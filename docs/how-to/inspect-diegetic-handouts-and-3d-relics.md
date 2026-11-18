@@ -6,12 +6,14 @@ This guide covers how to generate diegetic in-world artifacts—such as weathere
 
 ## 1. Generating Diegetic Handouts
 
+Every request needs a Zitadel access token for the caller in `Authorization: Bearer`. The examples use the placeholders `USER_DM_1_TOKEN` and `PLAYER_ROWAN_TOKEN`. Set each one to a token for that user. The caller is the verified token subject. See [Identity and Token Contract](../reference/identity-and-token-contract.md).
+
 To synthesize a new in-world document with custom calligraphy, weathered parchment, wax seal, and optional invisible ink runes:
 
 ```bash
 curl -X POST http://localhost:8006/api/v1/lore/handouts/generate \
   -H "Content-Type: application/json" \
-  -H "x-user-id: user-dm-1" \
+  -H "Authorization: Bearer $USER_DM_1_TOKEN" \
   -d '{
     "campaign_id": "8a329ef2-5c91-4cf1-83d8-21d4bb67f101",
     "title": "Intercepted Courier Scroll",
@@ -57,7 +59,7 @@ Players or DMs can break the seal to unroll and read the document. Breaking trig
 ```bash
 curl -X POST http://localhost:8006/api/v1/lore/handouts/9e47d139-b1b5-4377-bdc1-b1d950229dca/break-seal \
   -H "Content-Type: application/json" \
-  -H "x-user-id: player-rowan" \
+  -H "Authorization: Bearer $PLAYER_ROWAN_TOKEN" \
   -d '{
     "broken_by": "player-rowan",
     "break_force": 14.0
@@ -87,7 +89,7 @@ Hidden messages written in invisible ink can be inspected under UV torchlight:
 ```bash
 curl -X POST http://localhost:8006/api/v1/lore/handouts/9e47d139-b1b5-4377-bdc1-b1d950229dca/reveal-invisible-ink \
   -H "Content-Type: application/json" \
-  -H "x-user-id: player-rowan" \
+  -H "Authorization: Bearer $PLAYER_ROWAN_TOKEN" \
   -d '{
     "revealed_by": "player-rowan",
     "uv_intensity": 1.0
@@ -114,7 +116,7 @@ To forge an interactive 3D artifact with PBR shaders and engraved runic coordina
 ```bash
 curl -X POST http://localhost:8006/api/v1/lore/relics/forge \
   -H "Content-Type: application/json" \
-  -H "x-user-id: user-dm-1" \
+  -H "Authorization: Bearer $USER_DM_1_TOKEN" \
   -d '{
     "campaign_id": "8a329ef2-5c91-4cf1-83d8-21d4bb67f101",
     "name": "Amulet of the Sunken Spire",
@@ -141,7 +143,7 @@ curl -X POST http://localhost:8006/api/v1/lore/relics/forge \
 ```bash
 curl -X POST http://localhost:8006/api/v1/lore/relics/<relic_id>/inspect \
   -H "Content-Type: application/json" \
-  -H "x-user-id: player-rowan" \
+  -H "Authorization: Bearer $PLAYER_ROWAN_TOKEN" \
   -d '{
     "inspected_by": "player-rowan",
     "notes": "Rotated relic 180 degrees to discover backplate runes."
@@ -159,7 +161,7 @@ Deciphering a rune updates its translated status on the aggregate:
 ```bash
 curl -X POST http://localhost:8006/api/v1/lore/relics/<relic_id>/translate-rune \
   -H "Content-Type: application/json" \
-  -H "x-user-id: player-rowan" \
+  -H "Authorization: Bearer $PLAYER_ROWAN_TOKEN" \
   -d '{
     "rune_id": "rune-spire-1",
     "translated_by": "player-rowan",

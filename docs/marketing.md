@@ -120,7 +120,7 @@ The speech targets are not measured. The 500 millisecond target has no latency t
 
 ### 5. Identity and Authorization
 
-- **Live**: Zitadel OIDC token checks on HTTP and WebSocket routes. Tests: `tests/test_blackbox_zitadel_http_auth.py`, `tests/test_blackbox_zitadel_websocket_auth.py`, `tests/test_blackbox_identity_negative.py` (TASK-0034, TASK-0522, TASK-0529). The dev identity bypass was removed (TASK-0520).
+- **Live**: Zitadel OIDC token checks on HTTP and WebSocket routes. The spectator and overlay reads stay anonymous by design. The identity contract is in `docs/reference/identity-and-token-contract.md`. Tests: `tests/test_blackbox_zitadel_http_auth.py`, `tests/test_blackbox_zitadel_websocket_auth.py`, `tests/test_blackbox_identity_negative.py` (TASK-0034, TASK-0522, TASK-0529). The dev identity bypass was removed (TASK-0520).
 - **In progress**: SpiceDB object authorization. The gateway and services check SpiceDB permissions on the routes covered by TASK-0522 to TASK-0555, TASK-0767, and TASK-0770. Tests: `tests/test_blackbox_spicedb_live.py`, `tests/test_blackbox_board_actions_authz.py`, `tests/test_blackbox_voice_authz.py`. This page does not claim that every route has a permission check.
 - **In progress**: Stand-in guardrail contract. Blocking task: TASK-0691.
 
@@ -189,7 +189,7 @@ Open work in Milestone 10 includes the gateway proxies (TASK-0582, TASK-0583, TA
 | **Event Sourcing** | `eventsource-py` aggregates on PostgreSQL | **Live** (deployed services) |
 | **Distributed Messaging** | Redis Streams consumer groups | **Live** |
 | **Object Authorization** | SpiceDB Zanzibar (`runefoble.zed`) on covered routes | **In progress** |
-| **Identity** | Zitadel OIDC on HTTP and WebSocket routes | **Live** |
+| **Identity** | Zitadel OIDC on HTTP and WebSocket routes, with service credentials for service-to-service calls | **Live** |
 | **Frontend Architecture** | Lit Web Components + Shadow DOM, per-service manifests | **Live** |
 | **Design System** | Bauhaus tokens, Dark/Light/System modes, token contrast checks | **In progress** |
 | **Agent Interface** | Model Context Protocol (FastMCP) gateway | **Live** (authenticated tools) |

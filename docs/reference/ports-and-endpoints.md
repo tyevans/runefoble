@@ -341,7 +341,7 @@ Campaign Lore routes require a verified bearer token, except `/health`, `/health
 | `gateway-api` | POST | `/api/v1/mobile/companion/{session_id}/whisper` | Proxies to `voice-agent`, which dispatches the secret DM whisper with a triple-pulse haptic alert. The owner checks `session.control` |
 | `gateway-api` | POST | `/api/v1/mobile/companion/{session_id}/turn-alert` | Proxies to `voice-agent`, which triggers the combat turn initiative double-pulse haptic alert. The owner checks `session.control` |
 | `gateway-api` | GET | `/api/v1/mobile/companion/profiles` | Proxies to `voice-agent`, which lists the adaptive Opus mobile audio streaming profiles |
-| `gateway-api` | GET | `/api/v1/spectate/{session_id}` | Audience-safe spectator state overlay redacting secret DM notes and monster stats (alias: `/api/v1/spectator/sessions/{session_id}`) |
+| `gateway-api` | GET | `/api/v1/spectate/{session_id}` | Audience-safe spectator state overlay redacting secret DM notes and monster stats (alias: `/api/v1/spectator/sessions/{session_id}`). Public: no identity is required. A `token` query parameter names an anonymous viewer and is not verified. A `Bearer` token, when sent, must verify (`401` otherwise) |
 | `gateway-api` | GET | `/overlay/party-vitals/{session_id}` | OBS transparent party vitals overlay (alpha-transparent rgba(0,0,0,0) canvas, zero DM secrets) |
 | `gateway-api` | WS | `/ws/overlay/{session_id}` | Real-time spectator WebSocket feed streaming sanitized party vitals and cinematic camera updates (aliases: `/overlay/ws/{session_id}`, `/ws/spectator/{session_id}`) |
 | `gateway-api` | WS | `/ws/spectator/{session_id}` | Real-time spectator WebSocket feed streaming sanitized session state and broadcast updates |
@@ -441,7 +441,7 @@ The gateway mounts the voice room and stream diagnostics routers. It registers t
 
 ## Gateway Proxy Identity and Errors
 
-A gateway proxy route forwards the caller's verified bearer token to the owning service. The gateway verifies the token first. The owning service verifies it again.
+A gateway proxy route forwards the caller's bearer token to the owning service. The owning service verifies it (ADR-0015 c). Some proxy routes also run the gateway identity dependency first. The asset, forge, voice, and companion proxies do not, so the owning service is their only identity check. The full contract is in [Identity and Token Contract](identity-and-token-contract.md).
 
 - The gateway copies the `Authorization` header to the upstream request. It sends the `X-Runefoble-Service-Credential` header and the W3C `traceparent` header on every call. It forwards no other header from the client. A client `X-User-Id` header is not forwarded.
 - An upstream `2xx` or `4xx` answer returns to the client with the same status and body.
@@ -476,6 +476,19 @@ Engine failure returns `503` with `{"detail": {"error": "speech_synthesis_unavai
 Public routes: `/healthz`, `/health`, `/ui/manifest`, and `/openapi.json`.
 
 The shared settings are `RUNEFOBLE_ZITADEL_ISSUER`, `RUNEFOBLE_ZITADEL_AUDIENCE`, and `RUNEFOBLE_ZITADEL_INTERNAL_URL`. The Helm chart sets them for each service. The audience comes from the Secret `runefoble-zitadel-client`.
+
+## Removed Identity Routes
+
+These paths have no route in the gateway. Use the replacement. The full table is in [Identity and Token Contract](identity-and-token-contract.md#6-removed-routes-and-replacements).
+
+| Removed path | Replacement |
+|---|---|
+| `POST /api/v1/auth/token`, `POST /api/v1/auth/refresh`, `POST /api/v1/auth/logout` | Zitadel OIDC in the App Shell (`frontend/src/auth/oidc-client.ts`) |
+| `POST /api/v1/auth/register`, `/verify`, `/verify-email`, `/resend-verification` | Zitadel hosted sign-up (`prompt=create`) |
+| `POST /api/v1/auth/admin/seed`, `POST /api/v1/auth/admin/invite` | None. Use `POST /api/v1/campaigns/{campaign_id}/invites`. |
+| `POST /api/v1/auth/dev/send-test`, `POST /api/v1/auth/test-email`, `DELETE /api/v1/auth/dev/emails` | Mailpit at `/mail` |
+| `POST /api/v1/auth/sync/user` | None. Token claims grant no relation. |
+| `POST /api/v1/auth/sync/membership`, `/character-ownership`, `/token-binding` | `POST /api/v1/campaigns/{campaign_id}/roles`, `POST /api/v1/characters`, `POST /api/v1/campaigns/join` |
 
 ## Infrastructure Ports
 

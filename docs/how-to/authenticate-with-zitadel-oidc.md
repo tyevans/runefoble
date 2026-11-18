@@ -5,7 +5,9 @@ Runefoble integrates with self-hosted Zitadel (`ghcr.io/zitadel/zitadel`) for OI
 
 The platform has one identity verifier: `ZitadelAuthService` in `libs/runefoble_auth`. No mode disables verification. No header, query parameter, or request body sets identity. Roles and admin flags are not identity. Authorization comes from SpiceDB only (ADR-0001).
 
-SpiceDB relations are written only for a verified principal. The claim sync path that maps role claims to relations still exists. TASK-0534 removes it. Do not add code that writes relations from token claims.
+SpiceDB relations are written only for a verified principal. Token claims never write a relation. The claim sync route and its role mapping were removed (TASK-0534). Do not add code that writes relations from token claims.
+
+The full identity contract for every surface is in [Identity and Token Contract](../reference/identity-and-token-contract.md). This guide shows how to use it.
 
 ## Architecture & Verification Flows
 
@@ -57,7 +59,8 @@ principal: VerifiedPrincipal = auth_service.verify_token(bearer_token)
 Rules:
 - `verify_token` accepts only `RS256`.
 - Discovery and JWKS come from `<issuer>/.well-known/openid-configuration`. Zitadel does not serve keys at `/.well-known/jwks.json`.
-- Settings: `RUNEFOBLE_ZITADEL_ISSUER`, `RUNEFOBLE_ZITADEL_AUDIENCE` (the project ID in a cluster), and `RUNEFOBLE_ZITADEL_INTERNAL_URL` (optional).
+- Settings: `RUNEFOBLE_ZITADEL_ISSUER`, `RUNEFOBLE_ZITADEL_AUDIENCE` (the project ID in a cluster), and `RUNEFOBLE_ZITADEL_INTERNAL_URL` (optional). The settings are read in `libs/runefoble_platform/src/runefoble_platform/config.py`.
+- When `RUNEFOBLE_ZITADEL_AUDIENCE` is empty, the platform uses `RUNEFOBLE_ZITADEL_CLIENT_ID` (default `runefoble-api`) as the audience. A verifier built by hand with a blank audience raises `ConfigurationError` (`libs/runefoble_auth/src/runefoble_auth/zitadel.py`). Set the audience in every deployed environment.
 - `RUNEFOBLE_ZITADEL_INTERNAL_URL` is the in-cluster origin, for example `http://zitadel:8080`. A pod cannot resolve the browser-facing host. When this setting is set, discovery and JWKS requests go to that origin with `Host` set to the issuer host. Zitadel refuses other hosts. The `iss` check still uses the issuer exactly.
 - There is no offline or development bypass. Tests mint real signed tokens (Step 5).
 
@@ -89,7 +92,7 @@ async def get_session(session_id: str):
 
 A missing, malformed, or unverified Bearer token returns `HTTP 401` with `WWW-Authenticate: Bearer`. For the full contract, see [Verify Identity in FastAPI and WebSockets](verify-identity-in-fastapi-and-websockets.md).
 
-The gateway does not read an `X-User-Id` header as identity. Use the verified token subject. Public routes are limited to health checks, OpenAPI and docs pages, the sign-in flow, and the spectator view. Upload and delete routes for assets take the owner from the token.
+The gateway does not read an `X-User-Id` header as identity. Use the verified token subject. The public routes are the health checks, the OpenAPI and docs pages, and the spectator and overlay reads. The reference lists each one and its code (see [Identity and Token Contract](../reference/identity-and-token-contract.md#4-public-routes)). Asset upload and delete routes take the owner from the token.
 
 ---
 
@@ -224,23 +227,21 @@ The Zitadel machine-user client credentials flow is the alternative. This platfo
 
 | Setting | Header | Read by | Meaning |
 |---|---|---|---|
-| `RUNEFOBLE_SERVICE_CREDENTIAL` | `X-Runefoble-Service-Credential` | `the_watcher`, `gateway_mcp`, `game_session`, `board_state`, `character_sheet`, `rules_compendium`, `inference_worker` | Shared credential. No default value. |
+| `RUNEFOBLE_SERVICE_CREDENTIAL` | `X-Runefoble-Service-Credential` | Senders: `gateway-api`, `gateway-mcp`, `the_watcher`, `game_session`, `campaign_lore`. Receivers: `board_state`, `character_sheet`, `game_session`, `rules_compendium`, `inference_worker`. | Shared credential. No default value. |
 
-The header never carries a user token. `Authorization` stays the user token.
+The header never carries a user token. `Authorization` stays the user token. The full sender and receiver list, with code paths, is in [Identity and Token Contract](../reference/identity-and-token-contract.md#2-surface-rules).
 
 ### Receiver rules
 
-- A receiver accepts a verified user bearer or the service credential, on the routes that another service calls. The dependency is `runefoble_auth.caller.require_user_or_service_credential`.
+- A receiver accepts a verified user bearer or the service credential, on the routes that another service calls. The dependency is `runefoble_auth.caller.require_user_or_service_credential`, built through `get_caller_or_service`.
 - A request with an `Authorization` header must verify as a Zitadel user token. A failed token gives `401`, even when the service credential is also present.
 - A request with no `Authorization` header is a service call when it presents the credential. A service call has no user id. Routes that act for a user keep the user-only dependency, so a service call gets `401` there.
 - The receiver compares the credential with `hmac.compare_digest`. Any other caller gets `401`.
-- A receiver refuses to start when the setting is unset or blank.
-- The MCP gateway sends the credential on every owning-service call. It forwards the MCP caller's bearer when one exists, so the owning service acts for that user.
-- The `game_session` stand-in release forwards the hot-swap player's bearer. It does not send the credential.
-- The API gateway (`gateway-api`) does not receive the credential.
-- The inference worker sends no CORS headers. Browsers cannot call it.
-- The Watcher returns `503 backend_unavailable` and makes no worker call when the setting is unset.
-- A Zitadel user token is not a service credential. The inference worker returns `401` for it.
+- A receiver refuses to start when the setting is unset or blank (`libs/runefoble_platform/src/runefoble_platform/service_credential.py`, `expected_service_credential`).
+- The MCP gateway sends the credential on owning-service calls (`gateway/mcp/src/gateway_mcp/owning_services.py`). It forwards the MCP caller's bearer when one exists.
+- The API gateway sends the credential on calls to owning services (`gateway/api/src/gateway_api/upstreams.py`). No gateway route accepts it.
+- The Watcher returns `503 backend_unavailable` and makes no worker call when the setting is unset (`services/the_watcher/src/the_watcher/worker_client.py`).
+- A Zitadel user token is not a service credential. The inference worker returns `401` for it (`services/inference_worker/src/inference_worker/auth.py`).
 
 ### Helm
 
@@ -251,7 +252,7 @@ kubectl patch secret runefoble-credentials --type merge \
   -p "{\"stringData\": {\"service-credential\": \"$(openssl rand -hex 32)\"}}"
 ```
 
-The `board-state`, `character-sheet`, `game-session`, `rules-compendium`, `the-watcher`, `inference-worker`, and `gateway-mcp` deployments read the key as `RUNEFOBLE_SERVICE_CREDENTIAL`.
+The `gateway-api`, `board-state`, `campaign-lore`, `character-sheet`, `game-session`, `rules-compendium`, `the-watcher`, `inference-worker`, and `gateway-mcp` deployments read the key as `RUNEFOBLE_SERVICE_CREDENTIAL` (`deployments/helm/runefoble/templates/services.yaml`, `gateway-mcp.yaml`, `inference-worker.yaml`).
 
 ### Test with a service credential
 
