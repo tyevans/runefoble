@@ -44,6 +44,7 @@ SERIAL_MODULES = frozenset(
         "tests/test_blackbox_app_shell_test_modular_decomposition.py",
         "tests/test_blackbox_barge_in_filter/test_barge_in_filter.py",
         "tests/test_blackbox_campaign_lore_rag.py",
+        "tests/test_blackbox_dev_environment.py",
         "tests/test_blackbox_ghost_previews.py",
         "tests/test_blackbox_intent_disambiguation_flow.py",
         "tests/test_blackbox_leitmotif_api.py",
