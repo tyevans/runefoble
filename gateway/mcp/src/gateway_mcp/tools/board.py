@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Any
 
 from gateway_mcp.caller import caller_bearer
 from gateway_mcp.owning_services import OwningServices, ServiceRejectedError
+from gateway_mcp.tool_authz import authorize_tool_call, session_control, token_move
 from mcp.server.fastmcp import Context
 from pydantic import BaseModel
 
@@ -78,6 +79,7 @@ async def move_board_token(
     ctx: Context | None = None,
 ) -> dict[str, Any]:
     """Move a token to target coordinates (x, y) on the tactical map."""
+    await authorize_tool_call(ctx, token_move(token_id))
     result = await OwningServices(bearer=caller_bearer(ctx)).move_token(
         session_id,
         token_id,
@@ -121,6 +123,7 @@ async def create_encounter(
     The session id is the encounter id. game_session starts combat first, so an
     unknown or unavailable session creates no board.
     """
+    await authorize_tool_call(ctx, session_control(session_id))
     client = OwningServices(bearer=caller_bearer(ctx))
     enemy_list = enemies or []
     combat = await client.start_combat(

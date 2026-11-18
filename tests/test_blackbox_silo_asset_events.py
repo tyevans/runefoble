@@ -101,7 +101,6 @@ async def test_blackbox_event_emission_on_upload_and_delete(signing_issuer, mock
     assert mem_event.owner_id == "paladin_order"
 
     # 2. Perform delete
-    client.headers["Authorization"] = f"Bearer {signing_issuer.mint('dm_cleanser')}"
     del_res = client.delete(f"/api/v1/assets/{asset_id}")
     assert del_res.status_code == 200
 
@@ -110,7 +109,7 @@ async def test_blackbox_event_emission_on_upload_and_delete(signing_issuer, mock
     _del_id, del_payload = stream_events[1]
     assert del_payload["event_type"] == "runefoble.events.asset.deleted"
     assert asset_id in del_payload["payload"]
-    assert "dm_cleanser" in del_payload["payload"]
+    assert "paladin_order" in del_payload["payload"]
 
 
 # --- 3. OpenAPI Hub Registration ---

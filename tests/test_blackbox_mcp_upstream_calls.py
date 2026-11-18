@@ -22,6 +22,7 @@ from runefoble_platform.telemetry import init_telemetry, reset_tracer_provider
 
 from tests.helpers.live_services import serve
 from tests.helpers.mcp_http import call_tool_over_http, serve_mcp
+from tests.helpers.ws_identity import SIGNING_ISSUER
 
 
 def _record(request: Request) -> dict[str, Any]:
@@ -92,7 +93,10 @@ async def test_tool_call_sends_service_credential_and_traceparent_upstream(
 ):
     """Every upstream call from a tool carries the service credential and a traceparent."""
     result = await call_tool_over_http(
-        mcp_endpoint, "inspect_tactical_board", {"session_id": "camp-7"}
+        mcp_endpoint,
+        "inspect_tactical_board",
+        {"session_id": "camp-7"},
+        SIGNING_ISSUER.mint("user-test"),
     )
 
     assert result.isError is False
@@ -110,7 +114,10 @@ async def test_session_id_with_separators_stays_in_one_path_segment(
 ):
     """An agent session id with '/', '?' and '#' reaches no other route. The tool returns an error."""
     result = await call_tool_over_http(
-        mcp_endpoint, "inspect_tactical_board", {"session_id": "camp/7?x#y"}
+        mcp_endpoint,
+        "inspect_tactical_board",
+        {"session_id": "camp/7?x#y"},
+        SIGNING_ISSUER.mint("user-test"),
     )
 
     assert result.isError is True

@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Any
 
 from gateway_mcp.dynamic.models import TYPE_MAP, DynamicToolDefinition
 from gateway_mcp.identity import current_caller_id
+from gateway_mcp.tool_authz import ToolAuthzError, check_requirement, tool_execute
 
 if TYPE_CHECKING:
     from gateway_mcp.dynamic.registry import DynamicToolRegistry
@@ -35,9 +36,11 @@ def make_dynamic_tool_callable(
     async def dynamic_runner(*args: Any, **kwargs: Any) -> Any:
         ba = sig.bind(*args, **kwargs)
         ba.apply_defaults()
-        return registry.execute_tool(
-            definition.name, ba.arguments, user_id=current_caller_id(registry.mcp)
-        )
+        caller_id = current_caller_id(registry.mcp)
+        if caller_id is None:
+            raise ToolAuthzError("Authentication required: the request carries no verified caller.")
+        await check_requirement(caller_id, tool_execute(definition.name))
+        return registry.execute_tool(definition.name, ba.arguments, user_id=caller_id)
 
     dynamic_runner.__signature__ = sig  # type: ignore[attr-defined]
     dynamic_runner.__doc__ = definition.description

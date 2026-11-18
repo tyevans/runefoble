@@ -7,7 +7,10 @@ own and return no substitute values when the service fails.
 
 from typing import TYPE_CHECKING, Any
 
+from gateway_mcp.caller import caller_bearer
 from gateway_mcp.owning_services import OwningServices
+from gateway_mcp.tool_authz import authorize_tool_call, character_edit, dm_action_on_character
+from mcp.server.fastmcp import Context
 
 if TYPE_CHECKING:
     from mcp.server.fastmcp import FastMCP
@@ -45,10 +48,11 @@ async def get_character_sheet(character_id: str) -> dict[str, Any]:
 
 
 async def apply_absentee_penalty(
-    character_id: str, penalty_type: str, explanation: str
+    character_id: str, penalty_type: str, explanation: str, ctx: Context | None = None
 ) -> dict[str, Any]:
     """Impose a session miss penalty (e.g. 'drunk', 'foolishness', 'cowardice') on an absent player's PC."""
-    sheet = await OwningServices().apply_penalty(
+    await authorize_tool_call(ctx, dm_action_on_character(character_id))
+    sheet = await OwningServices(bearer=caller_bearer(ctx)).apply_penalty(
         character_id, penalty_type=penalty_type, description=explanation
     )
     return {
@@ -64,9 +68,11 @@ async def cast_spell(
     character_id: str,
     spell_name: str,
     spell_level: int = 1,
+    ctx: Context | None = None,
 ) -> dict[str, Any]:
     """Cast a spell from a spell slot. Use spell_level 0 for a cantrip. The character sheet tracks slot expenditure."""
-    sheet = await OwningServices().cast_spell(
+    await authorize_tool_call(ctx, character_edit(character_id))
+    sheet = await OwningServices(bearer=caller_bearer(ctx)).cast_spell(
         character_id, spell_name=spell_name, slot_level=spell_level
     )
     return {
@@ -83,9 +89,11 @@ async def modify_character_hp(
     delta: int,
     damage_type: str = "untyped",
     reason: str = "combat action",
+    ctx: Context | None = None,
 ) -> dict[str, Any]:
     """Modify a character or token's hit points (negative for damage, positive for healing)."""
-    sheet = await OwningServices().change_health(
+    await authorize_tool_call(ctx, dm_action_on_character(character_id))
+    sheet = await OwningServices(bearer=caller_bearer(ctx)).change_health(
         character_id, delta=delta, source=f"{reason} [{damage_type}]"
     )
     return {
@@ -106,9 +114,10 @@ async def add_condition(
     condition: str,
     duration_rounds: int | None = None,
     source: str = "unspecified",
+    ctx: Context | None = None,
 ) -> dict[str, Any]:
     """Impose an active status condition or DM penalty on a character (e.g. 'blinded', 'prone', 'drunk', 'frightened')."""
-    return await _impose_condition(character_id, condition, duration_rounds, source)
+    return await _impose_condition(character_id, condition, duration_rounds, source, ctx)
 
 
 async def apply_condition(
@@ -116,9 +125,10 @@ async def apply_condition(
     condition: str,
     duration_rounds: int | None = None,
     source: str = "unspecified",
+    ctx: Context | None = None,
 ) -> dict[str, Any]:
     """Impose an active status condition or DM penalty on a character (e.g. 'blinded', 'prone', 'drunk', 'frightened')."""
-    return await _impose_condition(character_id, condition, duration_rounds, source)
+    return await _impose_condition(character_id, condition, duration_rounds, source, ctx)
 
 
 async def _impose_condition(
@@ -126,10 +136,12 @@ async def _impose_condition(
     condition: str,
     duration_rounds: int | None,
     source: str,
+    ctx: Context | None,
 ) -> dict[str, Any]:
     """Send a condition to character_sheet and return the conditions it now stores."""
+    await authorize_tool_call(ctx, dm_action_on_character(character_id))
     name = condition.lower().strip()
-    sheet = await OwningServices().apply_condition(
+    sheet = await OwningServices(bearer=caller_bearer(ctx)).apply_condition(
         character_id, condition=name, duration_rounds=duration_rounds, source=source
     )
     return {

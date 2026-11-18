@@ -72,7 +72,7 @@ def board_status(board_url: str, session_id: str) -> int:
 
 
 async def call_create_encounter(session_id: str, enemies: list[dict[str, Any]]) -> CallToolResult:
-    """Call create_encounter over MCP HTTP, with the `user-test` caller bearer."""
+    """Call create_encounter over MCP HTTP as the DM of the started session (`user-test`)."""
     return await call_tool_over_http(
         _MCP["url"],
         "create_encounter",
@@ -184,6 +184,15 @@ BOARD_CAMPAIGN = "camp-board-fixture"
 @pytest.fixture(autouse=True)
 def _board_campaign_dm(spicedb):
     """Make `user-test` the DM of the campaign that every board in this module belongs to."""
+    asyncio.run(
+        spicedb.write_relationship(
+            resource_type="campaign",
+            resource_id=BOARD_CAMPAIGN,
+            relation="dungeon_master",
+            subject_type="user",
+            subject_id="user-test",
+        )
+    )
     asyncio.run(
         spicedb.write_relationship(
             resource_type="campaign",

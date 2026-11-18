@@ -59,6 +59,9 @@ uv run pytest tests/test_mcp_tools.py tests/test_blackbox_mcp_gateway.py
 
 Write service-backed tools as blackbox tests. Start the owning service with `tests/helpers/live_services.py` (`serve(app)`), set its URL environment variable, and call the tool through the MCP protocol (`call_tool` in `tests/test_blackbox_mcp_gateway.py`). Add an error case that points the URL at `closed_port_url()` or a `unavailable_app(503)` stand-in.
 
+### Check a Permission in a Mutating Tool
+A tool that changes state must name one schema permission. Add `ctx: Context | None = None` to the tool. Call `await authorize_tool_call(ctx, requirement)` from `gateway_mcp.tool_authz` before any service call. Build the requirement with a helper such as `dm_action_on_character`, `character_edit`, `token_move`, or `session_control`. Add a builder to `_STEP_BUILDERS` in the same module, so that `execute_agent_action_plan` checks the tool too. Pass `bearer=caller_bearer(ctx)` to `OwningServices`. Never read the caller from an argument. Write a test where a player is denied and the DM succeeds.
+
 ### 5. Call the Tool with a Bearer Token
 In a blackbox test, mint a token with the shared signing issuer and pass it to the MCP client. `tests/helpers/mcp_http.py` provides `call_tool_over_http(endpoint, name, arguments, bearer=...)`. Do not send an `X-User-Id` header or a caller field in the arguments.
 

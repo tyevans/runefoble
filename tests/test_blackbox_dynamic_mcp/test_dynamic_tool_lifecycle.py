@@ -8,12 +8,14 @@ import pytest
 from fastapi.testclient import TestClient
 from gateway_mcp.server import mcp
 
+from tests.helpers.mcp_http import call_tool_json
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.ws_identity import SIGNING_ISSUER
 from tests.test_blackbox_dynamic_mcp.conftest import caller_headers
 
 
 @pytest.mark.asyncio
-async def test_blackbox_register_dynamic_tool_and_discovery(client: TestClient):
+async def test_blackbox_register_dynamic_tool_and_discovery(client: TestClient, mcp_endpoint: str):
     """Verify registering a dynamic tool via POST /mcp/tools/register and reflection in FastMCP."""
     tool_name = "calculate_falloff"
     payload = {
@@ -54,7 +56,12 @@ async def test_blackbox_register_dynamic_tool_and_discovery(client: TestClient):
     assert "distance" in fastmcp_tool.parameters["properties"]
 
     # 4. Invoke via FastMCP protocol entrypoint
-    mcp_out = await fastmcp_tool.run({"base_damage": 30, "distance": 5})
+    mcp_out = await call_tool_json(
+        mcp_endpoint,
+        tool_name,
+        {"base_damage": 30, "distance": 5},
+        SIGNING_ISSUER.mint("user-test"),
+    )
     assert mcp_out["effective_damage"] == 20
     assert mcp_out["distance"] == 5
 

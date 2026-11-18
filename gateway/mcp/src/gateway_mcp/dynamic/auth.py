@@ -6,6 +6,7 @@ import logging
 from typing import Any
 
 from fastapi import HTTPException
+from runefoble_auth.errors import AuthzError
 from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
 
 logger = logging.getLogger("runefoble.gateway_mcp.dynamic.auth")
@@ -26,14 +27,27 @@ def set_spicedb_client(client: SpiceDBClient | MockSpiceDBClient | None) -> None
     _spicedb_client = client
 
 
+def authorization_unavailable() -> HTTPException:
+    """The 503 for a SpiceDB failure. A failed check or write is never a success."""
+    return HTTPException(
+        status_code=503,
+        detail={"error": "authorization_unavailable", "message": "Authorization service failed."},
+    )
+
+
 async def grant_tool_permissions(
     author_id: str, tool_name: str, campaign_id: str | None = None, client: Any = None
 ) -> None:
     """Register SpiceDB author and campaign relationships for dynamic tool."""
     spicedb = client or get_spicedb_client()
-    await spicedb.write_relationship("mcp_tool", tool_name, "author", "user", author_id)
-    if campaign_id:
-        await spicedb.write_relationship("mcp_tool", tool_name, "campaign", "campaign", campaign_id)
+    try:
+        await spicedb.write_relationship("mcp_tool", tool_name, "author", "user", author_id)
+        if campaign_id:
+            await spicedb.write_relationship(
+                "mcp_tool", tool_name, "campaign", "campaign", campaign_id
+            )
+    except AuthzError as exc:
+        raise authorization_unavailable() from exc
 
 
 async def revoke_tool_permissions(
@@ -53,7 +67,10 @@ async def check_tool_permission(
 ) -> bool:
     """Check fine-grained Zanzibar permission on a dynamic tool."""
     spicedb = client or get_spicedb_client()
-    return await spicedb.check_permission("mcp_tool", tool_name, permission, "user", user_id)
+    try:
+        return await spicedb.check_permission("mcp_tool", tool_name, permission, "user", user_id)
+    except AuthzError as exc:
+        raise authorization_unavailable() from exc
 
 
 async def enforce_tool_auth(
