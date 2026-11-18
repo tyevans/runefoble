@@ -53,9 +53,3 @@ class DiceSettled(BaseRunefobleEvent):
     rotation: list[float] = Field(default_factory=lambda: [0.0, 0.0, 0.0])
     bounces: int = 0
     trajectory: list[dict[str, float]] = Field(default_factory=list)
-
-
-register_event(PhysicsCollisionOccurred, event_type="board.physics.collision")
-register_event(PhysicsCollisionOccurred, event_type="PhysicsCollisionOccurred")
-register_event(DiceSettled, event_type="board.dice.settled")
-register_event(DiceSettled, event_type="DiceSettled")

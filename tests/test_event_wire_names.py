@@ -7,11 +7,15 @@ identifier resolves to no event, because the platform keeps no aliases for old n
 from __future__ import annotations
 
 import importlib
+import json
 import pkgutil
 import re
 
+import pytest
 import runefoble_events
 from eventsource.domain.event_registry import default_registry, get_event_class_or_none
+from runefoble_events.asset import BattlemapForged
+from runefoble_platform.event_deserializer import deserialize_event
 
 WIRE_NAME_RULE = re.compile(r"^runefoble\.events\.[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$")
 
@@ -37,3 +41,42 @@ def test_retired_class_name_identifiers_resolve_to_no_event() -> None:
     assert get_event_class_or_none("CharacterCreated") is None
     assert get_event_class_or_none("TokenMoved") is None
     assert get_event_class_or_none("runefoble.events.character.CharacterCreated") is None
+
+
+@pytest.mark.parametrize(
+    "retired_name", ["BattlemapForged", "FogRevealed", "ShroudReset", "BoardMoveEvent"]
+)
+def test_retired_short_name_does_not_deserialize(retired_name: str) -> None:
+    fields = {"event_type": retired_name, "payload": json.dumps({"aggregate_id": "x"})}
+
+    assert isinstance(deserialize_event(fields), dict)
+
+
+def test_canonical_identifier_deserializes_to_the_event() -> None:
+    payload = {
+        "aggregate_id": "00000000-0000-4000-8000-000000000001",
+        "asset_id": "asset-1",
+        "creator_id": "user-1",
+        "prompt": "crypt",
+        "image_url": "https://example.test/crypt.png",
+        "width_cells": 10,
+        "height_cells": 10,
+    }
+    fields = {
+        "event_type": "runefoble.events.asset.battlemap_forged",
+        "payload": json.dumps(payload),
+    }
+
+    assert isinstance(deserialize_event(fields), BattlemapForged)
+
+
+def test_no_registered_event_resolves_by_class_name() -> None:
+    """Class names are never registry keys, so no retired short name still resolves."""
+    leaked = [
+        cls.__name__
+        for cls in _load_all_registered_events()
+        if cls.__module__.startswith("runefoble_events")
+        and get_event_class_or_none(cls.__name__) is not None
+    ]
+
+    assert leaked == []

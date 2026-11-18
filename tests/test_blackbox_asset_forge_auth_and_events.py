@@ -41,9 +41,9 @@ def test_asset_forge_cloudevents_registration():
     """Verify BattlemapForged and TokenAssetForged are registered in eventsource EventRegistry."""
     assert get_event_class_or_none("runefoble.events.asset.battlemap_forged") is BattlemapForged
     assert get_event_class_or_none("runefoble.events.asset.token_forged") is TokenAssetForged
-    assert get_event_class_or_none("BattlemapForged") is BattlemapForged
+    assert get_event_class_or_none("BattlemapForged") is None
     assert get_event_class_or_none("BattlemapCreated") is None
-    assert get_event_class_or_none("TokenAssetForged") is TokenAssetForged
+    assert get_event_class_or_none("TokenAssetForged") is None
     assert get_event_class_or_none("AssetGenerated") is None
 
     event = BattlemapForged(

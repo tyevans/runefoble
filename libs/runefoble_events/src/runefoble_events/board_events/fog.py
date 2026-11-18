@@ -19,7 +19,6 @@ class FogOfWarRevealed(BaseRunefobleEvent):
 
 
 FogRevealed = FogOfWarRevealed
-register_event(FogOfWarRevealed, event_type="FogRevealed")
 
 
 @register_event("runefoble.events.board.fog_of_war_shrouded")
@@ -33,8 +32,6 @@ class FogOfWarShrouded(BaseRunefobleEvent):
 
 
 ShroudReset = FogOfWarShrouded
-register_event(FogOfWarShrouded, event_type="ShroudReset")
-register_event(FogOfWarShrouded, event_type="FogOfWarShrouded")
 
 
 @register_event("runefoble.events.board.visibility_mask_updated")
@@ -50,6 +47,3 @@ class VisibilityMaskUpdated(BaseRunefobleEvent):
     token_id: str | None = None
     revealed_count: int = 0
     total_cells: int = 0
-
-
-register_event(VisibilityMaskUpdated, event_type="VisibilityMaskUpdated")

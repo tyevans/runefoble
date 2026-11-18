@@ -70,5 +70,3 @@ class UniversalVTTImported(BaseRunefobleEvent):
 
 
 BoardMapImported = UniversalVTTImported
-register_event(UniversalVTTImported, event_type="BoardMapImported")
-register_event(UniversalVTTImported, event_type="UniversalVTTImported")

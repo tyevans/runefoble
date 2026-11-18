@@ -173,7 +173,7 @@ async def overlay_websocket_endpoint(websocket: WebSocket, session_id: str) -> N
                         "camera": cam.model_dump(),
                     }
                     await ws_overlay_manager.broadcast_to_session(session_id, msg)
-            elif action in ("dice_rolled", "roll_animation", "DiceRolled"):
+            elif action in ("dice_rolled", "roll_animation"):
                 msg = {
                     "type": "roll_animation",
                     "roller_name": str(data.get("roller_name", "Adventurer")),

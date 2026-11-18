@@ -372,15 +372,19 @@ def test_event_registry_resolution() -> None:
         get_event_class_or_none("runefoble.events.board.token_knockback_applied")
         is TokenKnockbackApplied
     )
-    assert get_event_class_or_none("TokenKnockbackApplied") is TokenKnockbackApplied
+    assert get_event_class_or_none("TokenKnockbackApplied") is None
     assert get_event_class_or_none("runefoble.events.board.elevation_changed") is ElevationChanged
-    assert get_event_class_or_none("ElevationChanged") is ElevationChanged
+    assert get_event_class_or_none("ElevationChanged") is None
     assert (
         get_event_class_or_none("runefoble.events.board.visibility_mask_updated")
         is VisibilityMaskUpdated
     )
-    assert get_event_class_or_none("VisibilityMaskUpdated") is VisibilityMaskUpdated
-    assert get_event_class_or_none("FogRevealed") is FogOfWarRevealed
-    assert get_event_class_or_none("ShroudReset") is FogOfWarShrouded
-    assert get_event_class_or_none("BoardLightSourcePlacedEvent") is BoardLightSourcePlacedEvent
-    assert get_event_class_or_none("BoardDoorToggledEvent") is BoardDoorToggledEvent
+    assert (
+        get_event_class_or_none("runefoble.events.board.visibility_mask_updated")
+        is VisibilityMaskUpdated
+    )
+    # Retired short names and Python alias names resolve to no event.
+    assert get_event_class_or_none("FogRevealed") is None
+    assert get_event_class_or_none("ShroudReset") is None
+    assert get_event_class_or_none("BoardLightSourcePlacedEvent") is None
+    assert get_event_class_or_none("BoardDoorToggledEvent") is None

@@ -40,7 +40,7 @@ def test_domain_events_registered_in_eventsource_registry():
         CombatEncounterEnded,
     ]
     for evt_cls in core_events:
-        assert is_event_registered(evt_cls.__name__), (
+        assert is_event_registered(evt_cls.event_type_name()), (
             f"Event '{evt_cls.__name__}' not registered in eventsource-py registry"
         )
 

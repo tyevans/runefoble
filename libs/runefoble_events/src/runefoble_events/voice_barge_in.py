@@ -11,7 +11,6 @@ from pydantic import Field
 from runefoble_events.base import BaseRunefobleEvent, register_event
 
 
-@register_event("voice.barge_in_detected")
 @register_event("runefoble.events.voice.barge_in_detected")
 class NeuralSpeechBargeInDetectedEvent(BaseRunefobleEvent):
     """Emitted when neural VAD detects vocalization onset during active TTS playback."""
@@ -30,7 +29,6 @@ class NeuralSpeechBargeInDetectedEvent(BaseRunefobleEvent):
     reason: str = "human_speech_barge_in"
 
 
-@register_event("voice.tts_stream_attenuated")
 @register_event("runefoble.events.voice.tts_stream_attenuated")
 class TTSStreamAttenuatedEvent(BaseRunefobleEvent):
     """Emitted when active TTS playback is attenuated gracefully to silence with cosine crossfading."""

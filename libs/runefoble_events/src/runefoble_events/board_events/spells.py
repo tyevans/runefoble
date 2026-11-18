@@ -79,9 +79,3 @@ class EphemeralDecalsDecayed(BaseRunefobleEvent):
     session_id: str = ""
     board_id: str = ""
     rounds: int = 1
-
-
-register_event(SpellCast, event_type="SpellCast")
-register_event(AreaEffectExploded, event_type="AreaEffectExploded")
-register_event(VFXAnimationFinished, event_type="VFXAnimationFinished")
-register_event(EphemeralDecalsDecayed, event_type="EphemeralDecalsDecayed")

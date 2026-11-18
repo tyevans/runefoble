@@ -99,7 +99,3 @@ class ElevationChanged(BaseRunefobleEvent):
 
 
 BoardMoveEvent = TokenMoved
-register_event(TokenMoved, event_type="BoardMoveEvent")
-register_event(TokenActionExecuted, event_type="TokenActionExecuted")
-register_event(TokenKnockbackApplied, event_type="TokenKnockbackApplied")
-register_event(ElevationChanged, event_type="ElevationChanged")
