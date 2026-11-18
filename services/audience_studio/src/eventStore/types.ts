@@ -37,7 +37,17 @@ export interface EventStore {
   load(streamId: string): Promise<StoredEvent[]>;
   /** All events of every stream whose id starts with the prefix, ordered by stream then version. */
   loadPrefix(prefix: string): Promise<StoredEvent[]>;
-  /** Writes every change in one transaction, or none. */
+  /**
+   * Writes every change and one outbox entry per event in one transaction, or none.
+   * @throws ConcurrencyConflictError when a stream is not at the expected version.
+   */
   appendAll(changes: AppendChange[]): Promise<void>;
+  /**
+   * Passes up to `limit` unsent events, oldest first, to `publish`, then marks them sent.
+   * The batch is all or nothing: when `publish` rejects, no event in the batch is marked and
+   * the error propagates. Delivery is at least once, so consumers dedupe by event id.
+   * Resolves with the number of events in the batch.
+   */
+  drainOutbox(limit: number, publish: (event: StoredEvent) => Promise<void>): Promise<number>;
   close(): Promise<void>;
 }

@@ -4,7 +4,7 @@
  */
 
 export abstract class HttpError extends Error {
-  abstract readonly statusCode: 400 | 401 | 403 | 404 | 503;
+  abstract readonly statusCode: 400 | 401 | 403 | 404 | 409 | 503;
 
   constructor(message: string, options?: { cause?: unknown }) {
     super(message, options);
@@ -20,6 +20,11 @@ export class DomainError extends HttpError {
 /** The named poll or proposal does not exist. */
 export class NotFound extends HttpError {
   readonly statusCode = 404;
+}
+
+/** The write lost a race with another writer on the same stream. The client may retry the command. */
+export class ConflictError extends HttpError {
+  readonly statusCode = 409;
 }
 
 /** The verified principal lacks the schema permission for the action. */

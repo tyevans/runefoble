@@ -13,6 +13,8 @@ import {
 export class MemoryEventStore implements EventStore {
   readonly kind = 'memory' as const;
   private readonly streams = new Map<string, StoredEvent[]>();
+  /** Outbox: events committed and not yet sent, in commit order. */
+  private unsent: StoredEvent[] = [];
 
   async init(): Promise<void> {}
 
@@ -38,16 +40,25 @@ export class MemoryEventStore implements EventStore {
       }
     }
     for (const change of changes) {
+      const appended = change.events.map((event, index): StoredEvent => ({
+        ...event,
+        streamId: change.streamId,
+        version: change.expectedVersion + index + 1,
+      }));
       const list = this.streams.get(change.streamId) ?? [];
-      change.events.forEach((event, index) => {
-        list.push({
-          ...event,
-          streamId: change.streamId,
-          version: change.expectedVersion + index + 1,
-        });
-      });
+      list.push(...appended);
       this.streams.set(change.streamId, list);
+      this.unsent.push(...appended);
     }
+  }
+
+  async drainOutbox(limit: number, publish: (event: StoredEvent) => Promise<void>): Promise<number> {
+    const batch = this.unsent.slice(0, limit);
+    for (const event of batch) {
+      await publish(event);
+    }
+    this.unsent.splice(0, batch.length);
+    return batch.length;
   }
 
   async close(): Promise<void> {}

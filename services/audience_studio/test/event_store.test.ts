@@ -59,3 +59,58 @@ test('KeyedMutex runs work on the same key one at a time', async () => {
   await Promise.all([slow('a', 30), slow('b', 1)]);
   assert.deepEqual(trace, ['a:start', 'a:end', 'b:start', 'b:end']);
 });
+
+test('drainOutbox publishes pending events oldest first, in batches, and marks them sent', async () => {
+  const store = new MemoryEventStore();
+  await store.appendAll([
+    {
+      streamId: 'AudiencePoll-outbox',
+      expectedVersion: 0,
+      events: [
+        { type: 'a', data: {}, occurredAt: at },
+        { type: 'b', data: {}, occurredAt: at },
+      ],
+    },
+  ]);
+
+  const sent: string[] = [];
+  const record = async (event: { streamId: string; version: number }) => {
+    sent.push(`${event.streamId}#${event.version}`);
+  };
+  assert.equal(await store.drainOutbox(1, record), 1);
+  assert.equal(await store.drainOutbox(10, record), 1);
+  assert.equal(await store.drainOutbox(10, record), 0);
+  assert.deepEqual(sent, ['AudiencePoll-outbox#1', 'AudiencePoll-outbox#2']);
+});
+
+test('a failed publish leaves the whole outbox batch pending for the next drain', async () => {
+  const store = new MemoryEventStore();
+  await store.appendAll([
+    {
+      streamId: 'AudiencePoll-retry',
+      expectedVersion: 0,
+      events: [
+        { type: 'a', data: {}, occurredAt: at },
+        { type: 'b', data: {}, occurredAt: at },
+      ],
+    },
+  ]);
+
+  let calls = 0;
+  await assert.rejects(
+    store.drainOutbox(10, async () => {
+      calls += 1;
+      if (calls === 2) throw new Error('stream unavailable');
+    }),
+    /stream unavailable/
+  );
+
+  const retried: number[] = [];
+  assert.equal(
+    await store.drainOutbox(10, async (event) => {
+      retried.push(event.version);
+    }),
+    2
+  );
+  assert.deepEqual(retried, [1, 2]);
+});
