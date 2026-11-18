@@ -168,7 +168,7 @@ describe('forgeBattlemap (TASK-0613)', () => {
       (err: unknown) => {
         assert.ok(err instanceof ForgeApiError);
         assert.equal(err.status, 502);
-        assert.match(err.message, /HTTP 502/);
+        assert.match(err.message, /status 502/);
         return true;
       },
     );

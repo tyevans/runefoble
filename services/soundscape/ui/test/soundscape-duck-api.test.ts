@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { postDuck, type FetchLike } from '../src/soundscape-duck-api.ts';
+import type { FetchLike } from '@runefoble/ui-core';
+import { postDuck } from '../src/soundscape-duck-api.ts';
 
 const request = { sessionId: 'session-tomb-14', isDucked: true, reason: 'thunder', durationMs: 2000 };
 
@@ -55,7 +56,7 @@ test('reports the HTTP status when a rejected reply has no JSON detail', async (
 
   const result = await postDuck({ apiBase: '', authorization: '' }, request, fetchImpl);
 
-  assert.deepEqual(result, { ok: false, message: 'HTTP 503' });
+  assert.deepEqual(result, { ok: false, message: 'Request failed with status 503' });
 });
 
 test('reports a network failure instead of throwing', async () => {

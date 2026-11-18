@@ -1,5 +1,5 @@
 import { LitElement, html } from 'lit';
-import { AuthConsumerController, websocketProtocols } from '@runefoble/ui-core';
+import { AuthConsumerController, websocketProtocols, wsUrl } from '@runefoble/ui-core';
 import { customElement, property, state } from 'lit/decorators.js';
 import './mobile_companion/index.ts';
 import type { WhisperMessage } from './mobile_companion/haptic_ping_panel.ts';
@@ -116,15 +116,15 @@ export class RunefobleMobileCompanion extends LitElement {
 
   /** Opens the companion socket with the shell's bearer token. Without a token it does not open. */
   public async connectWebSocket(url?: string): Promise<void> {
-    const wsUrl = url || (typeof window !== 'undefined' ? `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws/mobile-companion/${this.sessionId}?peer_id=${this.peerId}` : '');
-    if (!wsUrl || typeof WebSocket === 'undefined') return;
+    const target = url || (typeof window !== 'undefined' ? wsUrl(`/ws/mobile-companion/${this.sessionId}?peer_id=${this.peerId}`) : '');
+    if (!target || typeof WebSocket === 'undefined') return;
     const token = await this.auth.getAccessToken();
     if (!token) {
       this.socketError = 'The mobile companion needs a signed-in session.';
       return;
     }
     try {
-      this.ws = new WebSocket(wsUrl, websocketProtocols(token));
+      this.ws = new WebSocket(target, websocketProtocols(token));
       this.ws.onopen = () => { this.connected = true; this.dispatchEvent(new CustomEvent('connection-changed', { detail: { connected: true }, bubbles: true, composed: true })); };
       this.ws.onclose = (event) => {
         this.connected = false;

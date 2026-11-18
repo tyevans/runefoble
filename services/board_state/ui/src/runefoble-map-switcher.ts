@@ -1,7 +1,7 @@
-import { AuthConsumerController } from '@runefoble/ui-core';
+import { AuthConsumerController, HttpError } from '@runefoble/ui-core';
 import { LitElement, html, css } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { BoardApiError, postSwitchMap } from './board-api.ts';
+import { postSwitchMap } from './board-api.ts';
 
 export interface BattlemapItem {
   id: string;
@@ -98,7 +98,7 @@ export class RunefobleMapSwitcher extends LitElement {
       }));
       this.close();
     } catch (err) {
-      const reason = err instanceof BoardApiError ? err.detail : (err as Error).message;
+      const reason = err instanceof HttpError ? err.detail : (err as Error).message;
       this.errorMessage = `Map not switched: ${reason}`;
     } finally {
       this.busy = false;

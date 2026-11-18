@@ -5,7 +5,7 @@
 
 import { LitElement, html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { AuthConsumerController } from '@runefoble/ui-core';
+import { AuthConsumerController, HttpError, requestJson } from '@runefoble/ui-core';
 import { compendiumStyles } from './runefoble-rules-compendium.styles.ts';
 import type { RuleCategory, RuleSearchResultItem, RuleSearchResponse } from './types.ts';
 
@@ -58,24 +58,21 @@ export class RunefobleRulesLookup extends LitElement {
       const campParam = this.campaignId ? `&campaign_id=${this.campaignId}` : '';
       const url = `${this.apiBaseUrl}/api/v1/compendium/rules/search?query=${encodeURIComponent(query)}${catParam}${campParam}`;
 
-      const res = await fetch(url, { headers: await this.auth.authHeaders() });
-      if (!res.ok) {
-        this.searchError = `Rules search failed (status ${res.status}).`;
-      } else {
-        this.searchError = null;
-        const data: RuleSearchResponse = await res.json();
-        this.results = data.results;
-        this.tookMs = data.took_ms;
-        this.dispatchEvent(
-          new CustomEvent('search-completed', {
-            detail: data,
-            bubbles: true,
-            composed: true,
-          })
-        );
-      }
+      const data = await requestJson<RuleSearchResponse>(url, {}, { headers: await this.auth.authHeaders() });
+      this.searchError = null;
+      this.results = data.results;
+      this.tookMs = data.took_ms;
+      this.dispatchEvent(
+        new CustomEvent('search-completed', {
+          detail: data,
+          bubbles: true,
+          composed: true,
+        })
+      );
     } catch (err) {
-      this.searchError = `Rules search failed: ${err instanceof Error ? err.message : String(err)}`;
+      this.searchError = err instanceof HttpError
+        ? `Rules search failed (status ${err.status}).`
+        : `Rules search failed: ${err instanceof Error ? err.message : String(err)}`;
     } finally {
       this.loading = false;
     }

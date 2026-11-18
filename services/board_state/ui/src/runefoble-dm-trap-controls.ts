@@ -1,8 +1,8 @@
-import { AuthConsumerController } from '@runefoble/ui-core';
+import { AuthConsumerController, HttpError } from '@runefoble/ui-core';
 import { LitElement, html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { dmTrapControlsStyles } from './runefoble-dm-trap-controls.styles.ts';
-import { BoardApiError, postTrap } from './board-api.ts';
+import { postTrap } from './board-api.ts';
 
 export interface TrapTypeOption {
   id: string;
@@ -84,7 +84,7 @@ export class RunefobleDmTrapControls extends LitElement {
       this.statusMessage = `Armed ${this.selectedTrapType}.`;
       this.dispatchEvent(new CustomEvent('trap-placed', { bubbles: true, composed: true, detail: trap }));
     } catch (err) {
-      const reason = err instanceof BoardApiError ? err.detail : (err as Error).message;
+      const reason = err instanceof HttpError ? err.detail : (err as Error).message;
       this.statusMessage = `Trap not armed: ${reason}`;
     } finally {
       this.busy = false;

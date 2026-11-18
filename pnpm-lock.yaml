@@ -277,6 +277,9 @@ importers:
 
   services/soundscape/ui:
     dependencies:
+      '@runefoble/ui-core':
+        specifier: workspace:*
+        version: link:../../../libs/runefoble_ui
       lit:
         specifier: ^3.3.3
         version: 3.3.3

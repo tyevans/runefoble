@@ -4,3 +4,7 @@ export { fetchAssetObjectUrl, revokeAssetObjectUrl, type AssetFetchLike } from '
 export { AssetImageController, AssetImageSet, isAuthorizedAssetPath } from './asset-image-controller.ts';
 export { websocketProtocols, RUNEFOBLE_SOCKET_PROTOCOL, RUNEFOBLE_BEARER_PREFIX } from './websocket-protocols.ts';
 export { PORTRAIT_PLACEHOLDERS, type PortraitPlaceholderId } from './portrait-placeholders.ts';
+export {
+  HttpError, bearerHeaders, errorDetailFromBody, errorMessageFromBody, isRecord, postJson, requestFailureMessage,
+  requestJson, wsUrl, type ActionResult, type FetchLike, type RequestOptions,
+} from './http.ts';

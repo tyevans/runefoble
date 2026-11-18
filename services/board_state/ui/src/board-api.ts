@@ -4,26 +4,8 @@
  * Callers render the server response. They never show an optimistic result.
  */
 
+import { postJson, wsUrl, type RequestOptions } from '@runefoble/ui-core';
 import type { AoETemplateConfig } from './board-types.ts';
-
-export type FetchLike = (input: string, init?: RequestInit) => Promise<Response>;
-
-export class BoardApiError extends Error {
-  readonly status: number;
-  readonly detail: string;
-
-  constructor(status: number, detail: string) {
-    super(`Board request failed with status ${status}: ${detail}`);
-    this.name = 'BoardApiError';
-    this.status = status;
-    this.detail = detail;
-  }
-}
-
-export interface BoardApiOptions {
-  headers?: Record<string, string>;
-  fetchImpl?: FetchLike;
-}
 
 export interface TrapDraft {
   name: string;
@@ -63,28 +45,6 @@ export interface SwitchMapResponse {
   status: string;
 }
 
-async function readFailureDetail(res: Response): Promise<string> {
-  const text = await res.text().catch(() => '');
-  try {
-    const parsed = JSON.parse(text) as { detail?: unknown };
-    if (typeof parsed.detail === 'string') return parsed.detail;
-  } catch {
-    // Body is not JSON. Fall through to the raw text.
-  }
-  return text || res.statusText;
-}
-
-async function postJson<T>(url: string, body: unknown, opts: BoardApiOptions): Promise<T> {
-  const fetchImpl: FetchLike = opts.fetchImpl ?? ((input, init) => globalThis.fetch(input, init));
-  const res = await fetchImpl(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...opts.headers },
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) throw new BoardApiError(res.status, await readFailureDetail(res));
-  return (await res.json()) as T;
-}
-
 export function buildCreateTrapBody(draft: TrapDraft): Record<string, unknown> {
   return {
     name: draft.name,
@@ -100,13 +60,13 @@ export function buildCreateTrapBody(draft: TrapDraft): Record<string, unknown> {
 }
 
 /** POST /api/v1/boards/{boardId}/traps (DM only). */
-export function postTrap(boardId: string, draft: TrapDraft, opts: BoardApiOptions = {}): Promise<SecretTrapResponse> {
+export function postTrap(boardId: string, draft: TrapDraft, opts: RequestOptions = {}): Promise<SecretTrapResponse> {
   const url = `/api/v1/boards/${encodeURIComponent(boardId)}/traps`;
   return postJson<SecretTrapResponse>(url, buildCreateTrapBody(draft), opts);
 }
 
 /** POST /api/v1/boards/{boardId}/switch-map (DM only). */
-export function postSwitchMap(boardId: string, draft: SwitchMapDraft, opts: BoardApiOptions = {}): Promise<SwitchMapResponse> {
+export function postSwitchMap(boardId: string, draft: SwitchMapDraft, opts: RequestOptions = {}): Promise<SwitchMapResponse> {
   const url = `/api/v1/boards/${encodeURIComponent(boardId)}/switch-map`;
   return postJson<SwitchMapResponse>(url, {
     new_map_id: draft.newMapId,
@@ -119,8 +79,7 @@ export function postSwitchMap(boardId: string, draft: SwitchMapDraft, opts: Boar
 
 /** WebSocket URL of the board service stream, /ws/boards/{boardId}. */
 export function boardSocketUrl(protocol: string, host: string, boardId: string): string {
-  const proto = protocol === 'https:' ? 'wss:' : 'ws:';
-  return `${proto}//${host}/ws/boards/${encodeURIComponent(boardId)}`;
+  return wsUrl(`/ws/boards/${encodeURIComponent(boardId)}`, { protocol, host });
 }
 
 export interface TokenMoveIntent {
