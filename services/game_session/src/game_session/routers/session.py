@@ -6,6 +6,7 @@ committed events to their streams, so routes do not publish directly.
 
 from __future__ import annotations
 
+from collections.abc import Awaitable
 from typing import Annotated
 from uuid import UUID, uuid4
 
@@ -13,7 +14,11 @@ from eventsource.domain.exceptions import AggregateNotFoundError
 from fastapi import APIRouter, Depends, Header, HTTPException
 from game_session.aggregate import GameSessionAggregate, GameSessionState
 from game_session.campaign.tuples import link_session
-from game_session.character_client import CharacterSheetUnavailableError, release_stand_in
+from game_session.character_client import (
+    CharacterSheetUnavailableError,
+    activate_stand_in,
+    release_stand_in,
+)
 from game_session.dependencies import get_spicedb_client, repo
 from game_session.models import (
     CreateSessionRequest,
@@ -21,6 +26,7 @@ from game_session.models import (
     HotSwapResponse,
     JoinSessionRequest,
     LeaveSessionRequest,
+    LeaveSessionResponse,
     ReadinessRequest,
     RollDiceRequest,
     RollDiceResponse,
@@ -111,9 +117,14 @@ async def start_session(session_id: UUID) -> GameSessionState:
     dependencies=[Depends(get_caller_principal)],
     response_model=GameSessionState,
 )
-async def join_session(session_id: UUID, req: JoinSessionRequest) -> GameSessionState:
-    """Record player entering session."""
+async def join_session(
+    session_id: UUID,
+    req: JoinSessionRequest,
+    authorization: Annotated[str, Header(alias="Authorization")],
+) -> GameSessionState:
+    """Record player entering session. A returning absent player releases the stand-in."""
     session = await _load_session(session_id)
+    stand_in_character_id = _active_stand_in_character(session.state, req.player_id)
     try:
         session.join_player(
             player_id=req.player_id,
@@ -123,6 +134,10 @@ async def join_session(session_id: UUID, req: JoinSessionRequest) -> GameSession
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
+    if stand_in_character_id is not None:
+        await _call_character_sheet(
+            release_stand_in(stand_in_character_id, session_id, authorization=authorization)
+        )
     await repo.save(session)
     return session.state
 
@@ -130,17 +145,46 @@ async def join_session(session_id: UUID, req: JoinSessionRequest) -> GameSession
 @router.post(
     "/api/v1/sessions/{session_id}/leave",
     dependencies=[Depends(get_caller_principal)],
-    response_model=GameSessionState,
+    response_model=LeaveSessionResponse,
 )
-async def leave_session(session_id: UUID, req: LeaveSessionRequest) -> GameSessionState:
-    """Record player absence, marking character for AI stand-in."""
+async def leave_session(
+    session_id: UUID,
+    req: LeaveSessionRequest,
+    authorization: Annotated[str, Header(alias="Authorization")],
+) -> LeaveSessionResponse:
+    """Record player absence. The lobby character goes to the AI stand-in (TASK-0690).
+
+    character_sheet owns the stand-in flag. The leave is saved only after it accepts the
+    activation. A player with no lobby character records the absence only.
+    """
     session = await _load_session(session_id)
     try:
         session.leave_player(player_id=req.player_id, reason=req.reason)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
+    character_id = session.state.lobby_characters.get(req.player_id)
+    if character_id is not None:
+        await _call_character_sheet(
+            activate_stand_in(character_id, session_id, authorization=authorization)
+        )
     await repo.save(session)
-    return session.state
+    return LeaveSessionResponse(**session.state.model_dump(), stand_in_character_id=character_id)
+
+
+def _active_stand_in_character(state: GameSessionState, player_id: str) -> UUID | None:
+    """Return the character that holds the stand-in for an absent player, if any."""
+    participant = state.participants.get(player_id)
+    if participant is None or not participant.is_stand_in_active:
+        return None
+    return state.lobby_characters.get(player_id)
+
+
+async def _call_character_sheet(call: Awaitable[None]) -> None:
+    """Await a character_sheet call. Map an upstream failure to 503, never to a fake success."""
+    try:
+        await call
+    except CharacterSheetUnavailableError as e:
+        raise HTTPException(status_code=503, detail=str(e)) from e
 
 
 @router.post(
