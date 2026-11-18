@@ -16,6 +16,7 @@
     "build": "tsc --noEmit"
   },
   "dependencies": {
+    "@runefoble/ui-core": "workspace:*",
     "lit": "^3.3.3"
   },
   "devDependencies": {

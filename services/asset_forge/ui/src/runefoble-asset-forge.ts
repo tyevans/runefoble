@@ -1,3 +1,4 @@
+import { AuthConsumerController, fetchAssetObjectUrl, revokeAssetObjectUrl } from '@runefoble/ui-core';
 import { LitElement, html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { assetForgeStyles } from './runefoble-asset-forge.styles.ts';
@@ -12,6 +13,8 @@ import {
 @customElement('runefoble-asset-forge')
 export class RunefobleAssetForge extends LitElement {
   static styles = assetForgeStyles;
+
+  private readonly auth = new AuthConsumerController(this);
 
   @property({ type: String })
   campaignId = '';
@@ -36,6 +39,13 @@ export class RunefobleAssetForge extends LitElement {
   @property({ type: Object })
   lastForgedToken: ForgedTokenData | null = null;
 
+  /** Blob URLs for the previews (TASK-0785). Forged bytes need a bearer, so `<img src>` cannot load them. */
+  @property({ type: String })
+  mapPreviewUrl = '';
+
+  @property({ type: String })
+  tokenPreviewUrl = '';
+
   @state()
   private mapPrompt = 'Subterranean dwarven forge with lava canals and broken anvil statues';
 
@@ -56,6 +66,12 @@ export class RunefobleAssetForge extends LitElement {
 
   @state()
   private errorMessage = '';
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    revokeAssetObjectUrl(this.mapPreviewUrl);
+    revokeAssetObjectUrl(this.tokenPreviewUrl);
+  }
 
   /** Runs one forge request. Shows the error on failure. Never reports false success. */
   private async runForge(action: () => Promise<void>) {
@@ -78,6 +94,9 @@ export class RunefobleAssetForge extends LitElement {
         widthCells: 20,
         heightCells: 20,
       });
+      const preview = await fetchAssetObjectUrl(map.image_url, () => this.auth.authHeaders());
+      revokeAssetObjectUrl(this.mapPreviewUrl);
+      this.mapPreviewUrl = preview;
       this.lastForgedMap = map;
       this.dispatchEvent(
         new CustomEvent('forge-battlemap', {
@@ -103,6 +122,9 @@ export class RunefobleAssetForge extends LitElement {
         tokenType: this.tokenType,
         campaignId: this.campaignId || undefined,
       });
+      const preview = await fetchAssetObjectUrl(token.image_url, () => this.auth.authHeaders());
+      revokeAssetObjectUrl(this.tokenPreviewUrl);
+      this.tokenPreviewUrl = preview;
       this.lastForgedToken = token;
       this.dispatchEvent(
         new CustomEvent('forge-token', {
@@ -206,7 +228,7 @@ export class RunefobleAssetForge extends LitElement {
               <div style="font-weight: 700; font-size: 0.85rem;">Forged Battlemap Ready</div>
               <img
                 class="preview-image"
-                src=${this.lastForgedMap.image_url}
+                src=${this.mapPreviewUrl}
                 alt="Forged Battlemap Preview"
               />
               <div class="stats-row">
@@ -272,7 +294,7 @@ export class RunefobleAssetForge extends LitElement {
             <div class="preview-card" style="align-items: center; text-align: center;">
               <div style="font-weight: 700; font-size: 0.85rem;">${this.lastForgedToken.token_name}</div>
               <img
-                src=${this.lastForgedToken.image_url}
+                src=${this.tokenPreviewUrl}
                 alt="Forged Token Preview"
                 style="width: 120px; height: 120px; border-radius: 50%; border: 3px solid #e63946; background: transparent;"
               />

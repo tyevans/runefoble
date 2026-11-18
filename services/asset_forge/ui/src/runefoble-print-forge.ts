@@ -1,19 +1,23 @@
+import { AuthConsumerController, fetchAssetObjectUrl, revokeAssetObjectUrl } from '@runefoble/ui-core';
 import { LitElement, html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { printForgeStyles } from './runefoble-print-forge.styles.ts';
-import { exportPrintPdf, exportStandees, exportStlToken } from './forge-api.ts';
+import { exportPrintPdf, exportStandees, exportStlToken, type ForgedDownload } from './forge-api.ts';
 
 export type PrintForgeTab = 'tiled-map' | 'standees' | 'stl-tokens';
 
 interface ExportResult {
   label: string;
   asset_id: string;
-  download_url: string;
+  /** A blob URL for this document only (TASK-0785). Forged bytes need a bearer. */
+  blobUrl: string;
 }
 
 @customElement('runefoble-print-forge')
 export class RunefoblePrintForge extends LitElement {
   static styles = printForgeStyles;
+
+  private readonly auth = new AuthConsumerController(this);
 
   @property({ type: String })
   campaignId = '';
@@ -58,6 +62,21 @@ export class RunefoblePrintForge extends LitElement {
   @state()
   private lastExport: ExportResult | null = null;
 
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    revokeAssetObjectUrl(this.lastExport?.blobUrl);
+  }
+
+  /**
+   * Fetches the forged bytes with the caller's bearer and returns a blob-backed result.
+   * The asset route refuses a caller without `forged_asset.view`, so the export fails.
+   */
+  private async downloadable(label: string, asset: ForgedDownload): Promise<ExportResult> {
+    const blobUrl = await fetchAssetObjectUrl(asset.download_url, () => this.auth.authHeaders());
+    revokeAssetObjectUrl(this.lastExport?.blobUrl);
+    return { label, asset_id: asset.asset_id, blobUrl };
+  }
+
   /** Runs one export request. Shows the error on failure. Never reports false success. */
   private async runExport(action: () => Promise<void>) {
     this.isExporting = true;
@@ -80,11 +99,7 @@ export class RunefoblePrintForge extends LitElement {
         pageSize: this.pageSize,
         campaignId: this.campaignId || undefined,
       });
-      this.lastExport = {
-        label: `Tiled map PDF (${pdf.total_pages} pages)`,
-        asset_id: pdf.asset_id,
-        download_url: pdf.download_url,
-      };
+      this.lastExport = await this.downloadable(`Tiled map PDF (${pdf.total_pages} pages)`, pdf);
       this.dispatchEvent(
         new CustomEvent('export-print-pdf', {
           detail: {
@@ -111,11 +126,10 @@ export class RunefoblePrintForge extends LitElement {
         pageSize: this.pageSize,
         campaignId: this.campaignId || undefined,
       });
-      this.lastExport = {
-        label: `Papercraft standees (${standees.pages} page${standees.pages === 1 ? '' : 's'})`,
-        asset_id: standees.asset_id,
-        download_url: standees.download_url,
-      };
+      this.lastExport = await this.downloadable(
+        `Papercraft standees (${standees.pages} page${standees.pages === 1 ? '' : 's'})`,
+        standees
+      );
       this.dispatchEvent(
         new CustomEvent('export-standees', {
           detail: {
@@ -140,11 +154,7 @@ export class RunefoblePrintForge extends LitElement {
         numSlots: 4,
         campaignId: this.campaignId || undefined,
       });
-      this.lastExport = {
-        label: `Watertight STL token (${stl.facet_count} facets)`,
-        asset_id: stl.asset_id,
-        download_url: stl.download_url,
-      };
+      this.lastExport = await this.downloadable(`Watertight STL token (${stl.facet_count} facets)`, stl);
       this.dispatchEvent(
         new CustomEvent('export-stl-token', {
           detail: {
@@ -171,8 +181,8 @@ export class RunefoblePrintForge extends LitElement {
           <div class="download-link">${this.lastExport.label} ready.</div>
           <a
             class="download-link"
-            href=${this.lastExport.download_url}
-            download
+            href=${this.lastExport.blobUrl}
+            download=${this.lastExport.asset_id}
             target="_blank"
             rel="noopener"
             >Download ${this.lastExport.asset_id}</a

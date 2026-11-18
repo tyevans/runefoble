@@ -12,6 +12,8 @@ export interface MockRoute {
   match: string;
   status: number;
   body: unknown;
+  /** Set for a raw body such as PDF bytes. A raw body is sent as text, not as JSON. */
+  contentType?: string;
 }
 
 export function withMockFetch(...routes: MockRoute[]) {
@@ -21,6 +23,12 @@ export function withMockFetch(...routes: MockRoute[]) {
       const route = routes.find((candidate) => url.includes(candidate.match));
       if (!route) {
         throw new Error(`Unmocked request: ${init?.method ?? 'GET'} ${url}`);
+      }
+      if (route.contentType) {
+        return new Response(String(route.body), {
+          status: route.status,
+          headers: { 'Content-Type': route.contentType },
+        });
       }
       return new Response(JSON.stringify(route.body), {
         status: route.status,

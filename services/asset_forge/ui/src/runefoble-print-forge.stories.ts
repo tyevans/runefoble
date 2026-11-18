@@ -43,16 +43,19 @@ const serviceUnavailable = {
 /** Exports the tiled PDF. The mocked route returns a download link on success. */
 export const TiledMapExportSuccess: Story = {
   decorators: [
-    withMockFetch({
-      match: '/api/v1/forge/print-pdf',
-      status: 200,
-      body: {
-        asset_id: 'print-pdf-demo-01',
-        download_url: 'data:application/pdf;base64,JVBERi0=',
-        total_pages: 4,
-        page_size: 'letter',
+    withMockFetch(
+      {
+        match: '/api/v1/forge/print-pdf',
+        status: 200,
+        body: {
+          asset_id: 'print-pdf-demo-01',
+          download_url: '/api/v1/assets/print-pdf-demo-01?stream=true',
+          total_pages: 4,
+          page_size: 'letter',
+        },
       },
-    }),
+      { match: '/api/v1/assets/print-pdf-demo-01', status: 200, body: '%PDF-1.4', contentType: 'application/pdf' }
+    ),
   ],
   render: () => html`
     <runefoble-print-forge campaignId="campaign-demo-01" activeTab="tiled-map"></runefoble-print-forge>
@@ -70,16 +73,19 @@ export const TiledMapExportServiceUnavailable: Story = {
 /** Exports papercraft standees. The mocked route returns a download link on success. */
 export const StandeesExportSuccess: Story = {
   decorators: [
-    withMockFetch({
-      match: '/api/v1/forge/standees',
-      status: 200,
-      body: {
-        asset_id: 'standees-demo-01',
-        download_url: 'data:application/pdf;base64,JVBERi0=',
-        standee_count: 1,
-        pages: 1,
+    withMockFetch(
+      {
+        match: '/api/v1/forge/standees',
+        status: 200,
+        body: {
+          asset_id: 'standees-demo-01',
+          download_url: '/api/v1/assets/standees-demo-01?stream=true',
+          standee_count: 1,
+          pages: 1,
+        },
       },
-    }),
+      { match: '/api/v1/assets/standees-demo-01', status: 200, body: '%PDF-1.4', contentType: 'application/pdf' }
+    ),
   ],
   render: () => html`
     <runefoble-print-forge campaignId="campaign-demo-01" activeTab="standees"></runefoble-print-forge>
