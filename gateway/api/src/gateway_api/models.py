@@ -91,59 +91,14 @@ class UpdateCampaignRequest(BaseModel):
     settings: dict[str, Any] | None = None
 
 
-class CampaignSummaryResponse(BaseModel):
-    id: str
-    title: str
-    description: str = ""
-    setting: str = ""
-    system: str = "5e"
-    status: str = "active"
-    owner_id: str = ""
-    role: str | None = None
-    member_count: int = 1
-    cover_image_url: str | None = None
-    settings: dict[str, Any] = Field(default_factory=dict)
-    created_at: str | None = None
-    updated_at: str | None = None
-
-
 class InviteRequest(BaseModel):
     role: Literal["player", "spectator"] = "player"
     expires_in_hours: int | None = 72
     max_uses: int | None = None
 
 
-class InviteResponse(BaseModel):
-    token: str
-    campaign_id: str
-    role: str
-    invite_url: str
-    expires_at: str | None = None
-    created_at: str
-    max_uses: int | None = None
-    uses: int = 0
-
-
 class JoinCampaignRequest(BaseModel):
     invite_token: str
-
-
-class JoinCampaignResponse(BaseModel):
-    status: str = "joined"
-    campaign_id: str
-    user_id: str
-    role: str
-    zanzibar_relation: str
-
-
-class CampaignMemberResponse(BaseModel):
-    user_id: str
-    role: str
-    subject_type: str = "user"
-    zanzibar_relation: str
-    username: str | None = None
-    character_name: str | None = None
-    avatar_url: str | None = None
 
 
 class CreateCampaignSessionRequest(BaseModel):
@@ -151,22 +106,3 @@ class CreateCampaignSessionRequest(BaseModel):
     scheduled_at: str | None = None
     description: str = ""
     status: str = "lobby"
-
-
-class CampaignSessionResponse(BaseModel):
-    id: str
-    campaign_id: str
-    title: str
-    status: str
-    round: int = 1
-    participants_count: int = 0
-    scheduled_at: str | None = None
-    created_at: str
-    campaignId: str | None = None
-    participantsCount: int | None = None
-
-    def model_post_init(self, __context: Any) -> None:
-        if self.campaignId is None:
-            self.campaignId = self.campaign_id
-        if self.participantsCount is None:
-            self.participantsCount = self.participants_count
