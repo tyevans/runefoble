@@ -107,15 +107,21 @@ Do not read tokens from `localStorage`. Ask the App Shell through the auth conte
 2. Create the controller in the component:
 
 ```ts
-import { AuthConsumerController } from '@runefoble/ui-core';
+import { AuthConsumerController, HttpError, requestJson } from '@runefoble/ui-core';
 
 private readonly auth = new AuthConsumerController(this);
 
-const res = await fetch(url, { headers: await this.auth.authHeaders() });
-if (!res.ok) this.error = `Request failed (status ${res.status}).`;
+try {
+  const data = await requestJson<Result>(url, {}, { headers: await this.auth.authHeaders() });
+  this.result = data;
+} catch (err) {
+  this.error = err instanceof HttpError ? `Request failed (status ${err.status}).` : 'The request failed.';
+}
 ```
 
 3. Catch failures and set an error state. Render the error. Do not show demo data.
+
+For a POST with a JSON body, call `postJson(url, body, { headers })`. Both helpers throw `HttpError` on a non-2xx response. `HttpError.detail` holds the server message. Do not write a local `fetch` and error parser.
 4. In stories, add one story with `<runefoble-story-auth-provider token="story-token">` and one story with no provider. Use `installTokenCheckingFetch` from `@runefoble/ui-core/story-fetch` to stand in for the gateway.
 
 ### WebSockets
@@ -132,8 +138,10 @@ if (!token) {
   this.socketError = 'Sign in to open the live connection.';
   return;
 }
-this.ws = new WebSocket(url, websocketProtocols(token));
+this.ws = new WebSocket(wsUrl('/ws/your-route/' + id), websocketProtocols(token));
 ```
+
+`wsUrl(path)` builds the `ws:` or `wss:` URL on the page origin. Do not write the protocol ternary by hand.
 
 `websocketProtocols` returns `['runefoble.v1', 'runefoble.bearer.<token>']`. The gateway closes a refused handshake with code 1008. Set an error state on code 1008 and render it. The App Shell clears the session and sends the user to sign-in.
 
