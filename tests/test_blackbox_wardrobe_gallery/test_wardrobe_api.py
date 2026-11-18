@@ -58,10 +58,7 @@ async def test_blackbox_spicedb_zanzibar_authorization(char_client: TestClient):
         headers=auth_headers(stranger_id),
     )
     assert res_stranger.status_code == 403
-    assert (
-        "Forbidden" in res_stranger.json()["detail"]
-        or "permission" in res_stranger.json()["detail"]
-    )
+    assert res_stranger.json()["detail"]["error"] == "permission_denied"
 
     # Owner attempt must succeed with 200 OK
     res_owner = char_client.post(

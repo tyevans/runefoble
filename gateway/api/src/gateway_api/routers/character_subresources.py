@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, Request
 from gateway_api.auth import require_zanzibar_permission
 from gateway_api.character_models import (
     AddInventoryItemRequest,
@@ -16,15 +16,10 @@ from gateway_api.character_models import (
     PrepareSpellRequest,
     StandInGuardrailsRequest,
 )
-from gateway_api.character_store import character_store
+from gateway_api.character_view import to_character_response
 from gateway_api.proxy import forward_json
 
 router = APIRouter(tags=["characters-subresources"])
-
-
-def _require_known_character(character_id: str) -> None:
-    if not character_store.get_character(character_id):
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Character not found")
 
 
 async def _forward(
@@ -55,14 +50,13 @@ async def modify_health(
     request: Request,
 ) -> CharacterResponse:
     """Mutate character HP, verify stand-in stabilization (requires 'edit')."""
-    _require_known_character(character_id)
     res = await _forward(
         request,
         "POST",
         f"/api/v1/characters/{character_id}/health",
         json_body=req.model_dump(exclude_unset=True),
     )
-    return CharacterResponse(**res)
+    return to_character_response(res, None)
 
 
 @router.post(
@@ -76,14 +70,13 @@ async def equip_item(
     request: Request,
 ) -> CharacterResponse:
     """Equip item to slot (requires 'edit')."""
-    _require_known_character(character_id)
     res = await _forward(
         request,
         "POST",
         f"/api/v1/characters/{character_id}/equipment",
         json_body=req.model_dump(exclude_unset=True),
     )
-    return CharacterResponse(**res)
+    return to_character_response(res, None)
 
 
 @router.delete(
@@ -97,9 +90,8 @@ async def unequip_item(
     request: Request,
 ) -> CharacterResponse:
     """Unequip item from slot (requires 'edit')."""
-    _require_known_character(character_id)
     res = await _forward(request, "DELETE", f"/api/v1/characters/{character_id}/equipment/{slot}")
-    return CharacterResponse(**res)
+    return to_character_response(res, None)
 
 
 @router.post(
@@ -113,14 +105,13 @@ async def add_inventory(
     request: Request,
 ) -> CharacterResponse:
     """Add item to inventory (requires 'edit')."""
-    _require_known_character(character_id)
     res = await _forward(
         request,
         "POST",
         f"/api/v1/characters/{character_id}/inventory",
         json_body=req.model_dump(exclude_unset=True),
     )
-    return CharacterResponse(**res)
+    return to_character_response(res, None)
 
 
 @router.delete(
@@ -135,14 +126,13 @@ async def remove_inventory(
     quantity: int = 1,
 ) -> CharacterResponse:
     """Remove item from inventory (requires 'edit')."""
-    _require_known_character(character_id)
     res = await _forward(
         request,
         "DELETE",
         f"/api/v1/characters/{character_id}/inventory/{item_id}",
         params={"quantity": str(quantity)},
     )
-    return CharacterResponse(**res)
+    return to_character_response(res, None)
 
 
 @router.post(
@@ -156,14 +146,13 @@ async def apply_condition(
     request: Request,
 ) -> CharacterResponse:
     """Apply tactical condition (requires 'edit')."""
-    _require_known_character(character_id)
     res = await _forward(
         request,
         "POST",
         f"/api/v1/characters/{character_id}/conditions",
         json_body=req.model_dump(exclude_unset=True),
     )
-    return CharacterResponse(**res)
+    return to_character_response(res, None)
 
 
 @router.delete(
@@ -177,11 +166,10 @@ async def remove_condition(
     request: Request,
 ) -> CharacterResponse:
     """Remove tactical condition (requires 'edit')."""
-    _require_known_character(character_id)
     res = await _forward(
         request, "DELETE", f"/api/v1/characters/{character_id}/conditions/{condition}"
     )
-    return CharacterResponse(**res)
+    return to_character_response(res, None)
 
 
 @router.post(
@@ -195,14 +183,13 @@ async def cast_spell(
     request: Request,
 ) -> CharacterResponse:
     """Cast spell, deducting slot tier (requires 'edit')."""
-    _require_known_character(character_id)
     res = await _forward(
         request,
         "POST",
         f"/api/v1/characters/{character_id}/spells/cast",
         json_body=req.model_dump(exclude_unset=True),
     )
-    return CharacterResponse(**res)
+    return to_character_response(res, None)
 
 
 @router.post(
@@ -216,14 +203,13 @@ async def prepare_spell(
     request: Request,
 ) -> CharacterResponse:
     """Prepare or unprepare spell (requires 'edit')."""
-    _require_known_character(character_id)
     res = await _forward(
         request,
         "POST",
         f"/api/v1/characters/{character_id}/spells/prepare",
         json_body=req.model_dump(exclude_unset=True),
     )
-    return CharacterResponse(**res)
+    return to_character_response(res, None)
 
 
 @router.put(
@@ -237,14 +223,13 @@ async def update_guardrails(
     request: Request,
 ) -> CharacterResponse:
     """Update stand-in policy guardrails (requires 'edit')."""
-    _require_known_character(character_id)
     res = await _forward(
         request,
         "PUT",
         f"/api/v1/characters/{character_id}/guardrails",
         json_body=req.model_dump(by_alias=False),
     )
-    return CharacterResponse(**res)
+    return to_character_response(res, None)
 
 
 @router.get(
@@ -256,6 +241,5 @@ async def get_guardrails(
     request: Request,
 ) -> dict[str, Any]:
     """Retrieve stand-in policy guardrails (requires 'view')."""
-    _require_known_character(character_id)
     res = await _forward(request, "GET", f"/api/v1/characters/{character_id}/guardrails")
     return dict(res)

@@ -1,25 +1,24 @@
-"""Blackbox frontdoor tests for Gateway Character Management and Zanzibar Authorization (TASK-0252).
+"""Blackbox frontdoor tests for gateway character routes (TASK-0252, TASK-0585).
 
-Governing ADRs: ADR-0001 (SpiceDB Zanzibar), ADR-0005 (Zitadel OIDC), ADR-0007 (Domain-Driven Gateway).
+The gateway proxies character create, list, read and campaign assignment to character_sheet,
+which owns the aggregate and the SpiceDB relations. Each test runs character_sheet and
+game_session as live loopback upstreams. Setup goes through the public HTTP routes only.
 Verifies:
-1. Character creation and automatic SpiceDB Zanzibar ownership assignment.
-2. Character listing filtered strictly by user ownership or Zanzibar view relation.
-3. Character detail retrieval and 403 Forbidden rejection for unauthorized users.
-4. Character campaign assignment and unassignment with Zanzibar edit permission.
-5. Character deletion restricted exclusively to Zanzibar owner, removing relations.
-6. CamelCase and snake_case dual compatibility for frontend Character Roster consumption.
+1. Character creation records the caller as owner and the public response shape.
+2. Listing returns only characters the caller may view.
+3. Read returns 403 to a stranger and the owner's permission body.
+4. Campaign assignment grants and revokes party view. The owner withholds the title from non-members.
+5. Create refuses fields that character_sheet cannot store, with 422 (never a silent drop).
 """
 
 import pytest
 from fastapi.testclient import TestClient
-from gateway_api.auth import get_spicedb_client
-from gateway_api.character_store import character_store
 from gateway_api.main import app
 
 
 @pytest.fixture
-def client(game_session_upstream):
-    """Enter the gateway lifespan after game_session is served, so the proxy reaches it."""
+def client(character_sheet_upstream, game_session_upstream):
+    """Enter the gateway lifespan after both upstreams serve, so the proxy reaches them."""
     with TestClient(app) as gateway_client:
         yield gateway_client
 
@@ -29,41 +28,29 @@ def _auth(issuer, sub: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {issuer.mint(sub)}"}
 
 
-@pytest.fixture(autouse=True)
-def reset_stores():
-    """Reset character and campaign memory stores before each test."""
-    character_store.reset(load_defaults=False)
-    yield
-
-
-@pytest.mark.asyncio
-async def test_character_creation_and_ownership(trusted_ws_issuer, client):
-    """Verify POST /api/v1/characters creates character and writes SpiceDB owner tuple."""
-    headers_valeros = _auth(trusted_ws_issuer, "user_valeros")
-
+def test_character_creation_records_the_caller_as_owner(trusted_ws_issuer, client):
+    """POST creates the character in character_sheet and returns both naming styles."""
+    headers = _auth(trusted_ws_issuer, "user_valeros")
     payload = {
         "name": "Valeros of Korvosa",
         "characterClass": "Fighter",
         "subclass": "Battle Master",
-        "level": 4,
-        "currentHp": 38,
         "maxHp": 45,
         "armorClass": 18,
         "speed": 30,
-        "portraitUrl": "/assets/portraits/fighter.svg",
     }
 
-    res = client.post("/api/v1/characters", json=payload, headers=headers_valeros)
-    assert res.status_code == 201
-    data = res.json()
+    res = client.post("/api/v1/characters", json=payload, headers=headers)
 
+    assert res.status_code == 201, res.text
+    data = res.json()
     assert data["name"] == "Valeros of Korvosa"
     assert data["character_class"] == "Fighter"
     assert data["characterClass"] == "Fighter"
     assert data["subclass"] == "Battle Master"
-    assert data["level"] == 4
-    assert data["current_hp"] == 38
-    assert data["currentHp"] == 38
+    assert data["level"] == 1
+    assert data["current_hp"] == 45
+    assert data["currentHp"] == 45
     assert data["max_hp"] == 45
     assert data["maxHp"] == 45
     assert data["armor_class"] == 18
@@ -71,98 +58,64 @@ async def test_character_creation_and_ownership(trusted_ws_issuer, client):
     assert data["speed"] == 30
     assert data["owner_id"] == "user_valeros"
     assert data["ownerId"] == "user_valeros"
-    char_id = data["id"]
-
-    # Verify SpiceDB has the owner relationship tuple
-    spicedb = get_spicedb_client()
-    has_owner = await spicedb.check_permission(
-        "character", char_id, "owner", "user", "user_valeros"
-    )
-    assert has_owner is True
-
-    # Owner has view permission
-    has_view = await spicedb.check_permission("character", char_id, "view", "user", "user_valeros")
-    assert has_view is True
 
 
-@pytest.mark.asyncio
-async def test_character_listing_isolation(trusted_ws_issuer, client):
-    """Verify GET /api/v1/characters lists only characters owned or viewable by the user."""
+def test_character_listing_isolation(trusted_ws_issuer, client):
+    """GET /api/v1/characters lists only characters the caller owns or may view."""
     headers_alice = _auth(trusted_ws_issuer, "user_alice")
     headers_bob = _auth(trusted_ws_issuer, "user_bob")
 
-    # Alice creates a wizard
-    res_a = client.post(
+    char_a_id = client.post(
         "/api/v1/characters",
-        json={"name": "Alice the Arcane", "characterClass": "Wizard", "level": 3, "maxHp": 20},
+        json={"name": "Alice the Arcane", "characterClass": "Wizard", "maxHp": 20},
         headers=headers_alice,
-    )
-    assert res_a.status_code == 201
-    char_a_id = res_a.json()["id"]
-
-    # Bob creates a rogue
-    res_b = client.post(
+    ).json()["id"]
+    char_b_id = client.post(
         "/api/v1/characters",
-        json={"name": "Bob the Shadow", "characterClass": "Rogue", "level": 3, "maxHp": 22},
+        json={"name": "Bob the Shadow", "characterClass": "Rogue", "maxHp": 22},
         headers=headers_bob,
-    )
-    assert res_b.status_code == 201
-    char_b_id = res_b.json()["id"]
+    ).json()["id"]
 
-    # Alice lists characters -> only sees Alice's character
-    alice_chars = client.get("/api/v1/characters", headers=headers_alice).json()
-    alice_ids = [c["id"] for c in alice_chars]
+    alice_ids = [c["id"] for c in client.get("/api/v1/characters", headers=headers_alice).json()]
+    bob_ids = [c["id"] for c in client.get("/api/v1/characters", headers=headers_bob).json()]
+
     assert char_a_id in alice_ids
     assert char_b_id not in alice_ids
-
-    # Bob lists characters -> only sees Bob's character
-    bob_chars = client.get("/api/v1/characters", headers=headers_bob).json()
-    bob_ids = [c["id"] for c in bob_chars]
     assert char_b_id in bob_ids
     assert char_a_id not in bob_ids
 
 
-@pytest.mark.asyncio
-async def test_character_detail_and_zanzibar_view_guard(trusted_ws_issuer, client):
-    """Verify GET /api/v1/characters/{id} returns details for owner and 403 for strangers."""
+def test_character_detail_and_view_guard(trusted_ws_issuer, client):
+    """The owner reads the sheet. A stranger gets 403 with the owner's permission body."""
     headers_alice = _auth(trusted_ws_issuer, "user_alice")
     headers_stranger = _auth(trusted_ws_issuer, "user_stranger")
-
-    res = client.post(
+    char_id = client.post(
         "/api/v1/characters",
-        json={"name": "Alice Guard", "characterClass": "Paladin", "level": 2, "maxHp": 24},
+        json={"name": "Alice Guard", "characterClass": "Paladin", "maxHp": 24},
         headers=headers_alice,
-    )
-    char_id = res.json()["id"]
+    ).json()["id"]
 
-    # Alice (owner) can view details
     res_alice = client.get(f"/api/v1/characters/{char_id}", headers=headers_alice)
     assert res_alice.status_code == 200
     assert res_alice.json()["name"] == "Alice Guard"
 
-    # Stranger without Zanzibar relation is denied access with 403
     res_denied = client.get(f"/api/v1/characters/{char_id}", headers=headers_stranger)
     assert res_denied.status_code == 403
     assert res_denied.json()["detail"]["error"] == "permission_denied"
 
 
-@pytest.mark.asyncio
 def test_character_campaign_assignment_and_view_propagation(trusted_ws_issuer, client):
-    """Verify PATCH /api/v1/characters/{id}/campaign writes campaign tuple and propagates view."""
+    """PATCH assigns the campaign, grants party view, and unassigning revokes it."""
     headers_alice = _auth(trusted_ws_issuer, "user_alice")
     headers_dm = _auth(trusted_ws_issuer, "dm_merlin")
     headers_party_member = _auth(trusted_ws_issuer, "user_grognak")
     headers_outsider = _auth(trusted_ws_issuer, "user_outsider")
 
-    # DM creates Campaign
-    camp_res = client.post(
+    campaign_id = client.post(
         "/api/v1/campaigns",
         json={"title": "Curse of Strahd", "setting": "Barovia"},
         headers=headers_dm,
-    )
-    campaign_id = camp_res.json()["id"]
-
-    # Add Grognak as a player in the campaign
+    ).json()["id"]
     invite = client.post(
         f"/api/v1/campaigns/{campaign_id}/invites", json={"role": "player"}, headers=headers_dm
     )
@@ -174,27 +127,24 @@ def test_character_campaign_assignment_and_view_propagation(trusted_ws_issuer, c
     )
     assert joined.status_code == 200, joined.text
 
-    # Alice creates an unassigned character
-    res = client.post(
+    char_id = client.post(
         "/api/v1/characters",
-        json={"name": "Alice Barovian", "characterClass": "Cleric", "level": 1, "maxHp": 12},
+        json={"name": "Alice Barovian", "characterClass": "Cleric", "maxHp": 12},
         headers=headers_alice,
+    ).json()["id"]
+
+    assert (
+        client.get(f"/api/v1/characters/{char_id}", headers=headers_party_member).status_code == 403
     )
-    char_id = res.json()["id"]
-
-    # Before assignment: Grognak cannot view Alice's character
-    res_grognak_before = client.get(f"/api/v1/characters/{char_id}", headers=headers_party_member)
-    assert res_grognak_before.status_code == 403
-
-    # Outsider cannot edit character or assign campaign (403 Forbidden)
-    res_outsider_patch = client.patch(
-        f"/api/v1/characters/{char_id}/campaign",
-        json={"campaignId": campaign_id},
-        headers=headers_outsider,
+    assert (
+        client.patch(
+            f"/api/v1/characters/{char_id}/campaign",
+            json={"campaignId": campaign_id},
+            headers=headers_outsider,
+        ).status_code
+        == 403
     )
-    assert res_outsider_patch.status_code == 403
 
-    # Alice (owner) assigns character to campaign
     res_patch = client.patch(
         f"/api/v1/characters/{char_id}/campaign",
         json={"campaignId": campaign_id},
@@ -206,18 +156,13 @@ def test_character_campaign_assignment_and_view_propagation(trusted_ws_issuer, c
     # Alice is not a campaign member, so the owner withholds the campaign title from her.
     assert res_patch.json()["campaignTitle"] is None
 
-    # After assignment: Campaign party member Grognak now has Zanzibar view permission!
-    res_grognak_after = client.get(f"/api/v1/characters/{char_id}", headers=headers_party_member)
-    assert res_grognak_after.status_code == 200
-    assert res_grognak_after.json()["name"] == "Alice Barovian"
-    # A member can read the campaign title through the owner.
-    assert res_grognak_after.json()["campaignTitle"] == "Curse of Strahd"
+    res_member = client.get(f"/api/v1/characters/{char_id}", headers=headers_party_member)
+    assert res_member.status_code == 200
+    assert res_member.json()["name"] == "Alice Barovian"
+    assert res_member.json()["campaignTitle"] == "Curse of Strahd"
 
-    # Outsider still has 403 Forbidden
-    res_outsider_after = client.get(f"/api/v1/characters/{char_id}", headers=headers_outsider)
-    assert res_outsider_after.status_code == 403
+    assert client.get(f"/api/v1/characters/{char_id}", headers=headers_outsider).status_code == 403
 
-    # Unassign character from campaign
     res_unassign = client.patch(
         f"/api/v1/characters/{char_id}/campaign",
         json={"campaignId": None},
@@ -225,58 +170,20 @@ def test_character_campaign_assignment_and_view_propagation(trusted_ws_issuer, c
     )
     assert res_unassign.status_code == 200
     assert res_unassign.json()["campaign_id"] is None
-
-    # Grognak can no longer view unassigned character
-    res_grognak_unassigned = client.get(
-        f"/api/v1/characters/{char_id}", headers=headers_party_member
+    assert (
+        client.get(f"/api/v1/characters/{char_id}", headers=headers_party_member).status_code == 403
     )
-    assert res_grognak_unassigned.status_code == 403
 
 
-@pytest.mark.asyncio
-async def test_character_deletion_owner_only(trusted_ws_issuer, client):
-    """Verify DELETE /api/v1/characters/{id} allows owner and blocks non-owners with 403."""
-    headers_alice = _auth(trusted_ws_issuer, "user_alice")
-    headers_bob = _auth(trusted_ws_issuer, "user_bob")
+def test_create_refuses_fields_character_sheet_cannot_store(trusted_ws_issuer, client):
+    """A level or a starting HP that character_sheet cannot keep returns 422, not a silent drop."""
+    headers = _auth(trusted_ws_issuer, "user_valeros")
 
     res = client.post(
         "/api/v1/characters",
-        json={"name": "Alice to Delete", "characterClass": "Bard", "level": 1, "maxHp": 10},
-        headers=headers_alice,
+        json={"name": "Too Strong", "characterClass": "Fighter", "level": 4, "maxHp": 45},
+        headers=headers,
     )
-    char_id = res.json()["id"]
 
-    # Non-owner Bob tries to delete Alice's character -> 403 Forbidden
-    res_bob_delete = client.delete(f"/api/v1/characters/{char_id}", headers=headers_bob)
-    assert res_bob_delete.status_code == 403
-    assert res_bob_delete.json()["detail"]["error"] == "permission_denied"
-
-    # Alice (owner) deletes her character
-    res_alice_delete = client.delete(f"/api/v1/characters/{char_id}", headers=headers_alice)
-    assert res_alice_delete.status_code == 200
-    assert res_alice_delete.json()["status"] == "deleted"
-
-    # Character is gone from store
-    assert character_store.get_character(char_id) is None
-
-    # Alice can no longer view deleted character
-    res_after = client.get(f"/api/v1/characters/{char_id}", headers=headers_alice)
-    assert res_after.status_code in (403, 404)
-
-
-@pytest.mark.asyncio
-async def test_default_characters_loaded_and_accessible(trusted_ws_issuer, client):
-    """Verify default seed characters are accessible to their verified owners."""
-    character_store.load_defaults()
-
-    # Valeros is owned by user-valeros
-    res_valeros = client.get("/api/v1/characters", headers=_auth(trusted_ws_issuer, "user-valeros"))
-    assert res_valeros.status_code == 200
-    ids_valeros = [c["id"] for c in res_valeros.json()]
-    assert "char-valeros" in ids_valeros
-
-    # Ezren is owned by user-evelyn
-    res_ezren = client.get("/api/v1/characters", headers=_auth(trusted_ws_issuer, "user-evelyn"))
-    assert res_ezren.status_code == 200
-    ids_ezren = [c["id"] for c in res_ezren.json()]
-    assert "char-ezren" in ids_ezren
+    assert res.status_code == 422
+    assert res.json()["detail"]["fields"] == ["level"]

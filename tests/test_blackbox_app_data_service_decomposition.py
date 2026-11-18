@@ -16,7 +16,6 @@ from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
-from gateway_api.character_store import character_store
 from gateway_api.main import app as gateway_app
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -28,12 +27,6 @@ TS_TEST_FILE = FRONTEND_DIR / "test" / "app-data-service.test.ts"
 def client(game_session_upstream) -> Iterator[TestClient]:
     with TestClient(gateway_app) as gateway_client:
         yield gateway_client
-
-
-@pytest.fixture(autouse=True)
-def reset_stores():
-    character_store.reset()
-    yield
 
 
 def test_frontend_node_blackbox_suite_execution():

@@ -10,6 +10,7 @@ from uuid import UUID, uuid4
 from character_sheet.aggregate import CharacterAggregate
 from character_sheet.crafting import CraftingAggregate
 from character_sheet.models import CharacterState
+from character_sheet.roster import permission_denied
 from character_sheet.schemas import CreateCharacterRequest, UpdateGuardrailsRequest
 from fastapi import Depends, HTTPException
 from runefoble_auth.principal import VerifiedPrincipal, require_principal
@@ -204,14 +205,23 @@ async def modify_character_health(
     return char.state
 
 
-async def authorize_character_edit(
-    spicedb: SpiceDBClient, character_id: UUID, user_id: str
+async def authorize_character_permission(
+    spicedb: SpiceDBClient | MockSpiceDBClient,
+    character_id: UUID,
+    permission: str,
+    user_id: str,
 ) -> None:
-    if not await spicedb.check_permission("character", str(character_id), "edit", "user", user_id):
-        raise HTTPException(
-            status_code=403,
-            detail=f"User '{user_id}' does not have edit permission on character '{character_id}'",
-        )
+    """Require one SpiceDB character permission for the caller. 403 with the shared body."""
+    if not await spicedb.check_permission(
+        "character", str(character_id), permission, "user", user_id
+    ):
+        raise permission_denied(user_id, permission, str(character_id))
+
+
+async def authorize_character_edit(
+    spicedb: SpiceDBClient | MockSpiceDBClient, character_id: UUID, user_id: str
+) -> None:
+    await authorize_character_permission(spicedb, character_id, "edit", user_id)
 
 
 async def update_character_guardrails(

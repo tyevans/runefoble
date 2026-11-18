@@ -12,7 +12,7 @@ from typing import Any
 
 from fastapi import APIRouter, Request, status
 from gateway_api.auth import CurrentPrincipal
-from gateway_api.character_store import character_store
+from gateway_api.character_view import campaign_character_names
 from gateway_api.models import (
     AssignRoleRequest,
     CreateCampaignRequest,
@@ -121,19 +121,10 @@ async def list_campaign_members(campaign_id: str, request: Request, user: Curren
     members = await forward_json(
         request, service=SERVICE, method="GET", path=f"{CAMPAIGNS}/{campaign_id}/members"
     )
-    names = _character_names(campaign_id)
+    names = await campaign_character_names(request, campaign_id)
     for member in members:
         member["character_name"] = member.get("character_name") or names.get(member["user_id"])
     return members
-
-
-def _character_names(campaign_id: str) -> dict[str, str]:
-    """Return {owner id: character name} for the characters assigned to one campaign."""
-    names: dict[str, str] = {}
-    for char in character_store.list_characters():
-        if char.campaign_id == campaign_id:
-            names.setdefault(char.owner_id, char.name)
-    return names
 
 
 @router.delete("/api/v1/campaigns/{campaign_id}/members/{user_id}")

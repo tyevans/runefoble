@@ -6,21 +6,34 @@ import contextlib
 from uuid import UUID
 
 from character_sheet import dependencies as deps
-from character_sheet import schemas
+from character_sheet import roster, schemas
 from character_sheet.models import CharacterState, StandInGuardrails
-from fastapi import APIRouter, Depends, HTTPException
+from character_sheet.roster import CharacterRosterView
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 router = APIRouter(tags=["character_sheet"], dependencies=[Depends(deps.get_principal)])
 
 
-@router.post("/api/v1/characters", response_model=CharacterState)
-@router.post("/api/v1/characters/create", response_model=CharacterState)
+@router.get("/api/v1/characters", response_model=list[CharacterRosterView])
+async def list_characters(
+    repo: deps.RepoDep,
+    spicedb: deps.SpiceDep,
+    user_id: deps.VerifiedUserId,
+    campaign_id: str | None = Query(None, alias="campaignId"),
+):
+    """List the characters the caller may view, optionally one campaign's party."""
+    return await roster.visible_characters(repo, spicedb, user_id, campaign_id)
+
+
+@router.post("/api/v1/characters", response_model=CharacterRosterView)
+@router.post("/api/v1/characters/create", response_model=CharacterRosterView)
 async def create_character(
     req: schemas.CreateCharacterRequest,
     repo: deps.RepoDep,
     spicedb: deps.SpiceDep,
     user_id: deps.VerifiedUserId,
 ):
+    """Create a character. The verified caller becomes its owner."""
     state = await deps.create_new_character(repo, req)
     with contextlib.suppress(Exception):
         await spicedb.write_relationship(
@@ -31,7 +44,7 @@ async def create_character(
             await spicedb.write_relationship(
                 "character", str(state.character_id), "campaign", "campaign", req.campaign_id
             )
-    return state
+    return await roster.roster_view(spicedb, state, owner_id=user_id)
 
 
 @router.post("/api/v1/characters/{character_id}/level-up", response_model=CharacterState)
@@ -78,9 +91,17 @@ async def restore_spell_slots(
     )
 
 
-@router.get("/api/v1/characters/{character_id}", response_model=CharacterState)
-async def get_character(character_id: UUID, repo: deps.RepoDep):
-    return (await deps.load_character(repo, character_id)).state
+@router.get("/api/v1/characters/{character_id}", response_model=CharacterRosterView)
+async def get_character(
+    character_id: UUID,
+    repo: deps.RepoDep,
+    spicedb: deps.SpiceDep,
+    user_id: deps.VerifiedUserId,
+):
+    """Read one character. Requires `view` (SpiceDB, checked here, not in the gateway)."""
+    state = (await deps.load_character(repo, character_id)).state
+    await deps.authorize_character_permission(spicedb, character_id, "view", user_id)
+    return await roster.roster_view(spicedb, state)
 
 
 @router.post("/api/v1/characters/{character_id}/stand-in", response_model=CharacterState)
@@ -171,7 +192,7 @@ async def get_guardrails(character_id: UUID, repo: deps.RepoDep):
     return (await deps.load_character(repo, character_id)).state.stand_in_guardrails
 
 
-@router.patch("/api/v1/characters/{character_id}/campaign", response_model=CharacterState)
+@router.patch("/api/v1/characters/{character_id}/campaign", response_model=CharacterRosterView)
 async def assign_campaign(
     character_id: UUID,
     req: schemas.AssignCampaignRequest,
@@ -179,7 +200,9 @@ async def assign_campaign(
     spicedb: deps.SpiceDep,
     user_id: deps.VerifiedUserId,
 ):
+    """Assign or unassign the campaign. Requires `edit`."""
     await deps.authorize_character_edit(spicedb, character_id, user_id)
-    return await deps.assign_character_campaign(
+    state = await deps.assign_character_campaign(
         repo, spicedb, character_id, req.campaign_id, user_id
     )
+    return await roster.roster_view(spicedb, state)

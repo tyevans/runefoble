@@ -16,7 +16,6 @@ from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
-from gateway_api.character_store import character_store
 from gateway_api.main import app
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -24,17 +23,10 @@ FRONTEND_DIR = REPO_ROOT / "frontend"
 
 
 @pytest.fixture
-def client(game_session_upstream):
+def client(game_session_upstream, character_sheet_upstream):
     """Enter the gateway lifespan after game_session is served, so the proxy reaches it."""
     with TestClient(app) as gateway_client:
         yield gateway_client
-
-
-@pytest.fixture(autouse=True)
-def reset_stores():
-    """Reset character and campaign memory stores before each test."""
-    character_store.reset(load_defaults=False)
-    yield
 
 
 def _auth(issuer, sub: str) -> dict[str, str]:
@@ -54,11 +46,9 @@ def test_frontdoor_create_character_mutation(trusted_ws_issuer, client):
         "name": "Thorne Ironbreaker",
         "characterClass": "Fighter",
         "subclass": "Champion",
-        "level": 3,
         "maxHp": 32,
         "armorClass": 17,
         "speed": 25,
-        "portraitUrl": "/assets/portraits/fighter.svg",
     }
 
     res = client.post("/api/v1/characters", json=payload, headers=headers)
@@ -68,7 +58,7 @@ def test_frontdoor_create_character_mutation(trusted_ws_issuer, client):
     assert data["name"] == "Thorne Ironbreaker"
     assert data["characterClass"] == "Fighter"
     assert data["subclass"] == "Champion"
-    assert data["level"] == 3
+    assert data["level"] == 1
     assert data["currentHp"] == 32
     assert data["maxHp"] == 32
     assert data["armorClass"] == 17
@@ -125,49 +115,6 @@ def test_frontdoor_assign_character_campaign_mutation(trusted_ws_issuer, client)
     assert unassign_res.status_code == 200
     unassigned_data = unassign_res.json()
     assert unassigned_data["campaignId"] is None
-
-
-def test_frontdoor_delete_character_mutation(trusted_ws_issuer, client):
-    """Verify DELETE /api/v1/characters/{id} deletes character and removes from listing."""
-    headers_owner = _auth(trusted_ws_issuer, "user-marcus")
-
-    # 1. Create character
-    char_res = client.post(
-        "/api/v1/characters",
-        json={"name": "Disposable Hero", "characterClass": "Bard", "maxHp": 18},
-        headers=headers_owner,
-    )
-    char_id = char_res.json()["id"]
-
-    # 2. Verify exists in list
-    assert char_id in [
-        c["id"] for c in client.get("/api/v1/characters", headers=headers_owner).json()
-    ]
-
-    # 3. Delete character
-    del_res = client.delete(f"/api/v1/characters/{char_id}", headers=headers_owner)
-    assert del_res.status_code == 200
-    assert del_res.json()["status"] == "deleted"
-
-    # 4. Verify removed from list
-    assert char_id not in [
-        c["id"] for c in client.get("/api/v1/characters", headers=headers_owner).json()
-    ]
-
-
-# ---------------------------------------------------------------------------
-# 2. App Shell & AppDataService Frontend Contracts (TASK-0254)
-# ---------------------------------------------------------------------------
-
-
-# ---------------------------------------------------------------------------
-# 3. File Length Limits (<500 lines Hard Invariant 6)
-# ---------------------------------------------------------------------------
-
-
-# ---------------------------------------------------------------------------
-# 4. Frontend TypeScript Test Execution
-# ---------------------------------------------------------------------------
 
 
 def test_frontend_app_shell_typescript_unit_suite():

@@ -2,7 +2,6 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from gateway_api.auth import CurrentPrincipal, get_spicedb_client, require_zanzibar_permission
-from gateway_api.character_store import character_store
 from gateway_api.dependencies import ws_manager
 from gateway_api.models import (
     AdvanceTurnRequest,
@@ -138,9 +137,6 @@ async def hot_swap_session_proxy(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=f"User '{player_id}' does not have permission to take control of character '{char_id}'",
             )
-        char = character_store.get_character(char_id)
-        if char:
-            char.is_stand_in_active = False
 
     payload = {
         "type": "hot_swap_takeover",

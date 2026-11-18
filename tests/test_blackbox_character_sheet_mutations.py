@@ -11,24 +11,17 @@ Verifies:
 7. Zanzibar authorization rejects non-permitted users with 403 Forbidden across all mutation endpoints.
 """
 
+import httpx
 import pytest
 from fastapi.testclient import TestClient
-from gateway_api.character_store import character_store
 from gateway_api.main import app
 
 
 @pytest.fixture
-def client(game_session_upstream):
+def client(game_session_upstream, character_sheet_upstream):
     """Enter the gateway lifespan after game_session is served, so the proxy reaches it."""
     with TestClient(app) as gateway_client:
         yield gateway_client
-
-
-@pytest.fixture(autouse=True)
-def reset_stores():
-    """Reset character and campaign memory stores before each test."""
-    character_store.reset(load_defaults=False)
-    yield
 
 
 def _auth(issuer, sub: str) -> dict[str, str]:
@@ -36,9 +29,7 @@ def _auth(issuer, sub: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {issuer.mint(sub)}"}
 
 
-def create_test_character(
-    client: TestClient, issuer, owner_id: str = "user_valeros", is_stand_in: bool = False
-) -> str:
+def create_test_character(client: TestClient, issuer, owner_id: str = "user_valeros") -> str:
     """Helper to create a test character via frontdoor POST /api/v1/characters."""
     headers = _auth(issuer, owner_id)
     res = client.post(
@@ -46,23 +37,17 @@ def create_test_character(
         json={
             "name": "Valeros of Korvosa",
             "characterClass": "Fighter 4 / Wizard 1",
-            "level": 5,
-            "currentHp": 38,
-            "maxHp": 44,
+            "maxHp": 38,
             "armorClass": 18,
             "speed": 30,
-            "isAiStandIn": is_stand_in,
         },
         headers=headers,
     )
     assert res.status_code == 201
-    return res.json()["id"]
+    char_id = res.json()["id"]
+    return char_id
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="TASK-0586: gateway character store is not the character_sheet store; sub-resource writes now reach the upstream only (TASK-0536)",
-)
 @pytest.mark.asyncio
 async def test_health_modification_and_clamping(trusted_ws_issuer, client):
     """Verify modifying HP with positive and negative deltas clamps within [0, maxHp]."""
@@ -78,32 +63,38 @@ async def test_health_modification_and_clamping(trusted_ws_issuer, client):
     assert res.status_code == 200
     assert res.json()["current_hp"] == 28
 
-    # Heal 30 HP: clamps to max_hp (44)
+    # Heal 30 HP: clamps to max_hp (38)
     res = client.post(
         f"/api/v1/characters/{char_id}/health",
         json={"delta": 30, "source": "cure_wounds"},
         headers=headers,
     )
     assert res.status_code == 200
-    assert res.json()["current_hp"] == 44
+    assert res.json()["current_hp"] == 38
 
     # Detail query reflects updated HP
     detail = client.get(f"/api/v1/characters/{char_id}", headers=headers).json()
-    assert detail["current_hp"] == 44
-    assert detail["currentHp"] == 44
+    assert detail["current_hp"] == 38
+    assert detail["currentHp"] == 38
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="TASK-0586: gateway character store is not the character_sheet store; sub-resource writes now reach the upstream only (TASK-0536)",
-)
 @pytest.mark.asyncio
-async def test_stand_in_permadeath_safeguard_stabilization(trusted_ws_issuer, client):
-    """Verify that when an AI stand-in character drops to <= 0 HP, safeguard stabilizes them."""
-    char_id = create_test_character(
-        client, trusted_ws_issuer, owner_id="user_valeros", is_stand_in=True
-    )
+async def test_stand_in_permadeath_safeguard_stabilization(
+    trusted_ws_issuer, client, character_sheet_upstream
+):
+    """Verify that when an AI stand-in character drops to <= 0 HP, safeguard stabilizes them.
+
+    The gateway serves no stand-in route. The stand-in is activated on character_sheet's own
+    public route, with the same signed token.
+    """
+    char_id = create_test_character(client, trusted_ws_issuer, owner_id="user_valeros")
     headers = _auth(trusted_ws_issuer, "user_valeros")
+    activated = httpx.post(
+        f"{character_sheet_upstream}/api/v1/characters/{char_id}/stand-in",
+        json={"active": True},
+        headers=headers,
+    )
+    assert activated.status_code == 200, activated.text
 
     # Take massive damage dropping HP to <= 0
     res = client.post(
@@ -121,10 +112,6 @@ async def test_stand_in_permadeath_safeguard_stabilization(trusted_ws_issuer, cl
     assert "unconscious_stabilized" in conditions
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="TASK-0586: gateway character store is not the character_sheet store; sub-resource writes now reach the upstream only (TASK-0536)",
-)
 @pytest.mark.asyncio
 async def test_equipment_equip_and_unequip(trusted_ws_issuer, client):
     """Verify equipping and unequipping items via sub-resource endpoints."""
@@ -159,10 +146,6 @@ async def test_equipment_equip_and_unequip(trusted_ws_issuer, client):
     assert res.json()["equipment"]["off_hand"] == "Shield +1"
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="TASK-0586: gateway character store is not the character_sheet store; sub-resource writes now reach the upstream only (TASK-0536)",
-)
 @pytest.mark.asyncio
 async def test_inventory_add_and_remove(trusted_ws_issuer, client):
     """Verify adding and removing inventory items via sub-resource endpoints."""
@@ -216,10 +199,6 @@ async def test_inventory_add_and_remove(trusted_ws_issuer, client):
     assert "item-potion-heal" not in res.json()["inventory"]
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="TASK-0586: gateway character store is not the character_sheet store; sub-resource writes now reach the upstream only (TASK-0536)",
-)
 @pytest.mark.asyncio
 async def test_conditions_apply_and_remove(trusted_ws_issuer, client):
     """Verify applying and removing conditions via sub-resource endpoints."""
@@ -255,10 +234,6 @@ async def test_conditions_apply_and_remove(trusted_ws_issuer, client):
     assert "stunned" in res.json()["conditions"]
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="TASK-0586: gateway character store is not the character_sheet store; sub-resource writes now reach the upstream only (TASK-0536)",
-)
 @pytest.mark.asyncio
 async def test_spells_cast_and_prepare(trusted_ws_issuer, client):
     """Verify spell casting slot deduction and spell preparation toggles."""
@@ -274,14 +249,14 @@ async def test_spells_cast_and_prepare(trusted_ws_issuer, client):
     assert res.status_code == 200
     assert "Fireball" in res.json()["prepared_spells"]
 
-    # Cast 1st-level spell: slots for tier 1 decreases from 4 to 3
+    # Cast 1st-level spell: slots for tier 1 decrease from 2 to 1
     res = client.post(
         f"/api/v1/characters/{char_id}/spells/cast",
         json={"spell_name": "Magic Missile", "slot_level": 1},
         headers=headers,
     )
     assert res.status_code == 200
-    assert res.json()["spell_slots"]["1"] == 3
+    assert res.json()["spell_slots"]["1"] == 1
 
     # Unprepare Fireball
     res = client.post(

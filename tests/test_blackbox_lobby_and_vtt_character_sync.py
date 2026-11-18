@@ -17,7 +17,6 @@ from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
-from gateway_api.character_store import character_store
 from gateway_api.main import app as gateway_app
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -27,15 +26,9 @@ SERVICES_DIR = SRC_DIR / "services"
 
 
 @pytest.fixture
-def client(game_session_upstream) -> Iterator[TestClient]:
+def client(game_session_upstream, character_sheet_upstream) -> Iterator[TestClient]:
     with TestClient(gateway_app) as gateway_client:
         yield gateway_client
-
-
-@pytest.fixture(autouse=True)
-def reset_stores():
-    character_store.reset()
-    yield
 
 
 # ---------------------------------------------------------------------------
@@ -82,11 +75,9 @@ def test_gateway_character_and_campaign_frontdoors(client: TestClient, trusted_w
             "name": "Valeros of Korvosa",
             "character_class": "Fighter",
             "subclass": "Battle Master",
-            "level": 4,
             "max_hp": 45,
             "armor_class": 18,
             "speed": 30,
-            "portrait_url": "/assets/portraits/fighter.svg",
         },
         headers=headers,
     )
@@ -99,11 +90,9 @@ def test_gateway_character_and_campaign_frontdoors(client: TestClient, trusted_w
             "name": "Kyra the Sun Maiden",
             "character_class": "Cleric",
             "subclass": "Life Domain",
-            "level": 4,
             "max_hp": 32,
             "armor_class": 16,
             "speed": 25,
-            "portrait_url": "/assets/portraits/cleric.svg",
         },
         headers=headers,
     )
