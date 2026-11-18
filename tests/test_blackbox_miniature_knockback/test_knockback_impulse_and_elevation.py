@@ -15,8 +15,6 @@ from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
-from runefoble_events.events import PhysicsCollisionOccurred, TokenMoved
-from runefoble_platform.event_sourcing import get_event_store
 
 from tests.helpers.mock_redis import MockAsyncRedis
 
@@ -161,17 +159,12 @@ def test_knockback_elevation_step_fall(
     assert data["elevation"] == 0.0
     assert data["status"] == "settled"
 
-    # Verify TokenMoved event recorded in event store
-    store = get_event_store()
-    moved_events = [
-        env.event
-        for env in store._events
-        if isinstance(env.event, TokenMoved)
-        and getattr(env.event, "token_id", None) == "fighter-cliff"
-    ]
-    assert len(moved_events) >= 1
-    assert moved_events[-1].to_x == 4
-    assert moved_events[-1].to_y == 3
+    # Verify the token position through the public board read model
+    board = client.get(f"/api/v1/boards/{board_id}")
+    assert board.status_code == 200, board.text
+    token = board.json()["tokens"]["fighter-cliff"]
+    assert token["x"] == 4
+    assert token["y"] == 3
 
 
 def test_knockback_obstacle_wall_collision_and_impact_energy(
@@ -204,18 +197,14 @@ def test_knockback_obstacle_wall_collision_and_impact_energy(
     assert data["to_x"] < 3, "Miniature must not penetrate through high wall"
     assert data["to_x"] >= 1
 
-    # Verify PhysicsCollisionOccurred event was recorded
-    store = get_event_store()
-    collision_events = [
-        env.event
-        for env in store._events
-        if isinstance(env.event, PhysicsCollisionOccurred)
-        and getattr(env.event, "entity_id", None) == "victim-1"
-    ]
-    assert len(collision_events) >= 1
-    col = collision_events[-1]
-    assert col.collision_type == "wall"
-    assert col.impact_energy > 0
+    # Verify the collision telemetry through the public board read model
+    board = client.get(f"/api/v1/boards/{board_id}")
+    assert board.status_code == 200, board.text
+    last_collision = board.json()["last_collision"]
+    assert last_collision is not None
+    assert last_collision["entity_id"] == "victim-1"
+    assert last_collision["collision_type"] == "wall"
+    assert last_collision["impact_energy"] > 0
 
 
 def test_knockback_grid_boundary_snapping(
