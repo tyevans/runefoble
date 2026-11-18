@@ -252,19 +252,6 @@ class CaravanTradeCompleted(BaseRunefobleEvent):
     completed_at: str | None = None
 
 
-@register_event("runefoble.events.west_marches.regional_merchant_stock_updated")
-class RegionalMerchantStockUpdated(BaseRunefobleEvent):
-    """Fired when outpost merchant inventory adjusts due to trade or expeditions."""
-
-    suppress_event_type_warning: ClassVar[bool] = True
-    event_type: str = "runefoble.events.west_marches.regional_merchant_stock_updated"
-
-    aggregate_type: str = "CaravanLedger"
-    shared_world_id: UUID | str = ""
-    outpost_name: str = ""
-    inventory_updates: dict[str, Any] = Field(default_factory=dict)
-
-
 __all__ = [
     "CampaignRegisteredToSharedWorld",
     "CaravanAmbushed",
@@ -277,7 +264,6 @@ __all__ = [
     "CrossCampaignDiscoveryShared",
     "OutpostEstablished",
     "OutpostResourcesContributed",
-    "RegionalMerchantStockUpdated",
     "SharedStrongholdUpgraded",
     "SharedWorldCreated",
 ]

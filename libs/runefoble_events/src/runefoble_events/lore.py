@@ -229,24 +229,6 @@ class AtlasPinCreated(BaseRunefobleEvent):
     )
 
 
-@register_event("runefoble.events.lore.atlas_pin_updated")
-class AtlasPinUpdated(BaseRunefobleEvent):
-    """Emitted when an atlas milestone pin properties are updated."""
-
-    suppress_event_type_warning: ClassVar[bool] = True
-    event_type: str = "runefoble.events.lore.atlas_pin_updated"
-
-    aggregate_type: str = "Atlas"
-    pin_id: UUID = Field(description="Unique identifier for the atlas pin")
-    campaign_id: UUID = Field(description="Campaign to which the atlas belongs")
-    title: str | None = None
-    coordinates: dict[str, float] | None = None
-    description: str | None = None
-    era: str | None = None
-    linked_entity_ids: list[str] | None = None
-    metadata: dict[str, Any] | None = None
-
-
 @register_event("runefoble.events.lore.atlas_layer_toggled")
 class AtlasLayerToggled(BaseRunefobleEvent):
     """Emitted when an atlas map layer visibility or active level is toggled."""

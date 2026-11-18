@@ -93,22 +93,6 @@ class TurnStarted(BaseRunefobleEvent):
     token_id: str | None = None
 
 
-@register_event("runefoble.events.session.camera_target_updated")
-class CameraTargetUpdated(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
-    aggregate_type: str = "GameSession"
-    aggregate_id: UUID = Field(default_factory=uuid4)
-    event_type: str = "runefoble.events.session.camera_target_updated"
-    session_id: str = ""
-    target_x: float = 0.0
-    target_y: float = 0.0
-    zoom: float = 1.5
-    duration_ms: int = 300
-    easing: str = "cubic-bezier(0.25, 0.1, 0.25, 1.0)"
-    active_token_id: str | None = None
-    reason: str = "turn_started"
-
-
 @register_event("runefoble.events.session.ended")
 class SessionEnded(BaseRunefobleEvent):
     suppress_event_type_warning: ClassVar[bool] = True

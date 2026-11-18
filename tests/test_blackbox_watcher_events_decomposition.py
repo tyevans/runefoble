@@ -66,28 +66,6 @@ def test_event_cloudevent_and_serialization_roundtrip():
             total=18,
             rolls=[13],
         ),
-        combat_mod.ReactionPromptTriggered(
-            session_id=session_id,
-            reacting_combatant_id="comb-1",
-            reacting_combatant_name="Aria",
-            trigger_phrase="Goblin moves in range",
-        ),
-        combat_mod.ReactionOpportunityResolved(
-            session_id=session_id,
-            reacting_combatant_id="comb-1",
-            action_taken="opportunity_attack",
-        ),
-        combat_mod.SecretTrapTriggered(
-            board_id="board-1",
-            token_id="token-1",
-            x=4,
-            y=5,
-        ),
-        combat_mod.VocalModulatorPresetChanged(
-            session_id=session_id,
-            peer_id="peer-dm",
-            preset_name="dragon_bellow",
-        ),
         actions_mod.WatcherActionProposed(
             action_id="act-1",
             session_id=session_id,

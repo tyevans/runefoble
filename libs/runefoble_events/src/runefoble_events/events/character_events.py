@@ -42,7 +42,6 @@ from runefoble_events.downtime import (
     StrongholdUpgraded,
 )
 from runefoble_events.haggling import (
-    CurrencyCredited,
     CurrencyDeducted,
     DMNegotiationOverridden,
     GambitExecuted,
@@ -75,7 +74,6 @@ __all__ = [
     "CraftingSucceeded",
     "CriticalHitRolled",
     "CriticalHitScored",
-    "CurrencyCredited",
     "CurrencyDeducted",
     "DMNegotiationOverridden",
     "DeathSaveStarted",

@@ -342,7 +342,6 @@ The Campaign Lore service publishes every event that its aggregates commit. The 
 | `RelicInspected` | `runefoble.events.lore.relic_inspected` |
 | `RelicRuneTranslated` | `runefoble.events.lore.relic_rune_translated` |
 | `AtlasPinCreated` | `runefoble.events.lore.atlas_pin_created` |
-| `AtlasPinUpdated` | `runefoble.events.lore.atlas_pin_updated` |
 | `AtlasLayerToggled` | `runefoble.events.lore.atlas_layer_toggled` |
 | `AtlasTerritoryUpdated` | `runefoble.events.lore.atlas_territory_updated` |
 | `CodexEntryPublished` | `runefoble.events.lore.codex_entry_published` |

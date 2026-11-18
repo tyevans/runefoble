@@ -8,7 +8,6 @@ from runefoble_events.combat_reactions import (
 )
 from runefoble_events.session import (
     AtmosphereUpdated,
-    CameraTargetUpdated,
     CharacterControlTransferred,
     CharacterSelectedForLobby,
     CombatEncounterEnded,
@@ -33,7 +32,6 @@ from runefoble_events.session import (
 
 __all__ = [
     "AtmosphereUpdated",
-    "CameraTargetUpdated",
     "DMOverrideApplied",
     "CharacterControlTransferred",
     "CharacterSelectedForLobby",

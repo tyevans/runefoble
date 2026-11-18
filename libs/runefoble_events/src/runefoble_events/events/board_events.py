@@ -8,7 +8,6 @@ from runefoble_events.board import (
     BoardMapImported,
     BoardMoveEvent,
     DiceSettled,
-    ElevationChanged,
     EphemeralDecalsDecayed,
     FogOfWarRevealed,
     FogOfWarShrouded,
@@ -19,13 +18,11 @@ from runefoble_events.board import (
     TerrainCellModified,
     TokenActionExecuted,
     TokenHazardTriggered,
-    TokenKnockbackApplied,
     TokenMoved,
     TokenPlaced,
     TokenRemoved,
     UniversalVTTImported,
     VFXAnimationFinished,
-    VisibilityMaskUpdated,
 )
 from runefoble_events.board_traps import (
     BattlemapSwitchedEvent,
@@ -49,7 +46,6 @@ __all__ = [
     "BoardMapImported",
     "BoardMoveEvent",
     "DiceSettled",
-    "ElevationChanged",
     "EphemeralDecalsDecayed",
     "FogOfWarRevealed",
     "FogOfWarShrouded",
@@ -60,7 +56,6 @@ __all__ = [
     "TerrainCellModified",
     "TokenActionExecuted",
     "TokenHazardTriggered",
-    "TokenKnockbackApplied",
     "TokenMoved",
     "TokenPlaced",
     "TokenRemoved",
@@ -69,5 +64,4 @@ __all__ = [
     "TrapSprungEvent",
     "UniversalVTTImported",
     "VFXAnimationFinished",
-    "VisibilityMaskUpdated",
 ]
