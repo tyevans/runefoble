@@ -157,7 +157,7 @@ export class RunefobleCampaignCodex extends LitElement {
   campaignId = '';
 
   @property({ type: Boolean })
-  isDM = false;
+  canRunSession = false;
 
   @property({ type: Array })
   entries: LoreEntry[] = [];
@@ -206,7 +206,7 @@ export class RunefobleCampaignCodex extends LitElement {
 
   render() {
     const filtered = this.entries.filter((entry) => {
-      if (entry.isSecret && !this.isDM) return false;
+      if (entry.isSecret && !this.canRunSession) return false;
       if (!this.searchQuery) return true;
       return (
         entry.title.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
@@ -218,7 +218,7 @@ export class RunefobleCampaignCodex extends LitElement {
     return html`
       <div class="header">
         <span class="title">Campaign Lore Codex</span>
-        <span class="badge">${this.isDM ? 'DM Secret Access' : 'Player Codex'}</span>
+        <span class="badge">${this.canRunSession ? 'DM Secret Access' : 'Player Codex'}</span>
       </div>
 
       <div class="search-box">

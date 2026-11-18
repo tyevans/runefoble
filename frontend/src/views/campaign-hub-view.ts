@@ -15,7 +15,7 @@ import { assignRoleFromEvent, createInviteFromEvent, removeMemberFromEvent, crea
 import { assignCharacterFromEvent, createCharacterFromEvent, deleteCharacterFromEvent } from '../app/character-actions.ts';
 import { createEntryFromEvent, createPinFromEvent } from '../app/lore-actions.ts';
 import { inspectCharacterFromEvent } from './character-view.ts';
-import { setCurrentCampaign } from '../app/shell-state.ts';
+import { setCampaignCapabilities, setCurrentCampaign } from '../app/shell-state.ts';
 import { resolveForgeAccess } from './forge-access.ts';
 
 type CampaignTab = 'overview' | 'characters' | 'codex' | 'analytics' | 'forge';
@@ -30,17 +30,19 @@ export async function loadCampaignHubData(host: RunefobleApp, route: MatchedRout
   const c = route.params.campaignId ?? '';
   host.inviteUrl = '';
   host.inviteToken = '';
-  const [camp, members, sessions, chars, rosterCamps] = await Promise.all([
+  const [camp, caps, members, sessions, chars, rosterCamps] = await Promise.all([
     appDataService.fetchCampaign(c),
+    appDataService.fetchCampaignCapabilities(c),
     appDataService.fetchCampaignMembers(c),
     appDataService.fetchCampaignSessions(c),
     appDataService.fetchCharacters(),
     appDataService.fetchRosterCampaignOptions(),
   ]);
-  if (!camp.ok || !members.ok || !sessions.ok || !chars.ok || !rosterCamps.ok) {
-    return failLoad(host, camp, members, sessions, chars, rosterCamps);
+  if (!camp.ok || !caps.ok || !members.ok || !sessions.ok || !chars.ok || !rosterCamps.ok) {
+    return failLoad(host, camp, caps, members, sessions, chars, rosterCamps);
   }
   setCurrentCampaign(host, camp.data);
+  setCampaignCapabilities(host, caps.data);
   host.campaignTitle = camp.data.title;
   router.setRouteTitle('campaign:' + camp.data.id, camp.data.title);
   host.campaignMembers = members.data;
@@ -54,9 +56,9 @@ export async function loadCampaignHubData(host: RunefobleApp, route: MatchedRout
 
 export function renderCampaignHub(app: RunefobleApp, v: AppActiveView) {
   const activeTab: CampaignTab = v === 'campaign-characters' ? 'characters' : v === 'campaign-codex' ? 'codex' : v === 'campaign-analytics' ? 'analytics' : v === 'campaign-forge' ? 'forge' : 'overview';
-  const permissions = app.currentCampaign?.permissions;
-  const canManage = Boolean(permissions?.manage);
-  const canForge = resolveForgeAccess(permissions) === 'allowed';
+  const capabilities = app.campaignCapabilities;
+  const canManage = Boolean(capabilities?.manage);
+  const canForge = resolveForgeAccess(capabilities) === 'allowed';
   return html`<div class="campaign-hub-layout">
     <runefoble-campaign-header .campaign=${app.currentCampaign} .canManage=${canManage} current-user-id=${app.currentUserId} @update-campaign=${(e: CustomEvent) => updateCampaignFromEvent(app, e)}></runefoble-campaign-header>
     ${renderCampaignTabs(app, activeTab, canForge)}
@@ -65,10 +67,11 @@ export function renderCampaignHub(app: RunefobleApp, v: AppActiveView) {
 }
 
 function renderCampaignTabContent(app: RunefobleApp, activeTab: CampaignTab, canManage: boolean, canForge: boolean) {
+  const canRunSession = Boolean(app.campaignCapabilities?.run_session);
   if (activeTab === 'overview') {
     return html`<div class="campaign-detail-layout">
       <runefoble-campaign-members campaign-id=${app.campaignId} campaign-title=${app.campaignTitle} .members=${app.campaignMembers} .canManage=${canManage} .isGm=${canManage} current-user-id=${app.currentUserId} .inviteUrl=${app.inviteUrl} .inviteToken=${app.inviteToken} @assign-role=${(e: CustomEvent) => assignRoleFromEvent(app, e)} @create-invite=${(e: CustomEvent) => createInviteFromEvent(app, e)} @remove-member=${(e: CustomEvent) => removeMemberFromEvent(app, e)}></runefoble-campaign-members>
-      <runefoble-session-list campaign-id=${app.campaignId} .sessions=${app.campaignSessions} .isDm=${Boolean(app.currentCampaign?.permissions.launch_session)} @enter-lobby=${(e: CustomEvent) => router.navigate('#/campaigns/' + app.campaignId + '/lobby/' + e.detail.sessionId)} @join-session=${(e: CustomEvent) => router.navigate('#/campaigns/' + app.campaignId + '/sessions/' + e.detail.sessionId)} @create-session=${(e: CustomEvent) => createSessionFromEvent(app, e)}></runefoble-session-list>
+      <runefoble-session-list campaign-id=${app.campaignId} .sessions=${app.campaignSessions} .isDm=${canRunSession} @enter-lobby=${(e: CustomEvent) => router.navigate('#/campaigns/' + app.campaignId + '/lobby/' + e.detail.sessionId)} @join-session=${(e: CustomEvent) => router.navigate('#/campaigns/' + app.campaignId + '/sessions/' + e.detail.sessionId)} @create-session=${(e: CustomEvent) => createSessionFromEvent(app, e)}></runefoble-session-list>
     </div>`;
   }
   if (activeTab === 'characters') {
@@ -89,6 +92,7 @@ function renderCampaignTabContent(app: RunefobleApp, activeTab: CampaignTab, can
 
 /** Codex & Lore tab. Two sub-tabs mount the atlas and the lore codex with live data. */
 function renderCodexTab(app: RunefobleApp) {
+  const canRunSession = Boolean(app.campaignCapabilities?.run_session);
   const view = app.campaignCodexView;
   const selectView = (next: 'atlas' | 'codex') => { app.campaignCodexView = next; };
   return html`<div class="codex-subtabs" role="tablist" aria-label="Codex Views">
@@ -96,8 +100,8 @@ function renderCodexTab(app: RunefobleApp) {
       <button class="nav-tab ${view === 'codex' ? 'active' : ''}" role="tab" aria-selected=${view === 'codex'} @click=${() => selectView('codex')}>Lore Codex</button>
     </div>
     ${view === 'atlas'
-      ? html`<runefoble-campaign-atlas .campaignId=${app.campaignId} .pins=${app.campaignAtlas?.pins ?? []} .territories=${app.campaignAtlas?.territories ?? []} .isDM=${Boolean(app.currentCampaign?.permissions.launch_session)} .pinError=${app.campaignPinError ?? ''} @pin-create-requested=${(e: CustomEvent) => createPinFromEvent(app, e)}></runefoble-campaign-atlas>`
-      : html`<runefoble-campaign-codex .campaignId=${app.campaignId} .entries=${app.campaignLoreEntries} .isDM=${Boolean(app.currentCampaign?.permissions.launch_session)} .entryError=${app.campaignEntryError ?? ''} @codex-entry-create-requested=${(e: CustomEvent) => createEntryFromEvent(app, e)}></runefoble-campaign-codex>`}`;
+      ? html`<runefoble-campaign-atlas .campaignId=${app.campaignId} .pins=${app.campaignAtlas?.pins ?? []} .territories=${app.campaignAtlas?.territories ?? []} .canRunSession=${canRunSession} .pinError=${app.campaignPinError ?? ''} @pin-create-requested=${(e: CustomEvent) => createPinFromEvent(app, e)}></runefoble-campaign-atlas>`
+      : html`<runefoble-campaign-codex .campaignId=${app.campaignId} .entries=${app.campaignLoreEntries} .canRunSession=${canRunSession} .entryError=${app.campaignEntryError ?? ''} @codex-entry-create-requested=${(e: CustomEvent) => createEntryFromEvent(app, e)}></runefoble-campaign-codex>`}`;
 }
 
 function renderCampaignTabs(app: RunefobleApp, activeTab: CampaignTab, canForge: boolean) {

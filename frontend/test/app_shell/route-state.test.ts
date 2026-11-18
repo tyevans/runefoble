@@ -18,6 +18,7 @@ import type { RunefobleApp } from '../../src/runefoble-app.ts';
 
 const HARBOUR = { id: 'harbour-watch', title: 'Harbour Watch', role: 'owner', permissions: { view: true, manage: true, invite: true, launch_session: true, assign_roles: true } };
 const GLASS = { id: 'glass-crypt', title: 'Glass Crypt', role: 'owner', permissions: { view: true, manage: true, invite: true, launch_session: true, assign_roles: true } };
+const OWNER_CAPABILITIES = { manage: true, run_session: true, play: true, view: true };
 
 function routeFor(path: string): MatchedRoute {
   const route = new Router().match(path);
@@ -78,6 +79,7 @@ describe('App Shell Route State (TASK-0642)', () => {
     gateway = installFakeGateway({
       ...EMPTY_LISTS,
       'GET /api/v1/campaigns/glass-crypt': { body: GLASS },
+      'GET /api/v1/campaigns/glass-crypt/capabilities': { body: OWNER_CAPABILITIES },
       'GET /api/v1/campaigns': { body: [HARBOUR, GLASS] },
     });
     const host = fakeHost('campaign-detail');

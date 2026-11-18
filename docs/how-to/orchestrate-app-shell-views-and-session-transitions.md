@@ -11,7 +11,7 @@ This how-to guide explains how the Runefoble App Shell (`frontend/src/runefoble-
 | `app/component-registry.ts` | Loads the shell chrome elements at startup. `loadViewBundles(view)` loads each microfrontend bundle by route with a dynamic `import()`. |
 | `router/view-resolver.ts` | Pure map from a matched route to a view id. The app and the view tests both import `resolveActiveView`. |
 | `app/route-state.ts` | Copies a matched route into the shell state: params, breadcrumbs, and campaign and session titles. |
-| `app/shell-state.ts` | Applies the stored theme. Syncs the user role to the shell. |
+| `app/shell-state.ts` | Applies the stored theme. Syncs the user role to the shell. Stores the campaign capability flags and registers the DM-only plugins. |
 | `app/shell-template.ts` | Renders the header, the main region, the toast, the modals, and the absentee overlays. |
 | `views/index.ts` | `VIEW_CONTROLLERS`: one controller per view id. A controller renders its view and loads its data. |
 | `views/campaign-dashboard-view.ts`, `campaign-hub-view.ts`, `lobby-view.ts`, `session-view.ts`, `character-view.ts`, `profile-view.ts` | The route view controllers. Each one owns the template and the data read for its route. |
@@ -149,7 +149,7 @@ During session staging and active virtual tabletop play, the App Shell dynamical
    - The user's first available character in their roster.
    - When the roster is empty, `resolveActiveCharacter` returns `null`. The session view shows an empty state that asks the user to choose a character in the lobby. No placeholder character is created (TASK-0642).
 4. **VTT Character Card Binding**: The `<runefoble-character-card>` dynamically receives `.characterName`, `.characterClass`, `.level`, `.currentHp`, `.maxHp`, `.armorClass`, and `.portraitUrl`.
-5. **DM Party Inspector & Switcher**: When authenticated as DM/Owner, a high-contrast inspection banner and `<select class="dm-character-switcher">` allow the Dungeon Master to inspect and switch active character cards across the entire party.
+5. **DM Party Inspector & Switcher**: When the campaign capabilities report `run_session`, a high-contrast inspection banner and `<select class="dm-character-switcher">` allow the Dungeon Master to inspect and switch active character cards across the entire party.
 
 ## 7. Auditing View Wiring and Regression Verification
 
@@ -174,10 +174,10 @@ In the active session (`session-active`) and pre-game lobby (`session-lobby`), t
      - `@spell-vfx-triggered`: Broadcasts `{ type: 'spell_vfx', ... }` (WebGL particle bloom).
      - `@confirm-ghost`: Broadcasts `{ type: 'confirm_ghost', ... }` (spoken movement finalization).
 3. **Default Tabletop Plugin Seeding**:
-   - `pluginRegistry` is automatically seeded via `registerDefaultPlugins()`:
+   - `pluginRegistry` is seeded via `registerDefaultPlugins(registry, canRunSession)`. `setCampaignCapabilities()` calls it with the `run_session` flag (TASK-0559):
      - Slot `hud-widget`: `<runefoble-initiative-tracker>`, `<runefoble-soundscape-controls>`.
      - Slot `dice-panel`: `<runefoble-dice-roller>`, `<runefoble-dice-tray-3d>`.
-     - Slot `sidebar-tool`: `<runefoble-combat-reaction-prompt>`, plus `<runefoble-dm-whisper-bar>` and `<runefoble-dm-trap-controls>` when authenticated as DM.
+     - Slot `sidebar-tool`: `<runefoble-combat-reaction-prompt>`, plus `<runefoble-dm-whisper-bar>` and `<runefoble-dm-trap-controls>` when `run_session` is true.
 4. **Expanded WebSocket Message Routing**:
    - `dice_rolled`: Triggers 3D dice tray physics toss (`runefoble-dice-tray-3d.roll()`) and updates roller state.
    - `turn_advanced`: Updates active combatant and round number on `<runefoble-initiative-tracker>`.
@@ -185,4 +185,15 @@ In the active session (`session-active`) and pre-game lobby (`session-lobby`), t
    - `spell_vfx`: Triggers WebGL particle blooms on `<runefoble-board>`.
    - `dm_whisper`: Streams private DM whispers into `<runefoble-dm-whisper-bar>`.
 
+## 9. Capability-Gated Views (TASK-0559)
 
+The App Shell does not read role strings. Each loader that opens a campaign reads `GET /api/v1/campaigns/{campaign_id}/capabilities` in the same request batch as the campaign. The gateway returns one boolean per `campaign` permission in `runefoble.zed`:
+
+| Flag | Gates |
+|---|---|
+| `manage` | Campaign settings, members, and the Asset Forge tab (`resolveForgeAccess`) |
+| `run_session` | Session creation and launch, DM Party Inspector, DM-only plugins, and the DM secret codex and atlas |
+| `play` | Player-level campaign actions |
+| `view` | Read access to the campaign |
+
+The flags only shape the view. The service checks stay authoritative. A missing or failed capability read sets `loadError`. It never grants a flag. When the open campaign changes, the flags reset until the loader sets the new ones.

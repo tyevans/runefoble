@@ -35,7 +35,7 @@ export const PlayerView: Story = {
   render: () => html`
     <runefoble-campaign-codex
       campaignId="campaign-demo"
-      .isDM=${false}
+      .canRunSession=${false}
       .entries=${sampleEntries}
     ></runefoble-campaign-codex>
   `,
@@ -45,7 +45,7 @@ export const DMSecretView: Story = {
   render: () => html`
     <runefoble-campaign-codex
       campaignId="campaign-demo"
-      .isDM=${true}
+      .canRunSession=${true}
       .entries=${sampleEntries}
     ></runefoble-campaign-codex>
   `,
@@ -55,7 +55,7 @@ export const EntryCreateRefused: Story = {
   render: () => html`
     <runefoble-campaign-codex
       campaignId="campaign-demo"
-      .isDM=${true}
+      .canRunSession=${true}
       .entries=${sampleEntries}
       entryError="Entry not published. Campaign lore is unavailable."
     ></runefoble-campaign-codex>

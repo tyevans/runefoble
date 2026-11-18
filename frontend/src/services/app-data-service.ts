@@ -7,6 +7,7 @@ import { authService, type UserClaims } from '../auth/auth-service.ts';
 import { authHeaders } from '../auth/transport.ts';
 import { toWatcherFeedEvent, type SessionChronicleEntry } from './session-chronicle.ts';
 import { resolveLobbyAvailableCharacters } from './lobby-character-options.ts';
+import type { CampaignCapabilities } from './campaign-capabilities.ts';
 import {
   dataFailure, dataOk, errorMessageFromBody, NETWORK_FAILURE_MESSAGE, UNREADABLE_RESPONSE_MESSAGE, type DataResult,
 } from './data-result.ts';
@@ -72,6 +73,10 @@ export class AppDataService {
 
   async fetchCampaign(campaignId: string): Promise<DataResult<CampaignItem>> {
     return this.request<CampaignItem>(`${this.apiBase}/campaigns/${campaignId}`);
+  }
+
+  async fetchCampaignCapabilities(campaignId: string): Promise<DataResult<CampaignCapabilities>> {
+    return this.request<CampaignCapabilities>(`${this.apiBase}/campaigns/${campaignId}/capabilities`);
   }
 
   async fetchCampaignMembers(campaignId: string): Promise<DataResult<CampaignMember[]>> {

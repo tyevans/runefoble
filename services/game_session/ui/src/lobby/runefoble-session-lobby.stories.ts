@@ -121,7 +121,6 @@ export const DmViewAllReady: Story = {
       session-title="Session 15: Descent into the Sunken Vaults"
       current-user-id="usr-evelyn"
       .isDm=${true}
-      .canLaunch=${true}
       .participants=${sampleParticipants}
       .availableCharacters=${sampleCharacters}
     ></runefoble-session-lobby>
@@ -136,7 +135,6 @@ export const DmViewWithAbsentStandIn: Story = {
       session-title="Session 15: Descent into the Sunken Vaults"
       current-user-id="usr-evelyn"
       .isDm=${true}
-      .canLaunch=${true}
       .participants=${participantsWithAbsentee}
       .availableCharacters=${sampleCharacters}
     ></runefoble-session-lobby>
@@ -151,7 +149,6 @@ export const PlayerViewUnready: Story = {
       session-title="Session 15: Descent into the Sunken Vaults"
       current-user-id="usr-marcus"
       .isDm=${false}
-      .canLaunch=${false}
       .participants=${participantsUnready}
       .availableCharacters=${sampleCharacters}
     ></runefoble-session-lobby>
@@ -166,7 +163,6 @@ export const PlayerViewReady: Story = {
       session-title="Session 15: Descent into the Sunken Vaults"
       current-user-id="usr-marcus"
       .isDm=${false}
-      .canLaunch=${false}
       .participants=${sampleParticipants}
       .availableCharacters=${sampleCharacters}
     ></runefoble-session-lobby>
@@ -181,7 +177,6 @@ export const EmptyLobby: Story = {
       session-title="Frontier Staging Area"
       current-user-id="usr-evelyn"
       .isDm=${true}
-      .canLaunch=${true}
       .participants=${[]}
       .availableCharacters=${sampleCharacters}
     ></runefoble-session-lobby>

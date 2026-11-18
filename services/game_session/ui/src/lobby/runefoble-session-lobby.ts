@@ -44,11 +44,10 @@ export class RunefobleSessionLobby extends LitElement {
   @property({ type: Array }) participants: LobbyParticipant[] = [];
   @property({ type: Array }) availableCharacters: LobbyCharacterOption[] = [];
   @property({ type: Boolean, attribute: 'is-dm' }) isDm = false;
-  @property({ type: Boolean, attribute: 'can-launch' }) canLaunch = false;
   @property({ type: Boolean, attribute: 'is-loading' }) isLoading = false;
 
   get canUserLaunch(): boolean {
-    return this.isDm || this.canLaunch;
+    return this.isDm;
   }
 
   get readinessSummary(): ReadinessSummary {

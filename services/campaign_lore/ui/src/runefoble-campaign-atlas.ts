@@ -19,7 +19,7 @@ export class RunefobleCampaignAtlas extends LitElement {
   @property({ type: Array }) pins: AtlasPin[] = [];
   @property({ type: Array }) territories: AtlasTerritory[] = [];
   @property({ type: Array }) codexEntries: CodexEntry[] = [];
-  @property({ type: Boolean }) isDM = false;
+  @property({ type: Boolean }) canRunSession = false;
   @property({ type: String }) pinError = '';
 
   @state() private zoomLevel = 1.0;

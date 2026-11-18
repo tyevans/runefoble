@@ -91,7 +91,7 @@ export const ContinentalView: Story = {
       .territories=${sampleTerritories}
       .pins=${samplePins}
       .codexEntries=${sampleCodex}
-      .isDM=${true}
+      .canRunSession=${true}
     ></runefoble-campaign-atlas>
   `,
 };
@@ -104,7 +104,7 @@ export const ContestedTerritories: Story = {
       .territories=${sampleTerritories}
       .pins=${samplePins}
       .codexEntries=${sampleCodex}
-      .isDM=${false}
+      .canRunSession=${false}
     ></runefoble-campaign-atlas>
   `,
 };
@@ -117,7 +117,7 @@ export const PinCreateRefused: Story = {
       .territories=${sampleTerritories}
       .pins=${samplePins}
       .codexEntries=${sampleCodex}
-      .isDM=${true}
+      .canRunSession=${true}
       .pinError=${"Pin not placed. Campaign lore is unavailable."}
     ></runefoble-campaign-atlas>
   `,

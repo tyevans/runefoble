@@ -1,7 +1,7 @@
 /**
- * App Shell Asset Forge permission state (TASK-0797). The campaign hub renders in a real
- * Chromium DOM. Only a campaign that reports `permissions.manage` shows the forge tab and
- * mounts the forge elements. Any other campaign shows the not-permitted notice.
+ * App Shell Asset Forge permission state (TASK-0797, TASK-0559). The campaign hub renders in a
+ * real Chromium DOM. Only a caller who holds the `manage` capability shows the forge tab and
+ * mounts the forge elements. Any other caller shows the not-permitted notice.
  * Governing ADRs: ADR-0004, ADR-0013, ADR-0014.
  */
 
@@ -10,20 +10,21 @@ import { render } from 'lit';
 import { renderCampaignHub } from '../src/views/campaign-hub-view.ts';
 import type { RunefobleApp } from '../src/runefoble-app.ts';
 
-function appWithPermissions(permissions: { manage?: boolean } | undefined): RunefobleApp {
+function appWithCapabilities(capabilities: { manage?: boolean } | undefined): RunefobleApp {
   return {
     campaignId: 'camp-1',
     currentUserId: 'user-1',
-    currentCampaign: { id: 'camp-1', title: 'The Sunken Vault', permissions },
+    currentCampaign: { id: 'camp-1', title: 'The Sunken Vault' },
+    campaignCapabilities: capabilities,
   } as unknown as RunefobleApp;
 }
 
 let host: HTMLElement | undefined;
 
-function renderForgeView(permissions: { manage?: boolean } | undefined): HTMLElement {
+function renderForgeView(capabilities: { manage?: boolean } | undefined): HTMLElement {
   host = document.createElement('div');
   document.body.append(host);
-  render(renderCampaignHub(appWithPermissions(permissions), 'campaign-forge'), host);
+  render(renderCampaignHub(appWithCapabilities(capabilities), 'campaign-forge'), host);
   return host;
 }
 
@@ -39,7 +40,7 @@ afterEach(() => {
 });
 
 describe('App Shell Asset Forge permission state', () => {
-  it('shows the forge tab and mounts the forge elements when the campaign grants manage', () => {
+  it('shows the forge tab and mounts the forge elements when the caller holds manage', () => {
     const root = renderForgeView({ manage: true });
 
     expect(hasForgeTab(root)).toBe(true);
@@ -55,7 +56,7 @@ describe('App Shell Asset Forge permission state', () => {
     expect(root.querySelector('.forge-not-permitted[role="alert"]')).not.toBeNull();
   });
 
-  it('denies the forge when the campaign reports no permissions', () => {
+  it('denies the forge when the capabilities have not loaded', () => {
     const root = renderForgeView(undefined);
 
     expect(hasForgeTab(root)).toBe(false);
