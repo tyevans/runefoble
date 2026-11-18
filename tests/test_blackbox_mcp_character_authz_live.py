@@ -17,10 +17,9 @@ from __future__ import annotations
 from collections.abc import Iterator
 from typing import Any
 
+import httpx
 import pytest
 from character_sheet import dependencies as sheet_deps
-from character_sheet.main import app as character_app
-from fastapi.testclient import TestClient
 from gateway_mcp.dynamic import auth as mcp_auth
 from gateway_mcp.server import mcp
 from mcp.types import CallToolResult
@@ -35,8 +34,12 @@ STRANGER = "live-sheet-stranger"
 
 
 @pytest.fixture
-def live_read_stack(live_spicedb_with_schema) -> Iterator[str]:
-    """Run the MCP gateway and character_sheet on the live SpiceDB client. Yield the MCP URL."""
+def live_read_stack(live_spicedb_with_schema, character_sheet_upstream) -> Iterator[str]:
+    """Run character_sheet as a live upstream and the MCP gateway on the live SpiceDB client.
+
+    Yield the MCP endpoint. The gateway reaches character_sheet over HTTP, and character_sheet
+    checks the same live schema, so both checks read the same tuples.
+    """
     live_client = live_spicedb_with_schema.client
     sheet_deps.set_spicedb_client(live_client)
     mcp_auth.set_spicedb_client(live_client)
@@ -49,14 +52,14 @@ def live_read_stack(live_spicedb_with_schema) -> Iterator[str]:
 
 
 @pytest.fixture
-def owned_character(live_read_stack: str) -> str:
+def owned_character(live_read_stack: str, character_sheet_upstream: str) -> str:
     """Create a character as OWNER through the public character_sheet route. Return its id."""
-    client = TestClient(character_app)
-    res = client.post(
-        "/api/v1/characters",
-        json={"name": "Live Kyra", "character_class": "Cleric", "max_hp": 30},
-        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(OWNER)}"},
-    )
+    headers = {"Authorization": f"Bearer {SIGNING_ISSUER.mint(OWNER)}"}
+    with httpx.Client(base_url=character_sheet_upstream, headers=headers) as http:
+        res = http.post(
+            "/api/v1/characters",
+            json={"name": "Live Kyra", "character_class": "Cleric", "max_hp": 30},
+        )
     assert res.status_code == 200, res.text
     return str(res.json()["character_id"])
 
