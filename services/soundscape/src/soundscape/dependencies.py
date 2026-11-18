@@ -15,10 +15,9 @@ from runefoble_auth.principal import VerifiedPrincipal, require_principal
 from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_auth.zitadel import ZitadelAuthService
 from runefoble_events.base import BaseRunefobleEvent
-from runefoble_platform.bus import bus as platform_bus
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.event_bus import EventBusProvider
-from runefoble_platform.event_publish import deliver_best_effort, publish_best_effort
+from runefoble_platform.event_publish import publish_best_effort
 from runefoble_platform.event_sourcing import AggregateRepository, create_aggregate_repository
 
 from soundscape.aggregate import SoundscapeAggregate
@@ -109,10 +108,9 @@ async def check_user_can_trigger_cue(
 
 
 async def publish_soundscape_event(event: BaseRunefobleEvent) -> None:
-    """Publish soundscape domain event across in-memory platform bus and Redis Streams."""
-    await deliver_best_effort(
-        "in-memory", event.event_type, platform_bus.publish(event.event_type, event)
-    )
-    bus = get_event_bus()
-    if bus:
-        await publish_best_effort(bus, "runefoble.events.soundscape", event)
+    """Publish a soundscape domain event on the soundscape Redis stream.
+
+    Policy: best effort. The aggregate is already saved, so a failed publish is logged and
+    counted on `/healthz`. It does not fail the request.
+    """
+    await publish_best_effort(get_event_bus(), "runefoble.events.soundscape", event)

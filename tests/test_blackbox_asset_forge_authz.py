@@ -69,7 +69,7 @@ def _body(kind: str, campaign_id: str | None) -> dict:
 
 @pytest.fixture(autouse=True)
 def clean_environment():
-    """Start every test with the in-memory bus and clear it afterwards."""
+    """Start every test with a Redis Streams bus over a mock and clear it afterwards."""
     set_event_bus(RedisStreamsEventBus(client=MockAsyncRedis()))
     yield
     set_event_bus(None)

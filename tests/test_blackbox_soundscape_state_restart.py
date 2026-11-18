@@ -24,9 +24,9 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 from runefoble_auth.factory import get_spicedb_client
-from runefoble_platform.bus import bus as platform_bus
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.event_sourcing import build_event_store, set_event_store
+from runefoble_platform.redis_bus import deserialize_event
 from soundscape.main import app
 
 from tests.helpers.ws_identity import SIGNING_ISSUER as ISSUER
@@ -163,21 +163,13 @@ async def test_explicit_duck_release_clears_ducking_before_its_duration(postgres
 
 
 @pytest.mark.asyncio
-async def test_aggregate_id_is_stable_across_process_starts(postgres_service):
+async def test_aggregate_id_is_stable_across_process_starts(postgres_service, mock_bus):
     """The soundscape aggregate id for a session is the same in two processes."""
     dsn = str(postgres_service["dsn"])
     session_id = f"session-{uuid4().hex[:8]}"
     campaign_id = str(uuid4())
     await _seed_dm(session_id, campaign_id)
 
-    emitted: list[str] = []
-
-    async def capture(event) -> None:
-        if getattr(event, "session_id", None) == session_id:
-            emitted.append(str(event.aggregate_id))
-
-    topic = "runefoble.events.soundscape.cue_triggered"
-    platform_bus.subscribe(topic, capture)
     store = _use_postgres_event_store(dsn)
     with TestClient(app, headers=_bearer(DM)) as client:
         cue = client.post(
@@ -191,6 +183,11 @@ async def test_aggregate_id_is_stable_across_process_starts(postgres_service):
         assert cue.status_code == 200, cue.text
     await store.close()
 
+    emitted = [
+        str(ev.aggregate_id)
+        for _, fields in mock_bus.streams.get("runefoble.events.soundscape", [])
+        if getattr(ev := deserialize_event(fields), "session_id", None) == session_id
+    ]
     assert emitted, "the cue route must emit a soundscape event on the bus"
     first_process_id = emitted[0]
     second = _restart_read(dsn, session_id, with_aggregate_id=True)

@@ -118,7 +118,7 @@ async def forge_battlemap(
     )
     await repo.save(forge_agg)
 
-    # 6. Publish domain event over Redis Streams & in-memory bus
+    # 6. Publish domain event over Redis Streams
     event = BattlemapForged(
         asset_id=asset_id,
         campaign_id=request.campaign_id,

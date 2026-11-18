@@ -17,15 +17,10 @@ from runefoble_events.events import (
     CombatEncounterStarted,
     CriticalHitScored,
     DeathSaveStarted,
-    DiceRolled,
     InitiativeTurnAdvanced,
     PlayerSpokeEvent,
 )
-from runefoble_platform.bus import bus as platform_bus
-from soundscape.event_handlers import (
-    handle_incoming_domain_event,
-    register_soundscape_event_handlers,
-)
+from soundscape.event_handlers import handle_incoming_domain_event
 from soundscape.leitmotif import LeitmotifEngine
 from soundscape.session_state import read_session_state, utc_now
 
@@ -130,27 +125,3 @@ async def test_death_save_triggers_somber_leitmotif():
     assert active is not None
     assert active.motif_type == "somber"
     assert active.character_id == "char-merisiel"
-
-
-@pytest.mark.asyncio
-async def test_register_soundscape_event_handlers_subscribes_to_platform_bus():
-    """Verify register_soundscape_event_handlers wires handlers to platform_bus."""
-    register_soundscape_event_handlers()
-
-    session_id = "session-test-bus-sub"
-    dice_event = DiceRolled(
-        session_id=session_id,
-        roller_id="char-ezren",
-        roller_name="Ezren",
-        formula="1d20+8",
-        total=28,
-        rolls=[20],
-        is_crit=True,
-    )
-    await platform_bus.publish("DiceRolled", dice_event)
-
-    engine = await _engine(session_id)
-    active = engine.get_active_status()
-    assert active is not None
-    assert active.motif_type == "triumphant"
-    assert active.character_id == "char-ezren"

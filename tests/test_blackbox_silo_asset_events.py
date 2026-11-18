@@ -10,14 +10,11 @@ Governed by:
 
 from __future__ import annotations
 
-from typing import Any
-
 import pytest
 from eventsource.domain.event_registry import get_event_class_or_none
 from fastapi.testclient import TestClient
 from gateway_api.main import app as gateway_app
 from runefoble_events.events import AssetDeleted, AssetUploaded
-from runefoble_platform.bus import bus as platform_bus
 
 from tests.helpers.silo_fixtures import PNG_SAMPLE_BYTES
 
@@ -58,21 +55,14 @@ def test_asset_events_registration_and_cloudevents():
     assert ce_dict["data"]["owner_id"] == "user-42"
 
 
-# --- 2. Domain Event Dispatching (Redis Stream & In-Memory Bus) ---
+# --- 2. Domain Event Dispatching (Redis Streams) ---
 
 
 @pytest.mark.asyncio
 async def test_blackbox_event_emission_on_upload_and_delete(
     trusted_ws_issuer, mock_bus, gateway_for
 ):
-    """Verify AssetUploaded and AssetDeleted domain events are emitted to event buses."""
-    received_in_memory_events: list[Any] = []
-
-    async def in_memory_upload_handler(event: Any):
-        received_in_memory_events.append(event)
-
-    platform_bus.subscribe("runefoble.events.asset.uploaded", in_memory_upload_handler)
-
+    """Verify AssetUploaded and AssetDeleted domain events are published on the Redis stream."""
     client = gateway_for(trusted_ws_issuer, "paladin_order")
 
     # 1. Perform upload
@@ -83,20 +73,13 @@ async def test_blackbox_event_emission_on_upload_and_delete(
     assert upload_res.status_code == 200
     asset_id = upload_res.json()["asset_id"]
 
-    # Check Redis stream events
+    # Exactly one upload entry on the asset stream
     stream_events = mock_bus.streams.get("runefoble.events.asset", [])
-    assert len(stream_events) >= 1
+    assert len(stream_events) == 1
     _evt_id, payload = stream_events[0]
     assert payload["event_type"] == "runefoble.events.asset.uploaded"
     assert asset_id in payload["payload"]
     assert "paladin_order" in payload["payload"]
-
-    # Check in-memory bus event
-    assert len(received_in_memory_events) == 1
-    mem_event = received_in_memory_events[0]
-    assert isinstance(mem_event, AssetUploaded)
-    assert mem_event.asset_id == asset_id
-    assert mem_event.owner_id == "paladin_order"
 
     # 2. Perform delete
     del_res = client.delete(f"/api/v1/assets/{asset_id}")

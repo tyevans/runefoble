@@ -21,7 +21,6 @@ from runefoble_platform.ui_manifest import load_ui_manifest
 
 from soundscape.consumer import start_soundscape_consumers
 from soundscape.dependencies import event_bus_provider
-from soundscape.event_handlers import register_soundscape_event_handlers
 from soundscape.routers.cue import router as cue_router
 from soundscape.routers.leitmotif import router as leitmotif_router
 from soundscape.routers.stems import router as stems_router
@@ -35,8 +34,7 @@ UI_MANIFEST = load_ui_manifest(
 
 @contextlib.asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    """Bootstrap service lifecycle, event handlers, and the Redis Streams consumer."""
-    register_soundscape_event_handlers()
+    """Bootstrap the Redis Streams bus and the soundscape consumer."""
     bus = await event_bus_provider.connect()
     consumers = await start_soundscape_consumers(bus)
     app.state.consumers = {"soundscape": consumers}
