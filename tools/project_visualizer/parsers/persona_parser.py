@@ -65,8 +65,8 @@ def parse_persona_files(project_dir: Path, root_dir: Path) -> list[PersonaItem]:
 
 
 def parse_feature_files(project_dir: Path) -> list[FeatureItem]:
-    """Parse features from docs/project/product/FEATURE_INVENTORY.md."""
-    feat_file = project_dir / "product" / "FEATURE_INVENTORY.md"
+    """Parse features from docs/reference/speculative-feature-inventory.md."""
+    feat_file = project_dir.parent / "reference" / "speculative-feature-inventory.md"
     if not feat_file.exists():
         return []
     content = feat_file.read_text(encoding="utf-8")

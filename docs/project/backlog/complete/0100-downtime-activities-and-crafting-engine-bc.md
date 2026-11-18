@@ -13,8 +13,10 @@ governing_adrs:
 - ADR-0011
 - ADR-0013
 target_release: 0.4.0
-prd_url: docs/project/product/accepted/prd-0014-downtime-crafting-and-stronghold-engine.md
-user_story: US-0044
+governing_prds:
+- PRD-0014
+governing_stories:
+- US-0044
 pr_url: https://github.com/tyevans/runefoble/pull/108
 ---
 # TASK-0100: Downtime Activities, Alchemical Crafting & Party Stronghold Engine
