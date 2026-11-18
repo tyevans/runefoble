@@ -20,8 +20,8 @@ The Campaign Analytics microservice operates as a CQRS projection engine and chr
    - `campaign_session_map`: Session to campaign mapping. Events without a campaign id use it.
    - `analytics_projection_state`: Token positions, names, and the active combatant and encounter. It also holds each stream's last projected message id.
    - SQLite and in-memory stores are not supported. The service refuses to start on a non-PostgreSQL URL.
-3. **Transactional Projection and Resume**: Each stream message is projected in one database transaction. The transaction also stores that message id as the stream position. A failed write rolls back the whole message. The message goes to `{stream}.dlq` and the consumer continues. On start-up, each stream resumes after its stored position. Replayed rows keep the same ids, so a replay does not create duplicate rows.
-4. **Chronicle Aggregate for Milestones**: Each milestone is recorded on `CampaignChronicleAggregate` (`eventsource-py`) through `AggregateRepository`. The event store saves the `ChronicleMilestoneRecorded` event first. The milestone row is projected from the saved event. The MVP and telemetry snapshot events (`EncounterMvpAwarded`, `CombatTelemetrySnapshotCreated`) are defined but not produced. MVP scores are computed from `combat_performance_records` at query time.
+3. **Transactional Projection and Resume**: Each stream message is projected in one database transaction. The transaction also stores that message id as the stream position. A failed write rolls back the whole message. The message goes to `{stream}.dlq` and the consumer continues. On start-up, each stream resumes after its stored position. Replayed rows keep the same ids, so a replay does not create duplicate rows. A replayed milestone reuses its saved chronicle event, so the timeline holds one row per milestone.
+4. **Chronicle Aggregate for Milestones**: Each milestone is recorded on `CampaignChronicleAggregate` (`eventsource-py`) through `AggregateRepository`. The event store saves the `ChronicleMilestoneRecorded` event first. The milestone row is projected from the saved event. The row id is the saved event's id. A milestone that a replay finds already saved is reused, not recorded again. The MVP and telemetry snapshot events (`EncounterMvpAwarded`, `CombatTelemetrySnapshotCreated`) are defined but not produced. MVP scores are computed from `combat_performance_records` at query time.
 5. **Start-up and Store Failures**:
    - Start-up fails when PostgreSQL is unreachable or the tables cannot be created. The service does not serve requests.
    - A query that cannot reach PostgreSQL returns HTTP `503` with `{"detail": "Campaign analytics store is unavailable"}`. It never returns empty data.
@@ -151,22 +151,24 @@ GET /api/v1/analytics/campaigns/{campaign_id}/timeline
   "campaign_id": "c5f8742d-cfca-4fbc-8911-37d363b9f4a1",
   "milestones": [
     {
-      "milestone_id": "m1",
+      "id": "m1",
+      "campaign_id": "c5f8742d-cfca-4fbc-8911-37d363b9f4a1",
       "session_id": "sess-01",
+      "type": "session_recap",
       "title": "Session 1 Concluded",
       "description": "Party defeated the Goblin Ambush and recovered the Sunstone",
-      "milestone_type": "session_recap",
       "timestamp": "2026-09-26T14:00:00Z",
-      "tags": ["session", "recap"]
+      "metadata": {"summary": "Party defeated the Goblin Ambush and recovered the Sunstone"}
     },
     {
-      "milestone_id": "m2",
+      "id": "m2",
+      "campaign_id": "c5f8742d-cfca-4fbc-8911-37d363b9f4a1",
       "session_id": "sess-02",
+      "type": "boss_encounter",
       "title": "Defeat of the Red Dragon",
       "description": "Party vanquished Ignis the Terrible at Dragon's Peak",
-      "milestone_type": "boss_defeat",
       "timestamp": "2026-09-26T15:30:00Z",
-      "tags": ["boss", "combat", "victory"]
+      "metadata": {}
     }
   ],
   "total_milestones": 2

@@ -1,8 +1,9 @@
 """Projection transaction: every read-model write for one stream message.
 
 A message's writes and its stream position commit together. A failed write raises and rolls
-back the whole message, so a restart replays it and never skips it. Row ids derive from the
-stream message id, so a replayed write lands on the same row.
+back the whole message, so a restart replays it and never skips it. Metric row ids derive from
+the stream message id, so a replayed write lands on the same row. Milestone row ids are the ids
+of their saved chronicle events, so a replayed milestone lands on the same row.
 
 Governed by ADR-0006 (Redis Streams) and ADR-0011 (event sourcing).
 """
@@ -143,6 +144,7 @@ class ProjectionTx:
 
     async def add_milestone(
         self,
+        milestone_id: str,
         campaign_id: str,
         session_id: str,
         milestone_type: str,
@@ -151,8 +153,9 @@ class ProjectionTx:
         timestamp: str,
         metadata: dict[str, Any],
     ) -> None:
+        """Project one saved chronicle milestone. Its id is the saved milestone's event id."""
         stmt = pg_insert(timeline_table).values(
-            id=self._row_id(campaign_id, session_id, milestone_type, title, timestamp),
+            id=milestone_id,
             campaign_id=str(campaign_id),
             session_id=str(session_id),
             milestone_type=milestone_type,

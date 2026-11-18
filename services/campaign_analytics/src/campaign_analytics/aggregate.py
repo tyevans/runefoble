@@ -29,6 +29,7 @@ class MilestoneState(BaseModel):
     description: str
     timestamp: str
     metadata: dict[str, Any] = Field(default_factory=dict)
+    source_message_id: str = ""
 
 
 class MvpAwardState(BaseModel):
@@ -71,8 +72,13 @@ class CampaignChronicleAggregate(DeclarativeAggregate[CampaignChronicleState]):
         title: str,
         description: str,
         metadata: dict[str, Any] | None = None,
+        source_message_id: str = "",
     ) -> None:
-        """Command to record a new narrative or combat milestone."""
+        """Command to record a new narrative or combat milestone.
+
+        The source message id names the stream message that caused the milestone. A replay of
+        that message finds the saved milestone by this id and does not record it again.
+        """
         self.create_event(
             ChronicleMilestoneRecorded,
             campaign_id_str=campaign_id,
@@ -81,6 +87,7 @@ class CampaignChronicleAggregate(DeclarativeAggregate[CampaignChronicleState]):
             title=title,
             description=description,
             metadata=metadata or {},
+            source_message_id=source_message_id,
         )
 
     def award_mvp(
@@ -137,6 +144,7 @@ class CampaignChronicleAggregate(DeclarativeAggregate[CampaignChronicleState]):
                 description=event.description,
                 timestamp=event.occurred_at.isoformat(),
                 metadata=event.metadata,
+                source_message_id=event.source_message_id,
             )
         )
 

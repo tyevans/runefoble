@@ -24,6 +24,7 @@ class ChronicleMilestoneRecorded(BaseRunefobleEvent):
     title: str
     description: str
     metadata: dict[str, Any] = Field(default_factory=dict)
+    source_message_id: str = ""
 
 
 @register_event("runefoble.events.analytics.telemetry_snapshot_created")
