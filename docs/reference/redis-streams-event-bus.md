@@ -79,8 +79,7 @@ Board State publishes every uncommitted event through one helper, `publish_board
 events = list(board.uncommitted_events)  # capture before the save clears them
 await repo.save(board)
 bus = get_event_bus()
-if bus is not None:
-    await publish_board_events(bus, events)
+await publish_board_events(bus, events)
 ```
 
 - Events publish in order to the `runefoble.events.board` stream.
@@ -155,7 +154,24 @@ await consumer_group.create_group(
 
 ### Event Bus Selection at Start-Up
 
-`get_event_bus()` (`libs/runefoble_platform/src/runefoble_platform/event_sourcing.py`) returns `RedisEventBus` when the Redis flag is set. It returns `InMemoryEventBus` only when the flag is off. A failure while it creates the Redis bus raises. No in-memory bus replaces it.
+### How a Service Gets the Bus
+
+`libs/runefoble_platform/src/runefoble_platform/event_bus.py` holds the only bus factory. No service builds `RedisStreamsEventBus` itself. No in-memory bus exists in production code.
+
+- `create_event_bus(settings)` builds the bus lazily. It raises `EventBusUnavailableError` when `RUNEFOBLE_REDIS_URL` is empty.
+- `EventBusProvider(settings)` owns one bus per service process. Its methods are `get()`, `set(bus)`, `connect()`, `close()`, and `lifespan(app)`.
+- `connect()` pings Redis. It raises `EventBusUnavailableError` when Redis is unreachable.
+- `lifespan(app)` is a FastAPI lifespan. It calls `connect()` at start-up and `close()` at shutdown. A service that cannot reach Redis does not start.
+
+Each service `dependencies` module creates one provider and binds its public API:
+
+```python
+event_bus_provider = EventBusProvider(platform_settings)
+get_event_bus = event_bus_provider.get
+set_event_bus = event_bus_provider.set
+```
+
+The service `main.py` passes `lifespan=event_bus_provider.lifespan`. A service with its own lifespan calls `event_bus_provider.lifespan(app)` inside it. Tests call `set_event_bus(RedisStreamsEventBus(client=MockAsyncRedis()))`. `close()` does not close a bus that a test set.
 
 ### Competing Consumer Reading
 ```python

@@ -73,9 +73,14 @@ SERVICE_VERIFIER_MODULES = [
 
 
 REDIS_BUS_MODULES = [
+    "asset_forge.dependencies",
     "board_state.dependencies",
+    "character_sheet.dependencies",
     "game_session.dependencies",
+    "gateway_api.dependencies",
+    "soundscape.dependencies",
     "the_watcher.dependencies",
+    "voice_agent.dependencies",
 ]
 
 

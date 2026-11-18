@@ -11,7 +11,7 @@ from runefoble_events.events import VoiceAudioConditioned
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 from voice_agent.dsp import VoiceDSPPipeline
-from voice_agent.room import get_voice_room_coordinator
+from voice_agent.event_bus import get_event_bus, set_event_bus
 from voice_agent.room_aggregate import to_uuid
 from voice_agent.stt import get_streaming_pipeline
 
@@ -21,22 +21,7 @@ STREAM_SESSION = "runefoble.events.session"
 STREAM_VOICE = "runefoble.events.voice"
 
 platform_settings = PlatformSettings()
-_event_bus: RedisStreamsEventBus | None = None
 dsp_pipeline = VoiceDSPPipeline()
-
-
-def get_event_bus() -> RedisStreamsEventBus:
-    global _event_bus
-    if _event_bus is None:
-        _event_bus = RedisStreamsEventBus(redis_url=platform_settings.redis_url)
-    return _event_bus
-
-
-def set_event_bus(bus: RedisStreamsEventBus | None) -> None:
-    global _event_bus
-    _event_bus = bus
-    get_voice_room_coordinator().set_event_bus(bus)
-    get_streaming_pipeline().set_event_bus(bus)
 
 
 def set_watcher_client(client: httpx.AsyncClient | None) -> None:

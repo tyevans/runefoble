@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import contextlib
 import logging
 from typing import Annotated
 from uuid import UUID
@@ -14,12 +13,12 @@ from runefoble_auth.zitadel import ZitadelAuthService
 from runefoble_events.base import BaseRunefobleEvent
 from runefoble_platform.bus import bus as platform_bus
 from runefoble_platform.config import PlatformSettings, WardrobeGeneratorSettings
+from runefoble_platform.event_bus import EventBusProvider
 from runefoble_platform.event_publish import deliver_best_effort, publish_best_effort
 from runefoble_platform.event_sourcing import (
     AggregateRepository,
     create_aggregate_repository,
 )
-from runefoble_platform.redis_bus import RedisStreamsEventBus
 from runefoble_platform.storage import SiloStorageService
 from runefoble_platform.storage import get_storage_service as get_platform_storage
 
@@ -29,7 +28,6 @@ from asset_forge.wardrobe_generator import WardrobeGenerator, build_wardrobe_gen
 logger = logging.getLogger("runefoble.asset_forge")
 settings = PlatformSettings()
 
-_event_bus: RedisStreamsEventBus | None = None
 _forge_repo: AggregateRepository[AssetForgeAggregate] = create_aggregate_repository(
     AssetForgeAggregate
 )
@@ -56,19 +54,9 @@ def get_wardrobe_generator() -> WardrobeGenerator:
     return _wardrobe_generator
 
 
-def get_event_bus() -> RedisStreamsEventBus | None:
-    """Provide RedisStreamsEventBus instance."""
-    global _event_bus
-    if _event_bus is None and settings.redis_url:
-        with contextlib.suppress(Exception):
-            _event_bus = RedisStreamsEventBus(redis_url=settings.redis_url)
-    return _event_bus
-
-
-def set_event_bus(bus: RedisStreamsEventBus | None) -> None:
-    """Override event bus for testing."""
-    global _event_bus
-    _event_bus = bus
+event_bus_provider = EventBusProvider(settings)
+get_event_bus = event_bus_provider.get
+set_event_bus = event_bus_provider.set
 
 
 def get_spicedb_client() -> SpiceDBClient | MockSpiceDBClient:

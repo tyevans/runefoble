@@ -16,6 +16,7 @@ from gateway_api.auth import get_zitadel_auth_service
 from gateway_api.auth_sync import router as auth_sync_router
 from gateway_api.dependencies import (
     WebSocketConnectionManager,
+    event_bus_provider,
     get_event_bus,
     platform_settings,
     set_event_bus,
@@ -47,6 +48,7 @@ from gateway_api.websocket_auth import admit_gateway_websocket
 from gateway_mcp.dynamic import set_event_bus as set_dynamic_tool_event_bus
 from gateway_mcp.routers import tools_registry_router
 from runefoble_platform.config import PlatformSettings
+from runefoble_platform.event_bus import create_event_bus
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 from runefoble_platform.telemetry import init_telemetry
 from voice_agent.room_routes import router as voice_rooms_router
@@ -58,7 +60,8 @@ async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Build the upstream service clients from settings at start-up. Close them at shutdown."""
     app.state.upstreams = UpstreamRegistry.from_settings(PlatformSettings())
     try:
-        yield
+        async with event_bus_provider.lifespan(app):
+            yield
     finally:
         await app.state.upstreams.aclose()
 
@@ -112,12 +115,10 @@ init_telemetry("gateway-api", settings=platform_settings, app=app)
 def configure_dynamic_tool_event_bus(redis_url: str) -> RedisStreamsEventBus:
     """Inject the Redis Streams bus that dynamic MCP tool events publish to.
 
-    Raises RuntimeError when no Redis URL is configured, so the gateway never
+    Raises EventBusUnavailableError when no Redis URL is configured, so the gateway never
     runs dynamic tools with events that cannot reach the system stream.
     """
-    if not redis_url:
-        raise RuntimeError("REDIS_URL must be set: dynamic MCP tool events require Redis Streams")
-    bus = RedisStreamsEventBus(redis_url=redis_url)
+    bus = create_event_bus(PlatformSettings(redis_url=redis_url))
     set_dynamic_tool_event_bus(bus)
     return bus
 

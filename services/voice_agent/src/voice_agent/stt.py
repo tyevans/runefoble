@@ -15,10 +15,9 @@ from uuid import NAMESPACE_DNS, UUID, uuid4, uuid5
 import httpx
 from pydantic import BaseModel
 from runefoble_events.events import PlayerSpokeEvent, VoiceTranscriptionFailed
-from runefoble_platform.config import PlatformSettings
 from runefoble_platform.engine_ports import EngineUnavailableError
-from runefoble_platform.redis_bus import RedisStreamsEventBus
 from voice_agent.auth import caller_headers
+from voice_agent.event_bus import get_event_bus
 from voice_agent.speech_settings import VoiceAgentSettings, build_transcriber
 from voice_agent.transcriber import BaseTranscriber
 from voice_agent.vad import (
@@ -101,17 +100,8 @@ class StreamingAudioPipeline:
         self.silence_threshold_ms = silence_threshold_ms
         self.energy_threshold = energy_threshold
         self.participants: dict[str, ParticipantAudioState] = {}
-        self._event_bus: RedisStreamsEventBus | None = None
         self._watcher_client: httpx.AsyncClient | None = None
         self._watcher_url: str = os.environ.get("RUNEFOBLE_WATCHER_URL", "http://the-watcher:8001")
-
-    def set_event_bus(self, bus: RedisStreamsEventBus | None) -> None:
-        self._event_bus = bus
-
-    def get_event_bus(self) -> RedisStreamsEventBus:
-        if self._event_bus is None:
-            self._event_bus = RedisStreamsEventBus(redis_url=PlatformSettings().redis_url)
-        return self._event_bus
 
     def set_watcher_client(self, client: httpx.AsyncClient | None) -> None:
         self._watcher_client = client
@@ -158,7 +148,7 @@ class StreamingAudioPipeline:
             reason=str(exc),
         )
         try:
-            await self.get_event_bus().publish_event(STREAM_VOICE, event)
+            await get_event_bus().publish_event(STREAM_VOICE, event)
         except Exception:
             logger.exception("Failed to publish VoiceTranscriptionFailed to '%s'", STREAM_VOICE)
 
@@ -228,7 +218,7 @@ class StreamingAudioPipeline:
             target_character_id=target_character_id,
         )
 
-        bus = self.get_event_bus()
+        bus = get_event_bus()
         event_id = None
         try:
             event_id = await bus.publish_event(STREAM_SESSION, event)

@@ -17,12 +17,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from runefoble_platform.consumer_group import RedisConsumerGroup
 from runefoble_platform.event_sourcing import create_aggregate_repository
-from runefoble_platform.redis_bus import RedisStreamsEventBus
 from runefoble_platform.stream_consumer import consumer_statuses
 from sqlalchemy.exc import SQLAlchemyError
 
 from campaign_analytics.aggregate import CampaignChronicleAggregate
 from campaign_analytics.dependencies import (
+    event_bus_provider,
     get_storage,
     get_worker,
     platform_settings,
@@ -41,8 +41,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     Any failure while starting raises, so the service does not run without its store.
     """
     storage = await CampaignAnalyticsStorage.create(platform_settings)
-    bus = RedisStreamsEventBus(redis_url=platform_settings.redis_url)
     try:
+        bus = await event_bus_provider.connect()
         chronicle: AggregateRepository[CampaignChronicleAggregate] = create_aggregate_repository(
             CampaignChronicleAggregate
         )
@@ -57,7 +57,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     except BaseException:
         set_storage(None)
         set_worker(None)
-        await bus.close()
+        await event_bus_provider.close()
         await storage.dispose()
         raise
 
@@ -66,7 +66,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         yield
     finally:
         await worker.stop()
-        await bus.close()
+        await event_bus_provider.close()
         await storage.dispose()
         app.state.consumers = {}
         set_storage(None)

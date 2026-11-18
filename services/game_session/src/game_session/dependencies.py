@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import contextlib
 import logging
 import os
 
@@ -21,11 +20,11 @@ from game_session.stronghold import StrongholdAggregate
 from game_session.west_marches import SharedWorldAggregate
 from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
 from runefoble_platform.config import PlatformSettings
+from runefoble_platform.event_bus import EventBusProvider
 from runefoble_platform.event_sourcing import (
     AggregateRepository,
     create_aggregate_repository,
 )
-from runefoble_platform.redis_bus import RedisStreamsEventBus
 
 logger = logging.getLogger("runefoble.game_session")
 
@@ -42,7 +41,6 @@ if platform_settings.is_deployed and watcher_service_url() is None:
         "RUNEFOBLE_WATCHER_URL must be set when RUNEFOBLE_ENVIRONMENT is "
         f"'{platform_settings.environment}'"
     )
-_event_bus: RedisStreamsEventBus | None = None
 _spicedb_client: SpiceDBClient | MockSpiceDBClient | None = None
 
 repo: AggregateRepository[GameSessionAggregate] = create_aggregate_repository(
@@ -173,14 +171,6 @@ def set_spicedb_client(client: SpiceDBClient | MockSpiceDBClient | None) -> None
     _spicedb_client = client
 
 
-def get_event_bus() -> RedisStreamsEventBus | None:
-    global _event_bus
-    if _event_bus is None and platform_settings.redis_url:
-        with contextlib.suppress(Exception):
-            _event_bus = RedisStreamsEventBus(redis_url=platform_settings.redis_url)
-    return _event_bus
-
-
-def set_event_bus(bus: RedisStreamsEventBus | None) -> None:
-    global _event_bus
-    _event_bus = bus
+event_bus_provider = EventBusProvider(platform_settings)
+get_event_bus = event_bus_provider.get
+set_event_bus = event_bus_provider.set

@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from board_state.dependencies import (
     BoardNotFoundError,
+    event_bus_provider,
     get_board,
     get_event_bus,
     repo,
@@ -49,6 +50,7 @@ app = FastAPI(
     title="Runefoble - Board State Service",
     version="0.1.0",
     description="Tactical Map, Grid Coordinates, Token Management, and Spatial Queries backed by eventsource-py.",
+    lifespan=event_bus_provider.lifespan,
 )
 
 app.include_router(ui_manifest_router)

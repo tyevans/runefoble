@@ -17,6 +17,7 @@ from the_watcher.dependencies import (
     compound_action_engine,
     disambiguation_engine,
     engine,
+    event_bus_provider,
     get_event_bus,
     set_event_bus,
     to_uuid,
@@ -59,6 +60,7 @@ app = FastAPI(
     title="Runefoble - The Watcher Service",
     version="0.1.0",
     description="AI Gameplay System: Speech-to-Intent, Board Animator, Autonomous DM & Missing Player Stand-in.",
+    lifespan=event_bus_provider.lifespan,
 )
 
 register_store_unavailable_handlers(app)

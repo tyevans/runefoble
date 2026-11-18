@@ -1,7 +1,8 @@
-"""Shared Redis Streams event bus factory with fail-fast start-up (ADR-0015 item 4).
+"""Shared Redis Streams event bus provider with fail-fast start-up (ADR-0015 item 4).
 
 A service that configures Redis must not start when Redis is unreachable. This module
-never substitutes an in-memory bus.
+never substitutes an in-memory bus. Each service owns one `EventBusProvider` and exposes
+`provider.get` and `provider.set` as its `get_event_bus` and `set_event_bus`.
 """
 
 from __future__ import annotations
@@ -9,7 +10,7 @@ from __future__ import annotations
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.redis_bus import RedisStreamsEventBus
@@ -38,33 +39,52 @@ async def connect_event_bus(bus: RedisStreamsEventBus) -> None:
         ) from exc
 
 
-@asynccontextmanager
-async def event_bus_lifespan(
-    app: FastAPI, settings: PlatformSettings | None = None
-) -> AsyncIterator[RedisStreamsEventBus]:
-    """Connect the bus at start-up, store it on app.state, and close it at shutdown."""
-    bus = create_event_bus(settings or PlatformSettings())
-    await connect_event_bus(bus)
-    app.state.event_bus = bus
-    try:
-        yield bus
-    finally:
-        app.state.event_bus = None
-        await bus.close()
+class EventBusProvider:
+    """Own one lazily built Redis Streams bus for a service process."""
 
+    def __init__(self, settings: PlatformSettings) -> None:
+        self._settings = settings
+        self._bus: RedisStreamsEventBus | None = None
+        self._owned = False
 
-def get_event_bus(request: Request) -> RedisStreamsEventBus:
-    """FastAPI dependency: the bus that the app lifespan connected."""
-    bus: RedisStreamsEventBus | None = getattr(request.app.state, "event_bus", None)
-    if bus is None:
-        raise EventBusUnavailableError("The event bus is not started for this application.")
-    return bus
+    def get(self) -> RedisStreamsEventBus:
+        """Return the bus. Build it on first use. Raise when Redis is not configured."""
+        if self._bus is None:
+            self._bus = create_event_bus(self._settings)
+            self._owned = True
+        return self._bus
+
+    def set(self, bus: RedisStreamsEventBus | None) -> None:
+        """Replace the bus. Tests pass a bus over a Redis test double. None resets it."""
+        self._bus = bus
+        self._owned = False
+
+    async def connect(self) -> RedisStreamsEventBus:
+        """Ping Redis at start-up. Raise EventBusUnavailableError when it is unreachable."""
+        bus = self.get()
+        await connect_event_bus(bus)
+        return bus
+
+    async def close(self) -> None:
+        """Close the bus that this provider built. A bus set from outside is left open."""
+        bus, owned = self._bus, self._owned
+        if bus is not None and owned:
+            self._bus, self._owned = None, False
+            await bus.close()
+
+    @asynccontextmanager
+    async def lifespan(self, _app: FastAPI) -> AsyncIterator[None]:
+        """FastAPI lifespan: fail start-up when Redis is unreachable, close the bus at shutdown."""
+        await self.connect()
+        try:
+            yield
+        finally:
+            await self.close()
 
 
 __all__ = [
+    "EventBusProvider",
     "EventBusUnavailableError",
     "connect_event_bus",
     "create_event_bus",
-    "event_bus_lifespan",
-    "get_event_bus",
 ]

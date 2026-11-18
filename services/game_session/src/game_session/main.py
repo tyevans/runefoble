@@ -8,6 +8,7 @@ from __future__ import annotations
 from fastapi import FastAPI
 from game_session.campaign import campaign_router, register_campaign_error_handlers
 from game_session.dependencies import (
+    event_bus_provider,
     get_event_bus,
     get_spicedb_client,
     repo,
@@ -53,6 +54,7 @@ app = FastAPI(
     title="Runefoble - Game Session Service",
     version="0.1.0",
     description="Session Lifecycle, Turn / Initiative Order, and Live Participation backed by eventsource-py.",
+    lifespan=event_bus_provider.lifespan,
 )
 
 register_store_unavailable_handlers(app)
