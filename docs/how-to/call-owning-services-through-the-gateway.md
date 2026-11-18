@@ -25,7 +25,7 @@ The key is the service name. It appears in logs and in the error body.
 
 ## 2. Render the variable in Helm
 
-The gateway reads its base URLs at start-up. Add the variable to the `gateway-api` consumer list in `deployments/helm/runefoble/templates/services.yaml`. Use the in-cluster address of the service. Do not use `localhost`.
+The gateway reads its base URLs at start-up. Set `urlEnv` on the owning service's entry under `services` in `deployments/helm/runefoble/values.yaml`, and add `gateway-api` to that entry's `consumers` list. Use the in-cluster address of the service. Do not use `localhost`.
 
 Run `make helm-lint` and `make helm-template`.
 

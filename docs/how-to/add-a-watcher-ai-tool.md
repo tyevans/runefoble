@@ -25,7 +25,7 @@ async def inspect_tactical_board(session_id: str) -> dict:
 
 Add a typed method to `OwningServices` in `gateway/mcp/src/gateway_mcp/owning_services.py` for each new upstream route. Build the route with `path(...)` from `runefoble_platform.service_client`, so that every agent-supplied segment stays inside one segment. Call `self._json(service, method, route, body)`. It sends through the shared service client. It maps 5xx and connection failures to `ServiceUnavailableError`, and 4xx responses to `ServiceRejectedError`. Do not catch these errors in the tool. FastMCP reports them as MCP tool error results.
 
-Add the base URL to `gateway/mcp/src/gateway_mcp/settings.py` and to the Helm `services.gatewayMcp` values when a new upstream service is added.
+Add the base URL to `gateway/mcp/src/gateway_mcp/settings.py` and, in Helm, add `gateway-mcp` to the `consumers` list of the upstream's entry under `services` in `deployments/helm/runefoble/values.yaml`.
 
 Only pure computation, such as dice rolls or rule lookups, may run inside the gateway without a service call. Tools that store state must go through the owning bounded context (ADR-0007).
 
