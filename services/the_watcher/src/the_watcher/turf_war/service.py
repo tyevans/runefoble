@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 from typing import Any
+from uuid import UUID
 
+from runefoble_platform.aggregate_loading import load_or_create
 from runefoble_platform.event_publish import publish_best_effort
 from the_watcher.dependencies import (
     STREAM_WORLD,
@@ -21,17 +23,21 @@ from the_watcher.turf_war.unrest_calculator import unrest_calculator
 
 
 async def load_or_create_unrest(region_id: str, campaign_id: str = "") -> RegionalUnrestAggregate:
-    """Load or instantiate an event-sourced RegionalUnrestAggregate."""
+    """Load an event-sourced RegionalUnrestAggregate. Create one only when its stream is absent.
+
+    A store error propagates to the caller (TASK-0699).
+    """
     repo = get_regional_unrest_repo()
     agg_uuid = to_uuid(region_id)
-    try:
-        return await repo.load(agg_uuid)
-    except Exception:
-        agg = RegionalUnrestAggregate(aggregate_id=agg_uuid)
+
+    def _fresh(aggregate_id: UUID) -> RegionalUnrestAggregate:
+        agg = RegionalUnrestAggregate(aggregate_id=aggregate_id)
         agg.state.region_id = region_id
         if campaign_id:
             agg.state.campaign_id = campaign_id
         return agg
+
+    return await load_or_create(repo, agg_uuid, _fresh)
 
 
 async def publish_turf_events(events: list[Any]) -> None:

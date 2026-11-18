@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, ConfigDict, Field
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.spicedb import SpiceDBClient
+from runefoble_platform.aggregate_loading import load_if_exists
 from runefoble_platform.event_sourcing import AggregateRepository
 
 from campaign_lore.dependencies import (
@@ -132,13 +133,12 @@ async def get_handout(
     ] = None,
 ) -> dict[str, Any]:
     """Retrieve diegetic handout state and visual styling spec."""
-    try:
-        handout = await repo.load(handout_id)
-    except Exception:
+    handout = await load_if_exists(repo, handout_id)
+    if handout is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Handout {handout_id} not found",
-        ) from None
+        )
 
     can_view = await check_user_can_view_campaign(user_id, handout.state.campaign_id, spicedb)
     if not can_view:
@@ -175,13 +175,12 @@ async def break_seal(
     ] = None,
 ) -> dict[str, Any]:
     """Crack/break the wax seal on a handout with dynamic acoustic feedback."""
-    try:
-        handout = await repo.load(handout_id)
-    except Exception:
+    handout = await load_if_exists(repo, handout_id)
+    if handout is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Handout {handout_id} not found",
-        ) from None
+        )
 
     can_interact = await check_user_can_interact_handout(
         user_id, handout.state.campaign_id, spicedb
@@ -228,13 +227,12 @@ async def reveal_invisible_ink(
     ] = None,
 ) -> dict[str, Any]:
     """Inspect invisible ink runes using simulated UV torchlight."""
-    try:
-        handout = await repo.load(handout_id)
-    except Exception:
+    handout = await load_if_exists(repo, handout_id)
+    if handout is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Handout {handout_id} not found",
-        ) from None
+        )
 
     can_interact = await check_user_can_interact_handout(
         user_id, handout.state.campaign_id, spicedb

@@ -13,6 +13,7 @@ from character_sheet.aggregate import CharacterAggregate
 from character_sheet.models import CharacterState
 from fastapi import HTTPException
 from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
+from runefoble_platform.aggregate_loading import load_if_exists
 from runefoble_platform.event_sourcing import AggregateRepository
 
 logger = logging.getLogger("runefoble.character_sheet.roster")
@@ -57,11 +58,11 @@ async def visible_characters(
         except ValueError:
             logger.warning("SpiceDB grants view on non-UUID character id %s. Skipped.", raw_id)
             continue
-        try:
-            state = (await repo.load(character_uuid)).state
-        except Exception:
+        aggregate = await load_if_exists(repo, character_uuid)
+        if aggregate is None:
             logger.warning("SpiceDB grants view on character %s with no aggregate", raw_id)
             continue
+        state = aggregate.state
         if campaign_id and state.campaign_id != campaign_id:
             continue
         views.append(await roster_view(spicedb, state))
