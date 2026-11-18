@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, ClassVar
+from typing import Any, ClassVar, Literal
 from uuid import UUID, uuid4
 
 from pydantic import Field
@@ -38,7 +38,7 @@ class WatcherNarrationGenerated(BaseRunefobleEvent):
     tone: str = "dark_fantasy"
     sensory_details: list[str] = Field(default_factory=list)
     suggested_prompts: list[str] = Field(default_factory=list)
-    tension_level: str = "rising"
+    tension_level: Literal["calm", "rising", "climax", "aftermath"] = "rising"
 
 
 @register_event

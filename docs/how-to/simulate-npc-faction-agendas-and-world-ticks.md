@@ -347,7 +347,7 @@ Returns:
 }
 ```
 
-Events are streamed across Redis Streams topic `runefoble:events:world` for automated session and chronicle synchronization.
+Events are streamed across Redis Streams topic `runefoble.events.world` for automated session and chronicle synchronization.
 
 ---
 

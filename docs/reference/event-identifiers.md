@@ -220,6 +220,7 @@ add the `runefoble.` prefix when the identifier lacks it.
 | `runefoble.events.voice.peer_joined` | `VoicePeerJoined` | `runefoble_events.voice` |
 | `runefoble.events.voice.peer_left` | `VoicePeerLeft` | `runefoble_events.voice` |
 | `runefoble.events.voice.profile_adapted` | `MobileAudioProfileAdapted` | `runefoble_events.voice` |
+| `runefoble.events.voice.speech_interrupted` | `VoiceSpeechInterrupted` | `runefoble_events.voice` |
 | `runefoble.events.voice.stream_codec_adapted` | `VoiceStreamCodecAdaptedEvent` | `runefoble_events.voice_stream_quality` |
 | `runefoble.events.voice.stream_quality_degraded` | `VoiceStreamQualityDegradedEvent` | `runefoble_events.voice_stream_quality` |
 | `runefoble.events.voice.transcription_failed` | `VoiceTranscriptionFailed` | `runefoble_events.voice` |
@@ -243,4 +244,3 @@ add the `runefoble.` prefix when the identifier lacks it.
 | `runefoble.events.watcher.narrative_whispered` | `DMNarrativeWhispered` | `runefoble_events.watcher_events.narrative` |
 | `runefoble.events.watcher.regional_unrest_escalated` | `RegionalUnrestEscalatedEvent` | `runefoble_events.turf_war` |
 | `runefoble.events.watcher.world_tick_executed` | `WorldTickExecuted` | `runefoble_events.watcher_events.factions` |
-| `voice.speech.interrupted` | `VoiceSpeechInterrupted` | `runefoble_events.voice` |

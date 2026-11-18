@@ -99,7 +99,7 @@ async def test_blackbox_deregister_dynamic_tool(client: TestClient):
 @pytest.mark.asyncio
 async def test_blackbox_tool_lifecycle_cloudevents(client: TestClient, mock_redis: MockAsyncRedis):
     """Verify tool registration, invocation, and unregistration emit domain events to Redis Stream."""
-    stream_name = "runefoble:events:system"
+    stream_name = "runefoble.events.system"
     tool_name = "alchemical_elixir"
     payload = {
         "name": tool_name,

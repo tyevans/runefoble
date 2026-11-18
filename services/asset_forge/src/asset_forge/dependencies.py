@@ -135,7 +135,11 @@ async def check_user_can_forge(
     )
 
 
-async def publish_forge_event(event: BaseRunefobleEvent) -> None:
+STREAM_ASSET = "runefoble.events.asset"
+STREAM_CHARACTER = "runefoble.events.character"
+
+
+async def publish_forge_event(event: BaseRunefobleEvent, stream: str = STREAM_ASSET) -> None:
     """Publish forge domain event across in-memory platform bus and Redis Streams."""
     # 1. In-memory bus
     await deliver_best_effort(
@@ -145,5 +149,4 @@ async def publish_forge_event(event: BaseRunefobleEvent) -> None:
     # 2. Redis stream bus
     bus = get_event_bus()
     if bus:
-        stream = "runefoble.events.asset"
         await publish_best_effort(bus, stream, event)

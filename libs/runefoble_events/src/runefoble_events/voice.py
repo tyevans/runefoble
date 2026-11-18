@@ -105,7 +105,6 @@ class MobileHapticPingDispatched(BaseRunefobleEvent):
     dispatched_at: str
 
 
-@register_event("voice.speech.interrupted")
 @register_event("runefoble.events.voice.speech_interrupted")
 class VoiceSpeechInterrupted(BaseRunefobleEvent):
     """Emitted when active TTS playback/narration is interrupted by player speech (barge-in)."""
@@ -113,7 +112,7 @@ class VoiceSpeechInterrupted(BaseRunefobleEvent):
     suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "VoiceRoom"
     aggregate_id: UUID = Field(default_factory=uuid4)
-    event_type: str = "voice.speech.interrupted"
+    event_type: str = "runefoble.events.voice.speech_interrupted"
     session_id: str
     speaker_id: str
     speaker_name: str = "Player"

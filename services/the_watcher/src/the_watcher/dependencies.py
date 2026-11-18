@@ -31,7 +31,7 @@ BOARD_STATE_URL = os.environ.get("RUNEFOBLE_BOARD_STATE_URL")
 
 STREAM_WATCHER = "runefoble.events.watcher"
 STREAM_BOARD = "runefoble.events.board"
-STREAM_WORLD = "runefoble:events:world"
+STREAM_WORLD = "runefoble.events.world"
 
 engine = TheWatcherEngine()
 chronicle_engine = ChronicleRecapEngine()

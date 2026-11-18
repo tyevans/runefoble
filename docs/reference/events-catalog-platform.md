@@ -78,8 +78,8 @@ Owned by `game_session` (ADR-0015 decision a). Defined in `libs/runefoble_events
 
 ### Dynamic FastMCP Tool Events (`aggregate_type: DynamicTool`)
 
-- **`DynamicToolRegisteredEvent`** (`DynamicToolRegistered`): Emitted when a dynamic FastMCP tool is registered or hot-reloaded at runtime. Broadcast on Redis Stream `runefoble:events:system`. Fields: `tool_name`, `description`, `parameters`, `author_id`, `campaign_id`, `metadata`.
-- **`DynamicToolUnregisteredEvent`** (`DynamicToolUnregistered`): Emitted when a dynamic tool is unregistered or retired from discovery. Broadcast on Redis Stream `runefoble:events:system`. Fields: `tool_name`, `unregistered_by`, `campaign_id`.
-- **`DynamicToolInvokedEvent`** (`DynamicToolInvoked`): Emitted when an agent or user invokes a dynamic tool via FastMCP or REST frontdoors. Broadcast on Redis Stream `runefoble:events:system`. Fields: `tool_name`, `user_id`, `session_id`, `campaign_id`, `arguments`, `duration_ms`, `success`, `error`.
+- **`DynamicToolRegisteredEvent`** (`DynamicToolRegistered`): Emitted when a dynamic FastMCP tool is registered or hot-reloaded at runtime. Broadcast on Redis Stream `runefoble.events.system`. Fields: `tool_name`, `description`, `parameters`, `author_id`, `campaign_id`, `metadata`.
+- **`DynamicToolUnregisteredEvent`** (`DynamicToolUnregistered`): Emitted when a dynamic tool is unregistered or retired from discovery. Broadcast on Redis Stream `runefoble.events.system`. Fields: `tool_name`, `unregistered_by`, `campaign_id`.
+- **`DynamicToolInvokedEvent`** (`DynamicToolInvoked`): Emitted when an agent or user invokes a dynamic tool via FastMCP or REST frontdoors. Broadcast on Redis Stream `runefoble.events.system`. Fields: `tool_name`, `user_id`, `session_id`, `campaign_id`, `arguments`, `duration_ms`, `success`, `error`.
 
 

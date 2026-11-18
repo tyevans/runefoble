@@ -9,7 +9,7 @@ from typing import Any
 from opentelemetry import trace
 
 logger = logging.getLogger("runefoble.gateway_mcp.dynamic.events")
-SYSTEM_STREAM = "runefoble:events:system"
+SYSTEM_STREAM = "runefoble.events.system"
 _event_bus: Any = None
 # Strong references keep fire-and-forget publish tasks alive until they finish.
 _pending_publishes: set[asyncio.Task[None]] = set()
