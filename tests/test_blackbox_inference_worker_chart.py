@@ -59,7 +59,13 @@ def test_chart_renders_inference_worker_deployment_with_probe_and_env():
     assert env["RUNEFOBLE_WORKER_BACKEND"] == "mock"
     assert "RUNEFOBLE_WORKER_OPENAI_BASE_URL" in env
     assert env["RUNEFOBLE_WORKER_REDIS_ENABLED"] == "false"
-    assert not any("secretKeyRef" in item.get("valueFrom", {}) for item in container["env"])
+    credential = next(
+        item for item in container["env"] if item["name"] == "RUNEFOBLE_SERVICE_CREDENTIAL"
+    )
+    assert credential["valueFrom"]["secretKeyRef"] == {
+        "name": "runefoble-credentials",
+        "key": "service-credential",
+    }
 
     probe = container["readinessProbe"]["httpGet"]
     assert probe == {"path": "/healthz", "port": WORKER_PORT}

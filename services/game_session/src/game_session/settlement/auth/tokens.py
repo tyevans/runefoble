@@ -8,6 +8,7 @@ from __future__ import annotations
 from typing import Annotated
 
 from fastapi import Depends
+from runefoble_auth.caller import CallerIdentity, require_user_or_service_credential
 from runefoble_auth.principal import (
     VerifiedPrincipal,
     authenticate_authorization,
@@ -15,6 +16,7 @@ from runefoble_auth.principal import (
 )
 from runefoble_auth.zitadel import ZitadelAuthService
 from runefoble_platform.config import PlatformSettings
+from runefoble_platform.service_credential import expected_service_credential
 
 _auth_service: ZitadelAuthService | None = None
 
@@ -27,7 +29,7 @@ def get_zitadel_auth_service() -> ZitadelAuthService:
         _auth_service = ZitadelAuthService(
             issuer=settings.zitadel_issuer,
             audience=settings.zitadel_audience,
-            jwks_url=settings.zitadel_jwks_url,
+            internal_url=settings.zitadel_internal_url,
         )
     return _auth_service
 
@@ -61,3 +63,10 @@ def get_caller_id(principal: CallerPrincipal) -> str:
 
 
 CallerId = Annotated[str, Depends(get_caller_id)]
+
+# Service credential (ADR-0015 e). Read once at import, so a service without it never starts.
+SERVICE_CREDENTIAL = expected_service_credential()
+get_caller_or_service = require_user_or_service_credential(
+    get_zitadel_auth_service, SERVICE_CREDENTIAL
+)
+CallerOrService = Annotated[CallerIdentity, Depends(get_caller_or_service)]

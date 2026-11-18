@@ -95,7 +95,7 @@ def get_zitadel_auth_service() -> ZitadelAuthService:
         _zitadel_auth_service = ZitadelAuthService(
             issuer=settings.zitadel_issuer,
             audience=settings.zitadel_audience,
-            jwks_url=settings.zitadel_jwks_url,
+            internal_url=settings.zitadel_internal_url,
         )
     return _zitadel_auth_service
 

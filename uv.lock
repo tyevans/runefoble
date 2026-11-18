@@ -3,8 +3,8 @@ revision = 3
 requires-python = ">=3.13"
 resolution-markers = [
     "python_full_version >= '3.15' and sys_platform == 'win32'",
-    "python_full_version == '3.14.*' and sys_platform == 'win32'",
     "python_full_version >= '3.15' and sys_platform != 'win32'",
+    "python_full_version == '3.14.*' and sys_platform == 'win32'",
     "python_full_version == '3.14.*' and sys_platform != 'win32'",
     "python_full_version < '3.14' and sys_platform == 'win32'",
     "python_full_version < '3.14' and sys_platform != 'win32'",
@@ -934,6 +934,7 @@ dependencies = [
     { name = "pydantic" },
     { name = "pydantic-settings" },
     { name = "rules-compendium" },
+    { name = "runefoble-platform" },
     { name = "uvicorn" },
 ]
 
@@ -945,6 +946,7 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.13.5" },
     { name = "pydantic-settings", specifier = ">=2.15.0" },
     { name = "rules-compendium", editable = "services/rules_compendium" },
+    { name = "runefoble-platform", editable = "libs/runefoble_platform" },
     { name = "uvicorn", specifier = ">=0.54.0" },
 ]
 
@@ -3126,6 +3128,7 @@ dependencies = [
     { name = "fastapi" },
     { name = "pydantic" },
     { name = "pyjwt" },
+    { name = "runefoble-platform" },
 ]
 
 [package.metadata]
@@ -3135,6 +3138,7 @@ requires-dist = [
     { name = "fastapi", specifier = ">=0.141.1" },
     { name = "pydantic", specifier = ">=2.13.5" },
     { name = "pyjwt", specifier = ">=2.15.0" },
+    { name = "runefoble-platform", editable = "libs/runefoble_platform" },
 ]
 
 [[package]]

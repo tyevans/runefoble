@@ -4,6 +4,7 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import Depends, Request
+from runefoble_auth.caller import CallerIdentity, require_user_or_service_credential
 from runefoble_auth.principal import VerifiedPrincipal, require_principal
 from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
 from runefoble_auth.zitadel import ZitadelAuthService
@@ -12,6 +13,7 @@ from runefoble_platform.event_sourcing import (
     AggregateRepository,
     create_aggregate_repository,
 )
+from runefoble_platform.service_credential import expected_service_credential
 
 from rules_compendium.aggregate import CompendiumAggregate, EncounterAggregate
 from rules_compendium.retrieval import CompendiumRetrievalEngine
@@ -69,7 +71,7 @@ def get_zitadel_auth_service() -> ZitadelAuthService:
         _zitadel_auth_service = ZitadelAuthService(
             issuer=settings.zitadel_issuer,
             audience=settings.zitadel_audience,
-            jwks_url=settings.zitadel_jwks_url,
+            internal_url=settings.zitadel_internal_url,
         )
     return _zitadel_auth_service
 
@@ -81,6 +83,14 @@ def set_zitadel_auth_service(service: ZitadelAuthService | None) -> None:
 
 
 get_current_principal = require_principal(get_zitadel_auth_service)
+
+
+# Service credential (ADR-0015 e). Read once at import, so a service without it never starts.
+SERVICE_CREDENTIAL = expected_service_credential()
+get_caller_or_service = require_user_or_service_credential(
+    get_zitadel_auth_service, SERVICE_CREDENTIAL
+)
+CallerOrService = Annotated[CallerIdentity, Depends(get_caller_or_service)]
 
 
 def get_current_user_id(

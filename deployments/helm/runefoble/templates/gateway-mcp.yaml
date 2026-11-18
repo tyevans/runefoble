@@ -25,6 +25,7 @@ spec:
           ports:
             - containerPort: {{ $mcp.port }}
           env:
+            {{- include "runefoble.serviceCredentialEnv" $ | nindent 12 }}
             - name: BOARD_STATE_URL
               value: {{ $mcp.boardStateUrl | quote }}
             - name: CHARACTER_SHEET_URL

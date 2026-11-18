@@ -32,9 +32,14 @@ async function freePort(): Promise<number> {
   });
 }
 
-/** Stands in for Zitadel's JWKS endpoint, which start-up does not read when the URL is set. */
+/** Stands in for Zitadel's discovery document and JWKS endpoint. Start-up reads both. */
 async function startJwksStub(): Promise<Server> {
-  const server = createHttpServer((_req, res) => {
+  const server = createHttpServer((req, res) => {
+    if (req.url === '/.well-known/openid-configuration') {
+      res.writeHead(200, { 'content-type': 'application/json' });
+      res.end(JSON.stringify({ jwks_uri: 'http://zitadel.test/oauth/v2/keys' }));
+      return;
+    }
     res.writeHead(200, { 'content-type': 'application/json' });
     res.end(JSON.stringify({ keys: [] }));
   });
@@ -73,7 +78,7 @@ test('the dev script starts the service and serves GET /healthz', async () => {
       HOST: '127.0.0.1',
       RUNEFOBLE_ZITADEL_ISSUER: 'http://zitadel.test',
       RUNEFOBLE_ZITADEL_AUDIENCE: 'runefoble-api',
-      RUNEFOBLE_ZITADEL_JWKS_URL: `http://127.0.0.1:${jwksPort}/keys`,
+      RUNEFOBLE_ZITADEL_INTERNAL_URL: `http://127.0.0.1:${jwksPort}`,
       RUNEFOBLE_SPICEDB_ENDPOINT: '127.0.0.1:50051',
       RUNEFOBLE_SPICEDB_PRESHARED_KEY: 'test-only',
     },

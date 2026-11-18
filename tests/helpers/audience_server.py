@@ -12,6 +12,7 @@ import socket
 import subprocess
 import threading
 import time
+import urllib.parse
 from collections.abc import Generator, Mapping
 from functools import lru_cache
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -40,14 +41,21 @@ def bearer_for(sub: str) -> dict[str, str]:
 
 
 class _JwksServer:
-    """Serves one JWK set at /keys on 127.0.0.1 until stopped."""
+    """Serves OIDC discovery and one JWK set on 127.0.0.1. Answers only the issuer host."""
 
     def __init__(self, issuer: SigningTestIssuer) -> None:
-        body = json.dumps(issuer.jwks()).encode("utf-8")
+        keys = json.dumps(issuer.jwks()).encode("utf-8")
+        discovery = json.dumps({"jwks_uri": f"{issuer.issuer}/oauth/v2/keys"}).encode("utf-8")
+        issuer_host = urllib.parse.urlsplit(issuer.issuer).netloc
+        routes = {
+            "/.well-known/openid-configuration": discovery,
+            "/oauth/v2/keys": keys,
+        }
 
         class Handler(BaseHTTPRequestHandler):
             def do_GET(self) -> None:  # noqa: N802 - http.server naming
-                if self.path != "/keys":
+                body = routes.get(self.path)
+                if self.headers.get("Host") != issuer_host or body is None:
                     self.send_error(404)
                     return
                 self.send_response(200)
@@ -65,7 +73,7 @@ class _JwksServer:
 
     @property
     def url(self) -> str:
-        return f"http://127.0.0.1:{self._server.server_address[1]}/keys"
+        return f"http://127.0.0.1:{self._server.server_address[1]}"
 
     def stop(self) -> None:
         self._server.shutdown()
@@ -127,7 +135,7 @@ class AudienceStudioProcess:
 
         # A fresh JWKS server per start. The key pair is kept, so tokens stay valid across restarts.
         self._jwks = _JwksServer(self.issuer)
-        env["RUNEFOBLE_ZITADEL_JWKS_URL"] = self._jwks.url
+        env["RUNEFOBLE_ZITADEL_INTERNAL_URL"] = self._jwks.url
 
         dist_index = SERVICE_DIR / "dist" / "index.js"
         build_audience_studio()

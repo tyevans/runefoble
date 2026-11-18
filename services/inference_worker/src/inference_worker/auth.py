@@ -1,38 +1,34 @@
 """Service credential guard for inference worker routes (ADR-0015 e).
 
-Callers are other services, never browsers. Each request presents
-`Authorization: Bearer <service token>`. The token comparison is constant time.
+Callers are other services, never browsers. Each request presents the shared service
+credential in the `X-Runefoble-Service-Credential` header. The comparison is constant time.
 """
 
 from __future__ import annotations
 
-import hmac
 from collections.abc import Callable
 from typing import Annotated
 
 from fastapi import Header, HTTPException
+from runefoble_platform.service_credential import (
+    SERVICE_CREDENTIAL_HEADER,
+    service_credential_matches,
+)
 
 
-def _bearer_value(authorization: str | None) -> str | None:
-    if not authorization:
-        return None
-    scheme, _, value = authorization.partition(" ")
-    if scheme != "Bearer":
-        return None
-    return value.strip() or None
+def service_credential_guard(expected_credential: str) -> Callable[..., None]:
+    """Build a dependency that accepts only the configured service credential. No fallback."""
 
-
-def service_token_guard(expected_token: str) -> Callable[..., None]:
-    """Build a dependency that accepts only the configured service token. No fallback."""
-    expected = expected_token.encode()
-
-    def _guard(authorization: Annotated[str | None, Header()] = None) -> None:
-        presented = _bearer_value(authorization)
-        if presented is None or not hmac.compare_digest(presented.encode(), expected):
+    def _guard(
+        service_credential: Annotated[str | None, Header(alias=SERVICE_CREDENTIAL_HEADER)] = None,
+    ) -> None:
+        if not service_credential_matches(service_credential, expected_credential):
             raise HTTPException(
                 status_code=401,
-                detail={"error": "unauthorized", "message": "Missing or invalid service token"},
-                headers={"WWW-Authenticate": "Bearer"},
+                detail={
+                    "error": "unauthorized",
+                    "message": "Missing or invalid service credential",
+                },
             )
 
     return _guard

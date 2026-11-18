@@ -329,7 +329,7 @@ Every `voice-agent` HTTP route except `GET /healthz` and `GET /ui/manifest` requ
 
 Every `voice-agent` WebSocket route (`/api/v1/voice/duplex/ws/...`, `/api/v1/voice/stream/ws/...`) admits the handshake only with a valid `runefoble.bearer.<jwt>` subprotocol. The service accepts with `runefoble.v1`. A refused handshake closes with code `1008` before accept.
 
-`game-session` forwards the caller's `Authorization` header on `POST /api/v1/voice/dsp/condition`. No service credential exists yet (ADR-0015 e). Until one exists, the caller's token is the only credential for that call.
+`game-session` forwards the caller's `Authorization` header on `POST /api/v1/voice/dsp/condition`. `voice-agent` does not accept the service credential yet (ADR-0015 e). Until it does, the caller's token is the only credential for that call.
 
 ## Gateway Proxy Identity and Errors
 
@@ -367,7 +367,7 @@ Engine failure returns `503` with `{"detail": {"error": "speech_synthesis_unavai
 
 Public routes: `/healthz`, `/health`, `/ui/manifest`, and `/openapi.json`.
 
-The shared settings are `RUNEFOBLE_ZITADEL_ISSUER`, `RUNEFOBLE_ZITADEL_AUDIENCE`, and `RUNEFOBLE_ZITADEL_JWKS_URL`. The Helm chart sets them for each service.
+The shared settings are `RUNEFOBLE_ZITADEL_ISSUER`, `RUNEFOBLE_ZITADEL_AUDIENCE`, and `RUNEFOBLE_ZITADEL_INTERNAL_URL`. The Helm chart sets them for each service. The audience comes from the Secret `runefoble-zitadel-client`.
 
 ## Infrastructure Ports
 

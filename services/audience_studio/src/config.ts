@@ -42,7 +42,7 @@ export function readSpicedbPresharedKey(env: NodeJS.ProcessEnv): string {
 
 /**
  * Read the Zitadel verification settings. The issuer and audience are required.
- * The JWKS URL is optional. Without it, the service reads it from OIDC discovery.
+ * The internal URL is optional. Set it when the issuer host is not resolvable from the pod.
  */
 export function readZitadelSettings(env: NodeJS.ProcessEnv): ZitadelSettings {
   const issuer = env.RUNEFOBLE_ZITADEL_ISSUER;
@@ -53,6 +53,6 @@ export function readZitadelSettings(env: NodeJS.ProcessEnv): ZitadelSettings {
   if (!audience) {
     throw new Error('RUNEFOBLE_ZITADEL_AUDIENCE is not set. The service cannot verify tokens without it.');
   }
-  const jwksUrl = env.RUNEFOBLE_ZITADEL_JWKS_URL || undefined;
-  return { issuer, audience, jwksUrl };
+  const internalUrl = env.RUNEFOBLE_ZITADEL_INTERNAL_URL || undefined;
+  return { issuer, audience, internalUrl };
 }

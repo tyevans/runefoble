@@ -1,8 +1,9 @@
 /**
  * Shared helpers for Audience Studio tests.
  *
- * TestIssuer plays the Zitadel role. It serves a real JWKS document over HTTP and mints
- * RS256 tokens. The service under test fetches the keys from that URL, as in deployment.
+ * TestIssuer plays the Zitadel role. It serves OIDC discovery and a real JWKS document over
+ * HTTP, and mints RS256 tokens. Like Zitadel, it answers only the issuer host in the Host
+ * header. The service under test reaches it through the internal URL, as in deployment.
  */
 
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
@@ -38,25 +39,33 @@ export class TestIssuer {
     private readonly privateKey: CryptoKey,
     private readonly jwk: JWK,
     private readonly server: Server,
-    /** URL that the service under test reads its signing keys from. */
-    readonly jwksUrl: string
+    /** Origin that the service under test reads discovery and signing keys from. */
+    readonly internalUrl: string
   ) {}
 
   static async start(): Promise<TestIssuer> {
     const { privateKey, publicKey } = await generateKeyPair('RS256');
     const jwk = { ...(await exportJWK(publicKey)), kid: KID, alg: 'RS256', use: 'sig' };
-    const body = JSON.stringify({ keys: [jwk] });
+    const keys = JSON.stringify({ keys: [jwk] });
+    const discovery = JSON.stringify({ jwks_uri: `${TEST_ISSUER}/oauth/v2/keys` });
     const server = createServer((req: IncomingMessage, res: ServerResponse) => {
-      if (req.url === '/keys') {
-        res.writeHead(200, { 'content-type': 'application/json' });
-        res.end(body);
+      if (req.headers.host !== new URL(TEST_ISSUER).host) {
+        res.writeHead(404, { 'content-type': 'application/json' }).end('{"message":"Instance not found"}');
+        return;
+      }
+      if (req.url === '/.well-known/openid-configuration') {
+        res.writeHead(200, { 'content-type': 'application/json' }).end(discovery);
+        return;
+      }
+      if (req.url === '/oauth/v2/keys') {
+        res.writeHead(200, { 'content-type': 'application/json' }).end(keys);
         return;
       }
       res.writeHead(404).end();
     });
     await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
     const { port } = server.address() as AddressInfo;
-    return new TestIssuer(privateKey, jwk, server, `http://127.0.0.1:${port}/keys`);
+    return new TestIssuer(privateKey, jwk, server, `http://127.0.0.1:${port}`);
   }
 
   async close(): Promise<void> {
@@ -119,7 +128,8 @@ export function mintAlgNone(sub: string): string {
 export interface ServiceOptions {
   /** Authorization port. Tests share one fake across restarts, as SpiceDB keeps its relations. */
   spicedb?: SpiceDbPort;
-  jwksUrl?: string;
+  /** Origin that the service reads discovery and keys from. Defaults to the test issuer. */
+  internalUrl?: string;
 }
 
 /** Builds a server that trusts the given issuer. Stores and streams are in memory (tests only). */
@@ -127,7 +137,7 @@ export async function startService(issuer: TestIssuer, options: ServiceOptions =
   return buildServer({
     spicedb: options.spicedb ?? new FakeSpiceDb(),
     logger: false,
-    zitadel: { issuer: TEST_ISSUER, audience: TEST_AUDIENCE, jwksUrl: options.jwksUrl ?? issuer.jwksUrl },
+    zitadel: { issuer: TEST_ISSUER, audience: TEST_AUDIENCE, internalUrl: options.internalUrl ?? issuer.internalUrl },
     createAdapters: async () => ({
       eventStore: new MemoryEventStore(),
       streamPublisher: new InMemoryStreamPublisher(),

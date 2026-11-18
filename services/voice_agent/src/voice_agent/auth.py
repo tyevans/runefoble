@@ -25,7 +25,7 @@ def get_voice_verifier() -> ZitadelAuthService:
         _verifier = ZitadelAuthService(
             issuer=settings.zitadel_issuer,
             audience=settings.zitadel_audience,
-            jwks_url=settings.zitadel_jwks_url,
+            internal_url=settings.zitadel_internal_url,
         )
     return _verifier
 

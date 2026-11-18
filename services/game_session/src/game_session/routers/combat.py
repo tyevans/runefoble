@@ -13,10 +13,10 @@ from game_session.models import (
     NextTurnRequest,
     StartCombatRequest,
 )
-from game_session.settlement.auth.tokens import get_caller_principal
+from game_session.settlement.auth.tokens import get_caller_or_service, get_caller_principal
 from runefoble_platform.event_sourcing import AggregateRepository
 
-router = APIRouter(dependencies=[Depends(get_caller_principal)], tags=["combat"])
+router = APIRouter(tags=["combat"])
 
 _repo: AggregateRepository[GameSessionAggregate] = default_repo
 
@@ -34,7 +34,11 @@ def _build_combat_response(
     )
 
 
-@router.post("/api/v1/sessions/{session_id}/combat/start", response_model=CombatStateResponse)
+@router.post(
+    "/api/v1/sessions/{session_id}/combat/start",
+    dependencies=[Depends(get_caller_principal)],
+    response_model=CombatStateResponse,
+)
 async def start_combat_encounter(session_id: UUID, req: StartCombatRequest | None = None):
     """Start combat encounter and initiate turn/round tracking."""
     combatants = req.combatants if req else []
@@ -52,7 +56,11 @@ async def start_combat_encounter(session_id: UUID, req: StartCombatRequest | Non
     return _build_combat_response(session)
 
 
-@router.post("/api/v1/sessions/{session_id}/combat/initiative", response_model=CombatStateResponse)
+@router.post(
+    "/api/v1/sessions/{session_id}/combat/initiative",
+    dependencies=[Depends(get_caller_principal)],
+    response_model=CombatStateResponse,
+)
 async def roll_combat_initiative(session_id: UUID, req: InitiativeRollRequest):
     """Submit or update initiative roll for a combatant."""
     try:
@@ -74,7 +82,11 @@ async def roll_combat_initiative(session_id: UUID, req: InitiativeRollRequest):
     return _build_combat_response(session)
 
 
-@router.post("/api/v1/sessions/{session_id}/combat/next-turn", response_model=CombatStateResponse)
+@router.post(
+    "/api/v1/sessions/{session_id}/combat/next-turn",
+    dependencies=[Depends(get_caller_principal)],
+    response_model=CombatStateResponse,
+)
 async def advance_combat_turn(session_id: UUID, req: NextTurnRequest | None = None):
     """Advance turn to next combatant in initiative order, cycling rounds."""
     turn_secs = req.turn_seconds if req else 60
@@ -92,7 +104,11 @@ async def advance_combat_turn(session_id: UUID, req: NextTurnRequest | None = No
     return _build_combat_response(session, turn_seconds=turn_secs)
 
 
-@router.post("/api/v1/sessions/{session_id}/combat/end", response_model=CombatStateResponse)
+@router.post(
+    "/api/v1/sessions/{session_id}/combat/end",
+    dependencies=[Depends(get_caller_principal)],
+    response_model=CombatStateResponse,
+)
 async def end_combat_encounter(session_id: UUID):
     """Conclude active combat encounter."""
     try:
@@ -109,7 +125,11 @@ async def end_combat_encounter(session_id: UUID):
     return _build_combat_response(session)
 
 
-@router.get("/api/v1/sessions/{session_id}/combat", response_model=CombatStateResponse)
+@router.get(
+    "/api/v1/sessions/{session_id}/combat",
+    dependencies=[Depends(get_caller_or_service)],
+    response_model=CombatStateResponse,
+)
 async def get_combat_state(session_id: UUID):
     """Retrieve current combat encounter state, initiative order, active turn, and timer."""
     try:

@@ -6,6 +6,7 @@ HTTP route.
 """
 
 import json
+import os
 import threading
 from collections.abc import Iterator
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -18,6 +19,7 @@ from inference_worker.api import app
 from inference_worker.config import WorkerSettings
 from inference_worker.llm_client import MultiBackendLLMClient
 from pydantic import SecretStr
+from runefoble_platform.service_credential import SERVICE_CREDENTIAL_HEADER
 
 INTENT_CONTENT = json.dumps(
     {
@@ -107,7 +109,10 @@ async def test_intent_route_calls_openai_backend_with_configured_secret(
             {"token_id": "tok-skel-1", "name": "Skeleton", "token_type": "monster", "x": 3, "y": 4}
         ],
     }
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+    headers = {SERVICE_CREDENTIAL_HEADER: os.environ["RUNEFOBLE_SERVICE_CREDENTIAL"]}
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test", headers=headers
+    ) as ac:
         resp = await ac.post("/inference/v1/intent", json=payload)
 
     assert resp.status_code == 200

@@ -1,7 +1,8 @@
-"""Blackbox checks for Zitadel issuer consistency in the rendered Helm chart.
+"""Blackbox checks for Zitadel issuer, audience, and bootstrap wiring in the rendered Helm chart.
 
 The tests render the umbrella chart and read the public manifests only. The browser-facing
-issuer must equal the `iss` value that Zitadel writes, and every service must use it.
+issuer must equal the `iss` value that Zitadel writes, and every service must use it. The
+audience and client ID come from the Secret that the bootstrap Job writes.
 """
 
 import json
@@ -14,7 +15,8 @@ import yaml
 
 HELM_CHART = Path("deployments/helm/runefoble")
 EXPECTED_ISSUER = "http://auth.localhost"
-EXPECTED_JWKS_URL = "http://zitadel:8080/oauth/v2/keys"
+EXPECTED_INTERNAL_URL = "http://zitadel:8080"
+CLIENT_SECRET = "runefoble-zitadel-client"
 ZITADEL_HOST = "auth.localhost"
 
 
@@ -43,6 +45,10 @@ def _env_map(container: dict) -> dict[str, str]:
     return {item["name"]: item.get("value") for item in container.get("env", [])}
 
 
+def _env_entry(container: dict, name: str) -> dict:
+    return next(item for item in container.get("env", []) if item["name"] == name)
+
+
 def test_zitadel_writes_browser_facing_external_domain():
     """Zitadel serves the browser-facing host, port, and protocol, so `iss` matches the issuer."""
     docs = _render()
@@ -53,8 +59,8 @@ def test_zitadel_writes_browser_facing_external_domain():
     assert env.get("ZITADEL_EXTERNALSECURE") == "false"
 
 
-def test_every_service_uses_the_browser_facing_issuer_and_internal_jwks():
-    """All deployments that verify tokens share one issuer and one in-cluster JWKS URL."""
+def test_every_service_uses_the_browser_facing_issuer_internal_url_and_project_audience():
+    """All deployments that verify tokens share one issuer, one in-cluster origin, and the project audience."""
     docs = _render()
     checked = []
     for doc in docs:
@@ -64,9 +70,16 @@ def test_every_service_uses_the_browser_facing_issuer_and_internal_jwks():
             env = _env_map(container)
             if "RUNEFOBLE_ZITADEL_ISSUER" not in env:
                 continue
-            checked.append(doc["metadata"]["name"])
-            assert env["RUNEFOBLE_ZITADEL_ISSUER"] == EXPECTED_ISSUER, doc["metadata"]["name"]
-            assert env["RUNEFOBLE_ZITADEL_JWKS_URL"] == EXPECTED_JWKS_URL, doc["metadata"]["name"]
+            name = doc["metadata"]["name"]
+            checked.append(name)
+            assert env["RUNEFOBLE_ZITADEL_ISSUER"] == EXPECTED_ISSUER, name
+            assert env["RUNEFOBLE_ZITADEL_INTERNAL_URL"] == EXPECTED_INTERNAL_URL, name
+            assert "RUNEFOBLE_ZITADEL_JWKS_URL" not in env, name
+            audience = _env_entry(container, "RUNEFOBLE_ZITADEL_AUDIENCE")
+            assert audience["valueFrom"]["secretKeyRef"] == {
+                "name": CLIENT_SECRET,
+                "key": "project-id",
+            }, name
     assert "gateway-api" in checked
     assert "asset-forge" in checked
 
@@ -85,19 +98,31 @@ def test_zitadel_host_is_routed_to_zitadel_and_not_under_a_path():
         assert all(p["path"] != "/auth" for p in paths), f"host {host} still routes /auth"
 
 
-def test_runtime_config_is_rendered_from_values_and_mounted_into_nginx():
-    """The frontend serves /runtime-config.json with the issuer, client ID, and scopes."""
+def test_runtime_config_template_takes_client_and_project_ids_from_the_secret():
+    """The frontend init container fills the generated IDs into the runtime config at start."""
     docs = _render()
     config_map = _find(docs, "ConfigMap", "frontend-runtime-config")
     runtime = json.loads(config_map["data"]["runtime-config.json"])
     assert runtime["issuer"] == EXPECTED_ISSUER
-    assert runtime["clientId"] == ""
-    assert runtime["scopes"] == ["openid", "profile", "email", "offline_access"]
+    assert runtime["clientId"] == "__RUNEFOBLE_CLIENT_ID__"
+    assert runtime["scopes"] == [
+        "openid",
+        "profile",
+        "email",
+        "offline_access",
+        "urn:zitadel:iam:org:project:id:__RUNEFOBLE_PROJECT_ID__:aud",
+    ]
     assert runtime["providerName"] == "Zitadel"
     assert "client_secret" not in config_map["data"]["runtime-config.json"]
 
     deployment = _find(docs, "Deployment", "frontend")
     pod = deployment["spec"]["template"]["spec"]
+    init = pod["initContainers"][0]
+    init_env = {item["name"]: item["valueFrom"]["secretKeyRef"] for item in init["env"]}
+    assert init_env == {
+        "RUNEFOBLE_CLIENT_ID": {"name": CLIENT_SECRET, "key": "client-id"},
+        "RUNEFOBLE_PROJECT_ID": {"name": CLIENT_SECRET, "key": "project-id"},
+    }
     mounts = pod["containers"][0]["volumeMounts"]
     assert {
         "name": "runtime-config",
@@ -106,4 +131,65 @@ def test_runtime_config_is_rendered_from_values_and_mounted_into_nginx():
         "readOnly": True,
     } in mounts
     volume = next(v for v in pod["volumes"] if v["name"] == "runtime-config")
-    assert volume["configMap"]["name"] == "frontend-runtime-config"
+    assert volume == {"name": "runtime-config", "emptyDir": {}}
+
+
+def test_bootstrap_job_runs_after_install_with_the_admin_token_from_a_secret():
+    """The bootstrap Job is a post-install hook. It reads the admin token from a Secret, not the Zitadel container."""
+    docs = _render()
+    job = _find(docs, "Job", "zitadel-bootstrap")
+    hook = job["metadata"]["annotations"]["helm.sh/hook"]
+    assert hook == "post-install,post-upgrade"
+    container = job["spec"]["template"]["spec"]["containers"][0]
+    env = _env_map(container)
+    assert env["RUNEFOBLE_ZITADEL_ISSUER"] == EXPECTED_ISSUER
+    assert env["RUNEFOBLE_ZITADEL_INTERNAL_URL"] == EXPECTED_INTERNAL_URL
+    assert env["RUNEFOBLE_ZITADEL_CLIENT_SECRET_NAME"] == CLIENT_SECRET
+    assert env["RUNEFOBLE_ZITADEL_PROJECT_NAME"] == "runefoble"
+    assert env["RUNEFOBLE_ZITADEL_APP_NAME"] == "runefoble-web"
+    assert env["RUNEFOBLE_ZITADEL_REDIRECT_URIS"] == "http://localhost/auth/callback"
+    assert env["RUNEFOBLE_ZITADEL_POST_LOGOUT_URIS"] == "http://localhost/"
+    assert _env_entry(container, "ZITADEL_ADMIN_PAT")["valueFrom"]["secretKeyRef"] == {
+        "name": "zitadel-admin",
+        "key": "pat",
+    }
+
+
+def test_bootstrap_role_may_write_only_the_client_secret_by_name():
+    """RBAC grants create on Secrets, and get or patch only on the client Secret by name."""
+    docs = _render()
+    role = _find(docs, "Role", "zitadel-bootstrap")
+    named = [rule for rule in role["rules"] if rule.get("resourceNames")]
+    assert named == [
+        {
+            "apiGroups": [""],
+            "resources": ["secrets"],
+            "resourceNames": [CLIENT_SECRET],
+            "verbs": ["get", "patch"],
+        }
+    ]
+    binding = _find(docs, "RoleBinding", "zitadel-bootstrap")
+    assert binding["subjects"][0]["name"] == "zitadel-bootstrap"
+
+
+def test_bootstrap_job_is_omitted_when_disabled():
+    """Set zitadel.bootstrap.enabled=false for the first install, before the admin token exists."""
+    if not shutil.which("helm"):
+        pytest.skip("helm CLI not available")
+    proc = subprocess.run(
+        [
+            "helm",
+            "template",
+            "runefoble",
+            str(HELM_CHART),
+            "--set",
+            "zitadel.bootstrap.enabled=false",
+        ],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    docs = [doc for doc in yaml.safe_load_all(proc.stdout) if doc]
+    assert not any(
+        doc.get("kind") == "Job" and doc["metadata"]["name"] == "zitadel-bootstrap" for doc in docs
+    )

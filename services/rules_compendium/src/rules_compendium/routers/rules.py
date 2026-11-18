@@ -9,6 +9,7 @@ from runefoble_auth.spicedb import SpiceDBClient
 from rules_compendium.dependencies import (
     CurrentUserId,
     check_user_can_view_campaign,
+    get_caller_or_service,
     get_current_user_id,
     get_retrieval_engine,
     get_spicedb_client,
@@ -19,11 +20,12 @@ from rules_compendium.retrieval import CompendiumRetrievalEngine
 router = APIRouter(
     prefix="/api/v1/compendium",
     tags=["Rules Compendium"],
-    dependencies=[Depends(get_current_user_id)],
 )
 
 
-@router.get("/rules/search", response_model=RuleSearchResponse)
+@router.get(
+    "/rules/search", dependencies=[Depends(get_current_user_id)], response_model=RuleSearchResponse
+)
 async def search_rules(
     query: Annotated[
         str, Query(description="Search term (e.g. 'fire damage', 'paralyzed', 'goblin')")
@@ -59,7 +61,7 @@ async def search_rules(
     )
 
 
-@router.get("/monsters/{name}")
+@router.get("/monsters/{name}", dependencies=[Depends(get_caller_or_service)])
 async def get_monster_by_name(
     name: str,
     engine: Annotated[CompendiumRetrievalEngine, Depends(get_retrieval_engine)],
@@ -71,7 +73,7 @@ async def get_monster_by_name(
     return monster
 
 
-@router.get("/spells/{name}")
+@router.get("/spells/{name}", dependencies=[Depends(get_current_user_id)])
 async def get_spell_by_name(
     name: str,
     engine: Annotated[CompendiumRetrievalEngine, Depends(get_retrieval_engine)],
@@ -83,7 +85,7 @@ async def get_spell_by_name(
     return spell
 
 
-@router.get("/conditions/{name}")
+@router.get("/conditions/{name}", dependencies=[Depends(get_current_user_id)])
 async def get_condition_by_name(
     name: str,
     engine: Annotated[CompendiumRetrievalEngine, Depends(get_retrieval_engine)],
