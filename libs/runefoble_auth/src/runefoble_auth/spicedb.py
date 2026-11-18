@@ -8,6 +8,7 @@ import logging
 import os
 from typing import Any
 
+from runefoble_auth.errors import AuthzUnavailableError
 from runefoble_auth.grpc_adapter import (
     create_grpc_client,
     grpc_check_permission,
@@ -138,7 +139,7 @@ class SpiceDBClient:
         if not resource_type:
             raise ValueError("resource_type is required to read SpiceDB relationships")
         if self._grpc_client is None:
-            raise RuntimeError(
+            raise AuthzUnavailableError(
                 f"SpiceDB client not initialized. Cannot read relationships from {self.endpoint}."
             )
         return await grpc_read_relationships(

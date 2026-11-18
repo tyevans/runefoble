@@ -6,6 +6,7 @@ import logging
 from typing import Any, Literal
 from uuid import UUID
 
+from runefoble_auth.errors import AuthzError
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.spicedb import MockSpiceDBClient, Relationship, SpiceDBClient
 from runefoble_auth.sync_events import (
@@ -27,6 +28,9 @@ from runefoble_auth.sync_tuples import (
 from runefoble_auth.zitadel import ZitadelAuthService
 
 logger = logging.getLogger(__name__)
+
+# A resource id that no tuple names. The health probe reads it and expects no rows.
+HEALTH_PROBE_RESOURCE_ID = "sync-health-probe"
 
 
 class ZitadelSpiceDBSyncService:
@@ -117,20 +121,34 @@ class ZitadelSpiceDBSyncService:
         return await reconcile_tuples(self.spicedb, self._write_tuple, expected_tuples)
 
     async def check_health(self) -> dict[str, Any]:
-        """Report synchronization health and SpiceDB connectivity."""
+        """Report synchronization health and SpiceDB connectivity.
+
+        Only SpiceDB failures (`AuthzError`) become an `unhealthy` reply. Every other exception
+        is a defect and propagates. The reply always carries the same four keys.
+        """
+        is_mock = isinstance(self.spicedb, MockSpiceDBClient) and not getattr(
+            self.spicedb, "_grpc_client", None
+        )
+        backend = "mock" if is_mock else "grpc"
         try:
-            await self.spicedb.read_relationships()
-            is_mock = isinstance(self.spicedb, MockSpiceDBClient) and not getattr(
-                self.spicedb, "_grpc_client", None
+            await self.spicedb.read_relationships(
+                resource_type="campaign", resource_id=HEALTH_PROBE_RESOURCE_ID
             )
+        except AuthzError as exc:
+            logger.warning("SpiceDB health probe failed: %s", exc)
             return {
-                "status": "healthy",
-                "spicedb_connected": True,
-                "sync_service": "operational",
-                "backend": "mock" if is_mock else "grpc",
+                "status": "unhealthy",
+                "spicedb_connected": False,
+                "sync_service": "unavailable",
+                "backend": backend,
+                "error": str(exc),
             }
-        except Exception as exc:
-            return {"status": "unhealthy", "spicedb_connected": False, "error": str(exc)}
+        return {
+            "status": "healthy",
+            "spicedb_connected": True,
+            "sync_service": "operational",
+            "backend": backend,
+        }
 
     async def handle_domain_event(self, event: Any, campaign_id: str | None = None) -> list[str]:
         return await handle_domain_event(self, event, campaign_id=campaign_id)

@@ -159,7 +159,13 @@ async def grpc_read_relationships(
             )
         return items
 
-    return await asyncio.to_thread(_stream_sync)
+    try:
+        return await asyncio.to_thread(_stream_sync)
+    except Exception as exc:
+        error = check_error_for(exc, "ReadRelationships")
+        if error is None:
+            raise
+        raise error from exc
 
 
 async def grpc_lookup_resources(
