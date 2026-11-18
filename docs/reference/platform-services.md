@@ -54,7 +54,7 @@ Runefoble is designed around a Kubernetes-first microservices topology deployed 
 - **Role**: Object-level access control enforcing who can view, run, mutate, or roll within campaigns, characters, and boards.
 - **Datastore Migrations**: Uses `spicedb datastore migrate head` executed via initContainers in the deployment and Helm schema job before serving or writing schemas.
 - **Schema**: `libs/runefoble_auth/schema/runefoble.zed`.
-- **Environment Variables**: `RUNEFOBLE_SPICEDB_ENDPOINT`, `RUNEFOBLE_SPICEDB_PRESHARED_KEY`. The preshared key is an operator secret with no default outside tests. A process that cannot read it exits at startup and names the variable. Helm supplies it from `spicedb.presharedKey` until TASK-0626 moves it to a Kubernetes Secret.
+- **Environment Variables**: `RUNEFOBLE_SPICEDB_ENDPOINT`, `RUNEFOBLE_SPICEDB_PRESHARED_KEY`. The preshared key is an operator secret with no default outside tests. A process that cannot read it exits at startup and names the variable. Helm reads it from the `runefoble-credentials` Secret, key `spicedb-preshared-key`, and passes it as `SPICEDB_GRPC_PRESHARED_KEY` to the SpiceDB server. See [Chart Credentials](#chart-credentials).
 - **Shared Factory**: `runefoble_auth.factory.get_spicedb_client()` is the only constructor for services and the gateway. It caches one client built from `PlatformSettings`. It raises `ConfigurationError` when the preshared key is missing.
 - **Fail-Closed Errors**: `check_permission` returns `False` only for a definitive `NO_PERMISSION`. Other failures raise a typed error from `runefoble_auth.errors`:
   - `AuthzUnavailableError`: gRPC `UNAVAILABLE` or `DEADLINE_EXCEEDED`, or a socket error. The gateway maps it to `503`.
@@ -70,7 +70,7 @@ Runefoble is designed around a Kubernetes-first microservices topology deployed 
 - **Issuer Variables** (set by the chart on every service that verifies tokens):
   - `RUNEFOBLE_ZITADEL_ISSUER`: the browser-facing issuer, `http://auth.localhost` by default. It must equal the token `iss` claim. Zitadel writes this value, built from `zitadel.externalDomain`, `externalPort`, and `externalSecure`.
   - `RUNEFOBLE_ZITADEL_JWKS_URL`: the in-cluster JWKS endpoint, `http://zitadel:8080/oauth/v2/keys`. Pods cannot resolve the browser-facing host, so the verifier does not read discovery.
-  - `RUNEFOBLE_ZITADEL_AUDIENCE`: the expected `aud` claim. Not yet set by the chart. It defaults to `RUNEFOBLE_ZITADEL_CLIENT_ID`.
+  - `RUNEFOBLE_ZITADEL_AUDIENCE`: the expected `aud` claim. The Python services default it to `RUNEFOBLE_ZITADEL_CLIENT_ID`, which the chart does not set. The Audience Studio chart sets it to `services.audienceStudio.zitadelAudience` (`runefoble-api`). The Node service refuses to start without it.
 - **Other Variables**: `RUNEFOBLE_ZITADEL_CLIENT_ID`. (`RUNEFOBLE_AUTH_DEV_MODE` was removed in TASK-0520.)
 - **Browser Runtime Config**: the frontend serves `/runtime-config.json` (issuer, client ID, scopes, provider name). The chart renders it from `frontend.runtimeConfig`. It holds no secret.
 - **Gateway CORS**: `RUNEFOBLE_CORS_ORIGINS` is a comma-separated list of browser origins allowed to call the gateway with credentials. The default is `http://localhost:5173,http://127.0.0.1:5173`. The value `*` is refused at startup.
@@ -104,6 +104,24 @@ Runefoble is designed around a Kubernetes-first microservices topology deployed 
 - **How-To Guide**: [Test Email Signups with Mailpit](../how-to/test-email-signups-with-mailpit.md).
 
 ---
+
+## Chart Credentials
+
+The chart stores every credential in one Kubernetes Secret and reads it with `secretKeyRef`. No container manifest holds a credential as a plain value.
+
+| Secret key | Values path | Read by |
+|---|---|---|
+| `postgres-password` | `credentials.postgres.password` | Every service with a database URL, SpiceDB, OpenPanel, Zitadel, Postgres |
+| `silo-access-key` | `credentials.silo.accessKey` | Silo, Soundscape, Asset Forge |
+| `silo-secret-key` | `credentials.silo.secretKey` | Silo, Soundscape, Asset Forge |
+| `spicedb-preshared-key` | `credentials.spicedb.presharedKey` | SpiceDB, schema job, all services that call SpiceDB |
+| `zitadel-masterkey` | `credentials.zitadel.masterKey` | Zitadel |
+| `zitadel-admin-password` | `credentials.zitadel.adminPassword` | Zitadel |
+| `grafana-admin-password` | `credentials.grafana.adminPassword` | Grafana |
+
+- **Local (`global.environment: local`)**: The chart renders the Secret from the `credentials` values. Those values are dev-only defaults. They are public in the repository.
+- **Other environments**: Set `credentials.existingSecret` to the name of a Secret that you manage. The chart renders no Secret. It fails `helm template` when `global.environment` is not `local` and `credentials.existingSecret` is empty.
+- **Database URLs**: The URLs use the Kubernetes `$(POSTGRES_PASSWORD)` expansion. The password does not appear in the URL value.
 
 ## Cross-Service URLs (TASK-0624)
 

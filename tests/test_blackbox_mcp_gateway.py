@@ -91,7 +91,7 @@ def tool_payload(result: CallToolResult) -> dict[str, Any]:
 @pytest.mark.asyncio
 async def test_blackbox_execute_agent_action_plan_invalid_tool():
     """Verify error handling when action plan specifies an invalid or unknown tool."""
-    tool = mcp.get_tool("execute_agent_action_plan")
+    tool = mcp._tool_manager.get_tool("execute_agent_action_plan")
     assert tool is not None
 
     plan = [

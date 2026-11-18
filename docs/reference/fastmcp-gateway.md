@@ -9,7 +9,6 @@ The gateway server entrypoint (`gateway/mcp/src/gateway_mcp/server.py`) operates
 gateway/mcp/src/gateway_mcp/
 ├── clients/               # HTTP clients for owning services (board_state, character_sheet, game_session, rules_compendium)
 │   └── services.py        # Typed async client and ServiceError types
-├── dynamic_registry.py    # Backward-compatible re-exports (< 30 lines)
 ├── dynamic/               # Dynamic tool registry package (< 140 lines per module)
 │   ├── auth.py            # SpiceDB Zanzibar authorization guard & relationship sync
 │   ├── builder.py         # Signature builder and callable adapter
