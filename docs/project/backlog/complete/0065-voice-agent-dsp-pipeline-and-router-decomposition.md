@@ -26,13 +26,13 @@ governing_stories:
 Complete
 
 ## Summary
-Decompose `services/voice_agent/src/voice_agent/dsp/` (373 lines, 74.6% of limit), `services/voice_agent/src/voice_agent/main.py` (384 lines, 76.8% of limit), and `services/voice_agent/src/voice_agent/room.py` (335 lines, 67.0% of limit) into modular DSP filter chains, phonetic generators, and FastAPI sub-routers before Hard Invariant 6 (File length limit < 500 lines) is breached.
+Decompose `services/voice_agent/src/voice_agent/dsp/` (373 lines, 74.6% of limit), `services/voice_agent/src/voice_agent/main.py` (384 lines, 76.8% of limit), and `services/voice_agent/src/voice_agent/room.py` (removed) (335 lines, 67.0% of limit) into modular DSP filter chains, phonetic generators, and FastAPI sub-routers before Hard Invariant 6 (File length limit < 500 lines) is breached.
 
 ## Problem Statement
 The `voice_agent` bounded context contains three core files approaching 400 lines:
 1. `services/voice_agent/src/voice_agent/dsp/` (373 lines) mixes high-level phonetic text mutation rules (drunken slurring regexes, stutters, and hiccup insertions) with low-level 16-bit signed PCM byte/array processing, DSP coefficient math, pitch shifting, reverb delay lines, and pipeline orchestration.
 2. `services/voice_agent/src/voice_agent/main.py` (384 lines) bundles FastAPI application instantiation, Redis Streams event bus listeners, speech-to-text endpoints, text-to-speech mock synthesis, and audio conditioning HTTP endpoints.
-3. `services/voice_agent/src/voice_agent/room.py` (335 lines) combines room lifecycle tracking, participant state dictionaries, audio stream session orchestration, and kick callbacks.
+3. `services/voice_agent/src/voice_agent/room.py` (removed) (335 lines) combines room lifecycle tracking, participant state dictionaries, audio stream session orchestration, and kick callbacks.
 
 As real STT (Whisper streaming in TASK-0039) and dynamic ambient soundscapes (TASK-0050) are integrated, these files will easily exceed the 500-line ceiling unless partitioned cleanly into single-responsibility modules.
 

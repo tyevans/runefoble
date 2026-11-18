@@ -54,7 +54,7 @@ Milestone 2 (Live Collaborative Alpha) requires live bidirectional voice communi
      - `webrtc_ice_candidate`: Relay trickle ICE candidates.
      - `webrtc_leave`: Gracefully terminate audio connection.
    - Enforce room session membership and authentication token validation with SpiceDB Zanzibar.
-3. **Voice Room Coordinator (`services/voice_agent/src/voice_agent/room.py` & `room_routes.py`)**:
+3. **Voice Room Coordinator (`services/voice_agent/src/voice_agent/room.py` (removed) & `room_routes.py`)**:
    - Track active audio rooms, peer lists, latency telemetry, and speaker audio levels.
    - Event-sourced `VoiceRoomAggregate` inheriting from `DeclarativeAggregate` with `@handles` methods (Hard Invariant 2).
    - Frontdoor HTTP endpoint `GET /api/v1/voice/rooms/{session_id}` returning active room participants and speaking status.
