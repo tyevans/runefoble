@@ -13,8 +13,6 @@ from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
-from runefoble_events.events import DiceSettled
-from runefoble_platform.event_sourcing import get_event_store
 
 from tests.helpers.mock_redis import MockAsyncRedis
 
@@ -87,23 +85,14 @@ def test_simulate_throw_cryptographic_alignment_all_polyhedral_types(
     assert 0 <= settled_cell[0] < 10
     assert 0 <= settled_cell[1] < 10
 
-    # 4. Verify domain event DiceSettled emitted to event store
-    store = get_event_store()
-    matching_events = [
-        env.event
-        for env in store._events
-        if (
-            isinstance(env.event, DiceSettled)
-            or getattr(env.event, "event_type", "")
-            in ("runefoble.events.board.dice.settled", "board.dice.settled")
-        )
-        and getattr(env.event, "dice_id", None) == data["dice_id"]
-    ]
-    assert len(matching_events) == 1
-    settled_evt = matching_events[0]
-    assert settled_evt.face_value == expected_face
-    assert settled_evt.dice_type == dice_type
-    assert settled_evt.bounces == data["bounces"]
+    # 4. Verify the settled roll through the public board read model
+    board = client.get(f"/api/v1/boards/{board_id}")
+    assert board.status_code == 200, board.text
+    settled = board.json()["last_dice_settled"]
+    assert settled["dice_id"] == data["dice_id"]
+    assert settled["face_value"] == expected_face
+    assert settled["dice_type"] == dice_type
+    assert settled["bounces"] == data["bounces"]
 
 
 def test_simulate_throw_boundary_bounce_and_energy_dissipation(
