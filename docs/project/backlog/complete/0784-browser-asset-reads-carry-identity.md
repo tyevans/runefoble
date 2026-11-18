@@ -1,7 +1,7 @@
 ---
 id: '0784'
 title: Browser Asset Reads Carry Identity
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies: []
 governing_adrs:
@@ -16,7 +16,7 @@ target_release: 0.9.0
 # TASK-0784: Browser Asset Reads Carry Identity
 
 ## Status
-Refined. Found during batch 23 integration, 2026-11-17.
+Complete
 
 ## Summary
 Asset reads now need a bearer and `forged_asset.view`. A browser `<img src>` or `<a href>` cannot send a bearer header, so any UI that renders an asset URL directly cannot show the asset.

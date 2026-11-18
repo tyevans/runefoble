@@ -1,7 +1,7 @@
 ---
 id: '0629'
 title: Make mypy Pass on gateway/mcp and Add It to the Lint Gate
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0489
@@ -17,7 +17,7 @@ target_release: 0.9.0
 # TASK-0629: Make mypy Pass on gateway/mcp and Add It to the Lint Gate
 
 ## Status
-Refined
+Complete
 
 ## Summary
 `uv run mypy gateway/mcp/src/gateway_mcp` reports 44 errors in 17 files. Most come from a missing `src/gateway_mcp/__init__.py`, which makes the package a namespace package. The rest come from a `FastMCP.get_tool` monkeypatch in `server.py:48`. Add the package marker, replace the monkeypatch with the public FastMCP lookup, and add mypy to the lint gate for this package.

@@ -1,7 +1,7 @@
 ---
 id: '0647'
 title: Storybook Stories Stop Requesting Missing Portrait SVG Assets
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0642
@@ -18,7 +18,7 @@ target_release: 0.9.0
 # TASK-0647: Storybook Stories Stop Requesting Missing Portrait SVG Assets
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Eight Storybook stories request `/assets/portraits/{fighter,wizard,cleric,rogue}.svg`. None of those files exists in the repository, so the stories log 404 errors. AGENTS.md DoD 3 requires zero console errors in Storybook. Ship real portrait assets, or point the stories at assets that exist. Also remove the App Shell placeholder reference to `fighter.svg` once TASK-0642 has landed.
@@ -38,13 +38,13 @@ Eight Storybook stories request `/assets/portraits/{fighter,wizard,cleric,rogue}
 - [`us-0004-developer-tests-component-in-storybook.md`](../../user_stories/accepted/us-0004-developer-tests-component-in-storybook.md)
 
 ## Detailed Specification & Implementation Plan
-1. Create four Bauhaus-style SVG portraits under `frontend/public/assets/portraits/` (`fighter.svg`, `wizard.svg`, `cleric.svg`, `rogue.svg`). Each is under 4 KB and uses only design tokens for colour.
+1. Create four Bauhaus-style SVG portraits under `frontend/public/assets/portraits/` (not created) (inline placeholders in `@runefoble/ui-core` replaced it; `fighter.svg`, `wizard.svg`, `cleric.svg`, `rogue.svg`). Each is under 4 KB and uses only design tokens for colour.
 2. Alternatively (decide at refinement, record the choice in the task file), point the stories at a single existing asset and remove the four classes. Pick one approach. Do not keep both.
 3. Add a Storybook check to `frontend/` that fails the build if a story requests a `/assets/` path that is not under `frontend/public/`. Implement it as a small Node script run by `pnpm run lint`.
 4. Confirm the eight story ids render with zero console errors.
 
 ## Frontdoor Blackbox Test Plan
-- A headless Storybook run (`pnpm storybook build` then a Playwright script in `frontend/tests/storybook-console.spec.ts`) loads each story id listed above and asserts no console error. Before the fix the eight stories FAIL. After the fix they PASS.
+- A headless Storybook run (`pnpm storybook build` then a Playwright script in `frontend/tests/storybook-console.spec.ts` (not created)) loads each story id listed above and asserts no console error. Before the fix the eight stories FAIL. After the fix they PASS.
 - The check is a Storybook frontdoor (rendered story), not a unit test of an internal class.
 - Playwright BDD scenario is not required for this task because it is not a user flow (DoR 8 applies to user-facing features).
 

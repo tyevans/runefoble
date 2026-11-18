@@ -1,7 +1,7 @@
 ---
 id: '0698'
 title: Restart Tests Run the Service in a Subprocess Over a Shared Event Store
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0697
@@ -16,7 +16,7 @@ target_release: 0.9.0
 # TASK-0698: Restart Tests Run the Service in a Subprocess Over a Shared Event Store
 
 ## Status
-Refined. Agreed at the refactor pause on 2026-11-17 (candidate 2).
+Complete
 
 ## Summary
 Restart tests (TASK-0567, TASK-0566) simulate a restart by re-importing service modules in the test process. This is fragile and can break other tests that hold module references.

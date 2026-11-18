@@ -1,7 +1,7 @@
 ---
 id: '0781'
 title: Character Sheet Store Outage Answers 503 and the Dice Test Reads Public State
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies: []
 governing_adrs:
@@ -16,13 +16,13 @@ target_release: 0.9.0
 # TASK-0781: Character Sheet Store Outage Answers 503 and the Dice Test Reads Public State
 
 ## Status
-Refined. Found during batch 23 integration, 2026-11-17.
+Complete
 
 ## Summary
 Some character_sheet write routes catch `Exception` and answer 400 when the event store is down. A store outage is a server fault and must answer 503. One dice-physics test reads the private event list of the in-memory store, which Hard Invariant 7 forbids.
 
 ## Problem Statement
-- `services/character_sheet/src/character_sheet/routers/`: write routes with `except Exception` that map every failure to 400. Find each with `grep -rn "except Exception" services/character_sheet/src`.
+- `services/character_sheet/src/character_sheet/routers/` (not created): write routes with `except Exception` that map every failure to 400. Find each with `grep -rn "except Exception" services/character_sheet/src`.
 - The dice-settled test under `tests/test_blackbox_*dice*` or `tests/test_blackbox_physics*` reads `store._events` (or the provider seam store) to assert a settled roll.
 
 ## Documentation & Architecture Review

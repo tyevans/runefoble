@@ -1,7 +1,7 @@
 ---
 id: '0644'
 title: Campaign Permissions Computed by the Gateway From SpiceDB Replace Client Role-Name Checks
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies: []
 governing_adrs:
@@ -20,7 +20,7 @@ target_release: 0.9.0
 # TASK-0644: Campaign Permissions Computed by the Gateway From SpiceDB Replace Client Role-Name Checks
 
 ## Status
-Refined
+Complete
 
 ## Summary
 The App Shell decides who may manage a campaign, launch a session, or invite players by comparing role strings. `isDM` is `roles.some(r => ['dm','admin','owner'].includes(r))`. The campaign role is compared to `'owner'` and `'dm'`. Hard Invariant 1 forbids role checks in business logic. The gateway should return the per-campaign permissions that SpiceDB computes. The App Shell reads those flags and never compares role names. Server-side checks stay authoritative.
@@ -52,7 +52,7 @@ The App Shell decides who may manage a campaign, launch a session, or invite pla
 
 ## Frontdoor Blackbox Test Plan
 - Pytest (`tests/test_blackbox_campaign_permissions.py`): a player's `GET /api/v1/campaigns/{id}` returns `permissions.manage == false` and `launch_session == false`. A DM's response returns `true`. Both come from the public route.
-- Playwright BDD (`e2e/features/campaign_permissions.feature`): a player opens a campaign and the "Launch session" control is not visible. The DM sees it. Setup uses the public campaign and role routes.
+- Playwright BDD (`e2e/features/campaign_permissions.feature` (not created)): a player opens a campaign and the "Launch session" control is not visible. The DM sees it. Setup uses the public campaign and role routes.
 - Before the change the player's UI shows the controls based on `isDM` (for example, a player whose role string is `owner` in a stale token would see them). After the change the flags decide. The scenario asserts visibility from the server flags.
 
 ## Definition of Done

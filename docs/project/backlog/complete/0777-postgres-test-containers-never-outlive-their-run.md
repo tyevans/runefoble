@@ -1,7 +1,7 @@
 ---
 id: '0777'
 title: PostgreSQL Test Containers Never Outlive Their Run
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies: []
 governing_adrs:
@@ -16,7 +16,7 @@ target_release: 0.9.0
 # TASK-0777: PostgreSQL Test Containers Never Outlive Their Run
 
 ## Status
-Refined. Found by the orchestrator on 2026-11-17.
+Complete
 
 ## Summary
 The `postgres_service` fixture starts a Docker container and stops it in its teardown. When a pytest run is killed (a timeout, an interrupt, a stopped agent), the teardown does not run. The container stays up until someone removes it by hand. Seven such containers were running on 2026-11-17, the oldest for seven hours.

@@ -1,7 +1,7 @@
 ---
 id: '0538'
 title: Client Authenticated Transport for API Calls and WebSockets, and Removal of Fixture Identity
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0524
@@ -19,7 +19,7 @@ target_release: 0.9.0
 # TASK-0538: Client Authenticated Transport for API Calls and WebSockets, and Removal of Fixture Identity
 
 ## Status
-Refined
+Complete
 
 ## Summary
 After sign-in works (TASK-0524), every client call must send the Zitadel token. Today the App Shell and several microfrontends send `X-User-Id` or open WebSockets with no token. The App Shell also uses a fixed user (`user-valeros`) and decides privileges from role strings. Send the token on every call, use the subprotocol contract for WebSockets, and remove fixture identity.

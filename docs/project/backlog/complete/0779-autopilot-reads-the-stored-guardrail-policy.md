@@ -1,7 +1,7 @@
 ---
 id: '0779'
 title: Autopilot Reads the Stored Guardrail Policy
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0691
@@ -17,7 +17,7 @@ target_release: 0.9.0
 # TASK-0779: Autopilot Reads the Stored Guardrail Policy
 
 ## Status
-Refined. Found during batch 23 integration, 2026-11-17.
+Complete
 
 ## Summary
 Autopilot takes the stand-in guardrail policy from its request body. The caller can send a weaker policy than the one stored on the character, so the DM-set guardrails do not bind the stand-in.

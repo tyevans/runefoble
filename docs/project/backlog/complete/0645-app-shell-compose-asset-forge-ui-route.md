@@ -1,7 +1,7 @@
 ---
 id: '0645'
 title: App Shell Composes the Asset Forge Microfrontend on a Deep-Linkable Route
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0595
@@ -24,7 +24,7 @@ target_release: 0.9.0
 # TASK-0645: App Shell Composes the Asset Forge Microfrontend on a Deep-Linkable Route
 
 ## Status
-Refined
+Complete
 
 Audit 2026-11-17: proposed TASK-0348 replaced by TASK-0595, which owns the gateway assets proxy that this task needs. TASK-0348 is partly superseded.
 

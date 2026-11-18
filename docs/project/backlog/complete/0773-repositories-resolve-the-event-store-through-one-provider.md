@@ -1,7 +1,7 @@
 ---
 id: '0773'
 title: Repositories Resolve the Event Store Through One Provider
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0707
@@ -18,7 +18,7 @@ target_release: 0.9.0
 # TASK-0773: Repositories Resolve the Event Store Through One Provider
 
 ## Status
-Refined. Round-3 triage (`.audit/drafts/round3-notes.md`).
+Complete
 
 ## Summary
 Module-level aggregate repositories capture the event store at import time. Fixtures that replace the store later leave those repositories on the old store, so tests patch a store the route does not use.

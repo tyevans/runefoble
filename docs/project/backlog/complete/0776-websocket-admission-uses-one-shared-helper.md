@@ -1,7 +1,7 @@
 ---
 id: '0776'
 title: WebSocket Admission Uses One Shared Helper
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0593
@@ -17,7 +17,7 @@ target_release: 0.9.0
 # TASK-0776: WebSocket Admission Uses One Shared Helper
 
 ## Status
-Refined. Refactor pause, 2026-11-17.
+Complete
 
 ## Summary
 Five tasks (0770, 0544, 0547, 0548, 0593) each wrote their own WebSocket connect check and close-code handling. The codes drifted (1008, 4003, 4403) until the orchestrator set one standard. Agreed at the refactor pause on 2026-11-17 (candidate 3).

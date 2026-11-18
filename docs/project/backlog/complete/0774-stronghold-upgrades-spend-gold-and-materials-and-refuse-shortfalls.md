@@ -1,7 +1,7 @@
 ---
 id: '0774'
 title: Stronghold Upgrades Spend Gold and Materials and Refuse Shortfalls
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies: []
 governing_adrs:
@@ -15,7 +15,7 @@ target_release: 0.9.0
 # TASK-0774: Stronghold Upgrades Spend Gold and Materials and Refuse Shortfalls
 
 ## Status
-Refined. Found by TASK-0584 (`.audit/work/0584.md`, Discovered) and checked by the orchestrator.
+Complete
 
 ## Summary
 A stronghold upgrade adds the gold and materials it spends to the treasury and the store, instead of

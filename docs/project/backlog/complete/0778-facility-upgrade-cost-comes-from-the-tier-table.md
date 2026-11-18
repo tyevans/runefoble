@@ -1,7 +1,7 @@
 ---
 id: '0778'
 title: Facility Upgrade Cost Comes From the Tier Table, Not the Client
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0774
@@ -17,7 +17,7 @@ target_release: 0.9.0
 # TASK-0778: Facility Upgrade Cost Comes From the Tier Table, Not the Client
 
 ## Status
-Refined. Found during batch 23 integration, 2026-11-17.
+Complete
 
 ## Summary
 Facility upgrades take their gold and material cost from the request body. A player can pay 1 gold for a 700-gold stronghold tier, or name any materials. Settlement and West Marches upgrades accept a client-set cost in the same way.

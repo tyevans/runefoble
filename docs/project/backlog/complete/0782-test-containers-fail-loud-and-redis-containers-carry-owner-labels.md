@@ -1,7 +1,7 @@
 ---
 id: '0782'
 title: Test Containers Fail Loudly and Redis Test Containers Carry Owner Labels
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies: []
 governing_adrs:
@@ -16,7 +16,7 @@ target_release: 0.9.0
 # TASK-0782: Test Containers Fail Loudly and Redis Test Containers Carry Owner Labels
 
 ## Status
-Refined. Found during batch 23 integration, 2026-11-17.
+Complete
 
 ## Summary
 The PostgreSQL fixture catches `Exception` and yields `None`, so a broken Docker setup skips tests in silence. It also never removes its temp file. The Redis test container leaks when a run is killed, in the same way the PostgreSQL containers did before TASK-0777.

@@ -46,6 +46,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Campaign analytics worker `process_event` alias, tracking property wrappers, and package root re-exports. Callers use `handle_event`. (TASK-0500)
 
 ### Added
+- Campaign "Asset Forge" tab at `#/campaigns/:campaignId/forge`. The App Shell mounts the battlemap and token forge and the print forge, loaded lazily from `@runefoble/asset-forge-ui`. (TASK-0645)
+- `fetchAssetObjectUrl` and `revokeAssetObjectUrl` in `@runefoble/ui-core` read protected assets with the signed-in bearer. (TASK-0784)
+- `GuardrailName` enumeration in `runefoble_platform`. Stand-in engines report only these names. (TASK-0691)
+- Gateway proxies for the asset forge routes: battlemap, token, wardrobe, print-pdf, standees, and stl-token (POST, plus GET reads for battlemap, token, and wardrobe). Binary replies pass through with their content type. (TASK-0595)
+- `make lint` runs an import contract that bans service packages in `gateway_api`. (TASK-0775)
 - Board State: `GET /api/v1/boards/{session_id}/tokens/{token_id}` returns one placed token. It needs `board.view`. (TASK-0582)
 - Campfire rest accepts campaign session ids. The campaign link comes from SpiceDB. (TASK-0584)
 - Gateway routes for the rules compendium: rule search, monster, spell, and condition lookup, encounter balance, and campaign homebrew register and list. Each route forwards to `rules_compendium` with the caller's bearer token. A closed upstream returns 503. An upstream 5xx returns 502. (TASK-0594)
@@ -99,6 +104,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
 
 ### Changed
+- The MCP gateway package now passes mypy. `make lint` runs mypy on `gateway/mcp/src/gateway_mcp`. (TASK-0629)
+- The gateway has one raw-body forwarding path, `forward_bytes`. The removed `forward_raw` no longer exists. (TASK-0783)
+- Test PostgreSQL fixture fails the test on any container start error and skips only when Docker is unavailable. It removes its temp init script on teardown. (TASK-0782)
+- Auto-pilot takes the stand-in policy from the absent character's stored policy. The request body takes no policy. A body with `guardrails` returns 422. (TASK-0779)
+- Stronghold upgrades take their gold and material cost from the tier table. The request names the facility only. A request with `gold_spent` or `materials_spent` answers `422`. (TASK-0778)
+- The App Shell and microfrontends send the Zitadel bearer token on every API call and WebSocket. The App Shell no longer sends `X-User-Id`. (TASK-0538)
+- Campaign list and detail responses include a `permissions` object (`view`, `manage`, `invite`, `launch_session`, `assign_roles`). SpiceDB computes each flag. The App Shell shows campaign controls from these flags and no longer compares role names (TASK-0644).
+- WebSocket admission for every gateway, voice, game session, and board socket now uses one helper, `runefoble_auth.websocket.admit_websocket`. Refusals close with 1008 (missing or invalid token), 4403 (authorization refusal), or 1011 (SpiceDB unavailable). A voice speaker refusal closes with 4403, not 1008. The board denial frame uses `PERMISSION_DENIED`, not `FORBIDDEN`. (TASK-0776)
+- The platform event store is resolved through one provider. Repositories no longer capture the store at import time. Tests replace the store with `set_event_store` and build one with `build_event_store`. (TASK-0773)
+- Restart tests for game session lists, minigame tables, and voice rooms run each service in a child process over the shared PostgreSQL event store. The in-process module re-import is removed (TASK-0698).
 - Voice signaling, mobile companion sockets, and companion dispatch routes run in voice_agent. The gateway relays them. Session refusals still close with 4403. An unreachable owner closes with 1013. (TASK-0593)
 - The gateway proxies the `/api/v1` settlement, establishment, and bulletin routes to `game_session`. It no longer serves the unprefixed settlement paths. (TASK-0592)
 - The platform showcase (`docs/marketing.md`) labels each capability Live, In progress, or Planned. Each Live row cites a passing frontdoor test. Roadmap status follows `docs/project/backlog/ROADMAP.md`. Removed the "zero-trust", "time-travel debugging", and "single-command cloud" claims and the unverified latency numbers. (TASK-0659)
@@ -1144,6 +1159,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **Documentation & Build Navigation**: Featured the Platform Showcase and Changelog in `zensical.toml` and root documentation landing page (`docs/index.md`), and enhanced `scripts/build_docs.py` to synchronize `CHANGELOG.md` to `docs/changelog.md` during documentation compilation.
 
 ### Fixed
+- Storybook stories for character roster, character builder modal and session lobby no longer request missing portrait SVGs, which removes the console 404 errors. Portraits are now inline Bauhaus placeholders in `@runefoble/ui-core`. (TASK-0647)
+- Character Sheet write routes answer 503 when the event store is unreachable. Before, they answered 400. No event is published and the character does not change. (TASK-0781)
+- Voice room peers keep their seats through a graceful voice_agent restart. A SIGTERM no longer records `peer_left` for each peer. Peers reconnect with the same `peer_id` and resume. (TASK-0780)
+- PostgreSQL and SpiceDB test containers no longer outlive a killed test run. Each test container records its owner process. The next run removes containers whose owner is dead on the same host. Live owners and unlabelled containers are never touched. (TASK-0777)
+- Stronghold upgrades now spend gold and materials from the treasury and the store. They no longer add them. (TASK-0774)
 - Campaign analytics: a replayed stream message no longer adds a second chronicle milestone. The milestone row id is the id of its saved chronicle event. (TASK-0730)
 - The character sheet, rules lookup and homebrew creator now send the signed-in token. They read it from the new `runefoble-auth` App Shell context, not from an unwritten `localStorage` key. Load failures now show an error. (TASK-0757)
 - Voice rooms persist their peers. A coordinator restart or a second replica no longer loses the room. Each voice room command saves the room before it publishes its event. (TASK-0702)

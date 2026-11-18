@@ -1,7 +1,7 @@
 ---
 id: '0775'
 title: Gateway Depends on No Service Package
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0593
@@ -17,7 +17,7 @@ target_release: 0.9.0
 # TASK-0775: Gateway Depends on No Service Package
 
 ## Status
-Refined. Refactor pause, 2026-11-17.
+Complete
 
 ## Summary
 The API gateway still imports service packages and lists them as dependencies. This couples the gateway to service internals and breaks the thin-gateway rule (ADR-0015 b). Agreed at the refactor pause on 2026-11-17 (candidate 1).

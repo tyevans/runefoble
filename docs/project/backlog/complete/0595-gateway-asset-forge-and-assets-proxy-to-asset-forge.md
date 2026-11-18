@@ -1,7 +1,7 @@
 ---
 id: '0595'
 title: Gateway Asset Forge and Assets Proxy to Asset Forge
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0580
@@ -20,7 +20,7 @@ target_release: 0.9.0
 # TASK-0595: Gateway Asset Forge and Assets Proxy to Asset Forge
 
 ## Status
-Refined
+Complete
 
 ## Summary
 `asset_forge` has no gateway route. The forge routes exist only on port 8008, and the ingress does not reach them. The gateway also serves `/api/v1/assets` in process from a platform storage library. Replace that router with proxies to `asset_forge`. Add gateway proxies for the battlemap, token, print, standee and STL routes.
@@ -28,7 +28,7 @@ Refined
 ## Problem Statement
 - `deployments/helm/runefoble/values.yaml` ingress sends only `/api` to the gateway. The forge routes are reachable only on 8008 (`w2-asset-forge.md` F3).
 - No route exists for `/api/v1/forge/battlemap`, `/api/v1/forge/token`, `/api/v1/forge/wardrobe`, `/api/v1/forge/print-pdf`, `/api/v1/forge/standees` or `/api/v1/forge/stl-token` in `gateway/api/src` (`w2-asset-forge.md` F3).
-- `gateway/api/src/gateway_api/assets.py` (in process) uploads and deletes assets with no auth. Its `_resolve_user_id` uses the raw bearer token (`w1-gateway-api.md` F5). It publishes events twice (`w1-gateway-api.md` F21).
+- `gateway/api/src/gateway_api/assets.py` (removed), which ran in process, uploads and deletes assets with no auth. Its `_resolve_user_id` uses the raw bearer token (`w1-gateway-api.md` F5). It publishes events twice (`w1-gateway-api.md` F21).
 - `main.py:83` mounts the assets router with `prefix="/api/v1/assets"`.
 
 ## Documentation & Architecture Review

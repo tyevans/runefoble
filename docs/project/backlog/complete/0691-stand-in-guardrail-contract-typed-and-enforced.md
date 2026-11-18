@@ -1,7 +1,7 @@
 ---
 id: '0691'
 title: Stand-In Guardrail Contract Is Typed and Enforced in Every Engine
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0690
@@ -19,7 +19,7 @@ target_release: 0.9.0
 # TASK-0691: Stand-In Guardrail Contract Is Typed and Enforced in Every Engine
 
 ## Status
-Refined. Discovered in round 2 audit of report 0608. Follow-on to TASK-0608 and TASK-0609.
+Complete
 
 ## Summary
 The guardrail policy has three gaps. Autopilot forwards an untyped dict to The Watcher. The local engine reports descriptive sentences in `guardrails_applied` while the worker reports policy names. The worker reads `preserve_spell_slots` and `custom_priorities` only as prompt text, so mock output ignores them. This task defines one typed policy and makes each engine apply and report it the same way.

@@ -1,7 +1,7 @@
 ---
 id: '0780'
 title: Voice Room Peers Survive a Graceful Restart
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0698
@@ -17,7 +17,7 @@ target_release: 0.9.0
 # TASK-0780: Voice Room Peers Survive a Graceful Restart
 
 ## Status
-Refined. Found during batch 23 integration, 2026-11-17.
+Complete
 
 ## Summary
 When voice_agent shuts down gracefully (SIGTERM, a rolling deploy), it closes each peer socket. The close handler then records `peer_left` with reason `disconnected`. The restored room is empty after the restart, so every client must rejoin.

@@ -1,7 +1,7 @@
 ---
 id: '0783'
 title: Gateway Forwarding Has One Raw-Body Path and Declares python-multipart
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies: []
 governing_adrs:
@@ -15,7 +15,7 @@ target_release: 0.9.0
 # TASK-0783: Gateway Forwarding Has One Raw-Body Path and Declares python-multipart
 
 ## Status
-Refined. Found during batch 23 integration, 2026-11-17.
+Complete
 
 ## Summary
 `forward_bytes` and `forward_raw` duplicate the raw-body forwarding logic. The services that parse multipart forms import `python-multipart` through FastAPI, but no package declares it.
