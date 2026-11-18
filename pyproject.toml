@@ -52,6 +52,8 @@ members = [
     "gateway/*",
 ]
 exclude = [
+    # TypeScript packages share these folders with Python members (pnpm workspace).
+    "libs/runefoble_ui",
     "services/audience_studio",
 ]
 
