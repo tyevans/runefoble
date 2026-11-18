@@ -25,8 +25,10 @@ from gateway_api.character_view import (
     to_owner_create_payload,
 )
 from gateway_api.proxy import forward_json
+from gateway_api.routers.character_subresources import router as subresources_router
 
 router = APIRouter(tags=["Characters"])
+router.include_router(subresources_router)
 
 
 async def _respond(request: Request, view: dict) -> CharacterResponse:

@@ -17,7 +17,6 @@ from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
-from gateway_api.character_store import character_store
 from gateway_api.main import app as gateway_app
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -30,12 +29,6 @@ SERVICES_DIR = SRC_DIR / "services"
 def client(game_session_upstream, character_sheet_upstream) -> Iterator[TestClient]:
     with TestClient(gateway_app) as gateway_client:
         yield gateway_client
-
-
-@pytest.fixture(autouse=True)
-def reset_stores():
-    character_store.reset()
-    yield
 
 
 # ---------------------------------------------------------------------------

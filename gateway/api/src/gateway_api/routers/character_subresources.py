@@ -16,6 +16,7 @@ from gateway_api.character_models import (
     PrepareSpellRequest,
     StandInGuardrailsRequest,
 )
+from gateway_api.character_view import to_character_response
 from gateway_api.proxy import forward_json
 
 router = APIRouter(tags=["characters-subresources"])
@@ -55,7 +56,7 @@ async def modify_health(
         f"/api/v1/characters/{character_id}/health",
         json_body=req.model_dump(exclude_unset=True),
     )
-    return CharacterResponse(**res)
+    return to_character_response(res, None)
 
 
 @router.post(
@@ -75,7 +76,7 @@ async def equip_item(
         f"/api/v1/characters/{character_id}/equipment",
         json_body=req.model_dump(exclude_unset=True),
     )
-    return CharacterResponse(**res)
+    return to_character_response(res, None)
 
 
 @router.delete(
@@ -90,7 +91,7 @@ async def unequip_item(
 ) -> CharacterResponse:
     """Unequip item from slot (requires 'edit')."""
     res = await _forward(request, "DELETE", f"/api/v1/characters/{character_id}/equipment/{slot}")
-    return CharacterResponse(**res)
+    return to_character_response(res, None)
 
 
 @router.post(
@@ -110,7 +111,7 @@ async def add_inventory(
         f"/api/v1/characters/{character_id}/inventory",
         json_body=req.model_dump(exclude_unset=True),
     )
-    return CharacterResponse(**res)
+    return to_character_response(res, None)
 
 
 @router.delete(
@@ -131,7 +132,7 @@ async def remove_inventory(
         f"/api/v1/characters/{character_id}/inventory/{item_id}",
         params={"quantity": str(quantity)},
     )
-    return CharacterResponse(**res)
+    return to_character_response(res, None)
 
 
 @router.post(
@@ -151,7 +152,7 @@ async def apply_condition(
         f"/api/v1/characters/{character_id}/conditions",
         json_body=req.model_dump(exclude_unset=True),
     )
-    return CharacterResponse(**res)
+    return to_character_response(res, None)
 
 
 @router.delete(
@@ -168,7 +169,7 @@ async def remove_condition(
     res = await _forward(
         request, "DELETE", f"/api/v1/characters/{character_id}/conditions/{condition}"
     )
-    return CharacterResponse(**res)
+    return to_character_response(res, None)
 
 
 @router.post(
@@ -188,7 +189,7 @@ async def cast_spell(
         f"/api/v1/characters/{character_id}/spells/cast",
         json_body=req.model_dump(exclude_unset=True),
     )
-    return CharacterResponse(**res)
+    return to_character_response(res, None)
 
 
 @router.post(
@@ -208,7 +209,7 @@ async def prepare_spell(
         f"/api/v1/characters/{character_id}/spells/prepare",
         json_body=req.model_dump(exclude_unset=True),
     )
-    return CharacterResponse(**res)
+    return to_character_response(res, None)
 
 
 @router.put(
@@ -228,7 +229,7 @@ async def update_guardrails(
         f"/api/v1/characters/{character_id}/guardrails",
         json_body=req.model_dump(by_alias=False),
     )
-    return CharacterResponse(**res)
+    return to_character_response(res, None)
 
 
 @router.get(
