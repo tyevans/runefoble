@@ -51,7 +51,7 @@ class WebSocketActionValidator:
             "campaign", campaign_id, view, "user", subject_id
         )
 
-    async def is_dungeon_master(self, campaign_id: str, subject_id: str) -> bool:
+    async def can_run_session(self, campaign_id: str, subject_id: str) -> bool:
         """Check if subject holds campaign.run_session (DM, GM, or owner) in SpiceDB."""
         _, run_session = ACTION_PERMISSIONS["campaign.run_session"]
         return await self.spicedb.check_permission(
@@ -88,7 +88,7 @@ class WebSocketActionValidator:
         self, campaign_id: str, subject_id: str, action: str, data: dict[str, Any]
     ) -> bool:
         """Validate whether subject is authorized to perform action within campaign."""
-        if await self.is_dungeon_master(campaign_id, subject_id):
+        if await self.can_run_session(campaign_id, subject_id):
             return True
         if action in MOVE_ACTIONS:
             return await self._validate_move_action(campaign_id, subject_id, data)
