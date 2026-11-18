@@ -17,7 +17,7 @@ from collections.abc import Generator
 
 import pytest
 
-from tests.helpers.container_owner import owner_label_args
+from tests.helpers.container_owner import owner_label_args, remove_test_container
 
 
 def get_free_port() -> int:
@@ -125,7 +125,7 @@ def _run_postgres_container(
             "async_dsn": f"postgresql+asyncpg://runefoble_user:runefoble_dev_password@127.0.0.1:{port}/runefoble",
         }
     finally:
-        subprocess.run([docker_bin, "rm", "-f", container_name], capture_output=True)
+        remove_test_container(docker_bin, container_name)
 
 
 def _wait_until_ready(docker_bin: str, container_name: str, timeout: float = 30.0) -> bool:

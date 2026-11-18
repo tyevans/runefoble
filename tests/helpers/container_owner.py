@@ -86,3 +86,21 @@ def remove_orphaned_test_containers(docker_bin: str | None = None) -> None:
         if _pid_is_alive(owner_pid):
             continue
         subprocess.run([docker, "rm", "-f", container_id], capture_output=True, check=False)
+
+
+def remove_test_container(docker_bin: str, container_name: str) -> None:
+    """Force-remove a container that a fixture started. Raise when Docker refuses.
+
+    A container that is already gone is not a failure: `docker run --rm` removes a container
+    that exits on its own. Any other removal failure raises with the container name, so the
+    teardown error shows in the test output.
+    """
+    result = subprocess.run(
+        [docker_bin, "rm", "-f", container_name],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode == 0 or "No such container" in result.stderr:
+        return
+    raise RuntimeError(f"Failed to remove test container {container_name}: {result.stderr.strip()}")
