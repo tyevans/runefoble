@@ -16,7 +16,7 @@
 | `make cluster-up` | Launches local Kind Kubernetes cluster with port mapping and Traefik |
 | `make cluster-down` | Deletes the local Kind cluster |
 | `make install-tools` | Checks that `kind`, `uv`, `pnpm`, `helm`, and `docker` are on `PATH`. Installs `kind` v0.27.0 into `~/.local/bin` when `kind` is missing |
-| `make images` | Builds every service image (`runefoble/<service>:0.1.0`). Python services use `deployments/docker/python-service.Dockerfile` and load into the `runefoble-local` Kind cluster. The Node `audience-studio` image uses `services/audience_studio/Dockerfile` (Node 20, pnpm from the frozen lockfile, runs `dist/index.js` as the `node` user on port 8010) and is loaded the same way. |
+| `make images` | Builds every service image (`runefoble/<service>:0.1.0`). Python services use `deployments/docker/python-service.Dockerfile` and load into the `runefoble-local` Kind cluster. The Node `audience-studio` image uses `services/audience_studio/Dockerfile` (Node 22, pnpm 11.22.0 from the frozen lockfile, runs `dist/index.js` as the `node` user on port 8010) and is loaded the same way. |
 | `make helm-lint` | Validates Helm chart syntax |
 | `make helm-template` | Renders and inspects Kubernetes manifests |
 | `make helm-check-event-store` | Runs `scripts/check_helm_event_store.py`. Fails when a service that owns aggregates has no PostgreSQL event store in the Helm chart |
@@ -27,6 +27,7 @@
 | `make dev-api` | Runs the API Gateway locally |
 | `make dev-worker` | Runs AI inference worker locally |
 | `make deploy-remote-worker` | Syncs the workspace with rsync to the remote GPU host set in the Makefile and runs `uv sync` there |
+| `make dev-audience-studio` | Runs Audience Studio from TypeScript source with reload (`pnpm run dev` in `services/audience_studio`, which runs `tsx watch src/index.ts`). Listens on port 8010 and serves `GET /healthz`. Needs `RUNEFOBLE_ZITADEL_ISSUER`, `RUNEFOBLE_ZITADEL_AUDIENCE`, `RUNEFOBLE_SPICEDB_PRESHARED_KEY`, and either `RUNEFOBLE_DATABASE_URL` plus `REDIS_URL`, or `NODE_ENV=test`. Start-up fails without them. |
 | `make test` | Executes the Python test suite (`uv run pytest`, default per-test timeout of 300 seconds from `[tool.pytest.ini_options]`; a test that exceeds it fails with a timeout error) and builds the frontend |
 | `make test-entrypoints` | Runs `tests/test_entrypoints.py`. Covers developer entrypoints, CLI tools, and microservice start-up |
 | `make test-property` | Runs the Hypothesis property tests in `tests/test_properties.py` |

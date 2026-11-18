@@ -309,7 +309,7 @@ def test_make_images_builds_audience_studio_from_node_dockerfile():
 def test_audience_studio_dockerfile_runs_non_root_on_helm_port():
     """The Node image runs `dist/index.js` as a non-root user on the Helm port."""
     text = AUDIENCE_DOCKERFILE.read_text(encoding="utf-8")
-    assert "FROM node:20-alpine" in text
+    assert "FROM node:22-alpine" in text
     assert f"PORT={AUDIENCE_PORT}" in text
     assert re.search(r"^USER\s+(?!root\b)\S+", text, re.MULTILINE), "no non-root USER"
     assert 'CMD ["node", "dist/index.js"]' in text
