@@ -22,7 +22,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/119
 # TASK-0103: Interactive Tavern Minigames & Personality-Driven Merchant Haggling
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Implement multiplayer interactive tavern minigames (Liar's Dice, card tournaments, drinking contests with dynamic voice DSP effects) and an NPC merchant haggling system with dynamic temperament states.

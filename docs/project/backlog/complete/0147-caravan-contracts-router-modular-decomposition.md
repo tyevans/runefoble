@@ -21,7 +21,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/170
 # TASK-0147: Caravan Contracts API Router Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `services/game_session/src/game_session/routers/caravan_contracts.py` (433 lines, 86.6% of limit) into modular sub-routers under `services/game_session/src/game_session/routers/caravan_contracts/` (`auth.py`, `board.py`, `lifecycle.py`, `__init__.py`), keeping all router modules < 180 lines per Hard Invariant 6.

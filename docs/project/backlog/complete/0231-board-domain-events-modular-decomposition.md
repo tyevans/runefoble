@@ -24,7 +24,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/384
 # TASK-0231: Board Domain Events Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `libs/runefoble_events/src/runefoble_events/board.py` (313 lines, 62.6% of limit) into focused event domain submodules under `libs/runefoble_events/src/runefoble_events/board_events/` (`token.py`, `fog.py`, `templates.py`, `lighting.py`), ensuring all domain event definition modules remain strictly < 120 lines per Hard Invariant 6.

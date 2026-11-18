@@ -21,7 +21,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/158
 # TASK-0138: Board State Models and Pydantic Schemas Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `services/board_state/src/board_state/models.py` (433 lines, 86.6% of limit) into modular, single-responsibility Pydantic schema modules under `services/board_state/src/board_state/models/` (`terrain.py`, `tokens.py`, `vfx.py`, `actions.py`, `board.py`) with facade re-exports in `models.py`, preventing future breaches of Hard Invariant 6 (< 500 lines per file).

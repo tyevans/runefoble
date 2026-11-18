@@ -23,7 +23,7 @@ Complete
 `gateway_mcp` calls board_state, character_sheet, game_session and rules_compendium over HTTP. It sends no credential, and the receiving services accept any caller on the cluster network. This task adds a service credential, read from a Kubernetes Secret, to the shared service client. The receiving routes reject calls without it.
 
 ## Problem Statement
-- `libs/runefoble_platform/src/runefoble_platform/service_client/client.py` and `gateway/mcp/src/gateway_mcp/clients/services.py` build requests with no credential.
+- `libs/runefoble_platform/src/runefoble_platform/service_client/client.py` and `gateway/mcp/src/gateway_mcp/clients/services.py` (removed) build requests with no credential.
 - The MCP tools run with no user principal. Routes that trust only the network path accept them.
 - Report 0622: the inference worker has the same gap. TASK-0529 covers it. This task covers the MCP caller and the receivers it uses.
 

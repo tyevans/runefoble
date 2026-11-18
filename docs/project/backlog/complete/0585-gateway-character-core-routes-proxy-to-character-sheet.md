@@ -26,7 +26,7 @@ Complete
 Character create, list, read and campaign assignment are served from the gateway's in-memory `CharacterStore`. Move them to `character_sheet`. The gateway forwards each call. The store and the mutation sync code are deleted. `character_sheet` gets a roster list route, which it lacks today.
 
 ## Problem Statement
-- `gateway/api/src/gateway_api/character_store.py:18-30` holds characters in a `dict`. `routers/characters.py:20-40` serves list and create from it. `routers/characters.py` also serves `PATCH .../campaign` and `DELETE` (`w1-character-sheet.md` F1).
+- `gateway/api/src/gateway_api/character_store.py:18-30` (removed) holds characters in a `dict`. `routers/characters.py:20-40` serves list and create from it. `routers/characters.py` also serves `PATCH .../campaign` and `DELETE` (`w1-character-sheet.md` F1).
 - `character_store_mutations.py:26-50` imports `character_sheet.dependencies` and writes the aggregate in-process. It swallows errors with `except Exception: pass` (`w1-gateway-api.md` F10, `w1-character-sheet.md` F7).
 - The owner has `POST /api/v1/characters`, `POST /api/v1/characters/create`, `GET /api/v1/characters/{character_id}` (`services/character_sheet/src/character_sheet/router.py:16-71`), and `PATCH .../campaign` in the same family. There is no `GET /api/v1/characters` list route.
 - `DELETE /api/v1/characters/{id}` has no owner route.

@@ -13,11 +13,16 @@ governing_adrs:
 - ADR-0011
 target_release: 0.2.1
 pr_url: https://github.com/tyevans/runefoble/pull/71
+governing_prds:
+- PRD-0001
+- PRD-0013
+governing_stories:
+- US-0021
 ---
 # TASK-0054: Conversational Disambiguation and Compound Action Intents
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Extend `services/the_watcher` intent parsing and action execution to support multi-part tactical combos and conversational target disambiguation for voice-driven players.
@@ -45,7 +50,7 @@ When a player speaks an ambiguous command (*"I shoot the goblin"* when three gob
 3. **Ghost Preview Event Integration**:
    - Emit preview path candidates over Redis Streams during clarification to highlight candidate targets on the board.
 4. **Frontdoor Blackbox Verification**:
-   - Comprehensive test suite in `tests/test_blackbox_intent_disambiguation.py`.
+   - Comprehensive test suite in `tests/test_blackbox_intent_disambiguation.py` (removed).
 
 ## INVEST Criteria Evaluation
 - **Independent (I)**: Enhances intent parsing and graph orchestration without altering physical grid coordinate rules.
@@ -64,7 +69,7 @@ When a player speaks an ambiguous command (*"I shoot the goblin"* when three gob
 3. **CloudEvents Publication**:
    - Emits `IntentDisambiguationRequested` and `CompoundActionResolved` over Redis Streams.
 4. **Frontdoor Blackbox Test Suite**:
-   - `tests/test_blackbox_intent_disambiguation.py` verifying multi-target clarification, combo ordering, and partial failure handling.
+   - `tests/test_blackbox_intent_disambiguation.py` (removed) verifying multi-target clarification, combo ordering, and partial failure handling.
 5. **Quality Gates**:
    - Conforms strictly to Hard Invariant 6 (< 500 lines per file).
    - Passes `uv run pytest tests/test_blackbox_intent_disambiguation.py` and `uv run ruff check`.

@@ -23,7 +23,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/113
 # TASK-0117: Stream Overlay Router and HUD Templates Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `gateway/api/src/gateway_api/routers/overlay.py` (416 lines, 83.2% of limit) into an APIRouter module (`overlay.py`), Pydantic models module (`overlay_models.py`), and HTML/CSS template generator module (`overlay_templates.py`) to prevent breaching Hard Invariant 6 (File length limit < 500 lines).
@@ -64,7 +64,7 @@ As upcoming enhancements introduce multi-track audio meters and camera framing c
 - **Valuable (V)**: Protects against Hard Invariant 6 violations (< 500 lines) and improves template maintainability.
 - **Estimable (E)**: Pure refactoring isolating Python strings and Pydantic schemas.
 - **Small (S)**: Scope strictly isolated to `gateway/api/src/gateway_api/routers/overlay.py`; all resulting files < 190 lines.
-- **Testable (T)**: Verified with `tests/test_blackbox_cinematic_director.py` and `tests/test_spectator_stream_overlay.py`.
+- **Testable (T)**: Verified with `tests/test_blackbox_cinematic_director/` and `tests/test_spectator_stream_overlay.py`.
 
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
 1. **Decomposition Executed**:

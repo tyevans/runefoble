@@ -27,7 +27,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/359
 # TASK-0362: Session Lobby & Tabletop VTT Playwright BDD Test Suite
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Implement a multi-browser Playwright BDD test suite (`e2e/features/session_lobby_and_vtt.feature`) verifying the pre-game staging lobby, readiness toggling, absentee stand-in flags, live session launching, and real-time tabletop VTT token synchronization per ADR-0014. Automate end-to-end verification across two concurrent browser sessions (Dungeon Master and Player) connected over real WebSockets.

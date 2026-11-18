@@ -25,7 +25,7 @@ governing_stories:
 # TASK-0047: Campaign Lore Knowledge Base & redstring RAG Microservice
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Scaffold a new bounded context microservice `services/campaign_lore` powered by `redstring` (`tyevans/redstring` on GitHub / PyPI) to extract knowledge graphs from worldbuilding docs, perform alias consolidation, and serve hybrid RAG queries (graph + vector + BM25) to The Watcher AI DM engine.

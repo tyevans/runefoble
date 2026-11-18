@@ -21,7 +21,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/283
 # TASK-0249: Session Scheduling and Staging Lobby Creation Modal
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Enhance `runefoble-session-list` in `frontend/src/components/runefoble-session-list.ts` with a modal dialog for scheduling upcoming sessions or immediately launching a pre-game staging lobby, connecting directly to the Gateway API's `POST /api/v1/campaigns/{campaign_id}/sessions` endpoint.

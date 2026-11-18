@@ -24,7 +24,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/267
 # TASK-0245: Campaign Lore Dependencies and Permissions Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `services/campaign_lore/src/campaign_lore/dependencies.py` (474 lines, 94.8% of limit — approaching the 500-line invariant limit) into modular submodules under `services/campaign_lore/src/campaign_lore/` (`permissions.py`, `codex_deps.py`, and `dependencies.py`), keeping all dependency and permission modules strictly < 150 lines per Hard Invariant 6, ADR-0001, ADR-0003, and ADR-0007.

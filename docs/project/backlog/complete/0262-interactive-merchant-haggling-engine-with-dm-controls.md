@@ -21,7 +21,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/298
 # TASK-0262: Interactive Merchant Haggling Engine with DM Arbitration Controls
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Implement a dynamic merchant bartering and haggling engine with a tug-of-war price meter, persuasive dialogue moves, merchant patience/temperament meters, and real-time DM arbitration controls for nudging moods, injecting custom dialogue barks, or overriding transaction terms.
@@ -56,7 +56,7 @@ Buying weapons, armor, bread, or potions in virtual tabletops is typically a sta
    - Custom in-character bark injection field broadcasted via WebSockets.
 3. **Frontend Component (`frontend/src/components/minigames/runefoble-merchant-haggler.ts`)**:
    - Responsive touch UI with sliding price scale, active dialogue cards, and merchant portrait emotion reaction.
-4. **Frontdoor Blackbox Verification (`tests/test_blackbox_merchant_haggling.py`)**:
+4. **Frontdoor Blackbox Verification (`tests/test_blackbox_merchant_haggling/`)**:
    - Execute gambit via HTTP/WebSocket frontdoor, assert price adjustment and patience score change.
    - DM override event closes transaction and credits inventory.
 

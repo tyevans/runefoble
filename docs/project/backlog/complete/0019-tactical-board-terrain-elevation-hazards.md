@@ -40,7 +40,7 @@ Implemented tactical cell elevation levels, difficult terrain movement cost mult
   - Updated `GET /api/v1/boards/{id}` to project terrain grid and active hazards.
 - `docs/reference/events-schema.md`:
   - Documented `TerrainCellModified` and `TokenHazardTriggered` in the Diataxis reference documentation.
-- `docs/project/product/accepted/PRD-0003-spatial-fog-of-war-and-visibility-engine.md`:
+- `docs/project/product/accepted/prd-0003-spatial-fog-of-war-and-visibility-engine.md`:
   - Updated checkable outcomes to include terrain elevation, difficult terrain movement budget penalties, and hazard events.
 
 ## Verification

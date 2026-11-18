@@ -21,7 +21,7 @@ governing_stories:
 # TASK-0086: Settings Modal Tab Panels and Sub-Controllers Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `frontend/src/components/runefoble-settings-modal.ts` (420 lines, 84.0% of limit) by extracting tab view panels (`runefoble-settings-appearance.ts`, `runefoble-settings-audio.ts`, `runefoble-settings-dice.ts`) into dedicated subcomponents to ensure strict adherence to Hard Invariant 6 (File length limit < 500 lines).

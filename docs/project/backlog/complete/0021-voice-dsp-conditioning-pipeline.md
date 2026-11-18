@@ -22,7 +22,7 @@ Implemented a high-performance dynamic DSP audio conditioning chain in `voice_ag
 ## Implemented Scope & Changes
 1. **Domain Events (`libs/runefoble_events/src/runefoble_events/watcher.py` & `events.py`)**:
    - `VoiceAudioConditioned`: `session_id`, `speaker_id`, `speaker_name`, `filters_applied`, `latency_ms`, `audio_bytes_length`. Registered as `@register_event("runefoble.events.voice.audio_conditioned")` and re-exported in `events.py`.
-2. **DSP Filter Chain (`services/voice_agent/src/voice_agent/dsp.py`)**:
+2. **DSP Filter Chain (`services/voice_agent/src/voice_agent/dsp/`)**:
    - Filter presets (`whisper`, `underwater`, `ethereal`, `drunk`) implemented with pure Python fast math / array buffer operations executing in <15ms.
    - Dynamic range compression and high-pass shimmer for `whisper`.
    - Low-pass attenuation and sub-bass resonance rumble for `underwater`.
@@ -34,5 +34,5 @@ Implemented a high-performance dynamic DSP audio conditioning chain in `voice_ag
 4. **Blackbox TDD Suite (`tests/test_blackbox_voice_dsp.py`)**:
    - Strict frontdoor API test client interactions verifying each filter preset, combined filter TTS, latency benchmarks (<50ms), and Redis stream event emission.
 5. **PRD & Backlog Maintenance**:
-   - Updated `docs/project/product/accepted/PRD-0004-dynamic-vocal-audio-conditioning-and-dsp-filters.md` to Shipped.
+   - Updated `docs/project/product/accepted/prd-0004-dynamic-vocal-audio-conditioning-and-dsp-filters.md` to Shipped.
    - Updated `docs/project/product/REGISTRY.md` and `docs/project/backlog/PRIORITY.md`.

@@ -21,7 +21,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/223
 # TASK-0170: Kinetic 3D Dice Physics and Tray Audio Integration
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Integrate 3D polyhedral rigid-body dice collisions with Cannon-es physics, Three.js WebGL rendering, and synchronized WebAudio acoustic tray clatter in `services/board_state/ui/src/physics_3d/`, matching settled resting dice faces to server-side cryptographic rolls 100% reliably.

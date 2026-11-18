@@ -24,7 +24,7 @@ On square grids the AoE origin sits on the cell corner, not the cell centre. The
 ## Problem Statement
 - `services/board_state/src/board_state/aoe.py:127` and `:161`: for `grid_type="square"` the origin is `origin_x * 5.0, origin_y * 5.0`. Cell centres are `(x + 0.5) * 5.0`. The hex branch subtracts 0.5 and gets the centre.
 - Measured by the audit: a 5 ft sphere on cell (5,5) returns `(4,4) (4,5) (5,4) (5,5)`. Centred on the cell it returns `(4,5) (5,4) (5,5) (5,6) (6,5)`.
-- `services/board_state/src/board_state/rules.py:~110-135` (`compute_spell_vfx_impact`) uses integer cell distance with `(radius_cells + 0.5) ** 2`. For a 20 ft radius from (5,5) it returns 69 cells. The template returns 52.
+- `services/board_state/src/board_state/rules/` (`compute_spell_vfx_impact`) uses integer cell distance with `(radius_cells + 0.5) ** 2`. For a 20 ft radius from (5,5) it returns 69 cells. The template returns 52.
 
 ## Documentation & Architecture Review
 - AGENTS.md hard invariants and DoR 9 (no compatibility shims).

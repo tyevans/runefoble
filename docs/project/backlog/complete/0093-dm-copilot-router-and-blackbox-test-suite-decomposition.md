@@ -13,21 +13,23 @@ governing_adrs:
 - ADR-0013
 target_release: 0.3.0
 pr_url: https://github.com/tyevans/runefoble/pull/81
+governing_prds: []
+governing_stories: []
 ---
 # TASK-0093: DM Co-Pilot Router and Blackbox Test Suite Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
-Decompose `tests/test_blackbox_dm_copilot.py` (474 lines, 94.8% of limit) and `services/the_watcher/src/the_watcher/routers/copilot.py` (399 lines, 79.8% of limit) into modular sub-routers and partitioned test suites before Hard Invariant 6 (File length limit < 500 lines) is breached as spectator whispers and cinematic camera cues expand.
+Decompose `tests/test_blackbox_dm_copilot.py` (removed) (474 lines, 94.8% of limit) and `services/the_watcher/src/the_watcher/copilot.py` (399 lines, 79.8% of limit) into modular sub-routers and partitioned test suites before Hard Invariant 6 (File length limit < 500 lines) is breached as spectator whispers and cinematic camera cues expand.
 
 ## Problem Statement
-`tests/test_blackbox_dm_copilot.py` currently spans 474 lines—only 26 lines away from violating the repository's hard file length limit (Hard Invariant 6). It tests two distinct feature branches in a single monolithic file:
+`tests/test_blackbox_dm_copilot.py` (removed) currently spans 474 lines—only 26 lines away from violating the repository's hard file length limit (Hard Invariant 6). It tests two distinct feature branches in a single monolithic file:
 1. Narrative whisper suggestions: Private whisper creation, LLM narrative prompt generation, unread whisper tracking, and SpiceDB Zanzibar DM permission enforcement.
 2. AI DM pre-execution pause window and veto overrides: AI action proposal, pause window timeouts, DM approvals, DM parameter mutations, and hard veto rejections with CloudEvent emissions.
 
-Similarly, `services/the_watcher/src/the_watcher/routers/copilot.py` (399 lines) mixes both whisper REST endpoints and action proposal/veto state management into a single router.
+Similarly, `services/the_watcher/src/the_watcher/copilot.py` (399 lines) mixes both whisper REST endpoints and action proposal/veto state management into a single router.
 
 ## Governing Architecture & ADRs
 - **ADR-0001: SpiceDB Zanzibar Object Authorization**: Enforces fine-grained `dungeon_master` permissions on all whisper and veto override endpoints.
@@ -50,7 +52,7 @@ Similarly, `services/the_watcher/src/the_watcher/routers/copilot.py` (399 lines)
 - **Negotiable (N)**: Split boundaries between sub-router modules can be adjusted.
 - **Valuable (V)**: Protects against Hard Invariant 6 violations (at 94.8% of limit) and improves test isolation and speed.
 - **Estimable (E)**: Follows the established APIRouter and test decomposition pattern.
-- **Small (S)**: Scope strictly isolated to `the_watcher/routers/copilot` and `tests/test_blackbox_dm_copilot.py`; all resulting files < 250 lines.
+- **Small (S)**: Scope strictly isolated to `the_watcher/routers/copilot` and `tests/test_blackbox_dm_copilot.py` (removed); all resulting files < 250 lines.
 - **Testable (T)**: Verified with `uv run pytest tests/test_blackbox_dm_copilot*.py`.
 
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)

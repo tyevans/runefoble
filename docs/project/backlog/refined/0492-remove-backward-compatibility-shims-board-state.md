@@ -42,9 +42,9 @@ These aggregator facades exist solely for transitional backward compatibility, c
   - **ADR-0013: Frontend Microfrontend Architecture**: Clean isolation of microfrontend UI packages.
 
 ## Product & User Story References
-- [`prd-0005-tactile-board-state-and-fog-of-war.md`](../../product/accepted/prd-0005-tactile-board-state-and-fog-of-war.md)
-- [`us-0005-tactile-token-movement-and-snapping.md`](../../user_stories/accepted/us-0005-tactile-token-movement-and-snapping.md)
-- [`us-0027-spoken-ghost-token-movement-previews.md`](../../user_stories/accepted/us-0027-spoken-ghost-token-movement-previews.md)
+- [`prd-0005-tactile-board-state-and-fog-of-war.md`](../../product/accepted/prd-0003-spatial-fog-of-war-and-visibility-engine.md)
+- [`us-0005-tactile-token-movement-and-snapping.md`](../../user_stories/accepted/us-0043-tactile-kinetic-board-and-spoken-ghost-previews.md)
+- [`us-0027-spoken-ghost-token-movement-previews.md`](../../user_stories/accepted/us-0022-tactical-ghost-path-and-dynamic-cover-arcs.md)
 
 ## Detailed Specification & Implementation Plan
 1. **Decommission Router Aggregator Facade**:

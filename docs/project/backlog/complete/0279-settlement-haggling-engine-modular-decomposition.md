@@ -20,7 +20,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/370
 # TASK-0279: Settlement Haggling Engine Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `services/game_session/src/game_session/settlement/haggling.py` (356 lines, 71.2% of limit) into modular domain submodules under `services/game_session/src/game_session/settlement/haggling/` (`state.py`, `rhetoric.py`, `dm_controls.py`), ensuring all haggling modules remain strictly < 130 lines per Hard Invariant 6.
@@ -61,7 +61,7 @@ Decompose `services/game_session/src/game_session/settlement/haggling.py` (356 l
 - **Valuable (V)**: Protects core negotiation engine from exceeding the 500-line invariant.
 - **Estimable (E)**: Clear separation between state model, rhetoric resolution, and DM arbitration.
 - **Small (S)**: Each extracted submodule strictly < 130 lines.
-- **Testable (T)**: Full test coverage in `tests/test_blackbox_merchant_haggling.py`.
+- **Testable (T)**: Full test coverage in `tests/test_blackbox_merchant_haggling/`.
 
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
 1. `services/game_session/src/game_session/settlement/haggling.py` reduced to strictly < 40 lines.

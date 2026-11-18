@@ -6,6 +6,8 @@ created: 2026-09-26
 dependencies: [TASK-0059]
 governing_adrs: [ADR-0003]
 target_release: 0.2.0
+governing_prds: []
+governing_stories: []
 ---
 
 # TASK-0066: Project Visualizer Client Assets and Standalone HTML Template Modular Decomposition
@@ -27,4 +29,4 @@ Decompose monolithic visualizer string bundles into discrete modular client Java
 3. **Template & Stylesheet (`tools/project_visualizer/static/css/styles.css`)**:
    - CSS styles extracted into standalone `styles.css`.
 4. **Verification**:
-   - 100% test pass rate on `tests/test_project_visualizer.py`.
+   - 100% test pass rate on `tests/test_project_visualizer.py` (removed).

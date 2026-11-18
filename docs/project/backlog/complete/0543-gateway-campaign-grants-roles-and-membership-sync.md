@@ -32,10 +32,10 @@ Complete
 Any caller can grant a campaign role, including `owner`. Any caller can write membership, character ownership, and token bindings through the gateway. Any caller can post admin seed and invite routes that write `system:runefoble#admin`. This task makes every grant path go through a SpiceDB `manage` check on the campaign, or it removes the public route. It also adds a capability projection for the App Shell. The projection replaces role-name checks in the client (TASK-0559).
 
 ## Problem Statement
-- `gateway/api/src/gateway_api/routers/campaigns.py:161-170` (`POST /api/v1/campaigns/{campaign_id}/roles`) has no dependency. It writes any role, including `owner`, for any caller (`w1-gateway-api.md` F1). Probe: an anonymous request with `role=owner` returns 200 and then `manage` is allowed for the attacker (`w3-authz-coverage.md` F3).
+- `gateway/api/src/gateway_api/routers/campaigns.py:161-170` (removed) (`POST /api/v1/campaigns/{campaign_id}/roles`) has no dependency. It writes any role, including `owner`, for any caller (`w1-gateway-api.md` F1). Probe: an anonymous request with `role=owner` returns 200 and then `manage` is allowed for the attacker (`w3-authz-coverage.md` F3).
 - `gateway/api/src/gateway_api/auth_sync.py:112-199` exposes `/api/v1/auth/sync/user`, `/membership`, `/character-ownership`, and `/token-binding`. None has an authorization check. The user route trusts body roles (`w3-authz-coverage.md` F2, F3).
-- `gateway/api/src/gateway_api/routers/auth/admin.py:22-57` (`/admin/seed`) and `:59-` (`/admin/invite`) are public. They write `system:runefoble#admin` (a type that does not exist in the schema) and return an admin token. The write error is suppressed (`w3-authz-coverage.md` F4).
-- `gateway/api/src/gateway_api/routers/auth/registration.py:21-22` writes `campaign:public#viewer` inside `suppress(Exception)`. `viewer` is not a relation (`w1-libs.md` F5).
+- `gateway/api/src/gateway_api/routers/auth/admin.py:22-57` (removed) (`/admin/seed`) and `:59-` (`/admin/invite`) are public. They write `system:runefoble#admin` (a type that does not exist in the schema) and return an admin token. The write error is suppressed (`w3-authz-coverage.md` F4).
+- `gateway/api/src/gateway_api/routers/auth/registration.py:21-22` (removed) writes `campaign:public#viewer` inside `suppress(Exception)`. `viewer` is not a relation (`w1-libs.md` F5).
 - `gateway/api/src/gateway_api/routers/auth/__init__.py:69` mounts the admin router unconditionally.
 - `frontend/src/runefoble-app.ts:67-68` decides DM capability from role strings. The gateway has no endpoint that returns per-campaign capability flags.
 

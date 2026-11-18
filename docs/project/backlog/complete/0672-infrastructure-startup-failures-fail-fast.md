@@ -27,7 +27,7 @@ Three start-up paths hide a failed Redis connection. The platform event bus fall
 ## Problem Statement
 - `libs/runefoble_platform/src/runefoble_platform/event_sourcing.py` (`get_event_bus`, about line 147): when `RedisEventBus` fails to initialize, the function logs a warning and returns `InMemoryEventBus()`. ADR-0015 item 4 forbids in-memory fallbacks in deployed environments.
 - `services/board_state/src/board_state/dependencies.py:38`: `with contextlib.suppress(Exception):` wraps the bus initialization. A Redis failure produces no error.
-- `services/inference_worker/src/inference_worker/redis_consumer.py:42`: `with contextlib.suppress(Exception):` wraps `xgroup_create`. Every error is hidden, including errors other than "group already exists". The consumer then reads from a stream it may not have grouped.
+- `services/inference_worker/src/inference_worker/redis_consumer.py:42` (removed): `with contextlib.suppress(Exception):` wraps `xgroup_create`. Every error is hidden, including errors other than "group already exists". The consumer then reads from a stream it may not have grouped.
 - Already fixed on main (no action): `get_event_store` raises `EventStoreInitializationError` when PostgreSQL is configured and unreachable.
 
 ## Documentation & Architecture Review
@@ -41,7 +41,7 @@ Three start-up paths hide a failed Redis connection. The platform event bus fall
 ## Detailed Specification & Implementation Plan
 1. `get_event_bus`: when `use_redis_event_bus` is set, let the initialization error propagate. Delete the `InMemoryEventBus` fallback on that path. Keep the in-memory bus only when the flag is off, which is the local test mode.
 2. `services/board_state/src/board_state/dependencies.py`: delete the `contextlib.suppress` block. Call the bus provider directly. The service lifespan calls it at start-up, so the pod fails at start-up.
-3. `services/inference_worker/src/inference_worker/redis_consumer.py`: replace the suppression with a narrow handler. Catch `redis.exceptions.ResponseError` only when the message contains `BUSYGROUP`. Re-raise every other error.
+3. `services/inference_worker/src/inference_worker/redis_consumer.py` (removed): replace the suppression with a narrow handler. Catch `redis.exceptions.ResponseError` only when the message contains `BUSYGROUP`. Re-raise every other error.
 4. No compatibility flag. No alias for the old behavior.
 5. Update `docs/reference/redis-streams-event-bus.md` and the start-up note in `docs/how-to/instrument-services-with-opentelemetry.md` if it describes the fallback.
 
@@ -60,8 +60,8 @@ Three start-up paths hide a failed Redis connection. The platform event bus fall
 
 Source: `.audit/synth/discovered-round1.md`.
 
-- `services/inference_worker/src/inference_worker/redis_consumer.py:130-131`: when `_process_message` raises, the error is logged, no result is published, and the message is not acked. Publish an error result with the correlation id, then ack. Callers wait today with no reply.
-- `services/inference_worker/src/inference_worker/redis_consumer.py` (TASK-0501): messages with unknown task types or missing fields are rejected without publish or ack. They stay pending and are redelivered. Publish an error result, then ack (dead-letter policy).
+- `services/inference_worker/src/inference_worker/redis_consumer.py:130-131` (removed): when `_process_message` raises, the error is logged, no result is published, and the message is not acked. Publish an error result with the correlation id, then ack. Callers wait today with no reply.
+- `services/inference_worker/src/inference_worker/redis_consumer.py` (removed) (TASK-0501): messages with unknown task types or missing fields are rejected without publish or ack. They stay pending and are redelivered. Publish an error result, then ack (dead-letter policy).
 
 ## Audit Provenance
 

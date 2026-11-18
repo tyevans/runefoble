@@ -19,7 +19,7 @@ governing_stories:
 # TASK-0089: Campaign Lore Extraction, Embeddings, and Hybrid Retrieval Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `services/campaign_lore/src/campaign_lore/retrieval.py` (428 lines, 85.6% of limit) into modular submodules (`extraction.py`, `scoring.py`, and `retrieval.py`) to prevent breaching Hard Invariant 6 (File length limit < 500 lines) as worldbuilding NER extraction heuristics and hybrid RAG scoring algorithms expand.

@@ -23,7 +23,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/126
 # TASK-0113: Character Sheet Aggregate Mutation Handlers and Event Appliers Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `services/character_sheet/src/character_sheet/aggregate.py` (342 lines, 68.4% of limit) into modular command mutation handlers and `@handles` event state applier sub-modules to prevent breaching Hard Invariant 6 (File length limit < 500 lines) as downtime crafting (TASK-0100) and inventory encumbrance features expand.

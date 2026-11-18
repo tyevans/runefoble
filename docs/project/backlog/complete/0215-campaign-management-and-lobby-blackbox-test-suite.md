@@ -26,7 +26,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/207
 # TASK-0215: Campaign Management and Lobby Blackbox Test Suite
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Implement a blackbox frontdoor test suite verifying end-to-end campaign creation, player invitation, character party assignment, and pre-game session lobby launching into active VTT gameplay.
@@ -50,7 +50,7 @@ The transition from campaign creation to session lobby and active VTT involves m
 - **User Story**: [`us-0065-game-session-lobby-readiness-and-launch.md`](../../user_stories/accepted/us-0065-game-session-lobby-readiness-and-launch.md)
 
 ## Detailed Specification & Implementation Plan
-1. **Campaign Creation and Invite Flow Tests (`tests/test_blackbox_campaign_and_lobby.py`)**:
+1. **Campaign Creation and Invite Flow Tests (`tests/test_blackbox_campaign_and_lobby/`)**:
    - Verify creating a campaign via `POST /api/v1/campaigns` grants owner permissions in SpiceDB.
    - Verify invite link token generation and redemption via `POST /api/v1/campaigns/join`.
    - Verify role assignment updates Zanzibar tuples.
@@ -71,7 +71,7 @@ The transition from campaign creation to session lobby and active VTT involves m
 - **Testable (T)**: Executable via `uv run pytest tests/test_blackbox_campaign_and_lobby.py`.
 
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
-1. Test suite created in `tests/test_blackbox_campaign_and_lobby.py` (<350 lines).
+1. Test suite created in `tests/test_blackbox_campaign_and_lobby/` (<350 lines).
 2. Covers all acceptance criteria in US-0063, US-0064, and US-0065.
 3. Tests execute with zero backdoor database or mock state injection.
 4. Verified with `uv run pytest tests/test_blackbox_campaign_and_lobby.py`.

@@ -7,6 +7,8 @@ completed: 2026-09-26
 dependencies: [TASK-0024]
 governing_adrs: [ADR-0004, ADR-0012, ADR-0013]
 target_release: 0.1.0
+governing_prds: []
+governing_stories: []
 ---
 
 # TASK-0025: Microfrontend Architectural Governance and Workspace Configuration

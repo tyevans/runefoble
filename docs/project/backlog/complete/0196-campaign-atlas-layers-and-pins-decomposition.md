@@ -22,7 +22,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/257
 # TASK-0196: Campaign Atlas Layers and Pins Subviews Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `services/campaign_lore/ui/src/runefoble-campaign-atlas.ts` (331 lines, 66.2% of limit) into modular subviews under `services/campaign_lore/ui/src/atlas/` (`territory-renderer.template.ts`, `pins-layer.template.ts`, and `codex-sidebar.template.ts`), keeping each subview strictly < 120 lines per Hard Invariant 6 and ADR-0004/ADR-0013.
@@ -45,7 +45,7 @@ Decompose `services/campaign_lore/ui/src/runefoble-campaign-atlas.ts` (331 lines
    - Retain core state (active layer, active era, selected pins, zoom/pan transforms) and delegate rendering to modular templates (< 110 lines).
 3. **Verification**:
    - Verify Storybook stories for `<runefoble-campaign-atlas>` render cleanly across layers and eras.
-   - Run `tests/test_blackbox_campaign_atlas.py` to ensure all frontdoor behaviors remain green.
+   - Run `tests/test_blackbox_campaign_atlas/` to ensure all frontdoor behaviors remain green.
 
 ## INVEST Criteria Evaluation
 - **Independent (I)**: Isolated entirely within `services/campaign_lore/ui/src/` presentation layer.

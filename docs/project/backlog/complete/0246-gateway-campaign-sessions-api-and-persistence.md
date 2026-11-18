@@ -21,10 +21,10 @@ pr_url: https://github.com/tyevans/runefoble/pull/282
 # TASK-0246: Gateway Campaign Sessions API and Persistence
 
 ## Status
-Refined
+Complete
 
 ## Summary
-Extend `gateway/api/src/gateway_api/routers/campaigns.py` and `gateway_api/campaign_store/` with REST endpoints and in-memory persistence for campaign sessions: `GET /api/v1/campaigns/{campaign_id}/sessions` (list sessions with `view` permission) and `POST /api/v1/campaigns/{campaign_id}/sessions` (create session/staging lobby with `run_session` permission).
+Extend `gateway/api/src/gateway_api/routers/campaigns.py` (removed) and `gateway_api/campaign_store/` with REST endpoints and in-memory persistence for campaign sessions: `GET /api/v1/campaigns/{campaign_id}/sessions` (list sessions with `view` permission) and `POST /api/v1/campaigns/{campaign_id}/sessions` (create session/staging lobby with `run_session` permission).
 
 ## Problem Statement
 The frontend session list (`<runefoble-session-list>`) and campaign view currently make requests to `GET /api/v1/campaigns/{campaign_id}/sessions`, but the Gateway API returns HTTP 404 because no session listing or session creation routes exist under `/api/v1/campaigns/{campaign_id}`. Furthermore, creating a new session from the UI currently navigates to an invalid mock `/lobby/new` route without creating a persistent session record in the backend store or checking SpiceDB Zanzibar `run_session` permissions.
@@ -49,11 +49,11 @@ The frontend session list (`<runefoble-session-list>`) and campaign view current
 1. **Pydantic Models (`gateway/api/src/gateway_api/models.py`)**:
    - `CreateCampaignSessionRequest`: `title: str`, `scheduled_at: str | None = None`, `description: str = ""`, `status: str = "lobby"` (`lobby` or `upcoming`).
    - `CampaignSessionResponse`: `id: str`, `campaign_id: str`, `title: str`, `status: str`, `round: int = 1`, `participants_count: int = 0`, `scheduled_at: str | None = None`, `created_at: str`.
-2. **Campaign Store Session Methods (`gateway/api/src/gateway_api/campaign_store/store.py`)**:
+2. **Campaign Store Session Methods (`gateway/api/src/gateway_api/campaign_store/store.py` (removed))**:
    - Extend `CampaignStore` to manage sessions associated with campaigns (`_campaign_sessions: dict[str, list[CampaignSessionRecord]]`).
    - `create_session(campaign_id: str, title: str, status: str, ...)` generating unique session IDs (`session-<uuid>`).
    - `get_campaign_sessions(campaign_id: str)` returning all active, upcoming, and lobby sessions.
-3. **Gateway Router Endpoints (`gateway/api/src/gateway_api/routers/campaigns.py`)**:
+3. **Gateway Router Endpoints (`gateway/api/src/gateway_api/routers/campaigns.py` (removed))**:
    - `GET /api/v1/campaigns/{campaign_id}/sessions`: Validate Zanzibar `view` permission on campaign, return list of `CampaignSessionResponse`.
    - `POST /api/v1/campaigns/{campaign_id}/sessions`: Validate Zanzibar `run_session` permission on campaign, create session record, return HTTP 201 Created.
 4. **Blackbox HTTP Tests (`tests/test_blackbox_gateway_campaign_sessions.py`)**:
@@ -70,7 +70,7 @@ The frontend session list (`<runefoble-session-list>`) and campaign view current
 - **Testable (T)**: Frontdoor HTTP blackbox tests verify session creation, listing, and SpiceDB Zanzibar authorization checks.
 
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
-1. `GET` and `POST` `/api/v1/campaigns/{campaign_id}/sessions` implemented in `gateway/api/src/gateway_api/routers/campaigns.py`.
+1. `GET` and `POST` `/api/v1/campaigns/{campaign_id}/sessions` implemented in `gateway/api/src/gateway_api/routers/campaigns.py` (removed).
 2. SpiceDB Zanzibar permissions enforced via `require_zanzibar_permission`.
 3. Blackbox frontdoor tests in `tests/test_blackbox_gateway_campaign_sessions.py` pass.
 4. All modified files strictly adhere to file length limit (<500 lines).

@@ -10,11 +10,13 @@ governing_adrs:
 - ADR-0011
 target_release: 0.1.0
 pr_url: https://github.com/tyevans/runefoble/pull/14
+governing_prds: []
+governing_stories: []
 ---
 # TASK-0036: PostgreSQL Multi-Database Initialization & Persistent Event Store Connection
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Update the PostgreSQL Helm deployment with an entrypoint initialization script (`init-multidb.sh`) that provisions dedicated databases for Zitadel (`zitadel`), SpiceDB (`spicedb`), and OpenPanel (`openpanel`) alongside the primary `runefoble` application database. Reconcile database configuration in `libs/runefoble_platform/src/runefoble_platform/event_sourcing.py` and `config.py` to correctly connect `PostgreSQLEventStore` via `database_url` with automatic table creation and graceful in-memory fallback.

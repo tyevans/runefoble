@@ -19,13 +19,13 @@ governing_stories:
 # TASK-0082: OpenPanel Analytics SDK & Worker Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
-Decompose `libs/runefoble_platform/src/runefoble_platform/analytics.py` (431 lines, 86.2% of limit) into single-responsibility modules (`privacy.py`, `client.py`, and `worker.py` within `runefoble_platform.analytics`) to ensure strict adherence to Hard Invariant 6 (File length limit < 500 lines) and improve maintainability.
+Decompose `libs/runefoble_events/src/runefoble_events/analytics.py` (431 lines, 86.2% of limit) into single-responsibility modules (`privacy.py`, `client.py`, and `worker.py` within `runefoble_platform.analytics`) to ensure strict adherence to Hard Invariant 6 (File length limit < 500 lines) and improve maintainability.
 
 ## Problem Statement
-`libs/runefoble_platform/src/runefoble_platform/analytics.py` currently stands at 431 lines. As introduced in TASK-0038, the file bundles three distinct responsibilities:
+`libs/runefoble_events/src/runefoble_events/analytics.py` currently stands at 431 lines. As introduced in TASK-0038, the file bundles three distinct responsibilities:
 1. PII anonymization, property scrubbing, and privacy sanitation logic (`anonymize_profile_id`, `sanitize_properties`, `FORBIDDEN_PROPERTY_KEYS`).
 2. The asynchronous HTTP OpenPanel client (`OpenPanelClient`) handling event buffering, network dispatches, and mock mode recording.
 3. The background Redis Streams consumer worker (`AnalyticsEventWorker`) managing stream subscriptions, consumer group initialization, domain event-to-metric translation, and dead-letter routing.
@@ -50,9 +50,9 @@ Any addition of new domain event mappings or telemetry destinations risks pushin
    - `anonymize_profile_id`, `sanitize_properties`, and `FORBIDDEN_PROPERTY_KEYS` (~80 lines).
 2. **OpenPanel Client (`libs/runefoble_platform/src/runefoble_platform/analytics_client.py` or `analytics/client.py`)**:
    - `OpenPanelClient` with `track`, `identify`, `clear`, and `close` (~110 lines).
-3. **Analytics Event Worker (`libs/runefoble_platform/src/runefoble_platform/analytics_worker.py` or `analytics/worker.py`)**:
+3. **Analytics Event Worker (`libs/runefoble_platform/src/runefoble_platform/analytics/` or `analytics/worker.py`)**:
    - `AnalyticsEventWorker` with consumer group setup, event mapping, polling loop, and DLQ handling (~210 lines).
-4. **Clean Re-export Facade (`libs/runefoble_platform/src/runefoble_platform/analytics.py`)**:
+4. **Clean Re-export Facade (`libs/runefoble_events/src/runefoble_events/analytics.py`)**:
    - Re-export `OpenPanelClient`, `AnalyticsEventWorker`, `anonymize_profile_id`, and `sanitize_properties` to maintain 100% backward compatibility (~30 lines).
 
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)

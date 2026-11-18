@@ -19,7 +19,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/271
 # TASK-0242: Platform Email Client Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `libs/runefoble_platform/src/runefoble_platform/email_client.py` (358 lines, 71.6% of limit) into modular submodules under `libs/runefoble_platform/src/runefoble_platform/email/` (`models.py`, `smtp.py`, and `mailpit.py`), keeping all submodules strictly < 130 lines per Hard Invariant 6 and ADR-0003.
@@ -42,7 +42,7 @@ Decompose `libs/runefoble_platform/src/runefoble_platform/email_client.py` (358 
 4. **Platform Facade (`libs/runefoble_platform/src/runefoble_platform/email/__init__.py`)**:
    - Re-export `MailpitClient` and public functions maintaining 100% backward compatibility (< 40 lines).
 5. **Verification**:
-   - Verify tests in `tests/test_blackbox_email_signup_mailpit.py` pass without regression.
+   - Verify tests in `tests/test_blackbox_email_signup_mailpit.py` (removed) pass without regression.
 
 ## INVEST Criteria Evaluation
 - **Independent (I)**: Refactoring is strictly isolated to `libs/runefoble_platform/` email delivery modules.

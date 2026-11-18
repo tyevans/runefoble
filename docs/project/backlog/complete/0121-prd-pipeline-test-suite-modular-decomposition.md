@@ -10,17 +10,19 @@ governing_adrs:
 - ADR-0009
 target_release: 0.4.0
 pr_url: https://github.com/tyevans/runefoble/pull/134
+governing_prds: []
+governing_stories: []
 ---
 # TASK-0121: PRD Pipeline Test Suite Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
-Decompose `tests/test_prd_pipeline.py` (418 lines) into discrete, single-responsibility test modules (`test_prd_manager.py`, `test_prd_planner.py`, and `test_prd_decomposer.py`), keeping all test files strictly under 250 lines and preserving 100% test coverage.
+Decompose `tests/test_prd_pipeline.py` (removed) (418 lines) into discrete, single-responsibility test modules (`test_prd_manager.py`, `test_prd_planner.py`, and `test_prd_decomposer.py`), keeping all test files strictly under 250 lines and preserving 100% test coverage.
 
 ## Problem Statement
-`tests/test_prd_pipeline.py` currently spans 418 lines, approaching the 500-line hard invariant limit (Hard Invariant 6). It consolidates PRD creation, template rendering, decomposition planning, task slice generation, and CLI parsing in a single monolithic test file.
+`tests/test_prd_pipeline.py` (removed) currently spans 418 lines, approaching the 500-line hard invariant limit (Hard Invariant 6). It consolidates PRD creation, template rendering, decomposition planning, task slice generation, and CLI parsing in a single monolithic test file.
 
 ## Governing Architecture & ADRs
 - **ADR-0003: UV Monorepo Workspace for Python BCs**: Standardized test structuring within monorepo.
@@ -46,7 +48,7 @@ Decompose `tests/test_prd_pipeline.py` (418 lines) into discrete, single-respons
 
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
 1. **Decomposed Modules**:
-   - `tests/test_prd_pipeline.py` eliminated; replacement test files each strictly < 250 lines.
+   - `tests/test_prd_pipeline.py` (removed) eliminated; replacement test files each strictly < 250 lines.
 2. **Zero Regressions**:
    - 100% of existing PRD pipeline assertions pass without modification.
 3. **Quality Gates**:

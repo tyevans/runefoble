@@ -19,7 +19,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/211
 # TASK-0168: Neural Speech Barge-In and Soft Crossfade Audio Filter
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Implement high-precision voice activity onset detection with 20ms cosine soft crossfading in `services/voice_agent/`, halting AI TTS audio streams within 80ms of human interjection without audible pops or clicks.

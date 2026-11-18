@@ -20,7 +20,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/163
 # TASK-0144: Mock SpiceDB Client and Auth Schema Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `libs/runefoble_auth/src/runefoble_auth/mock_spicedb.py` (457 lines, 91.4% of limit) into clean, single-responsibility submodules under `libs/runefoble_auth/src/runefoble_auth/mock/` (`client.py`, `evaluator.py`, `schema_parser.py`) with facade re-exports in `mock_spicedb.py`, ensuring all auth mock modules remain < 160 lines per Hard Invariant 6.
@@ -38,7 +38,7 @@ Decompose `libs/runefoble_auth/src/runefoble_auth/mock_spicedb.py` (457 lines, 9
   - [`us-0013-gateway-zanzibar-authorization.md`](../../user_stories/accepted/us-0013-gateway-zanzibar-authorization.md)
 
 ## Detailed Specification & Implementation Plan
-1. **Schema Parser Submodule (`libs/runefoble_auth/src/runefoble_auth/mock/schema_parser.py`)**:
+1. **Schema Parser Submodule (`libs/runefoble_auth/src/runefoble_auth/mock/schema_parser.py` (removed))**:
    - Extract Zed definition parsing, object relation parsing, and relation graph construction (< 130 lines).
 2. **Permission Evaluator Submodule (`libs/runefoble_auth/src/runefoble_auth/mock/evaluator.py`)**:
    - Extract recursive Zanzibar permission resolution, arrow expressions, and caveat evaluation (< 140 lines).

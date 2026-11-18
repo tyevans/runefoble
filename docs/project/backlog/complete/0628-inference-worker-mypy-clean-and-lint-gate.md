@@ -23,7 +23,7 @@ Complete
 `uv run mypy services/inference_worker/src` reports 5 errors in 2 files. The `make lint` gate runs ruff only, so these errors never block a change. Fix the errors without ignores and add the mypy check for this service to the lint target.
 
 ## Problem Statement
-- `services/inference_worker/src/inference_worker/llm_client.py:63,73`: `max_tokens` is rejected by the `ChatOpenAI` stub (`w2-inference-worker.md` F8). Verify at runtime first; the probe passed `max_tokens=512`, so the call may be right and the stub stale.
+- `services/inference_worker/src/inference_worker/llm_client.py:63,73` (removed): `max_tokens` is rejected by the `ChatOpenAI` stub (`w2-inference-worker.md` F8). Verify at runtime first; the probe passed `max_tokens=512`, so the call may be right and the stub stale.
 - `llm_client.py:65,75`: `api_key` typed `str` but the client expects `SecretStr` (pass `settings.openai_api_key`).
 - `graphs/narration_graph.py:119`: `tension_level` typed `str` in state, model expects `Literal`.
 - `make lint` (Makefile lint target) runs `ruff` only.

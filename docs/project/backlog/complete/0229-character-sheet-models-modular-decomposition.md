@@ -20,7 +20,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/310
 # TASK-0229: Character Sheet Models Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `services/character_sheet/src/character_sheet/models.py` (372 lines, 74.4% of limit) into modular Python submodules under `services/character_sheet/src/character_sheet/models/` (`base.py`, `character.py`, `inventory.py`, `conditions.py`, `progression.py`), ensuring all domain model modules remain strictly < 120 lines per Hard Invariant 6.

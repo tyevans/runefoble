@@ -23,7 +23,7 @@ Complete
 Implement character level progression, class-based spell slot scaling, spell preparation, and casting tracking within the `character_sheet` aggregate (US-0015, PRD-0001). Governed by Hard Invariant 7 (Blackbox TDD with Frontdoor Setup), all tests must interact strictly through the public HTTP frontdoor API (`POST /api/v1/characters/...`) to create characters, advance levels, prepare spells, and cast them with spell slot exhaustion checks.
 
 ## Scope & Changes
-1. **Domain Events (`libs/runefoble_events/events.py`)**:
+1. **Domain Events (`libs/runefoble_events/events.py` (removed))**:
    - `CharacterLeveledUp`: `session_id`, `character_id`, `new_level`, `max_hp_increase`, `spell_slots`. (@register_event("runefoble.events.character.leveled_up"))
    - `SpellPrepared`: `session_id`, `character_id`, `spell_name`, `spell_level`. (@register_event("runefoble.events.character.spell_prepared"))
    - `SpellSlotExpended`: `session_id`, `character_id`, `spell_name`, `slot_level_used`, `remaining_slots`. (@register_event("runefoble.events.character.spell_slot_expended"))

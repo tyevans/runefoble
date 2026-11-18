@@ -19,13 +19,13 @@ pr_url: https://github.com/tyevans/runefoble/pull/157
 # TASK-0143: Campaign Analytics UI Blackbox Test Suite Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
-Decompose `tests/test_blackbox_campaign_analytics_ui.py` (383 lines, approaching limit) into focused, single-responsibility frontdoor test modules under `tests/test_blackbox_campaign_analytics_ui/` (`test_analytics_dashboard_ui.py`, `test_chronicle_timeline_ui.py`, `test_spatial_heatmaps_ui.py`), ensuring all test files remain < 200 lines per Hard Invariant 6.
+Decompose `tests/test_blackbox_campaign_analytics_ui/` (383 lines, approaching limit) into focused, single-responsibility frontdoor test modules under `tests/test_blackbox_campaign_analytics_ui/` (`test_analytics_dashboard_ui.py`, `test_chronicle_timeline_ui.py`, `test_spatial_heatmaps_ui.py`), ensuring all test files remain < 200 lines per Hard Invariant 6.
 
 ## Problem Statement
-`tests/test_blackbox_campaign_analytics_ui.py` tests damage spatial heatmaps, MVP turn charts, and chronicle timeline navigation in a single file spanning 383 lines. Decomposing it into domain-focused submodules prevents future breaches of Hard Invariant 6 (< 500 lines) and enables parallel test execution.
+`tests/test_blackbox_campaign_analytics_ui/` tests damage spatial heatmaps, MVP turn charts, and chronicle timeline navigation in a single file spanning 383 lines. Decomposing it into domain-focused submodules prevents future breaches of Hard Invariant 6 (< 500 lines) and enables parallel test execution.
 
 ## Governing Architecture & ADRs
 - **ADR-0013: Microfrontend Architecture and Service Component Vendoring**: Component test isolation and public frontdoor verification via Storybook stories and UI manifests.
@@ -43,7 +43,7 @@ Decompose `tests/test_blackbox_campaign_analytics_ui.py` (383 lines, approaching
    - Extract timeline scrubbing, milestone event pagination, and historical memory archive tests (< 140 lines).
 3. **Spatial Heatmap Tests (`tests/test_blackbox_campaign_analytics_ui/test_spatial_heatmaps_ui.py`)**:
    - Extract 2D canvas damage density rendering, grid coordinate overlay, and filter control tests (< 140 lines).
-4. **Test Deprecation Shim (`tests/test_blackbox_campaign_analytics_ui.py`)**:
+4. **Test Deprecation Shim (`tests/test_blackbox_campaign_analytics_ui/`)**:
    - Replaced by package directory runner or clean migration.
 
 ## INVEST Criteria Evaluation

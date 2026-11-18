@@ -16,7 +16,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/266
 # TASK-0202: Backlog Queue Parser and Serializer Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `tools/backlog_engine/queue.py` (374 lines, 74.8% of limit) into modular submodules under `tools/backlog_engine/` (`parser.py`, `serializer.py`, and `queue.py`), extracting task markdown frontmatter parsing and serialized file writing out of the queue coordinator, keeping all files strictly < 180 lines per Hard Invariant 6, ADR-0003, and ADR-0007.

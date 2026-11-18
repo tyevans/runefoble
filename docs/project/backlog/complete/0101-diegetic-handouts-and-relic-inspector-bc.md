@@ -22,7 +22,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/118
 # TASK-0101: Generative Diegetic Handouts, Wax Seals & 3D Relic Inspector
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Build an in-world diegetic artifact generation pipeline and interactive WebGL relic inspector, providing weathered letters with breakable wax seals, hidden runes, and rotating 3D magical items.

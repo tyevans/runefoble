@@ -7,6 +7,9 @@ completed: 2026-09-26
 dependencies: [TASK-0004, TASK-0010, TASK-0012]
 governing_adrs: [ADR-0004, ADR-0008, ADR-0012]
 target_release: 0.1.0
+governing_prds:
+- PRD-0001
+governing_stories: []
 ---
 
 # TASK-0017 — Bauhaus Geometric Dice Physics & Roll Arithmetic Web Component
@@ -39,7 +42,7 @@ Implemented a high-impact, tactile Bauhaus geometric dice rolling Web Component 
      - Natural 1 / Fumble displayed with stark red warning border.
    - Dispatches `dice-rolled` CustomEvent with full detail payload.
    - Kept strictly under 400 lines (288 lines).
-5. **Storybook Stories (`frontend/src/stories/dice-roller.stories.ts`)**:
+5. **Storybook Stories (`services/game_session/ui/src/dice-roller.stories.ts`)**:
    - `StandardD20Roll`, `AdvantageAttack`, `Fireball8d6`, `CriticalHit`, `CriticalFumble`.
 6. **Application Integration**:
    - Exported in `frontend/src/index.ts` and integrated in `frontend/src/runefoble-app.ts`.

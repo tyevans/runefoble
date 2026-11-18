@@ -22,7 +22,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/166
 # TASK-0149: Voice Duplex Audio Settings & Real-Time Barge-In Visualizer Microfrontend
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Build the `<runefoble-voice-duplex-controls>` Web Component within `services/voice_agent/ui/src/` to provide visual feedback for speech interruptions (barge-in), VAD sensitivity sliders, acoustic ducking meters, and live cancellation indicators in Storybook and the App Shell.

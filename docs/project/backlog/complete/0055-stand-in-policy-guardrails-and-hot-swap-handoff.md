@@ -14,11 +14,16 @@ governing_adrs:
 - ADR-0013
 target_release: 0.2.1
 pr_url: https://github.com/tyevans/runefoble/pull/73
+governing_prds:
+- PRD-0002
+governing_stories:
+- US-0025
+- US-0026
 ---
 # TASK-0055: Stand-In Policy Guardrails and Mid-Session Hot-Swap Takeover
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Add customizable tactical guardrail profiles and seamless mid-session hot-swap takeover mechanics for absent players in `services/the_watcher`, `services/character_sheet`, and `services/game_session`.

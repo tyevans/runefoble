@@ -19,7 +19,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/210
 # TASK-0166: Mobile Low-Bandwidth Opus Adaptive Stream Adapter
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Implement network-adaptive WebRTC stream bitrate scaling in `services/voice_agent/`, automatically stepping audio transmission down to 16kHz mono Opus (<50 kbps) when mobile participants experience packet loss.

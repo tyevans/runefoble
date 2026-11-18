@@ -21,13 +21,13 @@ pr_url: https://github.com/tyevans/runefoble/pull/176
 # TASK-0154: Soundscape UI Blackbox Test Suite Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
-Decompose `tests/test_blackbox_soundscape_ui.py` (369 lines, 73.8% of limit) into modular test modules under `tests/test_blackbox_soundscape_ui/` (`test_manifest.py`, `test_stem_mixing.py`, `test_foley_ducking.py`, `conftest.py`), keeping all test files < 150 lines per Hard Invariant 6.
+Decompose `tests/test_blackbox_soundscape_ui/` (369 lines, 73.8% of limit) into modular test modules under `tests/test_blackbox_soundscape_ui/` (`test_manifest.py`, `test_stem_mixing.py`, `test_foley_ducking.py`, `conftest.py`), keeping all test files < 150 lines per Hard Invariant 6.
 
 ## Problem Statement
-`tests/test_blackbox_soundscape_ui.py` tests microfrontend manifests, tension-driven stem crossfades, WebAudio -12dB audio ducking, and DM foley soundboard triggers in a single 369-line file. Decomposing it into domain-focused test files improves test isolation and prevents file length violations.
+`tests/test_blackbox_soundscape_ui/` tests microfrontend manifests, tension-driven stem crossfades, WebAudio -12dB audio ducking, and DM foley soundboard triggers in a single 369-line file. Decomposing it into domain-focused test files improves test isolation and prevents file length violations.
 
 ## Governing Architecture & ADRs
 - **ADR-0003: UV Monorepo Workspace for Python BCs**: Clean test package structuring.

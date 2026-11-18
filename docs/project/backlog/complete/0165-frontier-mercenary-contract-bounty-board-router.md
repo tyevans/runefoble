@@ -22,7 +22,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/209
 # TASK-0165: Frontier Mercenary Contract and Bounty Board Router
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Implement modular API endpoints and contract lifecycle handlers in `services/game_session/` for posting, claiming, verifying, and completing mercenary bounties and resource retrieval contracts between different adventuring parties sharing a West Marches frontier.

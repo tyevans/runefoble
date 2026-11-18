@@ -63,7 +63,7 @@ Pytest through public HTTP (`tests/test_blackbox_session_chronicle.py`):
 - A non-member gets 403 from the gateway.
 - Before the fix the routes return 404 and the App Shell shows fixture rows. After the fix the tests PASS.
 
-Playwright BDD (`e2e/features/absentee_recap.feature`): setup uses only public routes (session creation, stand-in activation through the lobby UI). The scenario asserts the recap text shown in the App Shell matches the penalty the API reports.
+Playwright BDD (`e2e/features/absentee_recap.feature` (removed)): setup uses only public routes (session creation, stand-in activation through the lobby UI). The scenario asserts the recap text shown in the App Shell matches the penalty the API reports.
 
 ## Definition of Done
 1. Both routes exist in the gateway and in `game_session`, with `/openapi.json` coverage.

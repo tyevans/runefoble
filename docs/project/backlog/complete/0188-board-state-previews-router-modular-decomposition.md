@@ -20,7 +20,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/248
 # TASK-0188: Board State Previews Router Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `services/board_state/src/board_state/routers/previews.py` (345 lines, 69.0% of limit) by separating REST route preview calculations from the live WebSocket ghost preview connection hub into `previews_http.py` and `previews_ws.py`, keeping each module strictly < 150 lines per Hard Invariant 6 and ADR-0010.

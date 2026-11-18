@@ -12,11 +12,13 @@ governing_adrs:
 - ADR-0009
 target_release: 0.2.0
 pr_url: https://github.com/tyevans/runefoble/pull/25
+governing_prds: []
+governing_stories: []
 ---
 # TASK-0040: Modular APIRouter Decomposition for The Watcher & Game Session Microservices
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose monolithic `main.py` entrypoints in `services/the_watcher` (471 lines) and `services/game_session` (467 lines) into modular FastAPI `APIRouter` modules before they breach Hard Invariant 6 (File length limit < 500 lines).

@@ -22,13 +22,13 @@ pr_url: https://github.com/tyevans/runefoble/pull/125
 # TASK-0114: Theming Tokens and Contrast Invariants Test Suite Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
-Decompose `tests/test_theming.py` (332 lines, 66.4% of limit) into two specialized test modules (`tests/test_theming_tokens.py` and `tests/test_theming_contrast.py`) to prevent breaching Hard Invariant 6 (File length limit < 500 lines) as new component themes and broadcast overlay color tokens are added.
+Decompose `tests/test_theming.py` (removed) (332 lines, 66.4% of limit) into two specialized test modules (`tests/test_theming_tokens.py` and `tests/test_theming_contrast.py`) to prevent breaching Hard Invariant 6 (File length limit < 500 lines) as new component themes and broadcast overlay color tokens are added.
 
 ## Problem Statement
-`tests/test_theming.py` currently spans 332 lines and validates multiple design system layers in a single test module:
+`tests/test_theming.py` (removed) currently spans 332 lines and validates multiple design system layers in a single test module:
 1. CSS custom property tokens: Verifying Bauhaus modernist color variables, geometric font families, and light/dark theme classes across CSS files.
 2. Web component styling invariants: Scanning 18+ Lit component source files across all microfrontends for hardcoded hex colors, raw px spacing, and missing `--rf-*` tokens.
 3. WCAG contrast ratio calculations: Evaluating foreground and background color combinations across light and dark modes to enforce accessibility standards.
@@ -56,12 +56,12 @@ As Milestone 4 and 5 introduce spectator overlay themes (TASK-0056) and characte
 - **Negotiable (N)**: Distribution of component file scans can be tuned.
 - **Valuable (V)**: Protects against Hard Invariant 6 violations (< 500 lines) and speeds up frontend token validation runs.
 - **Estimable (E)**: Pure pytest partitioning using shared test helpers.
-- **Small (S)**: Scope strictly isolated to `tests/test_theming.py`; all resulting files < 180 lines.
+- **Small (S)**: Scope strictly isolated to `tests/test_theming.py` (removed); all resulting files < 180 lines.
 - **Testable (T)**: Verified with `uv run pytest tests/test_theming_*.py`.
 
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
 1. **Decomposition Executed**:
-   - `tests/test_theming.py` decomposed into `tests/test_theming_tokens.py` and `tests/test_theming_contrast.py`.
+   - `tests/test_theming.py` (removed) decomposed into `tests/test_theming_tokens.py` and `tests/test_theming_contrast.py`.
 2. **Strict Line Limit**:
    - Both test files strictly under 200 lines in compliance with Hard Invariant 6.
 3. **Full Backward Compatibility**:

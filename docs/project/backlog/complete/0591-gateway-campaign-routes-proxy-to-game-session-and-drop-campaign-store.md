@@ -24,7 +24,7 @@ target_release: 0.9.0
 Complete
 
 ## Summary
-After TASK-0590, `game_session` owns campaigns. This task replaces `gateway/api/src/gateway_api/routers/campaigns.py` and the `campaign_store` package with proxies. The gateway keeps only its own WebSocket fan-out for campaigns. The gateway no longer writes SpiceDB tuples for campaigns.
+After TASK-0590, `game_session` owns campaigns. This task replaces `gateway/api/src/gateway_api/routers/campaigns.py` (removed) and the `campaign_store` package with proxies. The gateway keeps only its own WebSocket fan-out for campaigns. The gateway no longer writes SpiceDB tuples for campaigns.
 
 ## Problem Statement
 - `routers/campaigns.py` (209 lines) serves 11 routes from `campaign_store` (`w1-gateway-api.md` F11).
@@ -35,7 +35,7 @@ After TASK-0590, `game_session` owns campaigns. This task replaces `gateway/api/
 ## Documentation & Architecture Review
 - ADR-0007: the gateway does routing, auth and aggregation only. Campaign state moves to the owner (TASK-0590).
 - `docs/how-to/manage-campaign-lifecycle-and-invites.md` describes the public contract. The paths do not change.
-- The campaign WebSocket (`/ws/campaigns/{id}`, `gateway/api/src/gateway_api/websocket.py`) stays in the gateway. It is fan-out, not domain state. It checks `view` before it accepts a socket. Do not change its auth in this task.
+- The campaign WebSocket (`/ws/campaigns/{id}`, `libs/runefoble_auth/src/runefoble_auth/websocket.py`) stays in the gateway. It is fan-out, not domain state. It checks `view` before it accepts a socket. Do not change its auth in this task.
 - `POST /api/v1/campaigns/{id}/roles` is in the same router. Its missing authorization belongs to the authorization theme. Do not ship this task before that fix (see TASK-0590, step 5).
 
 ## Product & User Story References
@@ -83,7 +83,7 @@ Test file: `tests/test_blackbox_gateway_campaigns_proxy.py` (replaces `tests/tes
 
 Source: `.audit/synth/discovered-round1.md`.
 
-- `GET /api/v1/campaigns/{campaign_id}` returns HTTP 200 with a fabricated campaign for an unknown id (`gateway/api/src/gateway_api/routers/campaigns.py:61-72`). Return 404. This also unblocks the `@blocked` scenario in `e2e/features/app_shell_data_errors.feature`.
+- `GET /api/v1/campaigns/{campaign_id}` returns HTTP 200 with a fabricated campaign for an unknown id (`gateway/api/src/gateway_api/routers/campaigns.py:61-72` (removed)). Return 404. This also unblocks the `@blocked` scenario in `e2e/features/app_shell_data_errors.feature`.
 
 ## Orchestrator Addenda (2026-11-17, round 2)
 

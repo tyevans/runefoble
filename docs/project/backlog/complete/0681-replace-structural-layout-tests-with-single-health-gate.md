@@ -36,7 +36,7 @@ None. This is engineering hygiene with no user-facing change.
 1. Find the tests: `grep -rlnE "splitlines\(\)|len\(.*lines|must exist|\.exists\(\)" tests/ | xargs grep -lE "\.ts|\.py\"" `. Review each match.
 2. For each test function that only checks line counts, file existence, module counts or source text: delete it. If the file then has no tests, delete the file.
 3. Keep tests that run behaviour (HTTP, WebSocket, events, or a real `pnpm test` run).
-4. If a deleted check guarded a real rule that health-check does not cover, add that rule to `scripts/health_check.py` (one place) instead.
+4. If a deleted check guarded a real rule that health-check does not cover, add that rule to `scripts/health_check.py` (removed) (one place) instead.
 5. Update `docs/how-to/curate-backlog-and-roadmap.md` if it names these tests.
 
 ## Frontdoor Blackbox Test Plan

@@ -20,7 +20,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/225
 # TASK-0174: Community Plugin UI Extension Slots Microfrontend
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Implement extensible mounting slots and Shadow DOM sandboxing in the frontend design system (`frontend/src/components/plugins/`), allowing community-authored Lit Web Components to mount into designated extension slots (such as `hud-widget`, `dice-panel`, and `sidebar-tool`) with full Bauhaus theme token inheritance and secure event isolation.

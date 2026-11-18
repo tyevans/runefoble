@@ -22,7 +22,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/171
 # TASK-0155: Spoken Reaction Interrupts and Ready-Action Combat Triggers
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Implement the reaction interrupt engine and ready-action conditional registry within `services/the_watcher/` and `services/game_session/`, allowing players to halt ongoing turn execution via spoken reaction keywords ("Shield!", "Counterspell!", "Opportunity Attack!") or declare conditional triggers that fire automatically when combat triggers are met.

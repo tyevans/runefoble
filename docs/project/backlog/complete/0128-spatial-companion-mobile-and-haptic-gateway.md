@@ -21,7 +21,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/146
 # TASK-0128: Spatial Companion Mobile WebRTC Audio & Haptic Ping Gateway
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Build a dedicated low-bandwidth WebRTC companion endpoint and mobile WebSocket gateway supporting haptic vibration pulses for secret DM whispers, turn notification alerts, and adaptive Opus voice streaming.

@@ -21,13 +21,13 @@ pr_url: https://github.com/tyevans/runefoble/pull/269
 # TASK-0232: Rules Compendium UI Blackbox Test Suite Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
-Decompose `tests/test_blackbox_rules_compendium_ui.py` (393 lines, 78.6% of limit - approaching the 500-line invariant limit) into modular test submodules under `tests/test_blackbox_rules_compendium_ui/` (`conftest.py`, `test_srd_search.py`, `test_homebrew_form.py`, and `test_encounter_cr.py`), keeping all test files strictly < 150 lines per Hard Invariant 6, ADR-0003, and ADR-0013.
+Decompose `tests/test_blackbox_rules_compendium_ui/` (393 lines, 78.6% of limit - approaching the 500-line invariant limit) into modular test submodules under `tests/test_blackbox_rules_compendium_ui/` (`conftest.py`, `test_srd_search.py`, `test_homebrew_form.py`, and `test_encounter_cr.py`), keeping all test files strictly < 150 lines per Hard Invariant 6, ADR-0003, and ADR-0013.
 
 ## Problem Statement
-`tests/test_blackbox_rules_compendium_ui.py` has grown to 393 lines, combining tests for SRD compendium hybrid search, homebrew creation forms, challenge rating balancing calculations, and microfrontend manifest registration in a single test module. Approaching the file size threshold, decomposing it into focused submodules ensures maintainability, fast test execution, and strict compliance with Hard Invariant 6.
+`tests/test_blackbox_rules_compendium_ui/` has grown to 393 lines, combining tests for SRD compendium hybrid search, homebrew creation forms, challenge rating balancing calculations, and microfrontend manifest registration in a single test module. Approaching the file size threshold, decomposing it into focused submodules ensures maintainability, fast test execution, and strict compliance with Hard Invariant 6.
 
 ## Governing Architecture & ADRs
 - **ADR-0003: UV Monorepo Workspace for Python BCs**: Clean modular test package structure under `tests/`.
@@ -57,7 +57,7 @@ Decompose `tests/test_blackbox_rules_compendium_ui.py` (393 lines, 78.6% of limi
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
 1. **Module Architecture**:
    - `tests/test_blackbox_rules_compendium_ui/` package created with all files strictly < 150 lines.
-   - Monolithic `tests/test_blackbox_rules_compendium_ui.py` removed.
+   - Monolithic `tests/test_blackbox_rules_compendium_ui/` removed.
 2. **Frontdoor Verification**:
    - All tests pass cleanly via `uv run pytest tests/test_blackbox_rules_compendium_ui/`.
 3. **Quality Gates**:

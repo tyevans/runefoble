@@ -21,13 +21,13 @@ pr_url: https://github.com/tyevans/runefoble/pull/237
 # TASK-0216: Faction Turf War Test Suite Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
-Decompose `tests/test_blackbox_turf_war/test_blackbox_turf_war.py` (374 lines, 74.8% of limit) into modular test submodules under `tests/test_blackbox_turf_war/` (`conftest.py`, `test_skirmishes.py`, `test_unrest_escalation.py`, `test_turf_war_api.py`), keeping all test files strictly < 150 lines per Hard Invariant 6.
+Decompose `tests/test_blackbox_turf_war/test_blackbox_turf_war.py` (removed) (374 lines, 74.8% of limit) into modular test submodules under `tests/test_blackbox_turf_war/` (`conftest.py`, `test_skirmishes.py`, `test_unrest_escalation.py`, `test_turf_war_api.py`), keeping all test files strictly < 150 lines per Hard Invariant 6.
 
 ## Problem Statement
-`tests/test_blackbox_turf_war/test_blackbox_turf_war.py` was introduced in TASK-0162 and covers skirmish simulations, territory capture, unrest calculations, and REST API endpoints in a single monolithic test file of 374 lines. As additional multi-party faction clash scenarios and espionage mechanics are added, this suite will breach the 500-line hard ceiling unless decomposed into focused, single-responsibility test files.
+`tests/test_blackbox_turf_war/test_blackbox_turf_war.py` (removed) was introduced in TASK-0162 and covers skirmish simulations, territory capture, unrest calculations, and REST API endpoints in a single monolithic test file of 374 lines. As additional multi-party faction clash scenarios and espionage mechanics are added, this suite will breach the 500-line hard ceiling unless decomposed into focused, single-responsibility test files.
 
 ## Governing Architecture & ADRs
 - **ADR-0002: Event-Driven Watcher Gameplay Orchestration**: Verifies reactive gameplay pipelines and unrest progression.

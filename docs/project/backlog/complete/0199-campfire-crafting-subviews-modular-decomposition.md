@@ -21,7 +21,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/262
 # TASK-0199: Campfire Crafting Subviews Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `services/game_session/ui/src/runefoble-campfire-crafting.ts` (323 lines, 64.6% of limit) into modular presentation subviews under `services/game_session/ui/src/campfire/` (`crafting-bench.template.ts`, `boons-display.template.ts`, and `stronghold-status.template.ts`), keeping each module strictly < 120 lines per Hard Invariant 6 and ADR-0004/ADR-0013.
@@ -44,7 +44,7 @@ Decompose `services/game_session/ui/src/runefoble-campfire-crafting.ts` (323 lin
    - Maintain state management, event dispatching, and risk calculation while importing template functions (< 100 lines).
 3. **Verification**:
    - Verify Storybook stories for `<runefoble-campfire-crafting>` render without visual or functional regressions.
-   - Run blackbox tests in `tests/test_blackbox_campfire_crafting.py`.
+   - Run blackbox tests in `tests/test_blackbox_campfire_crafting/`.
 
 ## INVEST Criteria Evaluation
 - **Independent (I)**: Isolated strictly within `services/game_session/ui/src/` presentation sub-tree.
@@ -52,7 +52,7 @@ Decompose `services/game_session/ui/src/runefoble-campfire-crafting.ts` (323 lin
 - **Valuable (V)**: Safeguards against Hard Invariant 6 while facilitating new crafting minigames.
 - **Estimable (E)**: Deterministic template extraction with well-defined event interfaces.
 - **Small (S)**: Scope strictly isolated to `<runefoble-campfire-crafting>` templates (< 120 lines each).
-- **Testable (T)**: Frontdoor validation via Storybook and `tests/test_blackbox_campfire_crafting.py`.
+- **Testable (T)**: Frontdoor validation via Storybook and `tests/test_blackbox_campfire_crafting/`.
 
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
 1. **Module Architecture**:

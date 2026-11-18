@@ -26,11 +26,11 @@ Complete
 `libs/runefoble_auth/schema/runefoble.zed` is the only authority for object permissions (AGENTS.md Hard Invariant 1). Code writes and checks names that the schema does not define. Some names are missing, and one object type is used but never defined. This task fixes the schema itself. It adds the missing permission and relations that the rest of the theme depends on. It does not change any call site. Call sites move in the owning bounded-context tasks.
 
 ## Problem Statement
-- `character` has no `delete` permission. `gateway/api/src/gateway_api/routers/characters.py:118` checks `require_zanzibar_permission("owner", "character", ...)`, and `owner` is a relation, not a permission (`w3-authz-coverage.md` F16).
+- `character` has no `delete` permission. `gateway/api/src/gateway_api/routers/characters.py:118` (removed) checks `require_zanzibar_permission("owner", "character", ...)`, and `owner` is a relation, not a permission (`w3-authz-coverage.md` F16).
 - `codex_entry` has no `party_shared` or `public` relation. `services/campaign_lore/src/campaign_lore/codex_deps.py:83-93` writes `codex_entry#party_shared@campaign:<id>` and `codex_entry#public@campaign:<id>`. Live SpiceDB rejects these writes, so a shared entry is saved with no ACL (`w2-campaign-lore.md` F8).
-- `system` is written by `gateway/api/src/gateway_api/routers/auth/admin.py:18`. No `definition system` exists. The write is wrapped in `suppress(Exception)` (`w1-libs.md` F5). TASK-0544 removes the routes. This task records that no `system` type is added.
-- `campaign#viewer` is written by `gateway/api/src/gateway_api/routers/auth/registration.py:22`. `campaign` has no `viewer` relation (`w1-libs.md` F5). TASK-0543 removes the write.
-- `game_session` and `session` are both defined. Only `session` has a writer (`gateway/api/src/gateway_api/routers/campaigns.py:55`). Services check `game_session` and never write it (`w1-game-session.md` F7, F8). This task records the decision that `session` is the lifecycle object. `game_session` stays in the file until TASK-0559 removes it.
+- `system` is written by `gateway/api/src/gateway_api/routers/auth/admin.py:18` (removed). No `definition system` exists. The write is wrapped in `suppress(Exception)` (`w1-libs.md` F5). TASK-0544 removes the routes. This task records that no `system` type is added.
+- `campaign#viewer` is written by `gateway/api/src/gateway_api/routers/auth/registration.py:22` (removed). `campaign` has no `viewer` relation (`w1-libs.md` F5). TASK-0543 removes the write.
+- `game_session` and `session` are both defined. Only `session` has a writer (`gateway/api/src/gateway_api/routers/campaigns.py:55` (removed)). Services check `game_session` and never write it (`w1-game-session.md` F7, F8). This task records the decision that `session` is the lifecycle object. `game_session` stays in the file until TASK-0559 removes it.
 
 ## Documentation & Architecture Review
 - `docs/how-to/define-spicedb-zanzibar-permissions.md` lists the schema relations. It must match the file after this change.

@@ -50,10 +50,10 @@ In addition, `frontend/test/app-data-service-decomposition.test.ts` actively tes
   - **ADR-0013: Frontend Microfrontend Architecture**: Microfrontend component vendoring.
 
 ## Product & User Story References
-- [`prd-0001-runefoble-platform-foundations.md`](../../product/accepted/prd-0001-runefoble-platform-foundations.md)
+- [`prd-0001-runefoble-platform-foundations.md`](../../product/accepted/prd-0023-unified-frontend-application-shell-and-campaign-hub.md)
 - [`prd-0023-unified-frontend-application-shell-and-campaign-hub.md`](../../product/accepted/prd-0023-unified-frontend-application-shell-and-campaign-hub.md)
-- [`us-0010-developer-local-infrastructure-and-test-tooling.md`](../../user_stories/accepted/us-0010-developer-local-infrastructure-and-test-tooling.md)
-- [`us-0065-routed-app-shell-views-and-session-transitions.md`](../../user_stories/accepted/us-0065-routed-app-shell-views-and-session-transitions.md)
+- `us-0010-developer-local-infrastructure-and-test-tooling.md`
+- [`us-0065-routed-app-shell-views-and-session-transitions.md`](../../user_stories/accepted/us-0066-client-side-routing-navigation-and-breadcrumbs.md)
 
 ## Detailed Specification & Implementation Plan
 1. **Delete All 29 Forwarding Export Components**:

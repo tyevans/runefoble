@@ -38,8 +38,8 @@ During past modular refactorings of the platform foundation (such as email clien
   - **ADR-0006: Redis Streams Distributed Domain Event Streaming**: Core event bus models.
 
 ## Product & User Story References
-- [`prd-0001-runefoble-platform-foundations.md`](../../product/accepted/prd-0001-runefoble-platform-foundations.md)
-- [`us-0010-developer-local-infrastructure-and-test-tooling.md`](../../user_stories/accepted/us-0010-developer-local-infrastructure-and-test-tooling.md)
+- `prd-0001-runefoble-platform-foundations.md`
+- `us-0010-developer-local-infrastructure-and-test-tooling.md`
 
 ## Detailed Specification & Implementation Plan
 1. **Delete Backward-Compatibility Shims**:

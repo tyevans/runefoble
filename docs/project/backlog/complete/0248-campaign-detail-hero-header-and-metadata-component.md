@@ -22,7 +22,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/280
 # TASK-0248: Campaign Detail Hero Header and Metadata Component
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Implement the `<runefoble-campaign-header>` Lit Web Component in `services/game_session/ui/src/campaigns/` providing a Bauhaus hero banner, campaign title, setting badge, system ruleset pill (e.g. 5e, PF2e), status indicator, narrative description, DM profile badge, and an "Edit Campaign" modal for users with SpiceDB Zanzibar `manage` permissions.

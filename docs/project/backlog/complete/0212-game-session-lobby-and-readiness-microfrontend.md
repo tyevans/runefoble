@@ -20,7 +20,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/205
 # TASK-0212: Game Session Lobby and Readiness Microfrontend
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Implement `<runefoble-session-lobby>` in `services/game_session/ui/src/lobby/`, providing a pre-game staging room where players check in, select their character, toggle readiness, and Game Masters launch the live tabletop session.

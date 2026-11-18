@@ -47,7 +47,7 @@ Traceability of personas and stories. Governing records are the stories and PRDs
 
 ## Frontdoor Blackbox Test Plan
 - `spec-ops schema check` exits 0. Before the change it exits 1 with 86 errors. After the change it exits 0.
-- A pytest test (`tests/test_blackbox_backlog_frontmatter.py`) parses the frontmatter of every story, PRD, and task, and asserts the required keys. It fails on the same 86 cases before the change.
+- A pytest test (`tests/test_blackbox_backlog_frontmatter.py` (removed)) parses the frontmatter of every story, PRD, and task, and asserts the required keys. It fails on the same 86 cases before the change.
 - Each story's `persona` value appears in `PERSONAS.md`. The test asserts this for all 76 stories.
 
 ## Definition of Done

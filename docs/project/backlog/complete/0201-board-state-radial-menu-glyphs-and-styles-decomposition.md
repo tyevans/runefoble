@@ -19,7 +19,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/264
 # TASK-0201: Board State Radial Menu Glyphs and Styles Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `services/board_state/ui/src/radial_menu.ts` (321 lines, 64.2% of limit) into modular submodules under `services/board_state/ui/src/radial/` (`radial_menu.styles.ts`, `radial_glyphs.ts`, and `radial_wedge.ts`), keeping each module strictly < 110 lines per Hard Invariant 6 and ADR-0004/ADR-0013.

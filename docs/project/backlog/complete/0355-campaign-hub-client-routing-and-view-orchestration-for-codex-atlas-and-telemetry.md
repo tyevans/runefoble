@@ -28,7 +28,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/348
 # TASK-0355: Campaign Hub Client Routing and View Orchestration for Codex, Atlas, and Telemetry
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Eradicate disabled, unclickable tabs in the Campaign Hub by registering client routes `#/campaigns/:campaignId/codex` and `#/campaigns/:campaignId/analytics` in `frontend/src/router/router.ts`, importing `@runefoble/campaign-lore-ui` and `@runefoble/campaign-analytics-ui` into `frontend/src/runefoble-app.ts`, removing inline `e.preventDefault()` dead handlers in `renderCampaignTabs()`, and mounting `<runefoble-campaign-atlas>` (with codex sidebar) and `<runefoble-campaign-analytics>` in `renderActiveView()`.
@@ -75,7 +75,7 @@ In `frontend/src/router/router.ts`, neither `#/campaigns/:campaignId/codex` nor 
 5. **Gateway Routing / Proxy Alignment (`gateway/api/src/gateway_api/main.py`)**:
    - Ensure routes for `/api/v1/campaigns/{id}/codex`, `/api/v1/campaigns/{id}/atlas`, and `/api/v1/analytics/campaigns/{id}` pass through to respective services or provide mock gateway handlers in offline mode.
 6. **Blackbox TDD Tests**:
-   - Update `frontend/test/campaign-detail-view.test.ts` and `frontend/test/app-shell.test.ts` to assert that navigating to `#/campaigns/:campaignId/codex` and `#/campaigns/:campaignId/analytics` activates the corresponding tabs, mounts the components, and renders breadcrumbs.
+   - Update `frontend/test/campaign-detail-view.test.ts` and `frontend/test/app_shell/` to assert that navigating to `#/campaigns/:campaignId/codex` and `#/campaigns/:campaignId/analytics` activates the corresponding tabs, mounts the components, and renders breadcrumbs.
 
 ## INVEST Criteria Evaluation
 - **Independent (I)**: Implemented as App Shell route and component mounting logic without modifying domain aggregates.

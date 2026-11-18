@@ -20,7 +20,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/141
 # TASK-0126: Autonomous NPC Faction Agendas & Background Simulation Engine
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Build a background world progression engine for The Watcher where non-player factions, secret cults, and rival guilds execute goal-oriented agenda ticks between game sessions, generating dynamic geopolitical shifts, trade shortages, and evolving tavern rumors.
@@ -38,7 +38,7 @@ Between gaming sessions, the campaign world currently remains frozen in time unl
 - **User Story**: [`us-0057-autonomous-npc-faction-agendas-and-world-simulation.md`](../../user_stories/accepted/us-0057-autonomous-npc-faction-agendas-and-world-simulation.md)
 
 ## Detailed Specification & Implementation Plan
-1. **Faction Domain Modeling (`services/the_watcher/src/the_watcher/factions.py`)**:
+1. **Faction Domain Modeling (`services/the_watcher/src/the_watcher/factions/`)**:
    - `FactionAggregate` with attributes: name, influence (1-100), resources, disposition towards party, and active goal (e.g. "Infiltrate Arcane Guild").
 2. **Simulation Tick Engine**:
    - Probabilistic resolution of agenda checks based on rival faction counter-measures and regional stability modifiers.

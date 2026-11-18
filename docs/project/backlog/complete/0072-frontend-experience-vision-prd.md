@@ -57,13 +57,13 @@ The goal of this record is to define what elevates Runefoble beyond static 2D gr
 - **Accessible & High-Performance**: 60fps canvas/SVG rendering, complete keyboard hotkey navigation, and WCAG 2.1 AA compliant color contrast.
 
 ## Definition of Done (Checkable Deliverables)
-1. **PRD-0007 Authored (`docs/project/product/shaped/prd-0007-immersive-and-intuitive-frontend-experience.md`)**:
+1. **PRD-0007 Authored (`docs/project/product/shaped/prd-0007-immersive-and-intuitive-frontend-experience.md` (removed))**:
    - Structured according to project PRD standards with all six core questions answered.
    - Includes detailed user journey flows for Player, DM, and Spectator personas.
    - Checkable outcomes with measurable interaction latency thresholds (<16ms frame render budget, <200ms ghost preview).
 2. **Registry & Catalog Updates**:
    - Registered in `docs/project/product/REGISTRY.md` and indexed in `docs/project/product/PRIORITY.md`.
-   - Feature additions cataloged in `docs/project/product/FEATURE_INVENTORY.md` across Tactical Board, The Watcher, and Frontend domains.
+   - Feature additions cataloged in `docs/project/product/FEATURE_INVENTORY.md` (removed) across Tactical Board, The Watcher, and Frontend domains.
 3. **User Stories Established**:
    - Corresponding user stories defined in `docs/project/user_stories/accepted/` covering tactile token manipulation, radial action menus, and voice ghost previews (`US-0017`, `US-0018`, `US-0019`).
 4. **File Length Compliance**:

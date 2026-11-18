@@ -21,7 +21,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/131
 # TASK-0125: Radial Token Action Menu & Rotatable AoE Spell Templates
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Build an interactive contextual radial dial for one-tap token actions (Dodge, Dash, Melee, Cast) and draggable, rotatable geometric Area of Effect (AoE) templates (cones, spheres, lines) with live token intersection highlighting on the board grid.

@@ -20,7 +20,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/199
 # TASK-0209: Campaign Dashboard and Creation Microfrontend
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Build the `<runefoble-campaign-dashboard>` and `<runefoble-campaign-creator>` Lit Web Components in `services/game_session/ui/src/campaigns/`, providing an interactive campaign grid with status badges, search/filter, and a step-by-step campaign creation wizard.

@@ -22,10 +22,10 @@ pr_url: https://github.com/tyevans/runefoble/pull/284
 # TASK-0252: Gateway Character Management Router and Zanzibar Authorization
 
 ## Status
-Refined
+Complete
 
 ## Summary
-Create `gateway/api/src/gateway_api/routers/characters.py` and register it in `gateway/api/src/gateway_api/main.py`. Expose REST endpoints: `GET /api/v1/characters` (list user-owned characters), `POST /api/v1/characters` (create character and write SpiceDB owner tuple), `GET /api/v1/characters/{id}` (fetch character with view permission), `PATCH /api/v1/characters/{id}/campaign` (assign/unassign character to campaign with edit permission), and `DELETE /api/v1/characters/{id}` (delete owned character).
+Create `gateway/api/src/gateway_api/routers/characters.py` (removed) and register it in `gateway/api/src/gateway_api/main.py`. Expose REST endpoints: `GET /api/v1/characters` (list user-owned characters), `POST /api/v1/characters` (create character and write SpiceDB owner tuple), `GET /api/v1/characters/{id}` (fetch character with view permission), `PATCH /api/v1/characters/{id}/campaign` (assign/unassign character to campaign with edit permission), and `DELETE /api/v1/characters/{id}` (delete owned character).
 
 ## Problem Statement
 The frontend Character Roster (`<runefoble-character-roster>`) calls `GET /api/v1/characters`, but the Gateway API returns HTTP 404 because no character router exists in `gateway/api/src/gateway_api/routers/`. As a result, the frontend always falls back to static dummy characters. Furthermore, when users attempt to create characters, assign them to campaigns, or delete them, there are no endpoints to accept the payloads, validate SpiceDB Zanzibar permissions, or write relationship tuples.
@@ -47,11 +47,11 @@ The frontend Character Roster (`<runefoble-character-roster>`) calls `GET /api/v
   - [`us-0069-character-sheet-inspector-and-active-session-binding.md`](../../user_stories/accepted/us-0069-character-sheet-inspector-and-active-session-binding.md)
 
 ## Detailed Specification & Implementation Plan
-1. **Character Store & Models (`gateway/api/src/gateway_api/character_store.py`)**:
+1. **Character Store & Models (`gateway/api/src/gateway_api/character_store.py` (removed))**:
    - Define `CharacterRecord` storing `id`, `name`, `character_class`, `subclass`, `level`, `current_hp`, `max_hp`, `armor_class`, `speed`, `campaign_id`, `owner_id`, `portrait_url`.
    - Provide in-memory storage with initial default characters for dev/testing.
    - Implement `create_character()`, `get_character()`, `list_characters_for_user()`, `assign_campaign()`, and `delete_character()`.
-2. **Gateway Router (`gateway/api/src/gateway_api/routers/characters.py`)**:
+2. **Gateway Router (`gateway/api/src/gateway_api/routers/characters.py` (removed))**:
    - `GET /api/v1/characters`: Query all characters where `user` has `view` or `owner` relation in SpiceDB.
    - `POST /api/v1/characters`: Validate request, generate ID, save record, write `character:<id>#owner@user:<user_id>` in SpiceDB.
    - `GET /api/v1/characters/{character_id}`: Check Zanzibar `view` permission on `character:<id>`, return character details.

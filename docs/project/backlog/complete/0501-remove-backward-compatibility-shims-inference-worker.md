@@ -52,7 +52,7 @@ Under the updated DoR, these transitional compatibility branches must be excised
    - In `services/inference_worker/src/inference_worker/config.py` and `llm_client.py`, remove any alias or parameter mapping that grep finds (none found at audit 2026-11-17).
    - Standardize on explicit configuration models for OpenAI-compatible, Ollama, and mock inference engines.
 2. **Clean Up Consumer Message Adapters**:
-   - In `services/inference_worker/src/inference_worker/redis_consumer.py`, remove any legacy schema translation fallback (none found at audit 2026-11-17).
+   - In `services/inference_worker/src/inference_worker/redis_consumer.py` (removed), remove any legacy schema translation fallback (none found at audit 2026-11-17).
 3. **Prune Package Root Exports**:
    - In `services/inference_worker/src/inference_worker/__init__.py`, verify that only authoritative client and consumer interfaces are exported.
 4. **Update Blackbox Test Suites**:

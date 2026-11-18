@@ -19,7 +19,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/236
 # TASK-0180: Board State Stories Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `services/board_state/ui/src/runefoble-board.stories.ts` (378 lines, 75.6% of limit) by extracting sample token data, terrain configurations, and ghost preview states into a shared mock fixtures file `runefoble-board.stories.fixtures.ts`, keeping all story and fixture files strictly < 200 lines per Hard Invariant 6 and ADR-0013.

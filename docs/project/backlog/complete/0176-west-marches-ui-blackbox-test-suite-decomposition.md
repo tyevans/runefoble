@@ -21,13 +21,13 @@ pr_url: https://github.com/tyevans/runefoble/pull/234
 # TASK-0176: West Marches UI Blackbox Test Suite Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
-Decompose `tests/test_blackbox_west_marches_ui.py` (379 lines, 75.8% of limit) into modular test submodules under `tests/test_blackbox_west_marches_ui/` (`test_manifest.py`, `test_atlas_pins.py`, `test_stronghold_dashboard.py`, `conftest.py`), keeping all test files < 150 lines per Hard Invariant 6.
+Decompose `tests/test_blackbox_west_marches_ui.py` (removed) (379 lines, 75.8% of limit) into modular test submodules under `tests/test_blackbox_west_marches_ui/` (`test_manifest.py`, `test_atlas_pins.py`, `test_stronghold_dashboard.py`, `conftest.py`), keeping all test files < 150 lines per Hard Invariant 6.
 
 ## Problem Statement
-`tests/test_blackbox_west_marches_ui.py` tests UI manifests, interactive map pins, communal strongholds, and discovery logs in a single 379-line file. Approaching the file size limit, it must be decomposed into focused test modules for clarity and maintainability.
+`tests/test_blackbox_west_marches_ui.py` (removed) tests UI manifests, interactive map pins, communal strongholds, and discovery logs in a single 379-line file. Approaching the file size limit, it must be decomposed into focused test modules for clarity and maintainability.
 
 ## Governing Architecture & ADRs
 - **ADR-0003: UV Monorepo Workspace for Python BCs**: Clean test package structuring.
@@ -60,7 +60,7 @@ Decompose `tests/test_blackbox_west_marches_ui.py` (379 lines, 75.8% of limit) i
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
 1. **Test Suite Architecture**:
    - Test package created with all files strictly < 150 lines per Hard Invariant 6.
-   - Original monolithic `tests/test_blackbox_west_marches_ui.py` removed.
+   - Original monolithic `tests/test_blackbox_west_marches_ui.py` (removed) removed.
 2. **Frontdoor Test Verification**:
    - All tests pass via `uv run pytest tests/test_blackbox_west_marches_ui/`.
 3. **Quality Gates**:

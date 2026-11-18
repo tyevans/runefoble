@@ -29,7 +29,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/351
 # TASK-0358: Live Tabletop VTT WebSocket Event Mesh, Plugin Slots & Tangential Controls Integration
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Transform the active VTT view from a partially stubbed layout into a complete live tabletop system by wiring missing session lobby events (`@toggle-readiness`, `@toggle-stand-in`), passing `websocketUrl` to `<runefoble-board>`, expanding `runefoble-app.ts` WebSocket message processing to handle dice rolls, turn changes, AoE spells, and VFX, registering core microfrontends into default plugin slots (`hud-widget`, `dice-panel`, `sidebar-tool`), and removing hardcoded grid/atmosphere constants.
@@ -81,8 +81,8 @@ The active VTT and session views currently suffer from significant integration g
      - `spell_vfx`: Trigger WebGL particle bloom on `<runefoble-board>`.
      - `dm_whisper`: Feed private whisper channel in `<runefoble-dm-whisper-bar>`.
 5. **Blackbox TDD Tests**:
-   - Author `tests/test_blackbox_vtt_websocket_mesh.py` asserting multi-client WebSocket event broadcasting (readiness, dice rolls, turns, AoE placement).
-   - Update `frontend/test/app-shell.test.ts` to verify plugin slots and VTT event bindings.
+   - Author `tests/test_blackbox_vtt_websocket_mesh.py` (removed) asserting multi-client WebSocket event broadcasting (readiness, dice rolls, turns, AoE placement).
+   - Update `frontend/test/app_shell/` to verify plugin slots and VTT event bindings.
 
 ## INVEST Criteria Evaluation
 - **Independent (I)**: Focuses on the active session view and real-time event pipeline.

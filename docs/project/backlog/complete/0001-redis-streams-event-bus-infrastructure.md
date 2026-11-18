@@ -12,6 +12,7 @@ governing_prds:
 - PRD-0001
 governing_stories:
 - US-0010
+dependencies: []
 ---
 # TASK-0001: Redis Streams Event Bus Infrastructure and Helm Integration
 

@@ -23,10 +23,10 @@ governing_stories:
 # TASK-0088: Microfrontends Blackbox Test Suite Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
-Decompose `tests/test_microfrontends.py` (454 lines, 90.8% of limit) into two specialized blackbox test suites (`tests/test_microfrontend_manifests.py` and `tests/test_microfrontend_app_shell.py`) to prevent breaching Hard Invariant 6 (File length limit < 500 lines) as new service microfrontends are integrated.
+Decompose `tests/test_microfrontends.py` (454 lines, 90.8% of limit) into two specialized blackbox test suites (`tests/test_microfrontend_manifests.py` and `tests/test_microfrontend_app_shell.py` (removed)) to prevent breaching Hard Invariant 6 (File length limit < 500 lines) as new service microfrontends are integrated.
 
 ## Problem Statement
 `tests/test_microfrontends.py` currently stands at 454 lines. It tests two separate architectural layers:
@@ -46,7 +46,7 @@ As new microfrontends are onboarded in Milestone 3 (such as `soundscape` and `ca
    - `test_game_session_ui_manifest_frontdoor`, `test_the_watcher_ui_manifest_frontdoor`, `test_voice_agent_ui_manifest_frontdoor`.
    - Component tags and package naming convention assertions.
    - Target length: < 220 lines.
-2. **App Shell Orchestration & Storybook Aggregation Suite (`tests/test_microfrontend_app_shell.py`)**:
+2. **App Shell Orchestration & Storybook Aggregation Suite (`tests/test_microfrontend_app_shell.py` (removed))**:
    - App shell Lit composition, Storybook stories indexing, and import graph verification.
    - Target length: < 220 lines.
 3. **Original Monolith Deletion**:
@@ -62,7 +62,7 @@ As new microfrontends are onboarded in Milestone 3 (such as `soundscape` and `ca
 
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
 1. **Modular Test Suite Partitioning**:
-   - `tests/test_microfrontends.py` decomposed into `tests/test_microfrontend_manifests.py` and `tests/test_microfrontend_app_shell.py`.
+   - `tests/test_microfrontends.py` decomposed into `tests/test_microfrontend_manifests.py` and `tests/test_microfrontend_app_shell.py` (removed).
 2. **Strict File Length Compliance (Hard Invariant 6)**:
    - All resulting test files strictly under 250 lines each.
 3. **Frontdoor Blackbox Verification**:

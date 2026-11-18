@@ -20,13 +20,13 @@ governing_stories:
 # TASK-0095: Soundscape Blackbox Test Suite and Adaptive Mixer Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
-Decompose `tests/test_blackbox_soundscape.py` (406 lines, 81.2% of limit) into two specialized blackbox test suites (`tests/test_blackbox_soundscape_transitions.py` and `tests/test_blackbox_soundscape_tension.py`) to prevent breaching Hard Invariant 6 (File length limit < 500 lines) as spatial foley and leitmotif stems land.
+Decompose `tests/test_blackbox_soundscape.py` (removed) (406 lines, 81.2% of limit) into two specialized blackbox test suites (`tests/test_blackbox_soundscape_transitions.py` and `tests/test_blackbox_soundscape_tension.py`) to prevent breaching Hard Invariant 6 (File length limit < 500 lines) as spatial foley and leitmotif stems land.
 
 ## Problem Statement
-`tests/test_blackbox_soundscape.py` spans 406 lines and bundles multiple distinct test concerns into a single file:
+`tests/test_blackbox_soundscape.py` (removed) spans 406 lines and bundles multiple distinct test concerns into a single file:
 1. Audio stem mixing & ducking: Ambient background track crossfading, WebAudio -12dB voice ducking coordination upon `PlayerSpokeEvent`, and manual override controls.
 2. Dynamic tension & combat reactivity: Threat score calculation, dynamic tension transitions upon `CombatEncounterStarted` and `CombatRoundAdvanced`, and tactical foley cue triggers (`SoundscapeCueTriggered`).
 3. Zanzibar authorization: Permission enforcement for audio mixer adjustments and DM override controls.
@@ -50,7 +50,7 @@ As upcoming Milestone 5 features introduce Character Musical Leitmotifs (TASK-01
 - **Negotiable (N)**: Allocation of Zanzibar permission tests between suites can be adjusted.
 - **Valuable (V)**: Protects against Hard Invariant 6 violations (< 500 lines) and speeds up test suite execution.
 - **Estimable (E)**: Clean pytest module separation with shared fixtures.
-- **Small (S)**: Scope strictly isolated to `tests/test_blackbox_soundscape.py`; all files < 220 lines.
+- **Small (S)**: Scope strictly isolated to `tests/test_blackbox_soundscape.py` (removed); all files < 220 lines.
 - **Testable (T)**: Verified with `uv run pytest tests/test_blackbox_soundscape_*.py`.
 
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)

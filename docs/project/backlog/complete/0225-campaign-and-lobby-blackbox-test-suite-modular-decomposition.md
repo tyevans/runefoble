@@ -24,13 +24,13 @@ pr_url: https://github.com/tyevans/runefoble/pull/321
 # TASK-0225: Campaign and Lobby Blackbox Test Suite Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
-Decompose `tests/test_blackbox_campaign_and_lobby.py` (338 lines, 67.6% of limit) into modular test submodules under `tests/test_blackbox_campaign_and_lobby/` (`conftest.py`, `test_campaign_lifecycle.py`, `test_party_assignment.py`, `test_session_lobby.py`), keeping all test files strictly < 130 lines per Hard Invariant 6.
+Decompose `tests/test_blackbox_campaign_and_lobby/` (338 lines, 67.6% of limit) into modular test submodules under `tests/test_blackbox_campaign_and_lobby/` (`conftest.py`, `test_campaign_lifecycle.py`, `test_party_assignment.py`, `test_session_lobby.py`), keeping all test files strictly < 130 lines per Hard Invariant 6.
 
 ## Problem Statement
-`tests/test_blackbox_campaign_and_lobby.py` covers campaign creation, Zanzibar authorization, roster party assignments, and lobby readiness transitions in a single monolithic test file of 338 lines. As multi-party West Marches integration tests and real-time WebSocket session launch assertions are expanded, this test file will breach the 500-line invariant unless decomposed.
+`tests/test_blackbox_campaign_and_lobby/` covers campaign creation, Zanzibar authorization, roster party assignments, and lobby readiness transitions in a single monolithic test file of 338 lines. As multi-party West Marches integration tests and real-time WebSocket session launch assertions are expanded, this test file will breach the 500-line invariant unless decomposed.
 
 ## Documentation & Architecture Review
 - **Documentation Consulted**:

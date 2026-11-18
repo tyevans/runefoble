@@ -36,8 +36,8 @@ Decompose `tests/test_blackbox_dev_environment.py` (328 lines, 65.6% of limit) i
 ## Product & User Story References
 - Technical debt refactoring supporting:
   - [`prd-0023-unified-frontend-application-shell-and-campaign-hub.md`](../../product/accepted/prd-0023-unified-frontend-application-shell-and-campaign-hub.md)
-  - [`us-0001-developer-local-environment-setup.md`](../../user_stories/accepted/us-0001-developer-local-environment-setup.md)
-  - [`us-0065-game-session-staging-lobby-and-pre-game-assembly.md`](../../user_stories/accepted/us-0065-game-session-staging-lobby-and-pre-game-assembly.md)
+  - `us-0001-developer-local-environment-setup.md`
+  - [`us-0065-game-session-staging-lobby-and-pre-game-assembly.md`](../../user_stories/accepted/us-0065-game-session-lobby-readiness-and-launch.md)
 
 ## Scope of Work
 1. **Create Modular Test Directory (`tests/test_blackbox_dev_environment/`)**:

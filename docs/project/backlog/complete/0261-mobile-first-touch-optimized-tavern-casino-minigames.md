@@ -20,7 +20,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/323
 # TASK-0261: Mobile-First Touch-Optimized Tavern and Casino Minigames Suite
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Develop a suite of responsive, touch-first Lit Web Components and WebSocket multiplayer engines for tavern and casino minigames—including Darts, Pool/Billiards, Liar's Dice, Roulette, and Dragon Craps—optimized specifically for mobile smartphone browsers without requiring native app installation.

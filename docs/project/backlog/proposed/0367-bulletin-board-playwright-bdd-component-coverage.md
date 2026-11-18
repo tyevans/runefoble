@@ -10,7 +10,7 @@ governing_adrs:
 - ADR-0013
 - ADR-0014
 governing_prds:
-- PRD-0025
+- PRD-0024
 governing_stories:
 - US-0070
 target_release: 0.9.0

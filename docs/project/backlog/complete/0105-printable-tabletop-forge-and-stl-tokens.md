@@ -21,7 +21,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/122
 # TASK-0105: Printable Tabletop Forge: Grid-Calibrated PDFs, Standees & 3D STL Tokens
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Expand `services/asset_forge` to export multi-page print-ready PDFs calibrated to exact 1-inch tabletop grids, foldable papercraft standees, and watertight 3D-printable STL token rings.

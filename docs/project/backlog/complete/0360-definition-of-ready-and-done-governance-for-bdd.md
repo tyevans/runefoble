@@ -19,7 +19,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/371
 # TASK-0360: Definition of Ready & Done Governance Updates for BDD and Playwright
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Formalize repository-wide architectural and quality governance for Behavior-Driven Development (BDD) per ADR-0014. Update the **Definition of Ready (DoR)** to mandate frontdoor BDD Gherkin scenario readiness, update the **Definition of Done (DoD)** to require passing Playwright BDD browser test suites for all user-facing capabilities, update Hard Invariant 7 in `AGENTS.md` and `docs/operating-manual.md`, and author a Diataxis How-To guide (`docs/how-to/test-user-flows-with-playwright-bdd.md`).

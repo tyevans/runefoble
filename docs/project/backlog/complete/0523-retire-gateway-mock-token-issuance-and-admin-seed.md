@@ -26,10 +26,10 @@ Complete
 The gateway issues its own tokens. It signs them with a fixed string, accepts any password, and derives DM roles from the username. It also seeds system admins without authentication. Remove every route that mints, refreshes, or seeds identity. Zitadel issues all tokens. Local admin bootstrap moves to the Zitadel wiring task.
 
 ## Problem Statement
-- `gateway/api/src/gateway_api/routers/auth/tokens.py:15-30` builds a JWT signed with the literal `runefoble-dev-signature`. Lines 34-45 issue it for any username and password. Roles come from the substrings `dm`, `master`, and `dungeon`. Audit w3-ddd F2, w3-authz F5.
+- `gateway/api/src/gateway_api/routers/auth/tokens.py:15-30` (removed) builds a JWT signed with the literal `runefoble-dev-signature`. Lines 34-45 issue it for any username and password. Roles come from the substrings `dm`, `master`, and `dungeon`. Audit w3-ddd F2, w3-authz F5.
 - `tokens.py` `refresh_token` mints `user-refreshed`. `logout_user` does nothing. Audit w2-app-shell F1.
-- `gateway/api/src/gateway_api/routers/auth/registration.py:33` grants `dm` and `player` from the username. Its verification state is in memory.
-- `gateway/api/src/gateway_api/routers/auth/admin.py:22-57` (`POST /api/v1/auth/admin/seed`) has no auth and returns an admin bearer. The SpiceDB write is wrapped in `contextlib.suppress(Exception)` (line 16-17). Audit w1-gateway-api F2, w3-authz F4.
+- `gateway/api/src/gateway_api/routers/auth/registration.py:33` (removed) grants `dm` and `player` from the username. Its verification state is in memory.
+- `gateway/api/src/gateway_api/routers/auth/admin.py:22-57` (removed) (`POST /api/v1/auth/admin/seed`) has no auth and returns an admin bearer. The SpiceDB write is wrapped in `contextlib.suppress(Exception)` (line 16-17). Audit w1-gateway-api F2, w3-authz F4.
 - `admin.py:59` (`POST /api/v1/auth/admin/invite`) has no auth.
 - `routers/auth/dev_mail.py:27,53` lets any caller send test mail and clear the mail store.
 
@@ -43,7 +43,7 @@ The gateway issues its own tokens. It signs them with a fixed string, accepts an
 - US-0070 (profile management). The profile route stays.
 
 ## Detailed Specification & Implementation Plan
-1. Delete from `gateway/api/src/gateway_api/routers/auth/tokens.py`: `POST /api/v1/auth/token`, `POST /refresh`, `POST /logout`, and `_generate_mock_jwt`. Delete the module if it is empty.
+1. Delete from `gateway/api/src/gateway_api/routers/auth/tokens.py` (removed): `POST /api/v1/auth/token`, `POST /refresh`, `POST /logout`, and `_generate_mock_jwt`. Delete the module if it is empty.
 2. Delete `registration.py` routes `/register`, `/verify`, `/verify-email`, and `/resend-verification`. Sign-up runs on the Zitadel hosted page, linked from the App Shell login view (TASK-0524).
    - If product needs an in-app sign-up form, that form calls the Zitadel management API from a server-side service account. That is a new task, not this one.
 3. Delete `admin.py` routes `/admin/seed` and `/admin/invite`. Delete the `_write_system_relation` helper and the `system` resource writes. Local admin bootstrap is in TASK-0526.

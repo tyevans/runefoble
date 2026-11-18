@@ -20,7 +20,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/281
 # TASK-0247: Frontend Vite API Proxy and Dynamic Route Title Resolver
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Configure the Vite development server in `frontend/vite.config.ts` to proxy `/api/v1` and `/ws` to the local Gateway API server (`http://localhost:8000`), and refactor `frontend/src/router/router.ts` with asynchronous dynamic title resolution so breadcrumbs and headers display real campaign and session names loaded from live API records instead of hardcoded stub IDs ('4', '5').

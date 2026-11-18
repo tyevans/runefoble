@@ -41,7 +41,7 @@ PRD-0012 explicitly requires the living campaign timeline to track "past session
 - [`prd-0012-campaign-telemetry-and-living-chronicle-timeline.md`](../../product/accepted/prd-0012-campaign-telemetry-and-living-chronicle-timeline.md)
 - [`prd-0015-generative-handouts-relic-inspector-and-printable-forge.md`](../../product/accepted/prd-0015-generative-handouts-relic-inspector-and-printable-forge.md)
 - [`us-0040-campaign-combat-telemetry-and-living-timeline.md`](../../user_stories/accepted/us-0040-campaign-combat-telemetry-and-living-timeline.md)
-- [`us-0045-generative-handouts-wax-seals-and-3d-relics.md`](../../user_stories/accepted/us-0045-generative-handouts-wax-seals-and-3d-relics.md)
+- [`us-0045-generative-handouts-wax-seals-and-3d-relics.md`](../../user_stories/accepted/us-0045-generative-in-world-handouts-and-relic-inspector.md)
 
 ## Scope of Work
 1. **Loot and Relic Projection Handlers (`services/campaign_analytics/src/campaign_analytics/event_handlers.py`)**:

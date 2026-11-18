@@ -71,7 +71,7 @@ Setup: campaign and poll are created through the audience routes. Roles are set 
 - A stubbed SpiceDB outage returns 503 on a read.
 
 ## Definition of Done
-1. Blackbox tests exist in `services/audience_studio/tests/` (or the existing TypeScript test folder) and pass against the live SpiceDB container.
+1. Blackbox tests exist in `services/audience_studio/tests/` (removed) (or the existing TypeScript test folder) and pass against the live SpiceDB container.
 2. `src/auth.ts` contains no role-name hierarchy and no `dm-user` fallback.
 3. `POST /auth/tuples` does not exist.
 4. `grep -rn "dm-user\|runefoble_secret_key" services/audience_studio/src` returns nothing.

@@ -20,7 +20,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/307
 # TASK-0273: Settlement Aggregate and Bulletin Handlers Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `services/game_session/src/game_session/settlement/settlement_aggregate.py` (455 lines, 91.0% of limit) by extracting bulletin board notice event handlers and mutation commands into a dedicated module `bulletin_handlers.py` and frontier haven legacy chartering logic into `charter_handlers.py`, reducing the core aggregate file to < 160 lines per Hard Invariant 6.

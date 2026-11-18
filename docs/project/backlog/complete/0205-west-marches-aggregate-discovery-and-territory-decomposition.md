@@ -20,7 +20,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/279
 # TASK-0205: West Marches Aggregate Discovery and Territory Handlers Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `services/campaign_lore/src/campaign_lore/west_marches_aggregate.py` (304 lines, 60.8% of limit) by extracting discovery pin mutation logic, territory claim evaluations, and outpost fortification calculations into `west_marches_handlers.py`, keeping the root aggregate definition strictly < 150 lines per Hard Invariant 6 and ADR-0007.

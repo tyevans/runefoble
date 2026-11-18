@@ -26,13 +26,13 @@ pr_url: https://github.com/tyevans/runefoble/pull/377
 # TASK-0238: GameSession Models Test Suite Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
-Decompose `tests/test_game_session_models_modular_decomposition.py` (339 lines, 67.8% of limit) into modular test sub-suites under `tests/test_game_session_models/` (`test_session_and_combat.py`, `test_reactions.py`, `test_settlements_and_facilities.py`, `test_autopilot_and_hotswap.py`), keeping all test modules strictly < 120 lines per Hard Invariant 6 and Hard Invariant 7.
+Decompose `tests/test_game_session_models/` (339 lines, 67.8% of limit) into modular test sub-suites under `tests/test_game_session_models/` (`test_session_and_combat.py`, `test_reactions.py`, `test_settlements_and_facilities.py`, `test_autopilot_and_hotswap.py`), keeping all test modules strictly < 120 lines per Hard Invariant 6 and Hard Invariant 7.
 
 ## Problem Statement
-`tests/test_game_session_models_modular_decomposition.py` contains 339 lines verifying package exports, combat request/response validation, turn transition state mixins, reaction declarations, settlement charters, facility upgrades, and autopilot/hotswap payloads in a single test module. Approaching the file size threshold, decomposing it into focused sub-suites improves test organization and ensures compliance with Hard Invariant 6.
+`tests/test_game_session_models/` contains 339 lines verifying package exports, combat request/response validation, turn transition state mixins, reaction declarations, settlement charters, facility upgrades, and autopilot/hotswap payloads in a single test module. Approaching the file size threshold, decomposing it into focused sub-suites improves test organization and ensures compliance with Hard Invariant 6.
 
 ## Documentation & Architecture Review
 - **Documentation Consulted**:
@@ -79,7 +79,7 @@ Decompose `tests/test_game_session_models_modular_decomposition.py` (339 lines, 
 - **Testable (T)**: Frontdoor test execution via `uv run pytest tests/test_game_session_models/`.
 
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
-1. `tests/test_game_session_models_modular_decomposition.py` replaced by modular sub-suites under `tests/test_game_session_models/`.
+1. `tests/test_game_session_models/` replaced by modular sub-suites under `tests/test_game_session_models/`.
 2. All test files strictly < 120 lines each per Hard Invariant 6.
 3. Passes `uv run pytest tests/test_game_session_models/` with 100% test pass rate.
 4. Passes `uv run ruff check .` and `uv run ruff format --check .`.

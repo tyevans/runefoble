@@ -12,11 +12,13 @@ governing_adrs:
 - ADR-0011
 target_release: 0.2.0
 pr_url: https://github.com/tyevans/runefoble/pull/31
+governing_prds: []
+governing_stories: []
 ---
 # TASK-0042: Redis Consumer Groups & Projections Test Suite Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose the monolithic integration test suite `tests/test_redis_consumer_groups.py` (435 lines, 87.0% of limit) into two focused, single-responsibility test modules: one dedicated to low-level distributed consumer group mechanics and Dead Letter Queue (DLQ) routing, and another dedicated to high-level domain read projection workers.
@@ -45,12 +47,12 @@ As analytics pipelines and OTel tracing integrations add further event-driven co
 ## Proposed Decomposition
 1. **Consumer Group Mechanics (`tests/test_redis_consumer_groups.py`)**:
    - Focus exclusively on `RedisConsumerGroup` lifecycle, consumer claim recovery, pending entry list (PEL) acknowledgements, retry policies, and DLQ dispatching (< 250 lines).
-2. **Session Read Projections (`tests/test_session_projections.py`)**:
+2. **Session Read Projections (`tests/test_session_projections.py` (removed))**:
    - Extract `SessionReadProjection` worker tests into a dedicated suite verifying projection state updates upon domain events (`SessionCreatedEvent`, `TokenMovedEvent`, `SceneAtmosphereUpdatedEvent`) (< 200 lines).
 
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
 1. **Test Suite Decomposition**:
-   - `tests/test_session_projections.py` created and dedicated to read projection workers.
+   - `tests/test_session_projections.py` (removed) created and dedicated to read projection workers.
    - `tests/test_redis_consumer_groups.py` focused cleanly on consumer group infrastructure.
 2. **Zero Coverage Loss**:
    - 100% of existing test scenarios and assertions preserved with zero skipped or removed checks.

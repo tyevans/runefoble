@@ -23,7 +23,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/378
 # TASK-0364: GitHub Actions CI Workflow Playwright BDD Quality Gate Integration
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Integrate the Playwright BDD end-to-end test suite into the automated GitHub Actions CI pipeline (`.github/workflows/ci.yml`) as a blocking merge gate per ADR-0010 and ADR-0014. Configure Playwright browser caching, background service orchestration with readiness polling, headless test execution via `make test-e2e`, and automated failure artifact archiving (traces, screenshots, videos).

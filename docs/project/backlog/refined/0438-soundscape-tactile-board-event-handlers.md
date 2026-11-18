@@ -47,8 +47,8 @@ Currently, `services/soundscape/src/soundscape/event_handlers.py` only subscribe
 ## Product & User Story References
 - [`prd-0010-adaptive-soundscape-foley-and-tension-scoring.md`](../../product/accepted/prd-0010-adaptive-soundscape-foley-and-tension-scoring.md)
 - [`us-0039-encounter-tension-adaptive-scoring-and-foley.md`](../../user_stories/accepted/us-0039-encounter-tension-adaptive-scoring-and-foley.md)
-- [`us-0048-kinetic-spell-vfx-and-particle-bloom.md`](../../user_stories/accepted/us-0048-kinetic-spell-vfx-and-particle-bloom.md)
-- [`us-0061-tabletop-3d-physics-and-dice-collisions.md`](../../user_stories/accepted/us-0061-tabletop-3d-physics-and-dice-collisions.md)
+- [`us-0048-kinetic-spell-vfx-and-particle-bloom.md`](../../user_stories/accepted/us-0048-kinetic-spell-vfx-and-particle-canvas.md)
+- [`us-0061-tabletop-3d-physics-and-dice-collisions.md`](../../user_stories/accepted/us-0061-3d-miniature-tokens-and-tabletop-physics.md)
 
 ## Detailed Specification & Implementation Plan
 1. **Extend Subscribed Events (`services/soundscape/src/soundscape/event_handlers.py`)**:

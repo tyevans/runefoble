@@ -22,7 +22,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/123
 # TASK-0120: CSS Design Tokens and Theme Variables Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `frontend/src/styles/themes.css` (424 lines, 84.8% of limit) into modular CSS sub-modules (`themes/base.css`, `themes/bauhaus.css`, `themes/dark-fantasy.css`, `themes/parchment.css`, `themes/cyber-rune.css`) to prevent violating Hard Invariant 6 (File length limit < 500 lines) as new broadcast themes and high-contrast accessibility tokens are added.

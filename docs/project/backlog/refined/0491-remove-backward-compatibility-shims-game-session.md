@@ -58,10 +58,10 @@ These artifacts contradict the DoR zero backward compatibility mandate and must 
   - **ADR-0013: Frontend Microfrontend Architecture**: Microfrontend component separation.
 
 ## Product & User Story References
-- [`prd-0004-realtime-game-session-orchestration.md`](../../product/accepted/prd-0004-realtime-game-session-orchestration.md)
-- [`prd-0012-frontier-settlements-and-havens.md`](../../product/accepted/prd-0012-frontier-settlements-and-havens.md)
-- [`us-0004-session-lobby-and-player-readiness.md`](../../user_stories/accepted/us-0004-session-lobby-and-player-readiness.md)
-- [`us-0044-charter-frontier-settlement-haven.md`](../../user_stories/accepted/us-0044-charter-frontier-settlement-haven.md)
+- `prd-0004-realtime-game-session-orchestration.md`
+- [`prd-0012-frontier-settlements-and-havens.md`](../../product/accepted/prd-0024-settlement-haven-builder-and-mobile-minigames.md)
+- [`us-0004-session-lobby-and-player-readiness.md`](../../user_stories/accepted/us-0065-game-session-lobby-readiness-and-launch.md)
+- [`us-0044-charter-frontier-settlement-haven.md`](../../user_stories/accepted/us-0072-mobile-responsive-settlement-browser-and-town-builder.md)
 
 ## Detailed Specification & Implementation Plan
 1. **Delete Facade and Compatibility Shim Files**:

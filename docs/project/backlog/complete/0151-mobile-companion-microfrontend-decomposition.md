@@ -20,7 +20,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/173
 # TASK-0151: Mobile Companion Microfrontend Component and Audio Visualizer Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `services/voice_agent/ui/src/runefoble-mobile-companion.ts` (386 lines, 77.2% of limit) into focused sub-components under `services/voice_agent/ui/src/mobile_companion/` (`audio_stream_controller.ts`, `haptic_ping_panel.ts`, `connection_status_badge.ts`), keeping all source files < 150 lines per Hard Invariant 6.

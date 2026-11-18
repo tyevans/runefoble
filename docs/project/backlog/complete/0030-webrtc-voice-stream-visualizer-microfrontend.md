@@ -7,6 +7,8 @@ completed: 2026-09-26
 dependencies: [TASK-0026, TASK-0027]
 governing_adrs: [ADR-0004, ADR-0012, ADR-0013]
 target_release: 0.1.0
+governing_prds: []
+governing_stories: []
 ---
 
 # TASK-0030: WebRTC Audio Stream & Real-Time Waveform Visualizer in Voice Agent Microfrontend
@@ -24,7 +26,7 @@ Enhanced the `@runefoble/voice-agent-ui` microfrontend (`<runefoble-voice-contro
 - `services/voice_agent/ui/src/waveform-visualizer.ts`:
   - Modularized HTML5 canvas rendering loop with `AnalyserNode` time-domain data processing and fallback reactive harmonic wave synthesis.
   - Implemented Bauhaus aesthetic grid lines, dynamic wave strokes, and affliction-specific styles (e.g. Canary Yellow inebriation wobble for `drunk` DSP filter).
-- `services/voice_agent/ui/src/voice-control-styles.ts`:
+- `services/voice_agent/ui/src/voice-control-styles.ts` (removed):
   - Extracted Bauhaus modernist CSS tokens, drop-shadow offsets (`var(--rf-shadow)`), and neobrutalist button interaction states into dedicated stylesheet module.
 - `services/voice_agent/ui/src/runefoble-voice-controls.stories.ts`:
   - Added interactive Storybook stories: `DefaultMuted`, `Inactive`, `WaveformActive`, `LowBandwidthWarning`, `AfflictionDspActive`, and `CustomChannelDisabled`.

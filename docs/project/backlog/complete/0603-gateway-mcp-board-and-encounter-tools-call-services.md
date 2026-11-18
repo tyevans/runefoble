@@ -36,7 +36,7 @@ Source: `.audit/reports/w1-gateway-mcp.md` F1. Existing task TASK-0005 (complete
 - `docs/reference/fastmcp-gateway.md`: tool inventory. Update the statement that tools are backed by services.
 - `docs/how-to/add-a-watcher-ai-tool.md`: describes the tool pattern. Correct it to HTTP-backed calls.
 - ADR-0007: the gateway MCP is an adapter. Domain state stays in `board_state`.
-- Shared client helper: place the HTTP client in `gateway/mcp/src/gateway_mcp/clients/` (new module). Shared with TASK-0604 and TASK-0605.
+- Shared client helper: place the HTTP client in `gateway/mcp/src/gateway_mcp/clients/` (removed) (new module). Shared with TASK-0604 and TASK-0605.
 
 ## Product & User Story References
 - `docs/project/user_stories/accepted/us-0008-mcp-tool-invocation-for-agents.md`

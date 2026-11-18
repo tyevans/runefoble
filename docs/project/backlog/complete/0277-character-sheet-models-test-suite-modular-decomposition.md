@@ -20,13 +20,13 @@ pr_url: https://github.com/tyevans/runefoble/pull/319
 # TASK-0277: Character Sheet Models Test Suite Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
-Decompose `tests/test_character_sheet_models_modular_decomposition.py` (395 lines, 79.0% of limit) into modular test submodules under `tests/test_character_sheet_models_modular_decomposition/` (`conftest.py`, `test_core_models.py`, `test_inventory_models.py`, `test_conditions_progression.py`, `test_routes_integration.py`), ensuring all test files remain strictly < 130 lines per Hard Invariant 6.
+Decompose `tests/test_character_sheet_models_modular_decomposition/` (395 lines, 79.0% of limit) into modular test submodules under `tests/test_character_sheet_models_modular_decomposition/` (`conftest.py`, `test_core_models.py`, `test_inventory_models.py`, `test_conditions_progression.py`, `test_routes_integration.py`), ensuring all test files remain strictly < 130 lines per Hard Invariant 6.
 
 ## Problem Statement
-`tests/test_character_sheet_models_modular_decomposition.py` currently verifies backward compatibility and schema parity for character sheet models (attribute scores, vitals, inventory items, equipment slots, conditions, spell slots, level progression) and FastAPI HTTP endpoints in a single monolithic test file of 395 lines. As the largest source file in the repository (79% of the 500-line invariant limit), any addition of character customization or multiclassing tests will immediately breach the invariant unless decomposed.
+`tests/test_character_sheet_models_modular_decomposition/` currently verifies backward compatibility and schema parity for character sheet models (attribute scores, vitals, inventory items, equipment slots, conditions, spell slots, level progression) and FastAPI HTTP endpoints in a single monolithic test file of 395 lines. As the largest source file in the repository (79% of the 500-line invariant limit), any addition of character customization or multiclassing tests will immediately breach the invariant unless decomposed.
 
 ## Documentation & Architecture Review
 - **Documentation Consulted**:
@@ -55,7 +55,7 @@ Decompose `tests/test_character_sheet_models_modular_decomposition.py` (395 line
 5. **FastAPI Route Regression Tests (`tests/test_character_sheet_models_modular_decomposition/test_routes_integration.py`)**:
    - Extract HTTP endpoint tests for character creation, attribute querying, inventory mutations, and condition updates (< 110 lines).
 6. **Verification**:
-   - Remove root test module `tests/test_character_sheet_models_modular_decomposition.py` and run `uv run pytest tests/test_character_sheet_models_modular_decomposition/`.
+   - Remove root test module `tests/test_character_sheet_models_modular_decomposition/` and run `uv run pytest tests/test_character_sheet_models_modular_decomposition/`.
 
 ## INVEST Criteria Evaluation
 - **Independent (I)**: Test reorganization without altering public API contracts or model schemas.
@@ -66,7 +66,7 @@ Decompose `tests/test_character_sheet_models_modular_decomposition.py` (395 line
 - **Testable (T)**: Pytest execution verifies 100% test passing and identical assertion coverage.
 
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
-1. `tests/test_character_sheet_models_modular_decomposition.py` decomposed into `tests/test_character_sheet_models_modular_decomposition/` package.
+1. `tests/test_character_sheet_models_modular_decomposition/` decomposed into `tests/test_character_sheet_models_modular_decomposition/` package.
 2. All extracted test submodules strictly < 130 lines per Hard Invariant 6.
 3. 100% test passing via `uv run pytest tests/test_character_sheet_models_modular_decomposition/`.
 4. Code passes `uv run ruff check .` and `uv run ruff format --check .`.

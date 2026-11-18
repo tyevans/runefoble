@@ -21,13 +21,13 @@ target_release: 0.9.0
 ## Status
 Complete
 
-Audit 2026-11-17: scope widened to the `get_tool` monkeypatch (`server.py:48`). The `apply_condition` alias named in the audit was not found; `apply_condition` is a plain tool function (`tools/character.py:161`). TASK-0629 depends on this task.
+Audit 2026-11-17: scope widened to the `get_tool` monkeypatch (`server.py:48`). The `apply_condition` alias named in the audit was not found; `apply_condition` is a plain tool function (`tools/character.py:161` (removed)). TASK-0629 depends on this task.
 
 ## Summary
 Remove `dynamic_registry.py` backward-compatibility re-exports and legacy tool registry aliases from `gateway/mcp`, routing all MCP tool registrations and inspections directly to authoritative submodules in `gateway_mcp.dynamic.*`.
 
 ## Problem Statement
-`gateway/mcp/src/gateway_mcp/dynamic_registry.py` exists as a backward-compatibility re-export module forwarding imports to `gateway_mcp.dynamic.*`. In a greenfield platform without external clients, retaining transitional re-export files creates confusion about canonical entry points for FastMCP tool registration and violates DoR rule 9.
+`gateway/mcp/src/gateway_mcp/dynamic/` exists as a backward-compatibility re-export module forwarding imports to `gateway_mcp.dynamic.*`. In a greenfield platform without external clients, retaining transitional re-export files creates confusion about canonical entry points for FastMCP tool registration and violates DoR rule 9.
 
 ## Documentation & Architecture Review
 - **Documentation Consulted**:
@@ -43,7 +43,7 @@ Remove `dynamic_registry.py` backward-compatibility re-exports and legacy tool r
 
 ## Detailed Specification & Implementation Plan
 1. **Delete Backward-Compatibility Re-export Module**:
-   - Delete `gateway/mcp/src/gateway_mcp/dynamic_registry.py`.
+   - Delete `gateway/mcp/src/gateway_mcp/dynamic/`.
 2. **Standardize Imports on `gateway_mcp.dynamic`**:
    - Remove the `mcp.get_tool = mcp._tool_manager.get_tool` monkeypatch (`server.py:48`). Coordinate with TASK-0606 on `dynamic/registry.py`, which calls `self.mcp.get_tool` (lines 47 and 79).
    - Audit `gateway/mcp/src/gateway_mcp/server.py`, `routers/tools_registry.py`, and test files.
@@ -62,7 +62,7 @@ Remove `dynamic_registry.py` backward-compatibility re-exports and legacy tool r
 - **Testable (T)**: Verified via `uv run pytest tests/test_fastmcp*.py`.
 
 ## Definition of Done
-1. `gateway/mcp/src/gateway_mcp/dynamic_registry.py` deleted.
+1. `gateway/mcp/src/gateway_mcp/dynamic/` deleted.
 2. All tool registration call sites migrated to `gateway_mcp.dynamic.*`.
 3. Zero backward-compatibility re-exports remain in `gateway/mcp`.
 4. FastMCP tool test suites pass cleanly.

@@ -24,7 +24,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/93
 # TASK-0056: Cinematic Director Auto-Camera and OBS Stream Overlay
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Build an autonomous cinematic director virtual camera and transparent OBS browser-source party HUD overlay in `gateway/api` and `services/game_session/ui/` for live streamers (Devon) to broadcast high-fidelity, uncluttered tabletop gameplay with zero risk of exposing DM secrets.
@@ -73,7 +73,7 @@ Live streamers currently have to manually pan and zoom the virtual tabletop whil
 3. **Microfrontend Manifest & Storybook**:
    - `<runefoble-spectator-overlay>` custom element published in `services/game_session/ui/manifest.json` and verified in Storybook with zero console errors.
 4. **Frontdoor Blackbox Suite**:
-   - `tests/test_blackbox_cinematic_director.py` verifying sanitized WebSocket event delivery, route responses, and camera target updates.
+   - `tests/test_blackbox_cinematic_director/` verifying sanitized WebSocket event delivery, route responses, and camera target updates.
 5. **Quality Gates**:
    - Conforms strictly to Hard Invariant 6 (< 500 lines per file).
    - Passes `uv run pytest tests/test_blackbox_cinematic_director.py` and `pnpm run build`.

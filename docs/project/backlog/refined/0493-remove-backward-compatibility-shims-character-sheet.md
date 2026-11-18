@@ -47,10 +47,10 @@ All of these artifacts preserve legacy paths for non-existent external consumers
   - **ADR-0013: Frontend Microfrontend Architecture**: Character sheet microfrontend vendoring.
 
 ## Product & User Story References
-- [`prd-0006-character-sheet-and-inventory.md`](../../product/accepted/prd-0006-character-sheet-and-inventory.md)
-- [`prd-0009-campfire-crafting-and-resting-boons.md`](../../product/accepted/prd-0009-campfire-crafting-and-resting-boons.md)
-- [`us-0006-character-sheet-equipment-inventory.md`](../../user_stories/accepted/us-0006-character-sheet-equipment-inventory.md)
-- [`us-0018-character-progression-and-spellbook.md`](../../user_stories/accepted/us-0018-character-progression-and-spellbook.md)
+- [`prd-0006-character-sheet-and-inventory.md`](../../product/accepted/prd-0006-digital-character-sheet-inventory-and-conditions.md)
+- [`prd-0009-campfire-crafting-and-resting-boons.md`](../../product/accepted/prd-0014-downtime-crafting-and-stronghold-engine.md)
+- [`us-0006-character-sheet-equipment-inventory.md`](../../user_stories/accepted/us-0015-character-inventory-equipment-tracking.md)
+- [`us-0018-character-progression-and-spellbook.md`](../../user_stories/accepted/us-0051-character-level-progression-and-spellbook.md)
 
 ## Detailed Specification & Implementation Plan
 1. **Delete Facade Modules**:

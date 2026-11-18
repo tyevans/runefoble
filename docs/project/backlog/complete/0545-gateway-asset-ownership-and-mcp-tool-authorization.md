@@ -34,7 +34,7 @@ The gateway MCP registry lets anonymous callers register, overwrite, delete, and
 - `gateway/mcp/src/gateway_mcp/dynamic/auth.py:63-64`: `enforce_tool_auth` returns without a check when `user_id` is falsy. Probe: anonymous register returns 200, and anonymous delete of another author's tool returns 200 (`w1-gateway-mcp.md` F2).
 - `gateway/mcp/src/gateway_mcp/routers/tools_registry.py:38-108`: `author_id` is `payload.author_id or x_user_id`, so the body chooses the author. Execute accepts the caller from a body field (`w3-authz-coverage.md` F8).
 - `gateway/mcp/src/gateway_mcp/routers/tools_registry.py` is mounted at root and under `/api/v1` (`gateway/api/src/gateway_api/main.py:88-90`), with no auth dependency (`w1-gateway-mcp.md` F2).
-- `gateway/mcp/src/gateway_mcp/tools/character.py` (`apply_absentee_penalty`, `modify_character_hp`, `cast_spell`, `add_condition`) and `tools/board.py` (`move_board_token`, `create_encounter`): no caller identity and no SpiceDB check. `tools/orchestration.py:25-130` runs any registered tool with no identity (`w1-gateway-mcp.md` F5).
+- `gateway/mcp/src/gateway_mcp/tools/character.py` (`apply_absentee_penalty`, `modify_character_hp`, `cast_spell`, `add_condition`) and `tools/board.py` (removed) (`move_board_token`, `create_encounter`): no caller identity and no SpiceDB check. `gateway/mcp/src/gateway_mcp/tools/orchestration.py:25-130` runs any registered tool with no identity (`w1-gateway-mcp.md` F5).
 - `gateway/api/src/gateway_api/assets.py:85` (`POST /upload`): no auth dependency. `:237` (`DELETE /{asset_id}`): no SpiceDB check. `_resolve_user_id` (lines 71-82) returns the raw bearer value as the user id (`w1-gateway-api.md` F5).
 
 ## Documentation & Architecture Review
@@ -42,7 +42,7 @@ The gateway MCP registry lets anonymous callers register, overwrite, delete, and
 - ADR-0007: the MCP gateway does not own tool state. Tool definitions are the MCP context's responsibility. The gateway checks access and routes.
 - `docs/reference/fastmcp-gateway.md` lists tools and their auth. Update it.
 - `docs/how-to/add-a-watcher-ai-tool.md` describes adding tools. Add the required permission to the recipe.
-- Out of scope and recorded in the index: the sandbox `exec` at `gateway/mcp/src/gateway_mcp/sandbox.py:155` remains in the request path after this task. A separate task must remove it.
+- Out of scope and recorded in the index: the sandbox `exec` at `gateway/mcp/src/gateway_mcp/sandbox.py:155` (removed) remains in the request path after this task. A separate task must remove it.
 
 ## Product & User Story References
 - US-0035 (runtime MCP tool hot reloading). US-0008 (MCP tool invocation for agents). US-0038 (procedural battlemaps and tokens, which uses asset ownership).
@@ -88,7 +88,7 @@ The gateway MCP registry lets anonymous callers register, overwrite, delete, and
 
 ## Orchestrator Addenda (2026-11-17, refactor-r1)
 
-- TASK-0545 (MCP and asset authorization): append "No task owns removal of the sandbox `exec` at `gateway/mcp/src/gateway_mcp/sandbox.py:155`. File one (not in this range). TASK-0737 follows its decision."
+- TASK-0545 (MCP and asset authorization): append "No task owns removal of the sandbox `exec` at `gateway/mcp/src/gateway_mcp/sandbox.py:155` (removed). File one (not in this range). TASK-0737 follows its decision."
 
 ## Orchestrator Addenda (2026-11-17, round 3)
 

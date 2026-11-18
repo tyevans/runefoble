@@ -24,7 +24,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/97
 # TASK-0052: Campaign Analytics & Chronicle Archive Microservice
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Scaffold the `services/campaign_analytics` bounded context microservice to project combat telemetry, tactical damage heatmaps, party MVP turn statistics, and interactive campaign milestone timelines from distributed Redis Streams domain events into PostgreSQL.
@@ -56,7 +56,7 @@ Returning players (Sarah) and human DMs (Evelyn) currently lack aggregated histo
    - `GET /api/v1/analytics/campaigns/{id}/mvp`: Per-encounter MVP awards based on damage dealt, healing provided, and critical hits.
    - `GET /api/v1/analytics/campaigns/{id}/timeline`: Chronological event milestones linking session recaps and boss encounters.
 4. **Frontdoor Blackbox Verification**:
-   - Create `tests/test_blackbox_campaign_analytics.py` verifying event consumption, projection latency (< 200ms), and REST query responses.
+   - Create `tests/test_blackbox_campaign_analytics.py` (removed) verifying event consumption, projection latency (< 200ms), and REST query responses.
 
 ## INVEST Criteria Evaluation
 - **Independent (I)**: Consumes standard CloudEvents from Redis Streams without modifying publishing microservices.
@@ -74,7 +74,7 @@ Returning players (Sarah) and human DMs (Evelyn) currently lack aggregated histo
    - `/openapi.json` exposed and registered in Helm `values.yaml`.
    - Health check `/healthz` returning 200 OK.
 3. **Frontdoor Blackbox Test Suite**:
-   - `tests/test_blackbox_campaign_analytics.py` publishes domain CloudEvents to Redis Streams and asserts projected REST responses.
+   - `tests/test_blackbox_campaign_analytics.py` (removed) publishes domain CloudEvents to Redis Streams and asserts projected REST responses.
 4. **Quality Gates**:
    - Conforms strictly to Hard Invariant 6 (< 500 lines per file).
    - Passes `uv run pytest tests/test_blackbox_campaign_analytics.py` and `uv run ruff check`.

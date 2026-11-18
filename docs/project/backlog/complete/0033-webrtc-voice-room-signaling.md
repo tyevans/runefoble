@@ -13,6 +13,12 @@ governing_adrs:
   - ADR-0007
 
 target_release: 0.2.0
+governing_prds:
+- PRD-0004
+- PRD-0005
+governing_stories:
+- US-0004
+- US-0011
 ---
 # TASK-0033: Live WebRTC Bidirectional Voice Room Signaling & WebAudio Pipeline
 
@@ -40,7 +46,7 @@ Milestone 2 (Live Collaborative Alpha) requires live bidirectional voice communi
    - `VoicePeerLeft`: `session_id`, `peer_id`, `reason`.
    - `VoicePeerMuteToggled`: `session_id`, `peer_id`, `is_muted`.
    - Registered under `runefoble.events.voice.*` and re-exported.
-2. **WebRTC Signaling Gateway (`gateway/api/src/gateway_api/webrtc_signaling.py` & WebSocket route)**:
+2. **WebRTC Signaling Gateway (`gateway/api/src/gateway_api/webrtc_signaling.py` (removed) & WebSocket route)**:
    - Handle WebSocket messages for WebRTC signaling:
      - `webrtc_join`: Join room for a session.
      - `webrtc_offer`: Forward SDP offer to target peer or audio mixer.

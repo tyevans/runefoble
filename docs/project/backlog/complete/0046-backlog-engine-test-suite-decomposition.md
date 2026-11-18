@@ -11,17 +11,19 @@ governing_adrs:
 - ADR-0009
 target_release: 0.2.0
 pr_url: https://github.com/tyevans/runefoble/pull/26
+governing_prds: []
+governing_stories: []
 ---
 # TASK-0046: Backlog Engine Test Suite Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
-Decompose `tests/test_backlog_engine.py` (476 lines, 95.2% of limit) into three focused, modular test suites (`tests/test_backlog_parser.py`, `tests/test_backlog_queue.py`, and `tests/test_backlog_execution.py`) before breaching Hard Invariant 6 (File length limit < 500 lines).
+Decompose `tests/test_backlog_engine.py` (removed) (476 lines, 95.2% of limit) into three focused, modular test suites (`tests/test_backlog_parser.py`, `tests/test_backlog_queue.py`, and `tests/test_backlog_execution.py`) before breaching Hard Invariant 6 (File length limit < 500 lines).
 
 ## Problem Statement
-`tests/test_backlog_engine.py` currently stands at 476 lines, placing it within 24 lines of breaching the 500-line hard invariant ceiling. As the largest file in the entire repository, any additional backlog validation checks or schema tests will trigger CI invariant failures. The monolithic file bundles three disparate concerns:
+`tests/test_backlog_engine.py` (removed) currently stands at 476 lines, placing it within 24 lines of breaching the 500-line hard invariant ceiling. As the largest file in the entire repository, any additional backlog validation checks or schema tests will trigger CI invariant failures. The monolithic file bundles three disparate concerns:
 1. Markdown frontmatter and YAML parsing, octal number safety, and ADR citation extraction.
 2. Topological task sorting, circular dependency detection, and priority queue ordering.
 3. Subprocess execution, automated quality gate validation, rollback semantics, and status progression.
@@ -31,7 +33,7 @@ Decompose `tests/test_backlog_engine.py` (476 lines, 95.2% of limit) into three 
 - **Negotiable (N)**: Split boundaries and fixture sharing across pytest test files can be adjusted.
 - **Valuable (V)**: Prevents CI test suite invariant failures, ensures maintainability, and improves test execution parallelism.
 - **Estimable (E)**: Pure test suite refactoring using standard pytest fixtures and runner invocations.
-- **Small (S)**: Scope strictly isolated to `tests/test_backlog_engine.py`; all three resulting test files will remain under 200 lines.
+- **Small (S)**: Scope strictly isolated to `tests/test_backlog_engine.py` (removed); all three resulting test files will remain under 200 lines.
 - **Testable (T)**: `uv run pytest tests/test_backlog_*.py` verifies 100% test pass rate with zero test regression.
 
 ## Governing Architecture & ADRs
@@ -52,7 +54,7 @@ Decompose `tests/test_backlog_engine.py` (476 lines, 95.2% of limit) into three 
    - `tests/test_backlog_parser.py` created and dedicated to frontmatter/syntax parsing.
    - `tests/test_backlog_queue.py` created and dedicated to topological queue sorting and cycle detection.
    - `tests/test_backlog_execution.py` created and dedicated to engine runner execution and lifecycle gates.
-   - Original monolithic `tests/test_backlog_engine.py` removed.
+   - Original monolithic `tests/test_backlog_engine.py` (removed) removed.
 2. **Zero Coverage Loss**:
    - 100% of existing test scenarios, edge cases, and assertions preserved without skipped tests.
 3. **File Length Compliance**:

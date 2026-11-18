@@ -27,7 +27,7 @@ own process. An AST check and a reduced builtins table are the only protection. 
 the gateway's credentials (including the service credential from TASK-0689).
 
 ## Problem Statement
-- `gateway/mcp/src/gateway_mcp/sandbox.py:144-170`: `execute_sandboxed_handler` calls
+- `gateway/mcp/src/gateway_mcp/sandbox.py:144-170` (removed): `execute_sandboxed_handler` calls
   `exec(code_str, safe_globals, local_ns)` and then calls the first callable it finds.
 - The handler runs in the request path of the MCP process.
 

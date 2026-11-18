@@ -19,7 +19,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/178
 # TASK-0153: Campfire Crafting Engine Recipe Registry and Mishap Table Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `services/character_sheet/src/character_sheet/crafting.py` (375 lines, 75.0% of limit) into modular domain submodules under `services/character_sheet/src/character_sheet/crafting/` (`recipes.py`, `mishaps.py`, `engine.py`, `__init__.py`), keeping all modules < 160 lines per Hard Invariant 6.

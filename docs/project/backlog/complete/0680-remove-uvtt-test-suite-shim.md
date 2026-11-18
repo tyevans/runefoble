@@ -20,10 +20,10 @@ target_release: 0.9.0
 Complete
 
 ## Summary
-`tests/test_blackbox_uvtt_import_suite.py` re-exports tests from the `tests/test_blackbox_uvtt_import/` package. Its docstring says "Maintains backward compatibility". DoR 9 forbids shims. This task deletes the shim and runs the tests from the package.
+`tests/test_blackbox_uvtt_import/` re-exports tests from the `tests/test_blackbox_uvtt_import/` package. Its docstring says "Maintains backward compatibility". DoR 9 forbids shims. This task deletes the shim and runs the tests from the package.
 
 ## Problem Statement
-- `tests/test_blackbox_uvtt_import_suite.py` imports fixtures and tests from `tests.test_blackbox_uvtt_import.*` and lists them in `__all__`.
+- `tests/test_blackbox_uvtt_import/` imports fixtures and tests from `tests.test_blackbox_uvtt_import.*` and lists them in `__all__`.
 - No code in the repo imports this module (checked with grep on `*.py`, `*.toml`, `Makefile`).
 - The basename clash noted in work/0562 no longer exists on main. Only the package directory and the shim remain.
 
@@ -37,7 +37,7 @@ Complete
 
 ## Detailed Specification & Implementation Plan
 1. Record the test count from `uv run pytest tests/test_blackbox_uvtt_import --collect-only -q`.
-2. Delete `tests/test_blackbox_uvtt_import_suite.py`.
+2. Delete `tests/test_blackbox_uvtt_import/`.
 3. Check `docs/` and `docs/project/` for a live (not historical) reference to the shim path. Update live references only. Do not edit `complete/` backlog records.
 4. Re-run collection. The count must match step 1.
 

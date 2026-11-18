@@ -26,7 +26,7 @@ Complete
 When the LLM backend fails, the worker returns `success: true` with canned text "[Generated response for prompt: ...]" and backend `mock`. The Watcher and players see a normal reply. This task makes backend failure an explicit error. Canned output is used only when the operator selects the `mock` backend. Every response reports its provenance (`llm`, `heuristic`, or `mock`).
 
 ## Problem Statement
-- `services/inference_worker/src/inference_worker/llm_client.py:105-115`: on any exception the client logs a warning and returns `{"success": True, "content": "[Generated response for prompt: ...]", "backend": "mock"}`.
+- `services/inference_worker/src/inference_worker/llm_client.py:105-115` (removed): on any exception the client logs a warning and returns `{"success": True, "content": "[Generated response for prompt: ...]", "backend": "mock"}`.
 - `graphs/narration_graph.py:89-103` returns canned sensory details and prompts.
 - The HTTP caller receives HTTP 200 with a normal body.
 - `the_watcher/routers/intent/speech.py:54` uses `action.get("confidence", 0.9)` when the worker sends no confidence. `speech.py:56-57` falls back to a fixed template reply.

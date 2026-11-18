@@ -40,7 +40,7 @@ The `<runefoble-caravan-board>` component in `@runefoble/game-session-ui` render
 - [`prd-0018-west-marches-shared-world-state-and-cross-campaign-trade.md`](../../product/accepted/prd-0018-west-marches-shared-world-state-and-cross-campaign-trade.md)
 - [`prd-0023-unified-frontend-application-shell-and-campaign-hub.md`](../../product/accepted/prd-0023-unified-frontend-application-shell-and-campaign-hub.md)
 - [`us-0058-west-marches-shared-world-state-and-caravan-trade.md`](../../user_stories/accepted/us-0058-west-marches-shared-world-state-and-caravan-trade.md)
-- [`us-0067-campaign-detail-view-orchestration.md`](../../user_stories/accepted/us-0067-campaign-detail-view-orchestration.md)
+- [`us-0067-campaign-detail-view-orchestration.md`](../../user_stories/accepted/us-0058-west-marches-shared-world-state-and-caravan-trade.md)
 
 ## Scope of Work
 1. **Client Router & Navigation (`frontend/src/router/router.ts`)**:

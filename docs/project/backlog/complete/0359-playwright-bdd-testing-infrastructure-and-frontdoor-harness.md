@@ -23,7 +23,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/356
 # TASK-0359: Playwright BDD Testing Infrastructure and Frontdoor Harness
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Establish the foundational Playwright BDD testing infrastructure and frontdoor test harness for the Runefoble monorepo per ADR-0014. Configure `@playwright/test` and a Gherkin-compatible step runner, set up `playwright.config.ts` targeting local dev servers (`http://localhost:5173` and `http://localhost:8000`), implement public frontdoor authentication and data-setup fixtures, and provide developer `Makefile` targets (`test-e2e`, `test-e2e-ui`, `test-bdd`).

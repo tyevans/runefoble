@@ -20,7 +20,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/212
 # TASK-0169: Hardware Acoustic Echo Cancellation and ERLE Validation
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Implement adaptive acoustic echo cancellation (AEC) filtering in `services/voice_agent/`, isolating incoming player vocal audio from outgoing room loudspeaker playback to ensure >35dB Echo Return Loss Enhancement (ERLE) without audible voice distortion.

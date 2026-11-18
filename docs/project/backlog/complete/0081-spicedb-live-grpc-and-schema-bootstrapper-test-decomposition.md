@@ -12,11 +12,13 @@ governing_adrs:
 - ADR-0009
 target_release: 0.2.0
 pr_url: https://github.com/tyevans/runefoble/pull/89
+governing_prds: []
+governing_stories: []
 ---
 # TASK-0081: SpiceDB Live gRPC Client and Schema Bootstrapper Test Suite Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `tests/test_blackbox_spicedb_live.py` (306 lines, 61.2% of limit) into two specialized test modules (`tests/test_spicedb_schema_bootstrap.py` and `tests/test_blackbox_spicedb_live_grpc.py`) to prevent breaching Hard Invariant 6 (File length limit < 500 lines) as new schema relations (e.g. spectator cheer permissions, VTT asset access) are added.

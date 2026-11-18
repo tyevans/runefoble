@@ -25,7 +25,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/291
 # TASK-0257: Profile Settings View and Campaign Creation Idempotency
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Implement the user profile view (`#/profile`) in `frontend/src/runefoble-app.ts` to resolve the no-op when clicking "Account Settings" in the user menu. Fix the campaign creation defect where a newly created campaign appears twice in the dashboard list by stopping duplicate event propagation in `RunefobleCampaignDashboard` / `RunefobleCampaignCreator` and enforcing ID de-duplication in `AppDataService`.

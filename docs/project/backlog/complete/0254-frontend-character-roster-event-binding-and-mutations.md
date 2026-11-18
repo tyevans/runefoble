@@ -23,7 +23,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/288
 # TASK-0254: Frontend Character Roster Event Binding and Data Mutations
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Wire event listeners in `frontend/src/runefoble-app.ts` for all actions dispatched by `<runefoble-character-roster>`: `@create-character`, `@assign-campaign`, `@delete-character`, and `@inspect-character`. Extend `AppDataService` (`frontend/src/services/app-data-service.ts`) with character mutation methods (`createCharacter`, `assignCharacterCampaign`, `deleteCharacter`) hitting the Gateway `/api/v1/characters` endpoints.

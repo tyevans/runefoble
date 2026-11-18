@@ -61,7 +61,7 @@ Playwright BDD (`e2e/features/campaign_analytics_and_codex.feature`):
   - When the DM places a pin "Star-Eater Gate" in the atlas
   - Then the codex sub-tab lists "Star-Eater Gate".
 - Before the change both scenarios FAIL (empty tabs). After the change they PASS.
-- Pytest (`tests/test_blackbox_analytics_timeline_frontdoor.py`) confirms the timeline route returns the seeded milestone.
+- Pytest (`tests/test_blackbox_analytics_timeline_frontdoor.py` (removed)) confirms the timeline route returns the seeded milestone.
 
 ## Definition of Done
 1. `grep -rn 'apiBaseUrl=""' frontend/src` returns no match.

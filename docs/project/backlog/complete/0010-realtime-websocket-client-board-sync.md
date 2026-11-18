@@ -7,6 +7,8 @@ governing_prds:
 - PRD-0005
 governing_stories:
 - US-0010
+governing_adrs: []
+dependencies: []
 ---
 
 # TASK-0010: Real-time WebSocket Protocol & Client Board Sync

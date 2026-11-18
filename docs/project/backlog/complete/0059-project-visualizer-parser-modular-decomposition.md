@@ -8,11 +8,13 @@ governing_adrs:
 - ADR-0003
 target_release: 0.2.0
 pr_url: https://github.com/tyevans/runefoble/pull/120
+governing_prds: []
+governing_stories: []
 ---
 # TASK-0059: Project Visualizer Parser Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `tools/project_visualizer/parser.py` (461 lines, 92.2% of limit) into modular, single-responsibility sub-parsers (`adr_parser.py`, `backlog_parser.py`, `product_parser.py`, `graph_builder.py`) to prevent violating Hard Invariant 6 (File length limit < 500 lines).
@@ -40,7 +42,7 @@ As new metadata fields, personas, and trace links are added to the documentation
    - `graph_builder.py`: Traceability matrix, dependency linking, and graph model population (< 120 lines).
 2. **Facade & Entrypoint (`tools/project_visualizer/parser.py`)**:
    - Retain `scan_project` and core parser functions as clean facades re-exporting from `parsers/` (< 90 lines).
-   - Ensure backward compatibility with existing tests (`tests/test_project_visualizer.py`) and scripts (`scripts/generate_project_graph.py`).
+   - Ensure backward compatibility with existing tests (`tests/test_project_visualizer.py` (removed)) and scripts (`scripts/generate_project_graph.py` (removed)).
 
 ## INVEST Criteria Evaluation
 - **Independent (I)**: Refactors internal tool parsing structure without altering data models, CLI interfaces, or exported JSON schemas.

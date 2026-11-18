@@ -22,7 +22,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/333
 # TASK-0278: Settlement Auth and Permissions Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `services/game_session/src/game_session/settlement/auth.py` (385 lines, 77.0% of limit) into modular auth and permission submodules under `services/game_session/src/game_session/settlement/auth/` (`tokens.py`, `permissions.py`, `dependencies.py`), ensuring all auth modules remain strictly < 130 lines per Hard Invariant 6.

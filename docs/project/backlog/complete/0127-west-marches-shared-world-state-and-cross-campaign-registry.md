@@ -20,7 +20,7 @@ target_release: 0.5.0
 # TASK-0127: West Marches Shared Persistent World State & Cross-Campaign Registry
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Build multi-party shared world state synchronization, enabling separate adventuring campaigns to explore a common frontier, share discovery logs, establish regional trading outposts, and trade resources via cross-campaign ledgers with SpiceDB Zanzibar isolation.

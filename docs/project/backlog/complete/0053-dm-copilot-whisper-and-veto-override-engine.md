@@ -15,11 +15,15 @@ governing_adrs:
 - ADR-0013
 target_release: 0.2.1
 pr_url: https://github.com/tyevans/runefoble/pull/72
+governing_prds:
+- PRD-0001
+governing_stories:
+- US-0017
 ---
 # TASK-0053: DM Co-Pilot Whisper Prompts and Veto Override Engine
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Implement private DM whisper channels and instant veto/override mechanics in `services/the_watcher` and the frontend, allowing human DMs to review, edit, or veto AI-proposed actions before they execute on the tactical board.
@@ -49,7 +53,7 @@ ADR-0002 mandates that "The Watcher is an assistant, never a dictator." Currentl
    - Implement `<runefoble-dm-whisper-bar>` Lit component in `services/the_watcher/ui/src/`.
    - Provide one-click actions: "Approve", "Veto", "Edit Intent".
 4. **Frontdoor Blackbox Verification**:
-   - Write comprehensive blackbox test suite in `tests/test_blackbox_dm_copilot.py`.
+   - Write comprehensive blackbox test suite in `tests/test_blackbox_dm_copilot.py` (removed).
 
 ## INVEST Criteria Evaluation
 - **Independent (I)**: Intercepts Watcher proposed actions without altering underlying board aggregate mutations.
@@ -69,7 +73,7 @@ ADR-0002 mandates that "The Watcher is an assistant, never a dictator." Currentl
 3. **Microfrontend & Storybook**:
    - `<runefoble-dm-whisper-bar>` component integrated in `services/the_watcher/ui/` with Storybook stories.
 4. **Frontdoor Blackbox Test Suite**:
-   - `tests/test_blackbox_dm_copilot.py` verifying veto interception, non-DM rejection, and action resolution.
+   - `tests/test_blackbox_dm_copilot.py` (removed) verifying veto interception, non-DM rejection, and action resolution.
 5. **Quality Gates**:
    - Conforms strictly to Hard Invariant 6 (< 500 lines per file).
    - Passes `uv run pytest tests/test_blackbox_dm_copilot.py` and `uv run ruff check`.

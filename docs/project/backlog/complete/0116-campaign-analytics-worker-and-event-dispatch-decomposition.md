@@ -21,7 +21,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/111
 # TASK-0116: Campaign Analytics Worker and Event Dispatch Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `services/campaign_analytics/src/campaign_analytics/worker.py` (420 lines, 84.0% of limit) into an asynchronous worker orchestration module (`worker.py`) and a specialized event projection dispatcher (`event_handlers.py`) to prevent violating Hard Invariant 6 (File length limit < 500 lines).
@@ -58,7 +58,7 @@ Adding new event types will quickly push `worker.py` past the 500-line hard inva
 - **Valuable (V)**: Protects against Hard Invariant 6 violations (< 500 lines) and enables clean addition of new event projections.
 - **Estimable (E)**: Standard Python event dispatch refactoring.
 - **Small (S)**: Scope strictly isolated to `services/campaign_analytics/src/campaign_analytics/worker.py`; both resulting modules < 220 lines.
-- **Testable (T)**: Verified with `tests/test_blackbox_campaign_analytics.py` and unit tests.
+- **Testable (T)**: Verified with `tests/test_blackbox_campaign_analytics.py` (removed) and unit tests.
 
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
 1. **Module Separation**:

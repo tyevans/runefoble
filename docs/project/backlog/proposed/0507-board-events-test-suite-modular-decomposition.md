@@ -41,7 +41,7 @@ Following the modularization of board domain events in TASK-0231, the accompanyi
 - [`prd-0003-spatial-fog-of-war-and-visibility-engine.md`](../../product/accepted/prd-0003-spatial-fog-of-war-and-visibility-engine.md)
 - [`prd-0005-realtime-websocket-board-sync.md`](../../product/accepted/prd-0005-realtime-websocket-board-sync.md)
 - [`prd-0013-immersive-and-intuitive-frontend-experience.md`](../../product/accepted/prd-0013-immersive-and-intuitive-frontend-experience.md)
-- [`us-0014-tactile-board-fog-of-war.md`](../../user_stories/accepted/us-0014-tactile-board-fog-of-war.md)
+- [`us-0014-tactile-board-fog-of-war.md`](../../user_stories/accepted/us-0012-spatial-line-of-sight-and-fog-of-war.md)
 - [`us-0043-tactile-kinetic-board-and-spoken-ghost-previews.md`](../../user_stories/accepted/us-0043-tactile-kinetic-board-and-spoken-ghost-previews.md)
 
 ## Scope of Work

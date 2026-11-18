@@ -24,7 +24,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/350
 # TASK-0356: Character Sheet Sub-Resource Mutations & Event-Sourced Persistence Integration
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Bridge the architectural disconnect between the Lit character sheet microfrontend and the backend `character_sheet:8003` microservice by reverse-proxying character sub-resource endpoints on `gateway-api`, adding character mutation methods to `frontend/src/services/app-data-service.ts`, binding all 11 action event listeners on `<runefoble-character-sheet>` in `frontend/src/runefoble-app.ts`, and adding interactive HP adjustment controls in `stats.template.ts`.
@@ -47,7 +47,7 @@ While high-level character CRUD (creation, deletion, campaign assignment, inspec
   - **ADR-0013: Frontend Microfrontend Architecture**: Event bubbling from microfrontends into App Shell.
 
 ## Scope of Work & Implementation Plan
-1. **Gateway Character Sub-Resource Routing (`gateway/api/src/gateway_api/routers/characters.py`)**:
+1. **Gateway Character Sub-Resource Routing (`gateway/api/src/gateway_api/routers/characters.py` (removed))**:
    - Proxy or implement routes for:
      - `POST /api/v1/characters/{id}/health`: Mutates character HP, checks stand-in stabilization.
      - `POST /api/v1/characters/{id}/equipment`: Equips item to designated slot.
@@ -79,7 +79,7 @@ While high-level character CRUD (creation, deletion, campaign assignment, inspec
    - In `services/character_sheet/ui/src/templates/inventory.template.ts`, provide slot selector dialog when equipping.
 5. **Blackbox TDD Tests**:
    - Author `tests/test_blackbox_character_sheet_mutations.py` asserting frontdoor HTTP mutation calls and state persistence.
-   - Update `frontend/test/character-management-and-profile.test.ts`.
+   - Update `frontend/test/character_management/`.
 
 ## INVEST Criteria Evaluation
 - **Independent (I)**: Targets character sheet sub-resource management independently of lobby or campaign views.

@@ -21,7 +21,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/256
 # TASK-0195: Faction Radar SVG and Drawer Subviews Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `services/the_watcher/ui/src/runefoble-faction-radar.ts` (331 lines, 66.2% of limit) into modular subviews under `services/the_watcher/ui/src/faction_radar/` (`radar-svg.template.ts`, `bulletin-drawer.template.ts`, and `faction-details.template.ts`), keeping each subview strictly < 120 lines per Hard Invariant 6 and ADR-0004/ADR-0013.

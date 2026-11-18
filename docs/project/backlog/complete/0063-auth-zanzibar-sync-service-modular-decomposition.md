@@ -11,11 +11,13 @@ governing_adrs:
 - ADR-0003
 target_release: 0.2.0
 pr_url: https://github.com/tyevans/runefoble/pull/68
+governing_prds: []
+governing_stories: []
 ---
 # TASK-0063: Zanzibar Auth Relationship Sync Service and Event Handlers Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `libs/runefoble_auth/src/runefoble_auth/sync.py` (392 lines, 78.4% of limit) into modular submodules (`sync_tuples.py`, `sync_events.py`, and `sync.py`) to prevent breaching Hard Invariant 6 (File length limit < 500 lines) as new Zanzibar schema relations and domain event integrations are added.
@@ -47,7 +49,7 @@ As Milestone 2 connects production SpiceDB gRPC clients and schema migrations (T
 - **Valuable (V)**: Protects against Hard Invariant 6 violations (< 500 lines) in core platform authentication and authorization infrastructure.
 - **Estimable (E)**: Pure refactoring separating event parsing and tuple formatting from the service coordinator.
 - **Small (S)**: Scope strictly isolated to `libs/runefoble_auth/src/runefoble_auth/`; all resulting files < 180 lines.
-- **Testable (T)**: Existing blackbox and unit auth tests (`tests/test_blackbox_spicedb_zitadel_sync.py`, `tests/test_spicedb_client.py`) verify 100% identical relationship synchronization.
+- **Testable (T)**: Existing blackbox and unit auth tests (`tests/test_blackbox_spicedb_zitadel_sync.py` (removed), `tests/test_spicedb_client.py`) verify 100% identical relationship synchronization.
 
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
 1. **Modular Submodule Creation**:

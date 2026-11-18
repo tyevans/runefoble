@@ -16,7 +16,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/235
 # TASK-0178: GameSession Models Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `services/game_session/src/game_session/models.py` (382 lines, 76.4% of limit) into modular submodules under `services/game_session/src/game_session/models/` (`session.py`, `turn_order.py`, `initiative.py`, `reactions.py`, `settlement.py`), keeping all model definitions strictly < 150 lines per Hard Invariant 6.

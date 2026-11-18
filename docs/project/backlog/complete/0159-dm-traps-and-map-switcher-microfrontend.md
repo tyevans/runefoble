@@ -19,7 +19,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/183
 # TASK-0159: DM Hidden Layers & Multi-Map Switcher Microfrontend
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Build `<runefoble-dm-trap-controls>` and `<runefoble-map-switcher>` Web Components in `services/board_state/ui/src/` to provide DM-exclusive controls for placing hidden traps, configuring trigger radiuses, and executing mid-session battlemap switches.

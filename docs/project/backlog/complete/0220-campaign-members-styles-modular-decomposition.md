@@ -16,7 +16,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/229
 # TASK-0220: Campaign Members Styles Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `services/game_session/ui/src/campaigns/runefoble-campaign-members.styles.ts` (432 lines, 86.4% of limit) into modular CSS modules under `services/game_session/ui/src/campaigns/styles/` (`base.styles.ts`, `roster.styles.ts`, `modal.styles.ts`, `badge.styles.ts`), ensuring all style modules remain strictly < 150 lines per Hard Invariant 6.
@@ -47,7 +47,7 @@ Decompose `services/game_session/ui/src/campaigns/runefoble-campaign-members.sty
 - **Valuable (V)**: Safeguards against Hard Invariant 6 (500 lines) and improves modularity of campaign membership UI.
 - **Estimable (E)**: Deterministic extraction of Lit CSS tagged templates into separate modules.
 - **Small (S)**: Bounded strictly to `services/game_session/ui/src/campaigns/styles/`; all modules < 150 lines.
-- **Testable (T)**: Frontdoor verification via Storybook stories and existing blackbox tests in `tests/test_blackbox_campaign_and_lobby.py`.
+- **Testable (T)**: Frontdoor verification via Storybook stories and existing blackbox tests in `tests/test_blackbox_campaign_and_lobby/`.
 
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
 1. **Module Architecture**:
@@ -55,6 +55,6 @@ Decompose `services/game_session/ui/src/campaigns/runefoble-campaign-members.sty
    - All extracted style modules under `services/game_session/ui/src/campaigns/styles/` strictly < 150 lines per Hard Invariant 6.
 2. **Frontdoor Test Verification**:
    - Storybook stories for `<runefoble-campaign-members>` render and pass tests.
-   - `tests/test_blackbox_campaign_and_lobby.py` passes cleanly.
+   - `tests/test_blackbox_campaign_and_lobby/` passes cleanly.
 3. **Quality Gates**:
    - Passes `uv run pytest tests/test_blackbox_campaign_and_lobby.py`, `uv run ruff check .`, and `uv run ruff format --check .`.

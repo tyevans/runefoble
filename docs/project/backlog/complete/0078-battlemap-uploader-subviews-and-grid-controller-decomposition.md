@@ -21,7 +21,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/91
 # TASK-0078: Battlemap Uploader Subviews and Grid Controller Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `services/board_state/ui/src/runefoble-map-uploader.ts` (315 lines, 63.0% of limit) into focused subcomponents for drag-and-drop file ingestion and interactive tactical grid/shroud masking configuration to prevent breaching Hard Invariant 6 (File length limit < 500 lines) as procedural battlemap generation (TASK-0049) and universal VTT imports (TASK-0057) land.

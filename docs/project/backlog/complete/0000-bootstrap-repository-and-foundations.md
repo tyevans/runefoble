@@ -17,6 +17,7 @@ governing_stories:
 - US-0002
 - US-0003
 - US-0004
+dependencies: []
 ---
 # TASK-0000: Bootstrap Repository and Platform Foundations
 

@@ -21,7 +21,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/159
 # TASK-0141: Zero-Latency Neural Voice Duplex & Speech Interruption Handling
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Enable natural bidirectional voice interruptions (barge-in) between tabletop players and The Watcher AI Dungeon Master by streaming low-latency VAD speech boundaries, canceling TTS playback within < 100ms, and clearing acoustic echo feedback.

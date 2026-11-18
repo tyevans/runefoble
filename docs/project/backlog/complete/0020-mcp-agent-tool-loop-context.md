@@ -6,6 +6,10 @@ created: 2026-09-25
 dependencies: [TASK-0005, TASK-0010, TASK-0016]
 governing_adrs: [ADR-0007, ADR-0011]
 target_release: 0.1.0
+governing_prds:
+- PRD-0001
+governing_stories:
+- US-0008
 ---
 
 # TASK-0020 — FastMCP Agent Tool Loop & Session State Context Server
@@ -18,7 +22,7 @@ Implemented automated multi-turn tool loops, dynamic session context resources (
    - Added MCP dynamic resource template `session://{session_id}/state` returning structured JSON of active tactical tokens, scene atmosphere (`mood`, `lighting`, `ambient_audio_prompt`), and encounter threat level.
    - Added tool `execute_agent_action_plan(session_id: str, actions: list[dict]) -> dict` running multi-turn steps sequentially with argument resolution, per-step timing, and robust error trapping.
    - Added grid boundary validation (8x8) to `move_board_token` and `execute_agent_action_plan`.
-   - Extracted `SPELL_EFFECTS` and `CONDITION_RULES` into `gateway/mcp/src/gateway_mcp/constants.py` to keep `server.py` at 427 lines (<450 lines Hard Invariant 6).
+   - Extracted `SPELL_EFFECTS` and `CONDITION_RULES` into `gateway/mcp/src/gateway_mcp/constants.py` (removed) to keep `server.py` at 427 lines (<450 lines Hard Invariant 6).
 2. **Blackbox TDD Suite (`tests/test_blackbox_mcp_gateway.py`)**:
    - Query resource template `session://camp1/state` verifying active tokens, scene atmosphere, and threat level.
    - Execute multi-step action plan (`roll_dice`, `move_board_token`, `narrate_with_the_watcher`) asserting step outputs, timing, and overall plan status.

@@ -25,7 +25,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/142
 # TASK-0133: Board State Aggregate Mutation Handlers and Event Appliers Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `services/board_state/src/board_state/aggregate.py` (488 lines, 97.6% of limit) into modular command mutation handlers and `@handles` event state appliers under `services/board_state/src/board_state/handlers/`, reducing the main aggregate coordinator to < 140 lines and safeguarding against breaches of Hard Invariant 6 (< 500 lines).

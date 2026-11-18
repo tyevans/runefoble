@@ -22,7 +22,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/255
 # TASK-0194: Combat Heatmap Canvas Rendering and Subviews Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `services/campaign_analytics/ui/src/runefoble-combat-heatmap.ts` (334 lines, 66.8% of limit) into modular sub-modules under `services/campaign_analytics/ui/src/heatmap/` (`canvas-renderer.ts`, `heatmap-controls.template.ts`, and `cell-inspector.template.ts`), keeping each sub-module strictly < 130 lines per Hard Invariant 6 and ADR-0004/ADR-0013.
@@ -45,7 +45,7 @@ Decompose `services/campaign_analytics/ui/src/runefoble-combat-heatmap.ts` (334 
    - Streamline component class to manage `@property` declarations, canvas resize observers, and delegating render calls to modular helpers (< 110 lines).
 3. **Verification**:
    - Verify Storybook stories for `<runefoble-combat-heatmap>` render accurately with interactive metric filtering.
-   - Run `tests/test_blackbox_campaign_analytics_ui.py` to confirm zero regressions.
+   - Run `tests/test_blackbox_campaign_analytics_ui/` to confirm zero regressions.
 
 ## INVEST Criteria Evaluation
 - **Independent (I)**: Refactoring is strictly isolated to `services/campaign_analytics/ui/src/` with zero backend API changes.

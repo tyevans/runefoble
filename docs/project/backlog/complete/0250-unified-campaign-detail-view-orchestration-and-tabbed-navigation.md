@@ -24,7 +24,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/286
 # TASK-0250: Unified Campaign Detail View Orchestration and Tabbed Navigation
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Refactor the `campaign-detail` view in `frontend/src/runefoble-app.ts` into a cohesive, tabbed campaign command center integrating `<runefoble-campaign-header>`, `<runefoble-campaign-members>`, `<runefoble-session-list>`, and sub-navigation links to the party character roster (`#/campaigns/:id/characters`), campaign lore codex, and chronicle analytics.

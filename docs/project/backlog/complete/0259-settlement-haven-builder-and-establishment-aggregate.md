@@ -22,7 +22,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/292
 # TASK-0259: Settlement Haven Builder and Establishment Aggregate Domain Model
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Implement the core event-sourced `SettlementAggregate` and `EstablishmentAggregate` within `services/game_session/` (or dedicated bounded context), providing domain events, declarative event handlers, commands, and read projections for managing settlement scales (hamlet, village, market town, city, metropolis), district zoning, and establishment lifecycle.
@@ -49,7 +49,7 @@ While Runefoble supports persistent havens in West Marches campaigns, there is n
   - [`us-0073-customizable-establishments-and-assignable-npc-workers.md`](../../user_stories/accepted/us-0073-customizable-establishments-and-assignable-npc-workers.md)
 
 ## Detailed Specification & Implementation Plan
-1. **Domain Events (`libs/runefoble_events/settlements.py`)**:
+1. **Domain Events (`libs/runefoble_events/settlements.py` (removed))**:
    - `SettlementFounded`: `settlement_id`, `campaign_id`, `name`, `scale`, `biome`, `coordinates`.
    - `SettlementTierUpgraded`: `settlement_id`, `old_tier`, `new_tier`, `unlocked_districts`.
    - `EstablishmentConstructed`: `establishment_id`, `settlement_id`, `district_id`, `category`, `name`.
@@ -61,7 +61,7 @@ While Runefoble supports persistent havens in West Marches campaigns, there is n
    - `POST /api/v1/campaigns/{campaign_id}/settlements`: Found settlement.
    - `GET /api/v1/campaigns/{campaign_id}/settlements/{settlement_id}`: Query settlement projection.
    - `POST /api/v1/settlements/{settlement_id}/establishments`: Construct establishment.
-4. **Frontdoor Blackbox Verification (`tests/test_blackbox_settlement_haven_aggregate.py`)**:
+4. **Frontdoor Blackbox Verification (`tests/test_blackbox_settlement_haven/`)**:
    - Found settlement via HTTP POST, assert `SettlementFounded` event emitted and persisted.
    - Add establishment via HTTP POST, assert `EstablishmentConstructed` event emitted and linked to district.
 

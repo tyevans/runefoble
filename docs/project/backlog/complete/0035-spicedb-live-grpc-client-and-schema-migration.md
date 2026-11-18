@@ -6,6 +6,8 @@ created: 2026-09-25
 dependencies: [TASK-0008, TASK-0016]
 governing_adrs: [ADR-0001, ADR-0005, ADR-0007]
 target_release: 0.1.0
+governing_prds: []
+governing_stories: []
 ---
 
 # TASK-0035: Live SpiceDB gRPC Client Integration & Schema Migration Bootstrapper

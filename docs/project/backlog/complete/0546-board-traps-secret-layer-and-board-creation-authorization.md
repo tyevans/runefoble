@@ -37,7 +37,7 @@ The board service returns secret traps to anonymous callers. Anonymous callers c
 - No code writes `board:` tuples (`w1-board-state.md` F8). The board branch is dead.
 - `services/board_state/src/board_state/routers/terrain.py:19` (`GET .../visibility?is_dm=`) lets any caller claim DM. Lines 67-88 (`fog-of-war/reveal` and `/shroud`) have no check and return hidden tokens with `is_dm=True` (`w3-authz-coverage.md` F12).
 - `services/board_state/src/board_state/routers/boards.py:59` (`POST /api/v1/boards`): no check (`w3-authz-coverage.md` route 89).
-- `services/board_state/src/board_state/dependencies.py:get_current_user_id` reads `x-user-id` (`w1-board-state.md` F15). Identity is TASK-0520. This task consumes the verified principal.
+- `services/board_state/src/board_state/dependencies.py:get_current_user_id` (removed) reads `x-user-id` (`w1-board-state.md` F15). Identity is TASK-0520. This task consumes the verified principal.
 
 ## Documentation & Architecture Review
 - ADR-0001: `board.manage_traps`, `board.view_secret_layer`, and `board.switch_map` are the schema permissions for this context. `board.dungeon_master` is a relation that the `campaign` branch covers, so the check does not name it.

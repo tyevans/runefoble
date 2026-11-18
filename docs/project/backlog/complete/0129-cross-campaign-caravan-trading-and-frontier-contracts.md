@@ -23,7 +23,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/147
 # TASK-0129: Cross-Campaign Caravan Trading Ledgers & Frontier Mercenary Contracts
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Expand West Marches community play by introducing asynchronous mercenary contracts and caravan trading ledgers, allowing adventuring parties across separate campaigns to post bounties, escort merchant caravans, trade regional supplies, and resolve frontier economic dependencies with SpiceDB Zanzibar multi-tenancy authorization.
@@ -72,7 +72,7 @@ While shared frontier discovery is enabled by TASK-0127, parties still lack stru
 3. **Domain Event Registration**:
    - CloudEvents registered with `@register_event` for `CaravanContractPosted`, `CaravanDispatched`, and `CaravanTradeFulfilled`.
 4. **Frontdoor Blackbox Test Suite**:
-   - `tests/test_blackbox_caravan_contracts.py` verifying full contract lifecycle and event emission through public endpoints.
+   - `tests/test_blackbox_caravan_contracts/` verifying full contract lifecycle and event emission through public endpoints.
 5. **Quality Gates**:
    - Conforms to Hard Invariant 6 (< 500 lines per file).
    - Passes `uv run pytest tests/test_blackbox_caravan_contracts.py` and `uv run ruff check .`.

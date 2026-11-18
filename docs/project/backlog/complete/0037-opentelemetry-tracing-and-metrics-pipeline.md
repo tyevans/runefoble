@@ -12,11 +12,13 @@ governing_adrs:
 - ADR-0007
 target_release: 0.1.0
 pr_url: https://github.com/tyevans/runefoble/pull/24
+governing_prds: []
+governing_stories: []
 ---
 # TASK-0037: OpenTelemetry Distributed Tracing, Metrics & Collector Helm Integration
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Integrate OpenTelemetry instrumentation across all FastAPI services and Redis Streams event bus subscribers in `libs/runefoble_platform`. Propagate W3C Trace Context across HTTP headers and CloudEvents metadata so distributed transactions (e.g. Speech -> Intent -> Board Move -> Event -> Audio Synth) can be visualized end-to-end in Grafana. Deploy the OpenTelemetry Collector container in the Helm chart to aggregate and route traces to Loki and Grafana.

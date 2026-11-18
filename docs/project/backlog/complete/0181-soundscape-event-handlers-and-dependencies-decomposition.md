@@ -22,7 +22,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/240
 # TASK-0181: Soundscape Event Handlers and Dependencies Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `services/soundscape/src/soundscape/dependencies.py` (367 lines, 73.4% of limit) by extracting Redis Streams domain event subscription handlers and listener setup into `services/soundscape/src/soundscape/event_handlers.py`, keeping all dependency and event handler modules strictly < 180 lines per Hard Invariant 6 and ADR-0007.

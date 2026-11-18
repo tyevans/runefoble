@@ -18,10 +18,10 @@ pr_url: https://github.com/tyevans/runefoble/pull/198
 # TASK-0208: Gateway Campaign Lifecycle and Membership API
 
 ## Status
-Refined
+Complete
 
 ## Summary
-Extend `gateway/api/src/gateway_api/routers/campaigns.py` to support full campaign lifecycle management: listing campaigns for the authenticated user, creating new campaigns with automatic SpiceDB Zanzibar ownership tuples, generating shareable invite tokens, and joining campaigns.
+Extend `gateway/api/src/gateway_api/routers/campaigns.py` (removed) to support full campaign lifecycle management: listing campaigns for the authenticated user, creating new campaigns with automatic SpiceDB Zanzibar ownership tuples, generating shareable invite tokens, and joining campaigns.
 
 ## Problem Statement
 The gateway currently only provides read proxying for single hardcoded campaigns (`GET /api/v1/campaigns/{id}`) and assigning roles (`POST /api/v1/campaigns/{id}/roles`). There are no endpoints to list all campaigns belonging to a user, create a new campaign, generate invite links, or accept invites.
@@ -40,7 +40,7 @@ The gateway currently only provides read proxying for single hardcoded campaigns
 - **User Story**: [`us-0063-campaign-creation-dashboard-and-zanzibar-roles.md`](../../user_stories/accepted/us-0063-campaign-creation-dashboard-and-zanzibar-roles.md)
 
 ## Detailed Specification & Implementation Plan
-1. **Campaign CRUD Endpoints (`gateway/api/src/gateway_api/routers/campaigns.py`)**:
+1. **Campaign CRUD Endpoints (`gateway/api/src/gateway_api/routers/campaigns.py` (removed))**:
    - `GET /api/v1/campaigns`: Return all campaigns where the user has `view` permission (filtered by SpiceDB lookup or user metadata).
    - `POST /api/v1/campaigns`: Create a new campaign, writing `campaign:{id}#owner@user:{user_id}` relation to SpiceDB.
    - `PATCH /api/v1/campaigns/{campaign_id}`: Update campaign title, description, and settings (requires `manage` permission).
@@ -60,7 +60,7 @@ The gateway currently only provides read proxying for single hardcoded campaigns
 - **Testable (T)**: Frontdoor HTTP blackbox tests verify campaign creation, invite code exchange, and role verification.
 
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
-1. Endpoints implemented in `gateway/api/src/gateway_api/routers/campaigns.py` (<350 lines).
+1. Endpoints implemented in `gateway/api/src/gateway_api/routers/campaigns.py` (removed) (<350 lines).
 2. Pydantic models for campaign creation, invites, and member lists defined in `gateway/api/src/gateway_api/models.py`.
 3. Automated blackbox tests verify campaign creation and membership retrieval with zero backdoor manipulation.
 4. Passes `uv run pytest tests/test_blackbox_gateway_campaigns.py` and `uv run ruff check gateway/api/`.

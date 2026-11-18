@@ -22,7 +22,7 @@ governing_stories:
 # TASK-0060: Domain Aggregates and Rule Tables Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose monolithic domain aggregate files across `game_session`, `board_state`, and `character_sheet` bounded contexts by extracting state models and static game rule tables into dedicated modules, keeping all domain aggregate files well clear of Hard Invariant 6 (< 500 lines per file).

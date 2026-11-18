@@ -21,7 +21,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/130
 # TASK-0124: Generative Character Wardrobe, Emotion & State Portrait Gallery
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Build dynamic character portrait variant synthesis and condition overlays, adapting character avatars and board tokens in real-time to current HP thresholds (<50% bloodied), condition afflictions, and generative narrative wardrobe changes (ballroom masquerade, arctic tundra).
@@ -66,7 +66,7 @@ Player avatars currently remain static 2D icons throughout an entire campaign re
 3. **Storybook Stories**:
    - Stories showcasing healthy, bloodied, poisoned, and gala attire portraits.
 4. **Frontdoor Blackbox Test Suite**:
-   - `tests/test_blackbox_wardrobe_gallery.py` verifying portrait variant generation and event dispatch via public endpoints.
+   - `tests/test_blackbox_wardrobe_gallery/` verifying portrait variant generation and event dispatch via public endpoints.
 5. **Quality Gates**:
    - Conforms to Hard Invariant 6 (< 500 lines per file).
    - Passes `pnpm run build` and `uv run pytest tests/test_blackbox_wardrobe_gallery.py`.

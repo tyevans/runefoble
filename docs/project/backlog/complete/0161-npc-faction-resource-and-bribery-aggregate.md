@@ -20,7 +20,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/184
 # TASK-0161: NPC Faction Resource Operations and Bribery Mechanics Aggregate
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Implement core domain aggregate handlers in `services/the_watcher/` for non-player faction resource expenditure, mercenary recruiting, and bribery difficulty calculations during inter-session world ticks.

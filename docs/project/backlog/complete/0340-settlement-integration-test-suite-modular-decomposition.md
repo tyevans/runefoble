@@ -28,13 +28,13 @@ pr_url: https://github.com/tyevans/runefoble/pull/355
 # TASK-0340: Settlement Integration Test Suite Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
-Decompose `tests/test_blackbox_settlements_integration.py` (497 lines, 99.4% of the 500-line invariant limit) into modular test submodules under `tests/test_blackbox_settlements_integration/` (`conftest.py`, `test_invariants_and_compat.py`, `test_auth_and_permissions.py`, `test_settlement_and_establishments.py`, `test_haggling_and_bulletin.py`), ensuring all test modules remain strictly < 130 lines per Hard Invariant 6.
+Decompose `tests/test_blackbox_settlements_integration.py` (removed) (497 lines, 99.4% of the 500-line invariant limit) into modular test submodules under `tests/test_blackbox_settlements_integration/` (`conftest.py`, `test_invariants_and_compat.py`, `test_auth_and_permissions.py`, `test_settlement_and_establishments.py`, `test_haggling_and_bulletin.py`), ensuring all test modules remain strictly < 130 lines per Hard Invariant 6.
 
 ## Problem Statement
-Following the modular decomposition of settlement authentication and worker routers (TASK-0278, TASK-0280), `tests/test_blackbox_settlements_integration.py` reached 497 lines. It bundles line invariant verifications, backwards-compatibility checks, bearer token auth lifecycles, settlement founding, tier upgrades, establishment creation, assignable NPC workers, merchant haggling gambits, and bulletin board notice decryption in a single monolithic test file. Operating within 3 lines of breaching Hard Invariant 6 (<500 lines), it is an urgent refactoring candidate that must be decomposed immediately to prevent invariant violations.
+Following the modular decomposition of settlement authentication and worker routers (TASK-0278, TASK-0280), `tests/test_blackbox_settlements_integration.py` (removed) reached 497 lines. It bundles line invariant verifications, backwards-compatibility checks, bearer token auth lifecycles, settlement founding, tier upgrades, establishment creation, assignable NPC workers, merchant haggling gambits, and bulletin board notice decryption in a single monolithic test file. Operating within 3 lines of breaching Hard Invariant 6 (<500 lines), it is an urgent refactoring candidate that must be decomposed immediately to prevent invariant violations.
 
 ## Documentation & Architecture Review
 - **Documentation Consulted**:
@@ -70,7 +70,7 @@ Following the modular decomposition of settlement authentication and worker rout
 5. **Haggling Gambits & Bulletin Board Tests (`tests/test_blackbox_settlements_integration/test_haggling_and_bulletin.py`)**:
    - Extract `test_merchant_haggling_gambits_and_dm_override` and `test_bulletin_board_pin_and_cipher_decrypt` (< 115 lines).
 6. **Verification**:
-   - Safely remove monolithic `tests/test_blackbox_settlements_integration.py` and ensure `uv run pytest tests/test_blackbox_settlements_integration/` runs with 100% passing tests.
+   - Safely remove monolithic `tests/test_blackbox_settlements_integration.py` (removed) and ensure `uv run pytest tests/test_blackbox_settlements_integration/` runs with 100% passing tests.
 
 ## INVEST Criteria Evaluation
 - **Independent (I)**: Pure test suite refactoring without altering any production endpoints or schemas.
@@ -81,8 +81,8 @@ Following the modular decomposition of settlement authentication and worker rout
 - **Testable (T)**: Directly executable via `uv run pytest tests/test_blackbox_settlements_integration/`.
 
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
-1. `tests/test_blackbox_settlements_integration.py` decomposed into `tests/test_blackbox_settlements_integration/` test package.
+1. `tests/test_blackbox_settlements_integration.py` (removed) decomposed into `tests/test_blackbox_settlements_integration/` test package.
 2. All extracted submodules strictly < 130 lines per Hard Invariant 6.
 3. 100% of test assertions pass via `uv run pytest tests/test_blackbox_settlements_integration/`.
-4. Monolithic `tests/test_blackbox_settlements_integration.py` safely removed.
+4. Monolithic `tests/test_blackbox_settlements_integration.py` (removed) safely removed.
 5. Code passes `uv run ruff check .` and `uv run ruff format --check .`.

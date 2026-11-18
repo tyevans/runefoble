@@ -24,7 +24,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/145
 # TASK-0135: West Marches Shared World Atlas Pins & Communal Stronghold Dashboard Microfrontend
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Build the `<runefoble-west-marches-atlas>` microfrontend in `services/campaign_lore/ui/src/` displaying multi-party persistent frontier map pins, communal tavern rumor bulletin boards, shared stronghold facility levels, and cross-campaign expedition logs with SpiceDB Zanzibar role filtering and Storybook stories.
@@ -72,7 +72,7 @@ TASK-0127 creates the backend persistence for multi-party West Marches shared st
 2. **Storybook Stories**:
    - `runefoble-west-marches-atlas.stories.ts` rendering interactive frontier pins and stronghold status.
 3. **Frontdoor Blackbox Test Suite**:
-   - `tests/test_blackbox_west_marches_ui.py` validating component mounting and manifest endpoint.
+   - `tests/test_blackbox_west_marches_ui.py` (removed) validating component mounting and manifest endpoint.
 4. **Quality Gates**:
    - Conforms to Hard Invariant 6 (< 500 lines per file).
    - Passes `pnpm test` and `pnpm build`.

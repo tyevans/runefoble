@@ -31,7 +31,7 @@ Implemented high-reliability distributed Redis Streams consumer groups, pending 
      - `route_to_dead_letter`: Quarantine of corrupt/poison messages into `{stream}.dlq` with failure metadata envelopes.
    - Enhanced `MockAsyncRedis` with pending entries list (PEL), competing consumer distribution, and auto-claim mechanics for unit testing without live Redis.
    - Kept `consumer_group.py` strictly under 350 lines (302 lines) and `redis_bus.py` at 150 lines (Hard Invariant 6).
-2. **Event Projection Worker (`services/game_session/src/game_session/projections.py`)**:
+2. **Event Projection Worker (`services/game_session/src/game_session/projections.py` (removed))**:
    - Implemented `SessionReadProjection` class maintaining low-latency denormalized read views (`SessionReadModel`, `TokenReadModel`, `AtmosphereReadModel`, `EncounterReadModel`).
    - Projects stream events (`TokenPlaced`, `TokenMoved`, `TokenRemoved`, `SceneAtmosphereSet`, `EncounterSpawned`, `AutonomousActionResolved`, `TurnAdvanced`, `SessionStarted`, `SessionEnded`).
    - Implemented async process loop with graceful start/stop shutdown and poison message DLQ routing.

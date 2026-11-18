@@ -22,13 +22,13 @@ pr_url: https://github.com/tyevans/runefoble/pull/140
 # TASK-0130: Character Leitmotifs Blackbox Test Suite Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
-Decompose monolithic `tests/test_blackbox_character_leitmotifs.py` (437 lines, 87.4% of limit) into discrete, single-responsibility blackbox test modules (`tests/test_blackbox_leitmotif_events.py`, `tests/test_blackbox_leitmotif_api.py`, and `tests/test_blackbox_leitmotif_triggers.py`), keeping all resulting test files strictly under 200 lines and maintaining 100% test coverage.
+Decompose monolithic `tests/test_blackbox_character_leitmotifs.py` (removed) (437 lines, 87.4% of limit) into discrete, single-responsibility blackbox test modules (`tests/test_blackbox_leitmotif_events.py`, `tests/test_blackbox_leitmotif_api.py`, and `tests/test_blackbox_leitmotif_triggers.py`), keeping all resulting test files strictly under 200 lines and maintaining 100% test coverage.
 
 ## Problem Statement
-`tests/test_blackbox_character_leitmotifs.py` currently spans 437 lines, approaching the 500-line hard invariant limit (Hard Invariant 6). It consolidates multiple test domains in a single file:
+`tests/test_blackbox_character_leitmotifs.py` (removed) currently spans 437 lines, approaching the 500-line hard invariant limit (Hard Invariant 6). It consolidates multiple test domains in a single file:
 1. CloudEvents schema registration and event mapping for `runefoble.events.soundscape.leitmotif_*` and `runefoble.events.character.*`.
 2. REST API route testing for leitmotif profile configuration, playback triggers, and SpiceDB Zanzibar access control.
 3. Multi-modal event triggers (critical hits, death saves, spoken reactions) and WebAudio DSP ducking gain calculations.
@@ -68,7 +68,7 @@ As additional character audio signatures and DSP filters are added, this file is
 
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
 1. **Decomposed Test Modules**:
-   - `tests/test_blackbox_character_leitmotifs.py` eliminated; replacement test files each strictly < 200 lines.
+   - `tests/test_blackbox_character_leitmotifs.py` (removed) eliminated; replacement test files each strictly < 200 lines.
 2. **Zero Regressions**:
    - 100% of existing leitmotif assertions pass without modification.
 3. **Quality Gates**:

@@ -20,7 +20,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/249
 # TASK-0189: Character Sheet UI Templates Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `services/character_sheet/ui/src/runefoble-character-sheet.templates.ts` (343 lines, 68.6% of limit) into modular template modules under `services/character_sheet/ui/src/templates/` (`stats.template.ts`, `inventory.template.ts`, `conditions.template.ts`, `spells.template.ts`), keeping each template file strictly < 120 lines per Hard Invariant 6 and ADR-0013.

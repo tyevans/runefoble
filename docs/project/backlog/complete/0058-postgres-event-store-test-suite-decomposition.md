@@ -13,11 +13,13 @@ governing_adrs:
 - ADR-0011
 target_release: 0.2.0
 pr_url: https://github.com/tyevans/runefoble/pull/62
+governing_prds: []
+governing_stories: []
 ---
 # TASK-0058: PostgreSQL Event Store and Provisioning Test Suite Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `tests/test_blackbox_postgres_event_store.py` (419 lines, 83.8% of limit) into two modular test files (`tests/test_blackbox_postgres_provisioning.py` and `tests/test_blackbox_postgres_event_store.py` with shared container fixtures) to prevent breaching Hard Invariant 6 (File length limit < 500 lines).

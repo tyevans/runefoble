@@ -23,7 +23,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/193
 # TASK-0162: Faction Turf War and Regional Unrest Event Pipeline
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Implement contested boundary skirmish calculations and regional unrest event fanout in `services/the_watcher/`, publishing `FactionTerritoryCaptured` and `RegionalUnrestEscalated` CloudEvents across Redis Streams without manual DM intervention.

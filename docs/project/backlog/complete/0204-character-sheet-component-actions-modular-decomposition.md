@@ -22,7 +22,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/274
 # TASK-0204: Character Sheet Component Action Handlers and State Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `services/character_sheet/ui/src/runefoble-character-sheet.ts` (319 lines, 63.8% of limit) by extracting equipment slot mutation handlers, condition toggle callbacks, and spell slot consumption utilities into `runefoble-character-sheet.actions.ts`, keeping the main component file strictly < 150 lines per Hard Invariant 6 and ADR-0013.
@@ -42,7 +42,7 @@ Decompose `services/character_sheet/ui/src/runefoble-character-sheet.ts` (319 li
    - Delegate event handler logic to imported action helpers, leaving the controller focused on lifecycle hooks and property synchronization (< 150 lines).
 3. **Verification**:
    - Verify character sheet Storybook stories and interactive events continue functioning without error.
-   - Run blackbox tests in `tests/test_blackbox_character_sheet_ui.py`.
+   - Run blackbox tests in `tests/test_blackbox_character_sheet_ui/`.
 
 ## INVEST Criteria Evaluation
 - **Independent (I)**: Isolated to the character sheet UI controller and its new actions module.

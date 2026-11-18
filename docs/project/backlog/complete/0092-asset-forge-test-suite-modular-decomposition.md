@@ -22,13 +22,13 @@ governing_stories:
 # TASK-0092: Asset Forge Blackbox Test Suite Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
-Decompose `tests/test_blackbox_asset_forge.py` (421 lines, 84.2% of limit) into two specialized blackbox test suites (`tests/test_blackbox_asset_forge_generation.py` and `tests/test_blackbox_asset_forge_auth_and_events.py`) to prevent breaching Hard Invariant 6 (File length limit < 500 lines) as new asset generation modalities are added.
+Decompose `tests/test_blackbox_asset_forge.py` (removed) (421 lines, 84.2% of limit) into two specialized blackbox test suites (`tests/test_blackbox_asset_forge_generation.py` and `tests/test_blackbox_asset_forge_auth_and_events.py`) to prevent breaching Hard Invariant 6 (File length limit < 500 lines) as new asset generation modalities are added.
 
 ## Problem Statement
-`tests/test_blackbox_asset_forge.py` currently spans 421 lines and tests multiple decoupled capabilities of the `asset_forge` service:
+`tests/test_blackbox_asset_forge.py` (removed) currently spans 421 lines and tests multiple decoupled capabilities of the `asset_forge` service:
 1. Procedural battlemap and token generation, Silo S3 binary payload storage, dimensions, transparency, and spatial wall geometry extraction (`test_blackbox_forge_battlemap_generation_and_storage`, `test_blackbox_forge_token_portrait_and_transparency`).
 2. CloudEvents schema compliance and Redis Streams event bus publishing (`BattlemapForged`, `TokenAssetForged`), SpiceDB Zanzibar authorization checks (`dungeon_master` role requirement), metadata query endpoints, and input validation rejections.
 
@@ -54,24 +54,24 @@ As image style customization, soundscape triggers, and token animation frames ar
    - Metadata retrieval, 404 behavior, and input validation rejections.
    - Target length: < 220 lines.
 3. **Original Monolith Deletion**:
-   - Remove `tests/test_blackbox_asset_forge.py`.
+   - Remove `tests/test_blackbox_asset_forge.py` (removed).
 
 ## INVEST Criteria Evaluation
 - **Independent (I)**: Refactors test structure without altering `services/asset_forge` code or public HTTP endpoints.
 - **Negotiable (N)**: Split of assertions across generation and auth suites can be adjusted.
 - **Valuable (V)**: Protects against Hard Invariant 6 violations (< 500 lines) and allows isolated generation vs auth verification.
 - **Estimable (E)**: Pure test suite decomposition with shared fixtures.
-- **Small (S)**: Scope strictly isolated to `tests/test_blackbox_asset_forge.py`; all resulting files < 250 lines.
+- **Small (S)**: Scope strictly isolated to `tests/test_blackbox_asset_forge.py` (removed); all resulting files < 250 lines.
 - **Testable (T)**: Verified with `uv run pytest tests/test_blackbox_asset_forge_*.py`.
 
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
 1. **Modular Test Suite Partitioning**:
-   - `tests/test_blackbox_asset_forge.py` decomposed into `tests/test_blackbox_asset_forge_generation.py` and `tests/test_blackbox_asset_forge_auth_and_events.py`.
+   - `tests/test_blackbox_asset_forge.py` (removed) decomposed into `tests/test_blackbox_asset_forge_generation.py` and `tests/test_blackbox_asset_forge_auth_and_events.py`.
 2. **Strict File Length Compliance (Hard Invariant 6)**:
    - All resulting test files strictly under 250 lines each.
 3. **Frontdoor Blackbox Verification**:
    - 100% test pass rate across all existing asset forge assertions via public HTTP endpoints (`POST /api/v1/forge/battlemap`, `POST /api/v1/forge/token`, `GET /api/v1/forge/assets/{id}`) and Redis Streams.
 4. **Original Monolith Removal**:
-   - `tests/test_blackbox_asset_forge.py` deleted.
+   - `tests/test_blackbox_asset_forge.py` (removed) deleted.
 5. **Quality Gates**:
    - Passes `uv run ruff check` and `uv run ruff format --check`.

@@ -39,7 +39,7 @@ Developer tooling. No user story applies (DoR 8 covers user-facing features only
 ## Detailed Specification & Implementation Plan
 1. Add `e2e/tsconfig.json` (strict, `noEmit`, types for `@playwright/test` and `playwright-bdd`). Add an `e2e:typecheck` script in `package.json` and call it from the existing `typecheck` target and from `make test-bdd`.
 2. Fix the type error at `character_sheet_steps.ts:65` by narrowing `charId` and throwing when it is missing (this matches TASK-0650).
-3. Add `scripts/check_e2e_unused_steps.py` (or a Node script under `e2e/scripts/`). It reads step patterns from `e2e/steps` and step lines from `e2e/features`, and fails on any definition with zero matches. Run it from `make test-bdd`. Use `uv run` for any Python.
+3. Add `scripts/check_e2e_unused_steps.py` (or a Node script under `e2e/scripts/` (removed)). It reads step patterns from `e2e/steps` and step lines from `e2e/features`, and fails on any definition with zero matches. Run it from `make test-bdd`. Use `uv run` for any Python.
 4. Delete the three unused definitions above, or add the scenario that needs them if the behaviour is still wanted.
 5. Replace the two `baseURL` literals with the config value (`test.info().project.use.baseURL` or the shared fixture).
 6. Either remove the `@serial` tags, or map them in `defineBddConfig` so that they affect scheduling. Record the choice in the task's Definition of Done.
