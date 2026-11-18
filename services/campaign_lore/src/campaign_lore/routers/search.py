@@ -6,11 +6,11 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, ConfigDict, Field
+from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.spicedb import SpiceDBClient
 
 from campaign_lore.dependencies import (
     get_retrieval_engine,
-    get_spicedb_client,
 )
 from campaign_lore.identity import CallerId, get_campaign_principal
 from campaign_lore.permissions import (

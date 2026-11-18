@@ -11,16 +11,17 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
+from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_platform.event_sourcing import AggregateRepository
 
 from campaign_lore.dependencies import (
-    get_spicedb_client,
     get_west_marches_repo,
 )
 from campaign_lore.identity import CallerId, get_campaign_principal
 from campaign_lore.models import WestMarchesState
 from campaign_lore.permissions import (
+    check_user_can_manage_campaign,
     check_user_can_play_campaign,
     check_user_can_view_campaign,
 )
@@ -120,8 +121,8 @@ async def link_shared_world(
     repo: Annotated[AggregateRepository[WestMarchesAtlasAggregate], Depends(get_west_marches_repo)],
 ) -> WestMarchesState:
     """Link campaign to a shared world frontier or set world properties."""
-    can_play = await check_user_can_play_campaign(user_id, campaign_id, spicedb)
-    if not can_play:
+    can_manage = await check_user_can_manage_campaign(user_id, campaign_id, spicedb)
+    if not can_manage:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Forbidden: User lacks permission to configure campaign world.",
@@ -144,14 +145,14 @@ async def link_shared_world(
         name=payload.world_name,
         frontier_region=payload.frontier_region,
         description=payload.description,
-        created_by=user_id or "system",
+        created_by=user_id,
     )
     aggregate.create_event(
         CampaignRegisteredToSharedWorld,
         shared_world_id=wid,
         campaign_id=str(campaign_id),
         party_name=payload.party_name,
-        registered_by=user_id or "system",
+        registered_by=user_id,
     )
     await repo.save(aggregate)
     return aggregate.state

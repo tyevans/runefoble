@@ -73,6 +73,8 @@ curl -X POST "http://localhost:8000/api/v1/campaigns/{campaign_id}/atlas/pins" \
 
 The engine applies ray-casting point-in-polygon containment against known territories, automatically annotating the pin metadata with its containing realm (`territory_id`, `territory_name`, and `territory_faction`), and emits `AtlasPinCreated`.
 
+Atlas permissions: viewing needs `view`. Placing a pin needs `play` (players and DMs). Layer toggles and territory updates need `run_session` (DM, GM, or owner). A spectator or an anonymous caller cannot change the atlas.
+
 ---
 
 ## 4. Collaborative Party Codex & SpiceDB Zanzibar Access Control
@@ -97,9 +99,11 @@ curl -X POST "http://localhost:8000/api/v1/campaigns/{campaign_id}/codex/entries
 
 | Privacy Status | SpiceDB Zanzibar Relations | Accessible By |
 |---|---|---|
-| `private` | `codex_entry#author`, `codex_entry#editor` | Author only (other users receive HTTP 403 Forbidden) |
-| `party_shared` | `codex_entry#party_shared@campaign#play` | Campaign players, DMs, GMs, and owner |
-| `public` | `codex_entry#public@campaign#view` | All campaign members and spectators |
+| `private` | `codex_entry#author`, `codex_entry#editor` | Author and editors (other users receive HTTP 403 Forbidden) |
+| `party_shared` | `codex_entry#party_shared@campaign` | Campaign players, DMs, GMs, and owner (`play`) |
+| `public` | `codex_entry#public@campaign` | Campaign members and spectators (`view`) |
+
+The `privacy` field accepts only `private`, `party_shared`, and `public`. Any other value returns `422`. Publishing requires the `play` permission on the campaign. An entry that belongs to another campaign returns `404` when it is read or edited through a different campaign path.
 
 ### Sharing with Party
 To reveal a private theory to the party:

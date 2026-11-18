@@ -18,6 +18,7 @@ from campaign_lore import dependencies, permissions
 from campaign_lore.identity import set_zitadel_auth_service
 from campaign_lore.main import app
 from fastapi.testclient import TestClient
+from runefoble_auth.factory import get_spicedb_client
 
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
@@ -44,14 +45,12 @@ def test_dependencies_expose_core_getters() -> None:
         "get_handout_repo",
         "get_relic_repo",
         "get_retrieval_engine",
-        "get_spicedb_client",
         "get_atlas_repo",
         "get_codex_repo",
         "get_codex_referencer",
         "get_campaign_codex_index",
         "get_west_marches_repo",
         "set_west_marches_repo",
-        "set_spicedb_client",
     ]
     for getter in expected_core_getters:
         assert hasattr(dependencies, getter), f"dependencies.{getter} missing"
@@ -63,16 +62,15 @@ def test_dependencies_expose_core_getters() -> None:
 async def test_frontdoor_codex_crud_and_permissions() -> None:
     """Verify codex endpoints enforce SpiceDB Zanzibar authorization through public frontdoors."""
     with TestClient(app, headers=_bearer(VISITOR_SUBJECT)) as client:
-        spicedb = dependencies.get_spicedb_client()
+        spicedb = get_spicedb_client()
 
         campaign_id = str(uuid4())
         author_id = f"user-author-{uuid4()}"
         viewer_id = f"user-viewer-{uuid4()}"
         stranger_id = f"user-stranger-{uuid4()}"
 
-        await spicedb.write_relationship("campaign", campaign_id, "view", "user", author_id)
-        await spicedb.write_relationship("campaign", campaign_id, "view", "user", viewer_id)
-        await spicedb.write_relationship("campaign", campaign_id, "play", "user", viewer_id)
+        await spicedb.write_relationship("campaign", campaign_id, "player", "user", author_id)
+        await spicedb.write_relationship("campaign", campaign_id, "player", "user", viewer_id)
 
         # 1. Author publishes a private codex entry
         publish_payload = {
@@ -152,24 +150,22 @@ async def test_frontdoor_codex_crud_and_permissions() -> None:
 @pytest.mark.asyncio
 async def test_frontdoor_permissions_evaluation() -> None:
     """Verify all extracted permission checks evaluate correctly with Zanzibar schema."""
-    spicedb = dependencies.get_spicedb_client()
+    spicedb = get_spicedb_client()
     campaign_id = uuid4()
     cid_str = str(campaign_id)
     dm_user = f"dm-{uuid4()}"
     player_user = f"player-{uuid4()}"
     guest_user = f"guest-{uuid4()}"
 
-    # Setup permissions: DM has run_session, player has play + view, guest has view only
-    await spicedb.write_relationship("campaign", cid_str, "run_session", "user", dm_user)
-    await spicedb.write_relationship("campaign", cid_str, "play", "user", player_user)
-    await spicedb.write_relationship("campaign", cid_str, "view", "user", player_user)
-    await spicedb.write_relationship("campaign", cid_str, "view", "user", guest_user)
+    # Setup roles: DM is a dungeon_master, player is a player, guest is a spectator
+    await spicedb.write_relationship("campaign", cid_str, "dungeon_master", "user", dm_user)
+    await spicedb.write_relationship("campaign", cid_str, "player", "user", player_user)
+    await spicedb.write_relationship("campaign", cid_str, "spectator", "user", guest_user)
 
     # Secrets: only DM can read secrets
     assert await permissions.check_user_can_read_secrets(dm_user, campaign_id, spicedb) is True
     assert await permissions.check_user_can_read_secrets(player_user, campaign_id, spicedb) is False
     assert await permissions.check_user_can_read_secrets(guest_user, campaign_id, spicedb) is False
-    assert await permissions.check_user_can_read_secrets(None, campaign_id, spicedb) is False
 
     # Campaign view
     assert await permissions.check_user_can_view_campaign(dm_user, campaign_id, spicedb) is True

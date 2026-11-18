@@ -57,7 +57,6 @@ SPICEDB_SERVICE_MODULES = [
     "game_session.dependencies",
     "rules_compendium.dependencies",
     "asset_forge.dependencies",
-    "campaign_lore.dependencies",
     "soundscape.dependencies",
     "the_watcher.dependencies",
     "board_state.dependencies",

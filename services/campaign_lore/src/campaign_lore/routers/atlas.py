@@ -5,6 +5,7 @@ from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
+from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_platform.event_sourcing import AggregateRepository
 
@@ -17,10 +18,11 @@ from campaign_lore.atlas import (
 from campaign_lore.atlas_aggregate import AtlasAggregate, AtlasState
 from campaign_lore.dependencies import (
     get_atlas_repo,
-    get_spicedb_client,
 )
 from campaign_lore.identity import CallerId, get_campaign_principal
 from campaign_lore.permissions import (
+    check_user_can_edit_atlas,
+    check_user_can_play_campaign,
     check_user_can_view_campaign,
 )
 
@@ -80,6 +82,15 @@ class AtlasViewResponse(BaseModel):
     territories: list[dict[str, Any]]
     contested_zones: list[dict[str, Any]]
     layer_extent: float
+
+
+async def _require_atlas_edit(user_id: str, campaign_id: UUID, spicedb: SpiceDBClient) -> None:
+    """Raise 403 unless the caller holds `atlas.edit` on the campaign."""
+    if not await check_user_can_edit_atlas(user_id, campaign_id, spicedb):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden: User lacks atlas edit permission on this campaign.",
+        )
 
 
 @router.get("", response_model=AtlasViewResponse)
@@ -147,11 +158,11 @@ async def create_pin(
     spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
 ) -> dict[str, Any]:
     """Place a geographical milestone pin onto the campaign world atlas."""
-    can_view = await check_user_can_view_campaign(user_id, campaign_id, spicedb)
-    if not can_view:
+    can_place = await check_user_can_play_campaign(user_id, campaign_id, spicedb)
+    if not can_place:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Forbidden: User cannot interact with campaign atlas.",
+            detail="Forbidden: User cannot place pins on this campaign atlas.",
         )
 
     try:
@@ -241,8 +252,10 @@ async def toggle_layer(
     payload: ToggleLayerRequest,
     user_id: CallerId,
     repo: Annotated[AggregateRepository[AtlasAggregate], Depends(get_atlas_repo)],
+    spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
 ) -> dict[str, Any]:
     """Toggle visibility for a map layer or geopolitical boundary overlay."""
+    await _require_atlas_edit(user_id, campaign_id, spicedb)
     try:
         aggregate = await repo.load(campaign_id)
     except Exception:
@@ -269,8 +282,10 @@ async def update_territory(
     payload: UpdateTerritoryRequest,
     user_id: CallerId,
     repo: Annotated[AggregateRepository[AtlasAggregate], Depends(get_atlas_repo)],
+    spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
 ) -> dict[str, Any]:
     """Define or update geopolitical boundaries, ownership factions, and contested statuses."""
+    await _require_atlas_edit(user_id, campaign_id, spicedb)
     try:
         aggregate = await repo.load(campaign_id)
     except Exception:

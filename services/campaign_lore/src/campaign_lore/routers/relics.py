@@ -5,12 +5,12 @@ from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, ConfigDict, Field
+from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_platform.event_sourcing import AggregateRepository
 
 from campaign_lore.dependencies import (
     get_relic_repo,
-    get_spicedb_client,
 )
 from campaign_lore.handouts import RelicSynthesizer
 from campaign_lore.handouts_aggregate import RelicAggregate
@@ -18,6 +18,7 @@ from campaign_lore.identity import CallerId, get_campaign_principal
 from campaign_lore.permissions import (
     check_user_can_inspect_relic,
     check_user_can_read_secrets,
+    check_user_can_run_session,
 )
 
 router = APIRouter(
@@ -48,10 +49,11 @@ class InspectRelicRequest(BaseModel):
 
 
 class TranslateRuneRequest(BaseModel):
-    """Payload to decipher or translate an inscription etched onto a relic."""
+    """Payload to decipher or translate an inscription. The translator is the verified caller."""
+
+    model_config = ConfigDict(extra="forbid")
 
     rune_id: str
-    translated_by: str = "player"
     translation: str | None = None
 
 
@@ -63,11 +65,11 @@ async def forge_relic(
     repo: Annotated[AggregateRepository[RelicAggregate], Depends(get_relic_repo)] = None,
 ) -> dict[str, Any]:
     """Forge a new 3D relic model with PBR shader attributes and etched runes."""
-    can_inspect = await check_user_can_inspect_relic(user_id, payload.campaign_id, spicedb)
-    if not can_inspect:
+    can_forge = await check_user_can_run_session(user_id, payload.campaign_id, spicedb)
+    if not can_forge:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Forbidden: User lacks campaign view permission",
+            detail="Forbidden: Only campaign run_session members can forge relics.",
         )
 
     spec = RelicSynthesizer.generate_relic_spec(
@@ -209,6 +211,13 @@ async def translate_rune(
             detail=f"Relic {relic_id} not found",
         ) from None
 
+    can_inspect = await check_user_can_inspect_relic(user_id, relic.state.campaign_id, spicedb)
+    if not can_inspect:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden: User lacks relic inspection permission",
+        )
+
     matched = next((r for r in relic.state.runes if r.get("id") == payload.rune_id), None)
     if not matched:
         raise HTTPException(
@@ -219,7 +228,7 @@ async def translate_rune(
     translation = payload.translation or matched.get("translated", "Ancient unknown dialect")
     relic.translate_rune(
         rune_id=payload.rune_id,
-        translated_by=payload.translated_by or user_id or "player",
+        translated_by=user_id,
         translation=translation,
     )
     await repo.save(relic)
@@ -229,5 +238,5 @@ async def translate_rune(
         "rune_id": payload.rune_id,
         "original_inscription": matched.get("inscription", ""),
         "translation": translation,
-        "translated_by": payload.translated_by or user_id or "player",
+        "translated_by": user_id,
     }

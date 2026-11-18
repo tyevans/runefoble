@@ -3,20 +3,25 @@
 from typing import Annotated, Any
 from uuid import UUID, uuid4
 
+from eventsource import AggregateNotFoundError
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
+from runefoble_auth.errors import AuthzError
+from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.spicedb import SpiceDBClient
+from runefoble_platform.errors import ServiceUnavailableError
 from runefoble_platform.event_sourcing import AggregateRepository
 
 from campaign_lore.aggregate import LoreDocumentAggregate, LoreDocumentState
 from campaign_lore.dependencies import (
     get_repo,
     get_retrieval_engine,
-    get_spicedb_client,
 )
 from campaign_lore.identity import CallerId, get_campaign_principal
 from campaign_lore.permissions import (
     check_user_can_read_secrets,
+    check_user_can_run_session,
+    check_user_can_view_campaign,
 )
 from campaign_lore.retrieval import LoreRetrievalEngine
 
@@ -61,7 +66,11 @@ async def ingest_document(
     spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
 ) -> IngestDocumentResponse:
     """Ingest a new worldbuilding document, extract knowledge graphs, and build hybrid indices."""
-    # If document is marked secret, ensure user has permission or is creating it as DM/author
+    if not await check_user_can_run_session(user_id, req.campaign_id, spicedb):
+        raise HTTPException(
+            status_code=403,
+            detail="Forbidden: Only campaign run_session members can ingest lore documents.",
+        )
     doc_id = uuid4()
     aggregate = LoreDocumentAggregate(doc_id)
     aggregate.ingest(
@@ -72,6 +81,20 @@ async def ingest_document(
         author_id=user_id,
         metadata={"tags": req.tags, **req.metadata},
     )
+    # The authorization tuple is written before the document is saved. A failed write
+    # returns 503 and the document is not saved.
+    try:
+        await spicedb.write_relationship(
+            resource_type="lore_document",
+            resource_id=str(doc_id),
+            relation="campaign",
+            subject_type="campaign",
+            subject_id=str(req.campaign_id),
+        )
+    except AuthzError as exc:
+        raise ServiceUnavailableError(
+            "Lore authorization is unavailable. The document was not saved."
+        ) from exc
     await repo.save(aggregate)
 
     # Index into the redstring graph and hybrid vector/chunk stores
@@ -117,15 +140,6 @@ async def ingest_document(
     )
     await repo.save(aggregate)
 
-    # Write SpiceDB relationship tuple for object authorization
-    await spicedb.write_relationship(
-        resource_type="lore_document",
-        resource_id=str(doc_id),
-        relation="campaign",
-        subject_type="campaign",
-        subject_id=str(req.campaign_id),
-    )
-
     return IngestDocumentResponse(
         document_id=doc_id,
         campaign_id=req.campaign_id,
@@ -148,16 +162,24 @@ async def get_document(
     """Retrieve an ingested lore document by UUID, enforcing SpiceDB Zanzibar access control."""
     try:
         doc = await repo.load(document_id)
-    except Exception as exc:
+    except AggregateNotFoundError as exc:
         raise HTTPException(status_code=404, detail="Lore document not found") from exc
 
-    # Enforce SpiceDB Zanzibar authorization for secret lore
     if doc.state.is_secret:
+        # Secret lore needs run_session (lore_document.read_secret).
         can_read = await check_user_can_read_secrets(user_id, doc.state.campaign_id, spicedb)
         if not can_read:
             raise HTTPException(
                 status_code=403,
                 detail="Forbidden: SpiceDB Zanzibar policy denies access to DM-only secret lore.",
+            )
+    else:
+        # Public lore needs campaign view (lore_document.read_public).
+        can_view = await check_user_can_view_campaign(user_id, doc.state.campaign_id, spicedb)
+        if not can_view:
+            raise HTTPException(
+                status_code=403,
+                detail="Forbidden: User lacks campaign view permission for this lore document.",
             )
 
     return doc.state
