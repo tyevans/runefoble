@@ -105,7 +105,7 @@ Each removed route returns `404`.
 ### 1. `GET /api/v1/auth/sync/health`
 Health probe reporting SpiceDB connectivity and synchronization backend (`mock` or `grpc`).
 
-**Response (200 OK):**
+**Response (200 OK):** SpiceDB answers the probe.
 ```json
 {
   "status": "healthy",
@@ -114,6 +114,34 @@ Health probe reporting SpiceDB connectivity and synchronization backend (`mock` 
   "backend": "mock"
 }
 ```
+
+**Response (503 Service Unavailable):** SpiceDB does not answer, or the sync reply is malformed. The body holds the reason in `detail`.
+
+SpiceDB unreachable (`backend` is `grpc` for a live client):
+```json
+{
+  "detail": {
+    "status": "unhealthy",
+    "spicedb_connected": false,
+    "sync_service": "unavailable",
+    "backend": "grpc",
+    "error": "ReadRelationships failed. UNAVAILABLE: ..."
+  }
+}
+```
+
+Malformed reply (a required key is missing). The gateway never fills the key with a default:
+```json
+{
+  "detail": {
+    "status": "unhealthy",
+    "error": "malformed sync health reply",
+    "missing_fields": ["status"]
+  }
+}
+```
+
+Only SpiceDB failures produce `unhealthy`. Any other exception is a defect and returns a server error.
 
 ## Domain Event Listeners
 
