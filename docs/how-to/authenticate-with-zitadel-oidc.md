@@ -156,35 +156,36 @@ A second run creates no project and no application. It writes the same Secret da
 
 ### Admin token source
 
-The Job calls the Zitadel management API with a personal access token (PAT). The chart reads the PAT from a Kubernetes Secret that you create. The chart does not read files from the Zitadel container.
+The Job calls the Zitadel management API with a personal access token (PAT). The chart delivers the PAT with no manual step:
+
+1. Zitadel writes the PAT of the machine user to the file named by `ZITADEL_FIRSTINSTANCE_PATPATH` (`/zitadel/bootstrap/admin.pat`) on its first start. The file is on an `emptyDir` volume in the Zitadel pod.
+2. The `pat-publisher` sidecar in the Zitadel pod waits for that file. It server-side applies the Secret `zitadel.bootstrap.adminSecret` (default `zitadel-admin`) with the key `pat`.
+3. The Job reads the Secret when its container starts.
 
 - Secret name: `zitadel.bootstrap.adminSecret` (default `zitadel-admin`).
 - Key: `pat`.
-- Owner: the operator. Zitadel generates the token on its first start. The chart cannot set it.
+- Owner: the `pat-publisher` sidecar. Do not create or edit this Secret by hand.
 - Token owner: the machine user `zitadel.bootstrap.machineUsername` (default `runefoble-bootstrap`). Zitadel creates it on the first start with the `IAM_OWNER` role.
+- RBAC: the `zitadel` Role can create Secrets in the namespace. It can get and patch only the Secret named by `zitadel.bootstrap.adminSecret`.
+
+The sidecar reads the file only once per Zitadel database. A later pod restart does not write a new file. The Secret that the sidecar wrote stays valid while the Zitadel database stays.
 
 ### Local Kind install
 
-The first install has a chicken-and-egg step. The Job needs the PAT, and Zitadel makes the PAT on its first start. Install in two steps:
+Run `make helm-deploy` once. No separate PAT step is needed. The Job waits for Zitadel, so the first install takes several minutes. See [Tutorial 01](../tutorials/01-local-development-setup.md#step-4-validate-and-deploy-the-helm-chart) for the expected results.
+
+If the Job starts while an older Secret still holds a token from a removed Zitadel database, the Zitadel call fails with HTTP 401. The Job then exits with an error. Kubernetes restarts the Job container. The restart reads the new token from the Secret.
 
 ```bash
-# 1. Install without the Job. Zitadel starts and creates the machine user and its PAT.
-helm upgrade --install runefoble deployments/helm/runefoble --set zitadel.bootstrap.enabled=false
-
-# 2. Read the PAT from the Zitadel log. Zitadel prints it on its first start.
-kubectl logs deploy/zitadel | grep -i "pat"
-
-# 3. Store the PAT in the Secret that the Job reads.
-kubectl create secret generic zitadel-admin --from-literal=pat="<token from step 2>"
-
-# 4. Enable the Job. It creates the project and application and writes runefoble-zitadel-client.
-helm upgrade runefoble deployments/helm/runefoble
+# Check that the publisher wrote the Secret and that the Job finished.
+kubectl get secret zitadel-admin -o jsonpath='{.data.pat}' | base64 -d | wc -c
+kubectl get job zitadel-bootstrap
 kubectl get secret runefoble-zitadel-client -o jsonpath='{.data.client-id}' | base64 -d; echo
 ```
 
 Later upgrades run the Job again. It changes nothing when the project and application already match.
 
-Until step 4 finishes, the pods that read the Secret stay in `CreateContainerConfigError`. The services and the frontend start when the Secret exists. The services read `RUNEFOBLE_ZITADEL_AUDIENCE` from `project-id`. The App Shell reads `clientId` and the project audience scope from `client-id` and `project-id`.
+Until the Job finishes, the pods that read the Secret stay in `CreateContainerConfigError`. The services and the frontend start when the Secret exists. The services read `RUNEFOBLE_ZITADEL_AUDIENCE` from `project-id`. The App Shell reads `clientId` and the project audience scope from `client-id` and `project-id`.
 
 ### Production values
 

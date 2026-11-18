@@ -11,17 +11,18 @@ Server-side apply makes a repeated run a no-op for the Secret when the data is u
 
 from __future__ import annotations
 
-import json
 import os
-import ssl
 import sys
-import urllib.error
-import urllib.parse
-import urllib.request
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 
+from runefoble_auth.kubernetes_secret import (
+    SERVICE_ACCOUNT_DIR,
+    apply_secret,
+    read_service_account_token,
+    service_account_ca_file,
+)
 from runefoble_auth.zitadel_bootstrap import (
     ApplicationSpec,
     Provisioned,
@@ -29,8 +30,6 @@ from runefoble_auth.zitadel_bootstrap import (
     provision,
 )
 
-SERVICE_ACCOUNT_DIR = Path("/var/run/secrets/kubernetes.io/serviceaccount")
-KUBERNETES_API_TIMEOUT_SECONDS = 10
 READY_TIMEOUT_SECONDS = 300
 FIELD_MANAGER = "runefoble-zitadel-bootstrap"
 
@@ -55,8 +54,6 @@ class BootstrapConfig:
     def from_env(
         cls, env: Mapping[str, str], service_account_dir: Path = SERVICE_ACCOUNT_DIR
     ) -> BootstrapConfig:
-        token_path = service_account_dir / "token"
-        ca_path = service_account_dir / "ca.crt"
         return cls(
             issuer=_required(env, "RUNEFOBLE_ZITADEL_ISSUER"),
             internal_url=_required(env, "RUNEFOBLE_ZITADEL_INTERNAL_URL"),
@@ -71,8 +68,8 @@ class BootstrapConfig:
                 dev_mode=_required(env, "RUNEFOBLE_ZITADEL_DEV_MODE").lower() == "true",
             ),
             kubernetes_api=_required(env, "KUBERNETES_API_URL"),
-            kubernetes_token=token_path.read_text(encoding="utf-8").strip(),
-            kubernetes_ca_file=str(ca_path) if ca_path.exists() else None,
+            kubernetes_token=read_service_account_token(service_account_dir),
+            kubernetes_ca_file=service_account_ca_file(service_account_dir),
         )
 
 
@@ -92,49 +89,15 @@ def _csv(env: Mapping[str, str], name: str) -> tuple[str, ...]:
 
 def apply_client_secret(config: BootstrapConfig, provisioned: Provisioned) -> None:
     """Server-side apply the Secret that holds the generated project and client IDs."""
-    url = (
-        f"{config.kubernetes_api.rstrip('/')}/api/v1/namespaces/{config.namespace}"
-        f"/secrets/{config.secret_name}"
-        f"?fieldManager={FIELD_MANAGER}&force=true"
+    apply_secret(
+        api_url=config.kubernetes_api,
+        token=config.kubernetes_token,
+        ca_file=config.kubernetes_ca_file,
+        namespace=config.namespace,
+        name=config.secret_name,
+        string_data={"project-id": provisioned.project_id, "client-id": provisioned.client_id},
+        field_manager=FIELD_MANAGER,
     )
-    body = {
-        "apiVersion": "v1",
-        "kind": "Secret",
-        "metadata": {
-            "name": config.secret_name,
-            "namespace": config.namespace,
-            "labels": {"app.kubernetes.io/part-of": "runefoble"},
-        },
-        "type": "Opaque",
-        "stringData": {"project-id": provisioned.project_id, "client-id": provisioned.client_id},
-    }
-    request = urllib.request.Request(
-        url,
-        data=json.dumps(body).encode("utf-8"),
-        method="PATCH",
-        headers={
-            "Authorization": f"Bearer {config.kubernetes_token}",
-            "Content-Type": "application/apply-patch+yaml",
-            "Accept": "application/json",
-        },
-    )
-    context = (
-        ssl.create_default_context(cafile=config.kubernetes_ca_file) if _is_https(url) else None
-    )
-    try:
-        with urllib.request.urlopen(
-            request, timeout=KUBERNETES_API_TIMEOUT_SECONDS, context=context
-        ) as response:
-            response.read()
-    except urllib.error.HTTPError as exc:
-        detail = exc.read().decode("utf-8", errors="replace")[:300]
-        raise RuntimeError(
-            f"Applying Secret {config.secret_name} returned HTTP {exc.code}: {detail}"
-        ) from exc
-
-
-def _is_https(url: str) -> bool:
-    return urllib.parse.urlsplit(url).scheme == "https"
 
 
 def run(config: BootstrapConfig) -> Provisioned:

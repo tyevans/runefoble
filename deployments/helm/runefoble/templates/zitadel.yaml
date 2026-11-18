@@ -1,4 +1,49 @@
 {{- if .Values.zitadel.enabled -}}
+{{- /*
+Zitadel writes the admin machine user's PAT to ZITADEL_FIRSTINSTANCE_PATPATH on first start.
+The pat-publisher sidecar reads that file from the shared emptyDir and applies the Secret named
+by zitadel.bootstrap.adminSecret. The Role below may touch only that Secret by name.
+*/ -}}
+{{- $patDir := "/zitadel/bootstrap" -}}
+{{- $patPath := printf "%s/admin.pat" $patDir -}}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: zitadel
+  labels:
+    app: zitadel
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: zitadel
+  labels:
+    app: zitadel
+rules:
+  # Server-side apply creates the Secret on the first run.
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["create"]
+  - apiGroups: [""]
+    resources: ["secrets"]
+    resourceNames: [{{ .Values.zitadel.bootstrap.adminSecret | quote }}]
+    verbs: ["get", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: zitadel
+  labels:
+    app: zitadel
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: zitadel
+subjects:
+  - kind: ServiceAccount
+    name: zitadel
+    namespace: {{ .Release.Namespace }}
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -15,14 +60,23 @@ spec:
       labels:
         app: zitadel
     spec:
+      serviceAccountName: zitadel
+      # Kubernetes would inject ZITADEL_PORT=tcp://<ip>:8080 from the Service named zitadel. Zitadel
+      # reads ZITADEL_PORT as its listen port and fails to start. Turn off the service variables.
+      enableServiceLinks: false
       containers:
         - name: zitadel
           image: {{ .Values.zitadel.image }}
-          args: ["start-from-init", "--tlsMode", "disabled"]
+          args: ["start-from-init", "--masterkeyFromEnv", "--tlsMode", "disabled"]
           ports:
             - containerPort: {{ .Values.zitadel.port }}
+          volumeMounts:
+            - name: bootstrap
+              mountPath: {{ $patDir }}
           env:
             {{- include "runefoble.secretEnv" (dict "root" $ "name" "ZITADEL_MASTERKEY" "key" "zitadel-masterkey") | nindent 12 }}
+            - name: ZITADEL_FIRSTINSTANCE_PATPATH
+              value: {{ $patPath | quote }}
             - name: ZITADEL_EXTERNALDOMAIN
               value: {{ .Values.zitadel.externalDomain | quote }}
             - name: ZITADEL_EXTERNALPORT
@@ -81,15 +135,40 @@ spec:
               value: ""
             - name: ZITADEL_DEFAULTINSTANCE_SMTPCONFIGURATION_SMTP_PASSWORD
               value: ""
-            - name: ZITADEL_DEFAULTINSTANCE_SMTPCONFIGURATION_SMTP_TLS
+            # Zitadel reads TLS, FROM, and FROMNAME one level above SMTP (DefaultInstance.SMTPConfiguration).
+            # A wrong name is ignored. Then the host is set and the sender is empty, so setup fails
+            # with Errors.Invalid.Argument in step 03_default_instance.
+            - name: ZITADEL_DEFAULTINSTANCE_SMTPCONFIGURATION_TLS
               value: "false"
-            - name: ZITADEL_DEFAULTINSTANCE_SMTPCONFIGURATION_SMTP_SSL
-              value: "false"
-            - name: ZITADEL_DEFAULTINSTANCE_SMTPCONFIGURATION_SMTP_FROM
+            - name: ZITADEL_DEFAULTINSTANCE_SMTPCONFIGURATION_FROM
               value: {{ .Values.zitadel.adminEmail | default "noreply@runefoble.local" | quote }}
-            - name: ZITADEL_DEFAULTINSTANCE_SMTPCONFIGURATION_SMTP_FROMNAME
+            - name: ZITADEL_DEFAULTINSTANCE_SMTPCONFIGURATION_FROMNAME
               value: "Runefoble"
+            # The sender is not in the instance domain (auth.localhost). Turn off the check.
+            - name: ZITADEL_DEFAULTINSTANCE_DOMAINPOLICY_SMTPSENDERADDRESSMATCHESINSTANCEDOMAIN
+              value: "false"
             {{- end }}
+        - name: pat-publisher
+          image: {{ .Values.services.gatewayApi.image }}
+          command: ["python", "-m", "runefoble_auth.zitadel_pat_publisher"]
+          volumeMounts:
+            - name: bootstrap
+              mountPath: {{ $patDir }}
+              readOnly: true
+          env:
+            - name: ZITADEL_PAT_PATH
+              value: {{ $patPath | quote }}
+            - name: ZITADEL_ADMIN_SECRET_NAME
+              value: {{ .Values.zitadel.bootstrap.adminSecret | quote }}
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: KUBERNETES_API_URL
+              value: "https://kubernetes.default.svc"
+      volumes:
+        - name: bootstrap
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service

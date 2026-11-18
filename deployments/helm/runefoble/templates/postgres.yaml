@@ -50,6 +50,8 @@ spec:
           image: {{ .Values.postgres.image }}
           ports:
             - containerPort: {{ .Values.postgres.port }}
+          # About 17 Runefoble clients each hold a connection pool. The server default of 100 is too low.
+          args: ["-c", "max_connections={{ .Values.postgres.maxConnections | default 300 }}"]
           env:
             - name: POSTGRES_DB
               value: {{ .Values.postgres.database }}

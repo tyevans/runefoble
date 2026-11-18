@@ -42,11 +42,12 @@ RUN if [ -n "${SYSTEM_PACKAGES}" ]; then \
     fi
 
 # The whole uv workspace is needed to resolve `uv.lock`. Tests and frontend code
-# are excluded by .dockerignore.
+# are excluded by .dockerignore. The install is editable, so a service finds its own source tree
+# (for example services/<bc>/ui/manifest.json, which the service loads relative to its module).
 COPY . .
 
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --package "${SERVICE}" --no-dev --no-editable
+    uv sync --frozen --package "${SERVICE}" --no-dev
 
 RUN useradd --system --uid 10001 --no-create-home runefoble
 USER runefoble

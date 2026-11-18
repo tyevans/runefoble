@@ -26,6 +26,7 @@ spec:
             - containerPort: {{ $mcp.port }}
           env:
             {{- include "runefoble.serviceCredentialEnv" $ | nindent 12 }}
+            {{- include "runefoble.secretEnv" (dict "root" $ "name" "RUNEFOBLE_SPICEDB_PRESHARED_KEY" "key" "spicedb-preshared-key") | nindent 12 }}
             {{- include "runefoble.zitadelServiceEnv" $ | nindent 12 }}
             - name: BOARD_STATE_URL
               value: {{ $mcp.boardStateUrl | quote }}
