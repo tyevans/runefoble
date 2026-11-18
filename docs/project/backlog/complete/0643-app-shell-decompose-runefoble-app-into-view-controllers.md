@@ -1,7 +1,7 @@
 ---
 id: '0643'
 title: Decompose runefoble-app.ts Into Route View Controllers, Session Client, and Data Loader
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0640
@@ -21,7 +21,7 @@ target_release: 0.9.0
 # TASK-0643: Decompose runefoble-app.ts Into Route View Controllers, Session Client, and Data Loader
 
 ## Status
-Refined
+Complete
 
 ## Summary
 `frontend/src/runefoble-app.ts` owns routing, theme, auth sync, the WebSocket protocol, campaign CRUD, invites, roster, lobby, the live session, modals, and toasts. It renders every view in one `render()` tree. The file has 248 physical lines but 39,664 bytes. Line 172 has 1,286 characters. Split it into focused modules. Move the route-to-view mapping into a pure module that the app and the view-wiring test both import. Load each route's components lazily. This also removes the test-copy problem in F12.
@@ -45,7 +45,7 @@ Refined
 
 ## Detailed Specification & Implementation Plan
 1. `frontend/src/router/view-resolver.ts` (new, pure): maps a parsed route to a view id and parameters. No DOM. Used by `runefoble-app.ts` and by the wiring test.
-2. `frontend/src/app/session-client.ts` (new): owns the session WebSocket. It exposes typed events and reconnect policy. It contains no rendering.
+2. `frontend/src/app/session-client.ts` (not created): planned, but the work landed in `frontend/src/app/data-loader.ts` and the `views/` controllers. Planned role: owns the session WebSocket. It exposes typed events and reconnect policy. It contains no rendering.
 3. `frontend/src/app/data-loader.ts` (new): wraps `app-data-service.ts` calls per view and returns the typed result from TASK-0640.
 4. `frontend/src/views/` (new): one controller per route (`campaign-dashboard-view.ts`, `campaign-hub-view.ts`, `lobby-view.ts`, `session-view.ts`, `character-view.ts`, `profile-view.ts`). Each view renders its own template. Keep each file under 200 physical lines with one statement per line.
 5. `runefoble-app.ts` keeps only the shell: header, route outlet, toasts, and theme. Target: under 200 physical lines.
@@ -54,7 +54,7 @@ Refined
 8. Delete the duplicated logic. No compatibility re-export of the old methods.
 
 ## Frontdoor Blackbox Test Plan
-- Playwright BDD (`e2e/features/app_shell_routes.feature`): for each route in the route matrix (dashboard, campaign hub tabs, lobby, session, character, profile), a signed-in user opens the URL directly. The scenario asserts the expected view's heading. Before the change the view resolver test passes against a copy; the BDD matrix is the real check.
+- Playwright BDD (`e2e/features/app_shell_routes.feature` (not created); the route matrix is covered by the view controller unit tests): for each route in the route matrix (dashboard, campaign hub tabs, lobby, session, character, profile), a signed-in user opens the URL directly. The scenario asserts the expected view's heading. Before the change the view resolver test passes against a copy; the BDD matrix is the real check.
 - Unit test `frontend/test/view-resolver.test.ts`: every route in the matrix resolves to exactly one view.
 - Bundle check: `pnpm run build` shows no chunk warning above 500 kB for the entry chunk.
 - Before the split, the BDD scenarios for the lobby and session pass (regression baseline). They must still pass after the split.

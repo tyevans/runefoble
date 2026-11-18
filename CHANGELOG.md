@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Security
+- Board State: token place, move, remove, actions, AoE, spell VFX, physics, previews, lights, doors, and map import check a SpiceDB permission. Token placement writes `board_token` tuples. The board WebSocket needs a bearer and `board.view`, checks each message, and no longer rebroadcasts unknown client frames. (TASK-0547)
 - MCP tools that change characters, boards, or encounters check a schema permission for the verified caller. Agent action plan steps and dynamic tool calls over MCP check the same rules (`mcp_tool.execute`). (TASK-0545)
 - Board State: secret traps, secret doors, and secret portals no longer reach callers without `board.view_secret_layer`. Trap disarm, map switch, terrain, and fog routes now enforce SpiceDB `board` permissions. Board creation needs `campaign.run_session` and writes the board tuple. The `is_dm` query parameter is removed. (TASK-0546)
 - Voice signaling, mobile companion, overlay and spectator sockets now need `session.observe` (close code 4403). Overlay frames need `session.participate`. Companion whisper and turn-alert need `session.control`. `speak-and-act` needs `session.participate`. The campaign socket rejects action names it does not define. (TASK-0544)
@@ -42,6 +43,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Campaign analytics worker `process_event` alias, tracking property wrappers, and package root re-exports. Callers use `handle_event`. (TASK-0500)
 
 ### Added
+- Frontdoor negative authentication suite. Every public HTTP and WebSocket surface refuses forged, expired, wrong-audience, wrong-issuer, unsigned, `alg: none`, and malformed credentials, and the retired sign-in, seed, and body-claim sync routes are absent (TASK-0535).
 - `ProfileUpdated` domain event. game_session owns each user's profile as event-sourced state. (TASK-0742)
 - Gateway routes `GET /api/v1/sessions/{session_id}/events` (session chronicle feed) and `GET /api/v1/sessions/{session_id}/absentee-recap` (stand-in turns and penalties). Both require `session.observe`. (TASK-0641)
 - The MCP transport requires a verified bearer token on every request. A request without one gets `401` before any tool runs (ADR-0015 c). (TASK-0532)
@@ -90,6 +92,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
 
 ### Changed
+- The Watcher keeps DM pending actions, whispers, and open disambiguations in event-sourced aggregates. They survive a restart. Open action timers re-arm from stored deadlines at start-up. (TASK-0568)
+- Campaign Lore publishes every committed lore event through its repository to a `runefoble.events.lore.<name>` stream. A failed publish returns 503. (TASK-0572)
+- Voice duplex playback and stream quality state is stored in the voice room aggregate. A replica or a restarted voice service reports the same playback and codec state. (TASK-0577)
+- Rules compendium campaign homebrew is stored in the campaign aggregate. The search and monster index is rebuilt from events at start-up, so homebrew survives a restart. (TASK-0571)
+- Dynamic tool admin routes (`/mcp/tools*`) run in the MCP gateway process, so a registered tool is visible and callable over MCP. The API gateway no longer serves them (404). Swagger UI lists the MCP gateway spec. (TASK-0727)
+- App Shell loads each microfrontend bundle by route. The entry chunk drops from 847 kB to 180 kB. (TASK-0643)
 - MCP tools call the owning services through the shared service client. Each upstream call sends the service credential and the W3C trace context. The MCP gateway starts telemetry as `gateway-mcp`. Agent-supplied path segments are percent-encoded. (TASK-0745)
 - Helm: the Grafana container listens on the chart port (3001), so `kubectl port-forward svc/grafana 3001:3001` reaches it. (TASK-0657)
 - Campaign Analytics refuses to start when PostgreSQL or Redis is unreachable. A PostgreSQL failure raises `CampaignStoreStartupError`. A Redis failure raises `EventBusUnavailableError`. The service serves no requests in either case. (TASK-0688)

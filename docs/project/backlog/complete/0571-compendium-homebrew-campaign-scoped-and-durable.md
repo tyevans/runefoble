@@ -1,7 +1,7 @@
 ---
 id: '0571'
 title: Compendium Homebrew Campaign-Scoped and Rebuilt From the Aggregate
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0560
@@ -20,7 +20,7 @@ target_release: 0.9.0
 # TASK-0571: Compendium Homebrew Campaign-Scoped and Rebuilt From the Aggregate
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Homebrew monsters are written into the global SRD monster map with no campaign key. An anonymous request can read a campaign's homebrew "Goblin" in place of the SRD Goblin. Homebrew index state is also process memory, so it is lost on restart. This task keeps homebrew in campaign-scoped aggregate state, rebuilds the index from events, and prevents homebrew from replacing canonical entries.

@@ -1,7 +1,7 @@
 ---
 id: '0572'
 title: Campaign Lore Codex Index, Retrieval State and Domain Events Made Durable
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0560
@@ -22,7 +22,7 @@ target_release: 0.9.0
 # TASK-0572: Campaign Lore Codex Index, Retrieval State and Domain Events Made Durable
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Campaign lore aggregates are stored, but three things that users see are not: the codex list is a module-level dict, the retrieval state (documents, redstring graph, vectors) is in memory, and aggregate events are never published to the bus. This task rebuilds the codex index and retrieval state from the event stream at start-up, and publishes lore events through the repository on the documented topics.

@@ -1,7 +1,7 @@
 ---
 id: '0547'
 title: Board Token, Encounter, and WebSocket Action Authorization
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0546
@@ -29,7 +29,7 @@ target_release: 0.9.0
 # TASK-0547: Board Token, Encounter, and WebSocket Action Authorization
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Most mutating board routes have no permission check. Anyone can place, move, or remove a token, cast an area spell, change terrain, import a map, toggle doors, and throw physics objects. The board WebSocket applies moves and spell actions for any client. This task adds one permission per action to each route and to each WebSocket message. It writes the `board_token` tuples that the checks need.

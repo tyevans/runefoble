@@ -24,7 +24,7 @@ from backlog_link_map import LINK_MAP, PATH_OVERRIDES, REFERENCE_MAP
 from backlog_records import (
     ADR_DIR,
     PRODUCT_DIR,
-    REMOVED_MARK,
+    REMOVED_MARKS,
     STORIES_DIR,
     active_records,
     complete_records,
@@ -195,7 +195,7 @@ def fix_paths(report: list[str]) -> int:
                 edits.append((match.start(1), match.end(1), raw.replace(path, moved, 1)))
                 report.append(f"moved  {record.name}: {path} -> {moved}")
             else:
-                edits.append((match.end(), match.end(), REMOVED_MARK))
+                edits.append((match.end(), match.end(), REMOVED_MARKS[0]))
                 report.append(f"removed {record.name}: {path}")
         if not edits:
             continue

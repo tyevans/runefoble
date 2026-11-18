@@ -1,7 +1,7 @@
 ---
 id: '0727'
 title: Dynamic Tool Admin Routes Run in the MCP Gateway Process
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0532
@@ -18,7 +18,7 @@ target_release: 0.9.0
 # TASK-0727: Dynamic Tool Admin Routes Run in the MCP Gateway Process
 
 ## Status
-Refined. Found by the refactor audit round refactor-r1 and checked against the code on 2026-11-17.
+Complete
 
 ## Summary
 The API gateway mounts the dynamic tool admin router in its own process. The MCP server runs in a separate container and never sees a tool that is registered through that router. The call succeeds and the tool does not appear for MCP clients.

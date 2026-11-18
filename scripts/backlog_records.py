@@ -22,8 +22,10 @@ ADR_DIR = REPO_ROOT / "docs" / "project" / "adrs" / "accepted"
 
 MD_LINK = re.compile(r"\]\(([^)\s]+)\)")
 BACKTICK = re.compile(r"`([^`\s]+)`")
-LINE_SUFFIX = re.compile(r":\d+(-\d+)?$")
-REMOVED_MARK = " (removed)"
+LINE_SUFFIX = re.compile(r":\d+(?:-\d+)?(?:,\d+(?:-\d+)?)*$")
+# A complete record marks a cited path that no longer exists: removed later, or planned and never
+# created because the work landed elsewhere.
+REMOVED_MARKS = (" (removed)", " (not created)")
 REPO_TOPS = (
     "libs/",
     "services/",
@@ -102,7 +104,7 @@ def repo_path_tokens(text: str) -> Iterator[tuple[re.Match, str, bool]]:
             continue
         if "." not in path.rsplit("/", 1)[-1] and not path.endswith("/"):
             continue
-        removed = text[match.end() :].startswith(REMOVED_MARK)
+        removed = text[match.end() :].startswith(REMOVED_MARKS)
         yield match, path, removed
 
 

@@ -70,3 +70,7 @@ Test file: `tests/test_blackbox_soundscape_gateway.py` (existing file, updated).
 
 - Severity: high
 - Source audits: `w2-soundscape.md`, `w1-gateway-api.md`, `w1-gates-infra.md`
+
+## Orchestrator Addenda (2026-11-17, round 3)
+- TASK-0576 moved soundscape ducking into the aggregate (`/duck` and its release). Proxy those routes
+  through the gateway here, then wire the soundscape UI ducking controls to them, with a Storybook story.

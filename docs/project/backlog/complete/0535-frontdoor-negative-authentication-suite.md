@@ -1,7 +1,7 @@
 ---
 id: '0535'
 title: Frontdoor Negative Authentication Suite (Forged, Expired, Wrong Audience, Body Claims)
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0520
@@ -22,7 +22,7 @@ target_release: 0.9.0
 # TASK-0535: Frontdoor Negative Authentication Suite (Forged, Expired, Wrong Audience, Body Claims)
 
 ## Status
-Refined
+Complete
 
 ## Summary
 The existing 209 authentication tests pass only because dev mode accepts anything. No test sends a forged or invalid token through a public route and expects a refusal. Add a parameterised frontdoor suite that covers every class of bad credential on representative routes in each surface. Run it in the normal test gate.

@@ -1,7 +1,7 @@
 ---
 id: '0577'
 title: Voice Room Aggregate Saved on Every Command, Duplex Playback State Made Shared
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0560
@@ -19,7 +19,7 @@ target_release: 0.9.0
 # TASK-0577: Voice Room Aggregate Saved on Every Command, Duplex Playback State Made Shared
 
 ## Status
-Refined
+Complete
 
 ## Summary
 The voice room coordinator loads `VoiceRoomAggregate` from the repository but never saves it. Its events go only to Redis. Duplex playback and stream quality state live in module globals, so replicas and restarts answer differently. This task saves each room command through the repository and moves playback and quality state into the room aggregate.

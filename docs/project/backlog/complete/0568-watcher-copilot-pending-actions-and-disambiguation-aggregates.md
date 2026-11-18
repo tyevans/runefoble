@@ -1,7 +1,7 @@
 ---
 id: '0568'
 title: Watcher Pending DM Actions, Whispers and Disambiguations as Aggregates
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0560
@@ -22,7 +22,7 @@ target_release: 0.9.0
 # TASK-0568: Watcher Pending DM Actions, Whispers and Disambiguations as Aggregates
 
 ## Status
-Refined
+Complete
 
 ## Summary
 The Watcher keeps DM approval windows, pending vetoes, private whispers, and open disambiguation requests in process memory. A restart or a second replica loses them. This task models each as an event-sourced aggregate saved through `AggregateRepository`, with the timers rebuilt from stored deadlines.
