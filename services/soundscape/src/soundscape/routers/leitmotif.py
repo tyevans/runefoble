@@ -15,10 +15,11 @@ from runefoble_auth.spicedb import SpiceDBClient
 
 from soundscape.aggregate import SoundscapeAggregate
 from soundscape.dependencies import (
+    VerifiedUserId,
     check_user_can_control_soundscape,
-    get_current_user_id,
     get_or_create_aggregate_id,
     get_or_create_leitmotif_engine,
+    get_principal,
     get_soundscape_repo,
     get_spicedb_client,
     publish_soundscape_event,
@@ -30,20 +31,21 @@ from soundscape.leitmotif import (
     LeitmotifTriggerRequest,
 )
 
-router = APIRouter(prefix="/api/v1/soundscape/leitmotif", tags=["Character Leitmotifs"])
+router = APIRouter(
+    prefix="/api/v1/soundscape/leitmotif",
+    tags=["Character Leitmotifs"],
+    dependencies=[Depends(get_principal)],
+)
 
 
 async def check_leitmotif_authorization(
-    user_id: str | None,
+    user_id: str,
     character_id: str,
     session_id: str,
     campaign_id: UUID | None,
     spicedb: SpiceDBClient,
 ) -> bool:
     """Enforce Zanzibar permissions for character leitmotif configuration & triggers."""
-    if not user_id:
-        return True
-
     # 1. Check if user has edit rights for this character
     try:
         can_edit = await spicedb.check_permission(
@@ -88,7 +90,7 @@ async def list_timbre_presets() -> dict[str, Any]:
 )
 async def configure_character_leitmotif(
     request: CharacterLeitmotifProfile,
-    user_id: Annotated[str | None, Depends(get_current_user_id)],
+    user_id: VerifiedUserId,
     spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
 ) -> CharacterLeitmotifProfile:
     """Persist and activate character leitmotif configuration.
@@ -181,7 +183,7 @@ async def get_character_leitmotif_profile(
 )
 async def trigger_character_leitmotif(
     request: LeitmotifTriggerRequest,
-    user_id: Annotated[str | None, Depends(get_current_user_id)],
+    user_id: VerifiedUserId,
     spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
 ) -> ActiveLeitmotifPlayback:
     """Trigger dynamic stem stinger or audition character leitmotif.

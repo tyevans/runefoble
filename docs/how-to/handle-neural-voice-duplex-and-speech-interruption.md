@@ -41,13 +41,23 @@ When The Watcher AI DM delivers narration or NPC dialogue over WebRTC audio, tab
 
 ## 2. Connecting via WebSocket Frontdoor
 
-Clients establish a duplex voice control and audio streaming connection to the Voice Agent service:
+Clients establish a duplex voice control and audio streaming connection to the Voice Agent service.
+
+### Identity Contract (TASK-0530)
+
+The Voice Agent verifies the Zitadel bearer token itself (ADR-0015 c). It does not trust an identity header from the gateway.
+
+- **HTTP routes** take the token only from `Authorization: Bearer <jwt>`. A request with no token, a garbage token, or a token from another issuer returns `401` with `WWW-Authenticate: Bearer`. `X-User-Id` and `?user_id=` are ignored. The DM kick and modulate routes use the token subject for SpiceDB checks.
+- **WebSocket routes** (`/api/v1/voice/duplex/ws/...`, `/api/v1/voice/stream/ws/...`) take the token only from the `runefoble.bearer.<jwt>` subprotocol. The client offers `runefoble.v1` and `runefoble.bearer.<jwt>`. The service accepts the handshake with `runefoble.v1`. A handshake with no valid token closes with code `1008` before accept. A token in the query string is refused.
+- `GET /healthz` and `GET /ui/manifest` stay public.
 
 ```typescript
+const token = accessToken; // Zitadel access token for the signed-in user
 const sessionId = "session-campaign-12";
 const speakerId = "spk-marcus";
 const ws = new WebSocket(
-  `wss://runefoble.local/api/v1/voice/duplex/ws/${sessionId}/${speakerId}?speaker_name=Marcus`
+  `wss://runefoble.local/api/v1/voice/duplex/ws/${sessionId}/${speakerId}?speaker_name=Marcus`,
+  ["runefoble.v1", `runefoble.bearer.${token}`]
 );
 
 ws.onopen = () => {
@@ -184,6 +194,7 @@ The diagnostic endpoint evaluates synthetic or captured audio frames and returns
 
 ```bash
 curl -X POST http://voice-agent.runefoble.svc.cluster.local:8005/voice/filters/barge-in/evaluate \
+  -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
     "session_id": "session-campaign-12",
@@ -232,6 +243,7 @@ The diagnostic endpoint evaluates paired loudspeaker and microphone PCM streams 
 
 ```bash
 curl -X POST http://voice-agent.runefoble.svc.cluster.local:8005/voice/aec/benchmark \
+  -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
     "session_id": "session-campaign-12",

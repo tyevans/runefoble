@@ -12,10 +12,14 @@ Verifies:
 import pytest
 from fastapi.testclient import TestClient
 from gateway_api.auth import get_spicedb_client
-from gateway_api.campaign_store import campaign_store
 from gateway_api.main import app
 
-client = TestClient(app)
+
+@pytest.fixture
+def client(game_session_upstream) -> TestClient:
+    """Enter the gateway lifespan after game_session is served, so the proxy reaches it."""
+    with TestClient(app) as gateway_client:
+        yield gateway_client
 
 
 def _auth(issuer, sub: str) -> dict[str, str]:
@@ -23,14 +27,7 @@ def _auth(issuer, sub: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {issuer.mint(sub)}"}
 
 
-@pytest.fixture(autouse=True)
-def reset_store():
-    """Reset campaign and session store before each test run."""
-    campaign_store.reset()
-    yield
-
-
-def _create_campaign(issuer, owner_sub: str = "owner_evelyn") -> tuple[str, dict[str, str]]:
+def _create_campaign(client, issuer, owner_sub: str = "owner_evelyn") -> tuple[str, dict[str, str]]:
     """Create a campaign as the owner through the public route. Return its id and owner headers."""
     headers_owner = _auth(issuer, owner_sub)
     res = client.post("/api/v1/campaigns", json={"title": "Grant Test"}, headers=headers_owner)
@@ -38,7 +35,7 @@ def _create_campaign(issuer, owner_sub: str = "owner_evelyn") -> tuple[str, dict
     return res.json()["id"], headers_owner
 
 
-def _join_with_invite(issuer, campaign_id: str, owner_headers, role: str, sub: str) -> None:
+def _join_with_invite(client, issuer, campaign_id: str, owner_headers, role: str, sub: str) -> None:
     """Create an invite as the owner, then redeem it as `sub` through public routes."""
     inv = client.post(
         f"/api/v1/campaigns/{campaign_id}/invites",
@@ -54,16 +51,16 @@ def _join_with_invite(issuer, campaign_id: str, owner_headers, role: str, sub: s
     assert join.status_code == 200, join.text
 
 
-def _member_ids(campaign_id: str, owner_headers) -> set[str]:
+def _member_ids(client, campaign_id: str, owner_headers) -> set[str]:
     """Read the member roster as the owner through the public members route."""
     res = client.get(f"/api/v1/campaigns/{campaign_id}/members", headers=owner_headers)
     assert res.status_code == 200, res.text
     return {m["user_id"] for m in res.json()}
 
 
-def test_anonymous_role_grant_is_refused_and_writes_nothing(signing_issuer):
+def test_anonymous_role_grant_is_refused_and_writes_nothing(trusted_ws_issuer, client):
     """An anonymous request with role=owner gets 401 and no grant is written."""
-    campaign_id, headers_owner = _create_campaign(signing_issuer)
+    campaign_id, headers_owner = _create_campaign(client, trusted_ws_issuer)
 
     res = client.post(
         f"/api/v1/campaigns/{campaign_id}/roles",
@@ -71,40 +68,42 @@ def test_anonymous_role_grant_is_refused_and_writes_nothing(signing_issuer):
     )
     assert res.status_code == 401, res.text
 
-    assert _member_ids(campaign_id, headers_owner) == {"owner_evelyn"}
+    assert _member_ids(client, campaign_id, headers_owner) == {"owner_evelyn"}
 
 
-def test_non_member_cannot_grant_owner_and_no_grant_is_written(signing_issuer):
-    """A valid token from a non-member gets 403 for role=owner. No tuple is written."""
-    campaign_id, headers_owner = _create_campaign(signing_issuer)
-    headers_attacker = _auth(signing_issuer, "attacker_mallory")
+def test_non_member_cannot_grant_a_role_and_no_grant_is_written(client, trusted_ws_issuer):
+    """A valid token from a non-member gets 403. No tuple is written."""
+    campaign_id, headers_owner = _create_campaign(client, trusted_ws_issuer)
+    headers_attacker = _auth(trusted_ws_issuer, "attacker_mallory")
 
     res = client.post(
         f"/api/v1/campaigns/{campaign_id}/roles",
-        json={"user_id": "attacker_mallory", "role": "owner"},
+        json={"user_id": "attacker_mallory", "role": "dungeon_master"},
         headers=headers_attacker,
     )
     assert res.status_code == 403, res.text
     assert res.json()["detail"]["error"] == "permission_denied"
 
-    # Later check: the owner's roster does not list the attacker.
-    assert _member_ids(campaign_id, headers_owner) == {"owner_evelyn"}
+    # The owner's roster does not list the attacker.
+    assert _member_ids(client, campaign_id, headers_owner) == {"owner_evelyn"}
 
-    # The attacker gained no manage right: the campaign still refuses a role grant from them.
+    # The attacker gained no manage right: a second grant from them is also refused.
     again = client.post(
         f"/api/v1/campaigns/{campaign_id}/roles",
         json={"user_id": "attacker_mallory", "role": "player"},
         headers=headers_attacker,
     )
     assert again.status_code == 403, again.text
-    assert _member_ids(campaign_id, headers_owner) == {"owner_evelyn"}
+    assert _member_ids(client, campaign_id, headers_owner) == {"owner_evelyn"}
 
 
-def test_player_cannot_grant_roles(signing_issuer):
+def test_player_cannot_grant_roles(trusted_ws_issuer, client):
     """A redeemed player gets 403 when granting a role. The roster does not change."""
-    campaign_id, headers_owner = _create_campaign(signing_issuer)
-    _join_with_invite(signing_issuer, campaign_id, headers_owner, "player", "player_cadence")
-    headers_player = _auth(signing_issuer, "player_cadence")
+    campaign_id, headers_owner = _create_campaign(client, trusted_ws_issuer)
+    _join_with_invite(
+        client, trusted_ws_issuer, campaign_id, headers_owner, "player", "player_cadence"
+    )
+    headers_player = _auth(trusted_ws_issuer, "player_cadence")
 
     res = client.post(
         f"/api/v1/campaigns/{campaign_id}/roles",
@@ -122,10 +121,12 @@ def test_player_cannot_grant_roles(signing_issuer):
     assert session.status_code == 403, session.text
 
 
-def test_owner_rejects_owner_role_with_422(signing_issuer):
+def test_owner_rejects_owner_role_with_422(trusted_ws_issuer, client):
     """Ownership moves only with campaign creation. The route rejects role=owner."""
-    campaign_id, headers_owner = _create_campaign(signing_issuer)
-    _join_with_invite(signing_issuer, campaign_id, headers_owner, "player", "player_cadence")
+    campaign_id, headers_owner = _create_campaign(client, trusted_ws_issuer)
+    _join_with_invite(
+        client, trusted_ws_issuer, campaign_id, headers_owner, "player", "player_cadence"
+    )
 
     res = client.post(
         f"/api/v1/campaigns/{campaign_id}/roles",
@@ -133,14 +134,16 @@ def test_owner_rejects_owner_role_with_422(signing_issuer):
         headers=headers_owner,
     )
     assert res.status_code == 422, res.text
-    assert _member_ids(campaign_id, headers_owner) == {"owner_evelyn", "player_cadence"}
+    assert _member_ids(client, campaign_id, headers_owner) == {"owner_evelyn", "player_cadence"}
 
 
-def test_owner_grants_dungeon_master_and_dm_can_run_sessions(signing_issuer):
+def test_owner_grants_dungeon_master_and_dm_can_run_sessions(trusted_ws_issuer, client):
     """The owner grants dungeon_master. The new DM can then create a session."""
-    campaign_id, headers_owner = _create_campaign(signing_issuer)
-    _join_with_invite(signing_issuer, campaign_id, headers_owner, "spectator", "dm_arthur")
-    headers_dm_candidate = _auth(signing_issuer, "dm_arthur")
+    campaign_id, headers_owner = _create_campaign(client, trusted_ws_issuer)
+    _join_with_invite(
+        client, trusted_ws_issuer, campaign_id, headers_owner, "spectator", "dm_arthur"
+    )
+    headers_dm_candidate = _auth(trusted_ws_issuer, "dm_arthur")
 
     # Before the grant the candidate cannot run a session.
     before = client.post(
@@ -166,10 +169,12 @@ def test_owner_grants_dungeon_master_and_dm_can_run_sessions(signing_issuer):
     assert after.status_code == 201, after.text
 
 
-def test_spicedb_write_failure_returns_503_and_writes_nothing(signing_issuer, monkeypatch):
-    """A failed SpiceDB write returns 503. The grant is not reported as success."""
-    campaign_id, headers_owner = _create_campaign(signing_issuer)
-    _join_with_invite(signing_issuer, campaign_id, headers_owner, "spectator", "dm_arthur")
+def test_spicedb_write_failure_in_the_owner_surfaces_as_502(trusted_ws_issuer, monkeypatch, client):
+    """The owner answers 503 when SpiceDB fails. The gateway maps that upstream 5xx to 502 (TASK-0580)."""
+    campaign_id, headers_owner = _create_campaign(client, trusted_ws_issuer)
+    _join_with_invite(
+        client, trusted_ws_issuer, campaign_id, headers_owner, "spectator", "dm_arthur"
+    )
 
     spicedb = get_spicedb_client()
 
@@ -183,23 +188,28 @@ def test_spicedb_write_failure_returns_503_and_writes_nothing(signing_issuer, mo
         json={"user_id": "dm_arthur", "role": "dungeon_master"},
         headers=headers_owner,
     )
-    assert res.status_code == 503, res.text
+    assert res.status_code == 502, res.text
+    assert res.json()["upstream"] == "game_session"
 
     monkeypatch.undo()
     # The DM grant did not land: the candidate still cannot run a session.
     session = client.post(
         f"/api/v1/campaigns/{campaign_id}/sessions",
         json={"title": "Should Fail", "status": "lobby"},
-        headers=_auth(signing_issuer, "dm_arthur"),
+        headers=_auth(trusted_ws_issuer, "dm_arthur"),
     )
     assert session.status_code == 403, session.text
 
 
-def test_capabilities_reflect_the_callers_grants(signing_issuer):
+def test_capabilities_reflect_the_callers_grants(trusted_ws_issuer, client):
     """Owner, DM, player, and stranger see the capability flags their grants allow."""
-    campaign_id, headers_owner = _create_campaign(signing_issuer)
-    _join_with_invite(signing_issuer, campaign_id, headers_owner, "player", "player_cadence")
-    _join_with_invite(signing_issuer, campaign_id, headers_owner, "spectator", "dm_arthur")
+    campaign_id, headers_owner = _create_campaign(client, trusted_ws_issuer)
+    _join_with_invite(
+        client, trusted_ws_issuer, campaign_id, headers_owner, "player", "player_cadence"
+    )
+    _join_with_invite(
+        client, trusted_ws_issuer, campaign_id, headers_owner, "spectator", "dm_arthur"
+    )
     grant = client.post(
         f"/api/v1/campaigns/{campaign_id}/roles",
         json={"user_id": "dm_arthur", "role": "dungeon_master"},
@@ -209,7 +219,7 @@ def test_capabilities_reflect_the_callers_grants(signing_issuer):
 
     def _caps(sub: str) -> dict:
         res = client.get(
-            f"/api/v1/campaigns/{campaign_id}/capabilities", headers=_auth(signing_issuer, sub)
+            f"/api/v1/campaigns/{campaign_id}/capabilities", headers=_auth(trusted_ws_issuer, sub)
         )
         assert res.status_code == 200, res.text
         return res.json()
@@ -240,22 +250,22 @@ def test_capabilities_reflect_the_callers_grants(signing_issuer):
     }
 
 
-def test_capabilities_require_a_verified_token(signing_issuer):
+def test_capabilities_require_a_verified_token(trusted_ws_issuer, client):
     """Anonymous callers cannot read capability flags."""
-    campaign_id, _ = _create_campaign(signing_issuer)
+    campaign_id, _ = _create_campaign(client, trusted_ws_issuer)
     res = client.get(f"/api/v1/campaigns/{campaign_id}/capabilities")
     assert res.status_code == 401, res.text
 
 
-def test_capabilities_route_is_in_openapi():
+def test_capabilities_route_is_in_openapi(client):
     """The capabilities route is published in the gateway OpenAPI document."""
     paths = client.get("/openapi.json").json()["paths"]
     assert "get" in paths["/api/v1/campaigns/{campaign_id}/capabilities"]
 
 
-def test_removed_public_sync_routes_return_404(signing_issuer):
+def test_removed_public_sync_routes_return_404(trusted_ws_issuer, client):
     """Membership, character-ownership, and token-binding sync routes are gone (TASK-0543)."""
-    campaign_id, headers_owner = _create_campaign(signing_issuer)
+    campaign_id, headers_owner = _create_campaign(client, trusted_ws_issuer)
     body = {"campaign_id": campaign_id, "user_id": "attacker_mallory", "role": "owner"}
     for path in (
         "/api/v1/auth/sync/membership",
@@ -264,4 +274,4 @@ def test_removed_public_sync_routes_return_404(signing_issuer):
     ):
         res = client.post(path, json=body, headers=headers_owner)
         assert res.status_code == 404, f"{path}: {res.status_code}"
-    assert _member_ids(campaign_id, headers_owner) == {"owner_evelyn"}
+    assert _member_ids(client, campaign_id, headers_owner) == {"owner_evelyn"}

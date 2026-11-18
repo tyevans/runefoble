@@ -9,9 +9,10 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, Header, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from game_session.dependencies import get_event_bus, get_shared_world_repository, get_spicedb_client
 from game_session.events import STREAM_WEST_MARCHES
+from game_session.settlement.auth.tokens import CallerId, get_caller_principal
 from game_session.west_marches_models import (
     CreateSharedWorldRequest,
     EstablishOutpostRequest,
@@ -21,7 +22,11 @@ from game_session.west_marches_models import (
 )
 from runefoble_platform.event_publish import publish_or_fail
 
-router = APIRouter(prefix="/api/v1/shared-worlds", tags=["west-marches"])
+router = APIRouter(
+    dependencies=[Depends(get_caller_principal)],
+    prefix="/api/v1/shared-worlds",
+    tags=["west-marches"],
+)
 
 
 def _to_uuid(val: Any) -> UUID:
@@ -45,8 +50,8 @@ async def _check_perm(spicedb, res_id: str, perm: str, user_id: str | None) -> N
 
 @router.post("", status_code=201)
 async def create_shared_world(
+    caller_id: CallerId,
     req: CreateSharedWorldRequest,
-    x_user_id: str | None = Header(default="guild_officer_rowan"),
 ) -> dict[str, Any]:
     """Create a new West Marches shared frontier persistent world."""
     world_id = uuid4()
@@ -60,31 +65,30 @@ async def create_shared_world(
         name=req.name,
         frontier_region=req.frontier_region,
         description=req.description,
-        created_by=x_user_id or "system",
+        created_by=caller_id,
     )
     await repo.save(world)
 
-    if x_user_id:
-        await spicedb.write_relationship(
-            resource_type="shared_world",
-            resource_id=str(world_id),
-            relation="guild_officer",
-            subject_type="user",
-            subject_id=x_user_id,
-        )
+    await spicedb.write_relationship(
+        resource_type="shared_world",
+        resource_id=str(world_id),
+        relation="guild_officer",
+        subject_type="user",
+        subject_id=caller_id,
+    )
 
     return {"shared_world_id": str(world_id), **world.state.model_dump()}
 
 
 @router.get("/{shared_world_id}")
 async def get_shared_world(
+    caller_id: CallerId,
     shared_world_id: str,
-    x_user_id: str | None = Header(default=None),
 ) -> dict[str, Any]:
     """Retrieve shared frontier world state (discoveries, outposts, tavern notices)."""
     wid = _to_uuid(shared_world_id)
     spicedb = get_spicedb_client()
-    await _check_perm(spicedb, str(wid), "view", x_user_id)
+    await _check_perm(spicedb, str(wid), "view", caller_id)
 
     repo = get_shared_world_repository()
     try:
@@ -96,9 +100,9 @@ async def get_shared_world(
 
 @router.post("/{shared_world_id}/campaigns", status_code=201)
 async def register_campaign_to_world(
+    caller_id: CallerId,
     shared_world_id: str,
     req: RegisterCampaignRequest,
-    x_user_id: str | None = Header(default=None),
 ) -> dict[str, Any]:
     """Register an adventuring campaign/party into the shared persistent frontier."""
     wid = _to_uuid(shared_world_id)
@@ -109,7 +113,7 @@ async def register_campaign_to_world(
     world.register_campaign(
         campaign_id=req.campaign_id,
         party_name=req.party_name,
-        registered_by=x_user_id or "guild_officer",
+        registered_by=caller_id,
     )
     await repo.save(world)
 
@@ -131,14 +135,14 @@ async def register_campaign_to_world(
 
 @router.post("/{shared_world_id}/discoveries", status_code=201)
 async def record_discovery(
+    caller_id: CallerId,
     shared_world_id: str,
     req: RecordDiscoveryRequest,
-    x_user_id: str | None = Header(default=None),
 ) -> dict[str, Any]:
     """Record a cross-campaign milestone / waypoint discovery and broadcast on Redis Streams."""
     wid = _to_uuid(shared_world_id)
     spicedb = get_spicedb_client()
-    await _check_perm(spicedb, str(wid), "discover", x_user_id)
+    await _check_perm(spicedb, str(wid), "discover", caller_id)
 
     repo = get_shared_world_repository()
     world = await repo.load(wid)
@@ -167,14 +171,14 @@ async def record_discovery(
 
 @router.get("/{shared_world_id}/discoveries")
 async def list_discoveries(
+    caller_id: CallerId,
     shared_world_id: str,
     discovery_type: str | None = Query(default=None),
-    x_user_id: str | None = Header(default=None),
 ) -> dict[str, Any]:
     """List shared frontier discoveries mapped by participating adventuring parties."""
     wid = _to_uuid(shared_world_id)
     spicedb = get_spicedb_client()
-    await _check_perm(spicedb, str(wid), "view", x_user_id)
+    await _check_perm(spicedb, str(wid), "view", caller_id)
 
     repo = get_shared_world_repository()
     world = await repo.load(wid)
@@ -186,14 +190,14 @@ async def list_discoveries(
 
 @router.post("/{shared_world_id}/outposts", status_code=201)
 async def establish_outpost(
+    caller_id: CallerId,
     shared_world_id: str,
     req: EstablishOutpostRequest,
-    x_user_id: str | None = Header(default=None),
 ) -> dict[str, Any]:
     """Establish or reinforce a regional trading outpost in the frontier."""
     wid = _to_uuid(shared_world_id)
     spicedb = get_spicedb_client()
-    await _check_perm(spicedb, str(wid), "discover", x_user_id)
+    await _check_perm(spicedb, str(wid), "discover", caller_id)
 
     repo = get_shared_world_repository()
     world = await repo.load(wid)
@@ -211,14 +215,14 @@ async def establish_outpost(
 
 @router.post("/{shared_world_id}/tavern-board/notices", status_code=201)
 async def post_tavern_notice(
+    caller_id: CallerId,
     shared_world_id: str,
     req: PostNoticeRequest,
-    x_user_id: str | None = Header(default=None),
 ) -> dict[str, Any]:
     """Post an expedition bounty, request, or rumor to the communal tavern notice board."""
     wid = _to_uuid(shared_world_id)
     spicedb = get_spicedb_client()
-    await _check_perm(spicedb, str(wid), "discover", x_user_id)
+    await _check_perm(spicedb, str(wid), "discover", caller_id)
 
     repo = get_shared_world_repository()
     world = await repo.load(wid)
@@ -237,13 +241,13 @@ async def post_tavern_notice(
 
 @router.get("/{shared_world_id}/tavern-board/notices")
 async def list_tavern_notices(
+    caller_id: CallerId,
     shared_world_id: str,
-    x_user_id: str | None = Header(default=None),
 ) -> dict[str, Any]:
     """List communal tavern notice board bounties and rumors across all campaigns."""
     wid = _to_uuid(shared_world_id)
     spicedb = get_spicedb_client()
-    await _check_perm(spicedb, str(wid), "view", x_user_id)
+    await _check_perm(spicedb, str(wid), "view", caller_id)
 
     repo = get_shared_world_repository()
     world = await repo.load(wid)

@@ -5,6 +5,7 @@ Ensures zero contract regressions, public HTTP frontdoor reachability, OpenAPI s
 and strict compliance with Hard Invariant 6 (all files < 250 lines).
 """
 
+from collections.abc import Iterator
 from uuid import uuid4
 
 import pytest
@@ -13,8 +14,9 @@ from gateway_api.main import app as gateway_app
 
 
 @pytest.fixture
-def client():
-    return TestClient(gateway_app)
+def client(game_session_upstream) -> Iterator[TestClient]:
+    with TestClient(gateway_app) as gateway_client:
+        yield gateway_client
 
 
 def test_gateway_openapi_routes_completeness(client):

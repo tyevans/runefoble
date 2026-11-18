@@ -2,6 +2,10 @@
 
 This guide describes how to configure tactical guardrail policies for absent players' characters, activate zero-HP permadeath safeguards, and perform seamless mid-session hot-swap takeovers (TASK-0055, PRD-0002, US-0025, US-0026).
 
+## Authentication
+
+Every route in this service needs a bearer token. Set `TOKEN` to a Zitadel access token for the caller. The service verifies the token itself. It ignores `X-User-Id` and similar headers.
+
 ---
 
 ## 1. Configuring Stand-In Tactical Guardrails
@@ -27,7 +31,7 @@ Requests can be issued directly to `character-sheet:8003` or through `gateway-ap
 ```bash
 curl -X PUT http://localhost:8000/api/v1/characters/char-sarah-cleric/guardrails \
   -H "Content-Type: application/json" \
-  -H "X-User-Id: sarah-user" \
+  -H "Authorization: Bearer $TOKEN" \
   -d '{
     "preserve_spell_slots": {"3": 1},
     "protect_allies": ["Marcus"],
@@ -61,7 +65,7 @@ curl -X POST http://localhost:8001/api/v1/watcher/stand-in/act \
 
 ```bash
 curl -X GET http://localhost:8003/api/v1/characters/char-sarah-cleric/guardrails \
-  -H "X-User-Id: sarah-user"
+  -H "Authorization: Bearer $TOKEN"
 ```
 
 ---
@@ -92,7 +96,7 @@ Then damage the character:
 ```bash
 curl -X POST http://localhost:8003/api/v1/characters/char-sarah-cleric/health \
   -H "Content-Type: application/json" \
-  -H "X-User-Id: dm-evelyn" \
+  -H "Authorization: Bearer $TOKEN" \
   -d '{
     "delta": -15,
     "source": "Orc Chieftain Greatsword"
@@ -110,7 +114,7 @@ When a late-arriving player connects to an active combat encounter, they can ins
 ```bash
 curl -X POST http://localhost:8004/api/v1/sessions/session-crypt-01/hot-swap \
   -H "Content-Type: application/json" \
-  -H "X-User-Id: sarah-user" \
+  -H "Authorization: Bearer $TOKEN" \
   -d '{
     "character_id": "char-sarah-cleric",
     "player_id": "sarah-user",
@@ -138,6 +142,16 @@ curl -X POST http://localhost:8004/api/v1/sessions/session-crypt-01/hot-swap \
 - **Round & Turn Continuity**: The combat round and active initiative order are preserved intact without reload.
 - **Domain Event Publication**: Emits `CharacterControlTransferred` (`runefoble.events.session.character_control_transferred`) over Redis Streams.
 - **Stand-In Release**: Before it saves the session, `game_session` calls `POST /api/v1/characters/{character_id}/stand-in` with `"active": false` on `character-sheet`. The call uses `RUNEFOBLE_CHARACTER_SHEET_URL`. If the URL is not set, or `character-sheet` does not confirm the release, the hot-swap returns `502 Bad Gateway`. The session stays unchanged and the stand-in keeps control.
+
+### Auto-Pilot Turns Require The Watcher
+
+Auto-pilot turns (`POST /api/v1/sessions/{id}/turns/auto-pilot` or `/autopilot`) ask The Watcher for the stand-in action. `game_session` reads the Watcher URL from `RUNEFOBLE_WATCHER_URL` on each request.
+
+- If the URL is unset, the route returns `503` with a detail that names `RUNEFOBLE_WATCHER_URL`.
+- If The Watcher is unreachable, returns a status other than `200`, or returns an invalid body, the route returns `503`.
+- In each failure case, no stand-in action is recorded and the turn does not advance. `game_session` never runs a local engine instead.
+
+In `staging` and `production`, `game_session` does not start without `RUNEFOBLE_WATCHER_URL`. See [Platform Services](../reference/platform-services.md#deployed-mode-and-start-up-failures-adr-0015-4).
 
 ---
 

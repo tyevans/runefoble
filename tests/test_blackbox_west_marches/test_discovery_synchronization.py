@@ -11,6 +11,9 @@ from game_session.events import STREAM_WEST_MARCHES
 from runefoble_auth.spicedb import MockSpiceDBClient
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
 async def _setup_world(
@@ -20,14 +23,18 @@ async def _setup_world(
     parties: list[tuple[str, str, str]],
     name: str = "The Sunken Marches",
 ) -> str:
-    res = client.post("/api/v1/shared-worlds", json={"name": name}, headers={"x-user-id": officer})
+    res = client.post(
+        "/api/v1/shared-worlds",
+        json={"name": name},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(officer)}"},
+    )
     wid = res.json()["shared_world_id"]
     for cid, uid, pname in parties:
         await spicedb.write_relationship("campaign", cid, "player", "user", uid)
         client.post(
             f"/api/v1/shared-worlds/{wid}/campaigns",
             json={"campaign_id": cid, "party_name": pname},
-            headers={"x-user-id": officer},
+            headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(officer)}"},
         )
     return wid
 
@@ -63,7 +70,7 @@ async def test_blackbox_west_marches_shared_frontier_and_cross_party_discoveries
     disc_res = client.post(
         f"/api/v1/shared-worlds/{world_id}/discoveries",
         json=discovery_payload,
-        headers={"x-user-id": blue_uid},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(blue_uid)}"},
     )
     assert disc_res.status_code == 201
     disc_data = disc_res.json()["discovery"]
@@ -76,7 +83,7 @@ async def test_blackbox_west_marches_shared_frontier_and_cross_party_discoveries
 
     gold_query = client.get(
         f"/api/v1/shared-worlds/{world_id}/discoveries",
-        headers={"x-user-id": gold_uid},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(gold_uid)}"},
     )
     assert gold_query.status_code == 200
     discoveries = gold_query.json()["discoveries"]
@@ -112,17 +119,17 @@ async def test_shared_landmark_discovery_and_filtering(
             "discovered_by_campaign_id": c_blue,
             "discovered_by_party_name": "Party Blue",
         },
-        headers={"x-user-id": blue_uid},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(blue_uid)}"},
     )
     filtered = client.get(
         f"/api/v1/shared-worlds/{world_id}/discoveries?discovery_type=landmark",
-        headers={"x-user-id": blue_uid},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(blue_uid)}"},
     ).json()["discoveries"]
     assert len(filtered) == 1
     assert filtered[0]["name"] == "Obsidian Spire"
 
     empty = client.get(
         f"/api/v1/shared-worlds/{world_id}/discoveries?discovery_type=dungeon",
-        headers={"x-user-id": blue_uid},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(blue_uid)}"},
     ).json()["discoveries"]
     assert len(empty) == 0

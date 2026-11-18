@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from runefoble_auth.spicedb import SpiceDBClient
 
 from rules_compendium.dependencies import (
+    CurrentUserId,
     check_user_can_view_campaign,
     get_current_user_id,
     get_retrieval_engine,
@@ -15,7 +16,11 @@ from rules_compendium.dependencies import (
 from rules_compendium.models import RuleSearchResponse
 from rules_compendium.retrieval import CompendiumRetrievalEngine
 
-router = APIRouter(prefix="/api/v1/compendium", tags=["Rules Compendium"])
+router = APIRouter(
+    prefix="/api/v1/compendium",
+    tags=["Rules Compendium"],
+    dependencies=[Depends(get_current_user_id)],
+)
 
 
 @router.get("/rules/search", response_model=RuleSearchResponse)
@@ -23,12 +28,12 @@ async def search_rules(
     query: Annotated[
         str, Query(description="Search term (e.g. 'fire damage', 'paralyzed', 'goblin')")
     ],
+    user_id: CurrentUserId,
     category: Annotated[
         str | None, Query(description="Filter category ('monster', 'spell', 'condition')")
     ] = None,
     campaign_id: Annotated[UUID | None, Query(description="Campaign context for homebrew")] = None,
     limit: Annotated[int, Query(ge=1, le=50)] = 10,
-    user_id: Annotated[str | None, Depends(get_current_user_id)] = None,
     engine: Annotated[CompendiumRetrievalEngine, Depends(get_retrieval_engine)] = None,
     spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)] = None,
 ) -> RuleSearchResponse:

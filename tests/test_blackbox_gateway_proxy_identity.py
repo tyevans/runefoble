@@ -23,7 +23,6 @@ import pytest
 from fastapi import FastAPI, Request
 from fastapi.responses import PlainTextResponse
 from fastapi.testclient import TestClient
-from gateway_api.campaign_store import campaign_store
 from gateway_api.main import app as gateway_app
 
 from tests.helpers.live_services import closed_port_url, serve, unavailable_app
@@ -45,13 +44,6 @@ def _echo_upstream() -> FastAPI:
     return app
 
 
-@pytest.fixture(autouse=True)
-def reset_store() -> Iterator[None]:
-    campaign_store.reset()
-    yield
-    campaign_store.reset()
-
-
 @contextmanager
 def gateway(monkeypatch: pytest.MonkeyPatch, **upstream_urls: str) -> Iterator[TestClient]:
     """Set upstream URL variables, then run the gateway lifespan so it builds its clients."""
@@ -61,9 +53,9 @@ def gateway(monkeypatch: pytest.MonkeyPatch, **upstream_urls: str) -> Iterator[T
         yield client
 
 
-def _create_campaign(client: TestClient, signing_issuer) -> tuple[str, dict[str, str]]:
+def _create_campaign(client: TestClient, trusted_ws_issuer) -> tuple[str, dict[str, str]]:
     """Create a campaign through the public frontdoor. Return its id and the owner's headers."""
-    headers = {"Authorization": f"Bearer {signing_issuer.mint('dm_valeros')}"}
+    headers = {"Authorization": f"Bearer {trusted_ws_issuer.mint('dm_valeros')}"}
     res = client.post(
         "/api/v1/campaigns",
         json={"title": "Proxy Contract", "setting": "Test", "system": "5e", "description": "x"},
@@ -73,13 +65,15 @@ def _create_campaign(client: TestClient, signing_issuer) -> tuple[str, dict[str,
     return res.json()["id"], headers
 
 
-def test_proxy_forwards_bearer_token_and_no_user_header(monkeypatch, signing_issuer) -> None:
+def test_proxy_forwards_bearer_token_and_no_user_header(
+    monkeypatch, trusted_ws_issuer, game_session_upstream
+) -> None:
     """The upstream receives the same Authorization value and no X-User-Id."""
     with (
         serve(_echo_upstream()) as lore_url,
         gateway(monkeypatch, CAMPAIGN_LORE_URL=lore_url) as client,
     ):
-        campaign_id, headers = _create_campaign(client, signing_issuer)
+        campaign_id, headers = _create_campaign(client, trusted_ws_issuer)
         res = client.get(
             f"/api/v1/campaigns/{campaign_id}/atlas",
             headers={**headers, "X-User-Id": "spoofed-user"},
@@ -91,9 +85,9 @@ def test_proxy_forwards_bearer_token_and_no_user_header(monkeypatch, signing_iss
     assert echoed["x_user_id"] is None
 
 
-def test_soundscape_proxy_forwards_bearer_token(monkeypatch, signing_issuer) -> None:
+def test_soundscape_proxy_forwards_bearer_token(monkeypatch, trusted_ws_issuer) -> None:
     """A soundscape proxy route forwards the verified bearer token as well."""
-    headers = {"Authorization": f"Bearer {signing_issuer.mint('player_valeros')}"}
+    headers = {"Authorization": f"Bearer {trusted_ws_issuer.mint('player_valeros')}"}
     with (
         serve(_echo_upstream()) as soundscape_url,
         gateway(monkeypatch, SOUNDSCAPE_SERVICE_URL=soundscape_url) as client,
@@ -107,9 +101,9 @@ def test_soundscape_proxy_forwards_bearer_token(monkeypatch, signing_issuer) -> 
     assert echoed["x_user_id"] is None
 
 
-def test_client_header_is_not_forwarded_to_upstream(monkeypatch, signing_issuer) -> None:
+def test_client_header_is_not_forwarded_to_upstream(monkeypatch, trusted_ws_issuer) -> None:
     """Headers that the client sends are never copied to the owning service."""
-    headers = {"Authorization": f"Bearer {signing_issuer.mint('player_valeros')}"}
+    headers = {"Authorization": f"Bearer {trusted_ws_issuer.mint('player_valeros')}"}
     with (
         serve(_echo_upstream()) as soundscape_url,
         gateway(monkeypatch, SOUNDSCAPE_SERVICE_URL=soundscape_url) as client,
@@ -123,26 +117,28 @@ def test_client_header_is_not_forwarded_to_upstream(monkeypatch, signing_issuer)
     assert res.json()["x_forwarded_foo"] is None
 
 
-def test_upstream_403_passes_through_unchanged(monkeypatch, signing_issuer) -> None:
+def test_upstream_403_passes_through_unchanged(
+    monkeypatch, trusted_ws_issuer, game_session_upstream
+) -> None:
     """An upstream 403 reaches the client as 403 with the upstream body."""
     with (
         serve(unavailable_app(403)) as lore_url,
         gateway(monkeypatch, CAMPAIGN_LORE_URL=lore_url) as client,
     ):
-        campaign_id, headers = _create_campaign(client, signing_issuer)
+        campaign_id, headers = _create_campaign(client, trusted_ws_issuer)
         res = client.get(f"/api/v1/campaigns/{campaign_id}/atlas", headers=headers)
 
     assert res.status_code == 403
     assert res.json() == {"detail": "service maintenance"}
 
 
-def test_upstream_5xx_returns_502(monkeypatch, signing_issuer) -> None:
+def test_upstream_5xx_returns_502(monkeypatch, trusted_ws_issuer, game_session_upstream) -> None:
     """An upstream 503 returns 502 with a fixed message, not a success body."""
     with (
         serve(unavailable_app(503)) as lore_url,
         gateway(monkeypatch, CAMPAIGN_LORE_URL=lore_url) as client,
     ):
-        campaign_id, headers = _create_campaign(client, signing_issuer)
+        campaign_id, headers = _create_campaign(client, trusted_ws_issuer)
         res = client.get(f"/api/v1/campaigns/{campaign_id}/atlas", headers=headers)
 
     assert res.status_code == 502
@@ -150,10 +146,12 @@ def test_upstream_5xx_returns_502(monkeypatch, signing_issuer) -> None:
     assert "service maintenance" not in res.text
 
 
-def test_unreachable_upstream_returns_503(monkeypatch, signing_issuer) -> None:
+def test_unreachable_upstream_returns_503(
+    monkeypatch, trusted_ws_issuer, game_session_upstream
+) -> None:
     """A connection refused by the upstream returns 503 with no canned payload."""
     with gateway(monkeypatch, CAMPAIGN_LORE_URL=closed_port_url()) as client:
-        campaign_id, headers = _create_campaign(client, signing_issuer)
+        campaign_id, headers = _create_campaign(client, trusted_ws_issuer)
         res = client.get(f"/api/v1/campaigns/{campaign_id}/atlas", headers=headers)
 
     assert res.status_code == 503
@@ -161,17 +159,21 @@ def test_unreachable_upstream_returns_503(monkeypatch, signing_issuer) -> None:
     assert res.json() == {"detail": "Upstream service is unavailable", "upstream": "campaign_lore"}
 
 
-def test_unconfigured_upstream_returns_503(monkeypatch, signing_issuer) -> None:
+def test_unconfigured_upstream_returns_503(
+    monkeypatch, trusted_ws_issuer, game_session_upstream
+) -> None:
     """An empty upstream URL means no client exists, so the proxy returns 503 with no payload."""
     with gateway(monkeypatch, CAMPAIGN_LORE_URL="") as client:
-        campaign_id, headers = _create_campaign(client, signing_issuer)
+        campaign_id, headers = _create_campaign(client, trusted_ws_issuer)
         res = client.get(f"/api/v1/campaigns/{campaign_id}/atlas", headers=headers)
 
     assert res.status_code == 503
     assert res.json()["upstream"] == "campaign_lore"
 
 
-def test_non_json_success_body_returns_502(monkeypatch, signing_issuer) -> None:
+def test_non_json_success_body_returns_502(
+    monkeypatch, trusted_ws_issuer, game_session_upstream
+) -> None:
     """An upstream 200 with a non-JSON body returns 502, not an empty success."""
     broken = FastAPI()
 
@@ -180,7 +182,7 @@ def test_non_json_success_body_returns_502(monkeypatch, signing_issuer) -> None:
         return PlainTextResponse("not json", status_code=200)
 
     with serve(broken) as lore_url, gateway(monkeypatch, CAMPAIGN_LORE_URL=lore_url) as client:
-        campaign_id, headers = _create_campaign(client, signing_issuer)
+        campaign_id, headers = _create_campaign(client, trusted_ws_issuer)
         res = client.get(f"/api/v1/campaigns/{campaign_id}/atlas", headers=headers)
 
     assert res.status_code == 502

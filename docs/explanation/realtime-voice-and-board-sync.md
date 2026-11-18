@@ -81,8 +81,8 @@ Bidirectional voice streams and audio mesh coordination are negotiated via the W
   Dedicated dispatchers handle `webrtc_offer`, `webrtc_answer`, and `webrtc_ice_candidate` routing, `webrtc_mute` state toggles, `webrtc_telemetry` broadcasts, and graceful `webrtc_leave` teardowns.
 - **WebSocket Endpoint (`gateway_api.signaling.endpoint`)**:
   `voice_signaling_websocket_endpoint` coordinates the connection lifecycle, sends initial `connected` and `webrtc_joined` frames, runs the dispatch loop, and handles unexpected disconnects.
-- **Backward-Compatible Facade (`gateway_api.webrtc_signaling`)**:
-  Re-exports all signaling components to guarantee zero contract regressions across legacy imports.
+- **Facade (`gateway_api.webrtc_signaling`)** (defect, DoR 9):
+  Re-exports all signaling components for existing imports. Removal: TASK-0488.
 
 ## WebRTC Client Voice Service and Peer Connection Mesh Architecture
 
@@ -94,8 +94,8 @@ On the browser client, real-time voice streaming and peer mesh topology are mana
   `PeerConnectionMesh` manages the lifecycle of `RTCPeerConnection` instances across party peers. It implements early ICE candidate queuing prior to remote description resolution, tracks remote audio MediaStreams, bridges local audio tracks, and attaches remote streams to managed DOM `<audio>` elements with per-peer volume and mute controls.
 - **Voice Client Service Facade (`frontend/src/services/webrtc-voice.ts`)**:
   `WebRTCVoiceService` provides the public client interface. It establishes Zanzibar-authorized WebSocket signaling sessions with `gateway-api`, orchestrates auto-reconnect timers, coordinates the local `WebAudioPipeline` (hardware microphone capture, DSP vocal conditioning filters, and VAD audio levels), and periodically broadcasts speaking telemetry.
-- **Backward Compatibility**:
-  `webrtc-voice.ts` re-exports all protocol types and `PeerConnectionMesh`, ensuring seamless compatibility with existing frontend components, Storybook stories, and microfrontend consumers.
+- **Re-export Facade** (defect, DoR 9):
+  `webrtc-voice.ts` re-exports all protocol types and `PeerConnectionMesh`, for existing frontend components, Storybook stories, and microfrontend consumers. Removal: TASK-0502.
 
 ## Campaign WebSocket Hub and Action Validator Gateway Architecture
 
@@ -104,13 +104,13 @@ Real-time campaign mutations, token movement broadcasts, health modifications, a
 - **Zanzibar Action Validator (`gateway_api.websocket_validator`)**:
   `WebSocketActionValidator` executes fine-grained SpiceDB Zanzibar permission checks (`campaign:view`, `campaign:read`, `board_token:move`, `character:edit`, `dungeon_master`). It enforces DM bypass privileges, movement authorization, and blocks non-DM encounter mutations.
 - **Connection Hub Manager (`gateway_api.websocket_manager`)**:
-  `CampaignConnectionManager` (and backward-compatible alias `CampaignWebSocketManager`) tracks active client connections per campaign and handles JSON broadcast dispatching across connected party members.
+  `CampaignConnectionManager` (and the alias `CampaignWebSocketManager`, a defect per DoR 9; removal: TASK-0488) tracks active client connections per campaign and handles JSON broadcast dispatching across connected party members.
 - **Credential & Handshake Auth (`gateway_api.websocket_auth`)**:
   `admit_gateway_websocket` binds the gateway verifier to the shared `runefoble_auth.websocket.admit_websocket` check. Every gateway socket route calls it before accept. The token comes only from the `runefoble.bearer.<jwt>` subprotocol. Query strings and headers carry no identity.
 - **WebSocket Routing Endpoint (`gateway_api.websocket_endpoint`)**:
   `campaign_websocket_endpoint` manages the WebSocket handshake lifecycle, validates viewer connection permissions, dispatches incoming actions to Redis Streams (`runefoble.events.board`, `runefoble.events.session`, `runefoble.events.watcher`), and coordinates disconnect cleanup.
-- **Backward-Compatible Facade (`gateway_api.websocket`)**:
-  Re-exports all validator, manager, auth, and endpoint symbols ensuring zero contract regressions for existing callers and tests.
+- **Facade (`gateway_api.websocket`)** (defect, DoR 9):
+  Re-exports all validator, manager, auth, and endpoint symbols for existing callers and tests. Removal: TASK-0488.
 
 ## Latency Budgets
 - **Audio Capture & Streaming**: < 100ms

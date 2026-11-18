@@ -10,7 +10,7 @@ import contextlib
 from typing import Any
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, Header, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from game_session.dependencies import (
     get_establishment_negotiations_index,
     get_establishment_repository,
@@ -28,6 +28,7 @@ from game_session.settlement.auth import (
     check_negotiation_read_permission,
     write_negotiation_relationships,
 )
+from game_session.settlement.auth.tokens import CallerId, get_caller_principal
 from game_session.settlement.haggling import NegotiationAggregate
 from game_session.settlement.haggling_models import (
     DMOverrideRequest,
@@ -37,7 +38,7 @@ from game_session.settlement.haggling_models import (
 )
 from runefoble_platform.event_publish import publish_or_fail
 
-router = APIRouter(tags=["merchant-haggling"])
+router = APIRouter(dependencies=[Depends(get_caller_principal)], tags=["merchant-haggling"])
 
 
 def _to_uuid(val: Any) -> UUID:
@@ -72,13 +73,13 @@ async def _load_negotiation(nid: str) -> NegotiationAggregate:
 )
 @router.post("/establishments/{establishment_id}/haggle", response_model=NegotiationSessionState)
 async def haggle_establishment(
+    caller_id: CallerId,
     establishment_id: str,
     req: StartNegotiationRequest,
-    x_user_id: str | None = Header(default=None),
 ) -> NegotiationSessionState:
     """Start or advance an interactive bartering encounter within an establishment storefront."""
     spicedb = get_spicedb_client()
-    await check_establishment_read_permission(spicedb, establishment_id, x_user_id)
+    await check_establishment_read_permission(spicedb, establishment_id, caller_id)
 
     # 1. Determine merchant identity and item base price from establishment worker if available
     est_repo = get_establishment_repository()
@@ -144,7 +145,7 @@ async def haggle_establishment(
         establishment_id=establishment_id,
         campaign_id=campaign_id,
         session_id=req.session_id,
-        participant_id=x_user_id,
+        participant_id=caller_id,
     )
 
     get_establishment_negotiations_index().setdefault(establishment_id, []).append(str(nid))
@@ -154,8 +155,8 @@ async def haggle_establishment(
 @router.post("/api/v1/haggling/start", response_model=NegotiationSessionState)
 @router.post("/haggling/start", response_model=NegotiationSessionState)
 async def start_haggling_session(
+    caller_id: CallerId,
     req: StartNegotiationRequest,
-    x_user_id: str | None = Header(default=None),
 ) -> NegotiationSessionState:
     """Explicitly start an isolated negotiation session."""
     nid = uuid4()
@@ -183,7 +184,7 @@ async def start_haggling_session(
         negotiation_id=str(nid),
         campaign_id=req.campaign_id,
         session_id=req.session_id,
-        participant_id=x_user_id,
+        participant_id=caller_id,
     )
 
     return neg_agg.state
@@ -192,13 +193,13 @@ async def start_haggling_session(
 @router.post("/api/v1/haggling/{negotiation_id}/gambit", response_model=NegotiationSessionState)
 @router.post("/haggling/{negotiation_id}/gambit", response_model=NegotiationSessionState)
 async def execute_gambit_route(
+    caller_id: CallerId,
     negotiation_id: str,
     req: ExecuteGambitRequest,
-    x_user_id: str | None = Header(default=None),
 ) -> NegotiationSessionState:
     """Submit a persuasive gambit (Flattery, Bulk Order, Point Out Flaw, Intimidation, Walk Away)."""
     spicedb = get_spicedb_client()
-    await check_negotiation_participate_permission(spicedb, negotiation_id, x_user_id)
+    await check_negotiation_participate_permission(spicedb, negotiation_id, caller_id)
 
     neg_agg = await _load_negotiation(negotiation_id)
     try:
@@ -223,21 +224,17 @@ async def execute_gambit_route(
 )
 @router.patch("/haggling/{negotiation_id}/dm-override", response_model=NegotiationSessionState)
 async def dm_negotiation_override(
+    caller_id: CallerId,
     negotiation_id: str,
     req: DMOverrideRequest,
-    x_user_id: str | None = Header(default=None),
-    x_runefoble_role: str | None = Header(default=None, alias="X-RuneFoble-Role"),
 ) -> NegotiationSessionState:
     """Game Master arbitration control: nudge mood, inject dialogue barks, or override price."""
-    spicedb = get_spicedb_client()
-    # Check SpiceDB Zanzibar permission unless authorized DM role header is set for dev/test
-    if x_runefoble_role not in ("dungeon_master", "game_master", "dm"):
-        await check_negotiation_arbitrate_permission(spicedb, negotiation_id, x_user_id)
+    await check_negotiation_arbitrate_permission(get_spicedb_client(), negotiation_id, caller_id)
 
     neg_agg = await _load_negotiation(negotiation_id)
     try:
         neg_agg.dm_override(
-            dm_user_id=x_user_id or "dm_operator",
+            dm_user_id=caller_id,
             action=req.action,
             override_price_gp=req.override_price_gp or req.override_price,
             narrative_bark=req.narrative_bark,
@@ -256,12 +253,12 @@ async def dm_negotiation_override(
 @router.get("/api/v1/haggling/{negotiation_id}", response_model=NegotiationSessionState)
 @router.get("/haggling/{negotiation_id}", response_model=NegotiationSessionState)
 async def get_negotiation_state(
+    caller_id: CallerId,
     negotiation_id: str,
-    x_user_id: str | None = Header(default=None),
 ) -> NegotiationSessionState:
     """Retrieve the live state and dialogue history of an interactive bartering encounter."""
     spicedb = get_spicedb_client()
-    await check_negotiation_read_permission(spicedb, negotiation_id, x_user_id)
+    await check_negotiation_read_permission(spicedb, negotiation_id, caller_id)
     neg_agg = await _load_negotiation(negotiation_id)
     return neg_agg.state
 
@@ -269,16 +266,16 @@ async def get_negotiation_state(
 @router.post("/api/v1/haggling/{negotiation_id}/accept", response_model=NegotiationSessionState)
 @router.post("/haggling/{negotiation_id}/accept", response_model=NegotiationSessionState)
 async def accept_negotiation(
+    caller_id: CallerId,
     negotiation_id: str,
-    x_user_id: str | None = Header(default=None),
 ) -> NegotiationSessionState:
     """Accept the merchant's current counter-offer and finalize the deal."""
     spicedb = get_spicedb_client()
-    await check_negotiation_participate_permission(spicedb, negotiation_id, x_user_id)
+    await check_negotiation_participate_permission(spicedb, negotiation_id, caller_id)
     neg_agg = await _load_negotiation(negotiation_id)
     try:
         neg_agg.dm_override(
-            dm_user_id=x_user_id or "player",
+            dm_user_id=caller_id,
             action="accept_deal",
             override_price_gp=neg_agg.state.counter_price,
             narrative_bark="Deal accepted by customer.",

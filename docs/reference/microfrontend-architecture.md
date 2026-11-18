@@ -9,7 +9,7 @@ runefoble/
 ├── frontend/                     # Lightweight App Shell
 │   ├── src/
 │   │   ├── runefoble-app.ts      # Top-level shell layout, header & WebSocket orchestration
-│   │   ├── components/           # Shell components & backward-compatible re-exports
+│   │   ├── components/           # Shell components & re-export modules (defect, DoR 9; TASK-0502)
 │   │   │   ├── runefoble-settings-modal.ts  # Bauhaus settings modal with color mode & themes
 │   │   │   └── runefoble-theme-switcher.ts  # Bauhaus modernist theme switcher
 │   │   └── styles/
@@ -155,6 +155,8 @@ Response:
 }
 ```
 
+A service reads its `ui/manifest.json` file at start-up through `runefoble_platform.ui_manifest.load_ui_manifest`. A missing file, an unreadable file, or invalid JSON stops the process with `UIManifestError`. No service serves a hardcoded fallback manifest (ADR-0015 4). Run `make check-ui-manifests` to check every manifest.
+
 ## Storybook Dynamic Aggregation
 
 `frontend/.storybook/main.ts` automatically discovers stories across the monorepo:
@@ -274,6 +276,6 @@ When companion `.styles.ts` files approach modular size thresholds (> 300 lines)
 - `compendium-base.styles.ts`: Host container, search bar, navigation tabs, filter pills, and results cards (< 100 lines).
 - `encounter-builder.styles.ts`: Difficulty meters, monster tags, party thresholds, and draft roster controls (< 120 lines).
 - `homebrew-form.styles.ts`: Form inputs, stat block preview grids, and action button groups (< 110 lines).
-- **Aggregator Facade (`runefoble-rules-compendium.styles.ts`)**: Re-exports all sub-stylesheets and combines them into an exported `compendiumStyles: CSSResult[]` array (< 60 lines), guaranteeing backward compatibility across all importing components.
+- **Aggregator Facade (`runefoble-rules-compendium.styles.ts`)**: Re-exports all sub-stylesheets and combines them into an exported `compendiumStyles: CSSResult[]` array (< 60 lines), Defect (DoR 9): kept for all importing components. Removal: TASK-0502.
 
 

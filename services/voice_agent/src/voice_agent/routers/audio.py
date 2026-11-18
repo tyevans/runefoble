@@ -5,12 +5,13 @@ from __future__ import annotations
 import base64
 import binascii
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
+from voice_agent.auth import get_voice_principal
 from voice_agent.dependencies import _dispatch_voice_audio_conditioned
 from voice_agent.dsp import apply_audio_filters
 from voice_agent.models import DSPApplyRequest, DSPApplyResponse
 
-router = APIRouter(tags=["Audio DSP"])
+router = APIRouter(dependencies=[Depends(get_voice_principal)], tags=["Audio DSP"])
 
 
 @router.post("/api/v1/voice/dsp/apply", response_model=DSPApplyResponse)

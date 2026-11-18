@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Annotated
-
-from fastapi import APIRouter, Header, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from the_watcher.dependencies import (
     check_dm_authorization,
     get_faction_resource_repo,
@@ -19,8 +17,9 @@ from the_watcher.factions.resources.models import (
     MercenaryRecruitRequest,
     ResourceAdjustRequest,
 )
+from the_watcher.identity import CallerId, get_caller_principal
 
-router = APIRouter(tags=["faction_resources"])
+router = APIRouter(dependencies=[Depends(get_caller_principal)], tags=["faction_resources"])
 
 
 async def _assert_dm(caller: str | None, campaign_id: str | None) -> None:
@@ -75,14 +74,14 @@ def _to_response(agg: FactionResourceAggregate) -> FactionResourceResponse:
     "/api/v1/factions/{faction_id}/resources/adjust", response_model=FactionResourceResponse
 )
 async def adjust_resources(
+    caller_id: CallerId,
     faction_id: str,
     req: ResourceAdjustRequest,
     campaign_id: str | None = None,
-    x_user_id: Annotated[str | None, Header(alias="X-User-Id")] = None,
 ) -> FactionResourceResponse:
     agg = await _load_or_create(faction_id)
     camp = campaign_id or req.campaign_id or agg.state.campaign_id
-    await _assert_dm(x_user_id, camp)
+    await _assert_dm(caller_id, camp)
     agg.adjust_resources(req.treasury_delta, req.contraband_delta, req.reason, camp, req.metadata)
     await get_faction_resource_repo().save(agg)
     return _to_response(agg)
@@ -91,14 +90,14 @@ async def adjust_resources(
 @router.post("/factions/{faction_id}/bribery/resolve", response_model=BriberyAttemptResponse)
 @router.post("/api/v1/factions/{faction_id}/bribery/resolve", response_model=BriberyAttemptResponse)
 async def resolve_bribery(
+    caller_id: CallerId,
     faction_id: str,
     req: BriberyAttemptRequest,
     campaign_id: str | None = None,
-    x_user_id: Annotated[str | None, Header(alias="X-User-Id")] = None,
 ) -> BriberyAttemptResponse:
     agg = await _load_or_create(faction_id)
     camp = campaign_id or req.campaign_id or agg.state.campaign_id
-    await _assert_dm(x_user_id, camp)
+    await _assert_dm(caller_id, camp)
     try:
         r = agg.execute_bribery(
             req.target_name,
@@ -122,14 +121,14 @@ async def resolve_bribery(
     "/api/v1/factions/{faction_id}/mercenaries/recruit", response_model=FactionResourceResponse
 )
 async def recruit_mercenaries(
+    caller_id: CallerId,
     faction_id: str,
     req: MercenaryRecruitRequest,
     campaign_id: str | None = None,
-    x_user_id: Annotated[str | None, Header(alias="X-User-Id")] = None,
 ) -> FactionResourceResponse:
     agg = await _load_or_create(faction_id)
     camp = campaign_id or req.campaign_id or agg.state.campaign_id
-    await _assert_dm(x_user_id, camp)
+    await _assert_dm(caller_id, camp)
     try:
         agg.recruit_mercenaries(
             req.unit_name, req.count, req.cost_per_unit, req.unit_type, req.upkeep_per_tick, camp
@@ -143,10 +142,10 @@ async def recruit_mercenaries(
 @router.get("/factions/{faction_id}/resources", response_model=FactionResourceResponse)
 @router.get("/api/v1/factions/{faction_id}/resources", response_model=FactionResourceResponse)
 async def get_faction_resources(
+    caller_id: CallerId,
     faction_id: str,
     campaign_id: str | None = None,
-    x_user_id: Annotated[str | None, Header(alias="X-User-Id")] = None,
 ) -> FactionResourceResponse:
     agg = await _load_or_create(faction_id)
-    await _assert_view(x_user_id, campaign_id or agg.state.campaign_id)
+    await _assert_view(caller_id, campaign_id or agg.state.campaign_id)
     return _to_response(agg)

@@ -218,39 +218,16 @@ class CipherNoticeDecryptedEvent(BaseRunefobleEvent):
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 
-SettlementChartered = SettlementCharteredEvent
-SettlementUpgraded = SettlementUpgradedEvent
-SettlementRestBoonClaimed = SettlementRestBoonClaimedEvent
-SettlementFounded = SettlementFoundedEvent
-SettlementTierUpgraded = SettlementTierUpgradedEvent
-EstablishmentConstructed = EstablishmentConstructedEvent
-EstablishmentUpgraded = EstablishmentUpgradedEvent
-EstablishmentOperationsUpdated = EstablishmentOperationsUpdatedEvent
-BulletinNoticePinned = BulletinNoticePinnedEvent
-BulletinNoticeRemoved = BulletinNoticeRemovedEvent
-CipherNoticeDecrypted = CipherNoticeDecryptedEvent
-
 __all__ = [
-    "BulletinNoticePinned",
     "BulletinNoticePinnedEvent",
-    "BulletinNoticeRemoved",
     "BulletinNoticeRemovedEvent",
-    "CipherNoticeDecrypted",
     "CipherNoticeDecryptedEvent",
-    "EstablishmentConstructed",
     "EstablishmentConstructedEvent",
-    "EstablishmentOperationsUpdated",
     "EstablishmentOperationsUpdatedEvent",
-    "EstablishmentUpgraded",
     "EstablishmentUpgradedEvent",
-    "SettlementChartered",
     "SettlementCharteredEvent",
-    "SettlementFounded",
     "SettlementFoundedEvent",
-    "SettlementRestBoonClaimed",
     "SettlementRestBoonClaimedEvent",
-    "SettlementTierUpgraded",
     "SettlementTierUpgradedEvent",
-    "SettlementUpgraded",
     "SettlementUpgradedEvent",
 ]

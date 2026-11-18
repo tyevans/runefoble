@@ -3,28 +3,40 @@
 Part of TASK-0103 / PRD-0014 / US-0047 / ADR-0003 / ADR-0006 / ADR-0011 / ADR-0013.
 """
 
+from collections.abc import Iterator
 from pathlib import Path
-from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
 from game_session.dependencies import (
     set_event_bus as set_session_event_bus,
 )
-from game_session.dependencies import (
-    set_spicedb_client as set_session_spicedb,
-)
 from game_session.events import STREAM_TAVERN
 from game_session.main import app as session_app
 from gateway_api.main import app as gateway_app
-from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 from voice_agent.main import app as voice_app
 
 from tests.helpers.live_services import serve
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.voice_identity import voice_auth_headers
+from tests.helpers.ws_identity import SIGNING_ISSUER
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
+
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
+
+
+def _owned_session(client: TestClient) -> str:
+    """Create a campaign and one of its sessions through public routes. The caller owns both."""
+    campaign = client.post("/api/v1/campaigns", json={"title": "Tavern Campaign"})
+    assert campaign.status_code == 201, campaign.text
+    session = client.post(
+        f"/api/v1/campaigns/{campaign.json()['id']}/sessions", json={"title": "Tavern Night"}
+    )
+    assert session.status_code == 201, session.text
+    return session.json()["id"]
 
 
 @pytest.fixture
@@ -38,13 +50,13 @@ def mock_bus():
 
 @pytest.fixture
 def session_client():
-    mock_spicedb = MockSpiceDBClient()
-    set_session_spicedb(mock_spicedb)
-    return TestClient(session_app)
+    return TestClient(
+        session_app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"}
+    )
 
 
 @pytest.fixture
-def live_voice_agent(monkeypatch):
+def live_voice_agent(monkeypatch, trusted_voice_issuer):
     """Run voice_agent as a real HTTP upstream for the drink DSP call (ADR-0007)."""
     with serve(voice_app) as voice_url:
         monkeypatch.setenv("RUNEFOBLE_VOICE_AGENT_URL", voice_url)
@@ -52,8 +64,10 @@ def live_voice_agent(monkeypatch):
 
 
 @pytest.fixture
-def gateway_client():
-    return TestClient(gateway_app)
+def gateway_client(game_session_upstream) -> Iterator[TestClient]:
+    """Gateway client with the lifespan entered. The shared SpiceDB double serves every service."""
+    with TestClient(gateway_app) as client:
+        yield client
 
 
 def test_tavern_parlor_microfrontend_manifest_and_files(session_client):
@@ -84,7 +98,7 @@ def test_tavern_parlor_microfrontend_manifest_and_files(session_client):
 
 def test_blackbox_liars_dice_minigame_flow(session_client, mock_bus):
     """Test full Liar's Dice minigame: challenge, turns, bluff call, and victory payout."""
-    session_id = str(uuid4())
+    session_id = _owned_session(session_client)
 
     # 1. Challenge NPC pirate with 10 gold wager
     start_payload = {
@@ -142,7 +156,7 @@ def test_blackbox_liars_dice_minigame_flow(session_client, mock_bus):
 
 def test_blackbox_drinking_contest_and_dsp_speech(session_client, mock_bus, live_voice_agent):
     """Test drinking contest with progressive intoxication DC and DSP speech conditioning."""
-    session_id = str(uuid4())
+    session_id = _owned_session(session_client)
 
     start_res = session_client.post(
         f"/api/v1/sessions/{session_id}/tavern/games",
@@ -160,6 +174,7 @@ def test_blackbox_drinking_contest_and_dsp_speech(session_client, mock_bus, live
     d1_res = session_client.post(
         f"/api/v1/sessions/{session_id}/tavern/games/{game_id}/turn",
         json={"actor_id": "char_bram", "action_type": "drink", "con_roll": 18},
+        headers=voice_auth_headers("test-user"),
     )
     assert d1_res.status_code == 200
     assert d1_res.json()["result"]["intoxication_level"] == "sober"
@@ -168,6 +183,7 @@ def test_blackbox_drinking_contest_and_dsp_speech(session_client, mock_bus, live
     d2_res = session_client.post(
         f"/api/v1/sessions/{session_id}/tavern/games/{game_id}/turn",
         json={"actor_id": "char_bram", "action_type": "drink", "con_roll": 5},
+        headers=voice_auth_headers("test-user"),
     )
     assert d2_res.json()["result"]["intoxication_level"] == "tipsy"
 
@@ -181,6 +197,7 @@ def test_blackbox_drinking_contest_and_dsp_speech(session_client, mock_bus, live
             "con_roll": 6,
             "speech_text": speech_phrase,
         },
+        headers=voice_auth_headers("test-user"),
     )
     assert d3_res.status_code == 200
     d3_data = d3_res.json()["result"]
@@ -196,7 +213,7 @@ def test_blackbox_drinking_contest_and_dsp_speech(session_client, mock_bus, live
 
 def test_blackbox_merchant_haggling_stubborn_greedy(session_client, mock_bus):
     """Test US-0047 Scenario 2: Bram haggles 50g quote to 35g against stubborn dwarven blacksmith."""
-    session_id = str(uuid4())
+    session_id = _owned_session(session_client)
     merchant_id = "merchant_thorin_blacksmith"
 
     haggle_payload = {
@@ -235,7 +252,7 @@ def test_blackbox_merchant_haggling_stubborn_greedy(session_client, mock_bus):
 
 def test_blackbox_merchant_insult_lowball(session_client):
     """Test severe lowball offer triggering merchant insult outcome."""
-    session_id = str(uuid4())
+    session_id = _owned_session(session_client)
     merchant_id = "merchant_krag_hostile"
 
     haggle_res = session_client.post(
@@ -261,14 +278,14 @@ def _bearer(issuer, sub: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {issuer.mint(sub)}"}
 
 
-def test_blackbox_gateway_zanzibar_authorization(gateway_client, signing_issuer):
+def test_blackbox_gateway_zanzibar_authorization(gateway_client, trusted_ws_issuer):
     """Verify Gateway Zanzibar authorization enforcement for tavern minigames and merchant haggling.
 
     Membership is created through frontdoors only: the owner creates the campaign,
     issues a player invite, and the player redeems it.
     """
-    owner_headers = _bearer(signing_issuer, "user_dm")
-    user_headers = _bearer(signing_issuer, "user_bram")
+    owner_headers = _bearer(trusted_ws_issuer, "user_dm")
+    user_headers = _bearer(trusted_ws_issuer, "user_bram")
 
     create_res = gateway_client.post(
         "/api/v1/campaigns",
@@ -304,7 +321,7 @@ def test_blackbox_gateway_zanzibar_authorization(gateway_client, signing_issuer)
     denied_res = gateway_client.post(
         f"/api/v1/sessions/{camp_id}/tavern/games",
         json={"game_type": "liars_dice", "wager_gold": 10, "initiator_id": "bram"},
-        headers=_bearer(signing_issuer, "unauthorized_stranger"),
+        headers=_bearer(trusted_ws_issuer, "unauthorized_stranger"),
     )
     assert denied_res.status_code == 403
 

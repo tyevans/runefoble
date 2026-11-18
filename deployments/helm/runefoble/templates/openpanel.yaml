@@ -21,8 +21,9 @@ spec:
           ports:
             - containerPort: {{ .Values.openpanel.port }}
           env:
+            {{- include "runefoble.secretEnv" (dict "root" $ "name" "POSTGRES_PASSWORD" "key" "postgres-password") | nindent 12 }}
             - name: DATABASE_URL
-              value: "postgres://{{ .Values.postgres.username }}:{{ .Values.postgres.password }}@postgres:5432/openpanel"
+              value: "postgres://{{ .Values.postgres.username }}:$(POSTGRES_PASSWORD)@postgres:5432/openpanel"
 ---
 apiVersion: v1
 kind: Service

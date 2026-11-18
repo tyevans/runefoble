@@ -8,12 +8,12 @@ ADR-0007 (Gateway API & DDD), ADR-0013 (Frontend Microfrontends).
 from __future__ import annotations
 
 import subprocess
+from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
 from gateway_api.auth import get_spicedb_client
-from gateway_api.campaign_store import campaign_store
 from gateway_api.main import app as gateway_app
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -27,23 +27,17 @@ def _auth(issuer, sub: str) -> dict[str, str]:
 
 
 @pytest.fixture
-def client() -> TestClient:
-    return TestClient(gateway_app)
-
-
-@pytest.fixture(autouse=True)
-def reset_stores():
-    campaign_store.reset()
-    yield
-    campaign_store.reset()
+def client(game_session_upstream) -> Iterator[TestClient]:
+    with TestClient(gateway_app) as gateway_client:
+        yield gateway_client
 
 
 @pytest.mark.asyncio
 async def test_backend_create_campaign_seeds_initial_staging_lobby_with_spicedb(
-    client: TestClient, signing_issuer
+    client: TestClient, trusted_ws_issuer
 ):
     """Verify POST /api/v1/campaigns automatically seeds an initial staging lobby session with SpiceDB auth."""
-    headers_owner = _auth(signing_issuer, "dm_evelyn")
+    headers_owner = _auth(trusted_ws_issuer, "dm_evelyn")
     spicedb = get_spicedb_client()
 
     res_camp = client.post(
@@ -88,7 +82,7 @@ async def test_backend_create_campaign_seeds_initial_staging_lobby_with_spicedb(
     )
     token = res_inv.json()["token"]
 
-    headers_player = _auth(signing_issuer, "player_drizzt")
+    headers_player = _auth(trusted_ws_issuer, "player_drizzt")
     res_join = client.post(
         "/api/v1/campaigns/join",
         json={"invite_token": token},
@@ -107,10 +101,12 @@ async def test_backend_create_campaign_seeds_initial_staging_lobby_with_spicedb(
 
 
 @pytest.mark.asyncio
-async def test_campaign_sessions_isolation_and_offline_scoping(client: TestClient, signing_issuer):
+async def test_campaign_sessions_isolation_and_offline_scoping(
+    client: TestClient, trusted_ws_issuer
+):
     """Verify multi-campaign session roster isolation and persistence across listings."""
-    headers_a = _auth(signing_issuer, "owner_alpha")
-    headers_b = _auth(signing_issuer, "owner_beta")
+    headers_a = _auth(trusted_ws_issuer, "owner_alpha")
+    headers_b = _auth(trusted_ws_issuer, "owner_beta")
 
     # 1. Create Campaign A and schedule Session 2
     res_a = client.post(

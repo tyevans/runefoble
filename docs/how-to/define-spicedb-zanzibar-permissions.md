@@ -316,6 +316,6 @@ For lightweight unit and offline testing, `runefoble_auth` provides an in-memory
 - **`runefoble_auth.schema_graph`**: Parses Zed schema definitions into `SchemaGraph`, extracting relations, permissions, and target types. It is shared by the name contract and the mock.
 - **`runefoble_auth.mock.evaluator`**: Recursively evaluates schema-defined permissions, union rules, and arrow expressions (`relation->permission`). It holds no role-name grants and no alias table. Caveats are supported.
 - **`runefoble_auth.mock.client`**: Provides `MockSpiceDBClient` tuple storage, relationship CRUD, touch updates, and permission checks. It enforces the name contract. A write to an undefined type, relation, or subject raises `SchemaContractError`. A check of an undefined permission raises it too.
-- **`runefoble_auth.mock_spicedb`**: Facade module re-exporting `MockSpiceDBClient` and `Relationship` for complete backward compatibility.
+- **`runefoble_auth.mock_spicedb`**: Defect (DoR 9): facade module re-exporting `MockSpiceDBClient` and `Relationship`. Removal: TASK-0486.
 
 

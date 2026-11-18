@@ -9,7 +9,7 @@ import contextlib
 from typing import Any
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, Header, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from game_session.contracts.auth import (
     _to_uuid,
     check_bounty_claim,
@@ -32,9 +32,12 @@ from game_session.dependencies import (
     get_spicedb_client,
 )
 from game_session.events import STREAM_SESSION
+from game_session.settlement.auth.tokens import CallerId, get_caller_principal
 from runefoble_platform.event_publish import publish_or_fail
 
-router = APIRouter(prefix="/sessions", tags=["bounties"])
+router = APIRouter(
+    dependencies=[Depends(get_caller_principal)], prefix="/sessions", tags=["bounties"]
+)
 
 
 async def _save_pub(agg: MercenaryBountyAggregate) -> None:
@@ -61,31 +64,31 @@ def _err(fn, *a, **kw) -> Any:
 
 @router.post("/{session_id}/contracts/bounties", status_code=201)
 async def post_bounty(
-    session_id: str, req: PostBountyRequest, x_user_id: str | None = Header(default=None)
+    session_id: str, req: PostBountyRequest, caller_id: CallerId
 ) -> dict[str, Any]:
     sid, spicedb = _to_uuid(session_id), get_spicedb_client()
-    await check_bounty_post(spicedb, str(sid), x_user_id)
+    await check_bounty_post(spicedb, str(sid), caller_id)
     bid = uuid4()
     agg = MercenaryBountyAggregate(bid)
     data = req.model_dump()
     cid = data.pop("campaign_id", req.campaign_id)
-    agg.post_bounty(str(sid), cid, **data, poster_user_id=x_user_id)
+    agg.post_bounty(str(sid), cid, **data, poster_user_id=caller_id)
     await _save_pub(agg)
     get_session_bounties_index().setdefault(str(sid), []).append(str(bid))
-    await write_bounty_relationships(spicedb, str(bid), str(sid), req.campaign_id, x_user_id)
+    await write_bounty_relationships(spicedb, str(bid), str(sid), req.campaign_id, caller_id)
     return {"session_id": str(sid), "bounty": agg.state.model_dump()}
 
 
 @router.get("/{session_id}/contracts/bounties")
 async def list_bounties(
+    caller_id: CallerId,
     session_id: str,
     status: str | None = Query(default=None),
     target_type: str | None = Query(default=None),
     min_gold: int | None = Query(default=None),
-    x_user_id: str | None = Header(default=None),
 ) -> dict[str, Any]:
     sid = _to_uuid(session_id)
-    await check_bounty_view(get_spicedb_client(), str(sid), "", x_user_id)
+    await check_bounty_view(get_spicedb_client(), str(sid), "", caller_id)
     repo, results = get_bounty_contract_repository(), []
     for bid_str in get_session_bounties_index().get(str(sid), []):
         with contextlib.suppress(Exception):
@@ -101,42 +104,40 @@ async def list_bounties(
 
 
 @router.get("/{session_id}/contracts/bounties/{bounty_id}")
-async def get_bounty(
-    session_id: str, bounty_id: str, x_user_id: str | None = Header(default=None)
-) -> dict[str, Any]:
+async def get_bounty(session_id: str, bounty_id: str, caller_id: CallerId) -> dict[str, Any]:
     sid, bid = _to_uuid(session_id), _to_uuid(bounty_id)
-    await check_bounty_view(get_spicedb_client(), str(sid), str(bid), x_user_id)
+    await check_bounty_view(get_spicedb_client(), str(sid), str(bid), caller_id)
     agg = await _load(bid)
     return {"session_id": str(sid), "bounty": agg.state.model_dump()}
 
 
 @router.post("/{session_id}/contracts/bounties/{bounty_id}/claim")
 async def claim_bounty(
+    caller_id: CallerId,
     session_id: str,
     bounty_id: str,
     req: ClaimBountyRequest,
-    x_user_id: str | None = Header(default=None),
 ) -> dict[str, Any]:
     sid, bid, spicedb = _to_uuid(session_id), _to_uuid(bounty_id), get_spicedb_client()
-    await check_bounty_claim(spicedb, str(sid), str(bid), x_user_id)
+    await check_bounty_claim(spicedb, str(sid), str(bid), caller_id)
     agg = await _load(bid)
-    _err(agg.claim_bounty, x_user_id or "", req.claimant_campaign_id, req.claimant_party_name)
+    _err(agg.claim_bounty, caller_id, req.claimant_campaign_id, req.claimant_party_name)
     await _save_pub(agg)
-    await write_claimant_relationship(spicedb, str(bid), x_user_id)
+    await write_claimant_relationship(spicedb, str(bid), caller_id)
     return {"session_id": str(sid), "bounty": agg.state.model_dump()}
 
 
 @router.post("/{session_id}/contracts/bounties/{bounty_id}/complete")
 async def complete_bounty(
+    caller_id: CallerId,
     session_id: str,
     bounty_id: str,
     req: CompleteBountyRequest,
-    x_user_id: str | None = Header(default=None),
 ) -> dict[str, Any]:
     sid, bid = _to_uuid(session_id), _to_uuid(bounty_id)
-    await check_bounty_disburse(get_spicedb_client(), str(bid), str(sid), x_user_id)
+    await check_bounty_disburse(get_spicedb_client(), str(bid), str(sid), caller_id)
     agg = await _load(bid)
-    payout = _err(agg.complete_bounty, proof=req.proof, disbursed_by=x_user_id or "")
+    payout = _err(agg.complete_bounty, proof=req.proof, disbursed_by=caller_id)
     await _save_pub(agg)
     return {
         "session_id": str(sid),

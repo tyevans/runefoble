@@ -1,4 +1,4 @@
-.PHONY: help setup install-tools cluster-up cluster-down images voice-model-cache helm-lint helm-template helm-check-event-store helm-deploy test test-authz-live test-entrypoints test-property test-mutation test-e2e test-e2e-ui test-bdd lint lint-fix build dev dev-frontend dev-storybook dev-api dev-worker deploy-remote-worker pre-commit health-check clean-worktrees backlog-worker docs-build docs-serve prd-audit prd-decompose prd-create prd-sync
+.PHONY: help setup install-tools cluster-up cluster-down images voice-model-cache helm-lint helm-template helm-check-event-store helm-deploy test test-authz-live test-entrypoints test-property test-mutation test-e2e test-e2e-ui test-bdd lint lint-fix build check-ui-manifestsdev dev-frontend dev-storybook dev-api dev-worker deploy-remote-worker pre-commit health-check clean-worktrees backlog-worker docs-build docs-serve prd-audit prd-decompose prd-create prd-sync
 
 
 CLUSTER_NAME ?= runefoble-local
@@ -93,7 +93,8 @@ PYTHON_IMAGE_ROWS = \
 	'asset-forge|asset-forge|asset_forge.main:app|8008|' \
 	'soundscape|soundscape|soundscape.main:app|8009|' \
 	'campaign-analytics|campaign-analytics|campaign_analytics.main:app|8011|' \
-	'inference-worker|inference-worker|inference_worker.api:app|8100|'
+	'inference-worker|inference-worker|inference_worker.api:app|8100|' \
+	'gateway-mcp|gateway-mcp|gateway_mcp.asgi:app|8012|'
 
 # Speech model pre-fetch for voice-agent (TASK-0676). The model downloads on the host,
 # then the files are copied into the running voice-agent pod's model cache volume.
@@ -154,6 +155,10 @@ dev-storybook: ## Run Storybook component studio with watcher protection
 	@echo "==> Starting Storybook on port 6006..."
 	cd frontend && WATCHPACK_POLLING=true CHOKIDAR_USEPOLLING=true pnpm run storybook
 
+dev-audience-studio: ## Run Audience Studio from TypeScript source with reload (needs the RUNEFOBLE_* settings)
+	@echo "==> Starting Audience Studio dev server (port 8010)..."
+	cd services/audience_studio && pnpm run dev
+
 dev-api: ## Run API Gateway locally
 	@echo "==> Starting Runefoble API Gateway..."
 	uv run python gateway/api/src/gateway_api/main.py
@@ -192,7 +197,11 @@ test-mutation: ## Run mutation testing with mutmut on core domain modules
 	uv run mutmut run || true
 	uv run mutmut results || true
 
-test-bdd: ## Validate Gherkin feature syntax and step definition coverage
+test-bdd: ## Typecheck e2e steps, reject unused steps, validate Gherkin syntax
+	@echo "==> Typechecking e2e suite..."
+	@pnpm run e2e:typecheck
+	@echo "==> Checking for unused e2e step definitions..."
+	@uv run python scripts/check_e2e_unused_steps.py
 	@echo "==> Validating Gherkin feature syntax and step definitions..."
 	@pnpm exec bddgen
 
@@ -215,6 +224,8 @@ lint: ## Check types, Ruff lint, format, and Helm
 	uv run mypy services/inference_worker/src
 	@echo "==> Typechecking frontend..."
 	cd frontend && pnpm exec tsc --noEmit
+	@echo "==> Typechecking e2e suite..."
+	pnpm run e2e:typecheck
 	@echo "==> Linting Helm charts..."
 	helm lint $(HELM_CHART)
 
@@ -227,7 +238,10 @@ pre-commit: ## Run all pre-commit hooks across the repository
 	@echo "==> Running pre-commit hooks..."
 	uv run pre-commit run --all-files
 
-build: ## Build frontend assets and static Storybook
+check-ui-manifests: ## Fail when a service UI manifest is missing or invalid (ADR-0013, ADR-0015)
+	@uv run python -m runefoble_platform.ui_manifest $$(find services -path '*/ui/manifest.json' -not -path '*/node_modules/*' | sort)
+
+build: check-ui-manifests ## Build frontend assets and static Storybook
 	@echo "==> Building frontend application..."
 	cd frontend && pnpm run build
 	@echo "==> Building static Storybook site..."

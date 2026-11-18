@@ -15,8 +15,11 @@ from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import MockSpiceDBClient
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.ws_identity import SIGNING_ISSUER
 
 from .conftest import assert_stream_events
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
 @pytest.mark.asyncio
@@ -36,7 +39,7 @@ async def test_blackbox_cross_campaign_acceptance_and_zanzibar_authorization(
     world_res = client.post(
         "/api/v1/shared-worlds",
         json={"name": "Frontier Trade League"},
-        headers={"x-user-id": officer_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(officer_id)}"},
     )
     world_id = world_res.json()["shared_world_id"]
 
@@ -49,12 +52,12 @@ async def test_blackbox_cross_campaign_acceptance_and_zanzibar_authorization(
     client.post(
         f"/api/v1/shared-worlds/{world_id}/campaigns",
         json={"campaign_id": campaign_a, "party_name": "Guild Supply"},
-        headers={"x-user-id": officer_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(officer_id)}"},
     )
     client.post(
         f"/api/v1/shared-worlds/{world_id}/campaigns",
         json={"campaign_id": campaign_b, "party_name": "Iron Claws"},
-        headers={"x-user-id": officer_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(officer_id)}"},
     )
 
     # Post a high-tier ("deadly") contract
@@ -72,7 +75,7 @@ async def test_blackbox_cross_campaign_acceptance_and_zanzibar_authorization(
             "reward_reputation": 50,
             "posted_by_campaign_id": campaign_a,
         },
-        headers={"x-user-id": officer_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(officer_id)}"},
     )
     assert deadly_res.status_code == 201
     deadly_contract_id = deadly_res.json()["contract"]["contract_id"]
@@ -81,7 +84,7 @@ async def test_blackbox_cross_campaign_acceptance_and_zanzibar_authorization(
     unauth_accept = client.post(
         f"/api/v1/shared-worlds/{world_id}/caravans/contracts/{deadly_contract_id}/accept",
         json={"contractor_campaign_id": campaign_b, "contractor_party_name": "Iron Claws"},
-        headers={"x-user-id": grunt_user},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(grunt_user)}"},
     )
     assert unauth_accept.status_code == 403
     assert "High-tier mercenary contracts require" in unauth_accept.text
@@ -90,7 +93,7 @@ async def test_blackbox_cross_campaign_acceptance_and_zanzibar_authorization(
     auth_accept = client.post(
         f"/api/v1/shared-worlds/{world_id}/caravans/contracts/{deadly_contract_id}/accept",
         json={"contractor_campaign_id": campaign_b, "contractor_party_name": "Iron Claws"},
-        headers={"x-user-id": leader_b},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(leader_b)}"},
     )
     assert auth_accept.status_code == 200
     assert auth_accept.json()["contract"]["status"] == "accepted"

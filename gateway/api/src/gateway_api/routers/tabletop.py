@@ -2,11 +2,6 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from gateway_api.auth import CurrentPrincipal, get_spicedb_client, require_zanzibar_permission
-from gateway_api.campaign_store import (
-    DEFAULT_BOARD_TOKENS,
-    DEFAULT_SESSION_PARTICIPANTS,
-    campaign_store,
-)
 from gateway_api.character_store import character_store
 from gateway_api.dependencies import ws_manager
 from gateway_api.models import (
@@ -19,6 +14,59 @@ from pydantic import BaseModel, ConfigDict, Field
 
 router = APIRouter(tags=["Tabletop & Game Sessions"])
 
+DEFAULT_SESSION_PARTICIPANTS: list[dict[str, Any]] = [
+    {
+        "userId": "user-valeros",
+        "username": "Valeros",
+        "role": "player",
+        "character": "Valeros",
+        "characterId": "char-valeros",
+        "characterName": "Valeros",
+        "characterClass": "Fighter",
+        "characterLevel": 4,
+        "isReady": False,
+        "isAbsent": False,
+        "onlineStatus": "online",
+        "online": True,
+        "ai_stand_in": False,
+    },
+    {
+        "userId": "user-sarah",
+        "username": "Sarah",
+        "role": "player",
+        "character": "Sarah",
+        "characterId": "char-sarah",
+        "characterName": "Sarah",
+        "characterClass": "Rogue",
+        "characterLevel": 3,
+        "isReady": False,
+        "isAbsent": False,
+        "onlineStatus": "online",
+        "online": True,
+        "ai_stand_in": False,
+    },
+    {
+        "userId": "user-kyra",
+        "username": "Kyra",
+        "role": "player",
+        "character": "Kyra",
+        "characterId": "char-kyra",
+        "characterName": "Kyra",
+        "characterClass": "Cleric",
+        "characterLevel": 4,
+        "isReady": False,
+        "isAbsent": False,
+        "onlineStatus": "offline",
+        "online": False,
+        "ai_stand_in": False,
+    },
+]
+
+DEFAULT_BOARD_TOKENS: list[dict[str, Any]] = [
+    {"id": "t1", "name": "Valeros", "x": 2, "y": 2, "color": "#2563eb"},
+    {"id": "t2", "name": "Kyra", "x": 3, "y": 3, "color": "#db2777", "is_ai_controlled": True},
+]
+
 
 class HotSwapRequest(BaseModel):
     player_id: str | None = Field(default=None, alias="playerId")
@@ -29,19 +77,16 @@ class HotSwapRequest(BaseModel):
 
 @router.get(
     "/api/v1/sessions/{session_id}",
-    dependencies=[Depends(require_zanzibar_permission("view", resource_type="campaign"))],
+    dependencies=[Depends(require_zanzibar_permission("observe", resource_type="session"))],
 )
 async def get_session_proxy(session_id: str) -> dict:
-    """Retrieve game session state, participants, and round index (requires 'view')."""
-    sess = campaign_store.get_session(session_id)
+    """Retrieve game session state, participants, and round index (requires 'observe')."""
     return {
         "id": session_id,
-        "campaign_id": sess.campaign_id
-        if sess
-        else ("4" if session_id in {"14", "15"} else session_id),
-        "title": sess.title if sess else f"Session {session_id}",
-        "status": sess.status if sess else ("lobby" if session_id == "15" else "active"),
-        "round": sess.round if sess else 1,
+        "campaign_id": ("4" if session_id in {"14", "15"} else session_id),
+        "title": f"Session {session_id}",
+        "status": ("lobby" if session_id == "15" else "active"),
+        "round": 1,
         "current_turn": "c1",
         "participants": DEFAULT_SESSION_PARTICIPANTS,
     }
@@ -49,12 +94,9 @@ async def get_session_proxy(session_id: str) -> dict:
 
 @router.post(
     "/api/v1/sessions/{session_id}/start",
-    dependencies=[Depends(require_zanzibar_permission("run_session", resource_type="campaign"))],
+    dependencies=[Depends(require_zanzibar_permission("control", resource_type="session"))],
 )
 async def start_session_proxy(session_id: str) -> dict:
-    sess = campaign_store.get_session(session_id)
-    if sess:
-        sess.status = "active"
     await ws_manager.broadcast(
         {"type": "session_started", "sessionId": session_id, "status": "active"}
     )
@@ -63,7 +105,7 @@ async def start_session_proxy(session_id: str) -> dict:
 
 @router.post(
     "/api/v1/sessions/{session_id}/hot-swap",
-    dependencies=[Depends(require_zanzibar_permission("view", resource_type="campaign"))],
+    dependencies=[Depends(require_zanzibar_permission("observe", resource_type="session"))],
 )
 async def hot_swap_session_proxy(
     session_id: str,
@@ -85,9 +127,9 @@ async def hot_swap_session_proxy(
         )
         if not allowed:
             allowed = await spicedb.check_permission(
-                resource_type="campaign",
+                resource_type="session",
                 resource_id=session_id,
-                permission="view",
+                permission="observe",
                 subject_type="user",
                 subject_id=player_id,
             )
@@ -120,7 +162,7 @@ async def hot_swap_session_proxy(
 
 @router.post(
     "/api/v1/sessions/{session_id}/turns/advance",
-    dependencies=[Depends(require_zanzibar_permission("run_session", resource_type="campaign"))],
+    dependencies=[Depends(require_zanzibar_permission("control", resource_type="session"))],
 )
 async def advance_turn_proxy(session_id: str, req: AdvanceTurnRequest) -> dict:
     return {
@@ -132,7 +174,7 @@ async def advance_turn_proxy(session_id: str, req: AdvanceTurnRequest) -> dict:
 
 @router.post(
     "/api/v1/sessions/{session_id}/dm-override",
-    dependencies=[Depends(require_zanzibar_permission("run_session", resource_type="campaign"))],
+    dependencies=[Depends(require_zanzibar_permission("control", resource_type="session"))],
 )
 async def dm_override_proxy(session_id: str, req: DMOverrideRequest) -> dict:
     return {
@@ -145,7 +187,7 @@ async def dm_override_proxy(session_id: str, req: DMOverrideRequest) -> dict:
 
 @router.post(
     "/api/v1/sessions/{session_id}/atmosphere",
-    dependencies=[Depends(require_zanzibar_permission("run_session", resource_type="campaign"))],
+    dependencies=[Depends(require_zanzibar_permission("control", resource_type="session"))],
 )
 async def update_atmosphere_proxy(session_id: str, req: AtmosphereUpdateRequest) -> dict:
     return {
@@ -173,7 +215,7 @@ async def get_token_proxy(token_id: str) -> dict:
 
 @router.get(
     "/api/v1/boards/{session_id}",
-    dependencies=[Depends(require_zanzibar_permission("view", resource_type="campaign"))],
+    dependencies=[Depends(require_zanzibar_permission("observe", resource_type="session"))],
 )
 async def get_board_proxy(session_id: str) -> dict:
     return {"session_id": session_id, "cols": 8, "rows": 8, "tokens": DEFAULT_BOARD_TOKENS}

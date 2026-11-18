@@ -10,10 +10,21 @@ import pytest
 from fastapi.testclient import TestClient
 from game_session.main import app as session_app
 
+from tests.helpers.watcher_double import (
+    STAND_IN_ACTION_BODY,
+    serve_watcher_double,
+    watcher_stand_in_app,
+)
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
+
 
 @pytest.fixture
 def session_client():
-    return TestClient(session_app)
+    return TestClient(
+        session_app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"}
+    )
 
 
 def test_game_session_openapi_routes_completeness(session_client):
@@ -66,7 +77,7 @@ def test_game_session_lifecycle_frontdoor(session_client):
     assert start_res.status_code == 200 and start_res.json()["status"] == "active"
 
 
-def test_game_session_turns_frontdoor(session_client):
+def test_game_session_turns_frontdoor(session_client, monkeypatch):
     """Verify turn advancement, combat initiative rotation, and autopilot frontdoors."""
     c_res = session_client.post(
         "/api/v1/sessions/create",
@@ -110,9 +121,13 @@ def test_game_session_turns_frontdoor(session_client):
         f"/api/v1/sessions/{session_id}/leave", json={"player_id": "p-1", "reason": "pizza"}
     )
     payload = {"penalties": ["foolishness"]}
-    for endpoint in ["/turns/auto-pilot", "/autopilot"]:
-        res = session_client.post(f"/api/v1/sessions/{session_id}{endpoint}", json=payload)
-        assert res.status_code == 200 and res.json()["action"]["character_name"] == "Valeros"
+    with serve_watcher_double(
+        watcher_stand_in_app(body={**STAND_IN_ACTION_BODY, "character_name": "Valeros"})
+    ) as watcher_url:
+        monkeypatch.setenv("RUNEFOBLE_WATCHER_URL", watcher_url)
+        for endpoint in ["/turns/auto-pilot", "/autopilot"]:
+            res = session_client.post(f"/api/v1/sessions/{session_id}{endpoint}", json=payload)
+            assert res.status_code == 200 and res.json()["action"]["character_name"] == "Valeros"
 
 
 def test_game_session_presence_frontdoor(session_client):

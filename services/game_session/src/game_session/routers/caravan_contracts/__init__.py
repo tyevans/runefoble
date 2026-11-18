@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from game_session.routers.caravan_contracts.auth import (
     _check_high_tier_auth,
     _check_perm,
@@ -25,8 +25,9 @@ from game_session.routers.caravan_contracts.lifecycle import (
 from game_session.routers.caravan_contracts.lifecycle import (
     router as lifecycle_router,
 )
+from game_session.settlement.auth.tokens import get_caller_principal
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(get_caller_principal)])
 router.include_router(board_router)
 router.include_router(lifecycle_router)
 

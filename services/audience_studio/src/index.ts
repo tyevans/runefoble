@@ -3,18 +3,20 @@
  */
 
 import { createAdapters } from './adapters.js';
-import { readSpicedbPresharedKey } from './config.js';
+import { readSpicedbPresharedKey, readZitadelSettings } from './config.js';
 import { buildServer } from './server.js';
 
 const PORT = parseInt(process.env.PORT || '8010', 10);
 const HOST = process.env.HOST || '0.0.0.0';
 const SPICEDB_ENDPOINT = process.env.RUNEFOBLE_SPICEDB_ENDPOINT;
 const SPICEDB_TOKEN = readSpicedbPresharedKey(process.env);
+const ZITADEL = readZitadelSettings(process.env);
 
 async function main() {
   const { server } = await buildServer({
     spicedbEndpoint: SPICEDB_ENDPOINT,
     spicedbToken: SPICEDB_TOKEN,
+    zitadel: ZITADEL,
     logger: true,
     createAdapters: (log) => createAdapters(process.env, log),
   });
@@ -43,4 +45,3 @@ main().catch((err) => {
   console.error('Failed to start Audience Studio:', err);
   process.exit(1);
 });
-

@@ -4,12 +4,11 @@ The FastMCP Gateway (`gateway/mcp`) exposes Runefoble tabletop actions, spatial 
 
 ## Architecture
 
-The gateway server entrypoint (`gateway/mcp/src/gateway_mcp/server.py`) operates as a lightweight orchestration shell (< 80 lines) delegating domain capabilities to modular sub-packages:
+The gateway server entrypoint (`gateway/mcp/src/gateway_mcp/server.py`) operates as a lightweight orchestration shell (< 100 lines) delegating domain capabilities to modular sub-packages:
 
 gateway/mcp/src/gateway_mcp/
 ├── clients/               # HTTP clients for owning services (board_state, character_sheet, game_session, rules_compendium)
 │   └── services.py        # Typed async client and ServiceError types
-├── dynamic_registry.py    # Backward-compatible re-exports (< 30 lines)
 ├── dynamic/               # Dynamic tool registry package (< 140 lines per module)
 │   ├── auth.py            # SpiceDB Zanzibar authorization guard & relationship sync
 │   ├── builder.py         # Signature builder and callable adapter
@@ -18,9 +17,10 @@ gateway/mcp/src/gateway_mcp/
 │   └── registry.py        # Thread-safe tool registry with event notifications
 ├── routers/               # FastMCP REST routers (< 130 lines)
 │   └── tools_registry.py  # REST endpoints for dynamic tool registration & lifecycle
+├── asgi.py                # ASGI app (`gateway_mcp.asgi:app`) for the streamable HTTP endpoint
 ├── main.py                # CLI execution wrapper
-├── server.py              # FastMCP orchestration shell and module mounting
-├── settings.py            # Upstream service URLs (BOARD_STATE_URL, CHARACTER_SHEET_URL, GAME_SESSION_URL, RULES_COMPENDIUM_URL)
+├── server.py              # FastMCP orchestration shell, module mounting, and `main()`
+├── settings.py            # Required upstream service URLs and the GATEWAY_MCP_HOST/PORT listen address
 ├── tools/                 # MCP tool implementations (< 180 lines each)
 │   ├── dice.py            # Dice notation parsing and rolling (roll_dice)
 │   ├── board.py           # Tactical board and encounter tools (HTTP-backed by board_state)
@@ -31,6 +31,22 @@ gateway/mcp/src/gateway_mcp/
 └── prompts/               # FastMCP prompt templates (< 120 lines each)
     └── narrative.py       # Narrative DM guidance and tactical action adviser
 ```
+
+## Transport
+
+The gateway serves the MCP protocol over **streamable HTTP** only. The endpoint is `/mcp`.
+
+| Setting | Environment Variable | Default |
+|---|---|---|
+| Bind address | `GATEWAY_MCP_HOST` | `0.0.0.0` |
+| Bind port | `GATEWAY_MCP_PORT` | `8012` |
+
+- Run locally: `uv run python -m gateway_mcp.main` (or `gateway_mcp.main` after `uv sync`). Set the five upstream URLs first.
+- Container: `gateway_mcp.asgi:app` under uvicorn, port `8012`. The Helm Deployment `gateway-mcp` and ClusterIP Service `gateway-mcp` expose it inside the cluster only. No ingress rule routes to it.
+- The process stops at start-up when an upstream URL is unset. The error names the variable.
+- The server keeps session state in memory. Run one replica.
+- The stdio transport is removed. No developer tool in this repository uses it.
+- The endpoint has no OpenAPI document and no `/healthz`. The Helm readiness probe checks the TCP port.
 
 ## Tools Registry
 
@@ -48,22 +64,27 @@ All tools are registered onto FastMCP and callable by agents or action orchestra
 | `modify_character_hp` | `character_id: str`, `delta: int`, `damage_type: str`, `reason: str` | Apply damage (negative `delta`) or healing through `character_sheet` (`POST /api/v1/characters/{character_id}/health`). Returns the stored `current_hp`, `max_hp`, and stabilization state. The `damage_type` and `reason` are recorded in the change source. |
 | `add_condition` / `apply_condition` | `character_id: str`, `condition: str`, `duration_rounds: int`, `source: str` | Impose a status condition through `character_sheet` (`POST /api/v1/characters/{character_id}/conditions`). Returns the active conditions. Both tools share one route. |
 | `query_encounter_state` | `encounter_id: str` | Read an encounter. Round, active combatant, and turn order come from `game_session` (`GET /api/v1/sessions/{session_id}/combat`). Tokens, grid, and active hazards come from `board_state`. The `encounter_id` is the game session id. Returns `in_combat`, `round`, `active_combatant_id`, `turn_order`, `session_id`, `grid_dimensions`, `tokens`, and `active_hazards`. |
-| `create_encounter` | `encounter_name: str`, `terrain: str`, `enemies: list[{name, x, y, hp?}]` | Create a 10x8 board in `board_state` and place enemy monster tokens. Returns the board session id as `encounter_id`. This id is not a game session id, so `query_encounter_state` cannot read round or turn order for it. |
-| `narrate_with_the_watcher` | `scene_prompt: str`, `player_actions: str` | Invoke The Watcher AI GM for immersive narration and environmental cues. |
-| `execute_agent_action_plan` | `session_id: str`, `actions: list` | Sequentially execute multi-turn action plan with step validation and timing. |
-| `query_monster_stat_block` | `monster_name: str` | Retrieve full canonical monster stat block, AC, HP, CR, actions, and traits. |
+| `create_encounter` | `session_id: str`, `enemies: list[{name, x, y, hp?}]` | Start combat in `game_session` (`POST /api/v1/sessions/{session_id}/combat/start`) with one combatant per enemy. Fetch or create the 10x8 board for the session in `board_state`, then place each enemy as a monster token that is not friendly. The `session_id` is the encounter id. Returns `encounter_id` (equal to `session_id`), `grid`, `enemies_spawned`, `in_combat`, `round`, `active_combatant_id`, and `turn_order`. An unknown or unavailable session returns a tool error and creates no board. |
+| `narrate_with_the_watcher` | `campaign_id: str`, `session_id: str`, `scene_prompt: str`, `player_actions: str`, `scene_environment: str`, `tone: str` (default `dark_fantasy`) | Call The Watcher route `POST /api/v1/watcher/narrate`. Returns The Watcher response unchanged: `narrative`, `sensory_details`, `suggested_dm_prompts`, `tension_level`, `source`, and `degraded`. The gateway adds no narration of its own. If the inference worker fails, the tool returns an error. |
+| `execute_agent_action_plan` | `session_id: str`, `campaign_id: str`, `actions: list[{tool, actor_name, description?, parameters}]` | Propose each step to The Watcher (`POST /api/v1/watcher/actions/propose`), in order. Each step returns the pending action that The Watcher stored. The DM can veto or change a pending action before it takes effect. No board state changes in this tool. Planning stops at the first failed step. An unknown tool name fails its step before any call. |
+| `query_monster_stat_block` | `monster_name: str` | Read the monster stat block from `rules_compendium` (`GET /api/v1/compendium/monsters/{name}`). An unknown name returns a tool error. |
 | `calculate_encounter_balance` | `party_levels: list[int]`, `target_difficulty: str` | Call the `rules_compendium` route `POST /api/v1/compendium/encounters/balance`. Returns its CR XP thresholds and recommended monster group. |
 
 ### Upstream Service Calls
 
-Board, encounter, and character tools hold no board, combat, or character state. They call the owning services over HTTP through `gateway_mcp/clients/services.py`:
+Board, encounter, and character tools hold no board, combat, or character state. They call the owning services over HTTP through `gateway/mcp/src/gateway_mcp/clients/services.py`:
 
 | Setting | Environment Variable | Default | Owning Service |
 |---|---|---|---|
-| `board_state_url` | `BOARD_STATE_URL` | `http://localhost:8002` | `board_state` |
-| `character_sheet_url` | `CHARACTER_SHEET_URL` | `http://localhost:8003` | `character_sheet` |
-| `game_session_url` | `GAME_SESSION_URL` | `http://localhost:8004` | `game_session` |
-| `rules_compendium_url` | `RULES_COMPENDIUM_URL` | `http://localhost:8007` | `rules_compendium` |
+| `board_state_url` | `BOARD_STATE_URL` | Required | `board_state` |
+| `character_sheet_url` | `CHARACTER_SHEET_URL` | Required | `character_sheet` |
+| `game_session_url` | `GAME_SESSION_URL` | Required | `game_session` |
+| `rules_compendium_url` | `RULES_COMPENDIUM_URL` | Required | `rules_compendium` |
+| `the_watcher_url` | `THE_WATCHER_URL` | Required | `the_watcher` |
+
+The Helm chart renders these from `services.gatewayMcp` in `values.yaml`. Local runs must export them. There are no localhost defaults.
+
+The client forwards the `Authorization: Bearer` token of the MCP request, when the transport carries one. The gateway never creates a token. Without a token, the client sends no `Authorization` header. The upstream service then decides the result.
 
 An upstream 5xx status or an unreachable service raises `ServiceUnavailableError`. An upstream 4xx status raises `ServiceRejectedError`. FastMCP reports both to the caller as an MCP tool error result. The gateway never returns fallback data.
 
@@ -73,9 +94,10 @@ Dynamic FastMCP resources supply structured context to LLMs without requiring ex
 
 | Resource URI | MIME Type | Description |
 |---|---|---|
-| `session://active` | `application/json` | Active session state including tokens, threat level, and scene atmosphere. |
-| `session://{session_id}/state` | `application/json` | Specific session state including active tokens and atmosphere. |
-| `encounter://current` | `application/json` | Board state (tokens, grid, and hazards) of the active encounter from `board_state`. Round and turn order are not included; use `query_encounter_state` for them. |
+| `session://{session_id}/state` | `application/json` | Stored session state from `game_session` (`GET /api/v1/sessions/{session_id}`): title, status, turn, combat round, and participants. An unknown session id returns a resource error. |
+| `encounter://{session_id}/current` | `application/json` | Encounter of a game session: tokens, grid, and hazards from `board_state`, plus round and turn order from `game_session`. The session id is the encounter id. An unknown id returns a resource error. |
+
+The `session://active` and `encounter://current` resources were removed. They had no session id, so they could not read the session that a caller asked for.
 
 ## Prompt Templates
 

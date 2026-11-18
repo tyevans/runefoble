@@ -7,9 +7,11 @@ import json
 import logging
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
+from runefoble_auth.websocket import admit_websocket
 from runefoble_platform.engine_ports import EngineUnavailableError
+from voice_agent.auth import get_voice_principal, get_voice_verifier
 from voice_agent.stt import get_streaming_pipeline
 
 logger = logging.getLogger("runefoble.voice_agent.stream_routes")
@@ -45,7 +47,11 @@ class AudioStreamChunkResponse(BaseModel):
     buffer_duration_ms: float = 0.0
 
 
-@router.post("/chunk", response_model=AudioStreamChunkResponse)
+@router.post(
+    "/chunk",
+    response_model=AudioStreamChunkResponse,
+    dependencies=[Depends(get_voice_principal)],
+)
 async def ingest_audio_chunk(req: AudioStreamChunkRequest):
     """Ingest PCM/WAV audio chunk, process VAD boundaries, and trigger streaming transcription."""
     raw_b64 = req.audio_data or req.audio_base64
@@ -83,7 +89,8 @@ async def audio_stream_websocket(
     speaker_id: str = "speaker_default",
 ):
     """Real-time bidirectional WebSocket stream for continuous PCM audio frames."""
-    await websocket.accept()
+    if await admit_websocket(websocket, get_voice_verifier()) is None:
+        return
     pipeline = get_streaming_pipeline()
 
     qp = websocket.query_params

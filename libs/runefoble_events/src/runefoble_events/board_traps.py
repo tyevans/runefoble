@@ -90,18 +90,10 @@ class BattlemapSwitchedEvent(BaseRunefobleEvent):
 
 
 # Public domain event aliases
-TrapPlaced = TrapPlacedEvent
-TrapSprung = TrapSprungEvent
-TrapDisarmed = TrapDisarmedEvent
-BattlemapSwitched = BattlemapSwitchedEvent
 
 __all__ = [
-    "BattlemapSwitched",
     "BattlemapSwitchedEvent",
-    "TrapDisarmed",
     "TrapDisarmedEvent",
-    "TrapPlaced",
     "TrapPlacedEvent",
-    "TrapSprung",
     "TrapSprungEvent",
 ]

@@ -1,7 +1,7 @@
 # How-To: Decompose Microservice Routers
 
 ## Overview
-As bounded context microservices evolve and accumulate capabilities, monolithic entrypoints (`main.py`) risk exceeding Hard Invariant 6 (file length limit < 500 lines). This guide provides the standard pattern for decomposing FastAPI microservices into modular `APIRouter` packages while preserving public API contracts, backward compatibility, and test frontdoors.
+As bounded context microservices evolve and accumulate capabilities, monolithic entrypoints (`main.py`) risk exceeding Hard Invariant 6 (file length limit < 500 lines). This guide provides the standard pattern for decomposing FastAPI microservices into modular `APIRouter` packages while preserving public API contracts and test frontdoors.
 
 ---
 
@@ -132,7 +132,7 @@ routers/
     └── speech.py        # Single speech-to-intent parsing and event dispatch
 ```
 
-The package `__init__.py` mounts each sub-router on a master router to preserve 100% backward compatibility for callers importing `copilot_router`:
+The package `__init__.py` mounts each sub-router on a master router. Defect (DoR 9): it keeps `copilot_router` importable for existing callers. Removal: TASK-0490:
 
 ```python
 from fastapi import APIRouter
@@ -146,7 +146,7 @@ router.include_router(whispers_router)
 __all__ = ["actions_router", "router", "whispers_router"]
 ```
 
-Alternatively, when decomposing a router module into companion HTTP and WebSocket modules without promoting to a subdirectory (e.g., `board_state/routers/previews.py` decomposed into `previews_http.py` and `previews_ws.py`), maintain the original module as a router aggregator facade:
+Alternatively, when decomposing a router module into companion HTTP and WebSocket modules without promoting to a subdirectory (e.g., `services/board_state/src/board_state/routers/previews.py` decomposed into `previews_http.py` and `previews_ws.py`), maintain the original module as a router aggregator facade:
 
 ```python
 from fastapi import APIRouter
@@ -203,8 +203,8 @@ def get_ui_manifest():
     }
 ```
 
-### 4. Preserve Backwards Compatibility
-Ensure all existing functions and objects previously imported from `main.py` (such as `get_event_bus`, `set_event_bus`, or legacy route modules) are re-exported in `main.py` and `__all__`.
+### 4. Update Call Sites (DoR 9)
+Do not re-export symbols from `main.py`. Update every caller to the new module and delete the old import path.
 
 ### 5. Verify Blackbox Frontdoors and File Limits
 1. Ensure all existing integration tests run green.

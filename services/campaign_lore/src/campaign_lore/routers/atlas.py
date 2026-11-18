@@ -19,12 +19,16 @@ from campaign_lore.dependencies import (
     get_atlas_repo,
     get_spicedb_client,
 )
+from campaign_lore.identity import CallerId, get_campaign_principal
 from campaign_lore.permissions import (
     check_user_can_view_campaign,
-    get_current_user_id,
 )
 
-router = APIRouter(prefix="/api/v1/campaigns/{campaign_id}/atlas", tags=["Campaign Atlas"])
+router = APIRouter(
+    prefix="/api/v1/campaigns/{campaign_id}/atlas",
+    tags=["Campaign Atlas"],
+    dependencies=[Depends(get_campaign_principal)],
+)
 
 
 class CreatePinRequest(BaseModel):
@@ -81,7 +85,7 @@ class AtlasViewResponse(BaseModel):
 @router.get("", response_model=AtlasViewResponse)
 async def get_campaign_atlas(
     campaign_id: UUID,
-    user_id: Annotated[str | None, Depends(get_current_user_id)],
+    user_id: CallerId,
     repo: Annotated[AggregateRepository[AtlasAggregate], Depends(get_atlas_repo)],
     spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
     layer: str = Query(default="continental", description="Active deep-zoom layer"),
@@ -138,7 +142,7 @@ async def get_campaign_atlas(
 async def create_pin(
     campaign_id: UUID,
     payload: CreatePinRequest,
-    user_id: Annotated[str | None, Depends(get_current_user_id)],
+    user_id: CallerId,
     repo: Annotated[AggregateRepository[AtlasAggregate], Depends(get_atlas_repo)],
     spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
 ) -> dict[str, Any]:
@@ -207,7 +211,7 @@ async def create_pin(
 async def get_pin(
     campaign_id: UUID,
     pin_id: UUID,
-    user_id: Annotated[str | None, Depends(get_current_user_id)],
+    user_id: CallerId,
     repo: Annotated[AggregateRepository[AtlasAggregate], Depends(get_atlas_repo)],
     spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
 ) -> dict[str, Any]:
@@ -235,7 +239,7 @@ async def get_pin(
 async def toggle_layer(
     campaign_id: UUID,
     payload: ToggleLayerRequest,
-    user_id: Annotated[str | None, Depends(get_current_user_id)],
+    user_id: CallerId,
     repo: Annotated[AggregateRepository[AtlasAggregate], Depends(get_atlas_repo)],
 ) -> dict[str, Any]:
     """Toggle visibility for a map layer or geopolitical boundary overlay."""
@@ -263,7 +267,7 @@ async def toggle_layer(
 async def update_territory(
     campaign_id: UUID,
     payload: UpdateTerritoryRequest,
-    user_id: Annotated[str | None, Depends(get_current_user_id)],
+    user_id: CallerId,
     repo: Annotated[AggregateRepository[AtlasAggregate], Depends(get_atlas_repo)],
 ) -> dict[str, Any]:
     """Define or update geopolitical boundaries, ownership factions, and contested statuses."""

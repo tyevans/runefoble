@@ -5,13 +5,14 @@
 
 import type { WebSocket } from 'ws';
 import type { ApprovalQueue } from './approvalQueue.js';
+import type { VerifiedPrincipal } from './identity/zitadelVerifier.js';
 import type { PollEngine } from './pollEngine.js';
 import type { WSClientMessage, WSServerMessage } from './types.js';
 
 interface ClientContext {
   campaignId: string;
-  userId?: string;
-  role?: string;
+  /** Verified during the handshake. Every action acts as this principal. */
+  principal: VerifiedPrincipal;
 }
 
 export class WebSocketManager {
@@ -42,13 +43,13 @@ export class WebSocketManager {
     });
   }
 
-  handleConnection(socket: WebSocket, campaignId: string): void {
-    this.sockets.set(socket, { campaignId });
+  handleConnection(socket: WebSocket, campaignId: string, principal: VerifiedPrincipal): void {
+    this.sockets.set(socket, { campaignId, principal });
 
     socket.send(
       JSON.stringify({
         type: 'connected',
-        data: { campaignId },
+        data: { campaignId, userId: principal.userId },
         message: 'Connected to audience stream channel',
       })
     );
@@ -82,38 +83,36 @@ export class WebSocketManager {
     }
 
     if (msg.action === 'subscribe') {
-      if (msg.userId) ctx.userId = msg.userId;
-      if (msg.role) ctx.role = msg.role;
       this.send(socket, {
         type: 'subscribed',
-        data: { campaignId: ctx.campaignId, userId: ctx.userId, role: ctx.role },
+        data: { campaignId: ctx.campaignId, userId: ctx.principal.userId },
       });
       return;
     }
 
-    if (msg.action === 'cast_vote' && msg.pollId && msg.optionId && msg.userId) {
+    if (msg.action === 'cast_vote' && msg.pollId && msg.optionId) {
       await this.pollEngine.castVote(
         msg.pollId,
-        msg.userId,
+        ctx.principal.userId,
         msg.optionId,
         msg.channel ?? 'ws'
       );
       return;
     }
 
-    if (msg.action === 'approve_proposal' && msg.proposalId && msg.userId) {
+    if (msg.action === 'approve_proposal' && msg.proposalId) {
       const approved = await this.approvalQueue.approveProposal(
         msg.proposalId,
-        msg.userId
+        ctx.principal.userId
       );
       this.send(socket, { type: 'proposal_approved', data: approved });
       return;
     }
 
-    if (msg.action === 'veto_proposal' && msg.proposalId && msg.userId) {
+    if (msg.action === 'veto_proposal' && msg.proposalId) {
       const vetoed = await this.approvalQueue.vetoProposal(
         msg.proposalId,
-        msg.userId
+        ctx.principal.userId
       );
       this.send(socket, { type: 'proposal_vetoed', data: vetoed });
       return;

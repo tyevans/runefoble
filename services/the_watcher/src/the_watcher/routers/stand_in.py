@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from runefoble_events.events import AbsencePenaltyApplied, StandInActionDecided
 from runefoble_platform.event_publish import publish_or_fail
 from the_watcher.dependencies import (
@@ -12,6 +12,7 @@ from the_watcher.dependencies import (
     get_event_bus,
     to_uuid,
 )
+from the_watcher.identity import get_caller_principal
 from the_watcher.models import (
     StandInAction,
     StandInRecapRequest,
@@ -20,7 +21,7 @@ from the_watcher.models import (
 )
 from the_watcher.worker_client import call_worker
 
-router = APIRouter(tags=["stand_in"])
+router = APIRouter(dependencies=[Depends(get_caller_principal)], tags=["stand_in"])
 
 
 @router.post("/api/v1/watcher/stand-in/act", response_model=StandInAction)

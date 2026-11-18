@@ -11,6 +11,10 @@ import pytest
 from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import MockSpiceDBClient
 
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
+
 
 @pytest.mark.asyncio
 async def test_found_settlement_and_projection_query(
@@ -31,7 +35,7 @@ async def test_found_settlement_and_projection_query(
     res = client.post(
         f"/api/v1/campaigns/{cid}/settlements",
         json=payload,
-        headers={"x-user-id": mayor_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(mayor_id)}"},
     )
     assert res.status_code == 201, res.text
     data = res.json()
@@ -39,7 +43,10 @@ async def test_found_settlement_and_projection_query(
     assert data["name"] == "Oakhaven" and data["scale"] == "village" and data["tier"] == 2
     assert "agricultural_commons" in data["districts"] and data["prosperity"] == 150
 
-    proj = client.get(f"/api/v1/campaigns/{cid}/settlements/{sid}", headers={"x-user-id": mayor_id})
+    proj = client.get(
+        f"/api/v1/campaigns/{cid}/settlements/{sid}",
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(mayor_id)}"},
+    )
     assert proj.status_code == 200 and proj.json()["settlement_id"] == sid
 
 
@@ -55,7 +62,7 @@ async def test_district_capacity_and_scale_validation(
     cap_res = client.post(
         f"/api/v1/campaigns/{cid}/settlements",
         json={"name": "TooBigHamlet", "scale": "hamlet", "districts": ["d1", "d2", "d3"]},
-        headers={"x-user-id": mayor_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(mayor_id)}"},
     )
     assert cap_res.status_code == 400
     assert "permits at most 2 districts" in cap_res.json()["detail"]
@@ -64,7 +71,7 @@ async def test_district_capacity_and_scale_validation(
     scale_res = client.post(
         f"/api/v1/campaigns/{cid}/settlements",
         json={"name": "BadScale", "scale": "invalid_scale"},
-        headers={"x-user-id": mayor_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(mayor_id)}"},
     )
     assert scale_res.status_code == 400
     assert "Invalid settlement scale" in scale_res.json()["detail"]
@@ -83,7 +90,7 @@ async def test_settlement_authorization_enforcement(
     res = client.post(
         f"/api/v1/campaigns/{cid}/settlements",
         json={"name": "Forbidden", "scale": "hamlet"},
-        headers={"x-user-id": intruder_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(intruder_id)}"},
     )
     assert res.status_code == 403
 
@@ -91,13 +98,14 @@ async def test_settlement_authorization_enforcement(
     ok_res = client.post(
         f"/api/v1/campaigns/{cid}/settlements",
         json={"name": "Lawful Citadel", "scale": "village"},
-        headers={"x-user-id": dm_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_id)}"},
     )
     assert ok_res.status_code == 201
     sid = ok_res.json()["settlement_id"]
 
     # Intruder viewing denied
     view_res = client.get(
-        f"/api/v1/campaigns/{cid}/settlements/{sid}", headers={"x-user-id": intruder_id}
+        f"/api/v1/campaigns/{cid}/settlements/{sid}",
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(intruder_id)}"},
     )
     assert view_res.status_code == 403

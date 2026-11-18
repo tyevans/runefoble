@@ -13,7 +13,7 @@ from __future__ import annotations
 from uuid import uuid4
 
 import pytest
-from runefoble_events import (
+from runefoble_events.events import (
     CombatEncounterStarted,
     CriticalHitScored,
     DeathSaveStarted,

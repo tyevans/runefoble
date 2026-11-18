@@ -1,14 +1,22 @@
-"""Persistent analytical storage engine for Campaign Analytics read-models.
+"""PostgreSQL storage for Campaign Analytics read models.
 
-Governed by ADR-0005, ADR-0011, and Hard Invariant 6 (< 160 lines).
+The engine is created at start-up and must connect and create its tables. A failure raises, so
+the service does not start. Queries read the read-model tables directly. No query reads
+process memory.
+
+Governed by ADR-0011, ADR-0015 (no silent in-memory fallback), and Hard Invariant 6.
 """
 
 from __future__ import annotations
 
-import logging
+import contextlib
+import json
+from collections.abc import AsyncIterator
 from typing import Any
 
 from runefoble_platform.config import PlatformSettings
+from runefoble_platform.event_sourcing import normalize_async_postgres_url
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 
 from campaign_analytics.models import (
@@ -16,120 +24,112 @@ from campaign_analytics.models import (
     CampaignMvpResponse,
     CampaignTimelineResponse,
 )
+from campaign_analytics.projection import STREAM_POSITION_SCOPE, ProjectionTx
 from campaign_analytics.queries import (
     calculate_mvp_rankings,
-    create_milestone_record,
-    create_spatial_record,
     query_campaign_timeline,
     query_spatial_heatmap,
 )
 from campaign_analytics.schema import (
-    apply_combatant_metrics,
+    combat_perf_table,
     metadata,
+    projection_state_table,
+    session_campaign_table,
     spatial_table,
     timeline_table,
 )
 
-logger = logging.getLogger("runefoble.campaign_analytics.storage")
+
+class StorageConfigurationError(RuntimeError):
+    """Raised when the configured database cannot hold campaign analytics read models."""
+
+
+class StorageUnavailableError(RuntimeError):
+    """Raised when a query runs before the storage engine is ready."""
+
+
+def campaign_match(table: Any, campaign_id: str) -> Any:
+    """Match rows that belong to a campaign id, or to a session that belongs to it.
+
+    A query id matches when it names the row's campaign or session. It also matches when the
+    row's session maps to it, or when the query names a session whose campaign is the row's.
+    """
+    q = str(campaign_id)
+    sessions_of_q = select(session_campaign_table.c.session_id).where(
+        session_campaign_table.c.campaign_id == q
+    )
+    campaign_of_q = select(session_campaign_table.c.campaign_id).where(
+        session_campaign_table.c.session_id == q
+    )
+    return or_(
+        table.c.campaign_id == q,
+        table.c.session_id == q,
+        table.c.session_id.in_(sessions_of_q),
+        table.c.campaign_id.in_(campaign_of_q),
+    )
+
+
+def _session_filter(table: Any, session_id: str | None) -> list[Any]:
+    return [table.c.session_id == str(session_id)] if session_id else []
 
 
 class CampaignAnalyticsStorage:
-    """Analytical read-model projection storage supporting PostgreSQL and in-memory fallback."""
+    """Durable projection storage and read queries for campaign analytics."""
 
-    def __init__(self, engine: AsyncEngine | None = None, database_url: str | None = None) -> None:
-        self.engine, self._db_url = engine, database_url
-        self.session_to_campaign: dict[str, str] = {}
-        self.spatial_records: list[dict[str, Any]] = []
-        self.combatants: dict[str, dict[str, Any]] = {}
-        self.milestones: list[dict[str, Any]] = []
+    def __init__(self, engine: AsyncEngine) -> None:
+        self.engine = engine
 
     @classmethod
-    async def create(cls, settings: PlatformSettings | None = None) -> CampaignAnalyticsStorage:
-        db_url = str((settings or PlatformSettings()).database_url)
-        engine = None
-        if "postgresql" in db_url:
-            try:
-                engine = create_async_engine(db_url, pool_size=5, max_overflow=10)
-                async with engine.begin() as conn:
-                    await conn.run_sync(metadata.create_all)
-                logger.info("Connected to PostgreSQL analytical database.")
-            except Exception as e:
-                logger.warning("PostgreSQL unreachable (%s). Using in-memory fallback.", e)
-        return cls(engine=engine, database_url=db_url)
-
-    def map_session(self, session_id: str, campaign_id: str) -> None:
-        if session_id and campaign_id:
-            self.session_to_campaign[str(session_id)] = str(campaign_id)
-
-    def resolve_campaign_id(self, id_or_session: str) -> str:
-        return self.session_to_campaign.get(str(id_or_session), str(id_or_session))
-
-    def _matches_campaign(self, rec_c: str, rec_s: str, query_id: str) -> bool:
-        q, s = str(query_id), self.session_to_campaign
-        return rec_c == q or rec_s == q or s.get(rec_s) == q or s.get(q) == rec_c
-
-    async def _insert_row(self, table: Any, values: dict[str, Any]) -> None:
-        if self.engine:
-            try:
-                async with self.engine.begin() as conn:
-                    await conn.execute(table.insert().values(values))
-            except Exception as e:
-                logger.debug("Failed asyncpg write to %s: %s", table.name, e)
-
-    async def record_spatial(
-        self,
-        campaign_id: str,
-        session_id: str,
-        token_id: str,
-        token_name: str,
-        x: int,
-        y: int,
-        event_type: str = "movement",
-        damage: int = 0,
-        recorded_at: str | None = None,
-    ) -> None:
-        rec = create_spatial_record(
-            campaign_id, session_id, token_id, token_name, x, y, event_type, damage, recorded_at
+    async def create(cls, settings: PlatformSettings) -> CampaignAnalyticsStorage:
+        """Connect to PostgreSQL and create the read-model tables. Errors propagate."""
+        url = str(settings.database_url)
+        if "postgresql" not in url:
+            raise StorageConfigurationError(
+                "Campaign analytics requires PostgreSQL. SQLite and in-memory storage are not supported."
+            )
+        engine = create_async_engine(
+            normalize_async_postgres_url(url),
+            pool_size=5,
+            max_overflow=10,
+            pool_pre_ping=True,
         )
-        self.spatial_records.append(rec)
-        await self._insert_row(spatial_table, rec)
+        try:
+            async with engine.begin() as conn:
+                await conn.run_sync(metadata.create_all)
+        except BaseException:
+            await engine.dispose()
+            raise
+        return cls(engine)
 
-    async def record_combatant_stat(
-        self,
-        campaign_id: str,
-        session_id: str,
-        encounter_id: str,
-        combatant_id: str,
-        combatant_name: str,
-        *args: int,
-        **kwargs: int,
-    ) -> None:
-        apply_combatant_metrics(
-            self.combatants,
-            campaign_id,
-            session_id,
-            encounter_id,
-            combatant_id,
-            combatant_name,
-            *args,
-            **kwargs,
-        )
+    async def dispose(self) -> None:
+        await self.engine.dispose()
 
-    async def record_milestone(
-        self,
-        campaign_id: str,
-        session_id: str,
-        milestone_type: str,
-        title: str,
-        description: str,
-        timestamp: str | None = None,
-        metadata_dict: dict[str, Any] | None = None,
-    ) -> None:
-        rec, vals = create_milestone_record(
-            campaign_id, session_id, milestone_type, title, description, timestamp, metadata_dict
+    @contextlib.asynccontextmanager
+    async def projection(self, stream: str, message_id: str) -> AsyncIterator[ProjectionTx]:
+        """Open one transaction for a stream message. The stream position commits with it."""
+        async with self.engine.begin() as conn:
+            tx = ProjectionTx(conn, stream, message_id)
+            yield tx
+            await tx.commit_position()
+
+    async def stream_position(self, stream: str) -> str | None:
+        """Return the id of the last message projected from a stream, or None."""
+        stmt = select(projection_state_table.c.value).where(
+            projection_state_table.c.scope == STREAM_POSITION_SCOPE,
+            projection_state_table.c.key == stream,
         )
-        self.milestones.append(rec)
-        await self._insert_row(timeline_table, vals)
+        async with self.engine.connect() as conn:
+            raw = (await conn.execute(stmt)).scalar_one_or_none()
+        return None if raw is None else str(json.loads(raw))
+
+    async def counts(self) -> dict[str, int]:
+        """Count rows in each read model."""
+        async with self.engine.connect() as conn:
+            return {
+                "spatial_records_count": await _count(conn, spatial_table),
+                "combatants_count": await _count(conn, combat_perf_table),
+                "milestones_count": await _count(conn, timeline_table),
+            }
 
     async def get_heatmap(
         self,
@@ -138,10 +138,13 @@ class CampaignAnalyticsStorage:
         cell_size: int = 5,
         metric: str = "all",
     ) -> CampaignHeatmapResponse:
-        m = self._matches_campaign
-        return query_spatial_heatmap(
-            self.spatial_records, campaign_id, session_id, cell_size, metric, m
+        stmt = (
+            select(spatial_table)
+            .where(campaign_match(spatial_table, campaign_id))
+            .where(*_session_filter(spatial_table, session_id))
         )
+        rows = await self._rows(stmt)
+        return query_spatial_heatmap(rows, campaign_id, session_id, cell_size, metric)
 
     async def get_mvp(
         self,
@@ -149,17 +152,25 @@ class CampaignAnalyticsStorage:
         session_id: str | None = None,
         encounter_id: str | None = None,
     ) -> CampaignMvpResponse:
-        m = self._matches_campaign
-        return calculate_mvp_rankings(self.combatants, campaign_id, session_id, encounter_id, m)
+        stmt = select(combat_perf_table).where(campaign_match(combat_perf_table, campaign_id))
+        stmt = stmt.where(*_session_filter(combat_perf_table, session_id))
+        if encounter_id:
+            stmt = stmt.where(combat_perf_table.c.encounter_id == encounter_id)
+        rows = await self._rows(stmt)
+        return calculate_mvp_rankings(rows, campaign_id, session_id, encounter_id)
 
     async def get_timeline(
         self, campaign_id: str, session_id: str | None = None, limit: int = 50
     ) -> CampaignTimelineResponse:
-        return query_campaign_timeline(
-            self.milestones, campaign_id, session_id, limit, self._matches_campaign
-        )
+        stmt = select(timeline_table).where(campaign_match(timeline_table, campaign_id))
+        stmt = stmt.where(*_session_filter(timeline_table, session_id))
+        rows = await self._rows(stmt.order_by(timeline_table.c.timestamp))
+        return query_campaign_timeline(rows, campaign_id, session_id, limit)
 
-    record_spatial_position = record_spatial
-    get_campaign_heatmaps = get_heatmap
-    get_campaign_mvp = get_mvp
-    get_campaign_timeline = get_timeline
+    async def _rows(self, stmt: Any) -> list[dict[str, Any]]:
+        async with self.engine.connect() as conn:
+            return [dict(row) for row in (await conn.execute(stmt)).mappings().all()]
+
+
+async def _count(conn: Any, table: Any) -> int:
+    return int((await conn.execute(select(func.count()).select_from(table))).scalar_one())

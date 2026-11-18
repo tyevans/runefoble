@@ -7,8 +7,10 @@ import logging
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import Header
+from fastapi import Depends
+from runefoble_auth.principal import VerifiedPrincipal, require_principal
 from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
+from runefoble_auth.zitadel import ZitadelAuthService
 from runefoble_events.base import BaseRunefobleEvent
 from runefoble_platform.bus import bus as platform_bus
 from runefoble_platform.config import PlatformSettings, WardrobeGeneratorSettings
@@ -33,6 +35,7 @@ _forge_repo: AggregateRepository[AssetForgeAggregate] = create_aggregate_reposit
 )
 _spicedb_client: SpiceDBClient | MockSpiceDBClient | None = None
 _wardrobe_generator: WardrobeGenerator | None = None
+_zitadel_auth_service: ZitadelAuthService | None = None
 
 
 def get_forge_repo() -> AggregateRepository[AssetForgeAggregate]:
@@ -85,20 +88,42 @@ def set_spicedb_client(client: SpiceDBClient | MockSpiceDBClient | None) -> None
     _spicedb_client = client
 
 
-def get_current_user_id(
-    x_user_id: Annotated[str | None, Header(alias="x-user-id")] = None,
-) -> str | None:
-    """Extract authenticated caller identity from x-user-id header."""
-    return x_user_id
+def get_zitadel_auth_service() -> ZitadelAuthService:
+    """Provide the Zitadel verifier built from platform settings (ADR-0015 (c))."""
+    global _zitadel_auth_service
+    if _zitadel_auth_service is None:
+        _zitadel_auth_service = ZitadelAuthService(
+            issuer=settings.zitadel_issuer,
+            audience=settings.zitadel_audience,
+            jwks_url=settings.zitadel_jwks_url,
+        )
+    return _zitadel_auth_service
+
+
+def set_zitadel_auth_service(service: ZitadelAuthService | None) -> None:
+    """Override the Zitadel verifier for tests."""
+    global _zitadel_auth_service
+    _zitadel_auth_service = service
+
+
+get_principal = require_principal(get_zitadel_auth_service)
+
+
+def verified_user_id(principal: Annotated[VerifiedPrincipal, Depends(get_principal)]) -> str:
+    """Project the verified token subject. Every route in this service requires it."""
+    return principal.user_id
+
+
+VerifiedUserId = Annotated[str, Depends(verified_user_id)]
 
 
 async def check_user_can_forge(
-    user_id: str | None,
+    user_id: str,
     campaign_id: UUID | None,
     spicedb: SpiceDBClient | MockSpiceDBClient,
 ) -> bool:
     """Check Zanzibar authorization for forging assets in campaign context."""
-    if not campaign_id or not user_id:
+    if not campaign_id:
         # Standalone forge without campaign context is permissible
         return True
 

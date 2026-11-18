@@ -130,7 +130,7 @@ make test-e2e ARGS="--project=chromium -g 'Theme'"
 ```
 
 ### Validate Gherkin Syntax and Steps
-Generates test files and validates that all Gherkin steps map to step definitions without launching browsers:
+Typechecks the `e2e/` suite, rejects unused step definitions, generates test files, and validates that all Gherkin steps map to step definitions. No browser launches. See the [test user flows guide](test-user-flows-with-playwright-bdd.md) for the gate details:
 ```bash
 make test-bdd
 ```
@@ -193,7 +193,7 @@ Given('{word} is hosting session {string} for campaign {string}', async ({ page,
 
 // Valeros joins in a separate browser context
 Given('{word} joins {string} in a separate browser', async ({ browser, world }, user, session) => {
-  const context = await browser.newContext({ baseURL: 'http://localhost:5173' });
+  const context = await browser.newContext({ baseURL: test.info().project.use.baseURL });
   world.extraContexts.push(context);
   const userPage = await context.newPage();
   await injectUserIntoPage(userPage, user.toLowerCase());

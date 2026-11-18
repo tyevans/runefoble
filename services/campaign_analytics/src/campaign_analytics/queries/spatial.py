@@ -2,43 +2,14 @@
 
 Governed by:
 - ADR-0003: UV Monorepo Workspace for Python BCs
-- Hard Invariant 6: File length limit (< 120 lines)
+- Hard Invariant 6: File length limit (< 500 lines)
 """
 
 from __future__ import annotations
 
-from collections.abc import Callable
-from datetime import UTC, datetime
 from typing import Any
-from uuid import uuid4
 
 from campaign_analytics.models import CampaignHeatmapResponse, HeatmapCell
-
-
-def create_spatial_record(
-    campaign_id: str,
-    session_id: str,
-    token_id: str,
-    token_name: str,
-    x: int,
-    y: int,
-    event_type: str = "movement",
-    damage: int = 0,
-    recorded_at: str | None = None,
-) -> dict[str, Any]:
-    """Build a serialized spatial event telemetry record."""
-    return {
-        "id": str(uuid4()),
-        "campaign_id": str(campaign_id),
-        "session_id": str(session_id),
-        "token_id": str(token_id),
-        "token_name": token_name,
-        "x": int(x),
-        "y": int(y),
-        "event_type": event_type,
-        "damage": int(damage),
-        "recorded_at": recorded_at or datetime.now(UTC).isoformat(),
-    }
 
 
 def query_spatial_heatmap(
@@ -47,20 +18,10 @@ def query_spatial_heatmap(
     session_id: str | None = None,
     cell_size: int = 5,
     metric: str = "all",
-    matches_fn: Callable[[str, str, str], bool] | None = None,
 ) -> CampaignHeatmapResponse:
-    """Query aggregated spatial coordinate hit/damage densities."""
+    """Bucket spatial rows into heatmap cells and total their density."""
     cell_size = max(1, cell_size)
-    filtered = [
-        r
-        for r in spatial_records
-        if (
-            matches_fn(r["campaign_id"], r["session_id"], campaign_id)
-            if matches_fn
-            else (r["campaign_id"] == campaign_id or r["session_id"] == campaign_id)
-        )
-        and (not session_id or r["session_id"] == session_id)
-    ]
+    filtered = list(spatial_records)
 
     if metric in ("damage", "hit"):
         filtered = [r for r in filtered if r["event_type"] in ("damage", "knockout")]

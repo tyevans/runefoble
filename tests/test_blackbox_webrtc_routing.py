@@ -20,9 +20,10 @@ from runefoble_platform.redis_bus import RedisStreamsEventBus
 from voice_agent.room import VoiceRoomCoordinator, set_voice_room_coordinator
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.voice_identity import voice_auth_headers
 from tests.helpers.ws_identity import ws_subprotocols
 
-pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer", "trusted_voice_issuer")
 
 
 @pytest.fixture(autouse=True)
@@ -140,7 +141,7 @@ def test_voice_mute_toggle_and_telemetry_reporting():
             }
         )
 
-        res = client.get(f"/api/v1/voice/rooms/{session_id}")
+        res = client.get(f"/api/v1/voice/rooms/{session_id}", headers=voice_auth_headers(user_id))
         assert res.status_code == 200
         peer = res.json()["participants"][0]
         assert peer["peer_id"] == "peer_cleric" and peer["is_muted"] is True
@@ -160,7 +161,7 @@ def test_dm_moderation_kick_unauthorized_fails_with_403():
     client = TestClient(app)
     res = client.post(
         f"/api/v1/voice/rooms/{session_id}/kick",
-        headers={"X-User-Id": player_id},
+        headers=voice_auth_headers(player_id),
         json={"peer_id": "peer_target", "reason": "disruptive"},
     )
     assert res.status_code == 403
@@ -180,11 +181,15 @@ def test_dm_moderation_kick_authorized_succeeds_and_disconnects_peer():
     ) as ws:
         ws.receive_json()
         ws.receive_json()
-        assert client.get(f"/api/v1/voice/rooms/{session_id}").json()["participant_count"] == 1
+        room_url = f"/api/v1/voice/rooms/{session_id}"
+        assert (
+            client.get(room_url, headers=voice_auth_headers(dm_user)).json()["participant_count"]
+            == 1
+        )
 
         kick_res = client.post(
             f"/api/v1/voice/rooms/{session_id}/kick",
-            headers={"X-User-Id": dm_user},
+            headers=voice_auth_headers(dm_user),
             json={"peer_id": "peer_troll", "reason": "mic_spam"},
         )
         assert kick_res.status_code == 200 and kick_res.json()["status"] == "kicked"
@@ -196,4 +201,6 @@ def test_dm_moderation_kick_authorized_succeeds_and_disconnects_peer():
             ws.receive_json()
         assert exc.value.code == 4001
 
-    assert client.get(f"/api/v1/voice/rooms/{session_id}").json()["participant_count"] == 0
+    assert (
+        client.get(room_url, headers=voice_auth_headers(dm_user)).json()["participant_count"] == 0
+    )

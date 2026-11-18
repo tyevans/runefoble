@@ -5,8 +5,11 @@ Centralizes configuration settings across bounded contexts.
 
 from typing import Literal
 
-from pydantic import AliasChoices, Field, model_validator
+from pydantic import AliasChoices, Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Environments where a missing dependency must stop a service at start-up (ADR-0015 4).
+DEPLOYED_ENVIRONMENTS = frozenset({"staging", "production"})
 
 
 class PlatformSettings(BaseSettings):
@@ -61,6 +64,11 @@ class PlatformSettings(BaseSettings):
         return self
 
     @property
+    def is_deployed(self) -> bool:
+        """True when the environment is a deployed one (staging or production)."""
+        return self.environment in DEPLOYED_ENVIRONMENTS
+
+    @property
     def postgres_dsn(self) -> str:
         """Alias for database_url for backward compatibility."""
         return self.database_url
@@ -103,6 +111,14 @@ class PlatformSettings(BaseSettings):
         default=None,
         validation_alias=AliasChoices("RUNEFOBLE_ZITADEL_JWKS_URL", "ZITADEL_JWKS_URL"),
         description="Zitadel JWKS keys endpoint URL",
+    )
+
+    # Service-to-service credential (ADR-0015 e). No default value. The Watcher presents it to
+    # the inference worker. The worker refuses to start without the same value.
+    inference_service_token: SecretStr | None = Field(
+        default=None,
+        validation_alias=AliasChoices("RUNEFOBLE_INFERENCE_SERVICE_TOKEN"),
+        description="Bearer credential for calls to the inference worker (Kubernetes Secret)",
     )
 
     # Authorization & Zanzibar (SpiceDB)

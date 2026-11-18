@@ -1,4 +1,4 @@
-"""Blackbox tests verifying modular decomposition and backward compatibility of runefoble_events.
+"""Blackbox tests verifying modular decomposition of runefoble_events.
 
 Governed by:
 - ADR-0003: UV Monorepo Workspace for Python BCs
@@ -14,27 +14,19 @@ from uuid import uuid4
 
 import runefoble_events
 import runefoble_events.events as events_pkg
-from runefoble_events.base import BaseRunefobleEvent, register_event
-from runefoble_events.board_events import (
-    BoardGridInitialized as BoardGridRoot,
-)
-from runefoble_events.board_events import (
-    TokenMoved as TokenMovedRoot,
-)
+from runefoble_events.base import BaseRunefobleEvent
 from runefoble_events.events.board_events import (
     AoETemplatePlaced,
     BoardGridInitialized,
     FogOfWarRevealed,
     TokenMoved,
-    TrapSprung,
+    TrapSprungEvent,
 )
 from runefoble_events.events.character_events import (
-    CharacterCreated,
     CharacterDamaged,
     ItemAddedToInventory,
 )
 from runefoble_events.events.media_events import (
-    BattlemapForged,
     SoundscapeTrackChanged,
     VoicePeerJoined,
 )
@@ -46,12 +38,10 @@ from runefoble_events.events.narrative_events import (
     WatcherNarrationGenerated,
 )
 from runefoble_events.events.platform_events import (
-    ChronicleMilestoneRecorded,
-    DynamicToolRegistered,
+    DynamicToolRegisteredEvent,
     MercenaryBountyPosted,
 )
 from runefoble_events.events.session_events import (
-    CombatEncounterStarted,
     CombatRoundAdvanced,
     GameSessionStarted,
     InitiativeRolled,
@@ -63,55 +53,8 @@ from runefoble_events.events.world_events import (
     CaravanDispatched,
     FactionCreated,
     LoreDocumentIngested,
-    SettlementChartered,
+    SettlementCharteredEvent,
 )
-from runefoble_events.narrative_events import (
-    DiceRolled as DiceRolledRoot,
-)
-from runefoble_events.narrative_events import (
-    WatcherNarrationGenerated as WatcherNarrationRoot,
-)
-from runefoble_events.session_events import (
-    CombatEncounterStarted as CombatEncounterRoot,
-)
-from runefoble_events.session_events import (
-    SessionCreated as SessionCreatedRoot,
-)
-from runefoble_events.world_events import (
-    CaravanDispatched as CaravanDispatchedRoot,
-)
-from runefoble_events.world_events import (
-    FactionCreated as FactionCreatedRoot,
-)
-
-
-def test_backward_compatibility_re_export_parity() -> None:
-    """Verify that all domain events are accessible from top-level and category modules identically."""
-    # Frontdoor package root re-exports
-    assert runefoble_events.SessionCreated is SessionCreated
-    assert runefoble_events.TokenMoved is TokenMoved
-    assert runefoble_events.WatcherNarrationGenerated is WatcherNarrationGenerated
-    assert runefoble_events.FactionCreated is FactionCreated
-    assert runefoble_events.CharacterCreated is CharacterCreated
-    assert runefoble_events.BattlemapForged is BattlemapForged
-    assert runefoble_events.ChronicleMilestoneRecorded is ChronicleMilestoneRecorded
-
-    # Facade events package re-exports
-    assert events_pkg.SessionCreated is SessionCreated
-    assert events_pkg.TokenMoved is TokenMoved
-    assert events_pkg.WatcherNarrationGenerated is WatcherNarrationGenerated
-    assert events_pkg.CaravanDispatched is CaravanDispatched
-    assert events_pkg.register_event is register_event
-
-    # Root alias module parity
-    assert SessionCreatedRoot is SessionCreated
-    assert CombatEncounterRoot is CombatEncounterStarted
-    assert TokenMovedRoot is TokenMoved
-    assert BoardGridRoot is BoardGridInitialized
-    assert WatcherNarrationRoot is WatcherNarrationGenerated
-    assert DiceRolledRoot is DiceRolled
-    assert FactionCreatedRoot is FactionCreated
-    assert CaravanDispatchedRoot is CaravanDispatched
 
 
 def test_category_submodules_exported_symbols() -> None:
@@ -128,7 +71,7 @@ def test_category_submodules_exported_symbols() -> None:
     assert TokenMoved is not None
     assert FogOfWarRevealed is not None
     assert AoETemplatePlaced is not None
-    assert TrapSprung is not None
+    assert TrapSprungEvent is not None
 
     # Narrative category
     assert WatcherNarrationGenerated is not None
@@ -140,7 +83,7 @@ def test_category_submodules_exported_symbols() -> None:
     # World category
     assert FactionCreated is not None
     assert CaravanDispatched is not None
-    assert SettlementChartered is not None
+    assert SettlementCharteredEvent is not None
     assert LoreDocumentIngested is not None
     assert AliasesConsolidated is not None
 
@@ -149,7 +92,7 @@ def test_category_submodules_exported_symbols() -> None:
     assert ItemAddedToInventory is not None
     assert SoundscapeTrackChanged is not None
     assert VoicePeerJoined is not None
-    assert DynamicToolRegistered is not None
+    assert DynamicToolRegisteredEvent is not None
     assert MercenaryBountyPosted is not None
 
 
@@ -193,13 +136,10 @@ def test_domain_event_instantiation_and_cloudevent_compliance() -> None:
 
 
 def test_all_public_symbols_registered_and_iterable() -> None:
-    """Verify complete __all__ contents across events facade and root package."""
-    assert len(runefoble_events.__all__) >= 210
+    """Verify the events aggregator exports every public symbol and the package root exports base types only."""
     assert len(events_pkg.__all__) >= 210
+    assert set(runefoble_events.__all__) == {"BaseRunefobleEvent", "DomainEvent", "register_event"}
 
     # Ensure all symbols listed in __all__ are resolvable attributes
     for symbol_name in events_pkg.__all__:
         assert hasattr(events_pkg, symbol_name), f"Attribute {symbol_name} missing from events"
-        assert hasattr(runefoble_events, symbol_name), (
-            f"Attribute {symbol_name} missing from runefoble_events"
-        )

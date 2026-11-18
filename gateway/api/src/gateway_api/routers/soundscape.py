@@ -6,7 +6,6 @@ from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query, Request, status
 from gateway_api.auth import CurrentPrincipal, get_spicedb_client
-from gateway_api.campaign_store import campaign_store
 from gateway_api.proxy import forward_json
 from soundscape.models import MoodOverrideRequest, SoundscapeCueRequest, TensionCalculationRequest
 
@@ -18,9 +17,6 @@ async def _check_soundscape_perm(
 ) -> None:
     c = get_spicedb_client()
     targets = [t for t in (cid, sid if sid != "default" else None) if t]
-    sess = campaign_store.get_session(sid) if sid and sid != "default" else None
-    if sess and sess.campaign_id:
-        targets.append(sess.campaign_id)
     for t in targets:
         if await c.check_permission("campaign", str(t), perm, "user", user_id) or (
             perm == "run_session"

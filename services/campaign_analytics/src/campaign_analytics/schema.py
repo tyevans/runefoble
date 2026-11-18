@@ -1,18 +1,22 @@
-"""SQLAlchemy Core relational tables for Campaign Analytics analytical read-models."""
+"""SQLAlchemy Core tables for Campaign Analytics read models and projection state.
+
+Every read model is a PostgreSQL table. Projection writes and the stream position commit in
+one transaction, so a restart resumes exactly after the last projected message.
+
+Governed by ADR-0011 and ADR-0015 (PostgreSQL is mandatory in deployed environments).
+"""
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
-from typing import Any
-from uuid import uuid4
-
 from sqlalchemy import (
     Column,
+    Index,
     Integer,
     MetaData,
     String,
     Table,
     Text,
+    UniqueConstraint,
 )
 
 metadata = MetaData()
@@ -36,8 +40,8 @@ combat_perf_table = Table(
     "combat_performance_records",
     metadata,
     Column("id", String(36), primary_key=True),
-    Column("campaign_id", String(64), index=True, nullable=False),
-    Column("session_id", String(64), index=True, nullable=False),
+    Column("campaign_id", String(64), nullable=False),
+    Column("session_id", String(64), nullable=False),
     Column("encounter_id", String(64), default="default"),
     Column("combatant_id", String(64), nullable=False),
     Column("combatant_name", String(128), default=""),
@@ -48,6 +52,8 @@ combat_perf_table = Table(
     Column("fumbles", Integer, default=0),
     Column("turns_taken", Integer, default=0),
     Column("updated_at", String(64), nullable=False),
+    UniqueConstraint("campaign_id", "session_id", "combatant_id", name="uq_combatant_per_session"),
+    Index("ix_combat_perf_campaign", "campaign_id"),
 )
 
 timeline_table = Table(
@@ -63,6 +69,21 @@ timeline_table = Table(
     Column("metadata_json", Text, default="{}"),
 )
 
+session_campaign_table = Table(
+    "campaign_session_map",
+    metadata,
+    Column("session_id", String(64), primary_key=True),
+    Column("campaign_id", String(64), index=True, nullable=False),
+)
+
+projection_state_table = Table(
+    "analytics_projection_state",
+    metadata,
+    Column("scope", String(32), primary_key=True),
+    Column("key", String(256), primary_key=True),
+    Column("value", Text, nullable=False),
+)
+
 COMBAT_METRIC_FIELDS = (
     "damage_dealt",
     "damage_taken",
@@ -71,37 +92,3 @@ COMBAT_METRIC_FIELDS = (
     "fumbles",
     "turns_taken",
 )
-
-
-def apply_combatant_metrics(
-    combatants: dict[str, dict[str, Any]],
-    campaign_id: str,
-    session_id: str,
-    encounter_id: str,
-    combatant_id: str,
-    combatant_name: str,
-    *args: int,
-    **kwargs: int,
-) -> None:
-    """Initialize or accumulate combatant performance metric deltas."""
-    cid, key = str(combatant_id), f"{campaign_id}:{session_id}:{combatant_id}"
-    entry = combatants.setdefault(
-        key,
-        {
-            "id": str(uuid4()),
-            "campaign_id": str(campaign_id),
-            "session_id": str(session_id),
-            "encounter_id": encounter_id or "default",
-            "combatant_id": cid,
-            "combatant_name": combatant_name,
-            **dict.fromkeys(COMBAT_METRIC_FIELDS, 0),
-        },
-    )
-    if combatant_name:
-        entry["combatant_name"] = combatant_name
-    for f, v in zip(COMBAT_METRIC_FIELDS, args, strict=False):
-        entry[f] += v
-    for f, v in kwargs.items():
-        if f in entry:
-            entry[f] += v
-    entry["updated_at"] = datetime.now(UTC).isoformat()

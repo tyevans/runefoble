@@ -9,6 +9,7 @@ from __future__ import annotations
 import base64
 import uuid
 
+import pytest
 from fastapi.testclient import TestClient
 from runefoble_events.events import PlayerSpokeEvent
 from runefoble_platform.redis_bus import deserialize_event
@@ -20,6 +21,8 @@ from tests.helpers.audio_synth import (
 )
 from tests.helpers.fixture_transcriber import FixtureTranscriber
 from tests.helpers.mock_redis import MockAsyncRedis
+
+pytestmark = pytest.mark.usefixtures("trusted_voice_issuer")
 
 
 def test_silence_chunk_rejected_without_events(client: TestClient, mock_redis: MockAsyncRedis):

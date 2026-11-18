@@ -28,19 +28,13 @@ from runefoble_events.board import (
     VisibilityMaskUpdated,
 )
 from runefoble_events.board_traps import (
-    BattlemapSwitched,
     BattlemapSwitchedEvent,
-    TrapDisarmed,
     TrapDisarmedEvent,
-    TrapPlaced,
     TrapPlacedEvent,
-    TrapSprung,
     TrapSprungEvent,
 )
 from runefoble_events.uvtt_elements import (
-    BoardDoorToggled,
     BoardDoorToggledEvent,
-    BoardLightSourcePlaced,
     BoardLightSourcePlacedEvent,
 )
 
@@ -48,12 +42,9 @@ __all__ = [
     "AoETemplatePlaced",
     "AoETemplateRemoved",
     "AreaEffectExploded",
-    "BattlemapSwitched",
     "BattlemapSwitchedEvent",
-    "BoardDoorToggled",
     "BoardDoorToggledEvent",
     "BoardGridInitialized",
-    "BoardLightSourcePlaced",
     "BoardLightSourcePlacedEvent",
     "BoardMapImported",
     "BoardMoveEvent",
@@ -73,11 +64,8 @@ __all__ = [
     "TokenMoved",
     "TokenPlaced",
     "TokenRemoved",
-    "TrapDisarmed",
     "TrapDisarmedEvent",
-    "TrapPlaced",
     "TrapPlacedEvent",
-    "TrapSprung",
     "TrapSprungEvent",
     "UniversalVTTImported",
     "VFXAnimationFinished",

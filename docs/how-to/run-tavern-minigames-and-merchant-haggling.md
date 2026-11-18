@@ -122,6 +122,8 @@ When a participant reaches `blackout`, the contest concludes automatically and t
 
 `game-session` calls `voice_agent` over HTTP at `POST /api/v1/voice/dsp/condition`. The base URL is set by `RUNEFOBLE_VOICE_AGENT_URL` (Helm sets `http://voice-agent:8005`). The timeout is set by `RUNEFOBLE_VOICE_AGENT_TIMEOUT_SECONDS` (default `5`).
 
+`game-session` forwards the caller's `Authorization` header to `voice_agent` unchanged. `voice_agent` verifies the token (TASK-0530). A drink roll with `speech_text` must therefore carry the caller's bearer token. With no token, `voice_agent` refuses the call and the roll returns `503`.
+
 If `voice_agent` is unreachable, returns an error, or the variable is not set, the drink roll returns `503`. The response has no `voice_dsp` value. The drink is not recorded, so the intoxication level and drink count do not change. Retry the roll after `voice_agent` is ready.
 
 ---
@@ -217,7 +219,7 @@ curl -X PATCH http://localhost:8004/api/v1/haggling/neg-101/dm-override \
 ## 5. Web Component & Storybook Verification
 
 Interactive components render with high-contrast Bauhaus tokens and shadow DOM isolation:
-- `<runefoble-tavern-parlor>`: Shaker cups, drinking contest meters, and legacy merchant panels.
+- `<runefoble-tavern-parlor>`: Shaker cups, drinking contest meters, and merchant panels.
 - `<runefoble-merchant-haggler>`: Responsive tug-of-war price meter, patience pips (1-5), and dialogue cards.
 - `<runefoble-dm-negotiation-drawer>`: Live DM arbitration drawer with one-click mood buttons and custom bark injection.
 
@@ -234,6 +236,6 @@ Per ADR-0003, ADR-0006, ADR-0007, and ADR-0013, the haggling negotiation engine 
 - **`state.py`**: Event-sourced `NegotiationAggregate` state machine and session initiation (`start_negotiation`), managing baseline offer calculations, price ranges, and patience counters.
 - **`rhetoric.py`**: `RhetoricMovesMixin` managing player bargaining gambits, roll adjudication via `evaluate_gambit`, merchant temperament modifiers, and patience decay.
 - **`dm_controls.py`**: `DMControlsMixin` managing live DM arbitration endpoints, narrative dialogue barks, manual price overrides, and immediate deal resolution.
-- **`haggling.py` / `__init__.py`**: Aggregator facades (< 40 lines) maintaining 100% backwards-compatible re-exports for existing routers and services.
+- **`haggling.py` / `__init__.py`**: Defect (DoR 9): aggregator facades (< 40 lines) re-export symbols for existing routers and services. Removal: TASK-0491.
 
 

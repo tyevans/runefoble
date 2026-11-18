@@ -10,16 +10,29 @@ from typing import Any
 
 import httpx
 from fastapi import HTTPException
-from the_watcher.dependencies import logger
+from the_watcher.dependencies import logger, platform_settings
+
+
+def _service_authorization() -> dict[str, str]:
+    """Return the service credential header (ADR-0015 e). Refuse the call when none is set."""
+    token = platform_settings.inference_service_token
+    if token is None or not token.get_secret_value().strip():
+        logger.error("RUNEFOBLE_INFERENCE_SERVICE_TOKEN is not set. The worker call is refused.")
+        raise HTTPException(
+            status_code=503,
+            detail={"error": "backend_unavailable", "backend": "inference_worker"},
+        )
+    return {"Authorization": f"Bearer {token.get_secret_value()}"}
 
 
 async def call_worker(
     base_url: str, path: str, payload: dict[str, Any], *, timeout: float
 ) -> dict[str, Any]:
     """POST a payload to the inference worker and return its JSON object."""
+    headers = _service_authorization()
     try:
         async with httpx.AsyncClient(timeout=timeout) as client:
-            res = await client.post(f"{base_url}{path}", json=payload)
+            res = await client.post(f"{base_url}{path}", json=payload, headers=headers)
     except httpx.HTTPError as e:
         logger.error("Inference worker unreachable at %s: %s", base_url, e)
         raise HTTPException(

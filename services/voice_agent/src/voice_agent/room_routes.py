@@ -4,34 +4,21 @@ from __future__ import annotations
 
 import logging
 
-from fastapi import APIRouter, Header, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
+from voice_agent.auth import VoicePrincipal, get_voice_principal
 from voice_agent.room import get_voice_room_coordinator
 
 logger = logging.getLogger("runefoble.voice_agent.room_routes")
 
-router = APIRouter(prefix="/api/v1/voice/rooms", tags=["Voice Rooms"])
+router = APIRouter(
+    dependencies=[Depends(get_voice_principal)], prefix="/api/v1/voice/rooms", tags=["Voice Rooms"]
+)
 
 
 class KickPeerRequest(BaseModel):
     peer_id: str
     reason: str = "kicked_by_dm"
-
-
-def extract_user_id(
-    request: Request,
-    x_user_id: str | None = Header(None, alias="X-User-Id"),
-    authorization: str | None = Header(None, alias="Authorization"),
-) -> str:
-    """Extract authenticated subject identifier from header, bearer token, or query."""
-    if x_user_id:
-        return x_user_id
-    if authorization and authorization.startswith("Bearer "):
-        return authorization[7:].strip()
-    param_user = request.query_params.get("user_id") or request.query_params.get("token")
-    if param_user:
-        return param_user
-    return "guest_user"
 
 
 @router.get("/{session_id}")
@@ -45,12 +32,10 @@ async def get_voice_room(session_id: str):
 async def kick_voice_peer(
     session_id: str,
     req: KickPeerRequest,
-    request: Request,
-    x_user_id: str | None = Header(None, alias="X-User-Id"),
-    authorization: str | None = Header(None, alias="Authorization"),
+    principal: VoicePrincipal,
 ):
     """DM moderation endpoint: kick peer from active voice room (Zanzibar enforced)."""
-    user_id = extract_user_id(request, x_user_id, authorization)
+    user_id = principal.user_id
     coord = get_voice_room_coordinator()
 
     # Enforce SpiceDB Zanzibar authorization (Hard Invariant 1)

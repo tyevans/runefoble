@@ -18,9 +18,7 @@ from campaign_lore.dependencies import (
     get_codex_referencer,
     get_spicedb_client,
 )
-from campaign_lore.permissions import (
-    get_current_user_id,
-)
+from campaign_lore.identity import CallerId
 from campaign_lore.routers.codex.schemas import CrossReferenceContentRequest
 
 router = APIRouter()
@@ -60,7 +58,7 @@ async def get_entry_references(
 async def extract_references(
     campaign_id: UUID,
     payload: CrossReferenceContentRequest,
-    user_id: Annotated[str | None, Depends(get_current_user_id)],
+    user_id: CallerId,
     referencer: Annotated[CodexCrossReferencer, Depends(get_codex_referencer)],
     spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
 ) -> dict[str, Any]:

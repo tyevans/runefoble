@@ -16,14 +16,21 @@ from uuid import uuid4
 import pytest
 import redis.asyncio
 from fastapi.testclient import TestClient
-from runefoble_events import CombatEncounterStarted, SessionCreated
+from runefoble_events.events import CombatEncounterStarted, SessionCreated
 from runefoble_platform.consumer_group import RedisConsumerGroup
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 from runefoble_platform.stream_consumer import StreamConsumer
 
+from tests.helpers.campaign_analytics_service import AnalyticsService, wait_until
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.ws_identity import SIGNING_ISSUER
 
 SESSION_STREAM = "runefoble.events.session"
+
+
+def auth_headers(sub: str) -> dict[str, str]:
+    """Return Bearer headers for a token that the service verifier accepts."""
+    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
 
 
 @pytest.fixture
@@ -48,19 +55,17 @@ def _publish(double: MockAsyncRedis, stream: str, event: Any) -> None:
 
 
 def test_campaign_analytics_consumer_projects_session_event_from_redis(
-    redis_double: MockAsyncRedis,
+    analytics_service: AnalyticsService,
 ) -> None:
     """A session event on Redis appears in the analytics timeline after the consumer starts."""
-    from campaign_analytics.main import app
-
     campaign_id = f"camp-{uuid4().hex[:8]}"
     session_id = str(uuid4())
+    analytics_service.grant_view(campaign_id)
 
-    with TestClient(app) as client:
+    with analytics_service.start() as client:
         assert client.get("/healthz").json()["consumers"] == {"analytics": "running"}
 
-        _publish(
-            redis_double,
+        analytics_service.publish(
             SESSION_STREAM,
             SessionCreated(
                 aggregate_id=session_id,
@@ -76,11 +81,11 @@ def test_campaign_analytics_consumer_projects_session_event_from_redis(
             body = client.get(timeline_url).json()
             return body.get("total_milestones", 0) >= 1
 
-        assert _wait_until(has_milestone), "analytics consumer did not project the session event"
+        assert wait_until(has_milestone), "analytics consumer did not project the session event"
 
 
 def test_campaign_analytics_refuses_to_start_when_consumer_group_cannot_be_created(
-    monkeypatch: pytest.MonkeyPatch,
+    analytics_service: AnalyticsService, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """A Redis failure at start-up stops the service. It does not run without its consumer."""
     from campaign_analytics.main import app
@@ -95,17 +100,17 @@ def test_campaign_analytics_refuses_to_start_when_consumer_group_cannot_be_creat
         pass
 
 
-def test_healthz_reports_failed_consumer_after_read_failure(redis_double: MockAsyncRedis) -> None:
+def test_healthz_reports_failed_consumer_after_read_failure(
+    analytics_service: AnalyticsService,
+) -> None:
     """When the consumer loses Redis, /healthz reports it as failed with HTTP 503."""
-    from campaign_analytics.main import app
-
-    with TestClient(app) as client:
+    with analytics_service.start() as client:
         assert client.get("/healthz").status_code == 200
 
         async def lost_connection(*_args: Any, **_kwargs: Any) -> None:
             raise ConnectionError("redis connection lost")
 
-        redis_double.xreadgroup = lost_connection  # type: ignore[method-assign]
+        analytics_service.redis.xreadgroup = lost_connection  # type: ignore[method-assign]
 
         def is_degraded() -> bool:
             return client.get("/healthz").status_code == 503
@@ -130,7 +135,7 @@ def test_soundscape_consumer_applies_combat_start_from_redis(
     )
     set_event_bus(RedisStreamsEventBus(client=redis_double))
 
-    with TestClient(app) as client:
+    with TestClient(app, headers=auth_headers("soundscape-tester")) as client:
         assert client.get("/healthz").json()["consumers"] == {"soundscape": "running"}
         tension_url = f"/api/v1/soundscape/tension?session_id={session_id}"
         assert client.get(tension_url).json()["tension_score"] != expected_tension
@@ -153,7 +158,7 @@ async def test_failed_handler_routes_message_to_dead_letter_and_acknowledges() -
     double = MockAsyncRedis()
     consumer_group = RedisConsumerGroup(client=double)
 
-    async def failing_handler(_event: Any) -> None:
+    async def failing_handler(_message_id: str, _event: Any) -> None:
         raise ValueError("projection write failed")
 
     consumer = StreamConsumer(

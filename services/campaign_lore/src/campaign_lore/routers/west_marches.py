@@ -18,17 +18,18 @@ from campaign_lore.dependencies import (
     get_spicedb_client,
     get_west_marches_repo,
 )
+from campaign_lore.identity import CallerId, get_campaign_principal
 from campaign_lore.models import WestMarchesState
 from campaign_lore.permissions import (
     check_user_can_play_campaign,
     check_user_can_view_campaign,
-    get_current_user_id,
 )
 from campaign_lore.west_marches_aggregate import WestMarchesAtlasAggregate
 
 router = APIRouter(
     prefix="/api/v1/campaigns/{campaign_id}/west-marches",
     tags=["West Marches Atlas"],
+    dependencies=[Depends(get_campaign_principal)],
 )
 
 
@@ -83,7 +84,7 @@ class LinkSharedWorldPayload(BaseModel):
 @router.get("", response_model=WestMarchesState)
 async def get_west_marches_overview(
     campaign_id: UUID,
-    user_id: Annotated[str | None, Depends(get_current_user_id)],
+    user_id: CallerId,
     spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
     repo: Annotated[AggregateRepository[WestMarchesAtlasAggregate], Depends(get_west_marches_repo)],
     discovery_type: str | None = Query(default=None),
@@ -114,7 +115,7 @@ async def get_west_marches_overview(
 async def link_shared_world(
     campaign_id: UUID,
     payload: LinkSharedWorldPayload,
-    user_id: Annotated[str | None, Depends(get_current_user_id)],
+    user_id: CallerId,
     spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
     repo: Annotated[AggregateRepository[WestMarchesAtlasAggregate], Depends(get_west_marches_repo)],
 ) -> WestMarchesState:
@@ -160,7 +161,7 @@ async def link_shared_world(
 async def record_discovery_pin(
     campaign_id: UUID,
     payload: RecordDiscoveryPayload,
-    user_id: Annotated[str | None, Depends(get_current_user_id)],
+    user_id: CallerId,
     spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
     repo: Annotated[AggregateRepository[WestMarchesAtlasAggregate], Depends(get_west_marches_repo)],
 ) -> dict[str, Any]:
@@ -198,7 +199,7 @@ async def record_discovery_pin(
 async def upgrade_stronghold_facility(
     campaign_id: UUID,
     payload: UpgradeStrongholdPayload,
-    user_id: Annotated[str | None, Depends(get_current_user_id)],
+    user_id: CallerId,
     spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
     repo: Annotated[AggregateRepository[WestMarchesAtlasAggregate], Depends(get_west_marches_repo)],
 ) -> dict[str, Any]:
@@ -243,7 +244,7 @@ async def upgrade_stronghold_facility(
 async def post_tavern_notice(
     campaign_id: UUID,
     payload: PostNoticePayload,
-    user_id: Annotated[str | None, Depends(get_current_user_id)],
+    user_id: CallerId,
     spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
     repo: Annotated[AggregateRepository[WestMarchesAtlasAggregate], Depends(get_west_marches_repo)],
 ) -> dict[str, Any]:

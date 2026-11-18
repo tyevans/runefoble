@@ -54,6 +54,8 @@ make cluster-up images helm-deploy
 ```
 Run the targets in this order. `make helm-deploy` does not build images by itself.
 
+The chart creates the Secret `runefoble-credentials` from the `credentials` block in `values.yaml`. The values in that block are **dev-only**. They are public in this repository, so never deploy them to a shared cluster. See [Chart Credentials](../reference/platform-services.md#chart-credentials) for the keys and for the `credentials.existingSecret` setting that other environments need.
+
 ## Step 5: Verify Local Endpoints
 Open your browser to:
 - **Frontend App**: `http://localhost/`
@@ -61,12 +63,12 @@ Open your browser to:
 - **Identity Provider (Zitadel)**: `http://auth.localhost`. Chromium and Firefox resolve `*.localhost` to your machine. For `curl`, add `-H "Host: auth.localhost"` to the request, for example `curl -H "Host: auth.localhost" http://localhost/.well-known/openid-configuration`.
   - First run: the sign-in application (`runefoble-web`) and the client ID are not provisioned by the chart yet. Until the bootstrap task lands, the App Shell cannot complete a sign-in. `/runtime-config.json` on the frontend carries an empty `clientId`.
 - **Mailpit Email Testing UI**: `http://localhost/mail/`
-- **Observability (Grafana)**: `http://localhost:3001` (admin / admin)
+- **Observability (Grafana)**: `http://localhost:3001` (admin / admin, dev-only value from `credentials.grafana.adminPassword`)
 
 ## Step 6: Rapid Local Development (`make dev`)
 For fast iterative feature work on the frontend and API Gateway without redeploying Helm charts, export the SpiceDB preshared key and run:
 ```bash
-export RUNEFOBLE_SPICEDB_PRESHARED_KEY=runefoble_secret_key   # the value in values.yaml (spicedb.presharedKey)
+export RUNEFOBLE_SPICEDB_PRESHARED_KEY=runefoble_secret_key   # DEV-ONLY: the value of credentials.spicedb.presharedKey in values.yaml
 make dev
 ```
 The key has no default. Services refuse to start without it.

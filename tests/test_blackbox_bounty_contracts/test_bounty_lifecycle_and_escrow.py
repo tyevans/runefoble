@@ -12,8 +12,11 @@ from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import MockSpiceDBClient
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.ws_identity import SIGNING_ISSUER
 
 from .conftest import assert_session_stream_events
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
 @pytest.mark.asyncio
@@ -42,7 +45,7 @@ async def test_bounty_lifecycle_claim_and_complete_with_escrow(
             "escrow_gold": 600,
             "escrow_items": [{"item_id": "greater_healing_potion", "quantity": 1}],
         },
-        headers={"x-user-id": creator_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(creator_id)}"},
     )
     assert res_post.status_code == 201
     bounty_id = res_post.json()["bounty"]["bounty_id"]
@@ -51,7 +54,7 @@ async def test_bounty_lifecycle_claim_and_complete_with_escrow(
     res_self = client.post(
         f"/sessions/{session_id}/contracts/bounties/{bounty_id}/claim",
         json={"claimant_campaign_id": claimant_camp, "claimant_party_name": "Self Claim"},
-        headers={"x-user-id": creator_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(creator_id)}"},
     )
     assert res_self.status_code == 400
     assert "Creator cannot claim" in res_self.json()["detail"]
@@ -63,7 +66,7 @@ async def test_bounty_lifecycle_claim_and_complete_with_escrow(
             "claimant_campaign_id": claimant_camp,
             "claimant_party_name": "The Emerald Vanguard",
         },
-        headers={"x-user-id": claimant_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(claimant_id)}"},
     )
     assert res_claim.status_code == 200
     claimed_bounty = res_claim.json()["bounty"]
@@ -76,7 +79,7 @@ async def test_bounty_lifecycle_claim_and_complete_with_escrow(
     res_double = client.post(
         f"/sessions/{session_id}/contracts/bounties/{bounty_id}/claim",
         json={"claimant_campaign_id": claimant_camp, "claimant_party_name": "Other Party"},
-        headers={"x-user-id": "another_user"},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('another_user')}"},
     )
     assert res_double.status_code in (400, 403)
 
@@ -87,7 +90,7 @@ async def test_bounty_lifecycle_claim_and_complete_with_escrow(
             "proof": "Delivered 3 sealed vials of basilisk venom to Fort Rowan.",
             "notes": "Verified by Outpost Alchemist.",
         },
-        headers={"x-user-id": creator_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(creator_id)}"},
     )
     assert res_complete.status_code == 200
     comp_body = res_complete.json()

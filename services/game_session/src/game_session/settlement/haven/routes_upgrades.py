@@ -5,12 +5,13 @@ Governed by ADR-0001, ADR-0003, ADR-0007, ADR-0013, and PRD-0024.
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Header, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from game_session.dependencies import (
     get_establishment_repository,
     get_event_bus,
     get_settlement_repository,
 )
+from game_session.settlement.auth.tokens import CallerId, get_caller_principal
 from game_session.settlement.haven.loaders import (
     build_settlement_projection,
     load_establishment,
@@ -24,18 +25,18 @@ from game_session.settlement.models import (
     UpgradeSettlementTierRequest,
 )
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(get_caller_principal)])
 
 
 @router.post("/api/v1/settlements/{settlement_id}/upgrade-tier")
 @router.post("/settlements/{settlement_id}/upgrade-tier")
 async def upgrade_settlement_tier(
+    caller_id: CallerId,
     settlement_id: str,
     req: UpgradeSettlementTierRequest,
-    x_user_id: str | None = Header(default=None),
 ) -> SettlementProjectionResponse:
     """Upgrade settlement to higher civic tier."""
-    agg = await load_settlement(settlement_id, "upgrade", x_user_id)
+    agg = await load_settlement(settlement_id, "upgrade", caller_id)
     try:
         agg.upgrade_tier(
             new_tier=req.new_tier,
@@ -53,12 +54,12 @@ async def upgrade_settlement_tier(
 @router.post("/api/v1/establishments/{establishment_id}/upgrade")
 @router.post("/establishments/{establishment_id}/upgrade")
 async def upgrade_establishment(
+    caller_id: CallerId,
     establishment_id: str,
     req: UpgradeEstablishmentRequest,
-    x_user_id: str | None = Header(default=None),
 ) -> EstablishmentState:
     """Upgrade establishment tier, amenities, or capacity."""
-    agg = await load_establishment(establishment_id, "manage", x_user_id)
+    agg = await load_establishment(establishment_id, "edit", caller_id)
     try:
         agg.upgrade(
             new_tier=req.tier,
