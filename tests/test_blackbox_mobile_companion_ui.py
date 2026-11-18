@@ -11,15 +11,12 @@ Governed by:
 
 from __future__ import annotations
 
-import asyncio
 import json
 from pathlib import Path
-from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
 from gateway_api.companion import mobile_companion_manager
-from gateway_api.main import app as gateway_app
 from runefoble_auth.factory import get_spicedb_client
 from voice_agent.main import app as voice_app
 
@@ -49,8 +46,8 @@ def voice_client() -> TestClient:
 
 
 @pytest.fixture
-def client() -> TestClient:
-    return TestClient(gateway_app)
+def client(gateway) -> TestClient:
+    return gateway
 
 
 # ---------------------------------------------------------------------------
@@ -98,11 +95,10 @@ def test_manifest_file_matches_advertised_endpoint(voice_client: TestClient) -> 
 # ---------------------------------------------------------------------------
 
 
-def test_gateway_websocket_frontdoor_handshake_and_frames(client: TestClient) -> None:
+def test_gateway_websocket_frontdoor_handshake_and_frames(client: TestClient, table_for) -> None:
     """Verify WebSocket protocol delivers frames matching the component's dispatcher."""
-    spicedb = get_spicedb_client()
-    session_id, user_id = f"sess-{uuid4().hex[:6]}", "marcus"
-    asyncio.run(spicedb.write_relationship("campaign", session_id, "player", "user", user_id))
+    user_id = "marcus"
+    _, session_id = table_for("the_watcher_dm", {user_id: "player"})
 
     with client.websocket_connect(
         f"/ws/mobile-companion/{session_id}?peer_id=peer_marcus",
@@ -144,15 +140,12 @@ def test_gateway_websocket_frontdoor_handshake_and_frames(client: TestClient) ->
         assert haptic_frame["vibration_pattern"] == [200, 100, 200]
 
 
-def test_public_http_whisper_and_turn_alert_delivery(client: TestClient, trusted_ws_issuer) -> None:
+def test_public_http_whisper_and_turn_alert_delivery(
+    client: TestClient, trusted_ws_issuer, table_for
+) -> None:
     """Verify HTTP whisper & turn alert endpoints deliver haptic frames to mobile client."""
-    spicedb = get_spicedb_client()
-    session_id, user_id = f"sess-{uuid4().hex[:6]}", "marcus"
-    dm_user = "the_watcher_dm"
-    asyncio.run(spicedb.write_relationship("campaign", session_id, "player", "user", user_id))
-    asyncio.run(
-        spicedb.write_relationship("campaign", session_id, "dungeon_master", "user", dm_user)
-    )
+    user_id, dm_user = "marcus", "the_watcher_dm"
+    _, session_id = table_for(dm_user, {user_id: "player"})
 
     with client.websocket_connect(
         f"/ws/mobile-companion/{session_id}?peer_id=peer_marcus",

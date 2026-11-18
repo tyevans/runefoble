@@ -2,6 +2,8 @@ import pytest
 from gateway_api.main import app as gateway_app
 from httpx import ASGITransport, AsyncClient
 
+from tests.realtime_session import bearer
+
 
 @pytest.mark.asyncio
 async def test_gateway_health_and_docs():
@@ -21,20 +23,18 @@ async def test_gateway_health_and_docs():
         assert "/api/v1/boards/{session_id}" in openapi["paths"]
 
 
-@pytest.mark.asyncio
-async def test_gateway_speak_and_act(signing_issuer):
-    transport = ASGITransport(app=gateway_app)
-    headers = {"Authorization": f"Bearer {signing_issuer.mint('valeros-player')}"}
-    async with AsyncClient(transport=transport, base_url="http://test", headers=headers) as client:
-        res = await client.post(
-            "/api/v1/watcher/speak-and-act",
-            params={
-                "transcript": "Valeros advances 2 squares",
-                "speaker_name": "Valeros",
-                "session_id": "sess-001",
-            },
-        )
-        assert res.status_code == 200
-        data = res.json()
-        assert data["speaker"] == "Valeros"
-        assert "Valeros stepped forward" in data["action_taken"]
+def test_gateway_speak_and_act(gateway, table_for):
+    _, session_id = table_for("dm_dora", {"valeros-player": "player"})
+    res = gateway.post(
+        "/api/v1/watcher/speak-and-act",
+        params={
+            "transcript": "Valeros advances 2 squares",
+            "speaker_name": "Valeros",
+            "session_id": session_id,
+        },
+        headers=bearer("valeros-player"),
+    )
+    assert res.status_code == 200
+    data = res.json()
+    assert data["speaker"] == "Valeros"
+    assert "Valeros stepped forward" in data["action_taken"]

@@ -10,7 +10,7 @@ import logging
 from typing import Any
 
 from gateway_api.auth import get_spicedb_client
-from runefoble_auth.contract import ACTION_PERMISSIONS, load_contract
+from runefoble_auth.contract import ACTION_PERMISSIONS
 from runefoble_auth.spicedb import SpiceDBClient
 
 logger = logging.getLogger("runefoble.gateway.websocket_validator")
@@ -27,6 +27,7 @@ HEALTH_ACTIONS = ("modify_hp", "apply_condition", "clear_condition")
 DM_ACTIONS = ("spawn_monster", "set_scene", "spawn_encounter", "advance_turn", "end_session")
 DOOR_ACTIONS = ("toggle_door", "door_toggled", "open_door", "close_door")
 LIGHT_ACTIONS = ("place_light", "toggle_light", "light_placed")
+KNOWN_ACTIONS = frozenset(MOVE_ACTIONS + HEALTH_ACTIONS + DM_ACTIONS + DOOR_ACTIONS + LIGHT_ACTIONS)
 
 
 def _extract_char_id(data: dict[str, Any]) -> str | None:
@@ -100,12 +101,7 @@ class WebSocketActionValidator:
             )
         if action in DM_ACTIONS:
             return False
-        # An action name that the schema does not define grants nothing.
-        if action not in load_contract().definitions["campaign"].permissions:
-            return False
-        return await self.spicedb.check_permission(
-            "campaign", campaign_id, action, "user", subject_id
-        )
+        return False
 
 
 default_action_validator = WebSocketActionValidator()
@@ -114,6 +110,7 @@ __all__ = [
     "DM_ACTIONS",
     "DOOR_ACTIONS",
     "HEALTH_ACTIONS",
+    "KNOWN_ACTIONS",
     "LIGHT_ACTIONS",
     "MOVE_ACTIONS",
     "WebSocketActionValidator",

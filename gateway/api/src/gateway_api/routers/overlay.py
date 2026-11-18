@@ -26,8 +26,10 @@ from gateway_api.overlay_templates import (
     render_obs_overlay_html,
     render_overlay_html,
 )
+from gateway_api.session_access import has_session_permission, socket_may
 from gateway_api.spectator import get_raw_session_state
 from gateway_api.websocket_auth import admit_gateway_websocket
+from runefoble_auth.errors import AuthzUnavailableError
 
 router = APIRouter(tags=["OBS Overlay"])
 
@@ -83,11 +85,26 @@ async def get_party_vitals_overlay(
     )
 
 
+async def _may_publish(websocket: WebSocket, session_id: str, user_id: str, action: str) -> bool:
+    """Inbound overlay frames change what every viewer sees. They need `session.participate`."""
+    try:
+        allowed = await has_session_permission(session_id, user_id, "participate")
+    except AuthzUnavailableError:
+        await websocket.send_json({"type": "error", "code": "AUTHZ_UNAVAILABLE", "action": action})
+        return False
+    if not allowed:
+        await websocket.send_json({"type": "error", "code": "PERMISSION_DENIED", "action": action})
+    return allowed
+
+
 @router.websocket("/overlay/ws/{session_id}")
 @router.websocket("/ws/overlay/{session_id}")
 async def overlay_websocket_endpoint(websocket: WebSocket, session_id: str) -> None:
     """Real-time spectator WebSocket feed delivering sanitized updates."""
-    if await admit_gateway_websocket(websocket) is None:
+    principal = await admit_gateway_websocket(websocket)
+    if principal is None:
+        return
+    if not await socket_may(websocket, session_id, principal.user_id, "observe"):
         return
     ws_overlay_manager.register(session_id, websocket)
     raw = get_raw_session_state(session_id)
@@ -109,6 +126,8 @@ async def overlay_websocket_endpoint(websocket: WebSocket, session_id: str) -> N
         while True:
             data = await websocket.receive_json()
             action = data.get("action") or data.get("type") or "unknown"
+            if not await _may_publish(websocket, session_id, principal.user_id, action):
+                continue
             if action in ("turn_started", "TurnStarted"):
                 cam = director.handle_turn_started(
                     data,

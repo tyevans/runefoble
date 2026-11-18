@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException
-from gateway_api.auth import CurrentPrincipal, get_spicedb_client
+from fastapi import APIRouter
+from gateway_api.auth import CurrentPrincipal
 from gateway_api.companion.manager import mobile_companion_manager
-from gateway_api.signaling.auth import validate_voice_connection
+from gateway_api.session_access import require_session_permission
 from pydantic import BaseModel
 from voice_agent.mobile import PROFILES
 
@@ -44,9 +44,7 @@ async def dispatch_whisper_endpoint(
     principal: CurrentPrincipal,
 ):
     """Dispatch a secret DM whisper and trigger mobile haptic ping."""
-    spicedb = get_spicedb_client()
-    if not await validate_voice_connection(spicedb, session_id, principal.user_id):
-        raise HTTPException(status_code=403, detail={"error": "permission_denied"})
+    await require_session_permission(session_id, principal.user_id, "control")
 
     frame = await mobile_companion_manager.dispatch_whisper(
         session_id=session_id,
@@ -65,9 +63,7 @@ async def dispatch_turn_alert_endpoint(
     principal: CurrentPrincipal,
 ):
     """Trigger combat turn initiative haptic alert for mobile companion."""
-    spicedb = get_spicedb_client()
-    if not await validate_voice_connection(spicedb, session_id, principal.user_id):
-        raise HTTPException(status_code=403, detail={"error": "permission_denied"})
+    await require_session_permission(session_id, principal.user_id, "control")
 
     frame = await mobile_companion_manager.dispatch_turn_alert(
         session_id=session_id,

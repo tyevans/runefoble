@@ -26,6 +26,7 @@ os.environ["RUNEFOBLE_EVENT_STORE_BACKEND"] = "memory"
 os.environ.setdefault("RUNEFOBLE_WATCHER_ENGINE", "heuristic")
 
 pytest_plugins = [
+    "tests.realtime_session",
     "tests.helpers.audio_synth",
     "tests.helpers.campaign_analytics_service",
     "tests.helpers.lore_backends",
