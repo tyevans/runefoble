@@ -12,9 +12,13 @@ export const FALLBACK_PROFILE: UserClaims = {
   user_id: 'user-fixture', username: 'Valeros', email: 'valeros@runefoble.local', roles: ['player'],
 };
 
+const OWNER_PERMISSIONS = { view: true, manage: true, invite: true, launch_session: true, assign_roles: true };
+const PLAYER_PERMISSIONS = { view: true, manage: false, invite: false, launch_session: false, assign_roles: false };
+const NO_PERMISSIONS = { view: false, manage: false, invite: false, launch_session: false, assign_roles: false };
+
 export const FALLBACK_CAMPAIGNS: CampaignItem[] = [
-  { id: '4', title: 'Tomb of the Star-Eater', system: '5e', role: 'owner', owner_id: 'user-fixture', description: 'Ancient celestial horrors slumber beneath the irradiated astral sands.', setting: 'Spelljammer Astral Void', dm_name: 'The Watcher', player_count: 4, has_active_session: true, active_session_id: 'session-tomb-14' },
-  { id: '5', title: 'Whispering Depths', system: '5e', role: 'player', owner_id: 'user-evelyn', description: 'Subterranean aquatic expeditions through forgotten dwarven aqueducts.', setting: 'Underdark Aquatics', dm_name: 'Evelyn Vance', player_count: 5, has_active_session: false },
+  { id: '4', title: 'Tomb of the Star-Eater', system: '5e', role: 'owner', permissions: OWNER_PERMISSIONS, owner_id: 'user-fixture', description: 'Ancient celestial horrors slumber beneath the irradiated astral sands.', setting: 'Spelljammer Astral Void', dm_name: 'The Watcher', player_count: 4, has_active_session: true, active_session_id: 'session-tomb-14' },
+  { id: '5', title: 'Whispering Depths', system: '5e', role: 'player', permissions: PLAYER_PERMISSIONS, owner_id: 'user-evelyn', description: 'Subterranean aquatic expeditions through forgotten dwarven aqueducts.', setting: 'Underdark Aquatics', dm_name: 'Evelyn Vance', player_count: 5, has_active_session: false },
 ];
 
 export const FALLBACK_CHARACTERS: CharacterItem[] = [
@@ -100,7 +104,7 @@ export function getFallbackSession(sessionId: string): CampaignSessionItem {
 }
 
 export function createFallbackCampaign(campaignId: string): CampaignItem {
-  return { id: campaignId, title: `Campaign #${campaignId}`, role: 'player', player_count: 3, has_active_session: false };
+  return { id: campaignId, title: `Campaign #${campaignId}`, role: 'player', permissions: PLAYER_PERMISSIONS, player_count: 3, has_active_session: false };
 }
 
 export function createFallbackCampaignItem(payload: CreateCampaignPayload, ownerId = 'user-fixture'): CampaignItem {
@@ -110,7 +114,7 @@ export function createFallbackCampaignItem(payload: CreateCampaignPayload, owner
   ];
   const uname = ownerId === 'user-fixture' ? 'Valeros (You)' : ownerId;
   CAMPAIGN_MEMBERS_CACHE[id] = [{ user_id: ownerId, username: uname, role: 'owner' }];
-  return { id, title: payload.title, description: payload.description, owner_id: ownerId, setting: payload.setting, system: payload.system || '5e', role: 'owner', player_count: 1, has_active_session: false };
+  return { id, title: payload.title, description: payload.description, owner_id: ownerId, setting: payload.setting, system: payload.system || '5e', role: 'owner', permissions: OWNER_PERMISSIONS, player_count: 1, has_active_session: false };
 }
 
 export function updateFallbackCampaign(campaignId: string, payload: UpdateCampaignPayload): CampaignItem {
@@ -119,7 +123,7 @@ export function updateFallbackCampaign(campaignId: string, payload: UpdateCampai
     Object.assign(c, Object.fromEntries(Object.entries(payload).filter(([_, v]) => v !== undefined)));
     return { ...c };
   }
-  return { id: campaignId, title: payload.title, setting: payload.setting, system: payload.system || '5e', cover_image_url: payload.cover_image_url, description: payload.description };
+  return { id: campaignId, title: payload.title, setting: payload.setting, system: payload.system || '5e', cover_image_url: payload.cover_image_url, description: payload.description, permissions: NO_PERMISSIONS };
 }
 
 export function createFallbackCharacter(payload: CreateCharacterPayload, ownerId: string): CharacterItem {

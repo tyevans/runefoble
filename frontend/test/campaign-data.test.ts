@@ -8,22 +8,18 @@ import assert from 'node:assert/strict';
 import type { CampaignItem, RoleFilter, CreateCampaignPayload } from '../../services/game_session/ui/src/campaigns/types.ts';
 
 // Helper matching logic mirroring RunefobleCampaignDashboard
-function isDMing(c: CampaignItem, userId = ''): boolean {
-  const r = (c.role || '').toLowerCase();
-  if (r === 'owner' || r === 'dungeon_master' || r === 'dm') return true;
-  if (userId && c.owner_id === userId) return true;
-  return false;
+function isDMing(c: CampaignItem): boolean {
+  return c.permissions.launch_session;
 }
 
 function filterCampaigns(
   campaigns: CampaignItem[],
   filter: RoleFilter,
-  searchQuery: string,
-  userId = ''
+  searchQuery: string
 ): CampaignItem[] {
   return campaigns.filter((c) => {
-    if (filter === 'dming' && !isDMing(c, userId)) return false;
-    if (filter === 'playing' && isDMing(c, userId)) return false;
+    if (filter === 'dming' && !isDMing(c)) return false;
+    if (filter === 'playing' && isDMing(c)) return false;
 
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase().trim();
@@ -68,6 +64,7 @@ const testCampaigns: CampaignItem[] = [
     setting: 'Gothic Fantasy',
     system: '5e',
     role: 'owner',
+    permissions: { view: true, manage: true, invite: true, launch_session: true, assign_roles: true },
     owner_id: 'user-evelyn',
     dm_name: 'Evelyn',
     player_count: 4,
@@ -80,6 +77,7 @@ const testCampaigns: CampaignItem[] = [
     setting: 'Gothic Horror',
     system: '5e',
     role: 'player',
+    permissions: { view: true, manage: false, invite: false, launch_session: false, assign_roles: false },
     owner_id: 'user-marcus',
     dm_name: 'Marcus',
     player_count: 5,
@@ -92,6 +90,7 @@ const testCampaigns: CampaignItem[] = [
     setting: 'High Fantasy',
     system: 'pf2e',
     role: 'dungeon_master',
+    permissions: { view: true, manage: false, invite: true, launch_session: true, assign_roles: false },
     owner_id: 'user-evelyn',
     dm_name: 'Evelyn',
     player_count: 6,
@@ -104,6 +103,7 @@ const testCampaigns: CampaignItem[] = [
     setting: 'Lovecraftian Ocean',
     system: 'call_of_cthulhu',
     role: 'spectator',
+    permissions: { view: true, manage: false, invite: false, launch_session: false, assign_roles: false },
     owner_id: 'user-sarah',
     dm_name: 'Sarah',
     player_count: 3,

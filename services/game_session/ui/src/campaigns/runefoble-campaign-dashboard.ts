@@ -17,13 +17,9 @@ export class RunefobleCampaignDashboard extends LitElement {
 
   @state() private isCreatorOpen = false;
 
+  /** A campaign counts as DMing when the caller may launch its sessions (SpiceDB flag). */
   get isDMing(): (c: CampaignItem) => boolean {
-    return (c: CampaignItem) => {
-      const r = (c.role || '').toLowerCase();
-      if (r === 'owner' || r === 'dungeon_master' || r === 'dm') return true;
-      if (this.userId && c.owner_id === this.userId) return true;
-      return false;
-    };
+    return (c: CampaignItem) => c.permissions.launch_session;
   }
 
   get filteredCampaigns(): CampaignItem[] {

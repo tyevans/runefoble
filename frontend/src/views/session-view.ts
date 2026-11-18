@@ -10,7 +10,7 @@ import { switchDmCharacter } from '../app/character-actions.ts';
 /** Renders the live tabletop (party mode) or the spectator view for an active session. */
 export function renderSessionActive(app: RunefobleApp) {
   const char = app.activeCharacter ?? app.resolveActiveCharacter(app.campaignId);
-  const isOwnerOrDm = app.isDM || app.currentCampaign?.role === 'owner' || app.currentCampaign?.role === 'dm';
+  const isOwnerOrDm = Boolean(app.currentCampaign?.permissions.launch_session);
   if (app.viewMode === 'spectator') {
     return html`<runefoble-spectator-view .sessionId=${app.sessionId} .cols=${app.boardCols} .rows=${app.boardRows} .tokens=${app.tokens} .atmosphere=${app.atmosphere} .chronicle=${app.events}></runefoble-spectator-view>`;
   }

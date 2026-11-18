@@ -124,9 +124,9 @@ Campaign Lore routes require a verified bearer token, except `/health`, `/health
 | `game-session` | GET | `/sessions/{session_id}/contracts/bounties/{bounty_id}` | Retrieves details and escrow status for a specific bounty contract (alias: `/api/v1/sessions/{session_id}/contracts/bounties/{bounty_id}`) |
 | `game-session` | POST | `/sessions/{session_id}/contracts/bounties/{bounty_id}/claim` | Claims an open mercenary bounty on behalf of an adventuring party (alias: `/api/v1/sessions/{session_id}/contracts/bounties/{bounty_id}/claim`, Zanzibar enforced) |
 | `game-session` | POST | `/sessions/{session_id}/contracts/bounties/{bounty_id}/complete` | Submits fulfillment proof, resolves contract, and disburses escrow payout (alias: `/api/v1/sessions/{session_id}/contracts/bounties/{bounty_id}/complete`, Zanzibar enforced) |
-| `game-session` | GET | `/api/v1/campaigns` | Lists campaigns the caller can `view` (SpiceDB lookup; owner: game_session, ADR-0015 a) |
+| `game-session` | GET | `/api/v1/campaigns` | Lists campaigns the caller can `view` (SpiceDB lookup; owner: game_session, ADR-0015 a). Each item carries `permissions` (`view`, `manage`, `invite`, `launch_session`, `assign_roles`), one SpiceDB check per flag (TASK-0644) |
 | `game-session` | POST | `/api/v1/campaigns` | Creates a campaign, seeds a staging lobby, and writes the owner tuple after the save |
-| `game-session` | GET | `/api/v1/campaigns/{campaign_id}` | Reads one campaign (Zanzibar `view`) |
+| `game-session` | GET | `/api/v1/campaigns/{campaign_id}` | Reads one campaign (Zanzibar `view`). Includes the same `permissions` object as the list (TASK-0644) |
 | `game-session` | PATCH | `/api/v1/campaigns/{campaign_id}` | Updates campaign fields (Zanzibar `manage`) |
 | `game-session` | POST | `/api/v1/campaigns/{campaign_id}/invites` | Issues an invite with role, expiry, and use limit (Zanzibar `run_session`) |
 | `game-session` | POST | `/api/v1/campaigns/join` | Redeems an invite and records membership (any verified caller; `400`, `410`, or `409` on a bad invite) |
@@ -285,7 +285,7 @@ Campaign Lore routes require a verified bearer token, except `/health`, `/health
 | `gateway-api` | PATCH | `/api/v1/profile` | Updates user profile display name, avatar URL, and bio |
 | `gateway-api` | GET | `/api/v1/campaigns` | Proxies to `game_session`: lists the campaigns the caller can `view` (owner-enforced; ADR-0015 a) |
 | `gateway-api` | POST | `/api/v1/campaigns` | Proxies to `game_session`: creates a campaign. The caller becomes its owner. Returns `201` |
-| `gateway-api` | GET | `/api/v1/campaigns/{campaign_id}` | Proxies to `game_session`: campaign overview (requires `view`). Unknown ID returns `404` |
+| `gateway-api` | GET | `/api/v1/campaigns/{campaign_id}` | Proxies to `game_session`: campaign overview (requires `view`) with the `permissions` object (TASK-0644). Unknown ID returns `404` |
 | `gateway-api` | PATCH | `/api/v1/campaigns/{campaign_id}` | Proxies to `game_session`: updates campaign fields (requires `manage`) |
 | `gateway-api` | POST | `/api/v1/campaigns/{campaign_id}/invites` | Proxies to `game_session`: issues an invite for `player` or `spectator` (requires `run_session`). Returns `201` |
 | `gateway-api` | POST | `/api/v1/campaigns/join` | Proxies to `game_session`: redeems an invite and records membership. A used-up invite returns `409` |
