@@ -17,13 +17,12 @@ import jwt
 import pytest
 from cryptography.hazmat.primitives.asymmetric import rsa
 from fastapi.testclient import TestClient
+from game_session.settlement.auth.tokens import get_zitadel_auth_service as get_session_auth
+from game_session.settlement.auth.tokens import set_zitadel_auth_service as set_session_auth
 from gateway_api.auth import set_zitadel_auth_service
 from gateway_api.main import app
-from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
 from runefoble_auth.zitadel import ZitadelAuthService
-
-from tests.helpers.spicedb_factory import shared_spicedb_client
 
 
 def generate_rsa_key() -> rsa.RSAPrivateKey:
@@ -77,7 +76,7 @@ def create_signed_token(
 
 
 @pytest.fixture
-def auth_environment():
+def auth_environment(game_session_upstream, default_spicedb_client):
     """Set up test RSA keys, mock JWKS client, and gateway auth service in production mode."""
     valid_key = generate_rsa_key()
     attacker_key = generate_rsa_key()
@@ -96,25 +95,26 @@ def auth_environment():
         jwk_client=jwk_client,
     )
 
-    mock_spicedb = MockSpiceDBClient()
-    spicedb_patch = shared_spicedb_client(mock_spicedb)
-    spicedb_patch.start()
+    # Share the suite's mock SpiceDB with the gateway and game_session, as one store.
+    mock_spicedb = default_spicedb_client
     set_zitadel_auth_service(auth_service)
+    # The gateway forwards the bearer to game_session, so that upstream trusts the same key.
+    previous_session_auth = get_session_auth()
+    set_session_auth(auth_service)
 
-    client = TestClient(app)
-
-    yield {
-        "client": client,
-        "valid_key": valid_key,
-        "attacker_key": attacker_key,
-        "kid": kid,
-        "auth_service": auth_service,
-        "spicedb": mock_spicedb,
-    }
+    with TestClient(app) as client:
+        yield {
+            "client": client,
+            "valid_key": valid_key,
+            "attacker_key": attacker_key,
+            "kid": kid,
+            "auth_service": auth_service,
+            "spicedb": mock_spicedb,
+        }
 
     # Teardown
-    spicedb_patch.stop()
     set_zitadel_auth_service(None)
+    set_session_auth(previous_session_auth)
 
 
 @pytest.fixture

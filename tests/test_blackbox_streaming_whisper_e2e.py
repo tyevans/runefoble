@@ -25,7 +25,7 @@ from tests.helpers.audio_synth import (
 )
 from tests.helpers.fixture_transcriber import FixtureTranscriber
 from tests.helpers.mock_redis import MockAsyncRedis
-from tests.helpers.spicedb_factory import grant_voice_session
+from tests.helpers.spicedb_factory import VOICE_DM, bind_character_owner, grant_voice_session
 from tests.helpers.voice_identity import voice_ws_subprotocols
 
 pytestmark = pytest.mark.usefixtures("trusted_voice_issuer", "trusted_ws_issuer")
@@ -36,12 +36,17 @@ def test_end_to_end_streaming_speech_to_intent_latency_budget(
 ):
     """Verifies end-to-end streaming speech transcription and Watcher intent parsing strictly within 500ms."""
     session_id = str(uuid.uuid4())
-    asyncio.run(
-        grant_voice_session(
+
+    async def _grant() -> None:
+        await grant_voice_session(
             session_id,
             players=["spk-valeros-1", "spk-ws-valeros", "spk-final-1", "spk-kyra", "spk-valeros"],
         )
-    )
+        # The voice route forwards the DM's bearer to The Watcher. The DM speaks for this
+        # character, so The Watcher needs `character.edit` on it.
+        await bind_character_owner(VOICE_DM, "spk-valeros-1")
+
+    asyncio.run(_grant())
     campaign_id = str(uuid.uuid4())
 
     speech_pcm = generate_pcm_sine(duration_ms=300)
