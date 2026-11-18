@@ -1,4 +1,5 @@
-import { LitElement, html, type TemplateResult } from 'lit';
+import { LitElement, html, type PropertyValues, type TemplateResult } from 'lit';
+import { AssetImageSet, AuthConsumerController } from '@runefoble/ui-core';
 import { customElement, property } from 'lit/decorators.js';
 import { sessionLobbyStyles } from './runefoble-session-lobby.styles.ts';
 import {
@@ -12,8 +13,28 @@ import {
   computeReadinessSummary,
 } from './types.ts';
 
+/** Row key of one participant image. Avatar and portrait are separate rows. */
+const imageKey = (userId: string, slot: 'avatar' | 'portrait') => `${userId}:${slot}`;
+
 @customElement('runefoble-session-lobby')
 export class RunefobleSessionLobby extends LitElement {
+  private readonly auth = new AuthConsumerController(this);
+  /** Participant images. Protected asset paths load with the bearer (TASK-0785). */
+  private readonly images = new AssetImageSet(this, () => this.auth.authHeaders());
+
+  override willUpdate(changed: PropertyValues) {
+    super.willUpdate(changed);
+    const keys: string[] = [];
+    for (const p of this.participants) {
+      const avatar = imageKey(p.userId, 'avatar');
+      const portrait = imageKey(p.userId, 'portrait');
+      keys.push(avatar, portrait);
+      this.images.setSource(avatar, p.avatarUrl ?? '');
+      this.images.setSource(portrait, p.portraitUrl ?? '');
+    }
+    this.images.retain(keys);
+  }
+
   static styles = sessionLobbyStyles;
 
   @property({ type: String, attribute: 'session-id' }) sessionId = '';
@@ -70,7 +91,7 @@ export class RunefobleSessionLobby extends LitElement {
     return html`
       <div class="avatar-wrap">
         ${p.avatarUrl
-          ? html`<img class="avatar-img" src="${p.avatarUrl}" alt="${p.username}" />`
+          ? html`<img class="avatar-img" src="${this.images.url(imageKey(p.userId, 'avatar'))}" alt="${p.username}" />`
           : html`<div class="avatar-fallback">${initial}</div>`}
         <span class="presence-dot ${status}" title="${status}"></span>
       </div>
@@ -94,7 +115,7 @@ export class RunefobleSessionLobby extends LitElement {
     return html`
       <div class="character-card-preview">
         ${p.portraitUrl
-          ? html`<img class="char-portrait" src="${p.portraitUrl}" alt="Portrait" />`
+          ? html`<img class="char-portrait" src="${this.images.url(imageKey(p.userId, 'portrait'))}" alt="Portrait" />`
           : html`<div class="char-portrait-fallback">${initial}</div>`}
         <div class="char-details">
           ${hasChar

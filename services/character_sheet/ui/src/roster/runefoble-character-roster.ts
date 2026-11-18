@@ -1,5 +1,5 @@
-import { LitElement, html } from 'lit';
-import { PORTRAIT_PLACEHOLDERS } from '@runefoble/ui-core';
+import { LitElement, html, type PropertyValues } from 'lit';
+import { AssetImageSet, AuthConsumerController, PORTRAIT_PLACEHOLDERS } from '@runefoble/ui-core';
 import { customElement, property, state } from 'lit/decorators.js';
 import { characterRosterStyles } from './runefoble-character-roster.styles.ts';
 import './runefoble-character-builder-modal.ts';
@@ -15,6 +15,18 @@ import {
 
 @customElement('runefoble-character-roster')
 export class RunefobleCharacterRoster extends LitElement {
+  private readonly auth = new AuthConsumerController(this);
+  /** Portrait images by character id. Protected asset paths load with the bearer (TASK-0785). */
+  private readonly portraits = new AssetImageSet(this, () => this.auth.authHeaders());
+
+  override willUpdate(changed: PropertyValues) {
+    super.willUpdate(changed);
+    for (const char of this.characters) {
+      this.portraits.setSource(char.id, char.portraitUrl || PORTRAIT_PLACEHOLDERS.fighter);
+    }
+    this.portraits.retain(this.characters.map((char) => char.id));
+  }
+
   static styles = [characterRosterStyles];
 
   @property({ type: Array }) characters: CharacterItem[] = [];
@@ -88,7 +100,7 @@ export class RunefobleCharacterRoster extends LitElement {
     return html`
       <article class="character-card" data-character-id=${char.id}>
         <div class="card-top">
-          <img class="avatar-thumb" src=${char.portraitUrl || PORTRAIT_PLACEHOLDERS.fighter} alt=${char.name} />
+          <img class="avatar-thumb" src=${this.portraits.url(char.id)} alt=${char.name} />
           <div class="card-identity">
             <h3 class="card-name" title=${char.name}>${char.name}</h3>
             <div class="card-class">

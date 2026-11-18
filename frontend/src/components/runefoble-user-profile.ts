@@ -3,8 +3,9 @@
  * ADR-0004, ADR-0012, ADR-0013, TASK-0257
  */
 
-import { LitElement, html } from 'lit';
+import { LitElement, html, type PropertyValues } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
+import { AssetImageController, AuthConsumerController } from '@runefoble/ui-core';
 import { authService, type UserClaims } from '../auth/auth-service.ts';
 import { loadRuntimeConfig } from '../auth/runtime-config.ts';
 import { appDataService } from '../services/app-data-service.ts';
@@ -15,6 +16,15 @@ import { userProfileStyles } from './runefoble-user-profile.styles.ts';
 
 @customElement('runefoble-user-profile')
 export class RunefobleUserProfile extends LitElement {
+  private readonly auth = new AuthConsumerController(this);
+  /** The account avatar. A protected asset path loads with the bearer (TASK-0785). */
+  private readonly avatar = new AssetImageController(this, () => this.auth.authHeaders());
+
+  override willUpdate(changed: PropertyValues) {
+    super.willUpdate(changed);
+    this.avatar.setSource(this.getEffectiveUser()?.avatar_url ?? '');
+  }
+
   static styles = [userProfileStyles];
 
   @property({ type: Object }) user: UserClaims | null = null;
@@ -199,7 +209,7 @@ export class RunefobleUserProfile extends LitElement {
         <header class="profile-header">
           <div class="user-identity">
             ${user.avatar_url
-              ? html`<img class="avatar-large" src="${user.avatar_url}" alt="${displayName}" />`
+              ? html`<img class="avatar-large" src="${this.avatar.url}" alt="${displayName}" />`
               : html`<div class="avatar-large" aria-hidden="true">${this.getInitials(displayName)}</div>`}
             <div class="identity-text">
               <h1 class="profile-title" data-testid="profile-username">${displayName}</h1>

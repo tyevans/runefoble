@@ -103,3 +103,61 @@ export class AssetImageController implements ReactiveController {
     this.host.requestUpdate();
   }
 }
+
+/**
+ * A keyed set of `AssetImageController`s, for lists (roster cards, lobby rows, member rows).
+ *
+ * Call `setSource(key, src)` from `willUpdate` for every row. Call `retain(keys)` with the
+ * keys that still render, so a removed row revokes its blob URL. A disconnect revokes all.
+ */
+export class AssetImageSet {
+  private readonly images = new Map<string, AssetImageController>();
+  private readonly host: ReactiveControllerHost;
+  private readonly authHeaders: () => Promise<Record<string, string>>;
+  private readonly fetchImpl: AssetFetchLike | undefined;
+
+  constructor(
+    host: ReactiveControllerHost,
+    authHeaders: () => Promise<Record<string, string>>,
+    fetchImpl?: AssetFetchLike,
+  ) {
+    this.host = host;
+    this.authHeaders = authHeaders;
+    this.fetchImpl = fetchImpl;
+  }
+
+  /** The URL for `<img src>` of one row. Empty when the row has no image yet. */
+  url(key: string): string {
+    return this.images.get(key)?.url ?? '';
+  }
+
+  /** The refusal message of one row, or an empty string. */
+  failure(key: string): string {
+    return this.images.get(key)?.failure ?? '';
+  }
+
+  /** Shows `src` for one row. Creates the row's controller on first use. */
+  setSource(key: string, src: string): void {
+    this.controllerFor(key).setSource(src);
+  }
+
+  /** Revokes and drops every row whose key is not in `liveKeys`. */
+  retain(liveKeys: Iterable<string>): void {
+    const live = new Set(liveKeys);
+    for (const [key, image] of this.images) {
+      if (live.has(key)) continue;
+      image.setSource('');
+      this.host.removeController(image);
+      this.images.delete(key);
+    }
+  }
+
+  private controllerFor(key: string): AssetImageController {
+    let image = this.images.get(key);
+    if (!image) {
+      image = new AssetImageController(this.host, this.authHeaders, this.fetchImpl);
+      this.images.set(key, image);
+    }
+    return image;
+  }
+}

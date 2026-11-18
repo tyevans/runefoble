@@ -1,19 +1,21 @@
 import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import type { ReactiveControllerHost } from 'lit';
-import { AssetImageController, isAuthorizedAssetPath } from '../src/index.ts';
+import { AssetImageController, AssetImageSet, isAuthorizedAssetPath } from '../src/index.ts';
 
 const ASSET_A = '/api/v1/assets/asset-a?stream=true';
 const ASSET_B = '/api/v1/assets/asset-b?stream=true';
 const TOKEN = 'tok-1';
 
 /** A host stand-in that records controllers and update requests. */
-function fakeHost() {
-  const controllers: unknown[] = [];
+function fakeHost(autoConnect = false) {
+  const controllers: Array<{ hostConnected?: () => void }> = [];
   let updates = 0;
   const host = {
-    addController(c: unknown) {
+    addController(c: { hostConnected?: () => void }) {
       controllers.push(c);
+      // Lit calls hostConnected for a controller added to a connected host.
+      if (autoConnect) c.hostConnected?.();
     },
     removeController() {},
     requestUpdate() {
@@ -68,7 +70,7 @@ const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
 describe('isAuthorizedAssetPath', () => {
   it('matches only the authorized asset route', () => {
     assert.equal(isAuthorizedAssetPath(ASSET_A), true);
-    assert.equal(isAuthorizedAssetPath('/assets/portraits/default.svg'), false);
+    assert.equal(isAuthorizedAssetPath('https://cdn.example.test/portrait.png'), false);
     assert.equal(isAuthorizedAssetPath('data:image/png;base64,AAAA'), false);
   });
 });
@@ -81,10 +83,10 @@ describe('AssetImageController', () => {
     assert.equal(controllers.length, 1);
 
     image.hostConnected();
-    image.setSource('/assets/portraits/default.svg');
+    image.setSource('https://cdn.example.test/portrait.png');
     await settle();
 
-    assert.equal(image.url, '/assets/portraits/default.svg');
+    assert.equal(image.url, 'https://cdn.example.test/portrait.png');
     assert.deepEqual(requested, []);
   });
 
@@ -190,5 +192,38 @@ describe('AssetImageController', () => {
 
     assert.equal(image.url, 'blob:runefoble-test-1', 'the stale load must not replace the newer one');
     assert.ok(revoked.includes('blob:runefoble-test-2'), 'the stale blob must be revoked');
+  });
+});
+
+describe('AssetImageSet', () => {
+  it('shows one blob per row and revokes a row that is no longer rendered', async () => {
+    const { host } = fakeHost(true);
+    const { fetchImpl } = serverFetch();
+    const set = new AssetImageSet(host, bearer, fetchImpl);
+
+    set.setSource('row-1', ASSET_A);
+    set.setSource('row-2', ASSET_B);
+    await settle();
+    assert.equal(set.url('row-1'), 'blob:runefoble-test-1');
+    assert.equal(set.url('row-2'), 'blob:runefoble-test-2');
+
+    set.retain(['row-2']);
+    await settle();
+
+    assert.equal(set.url('row-1'), '');
+    assert.equal(set.url('row-2'), 'blob:runefoble-test-2');
+    assert.ok(revoked.includes('blob:runefoble-test-1'), 'the removed row must be revoked');
+  });
+
+  it('passes a plain or inline URL through a row without a request', async () => {
+    const { host } = fakeHost(true);
+    const { fetchImpl, requested } = serverFetch();
+    const set = new AssetImageSet(host, bearer, fetchImpl);
+
+    set.setSource('row-1', 'data:image/svg+xml;utf8,<svg/>');
+    await settle();
+
+    assert.equal(set.url('row-1'), 'data:image/svg+xml;utf8,<svg/>');
+    assert.deepEqual(requested, []);
   });
 });
