@@ -56,6 +56,7 @@ class CompendiumRetrievalEngine:
         self._spells: dict[str, dict[str, Any]] = {}
         self._conditions: dict[str, dict[str, Any]] = {}
         self._homebrew: dict[UUID, list[dict[str, Any]]] = {}
+        self._homebrew_monsters: dict[UUID, dict[str, dict[str, Any]]] = {}
 
         self._initialized = False
 
@@ -166,7 +167,7 @@ class CompendiumRetrievalEngine:
                 "is_homebrew": True,
                 "campaign_id": campaign_id,
             }
-            self._monsters[title.lower()] = m_data
+            self._homebrew_monsters.setdefault(campaign_id, {})[title.lower().strip()] = m_data
 
         content_str = " ".join(
             f"{k}: {v}" for k, v in content.items() if isinstance(v, (str, int, float))
@@ -295,6 +296,10 @@ class CompendiumRetrievalEngine:
     def get_condition(self, name: str) -> dict[str, Any] | None:
         """Find condition by name (case-insensitive)."""
         return self._conditions.get(name.lower().strip())
+
+    def get_homebrew_monster(self, campaign_id: UUID, name: str) -> dict[str, Any] | None:
+        """Find a homebrew monster of one campaign by name. SRD monsters are never found here."""
+        return self._homebrew_monsters.get(campaign_id, {}).get(name.lower().strip())
 
     def get_homebrew_by_campaign(self, campaign_id: UUID) -> list[dict[str, Any]]:
         """Retrieve homebrew rules belonging to a specific campaign."""

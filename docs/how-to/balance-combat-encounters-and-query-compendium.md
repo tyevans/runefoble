@@ -71,6 +71,13 @@ curl http://localhost:8007/api/v1/compendium/conditions/Paralyzed \
   -H "Authorization: Bearer $TOKEN"
 ```
 
+A homebrew monster is read the same way, with the campaign named. The caller must pass `homebrew_rule.view` for it. Otherwise the route returns `404`, the same as for a missing monster. Spell and condition lookups return SRD entries only.
+
+```bash
+curl "http://localhost:8007/api/v1/compendium/monsters/Abyssal%20Shadowstalker?campaign_id=8a329ef2-5c91-4cf1-83d8-21d4bb67f101" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
 ### Monster Response
 ```json
 {

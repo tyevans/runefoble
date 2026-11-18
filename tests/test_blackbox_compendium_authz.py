@@ -236,3 +236,66 @@ def test_encounter_without_campaign_needs_only_a_token(compendium, trusted_ws_is
         headers=_auth(trusted_ws_issuer, "stranger_vex"),
     )
     assert res.status_code == 200, res.text
+
+
+def _monster(compendium, name: str, headers: dict[str, str], campaign_id: str | None = None):
+    params = {"campaign_id": campaign_id} if campaign_id else None
+    return compendium.get(f"/api/v1/compendium/monsters/{name}", params=params, headers=headers)
+
+
+def test_owner_reads_own_homebrew_monster_by_name(gateway, compendium, trusted_ws_issuer):
+    """The DM reads the homebrew monster by name when it names the campaign."""
+    campaign_id, _ = _campaign_with_cast(gateway, trusted_ws_issuer)
+    assert (
+        _register(compendium, campaign_id, _auth(trusted_ws_issuer, "dm_sable")).status_code == 200
+    )
+
+    res = _monster(
+        compendium,
+        "Abyssal%20Shadowstalker",
+        _auth(trusted_ws_issuer, "dm_sable"),
+        campaign_id,
+    )
+    assert res.status_code == 200, res.text
+    assert res.json()["name"] == "Abyssal Shadowstalker"
+    assert res.json()["is_homebrew"] is True
+
+
+def test_stranger_gets_404_for_homebrew_monster(gateway, compendium, trusted_ws_issuer):
+    """A verified stranger gets 404 for the campaign homebrew monster, as if it did not exist."""
+    campaign_id, _ = _campaign_with_cast(gateway, trusted_ws_issuer)
+    assert (
+        _register(compendium, campaign_id, _auth(trusted_ws_issuer, "dm_sable")).status_code == 200
+    )
+
+    res = _monster(
+        compendium,
+        "Abyssal%20Shadowstalker",
+        _auth(trusted_ws_issuer, "stranger_vex"),
+        campaign_id,
+    )
+    assert res.status_code == 404, res.text
+
+
+def test_homebrew_monster_needs_a_campaign_to_be_read(gateway, compendium, trusted_ws_issuer):
+    """Without `campaign_id`, even the DM gets 404 for a homebrew monster."""
+    campaign_id, _ = _campaign_with_cast(gateway, trusted_ws_issuer)
+    assert (
+        _register(compendium, campaign_id, _auth(trusted_ws_issuer, "dm_sable")).status_code == 200
+    )
+
+    res = _monster(compendium, "Abyssal%20Shadowstalker", _auth(trusted_ws_issuer, "dm_sable"))
+    assert res.status_code == 404, res.text
+
+
+def test_srd_monster_is_readable_by_every_token_holder(gateway, compendium, trusted_ws_issuer):
+    """An SRD monster is readable by the DM and by a stranger. No bearer gets 401."""
+    campaign_id, _ = _campaign_with_cast(gateway, trusted_ws_issuer)
+
+    for sub in ("dm_sable", "stranger_vex"):
+        res = _monster(compendium, "Goblin", _auth(trusted_ws_issuer, sub), campaign_id)
+        assert res.status_code == 200, res.text
+        assert res.json()["name"] == "Goblin"
+        assert res.json().get("is_homebrew", False) is False
+
+    assert _monster(compendium, "Goblin", {}).status_code == 401
