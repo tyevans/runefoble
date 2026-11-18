@@ -243,6 +243,8 @@ lint: ## Check types, Ruff lint, format, and Helm
 	uv run lint-imports
 	@echo "==> Typechecking inference worker..."
 	uv run mypy services/inference_worker/src
+	@echo "==> Typechecking MCP gateway..."
+	uv run mypy gateway/mcp/src/gateway_mcp
 	@echo "==> Typechecking frontend..."
 	cd frontend && pnpm exec tsc --noEmit
 	@echo "==> Typechecking e2e suite..."
