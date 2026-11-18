@@ -82,11 +82,11 @@ Run the targets in this order. `make helm-deploy` does not build images. It depl
 ```bash
 kubectl get pods
 ```
-Wait until each pod shows `Running`. The pods of the Jobs `spicedb-schema-migration` and `zitadel-bootstrap` show `Completed`. Then check the gateway through the ingress:
+Wait until each pod shows `Running`. The pods of the Jobs `spicedb-schema-migration` and `zitadel-bootstrap` show `Completed`. A clean install from an empty namespace finishes its Helm hooks in about one minute. `make helm-deploy` returns after that. Zitadel starts with its Postgres database and writes the admin token to a Secret without any manual step. Then check the gateway through the ingress:
 ```bash
-curl -fsS -o /dev/null -w "%{http_code}\n" http://localhost/api/v1/health
+curl -fsS -o /dev/null -w "%{http_code}\n" http://localhost/healthz
 ```
-Expected result: `200`.
+Expected result: `200`. The body is a JSON report. Its `downstream_services` field shows the health of each service that the gateway probes.
 
 The chart creates the Secret `runefoble-credentials` from the `credentials` block in `values.yaml`. The values in that block are **dev-only**. They are public in this repository, so never deploy them to a shared cluster. See [Chart Credentials](../reference/platform-services.md#chart-credentials) for the keys and for the `credentials.existingSecret` setting that other environments need.
 
@@ -102,7 +102,7 @@ Check each endpoint:
 
 Zitadel uses the host name `auth.localhost`. Chromium and Firefox resolve `*.localhost` to your machine. For `curl`, send the `Host` header as shown.
 
-**First run only.** The chart does not create the sign-in application (`runefoble-web`). Follow the two-step install in [Authenticate with Zitadel OIDC](../how-to/authenticate-with-zitadel-oidc.md#bootstrap-the-zitadel-project-and-application). It creates the project, the application, and the Secret `runefoble-zitadel-client` that the frontend reads.
+**Sign-in application.** The bootstrap Job creates the Zitadel project and the sign-in application (`runefoble-web`) on each install. It writes the Secret `runefoble-zitadel-client` that the frontend reads. No manual step is needed. See [Authenticate with Zitadel OIDC](../how-to/authenticate-with-zitadel-oidc.md#bootstrap-the-zitadel-project-and-application).
 
 **Grafana.** The chart does not add an ingress route for Grafana. Open a port-forward in its own terminal. It runs until you press `Ctrl+C`:
 ```bash

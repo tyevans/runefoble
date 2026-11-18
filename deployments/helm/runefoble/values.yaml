@@ -65,6 +65,10 @@ ingress:
           pathType: Prefix
           service: gateway-api
           port: 8000
+        - path: /healthz
+          pathType: Prefix
+          service: gateway-api
+          port: 8000
         - path: /
           pathType: Prefix
           service: frontend
@@ -96,6 +100,10 @@ ingress:
           service: mailpit
           port: 8025
         - path: /ws
+          pathType: Prefix
+          service: gateway-api
+          port: 8000
+        - path: /healthz
           pathType: Prefix
           service: gateway-api
           port: 8000
@@ -137,7 +145,8 @@ redis:
 # Object Storage (Silo / MinIO fork)
 silo:
   enabled: true
-  image: minio/minio:RELEASE.2024-01-01T00-00-00Z
+  # Chainguard builds MinIO. minio/minio no longer publishes images to Docker Hub. Pinned by digest.
+  image: cgr.dev/chainguard/minio@sha256:7618b82bba99aadd77fcf59eb6cfd89b4b8b8e01ac796c474d57a1c1abf17e79
   port: 9000
   consolePort: 9001
   buckets:
@@ -160,8 +169,9 @@ zitadel:
   bootstrap:
     # Set to false for the first install. See docs/how-to/authenticate-with-zitadel-oidc.md.
     enabled: true
-    # Secret that you create out of band. It holds the Zitadel admin personal access token under
-    # the key `pat`. The chart does not create it, because Zitadel generates the token.
+    # Secret that the Zitadel pod writes at run time. It holds the Zitadel admin personal access
+    # token under the key `pat`. The pat-publisher sidecar in the Zitadel pod creates it. No
+    # manual step is needed.
     adminSecret: zitadel-admin
     # Machine user that Zitadel creates on first start, with the IAM_OWNER role. Its personal
     # access token is the admin token for the Job.
@@ -190,13 +200,13 @@ spicedb:
   httpPort: 8443
   schemaJob:
     enabled: true
-    image: authzed/zed:latest
+    image: authzed/zed:v0.25.0
     backoffLimit: 10
 
 # Analytics (OpenPanel self-hosted)
 openpanel:
   enabled: true
-  image: openpanel/openpanel:latest
+  image: lindesvard/openpanel-dashboard:2.3.0
   port: 3000
 
 # Email Testing & Mock SMTP (Mailpit)
@@ -301,8 +311,8 @@ services:
       RUNEFOBLE_EMBEDDING_BASE_URL: ""   # OpenAI-compatible base URL, including /v1
       RUNEFOBLE_EMBEDDING_MODEL: ""
       RUNEFOBLE_EMBEDDING_DIMENSION: ""  # Vector width the model returns
-    # Kubernetes Secret that holds the endpoint key under the key "api-key". It is not
-    # created by this chart. Local servers ignore the key, but the Secret must still exist.
+    # Kubernetes Secret that holds the endpoint key under the key "api-key". The chart renders it
+    # only when global.environment is local (an empty placeholder). Other environments create it.
     embeddingApiKeySecret: campaign-lore-embedding
   rulesCompendium:
     image: runefoble/rules-compendium:0.1.0

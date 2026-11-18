@@ -7,6 +7,7 @@
 | `/` | `frontend:80` | Lit + Vite web application |
 | `/api` | `gateway-api:8000` | REST API gateway (`/api/v1/...`) |
 | `/ws` | `gateway-api:8000` | WebSocket gateway (`/ws/session/{id}`, `/ws/voice/{id}`, `/ws/campaigns/{id}`, `/ws/minigames/{id}`, and other `/ws/...` routes). Traefik forwards the HTTP upgrade without extra annotations. `/ws/session/{id}` needs `session.observe` (close code 4403 otherwise) and relays only inside its own session. The minigame table sockets (`/ws/minigames/{id}` and `/ws/establishments/{id}/tables/{table_id}`) are relayed to `game_session`, which verifies the bearer subprotocol and owns the table (TASK-0592). Clients authenticate as described in [Authenticate with Zitadel OIDC](../how-to/authenticate-with-zitadel-oidc.md) |
+| `/healthz` | `gateway-api:8000` | Gateway health report. It probes each downstream service and reports its status. |
 | `/docs`, `/swagger-ui` | `swagger-ui:8080` | Unified Swagger UI aggregating all OpenAPI specs |
 | Host `auth.localhost`, path `/` | `zitadel:8080` | Self-hosted Zitadel identity provider. Zitadel has its own host because it serves only its root path |
 | `/analytics` | `openpanel:3000` | Self-hosted OpenPanel privacy-preserving analytics |
