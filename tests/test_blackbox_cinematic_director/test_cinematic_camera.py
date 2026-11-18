@@ -10,8 +10,7 @@ from gateway_api.cinematic_director import (
     get_cinematic_director,
     parse_cubic_bezier,
 )
-from runefoble_events.board import TokenMoved
-from runefoble_events.session import TurnStarted
+from runefoble_events.events import TokenMoved, TurnStarted
 
 
 def test_cinematic_director_cubic_bezier_calculation(

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, ClassVar
+from typing import Any
 from uuid import UUID, uuid4
 
 from pydantic import Field
@@ -12,7 +12,6 @@ from runefoble_events.base import BaseRunefobleEvent, register_event
 
 @register_event("runefoble.events.dice.rolled")
 class DiceRolled(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "GameSession"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.dice.rolled"
@@ -34,12 +33,8 @@ class DiceRolled(BaseRunefobleEvent):
         return self.rolls
 
 
-DiceRollEvent = DiceRolled
-
-
 @register_event("runefoble.events.encounter.spawned")
 class EncounterSpawned(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "Encounter"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.encounter.spawned"
@@ -53,7 +48,6 @@ class EncounterSpawned(BaseRunefobleEvent):
 
 @register_event("runefoble.events.encounter.action_resolved")
 class AutonomousActionResolved(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "Encounter"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.encounter.action_resolved"
@@ -67,7 +61,6 @@ class AutonomousActionResolved(BaseRunefobleEvent):
 
 @register_event("runefoble.events.board.ghost_preview_candidate")
 class CandidateGhostPreviewEmitted(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "BoardState"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.board.ghost_preview_candidate"
@@ -84,7 +77,6 @@ class CandidateGhostPreviewEmitted(BaseRunefobleEvent):
 __all__ = [
     "AutonomousActionResolved",
     "CandidateGhostPreviewEmitted",
-    "DiceRollEvent",
     "DiceRolled",
     "EncounterSpawned",
 ]

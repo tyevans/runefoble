@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import time
-from typing import ClassVar
 from uuid import UUID, uuid4
 
 from pydantic import Field
@@ -15,7 +14,6 @@ from runefoble_events.base import BaseRunefobleEvent, register_event
 class NeuralSpeechBargeInDetectedEvent(BaseRunefobleEvent):
     """Emitted when neural VAD detects vocalization onset during active TTS playback."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "VoiceRoom"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.voice.barge_in_detected"
@@ -33,7 +31,6 @@ class NeuralSpeechBargeInDetectedEvent(BaseRunefobleEvent):
 class TTSStreamAttenuatedEvent(BaseRunefobleEvent):
     """Emitted when active TTS playback is attenuated gracefully to silence with cosine crossfading."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "VoiceRoom"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.voice.tts_stream_attenuated"
@@ -46,8 +43,6 @@ class TTSStreamAttenuatedEvent(BaseRunefobleEvent):
     remaining_text: str | None = None
     attenuated_at: float = Field(default_factory=time.time)
 
-
-# Backward-compatible aliases
 
 __all__ = [
     "NeuralSpeechBargeInDetectedEvent",

@@ -16,7 +16,7 @@ from uuid import UUID
 from eventsource.domain.aggregate import DeclarativeAggregate
 from eventsource.domain.decorators import handles
 from pydantic import BaseModel, Field
-from runefoble_events.watcher import CampaignFactionRegistered, WorldTickExecuted
+from runefoble_events.events import CampaignFactionRegistered, WorldTickExecuted
 
 
 class LatestWorldTick(BaseModel):

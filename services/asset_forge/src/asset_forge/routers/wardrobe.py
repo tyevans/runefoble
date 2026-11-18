@@ -8,7 +8,7 @@ from uuid import uuid4
 from fastapi import APIRouter, Depends, HTTPException
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.spicedb import SpiceDBClient
-from runefoble_events.character import PortraitVariantGenerated
+from runefoble_events.events import PortraitVariantGenerated
 from runefoble_platform.asset_index import get_stored_asset
 from runefoble_platform.storage import AssetNotFoundError, SiloStorageService
 

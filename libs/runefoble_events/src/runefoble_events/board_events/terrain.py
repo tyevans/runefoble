@@ -1,6 +1,6 @@
 """Board grid initialization, terrain cell modification, and VTT import events."""
 
-from typing import Any, ClassVar, Literal
+from typing import Any, Literal
 from uuid import UUID, uuid4
 
 from pydantic import Field
@@ -10,7 +10,6 @@ from runefoble_events.base import BaseRunefobleEvent, register_event
 
 @register_event("runefoble.events.board.grid_initialized")
 class BoardGridInitialized(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     event_type: str = "runefoble.events.board.grid_initialized"
 
     aggregate_type: str = "BoardState"
@@ -23,7 +22,6 @@ class BoardGridInitialized(BaseRunefobleEvent):
 
 @register_event("runefoble.events.board.terrain_modified")
 class TerrainCellModified(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "BoardState"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.board.terrain_modified"
@@ -38,7 +36,6 @@ class TerrainCellModified(BaseRunefobleEvent):
 
 @register_event("runefoble.events.board.hazard_triggered")
 class TokenHazardTriggered(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "BoardState"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.board.hazard_triggered"
@@ -53,7 +50,6 @@ class TokenHazardTriggered(BaseRunefobleEvent):
 class UniversalVTTImported(BaseRunefobleEvent):
     """Emitted when a Universal VTT (.dd2vtt) battlemap is imported onto the board."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "BoardState"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.board.map_imported"
@@ -67,6 +63,3 @@ class UniversalVTTImported(BaseRunefobleEvent):
     portals: list[dict[str, Any]] = Field(default_factory=list)
     doors: dict[str, Any] = Field(default_factory=dict)
     lights: list[dict[str, Any]] = Field(default_factory=list)
-
-
-BoardMapImported = UniversalVTTImported

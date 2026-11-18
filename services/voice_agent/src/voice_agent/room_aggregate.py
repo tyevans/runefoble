@@ -13,21 +13,15 @@ from uuid import NAMESPACE_DNS, UUID, uuid4, uuid5
 from eventsource.domain.aggregate import DeclarativeAggregate
 from eventsource.domain.decorators import handles
 from pydantic import BaseModel, Field
-from runefoble_events.vocal_dsp import (
+from runefoble_events.events import (
     VocalModulatorPresetAppliedEvent,
     VoiceFilterToggledEvent,
-)
-from runefoble_events.voice import (
     VoicePeerJoined,
     VoicePeerLeft,
     VoicePeerMuteToggled,
-)
-from runefoble_events.voice_playback import (
     VoicePlaybackAttenuated,
     VoicePlaybackStarted,
     VoicePlaybackStopped,
-)
-from runefoble_events.voice_stream_quality import (
     VoiceStreamCodecAdaptedEvent,
     VoiceStreamQualityMeasured,
 )

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, ClassVar
+from typing import Any
 from uuid import UUID
 
 from pydantic import Field
@@ -14,7 +14,6 @@ from runefoble_events.base import BaseRunefobleEvent, register_event
 class SharedWorldCreated(BaseRunefobleEvent):
     """Fired when a persistent West Marches shared world frontier is established."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     event_type: str = "runefoble.events.west_marches.shared_world_created"
 
     aggregate_type: str = "SharedWorld"
@@ -29,7 +28,6 @@ class SharedWorldCreated(BaseRunefobleEvent):
 class CampaignRegisteredToSharedWorld(BaseRunefobleEvent):
     """Fired when an adventuring campaign links into a shared world frontier."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     event_type: str = "runefoble.events.west_marches.campaign_registered_to_shared_world"
 
     aggregate_type: str = "SharedWorld"
@@ -43,7 +41,6 @@ class CampaignRegisteredToSharedWorld(BaseRunefobleEvent):
 class CrossCampaignDiscoveryShared(BaseRunefobleEvent):
     """Fired when an adventuring party maps a point of interest, dungeon, or waypoint."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     event_type: str = "runefoble.events.west_marches.cross_campaign_discovery_shared"
 
     aggregate_type: str = "SharedWorld"
@@ -63,7 +60,6 @@ class CrossCampaignDiscoveryShared(BaseRunefobleEvent):
 class OutpostEstablished(BaseRunefobleEvent):
     """Fired when a regional settlement or base camp is established."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     event_type: str = "runefoble.events.west_marches.outpost_established"
 
     aggregate_type: str = "SharedWorld"
@@ -81,7 +77,6 @@ class OutpostEstablished(BaseRunefobleEvent):
 class SharedStrongholdUpgraded(BaseRunefobleEvent):
     """Fired when communal outpost facilities are upgraded."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     event_type: str = "runefoble.events.west_marches.shared_stronghold_upgraded"
 
     aggregate_type: str = "SharedWorld"
@@ -102,7 +97,6 @@ class OutpostResourcesContributed(BaseRunefobleEvent):
     in game_session (`StrongholdTreasuryContributed`).
     """
 
-    suppress_event_type_warning: ClassVar[bool] = True
     event_type: str = "runefoble.events.west_marches.outpost_resources_contributed"
 
     aggregate_type: str = "SharedWorld"
@@ -117,7 +111,6 @@ class OutpostResourcesContributed(BaseRunefobleEvent):
 class CommunalNoticePosted(BaseRunefobleEvent):
     """Fired when a cross-campaign notice or bounty is posted to the tavern board."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     event_type: str = "runefoble.events.west_marches.communal_notice_posted"
 
     aggregate_type: str = "SharedWorld"
@@ -135,7 +128,6 @@ class CommunalNoticePosted(BaseRunefobleEvent):
 class CaravanContractPosted(BaseRunefobleEvent):
     """Fired when an asynchronous mercenary caravan contract is posted."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     event_type: str = "runefoble.events.west_marches.caravan_contract_posted"
 
     aggregate_type: str = "CaravanContract"
@@ -161,7 +153,6 @@ class CaravanContractPosted(BaseRunefobleEvent):
 class CaravanContractAccepted(BaseRunefobleEvent):
     """Fired when an adventuring party claims or accepts an escort contract."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     event_type: str = "runefoble.events.west_marches.caravan_contract_accepted"
 
     aggregate_type: str = "CaravanContract"
@@ -178,7 +169,6 @@ class CaravanContractAccepted(BaseRunefobleEvent):
 class CaravanDispatched(BaseRunefobleEvent):
     """Fired when a resource caravan sets off across the frontier."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     event_type: str = "runefoble.events.west_marches.caravan_dispatched"
 
     aggregate_type: str = ""
@@ -197,7 +187,6 @@ class CaravanDispatched(BaseRunefobleEvent):
 class CaravanAmbushed(BaseRunefobleEvent):
     """Fired when a caravan encounters a wilderness hazard or ambush during transit."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     event_type: str = "runefoble.events.west_marches.caravan_ambushed"
 
     aggregate_type: str = "CaravanContract"
@@ -217,7 +206,6 @@ class CaravanAmbushed(BaseRunefobleEvent):
 class CaravanTradeFulfilled(BaseRunefobleEvent):
     """Fired when a caravan reaches destination, delivering cargo and completing the contract."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     event_type: str = "runefoble.events.west_marches.caravan_trade_fulfilled"
 
     aggregate_type: str = "CaravanContract"
@@ -239,7 +227,6 @@ class CaravanTradeFulfilled(BaseRunefobleEvent):
 class CaravanTradeCompleted(BaseRunefobleEvent):
     """Fired when a caravan arrives at its destination outpost, delivering cargo."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     event_type: str = "runefoble.events.west_marches.caravan_trade_completed"
 
     aggregate_type: str = "CaravanLedger"

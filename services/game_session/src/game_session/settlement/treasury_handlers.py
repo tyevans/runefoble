@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Any
 
 from eventsource.domain.decorators import handles
 from game_session.settlement.charter_handlers import _to_uuid
-from runefoble_events.settlements import SettlementResourcesDepositedEvent
+from runefoble_events.events import SettlementResourcesDepositedEvent
 
 if TYPE_CHECKING:
     from game_session.settlement.models import SettlementState

@@ -1,6 +1,6 @@
 """Tactile 3D collisions and physical tumbling dice domain events."""
 
-from typing import Any, ClassVar
+from typing import Any
 from uuid import UUID, uuid4
 
 from pydantic import Field
@@ -13,8 +13,6 @@ class PhysicsCollisionOccurred(BaseRunefobleEvent):
     """Emitted when a physical rigid-body collision occurs on the tactical board."""
 
     event_type: str = "runefoble.events.board.physics_collision"
-
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "BoardState"
     aggregate_id: UUID = Field(default_factory=uuid4)
     session_id: str = ""
@@ -38,8 +36,6 @@ class DiceSettled(BaseRunefobleEvent):
     """Emitted when physical tumbling dice come to rest on the tactical board."""
 
     event_type: str = "runefoble.events.dice.settled"
-
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "BoardState"
     aggregate_id: UUID = Field(default_factory=uuid4)
     session_id: str = ""

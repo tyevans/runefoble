@@ -14,7 +14,7 @@ from uuid import UUID, uuid5
 from eventsource.domain.aggregate import DeclarativeAggregate
 from eventsource.domain.decorators import handles
 from pydantic import BaseModel, Field
-from runefoble_events.child_index import ChildLinked
+from runefoble_events.events import ChildLinked
 
 _INDEX_NAMESPACE = UUID("3f6c1a9e-5b8d-4f0e-9a7c-2d4e6b8f1a30")
 

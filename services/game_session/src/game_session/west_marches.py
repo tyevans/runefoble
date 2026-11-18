@@ -16,7 +16,7 @@ from eventsource.domain.decorators import handles
 from game_session.caravan.ledger import CaravanLedgerAggregate
 from game_session.caravan.models import CaravanLedgerState
 from pydantic import BaseModel, Field
-from runefoble_events.west_marches import (
+from runefoble_events.events import (
     CampaignRegisteredToSharedWorld,
     CommunalNoticePosted,
     CrossCampaignDiscoveryShared,

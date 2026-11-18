@@ -25,29 +25,30 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
 
 ## Modular Package Architecture
 
-The `libs/runefoble_events` package organizes domain event definitions and re-exports into discrete, single-responsibility category modules governed by Hard Invariant 6 (< 150 lines per submodule, < 80 lines per aggregator facade):
+`runefoble_events.events` is the only public import home for domain event classes. Import every event class from this package:
 
-- **Aggregator Facades**:
-  - `runefoble_events`: Package root. It exports the base event types only: `BaseRunefobleEvent`, `DomainEvent` and `register_event`.
-  - `runefoble_events.events`: Subpackage aggregator facade providing unified access to domain event models.
-- **Domain Category Submodules (`runefoble_events.events.*`)**:
-  - `session_events.py`: Game session lifecycle, turn sequencing, initiative rolls, combat rounds, and reaction pause/triggers.
-  - `board_events.py`: Tactical board grid initialization, token kinematics, fog-of-war, spell AoE templates, and secret traps.
-  - `narrative_events.py`: The Watcher DM narrations, intent parsing, candidate ghost previews, story recaps, and AI stand-ins.
-  - `world_events.py`: West Marches persistent frontier, trade caravans, haven settlements, faction agendas, and lore knowledge.
-  - `character_events.py`: Character progression, inventory slots, conditions, alchemical crafting mishaps, and tavern minigames.
-  - `media_events.py`: Low-latency voice duplex, audio DSP modulation, dynamic soundscapes, procedural asset forge, and audience polls.
-  - `platform_events.py`: Core event base models, privacy-preserving combat analytics, compendium indexing, mercenary contracts, and dynamic MCP tools.
-- **The Watcher Domain Events (`runefoble_events.watcher_events.*` and `runefoble_events.watcher` facade)**:
-  - `watcher.py`: Public import module for the Watcher events.
+```python
+from runefoble_events.events import TokenMoved
+```
+
+The defining modules are internal. Do not import from them. Importing `runefoble_events.events` also registers every event class with the event registry. The package root `runefoble_events` exports only the base types: `BaseRunefobleEvent`, `DomainEvent`, and `register_event`. `BaseRunefobleEvent` sets `suppress_event_type_warning` once for all event classes.
+
+The defining modules group events by domain. The `Module` column in [`event-identifiers.md`](event-identifiers.md) names the defining module of each event. That generated file is the source of truth.
+  - Game session lifecycle, turn sequencing, initiative rolls, combat rounds, and reaction pause/triggers.
+  - Tactical board grid initialization, token kinematics, fog-of-war, spell AoE templates, and secret traps.
+  - The Watcher DM narrations, intent parsing, candidate ghost previews, story recaps, and AI stand-ins.
+  - West Marches persistent frontier, trade caravans, haven settlements, faction agendas, and lore knowledge.
+  - Character progression, inventory slots, conditions, alchemical crafting mishaps, and tavern minigames.
+  - Low-latency voice duplex, audio DSP modulation, dynamic soundscapes, procedural asset forge, and audience polls.
+  - Core event base models, privacy-preserving combat analytics, compendium indexing, mercenary contracts, and dynamic MCP tools.
+- **The Watcher Domain Events (`runefoble_events.watcher_events.*`)**:
   - `watcher_events/narrative.py`: Speech transcription (`runefoble.events.watcher.player_spoke`), parsed intent (`runefoble.events.watcher.speech_intent_parsed`), narration (`runefoble.events.watcher.narration_generated`), absentee recaps, and private DM whispers (< 120 lines).
   - `watcher_events/combat.py`: Dice roll telemetry (`DiceRolled`), autonomous combat encounters, candidate ghost previews, combat reaction interrupts, and trap triggers (< 150 lines).
   - `watcher_events/actions.py`: The Watcher DM copilot proposal, veto, approval, modification, and compound action disambiguation (< 150 lines).
   - `watcher_events/factions.py`: Autonomous NPC faction agendas, progress advances, geopolitical territory shifts, and world ticks (< 150 lines).
-- **Board Domain Events (`runefoble_events.board_events.*` and `runefoble_events.board` facade)**:
-  - `board.py`: Public import module for the board events.
+- **Board Domain Events (`runefoble_events.board_events.*`)**:
   - `board_events/token.py`: Tactical token placement, movement, and actions (< 100 lines).
-  - `board_events/fog.py`: Fog-of-war reveal (`runefoble.events.board.fog_of_war_revealed` / `FogRevealed`), shroud reset (`FogOfWarShrouded` / `ShroudReset`), (< 80 lines).
+  - `board_events/fog.py`: Fog-of-war reveal (`runefoble.events.board.fog_of_war_revealed`), shroud reset (`FogOfWarShrouded`), (< 80 lines).
   - `board_events/templates.py`: Geometric AoE spell template positioning and removal (`AoETemplatePlaced`, `AoETemplateRemoved`) (< 80 lines).
   - `board_events/lighting.py`: Dynamic point lights and interactive doors (`BoardLightSourcePlacedEvent`, `BoardDoorToggledEvent`) (< 80 lines).
   - `board_events/terrain.py`: Board grid initialization, cell elevation / hazard modifications, and Universal VTT map imports (< 80 lines).
@@ -102,4 +103,4 @@ These sections do not yet match the code. Each item lists its owner. Update a se
 - **Payload drift**: `CharacterControlTransferred` and the hot-swap event payloads differ from the code. Audit: W1 game-session F16. Owner: no task yet.
 - **Orphan producers and consumers**: TASK-0703 decided the orphans that had no producer or no consumer. Deleted (no producer, no reader): `ElevationChanged`, `CameraTargetUpdated`, `VisibilityMaskUpdated`, `TokenKnockbackApplied`, `VocalModulatorPresetChanged`, `ReactionOpportunityResolved`, `ReactionPromptTriggered`, `SecretTrapTriggered`, `AtlasPinUpdated`, `RegionalMerchantStockUpdated`, `CurrencyCredited` (and its alias `CurrencyCreditedEvent`). Wired: `CombatRoundAdvanced` and `TurnStarted` are raised by the game session combat advance. Kept with a reason: `StandInActivated` and `StandInReleased` (raised by the character aggregate), `CraftingSucceeded` (raised by the crafting engine), `AudiencePollStarted`, `AudienceVoteCast`, `AudiencePollCompleted`, `AudienceModifierProposed`, `AudienceModifierApproved` (published by the TypeScript audience studio; no Python or TypeScript reader). Open, with an owner: `CriticalHitScored` and `DeathSaveStarted` (read by the soundscape leitmotif handler; no producer exists for a natural 20 or a 0 HP drop), `ParticipantJoined` (read only by the unregistered SpiceDB listener; superseded by `PlayerJoinedSession`), and about 35 events that have a Python producer and no reader (for example the voice, mobile, spectator, dynamic tool and `WatcherAction*` events). Each needs a reader or a deletion, decided by its owner. Audit: W3 event wiring. Owner: follow-up tasks after TASK-0703.
 - **Dead read projections**: `PresenceProjection` and `SessionReadProjection` are never started in production. See [Redis Streams Event Bus](redis-streams-event-bus.md#in-memory-session-projections). Owner: TASK-0567.
-- **Code aliases**: the `X = XEvent` aliases are removed. The asset event names `BattlemapCreated` and `AssetGenerated` were removed by TASK-0799; use `BattlemapForged` and `TokenAssetForged`. Some `X = Y` aliases remain in code (for example `FogRevealed`, `ShroudReset`, `BoardMapImported`, `BoardMoveEvent`, `GameSessionStarted`). They are not part of TASK-0487. Owner: follow-up task needed.
+- **Code aliases**: the `X = XEvent` aliases are removed. The asset event names `BattlemapCreated` and `AssetGenerated` were removed by TASK-0799; use `BattlemapForged` and `TokenAssetForged`. The remaining `X = Y` aliases were removed by TASK-0815. Each event class has one name.

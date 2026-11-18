@@ -1,6 +1,6 @@
 """Base event infrastructure for Runefoble, built on eventsource-py."""
 
-from typing import Any
+from typing import Any, ClassVar
 from uuid import UUID
 
 from eventsource.domain.event import DomainEvent
@@ -40,6 +40,10 @@ class BaseRunefobleEvent(DomainEvent):
     Provides CloudEvent compatibility while supporting full EventStore persistence,
     versioning, causation/correlation tracking, and multi-tenant scoping.
     """
+
+    # Every Runefoble event sets an explicit wire name (event_type) that differs from its class name
+    # by design. Silence eventsource's mismatch warning once, here, for all event classes.
+    suppress_event_type_warning: ClassVar[bool] = True
 
     campaign_id: UUID | None = Field(default=None, description="Campaign identifier")
     session_id: UUID | None = Field(default=None, description="Game session identifier")

@@ -30,7 +30,7 @@ from game_session.settlement.worker_models import (
     WorkerInventoryItem,
     WorkerRelationship,
 )
-from runefoble_events.settlement_workers import (
+from runefoble_events.events import (
     NPCMoodUpdated,
     NPCRelationshipFormed,
     NPCWorkerAssigned,

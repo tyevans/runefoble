@@ -10,7 +10,7 @@ Part of the [Events Schema](events-schema.md). Each event identifier in this pag
   - `title`: String
   - `dm_id`: String
   - `created_by`: String
-- **`SessionStarted`** (alias (`runefoble.events.session.started`): `GameSessionStarted`): Emitted when the session transitions from lobby to active combat/exploration.
+- **`SessionStarted`** (`runefoble.events.session.started`): Emitted when the session transitions from lobby to active combat/exploration.
   - `started_at_turn`: Integer (default 1)
 - **`ParticipantJoined`** (`runefoble.events.session.participant_joined`): Emitted when a user joins the session in a specific role (player, spectator, gm).
   - `session_id`: UUID | str
@@ -151,10 +151,10 @@ Part of the [Events Schema](events-schema.md). Each event identifier in this pag
   - `previous_elevation`: Integer
   - `new_elevation`: Integer
   - `x`: Integer, `y`: Integer
-- **`FogOfWarRevealed`** (alias (`runefoble.events.board.fog_of_war_revealed`): `FogRevealed`): Emitted when a token's vision reveals uncharted grid cells.
+- **`FogOfWarRevealed`** (`runefoble.events.board.fog_of_war_revealed`): Emitted when a token's vision reveals uncharted grid cells.
   - `revealed_cells`: List[List[Integer]]
   - `revealed_by_token_id`: Optional[String]
-- **`FogOfWarShrouded`** (alias: `ShroudReset`): Emitted when fog-of-war shrouds previously revealed cells (`runefoble.events.board.fog_of_war_shrouded`).
+- **`FogOfWarShrouded`** : Emitted when fog-of-war shrouds previously revealed cells (`runefoble.events.board.fog_of_war_shrouded`).
   - `session_id`: String
   - `shrouded_cells`: List[List[Integer]]
   - `session_id`: String
@@ -183,7 +183,7 @@ Part of the [Events Schema](events-schema.md). Each event identifier in this pag
   - `target_x`: Integer, `target_y`: Integer
   - `descriptor`: String
   - `path`: List[List[Integer]]
-- **`UniversalVTTImported`** (alias: `BoardMapImported`): Emitted when a Universal VTT (`.dd2vtt`) map is imported onto the board (`runefoble.events.board.map_imported`).
+- **`UniversalVTTImported`** : Emitted when a Universal VTT (`.dd2vtt`) map is imported onto the board (`runefoble.events.board.map_imported`).
   - `session_id`: String
   - `cols`: Integer
   - `rows`: Integer

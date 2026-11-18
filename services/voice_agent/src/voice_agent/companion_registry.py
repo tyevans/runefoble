@@ -8,7 +8,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 from fastapi import WebSocket
-from runefoble_events.voice import MobileHapticPingDispatched
+from runefoble_events.events import MobileHapticPingDispatched
 from runefoble_platform.event_publish import publish_best_effort
 from voice_agent.dependencies import get_event_bus
 from voice_agent.mobile import (

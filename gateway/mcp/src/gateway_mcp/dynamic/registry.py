@@ -7,7 +7,7 @@ import threading
 import time
 from typing import TYPE_CHECKING, Any
 
-from runefoble_events.mcp_tools import (
+from runefoble_events.events import (
     DynamicToolInvokedEvent,
     DynamicToolRegisteredEvent,
     DynamicToolUnregisteredEvent,

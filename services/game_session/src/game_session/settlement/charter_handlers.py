@@ -20,7 +20,7 @@ from game_session.settlement.models import (
     FACILITY_REST_BOONS,
     FACILITY_TIER_NAMES,
 )
-from runefoble_events.settlements import (
+from runefoble_events.events import (
     SettlementCharteredEvent,
     SettlementRestBoonClaimedEvent,
     SettlementUpgradedEvent,

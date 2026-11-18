@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, ClassVar
+from typing import Any
 from uuid import UUID, uuid4
 
 from pydantic import Field
@@ -14,7 +14,6 @@ from runefoble_events.base import BaseRunefobleEvent, register_event
 class MercenaryBountyPosted(BaseRunefobleEvent):
     """Fired when a new mercenary bounty or retrieval contract is posted."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     event_type: str = "runefoble.events.west_marches.mercenary_bounty_posted"
 
     aggregate_type: str = "MercenaryBounty"
@@ -37,7 +36,6 @@ class MercenaryBountyPosted(BaseRunefobleEvent):
 class MercenaryBountyClaimed(BaseRunefobleEvent):
     """Fired when an adventuring party claims an active mercenary bounty."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     event_type: str = "runefoble.events.west_marches.mercenary_bounty_claimed"
 
     aggregate_type: str = "MercenaryBounty"
@@ -54,7 +52,6 @@ class MercenaryBountyClaimed(BaseRunefobleEvent):
 class MercenaryBountyFulfilled(BaseRunefobleEvent):
     """Fired when proof of bounty fulfillment is submitted or completed."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     event_type: str = "runefoble.events.west_marches.mercenary_bounty_fulfilled"
 
     aggregate_type: str = "MercenaryBounty"

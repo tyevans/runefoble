@@ -14,7 +14,7 @@ from game_session.caravan.transit import (
     validate_can_accept,
     validate_contract_post,
 )
-from runefoble_events.west_marches import (
+from runefoble_events.events import (
     CaravanContractAccepted,
     CaravanContractPosted,
 )

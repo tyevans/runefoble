@@ -13,7 +13,7 @@ from typing import Any
 from eventsource.domain.aggregate import DeclarativeAggregate
 from eventsource.domain.decorators import handles
 from pydantic import BaseModel, Field
-from runefoble_events.watcher import (
+from runefoble_events.events import (
     FactionAgendaAdvanced,
     FactionAgendaSet,
     FactionCreated,

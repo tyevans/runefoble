@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import time
-from typing import ClassVar
 from uuid import UUID, uuid4
 
 from pydantic import Field
@@ -15,7 +14,6 @@ from runefoble_events.base import BaseRunefobleEvent, register_event
 class EchoSuppressionEngagedEvent(BaseRunefobleEvent):
     """Emitted when acoustic echo suppression is engaged on microphone stream."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "VoiceRoom"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.voice.echo_suppression_engaged"
@@ -31,7 +29,6 @@ class EchoSuppressionEngagedEvent(BaseRunefobleEvent):
 class AECBenchmarkCompletedEvent(BaseRunefobleEvent):
     """Emitted when hardware AEC benchmark finishes validating ERLE > 35dB."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "VoiceRoom"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.voice.aec_benchmark_completed"
@@ -43,8 +40,6 @@ class AECBenchmarkCompletedEvent(BaseRunefobleEvent):
     filter_length: int = 512
     completed_at: float = Field(default_factory=time.time)
 
-
-# Backward-compatible aliases
 
 __all__ = [
     "AECBenchmarkCompletedEvent",

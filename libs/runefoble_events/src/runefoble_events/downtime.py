@@ -1,6 +1,6 @@
 """Downtime, crafting, and stronghold events for Runefoble, built on eventsource-py."""
 
-from typing import Any, ClassVar
+from typing import Any
 from uuid import UUID
 
 from pydantic import Field
@@ -12,7 +12,6 @@ from runefoble_events.base import BaseRunefobleEvent, register_event
 class CraftingAttempted(BaseRunefobleEvent):
     """Fired when an artisan initiates alchemical or mechanical combination."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     event_type: str = "runefoble.events.downtime.crafting_attempted"
 
     aggregate_type: str = "Crafting"
@@ -29,7 +28,6 @@ class CraftingAttempted(BaseRunefobleEvent):
 class CraftingSucceeded(BaseRunefobleEvent):
     """Fired when reagents transmute successfully into a potion, pellet, or artifact."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     event_type: str = "runefoble.events.downtime.crafting_succeeded"
 
     aggregate_type: str = "Crafting"
@@ -49,7 +47,6 @@ class CraftingSucceeded(BaseRunefobleEvent):
 class CraftingMishapOccurred(BaseRunefobleEvent):
     """Fired when volatile reagents react catastrophically."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     event_type: str = "runefoble.events.downtime.crafting_mishap_occurred"
 
     aggregate_type: str = "Crafting"
@@ -68,7 +65,6 @@ class CraftingMishapOccurred(BaseRunefobleEvent):
 class CampfireRestCompleted(BaseRunefobleEvent):
     """Fired when a party finishes resting around the campfire interlude."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     event_type: str = "runefoble.events.downtime.campfire_rest_completed"
 
     aggregate_type: str = "GameSession"
@@ -84,7 +80,6 @@ class CampfireRestCompleted(BaseRunefobleEvent):
 class StrongholdCreated(BaseRunefobleEvent):
     """Fired when a persistent campsite or base is established."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     event_type: str = "runefoble.events.downtime.stronghold_created"
 
     aggregate_type: str = "Stronghold"
@@ -97,7 +92,6 @@ class StrongholdCreated(BaseRunefobleEvent):
 class StrongholdUpgraded(BaseRunefobleEvent):
     """Fired when gold or materials are invested into camp facilities."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     event_type: str = "runefoble.events.downtime.stronghold_upgraded"
 
     aggregate_type: str = "Stronghold"
@@ -113,7 +107,6 @@ class StrongholdUpgraded(BaseRunefobleEvent):
 class StrongholdDeposited(BaseRunefobleEvent):
     """Fired when gold or materials are added to the stronghold treasury and store."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     event_type: str = "runefoble.events.downtime.stronghold_deposited"
 
     aggregate_type: str = "Stronghold"
@@ -126,7 +119,6 @@ class StrongholdDeposited(BaseRunefobleEvent):
 class StrongholdTreasuryContributed(BaseRunefobleEvent):
     """Fired when gold leaves the stronghold treasury to fund a frontier outpost (TASK-0795)."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     event_type: str = "runefoble.events.downtime.stronghold_treasury_contributed"
 
     aggregate_type: str = "Stronghold"

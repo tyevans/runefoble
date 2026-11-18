@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, ClassVar
+from typing import Any
 from uuid import UUID, uuid4
 
 from pydantic import Field
@@ -14,7 +14,6 @@ from runefoble_events.base import BaseRunefobleEvent, register_event
 class NegotiationSessionStarted(BaseRunefobleEvent):
     """Fired when an interactive bartering / haggling session is initiated."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "Negotiation"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.game_session.negotiation_session_started"
@@ -42,7 +41,6 @@ class NegotiationSessionStarted(BaseRunefobleEvent):
 class GambitExecuted(BaseRunefobleEvent):
     """Fired when a bargaining gambit is attempted and resolved against merchant DC."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "Negotiation"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.game_session.gambit_executed"
@@ -68,7 +66,6 @@ class GambitExecuted(BaseRunefobleEvent):
 class DMNegotiationOverridden(BaseRunefobleEvent):
     """Fired when the DM arbitrates or overrides haggling state in real time."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "Negotiation"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.game_session.dm_negotiation_overridden"
@@ -89,7 +86,6 @@ class DMNegotiationOverridden(BaseRunefobleEvent):
 class NegotiationConcluded(BaseRunefobleEvent):
     """Fired when a bartering session concludes (accepted, refused, or terminated)."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "Negotiation"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.game_session.negotiation_concluded"
@@ -113,7 +109,6 @@ class NegotiationConcluded(BaseRunefobleEvent):
 class CurrencyDeducted(BaseRunefobleEvent):
     """Fired when player currency is deducted for a purchase or wager."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "Negotiation"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.character.currency_deducted"
@@ -125,22 +120,10 @@ class CurrencyDeducted(BaseRunefobleEvent):
     campaign_id: str = ""
 
 
-# Aliases
-NegotiationSessionStartedEvent = NegotiationSessionStarted
-GambitExecutedEvent = GambitExecuted
-DMNegotiationOverriddenEvent = DMNegotiationOverridden
-NegotiationConcludedEvent = NegotiationConcluded
-CurrencyDeductedEvent = CurrencyDeducted
-
 __all__ = [
     "CurrencyDeducted",
-    "CurrencyDeductedEvent",
     "DMNegotiationOverridden",
-    "DMNegotiationOverriddenEvent",
     "GambitExecuted",
-    "GambitExecutedEvent",
     "NegotiationConcluded",
-    "NegotiationConcludedEvent",
     "NegotiationSessionStarted",
-    "NegotiationSessionStartedEvent",
 ]

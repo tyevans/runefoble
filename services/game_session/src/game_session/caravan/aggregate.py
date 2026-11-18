@@ -15,7 +15,7 @@ from game_session.caravan.board_operations import CaravanBoardOperationsMixin
 from game_session.caravan.models import CaravanContractState, _to_uuid
 from game_session.caravan.transit import calculate_transit_ambush_progress
 from game_session.caravan.transit_operations import CaravanTransitOperationsMixin
-from runefoble_events.west_marches import (
+from runefoble_events.events import (
     CaravanAmbushed,
     CaravanContractAccepted,
     CaravanContractPosted,

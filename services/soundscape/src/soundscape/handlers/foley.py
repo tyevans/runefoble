@@ -6,7 +6,7 @@ from datetime import timedelta
 from typing import TYPE_CHECKING, Any
 
 from eventsource.domain.decorators import handles
-from runefoble_events.soundscape import DuckingEngaged, DuckingReleased, SoundscapeCueTriggered
+from runefoble_events.events import DuckingEngaged, DuckingReleased, SoundscapeCueTriggered
 
 if TYPE_CHECKING:
     from soundscape.aggregate import SoundscapeState

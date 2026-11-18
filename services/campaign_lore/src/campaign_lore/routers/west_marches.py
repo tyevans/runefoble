@@ -142,7 +142,7 @@ async def link_shared_world(
 
     aggregate = await load_or_create(repo, campaign_id, WestMarchesAtlasAggregate)
 
-    from runefoble_events.west_marches import (
+    from runefoble_events.events import (
         CampaignRegisteredToSharedWorld,
         SharedWorldCreated,
     )

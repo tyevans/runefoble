@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, ClassVar, Literal
+from typing import Any, Literal
 from uuid import UUID, uuid4
 
 from pydantic import Field
@@ -14,7 +14,6 @@ from runefoble_events.base import BaseRunefobleEvent, register_event
 class TrapPlacedEvent(BaseRunefobleEvent):
     """Emitted when a secret DM spatial trap or trigger is placed on the board."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "BoardState"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.board.trap_placed"
@@ -38,7 +37,6 @@ class TrapPlacedEvent(BaseRunefobleEvent):
 class TrapSprungEvent(BaseRunefobleEvent):
     """Emitted when a moving token breaches an armed trap cell or proximity zone."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "BoardState"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.board.trap_sprung"
@@ -57,7 +55,6 @@ class TrapSprungEvent(BaseRunefobleEvent):
 class TrapDisarmedEvent(BaseRunefobleEvent):
     """Emitted when a secret trap is disarmed or disabled."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "BoardState"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.board.trap_disarmed"
@@ -70,7 +67,6 @@ class TrapDisarmedEvent(BaseRunefobleEvent):
 class BattlemapSwitchedEvent(BaseRunefobleEvent):
     """Emitted when the DM transitions the stage to a new battlemap and teleports tokens."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "BoardState"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.board.battlemap_switched"
@@ -84,8 +80,6 @@ class BattlemapSwitchedEvent(BaseRunefobleEvent):
     teleported_tokens: dict[str, list[int]] = Field(default_factory=dict)
     initiated_by: str | None = None
 
-
-# Public domain event aliases
 
 __all__ = [
     "BattlemapSwitchedEvent",

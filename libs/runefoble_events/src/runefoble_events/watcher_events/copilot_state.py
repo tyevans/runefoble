@@ -7,7 +7,7 @@ They are not published to the watcher stream. The public decision events live in
 
 from __future__ import annotations
 
-from typing import Any, ClassVar
+from typing import Any
 from uuid import UUID, uuid4
 
 from pydantic import Field
@@ -21,7 +21,6 @@ DISAMBIGUATIONS_AGGREGATE = "WatcherDisambiguations"
 
 @register_event("runefoble.events.watcher.pending_action_proposed")
 class PendingActionProposed(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = PENDING_ACTIONS_AGGREGATE
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.watcher.pending_action_proposed"
@@ -30,7 +29,6 @@ class PendingActionProposed(BaseRunefobleEvent):
 
 @register_event("runefoble.events.watcher.pending_action_vetoed")
 class PendingActionVetoed(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = PENDING_ACTIONS_AGGREGATE
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.watcher.pending_action_vetoed"
@@ -41,7 +39,6 @@ class PendingActionVetoed(BaseRunefobleEvent):
 
 @register_event("runefoble.events.watcher.pending_action_approved")
 class PendingActionApproved(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = PENDING_ACTIONS_AGGREGATE
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.watcher.pending_action_approved"
@@ -51,7 +48,6 @@ class PendingActionApproved(BaseRunefobleEvent):
 
 @register_event("runefoble.events.watcher.pending_action_modified")
 class PendingActionModified(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = PENDING_ACTIONS_AGGREGATE
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.watcher.pending_action_modified"
@@ -64,7 +60,6 @@ class PendingActionModified(BaseRunefobleEvent):
 
 @register_event("runefoble.events.watcher.pending_action_expired")
 class PendingActionExpired(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = PENDING_ACTIONS_AGGREGATE
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.watcher.pending_action_expired"
@@ -73,7 +68,6 @@ class PendingActionExpired(BaseRunefobleEvent):
 
 @register_event("runefoble.events.watcher.whisper_recorded")
 class WhisperRecorded(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = WHISPERS_AGGREGATE
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.watcher.whisper_recorded"
@@ -82,7 +76,6 @@ class WhisperRecorded(BaseRunefobleEvent):
 
 @register_event("runefoble.events.watcher.disambiguation_opened")
 class DisambiguationOpened(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = DISAMBIGUATIONS_AGGREGATE
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.watcher.disambiguation_opened"
@@ -91,7 +84,6 @@ class DisambiguationOpened(BaseRunefobleEvent):
 
 @register_event("runefoble.events.watcher.disambiguation_resolved")
 class DisambiguationResolved(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = DISAMBIGUATIONS_AGGREGATE
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.watcher.disambiguation_resolved"

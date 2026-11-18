@@ -7,7 +7,7 @@ from uuid import UUID, uuid4
 
 from eventsource.domain.aggregate import DeclarativeAggregate
 from eventsource.domain.decorators import handles
-from runefoble_events.turf_war import (
+from runefoble_events.events import (
     FactionSkirmishResolvedEvent,
     FactionTerritoryCapturedEvent,
     RegionalUnrestEscalatedEvent,

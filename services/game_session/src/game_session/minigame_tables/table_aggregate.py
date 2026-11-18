@@ -21,10 +21,10 @@ from game_session.minigame_tables.rules_engine import (
     evaluate_roulette_bets,
     score_dart_hit,
 )
-from runefoble_events.tavern import MinigameEnded
-from runefoble_events.tavern_tables import (
+from runefoble_events.events import (
     CrapsRolled,
     DartThrown,
+    MinigameEnded,
     RouletteSpun,
     TableBetPlaced,
     TableBidPlaced,

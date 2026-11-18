@@ -16,13 +16,13 @@ from uuid import NAMESPACE_DNS, UUID, uuid4, uuid5
 
 from eventsource.application.aggregates.repository import AggregateRepository
 from runefoble_events.events import (
+    PENDING_ACTIONS_AGGREGATE,
     WatcherActionApproved,
     WatcherActionExpired,
     WatcherActionModified,
     WatcherActionProposed,
     WatcherActionVetoed,
 )
-from runefoble_events.watcher_events.copilot_state import PENDING_ACTIONS_AGGREGATE
 from runefoble_platform.aggregate_loading import load_if_exists, load_or_create
 from runefoble_platform.event_publish import publish_best_effort, publish_or_fail
 from runefoble_platform.event_sourcing import FullEventStore

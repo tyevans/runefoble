@@ -13,17 +13,11 @@ from __future__ import annotations
 from uuid import uuid4
 
 from runefoble_events.base import BaseRunefobleEvent
-from runefoble_events.events.board_events import (
-    TokenMoved,
-)
-from runefoble_events.events.narrative_events import (
-    WatcherNarrationGenerated,
-)
-from runefoble_events.events.session_events import (
-    SessionCreated,
-)
-from runefoble_events.events.world_events import (
+from runefoble_events.events import (
     CaravanDispatched,
+    SessionCreated,
+    TokenMoved,
+    WatcherNarrationGenerated,
 )
 
 

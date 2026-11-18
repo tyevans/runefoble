@@ -11,30 +11,28 @@ from collections.abc import Callable, Sequence
 from typing import Any
 
 from eventsource.domain.event import DomainEvent
-from runefoble_events.lore import (
+from runefoble_events.events import (
     AliasesConsolidated,
     AtlasLayerToggled,
     AtlasPinCreated,
     AtlasTerritoryUpdated,
+    CampaignRegisteredToSharedWorld,
     CodexEntryPublished,
     CodexEntryUpdated,
+    CommunalNoticePosted,
+    CrossCampaignDiscoveryShared,
     EntitiesExtracted,
     HandoutGenerated,
     InvisibleInkRevealed,
     LoreDocumentIngested,
+    OutpostEstablished,
+    OutpostResourcesContributed,
     RelicForged,
     RelicInspected,
     RelicRuneTranslated,
-    WaxSealBroken,
-)
-from runefoble_events.west_marches import (
-    CampaignRegisteredToSharedWorld,
-    CommunalNoticePosted,
-    CrossCampaignDiscoveryShared,
-    OutpostEstablished,
-    OutpostResourcesContributed,
     SharedStrongholdUpgraded,
     SharedWorldCreated,
+    WaxSealBroken,
 )
 from runefoble_platform.event_publish import publish_or_fail
 

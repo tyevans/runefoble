@@ -7,7 +7,7 @@ from datetime import UTC, datetime
 
 from fastapi import WebSocket, WebSocketDisconnect
 from runefoble_auth.websocket import action_authorizer, admit_websocket
-from runefoble_events.voice import (
+from runefoble_events.events import (
     MobileAudioProfileAdapted,
     MobileCompanionConnected,
 )

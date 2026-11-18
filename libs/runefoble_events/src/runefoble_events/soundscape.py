@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from typing import ClassVar
 from uuid import UUID, uuid4
 
 from pydantic import Field
@@ -14,7 +13,6 @@ from runefoble_events.base import BaseRunefobleEvent, register_event
 class SoundscapeTrackChanged(BaseRunefobleEvent):
     """Emitted when active soundscape track or stem profile transitions."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "Soundscape"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.soundscape.track_changed"
@@ -30,7 +28,6 @@ class SoundscapeTrackChanged(BaseRunefobleEvent):
 class SoundscapeCueTriggered(BaseRunefobleEvent):
     """Emitted when a tactical sound foley or acoustic cue is triggered."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "Soundscape"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.soundscape.cue_triggered"
@@ -46,7 +43,6 @@ class SoundscapeCueTriggered(BaseRunefobleEvent):
 class SoundscapeTensionUpdated(BaseRunefobleEvent):
     """Emitted when encounter tension score is recalculated."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "Soundscape"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.soundscape.tension_updated"
@@ -63,7 +59,6 @@ class SoundscapeTensionUpdated(BaseRunefobleEvent):
 class SoundscapePartyHealthRecorded(BaseRunefobleEvent):
     """Emitted when a character's HP ratio changes in a session. Feeds the lowest party health."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "Soundscape"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.soundscape.party_health_recorded"
@@ -76,7 +71,6 @@ class SoundscapePartyHealthRecorded(BaseRunefobleEvent):
 class StemProfileOverridden(BaseRunefobleEvent):
     """Emitted when DM forces a stem profile (mood) override."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "Soundscape"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.soundscape.stem_profile_overridden"
@@ -89,7 +83,6 @@ class StemProfileOverridden(BaseRunefobleEvent):
 class MasterVolumeChanged(BaseRunefobleEvent):
     """Emitted when the session master volume changes (0.0 to 1.0)."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "Soundscape"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.soundscape.master_volume_changed"
@@ -101,7 +94,6 @@ class MasterVolumeChanged(BaseRunefobleEvent):
 class ChannelVolumeChanged(BaseRunefobleEvent):
     """Emitted when the stem channel sliders change. Holds the full channel map after the change."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "Soundscape"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.soundscape.channel_volume_changed"
@@ -113,7 +105,6 @@ class ChannelVolumeChanged(BaseRunefobleEvent):
 class DuckingEngaged(BaseRunefobleEvent):
     """Emitted when background audio ducking engages. duration_ms of 0 holds until released."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "Soundscape"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.soundscape.ducking_engaged"
@@ -127,7 +118,6 @@ class DuckingEngaged(BaseRunefobleEvent):
 class DuckingReleased(BaseRunefobleEvent):
     """Emitted when background audio ducking is released before any stored duration ends."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "Soundscape"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.soundscape.ducking_released"
@@ -139,7 +129,6 @@ class DuckingReleased(BaseRunefobleEvent):
 class LeitmotifProfileConfigured(BaseRunefobleEvent):
     """Emitted when a character's musical leitmotif profile is registered or updated."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "Soundscape"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.soundscape.leitmotif_configured"
@@ -160,7 +149,6 @@ class LeitmotifProfileConfigured(BaseRunefobleEvent):
 class LeitmotifTriggered(BaseRunefobleEvent):
     """Emitted when a character leitmotif stinger is triggered (clutch critical, death save)."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "Soundscape"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.soundscape.leitmotif_triggered"

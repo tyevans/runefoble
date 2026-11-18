@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from typing import ClassVar
 from uuid import UUID, uuid4
 
 from pydantic import Field
@@ -15,7 +14,6 @@ from runefoble_events.base import BaseRunefobleEvent, register_event
 class VoiceStreamQualityDegradedEvent(BaseRunefobleEvent):
     """Emitted when RTCP receiver reports detect packet loss or delay spikes exceeding limits."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "VoiceRoom"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.voice.stream_quality_degraded"
@@ -33,7 +31,6 @@ class VoiceStreamQualityDegradedEvent(BaseRunefobleEvent):
 class VoiceStreamQualityMeasured(BaseRunefobleEvent):
     """Emitted for every RTCP receiver report. It records the measured stream quality."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "VoiceRoom"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.voice.stream_quality_measured"
@@ -53,7 +50,6 @@ class VoiceStreamQualityMeasured(BaseRunefobleEvent):
 class VoiceStreamCodecAdaptedEvent(BaseRunefobleEvent):
     """Emitted when stream bitrate or Opus codec parameters are dynamically adjusted."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "VoiceRoom"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.voice.stream_codec_adapted"

@@ -18,7 +18,7 @@ import pytest
 from fastapi import WebSocketDisconnect
 from fastapi.testclient import TestClient
 from runefoble_auth.factory import get_spicedb_client
-from runefoble_events.voice import (
+from runefoble_events.events import (
     MobileAudioProfileAdapted,
     MobileCompanionConnected,
     MobileHapticPingDispatched,

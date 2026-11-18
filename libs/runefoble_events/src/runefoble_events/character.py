@@ -1,6 +1,6 @@
 """CharacterSheet aggregate events."""
 
-from typing import Any, ClassVar, Literal
+from typing import Any, Literal
 from uuid import UUID, uuid4
 
 from pydantic import Field
@@ -10,7 +10,6 @@ from runefoble_events.base import BaseRunefobleEvent, register_event
 
 @register_event("runefoble.events.character.created")
 class CharacterCreated(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     event_type: str = "runefoble.events.character.created"
 
     aggregate_type: str = "CharacterSheet"
@@ -40,7 +39,6 @@ class CharacterCreated(BaseRunefobleEvent):
 class CharacterHealthChanged(BaseRunefobleEvent):
     """HP change for one character. session_id is None when no session is in play."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     event_type: str = "runefoble.events.character.health_changed"
 
     aggregate_type: str = "CharacterSheet"
@@ -54,7 +52,6 @@ class CharacterHealthChanged(BaseRunefobleEvent):
 
 @register_event("runefoble.events.character.absence_penalty_applied")
 class AbsencePenaltyApplied(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     event_type: str = "runefoble.events.character.absence_penalty_applied"
 
     aggregate_type: str = "CharacterSheet"
@@ -63,12 +60,8 @@ class AbsencePenaltyApplied(BaseRunefobleEvent):
     imposed_by: Literal["human_dm", "the_watcher"] = "the_watcher"
 
 
-PlayerAbsenteePenalized = AbsencePenaltyApplied
-
-
 @register_event("runefoble.events.character.absence_penalty_cleared")
 class AbsencePenaltyCleared(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     event_type: str = "runefoble.events.character.absence_penalty_cleared"
 
     aggregate_type: str = "CharacterSheet"
@@ -77,7 +70,6 @@ class AbsencePenaltyCleared(BaseRunefobleEvent):
 
 @register_event("runefoble.events.character.item_added_to_inventory")
 class ItemAddedToInventory(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     event_type: str = "runefoble.events.character.item_added_to_inventory"
 
     aggregate_type: str = "CharacterSheet"
@@ -89,7 +81,6 @@ class ItemAddedToInventory(BaseRunefobleEvent):
 
 @register_event("runefoble.events.character.item_removed_from_inventory")
 class ItemRemovedFromInventory(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     event_type: str = "runefoble.events.character.item_removed_from_inventory"
 
     aggregate_type: str = "CharacterSheet"
@@ -99,7 +90,6 @@ class ItemRemovedFromInventory(BaseRunefobleEvent):
 
 @register_event("runefoble.events.character.equipment_slot_updated")
 class EquipmentSlotUpdated(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     event_type: str = "runefoble.events.character.equipment_slot_updated"
 
     aggregate_type: str = "CharacterSheet"
@@ -109,7 +99,6 @@ class EquipmentSlotUpdated(BaseRunefobleEvent):
 
 @register_event("runefoble.events.character.condition_applied")
 class ConditionApplied(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     event_type: str = "runefoble.events.character.condition_applied"
 
     aggregate_type: str = "CharacterSheet"
@@ -120,7 +109,6 @@ class ConditionApplied(BaseRunefobleEvent):
 
 @register_event("runefoble.events.character.condition_removed")
 class ConditionRemoved(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     event_type: str = "runefoble.events.character.condition_removed"
 
     aggregate_type: str = "CharacterSheet"
@@ -129,7 +117,6 @@ class ConditionRemoved(BaseRunefobleEvent):
 
 @register_event("runefoble.events.character.leveled_up")
 class CharacterLeveledUp(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "CharacterSheet"
     event_type: str = "runefoble.events.character.leveled_up"
     session_id: str = ""
@@ -141,7 +128,6 @@ class CharacterLeveledUp(BaseRunefobleEvent):
 
 @register_event("runefoble.events.character.spell_prepared")
 class SpellPrepared(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "CharacterSheet"
     event_type: str = "runefoble.events.character.spell_prepared"
     session_id: str = ""
@@ -152,7 +138,6 @@ class SpellPrepared(BaseRunefobleEvent):
 
 @register_event("runefoble.events.character.spell_slot_expended")
 class SpellSlotExpended(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "CharacterSheet"
     event_type: str = "runefoble.events.character.spell_slot_expended"
     session_id: str = ""
@@ -164,7 +149,6 @@ class SpellSlotExpended(BaseRunefobleEvent):
 
 @register_event("runefoble.events.character.spell_slots_restored")
 class SpellSlotsRestored(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "CharacterSheet"
     event_type: str = "runefoble.events.character.spell_slots_restored"
     session_id: str = ""
@@ -175,7 +159,6 @@ class SpellSlotsRestored(BaseRunefobleEvent):
 
 @register_event("runefoble.events.character.spell_unprepared")
 class SpellUnprepared(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "CharacterSheet"
     event_type: str = "runefoble.events.character.spell_unprepared"
     session_id: str = ""
@@ -185,7 +168,6 @@ class SpellUnprepared(BaseRunefobleEvent):
 
 @register_event("runefoble.events.character.stand_in_policy_updated")
 class StandInPolicyUpdated(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "CharacterSheet"
     event_type: str = "runefoble.events.character.stand_in_policy_updated"
     character_id: UUID | str
@@ -194,7 +176,6 @@ class StandInPolicyUpdated(BaseRunefobleEvent):
 
 @register_event("runefoble.events.character.stand_in_stabilized")
 class StandInStabilized(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "CharacterSheet"
     event_type: str = "runefoble.events.character.stand_in_stabilized"
     character_id: UUID | str
@@ -204,7 +185,6 @@ class StandInStabilized(BaseRunefobleEvent):
 
 @register_event("runefoble.events.character.stand_in_activated")
 class StandInActivated(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "CharacterSheet"
     event_type: str = "runefoble.events.character.stand_in_activated"
     session_id: str = ""
@@ -213,23 +193,16 @@ class StandInActivated(BaseRunefobleEvent):
 
 @register_event("runefoble.events.character.stand_in_released")
 class StandInReleased(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "CharacterSheet"
     event_type: str = "runefoble.events.character.stand_in_released"
     session_id: str = ""
     character_id: UUID | str
 
 
-# Legacy backward-compatible alias
-SessionPenaltyEvent = AbsencePenaltyApplied
-CharacterConditionApplied = ConditionApplied
-
-
 @register_event("runefoble.events.character.critical_hit_scored")
 class CriticalHitScored(BaseRunefobleEvent):
     """Emitted when a character scores a critical hit or natural 20."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "CharacterSheet"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.character.critical_hit_scored"
@@ -241,14 +214,10 @@ class CriticalHitScored(BaseRunefobleEvent):
     roll_total: int = 20
 
 
-CriticalHitRolled = CriticalHitScored
-
-
 @register_event("runefoble.events.character.death_save_started")
 class DeathSaveStarted(BaseRunefobleEvent):
     """Emitted when a character drops to 0 HP and begins death saves."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "CharacterSheet"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.character.death_save_started"
@@ -262,7 +231,6 @@ class DeathSaveStarted(BaseRunefobleEvent):
 class CharacterDamaged(BaseRunefobleEvent):
     """Emitted when a character takes damage, reducing hit points."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "CharacterSheet"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.character.damaged"
@@ -277,7 +245,6 @@ class CharacterDamaged(BaseRunefobleEvent):
 class PortraitVariantGenerated(BaseRunefobleEvent):
     """Emitted when a generative wardrobe attire variation is synthesized."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "CharacterSheet"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.character.portrait_variant_generated"
@@ -295,7 +262,6 @@ class PortraitVariantGenerated(BaseRunefobleEvent):
 class CharacterPortraitUpdated(BaseRunefobleEvent):
     """Emitted when a character's active portrait or token avatar is assigned."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "CharacterSheet"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.character.portrait_updated"
@@ -305,7 +271,6 @@ class CharacterPortraitUpdated(BaseRunefobleEvent):
 
 
 # Backward-compatible alias
-PortraitAssigned = CharacterPortraitUpdated
 
 
 @register_event("runefoble.events.character.assigned_to_campaign", schema_version=1)
@@ -313,8 +278,6 @@ class CharacterAssignedToCampaign(BaseRunefobleEvent):
     """Emitted when a character is assigned to or unassigned from a campaign."""
 
     event_type: str = "runefoble.events.character.assigned_to_campaign"
-
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "CharacterSheet"
     aggregate_id: UUID = Field(default_factory=uuid4)
     character_id: str = ""

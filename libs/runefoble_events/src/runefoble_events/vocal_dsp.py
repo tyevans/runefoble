@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import time
-from typing import ClassVar
 from uuid import UUID, uuid4
 
 from pydantic import Field
@@ -15,7 +14,6 @@ from runefoble_events.base import BaseRunefobleEvent, register_event
 class VocalModulatorPresetAppliedEvent(BaseRunefobleEvent):
     """Emitted when a DM vocal modulator preset is applied to an outgoing audio stream."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "VoiceRoom"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.voice.modulator_preset_applied"
@@ -36,7 +34,6 @@ class VocalModulatorPresetAppliedEvent(BaseRunefobleEvent):
 class VoiceFilterToggledEvent(BaseRunefobleEvent):
     """Emitted when a live voice filter parameter or node is toggled on/off."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "VoiceRoom"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.voice.filter_toggled"
@@ -48,8 +45,6 @@ class VoiceFilterToggledEvent(BaseRunefobleEvent):
     user_id: str = ""
     toggled_at: float = Field(default_factory=time.time)
 
-
-# Backward-compatible aliases
 
 __all__ = [
     "VocalModulatorPresetAppliedEvent",

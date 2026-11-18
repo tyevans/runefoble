@@ -11,7 +11,7 @@ from uuid import uuid4
 
 import pytest
 from campaign_analytics.aggregate import CampaignChronicleAggregate
-from runefoble_events.analytics import (
+from runefoble_events.events import (
     ChronicleMilestoneRecorded,
     CombatTelemetrySnapshotCreated,
     EncounterMvpAwarded,

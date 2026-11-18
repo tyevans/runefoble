@@ -12,7 +12,7 @@ from eventsource.domain.decorators import handles
 from game_session.settlement.haggling.dm_controls import DMControlsMixin
 from game_session.settlement.haggling.rhetoric import RhetoricMovesMixin
 from game_session.settlement.haggling_models import NegotiationSession, NegotiationSessionState
-from runefoble_events.haggling import (
+from runefoble_events.events import (
     CurrencyDeducted,
     NegotiationConcluded,
     NegotiationSessionStarted,

@@ -10,7 +10,7 @@ from uuid import UUID, uuid4
 
 from eventsource.domain.decorators import handles
 from game_session.settlement.models import BulletinNoticeState
-from runefoble_events.settlements import (
+from runefoble_events.events import (
     BulletinNoticePinnedEvent,
     BulletinNoticeRemovedEvent,
     CipherNoticeDecryptedEvent,

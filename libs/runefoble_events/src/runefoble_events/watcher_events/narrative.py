@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, ClassVar, Literal
+from typing import Any, Literal
 from uuid import UUID, uuid4
 
 from pydantic import Field
@@ -12,7 +12,6 @@ from runefoble_events.base import BaseRunefobleEvent, register_event
 
 @register_event("runefoble.events.watcher.player_spoke")
 class PlayerSpokeEvent(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     event_type: str = "runefoble.events.watcher.player_spoke"
 
     aggregate_type: str = "GameSession"
@@ -25,7 +24,6 @@ class PlayerSpokeEvent(BaseRunefobleEvent):
 
 @register_event("runefoble.events.watcher.speech_intent_parsed")
 class SpeechIntentParsed(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     event_type: str = "runefoble.events.watcher.speech_intent_parsed"
 
     aggregate_type: str = "GameSession"
@@ -39,7 +37,6 @@ class SpeechIntentParsed(BaseRunefobleEvent):
 
 @register_event("runefoble.events.watcher.narration_generated")
 class WatcherNarrationGenerated(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     event_type: str = "runefoble.events.watcher.narration_generated"
 
     aggregate_type: str = "GameSession"
@@ -52,7 +49,6 @@ class WatcherNarrationGenerated(BaseRunefobleEvent):
 
 @register_event("runefoble.events.watcher.stand_in_action_decided")
 class StandInActionDecided(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     event_type: str = "runefoble.events.watcher.stand_in_action_decided"
 
     aggregate_type: str = "GameSession"
@@ -63,13 +59,8 @@ class StandInActionDecided(BaseRunefobleEvent):
     flavor_text: str = ""
 
 
-StandInTurnExecuted = StandInActionDecided
-WatcherNarrationEvent = WatcherNarrationGenerated
-
-
 @register_event("runefoble.events.recap.generated")
 class AbsenteeRecapGenerated(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "Chronicle"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.recap.generated"
@@ -87,7 +78,6 @@ class AbsenteeRecapGenerated(BaseRunefobleEvent):
 
 @register_event("runefoble.events.scene.atmosphere_set")
 class SceneAtmosphereSet(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "Scene"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.scene.atmosphere_set"
@@ -102,7 +92,6 @@ class SceneAtmosphereSet(BaseRunefobleEvent):
 
 @register_event("runefoble.events.watcher.narrative_whispered")
 class DMNarrativeWhispered(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "GameSession"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.watcher.narrative_whispered"
@@ -122,7 +111,5 @@ __all__ = [
     "SceneAtmosphereSet",
     "SpeechIntentParsed",
     "StandInActionDecided",
-    "StandInTurnExecuted",
-    "WatcherNarrationEvent",
     "WatcherNarrationGenerated",
 ]

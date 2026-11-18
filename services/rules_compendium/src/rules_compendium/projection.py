@@ -9,7 +9,7 @@ cannot be read. The service never serves from an empty index.
 import logging
 
 from eventsource.ports.store import FullEventStore
-from runefoble_events.compendium import HomebrewRuleRegistered
+from runefoble_events.events import HomebrewRuleRegistered
 
 from rules_compendium.aggregate import CompendiumAggregate
 from rules_compendium.retrieval import CompendiumRetrievalEngine

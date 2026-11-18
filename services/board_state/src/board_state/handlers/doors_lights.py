@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
 from eventsource.domain.decorators import handles
-from runefoble_events.uvtt_elements import (
+from runefoble_events.events import (
     BoardDoorToggledEvent,
     BoardLightSourcePlacedEvent,
 )

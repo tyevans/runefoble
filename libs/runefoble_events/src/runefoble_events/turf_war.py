@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, ClassVar
+from typing import Any
 from uuid import UUID, uuid4
 
 from pydantic import Field
@@ -12,7 +12,6 @@ from runefoble_events.base import BaseRunefobleEvent, register_event
 
 @register_event("runefoble.events.watcher.faction_skirmish_resolved")
 class FactionSkirmishResolvedEvent(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "RegionalUnrest"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.watcher.faction_skirmish_resolved"
@@ -34,7 +33,6 @@ class FactionSkirmishResolvedEvent(BaseRunefobleEvent):
 
 @register_event("runefoble.events.watcher.faction_territory_captured")
 class FactionTerritoryCapturedEvent(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "RegionalUnrest"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.watcher.faction_territory_captured"
@@ -49,7 +47,6 @@ class FactionTerritoryCapturedEvent(BaseRunefobleEvent):
 
 @register_event("runefoble.events.watcher.regional_unrest_escalated")
 class RegionalUnrestEscalatedEvent(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "RegionalUnrest"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.watcher.regional_unrest_escalated"

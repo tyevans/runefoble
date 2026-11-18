@@ -16,7 +16,7 @@ from character_sheet.aggregate import CharacterAggregate
 from character_sheet.main import app
 from eventsource.domain.event_registry import get_event_class_or_none
 from fastapi.testclient import TestClient
-from runefoble_events.character import SpellUnprepared, StandInActivated, StandInReleased
+from runefoble_events.events import SpellUnprepared, StandInActivated, StandInReleased
 from runefoble_platform.event_sourcing import InMemoryEventStore, create_aggregate_repository
 
 from tests.helpers.ws_identity import SIGNING_ISSUER

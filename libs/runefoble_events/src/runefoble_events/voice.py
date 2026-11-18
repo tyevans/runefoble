@@ -1,7 +1,6 @@
 """Domain events for live WebRTC voice room signaling and audio peer management."""
 
 import time
-from typing import ClassVar
 from uuid import UUID, uuid4
 
 from pydantic import Field
@@ -13,7 +12,6 @@ from runefoble_events.base import BaseRunefobleEvent, register_event
 class VoicePeerJoined(BaseRunefobleEvent):
     """Emitted when an audio peer connects and joins the session voice room."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "VoiceRoom"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.voice.peer_joined"
@@ -28,7 +26,6 @@ class VoicePeerJoined(BaseRunefobleEvent):
 class VoicePeerLeft(BaseRunefobleEvent):
     """Emitted when an audio peer leaves or is disconnected/kicked from the voice room."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "VoiceRoom"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.voice.peer_left"
@@ -41,7 +38,6 @@ class VoicePeerLeft(BaseRunefobleEvent):
 class VoicePeerMuteToggled(BaseRunefobleEvent):
     """Emitted when an audio peer toggles their microphone mute state."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "VoiceRoom"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.voice.mute_toggled"
@@ -54,7 +50,6 @@ class VoicePeerMuteToggled(BaseRunefobleEvent):
 class MobileCompanionConnected(BaseRunefobleEvent):
     """Emitted when a mobile companion connects via the low-bandwidth gateway."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "VoiceRoom"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.voice.mobile_connected"
@@ -71,7 +66,6 @@ class MobileCompanionConnected(BaseRunefobleEvent):
 class MobileAudioProfileAdapted(BaseRunefobleEvent):
     """Emitted when mobile companion audio adapts due to cellular network conditions."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "VoiceRoom"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.voice.profile_adapted"
@@ -90,7 +84,6 @@ class MobileAudioProfileAdapted(BaseRunefobleEvent):
 class MobileHapticPingDispatched(BaseRunefobleEvent):
     """Emitted when a haptic vibration pulse or lockscreen alert is dispatched to mobile."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "VoiceRoom"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.voice.haptic_ping"
@@ -109,7 +102,6 @@ class MobileHapticPingDispatched(BaseRunefobleEvent):
 class VoiceSpeechInterrupted(BaseRunefobleEvent):
     """Emitted when active TTS playback/narration is interrupted by player speech (barge-in)."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "VoiceRoom"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.voice.speech_interrupted"
@@ -132,7 +124,6 @@ class VoiceTranscriptionFailed(BaseRunefobleEvent):
     No PlayerSpokeEvent is published for the failed utterance.
     """
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "VoiceRoom"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.voice.transcription_failed"

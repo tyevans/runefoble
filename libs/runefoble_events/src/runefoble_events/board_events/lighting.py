@@ -1,6 +1,6 @@
 """Dynamic point lights and interactive door domain events."""
 
-from typing import Any, ClassVar, Literal
+from typing import Any, Literal
 from uuid import UUID, uuid4
 
 from pydantic import Field
@@ -12,7 +12,6 @@ from runefoble_events.base import BaseRunefobleEvent, register_event
 class BoardDoorToggledEvent(BaseRunefobleEvent):
     """Emitted when an interactive door or portal changes state (open/closed/locked)."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "BoardState"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.board.door_toggled"
@@ -29,7 +28,6 @@ class BoardDoorToggledEvent(BaseRunefobleEvent):
 class BoardLightSourcePlacedEvent(BaseRunefobleEvent):
     """Emitted when a point light source or radiance emitter is placed on the board."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "BoardState"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.board.light_source_placed"

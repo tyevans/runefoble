@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, ClassVar
+from typing import Any
 from uuid import UUID, uuid4
 
 from pydantic import Field
@@ -15,8 +15,6 @@ class DynamicToolRegisteredEvent(BaseRunefobleEvent):
     """Emitted when a custom dynamic FastMCP tool is registered or hot-reloaded."""
 
     event_type: str = "runefoble.events.mcp_tools.dynamic_tool_registered"
-
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "DynamicTool"
     aggregate_id: UUID = Field(default_factory=uuid4)
     tool_name: str = ""
@@ -32,8 +30,6 @@ class DynamicToolUnregisteredEvent(BaseRunefobleEvent):
     """Emitted when a dynamic FastMCP tool is unregistered or retired."""
 
     event_type: str = "runefoble.events.mcp_tools.dynamic_tool_unregistered"
-
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "DynamicTool"
     aggregate_id: UUID = Field(default_factory=uuid4)
     tool_name: str = ""
@@ -46,8 +42,6 @@ class DynamicToolInvokedEvent(BaseRunefobleEvent):
     """Emitted when a dynamic FastMCP tool is executed by an agent or user."""
 
     event_type: str = "runefoble.events.mcp_tools.dynamic_tool_invoked"
-
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "DynamicTool"
     aggregate_id: UUID = Field(default_factory=uuid4)
     tool_name: str = ""

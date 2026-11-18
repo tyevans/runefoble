@@ -14,87 +14,29 @@ from __future__ import annotations
 
 from uuid import uuid4
 
-import runefoble_events.board as board_facade
-import runefoble_events.board_events as board_pkg
-import runefoble_events.events as events_facade
 from eventsource.domain.event_registry import get_event_class_or_none
-from runefoble_events.board_events.fog import (
-    FogOfWarRevealed,
-    FogOfWarShrouded,
-    FogRevealed,
-    ShroudReset,
-)
-from runefoble_events.board_events.lighting import (
-    BoardDoorToggledEvent,
-    BoardLightSourcePlacedEvent,
-)
-from runefoble_events.board_events.physics import (
-    DiceSettled,
-    PhysicsCollisionOccurred,
-)
-from runefoble_events.board_events.spells import (
-    AreaEffectExploded,
-    EphemeralDecalsDecayed,
-    SpellCast,
-    VFXAnimationFinished,
-)
-from runefoble_events.board_events.templates import (
+from runefoble_events.events import (
     AoETemplatePlaced,
     AoETemplateRemoved,
-)
-from runefoble_events.board_events.terrain import (
+    AreaEffectExploded,
+    BoardDoorToggledEvent,
     BoardGridInitialized,
-    BoardMapImported,
+    BoardLightSourcePlacedEvent,
+    DiceSettled,
+    EphemeralDecalsDecayed,
+    FogOfWarRevealed,
+    FogOfWarShrouded,
+    PhysicsCollisionOccurred,
+    SpellCast,
     TerrainCellModified,
-    TokenHazardTriggered,
-    UniversalVTTImported,
-)
-from runefoble_events.board_events.token import (
-    BoardMoveEvent,
     TokenActionExecuted,
+    TokenHazardTriggered,
     TokenMoved,
     TokenPlaced,
     TokenRemoved,
+    UniversalVTTImported,
+    VFXAnimationFinished,
 )
-
-
-def test_board_facade_re_exports() -> None:
-    """Verify board symbol parity across the board facades."""
-    expected_symbols = [
-        "AoETemplatePlaced",
-        "AoETemplateRemoved",
-        "AreaEffectExploded",
-        "BoardDoorToggledEvent",
-        "BoardGridInitialized",
-        "BoardLightSourcePlacedEvent",
-        "BoardMapImported",
-        "BoardMoveEvent",
-        "DiceSettled",
-        "EphemeralDecalsDecayed",
-        "FogOfWarRevealed",
-        "FogOfWarShrouded",
-        "FogRevealed",
-        "PhysicsCollisionOccurred",
-        "ShroudReset",
-        "SpellCast",
-        "TerrainCellModified",
-        "TokenActionExecuted",
-        "TokenHazardTriggered",
-        "TokenMoved",
-        "TokenPlaced",
-        "TokenRemoved",
-        "UniversalVTTImported",
-        "VFXAnimationFinished",
-    ]
-
-    for symbol in expected_symbols:
-        assert hasattr(board_facade, symbol), f"Symbol {symbol} missing from runefoble_events.board"
-        assert hasattr(board_pkg, symbol), (
-            f"Symbol {symbol} missing from runefoble_events.board_events"
-        )
-        assert hasattr(events_facade, symbol), (
-            f"Symbol {symbol} missing from runefoble_events.events"
-        )
 
 
 def test_token_events_instantiation_and_cloudevents() -> None:
@@ -114,7 +56,6 @@ def test_token_events_instantiation_and_cloudevents() -> None:
     assert placed_ev.name == "Thorin"
     assert placed_ev.hp == 25
 
-    # TokenMoved & BoardMoveEvent alias
     move_ev = TokenMoved(
         aggregate_id=agg_id,
         token_id="tok-alpha",
@@ -125,7 +66,6 @@ def test_token_events_instantiation_and_cloudevents() -> None:
         to_y=5,
     )
     assert move_ev.token_id == "tok-alpha"
-    assert BoardMoveEvent is TokenMoved
     ce_move = move_ev.to_cloudevent_dict()
     assert ce_move["type"] == "runefoble.events.board.token_moved"
     assert ce_move["data"]["to_x"] == 4
@@ -151,23 +91,19 @@ def test_fog_events_instantiation() -> None:
     """Verify fog-of-war reveal, shroud reset, and visibility mask domain events."""
     agg_id = uuid4()
 
-    # FogOfWarRevealed & FogRevealed alias
     fog_ev = FogOfWarRevealed(
         aggregate_id=agg_id,
         revealed_cells=[[1, 1], [1, 2], [2, 1]],
         revealed_by_token_id="tok-alpha",
     )
     assert len(fog_ev.revealed_cells) == 3
-    assert FogRevealed is FogOfWarRevealed
 
-    # FogOfWarShrouded & ShroudReset alias
     shroud_ev = FogOfWarShrouded(
         aggregate_id=agg_id,
         session_id="sess-01",
         shrouded_cells=[[5, 5]],
     )
     assert len(shroud_ev.shrouded_cells) == 1
-    assert ShroudReset is FogOfWarShrouded
 
 
 def test_templates_and_lighting_events_instantiation() -> None:
@@ -255,14 +191,12 @@ def test_terrain_spells_and_physics_events_instantiation() -> None:
     )
     assert hazard_ev.hazard_type == "lava"
 
-    # UniversalVTTImported & BoardMapImported alias
     vtt_ev = UniversalVTTImported(
         aggregate_id=agg_id,
         cols=20,
         rows=20,
     )
     assert vtt_ev.cols == 20
-    assert BoardMapImported is UniversalVTTImported
 
     # Spells & VFX
     spell_ev = SpellCast(

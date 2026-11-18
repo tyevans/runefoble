@@ -10,7 +10,6 @@ from __future__ import annotations
 
 from eventsource.domain.event_registry import get_event_class_or_none
 from runefoble_events.events import (
-    CriticalHitRolled,
     CriticalHitScored,
     DeathSaveStarted,
     LeitmotifProfileConfigured,
@@ -31,7 +30,6 @@ def test_leitmotif_cloudevents_registration() -> None:
     crit_cls = get_event_class_or_none("runefoble.events.character.critical_hit_scored")
     assert crit_cls is not None
     assert crit_cls is CriticalHitScored
-    assert CriticalHitRolled is CriticalHitScored
 
     death_cls = get_event_class_or_none("runefoble.events.character.death_save_started")
     assert death_cls is not None

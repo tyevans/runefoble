@@ -1,6 +1,6 @@
 """Lore domain events for Runefoble worldbuilding and redstring knowledge graph indexing."""
 
-from typing import Any, ClassVar
+from typing import Any
 from uuid import UUID
 
 from pydantic import Field
@@ -12,7 +12,6 @@ from runefoble_events.base import BaseRunefobleEvent, register_event
 class LoreDocumentIngested(BaseRunefobleEvent):
     """Emitted when a new campaign lore markdown/text document is ingested into the knowledge base."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     event_type: str = "runefoble.events.lore.document_ingested"
 
     document_id: UUID = Field(description="Unique document aggregate identifier")
@@ -30,7 +29,6 @@ class LoreDocumentIngested(BaseRunefobleEvent):
 class EntitiesExtracted(BaseRunefobleEvent):
     """Emitted when entities and relationships are extracted from a lore document via redstring."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     event_type: str = "runefoble.events.lore.entities_extracted"
 
     document_id: UUID = Field(description="Source document aggregate identifier")
@@ -47,7 +45,6 @@ class EntitiesExtracted(BaseRunefobleEvent):
 class AliasesConsolidated(BaseRunefobleEvent):
     """Emitted when synonymous entity titles and aliases are consolidated into canonical nodes."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     event_type: str = "runefoble.events.lore.aliases_consolidated"
 
     campaign_id: UUID = Field(description="Campaign to which the lore belongs")
@@ -67,7 +64,6 @@ class AliasesConsolidated(BaseRunefobleEvent):
 class HandoutGenerated(BaseRunefobleEvent):
     """Emitted when a diegetic handout (letter, decree, bounty, scroll) is forged."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     event_type: str = "runefoble.events.lore.handout_generated"
 
     aggregate_type: str = "DiegeticHandout"
@@ -102,7 +98,6 @@ class HandoutGenerated(BaseRunefobleEvent):
 class WaxSealBroken(BaseRunefobleEvent):
     """Emitted when a player or DM breaks the wax seal on a diegetic handout."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     event_type: str = "runefoble.events.lore.wax_seal_broken"
 
     aggregate_type: str = "DiegeticHandout"
@@ -121,7 +116,6 @@ class WaxSealBroken(BaseRunefobleEvent):
 class InvisibleInkRevealed(BaseRunefobleEvent):
     """Emitted when hidden runes or text are revealed via UV torchlight cursor."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     event_type: str = "runefoble.events.lore.invisible_ink_revealed"
 
     aggregate_type: str = "DiegeticHandout"
@@ -136,7 +130,6 @@ class InvisibleInkRevealed(BaseRunefobleEvent):
 class RelicForged(BaseRunefobleEvent):
     """Emitted when a 3D interactive relic is forged or added to the campaign lore."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     event_type: str = "runefoble.events.lore.relic_forged"
 
     aggregate_type: str = "Relic"
@@ -168,7 +161,6 @@ class RelicForged(BaseRunefobleEvent):
 class RelicInspected(BaseRunefobleEvent):
     """Emitted when a player rotates, examines, and inspects an interactive 3D relic."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     event_type: str = "runefoble.events.lore.relic_inspected"
 
     aggregate_type: str = "Relic"
@@ -190,7 +182,6 @@ class RelicInspected(BaseRunefobleEvent):
 class RelicRuneTranslated(BaseRunefobleEvent):
     """Emitted when an ancient rune on a relic is translated or deciphered."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     event_type: str = "runefoble.events.lore.relic_rune_translated"
 
     aggregate_type: str = "Relic"
@@ -206,7 +197,6 @@ class RelicRuneTranslated(BaseRunefobleEvent):
 class AtlasPinCreated(BaseRunefobleEvent):
     """Emitted when a geographical milestone pin is placed on the campaign world atlas."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     event_type: str = "runefoble.events.lore.atlas_pin_created"
 
     aggregate_type: str = "Atlas"
@@ -233,7 +223,6 @@ class AtlasPinCreated(BaseRunefobleEvent):
 class AtlasLayerToggled(BaseRunefobleEvent):
     """Emitted when an atlas map layer visibility or active level is toggled."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     event_type: str = "runefoble.events.lore.atlas_layer_toggled"
 
     aggregate_type: str = "Atlas"
@@ -249,7 +238,6 @@ class AtlasLayerToggled(BaseRunefobleEvent):
 class AtlasTerritoryUpdated(BaseRunefobleEvent):
     """Emitted when a geopolitical territory boundary polygon or ownership is created or updated."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     event_type: str = "runefoble.events.lore.atlas_territory_updated"
 
     aggregate_type: str = "Atlas"
@@ -274,7 +262,6 @@ class AtlasTerritoryUpdated(BaseRunefobleEvent):
 class CodexEntryPublished(BaseRunefobleEvent):
     """Emitted when a collaborative party codex entry is drafted, published, or revised."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     event_type: str = "runefoble.events.lore.codex_entry_published"
 
     aggregate_type: str = "Codex"
@@ -300,7 +287,6 @@ class CodexEntryPublished(BaseRunefobleEvent):
 class CodexEntryUpdated(BaseRunefobleEvent):
     """Emitted when an existing codex entry content or privacy status is updated."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     event_type: str = "runefoble.events.lore.codex_entry_updated"
 
     aggregate_type: str = "Codex"

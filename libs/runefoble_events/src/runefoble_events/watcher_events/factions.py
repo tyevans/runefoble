@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, ClassVar
+from typing import Any
 from uuid import UUID, uuid4
 
 from pydantic import Field
@@ -12,7 +12,6 @@ from runefoble_events.base import BaseRunefobleEvent, register_event
 
 @register_event("runefoble.events.watcher.faction_created")
 class FactionCreated(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "Faction"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.watcher.faction_created"
@@ -30,7 +29,6 @@ class FactionCreated(BaseRunefobleEvent):
 
 @register_event("runefoble.events.watcher.faction_agenda_set")
 class FactionAgendaSet(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "Faction"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.watcher.faction_agenda_set"
@@ -44,7 +42,6 @@ class FactionAgendaSet(BaseRunefobleEvent):
 
 @register_event("runefoble.events.watcher.faction_agenda_advanced")
 class FactionAgendaAdvanced(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "Faction"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.watcher.faction_agenda_advanced"
@@ -64,7 +61,6 @@ class FactionAgendaAdvanced(BaseRunefobleEvent):
 
 @register_event("runefoble.events.watcher.geopolitical_shift_occurred")
 class GeopoliticalShiftOccurred(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "Faction"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.watcher.geopolitical_shift_occurred"
@@ -81,7 +77,6 @@ class GeopoliticalShiftOccurred(BaseRunefobleEvent):
 class CampaignFactionRegistered(BaseRunefobleEvent):
     """A faction joined a campaign's simulation registry."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "CampaignWorld"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.watcher.campaign_faction_registered"
@@ -91,7 +86,6 @@ class CampaignFactionRegistered(BaseRunefobleEvent):
 
 @register_event("runefoble.events.watcher.world_tick_executed")
 class WorldTickExecuted(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "CampaignWorld"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.watcher.world_tick_executed"

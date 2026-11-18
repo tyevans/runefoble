@@ -13,7 +13,7 @@ from uuid import UUID, uuid5
 from eventsource.domain.aggregate import DeclarativeAggregate
 from eventsource.domain.decorators import handles
 from pydantic import BaseModel, Field
-from runefoble_events.asset import AssetDeleted, AssetUploaded
+from runefoble_events.events import AssetDeleted, AssetUploaded
 
 from runefoble_platform.event_sourcing import AggregateRepository, create_aggregate_repository
 from runefoble_platform.storage import AssetNotFoundError

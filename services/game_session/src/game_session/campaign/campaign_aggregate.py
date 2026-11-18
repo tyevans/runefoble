@@ -10,7 +10,7 @@ from typing import Any
 from eventsource.domain.aggregate import DeclarativeAggregate
 from eventsource.domain.decorators import handles
 from pydantic import BaseModel, Field
-from runefoble_events.campaign_lifecycle import CampaignCreated, CampaignUpdated
+from runefoble_events.events import CampaignCreated, CampaignUpdated
 
 UPDATABLE_FIELDS = frozenset(
     {"title", "description", "setting", "system", "cover_image_url", "status", "settings"}
