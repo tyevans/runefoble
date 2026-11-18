@@ -19,7 +19,7 @@ router = APIRouter(tags=["character_sheet"])
 async def list_characters(
     repo: deps.RepoDep,
     spicedb: deps.SpiceDep,
-    user_id: deps.VerifiedUserId,
+    user_id: deps.CallerId,
     campaign_id: str | None = Query(None, alias="campaignId"),
 ):
     """List the characters the caller may view, optionally one campaign's party."""
@@ -32,7 +32,7 @@ async def create_character(
     req: schemas.CreateCharacterRequest,
     repo: deps.RepoDep,
     spicedb: deps.SpiceDep,
-    user_id: deps.VerifiedUserId,
+    user_id: deps.CallerId,
 ):
     """Create a character. The ownership tuples are written first, so a failed write creates nothing."""
     character_id = uuid4()
@@ -227,7 +227,7 @@ async def assign_campaign(
     req: schemas.AssignCampaignRequest,
     repo: deps.RepoDep,
     spicedb: deps.SpiceDep,
-    user_id: deps.VerifiedUserId,
+    user_id: deps.CallerId,
 ):
     state = await deps.assign_character_campaign(
         repo, spicedb, character_id, req.campaign_id, user_id

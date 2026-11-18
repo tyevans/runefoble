@@ -8,7 +8,7 @@ import logging
 from typing import Any
 
 from fastapi import APIRouter, Depends
-from voice_agent.auth import VoicePrincipal, get_voice_principal
+from voice_agent.auth import CallerPrincipal, get_principal
 from voice_agent.authz import require_speaker
 from voice_agent.dependencies import (
     _dispatch_voice_audio_conditioned,
@@ -26,9 +26,7 @@ from voice_agent.synthesizer import AudioClip
 from voice_agent.wav import encode_wav
 
 logger = logging.getLogger("runefoble.voice_agent.synthesis")
-router = APIRouter(
-    dependencies=[Depends(get_voice_principal)], tags=["Speech Synthesis & Transcription"]
-)
+router = APIRouter(dependencies=[Depends(get_principal)], tags=["Speech Synthesis & Transcription"])
 
 DEFAULT_TTS_VOICE = "en-us"
 
@@ -41,7 +39,7 @@ async def list_personas():
 
 @router.post("/api/v1/voice/synthesize", response_model=TTSResponse)
 @router.post("/api/v1/voice/tts", response_model=TTSResponse)
-async def synthesize_voice(req: TTSRequest, principal: VoicePrincipal):
+async def synthesize_voice(req: TTSRequest, principal: CallerPrincipal):
     """Synthesize persona speech, apply DSP filters to that audio, and return the audio it describes."""
     await require_speaker(req.session_id, req.speaker_id, principal.user_id)
     filters = list(req.filters)

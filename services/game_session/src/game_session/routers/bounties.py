@@ -32,13 +32,11 @@ from game_session.dependencies import (
 )
 from game_session.events import STREAM_SESSION
 from game_session.queries import link_child, list_bounties_for_session
-from game_session.settlement.auth.tokens import CallerId, get_caller_principal
+from game_session.settlement.auth.tokens import CallerId, get_principal
 from runefoble_platform.aggregate_loading import load_if_exists
 from runefoble_platform.event_publish import publish_or_fail
 
-router = APIRouter(
-    dependencies=[Depends(get_caller_principal)], prefix="/sessions", tags=["bounties"]
-)
+router = APIRouter(dependencies=[Depends(get_principal)], prefix="/sessions", tags=["bounties"])
 
 
 async def _save_pub(agg: MercenaryBountyAggregate) -> None:

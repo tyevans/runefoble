@@ -15,7 +15,7 @@ from campaign_lore.dependencies import (
 )
 from campaign_lore.handouts import RelicSynthesizer
 from campaign_lore.handouts_aggregate import RelicAggregate
-from campaign_lore.identity import CallerId, get_campaign_principal
+from campaign_lore.identity import CallerId, get_principal
 from campaign_lore.permissions import (
     check_user_can_inspect_relic,
     check_user_can_read_secrets,
@@ -23,7 +23,7 @@ from campaign_lore.permissions import (
 )
 
 router = APIRouter(
-    prefix="/api/v1/lore/relics", tags=["3D Relics"], dependencies=[Depends(get_campaign_principal)]
+    prefix="/api/v1/lore/relics", tags=["3D Relics"], dependencies=[Depends(get_principal)]
 )
 
 

@@ -13,7 +13,7 @@ from __future__ import annotations
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Body, HTTPException, Request, status
-from gateway_api.auth import CurrentPrincipal
+from gateway_api.auth import CallerPrincipal
 from gateway_api.proxy import forward_json
 from runefoble_platform.service_client import path
 
@@ -33,7 +33,7 @@ def _owner_path(*segments: str) -> str:
 
 @router.post("/api/v1/campaigns/{campaign_id}/settlements", status_code=status.HTTP_201_CREATED)
 async def found_settlement(
-    campaign_id: str, request: Request, user: CurrentPrincipal, body: Annotated[Any, Body()]
+    campaign_id: str, request: Request, user: CallerPrincipal, body: Annotated[Any, Body()]
 ) -> Any:
     """Found a settlement haven in a campaign (game_session checks campaign write)."""
     return await forward_json(
@@ -47,7 +47,7 @@ async def found_settlement(
 
 @router.get("/api/v1/campaigns/{campaign_id}/settlements")
 async def list_campaign_settlements(
-    campaign_id: str, request: Request, user: CurrentPrincipal
+    campaign_id: str, request: Request, user: CallerPrincipal
 ) -> Any:
     """List the settlements of a campaign (game_session checks view)."""
     return await forward_json(
@@ -60,7 +60,7 @@ async def list_campaign_settlements(
 
 @router.get("/api/v1/campaigns/{campaign_id}/settlements/{settlement_id}")
 async def get_campaign_settlement(
-    campaign_id: str, settlement_id: str, request: Request, user: CurrentPrincipal
+    campaign_id: str, settlement_id: str, request: Request, user: CallerPrincipal
 ) -> Any:
     """Read one settlement projection (game_session checks view)."""
     return await forward_json(
@@ -75,7 +75,7 @@ async def get_campaign_settlement(
     "/api/v1/settlements/{settlement_id}/establishments", status_code=status.HTTP_201_CREATED
 )
 async def construct_establishment(
-    settlement_id: str, request: Request, user: CurrentPrincipal, body: Annotated[Any, Body()]
+    settlement_id: str, request: Request, user: CallerPrincipal, body: Annotated[Any, Body()]
 ) -> Any:
     """Construct an establishment in a settlement district (game_session checks upgrade)."""
     return await forward_json(
@@ -89,7 +89,7 @@ async def construct_establishment(
 
 @router.get("/api/v1/settlements/{settlement_id}/establishments")
 async def list_settlement_establishments(
-    settlement_id: str, request: Request, user: CurrentPrincipal
+    settlement_id: str, request: Request, user: CallerPrincipal
 ) -> Any:
     """List the establishments of a settlement (game_session checks view)."""
     return await forward_json(
@@ -101,7 +101,7 @@ async def list_settlement_establishments(
 
 
 @router.get("/api/v1/establishments/{establishment_id}")
-async def get_establishment(establishment_id: str, request: Request, user: CurrentPrincipal) -> Any:
+async def get_establishment(establishment_id: str, request: Request, user: CallerPrincipal) -> Any:
     """Read one establishment (game_session checks view)."""
     return await forward_json(
         request,
@@ -113,7 +113,7 @@ async def get_establishment(establishment_id: str, request: Request, user: Curre
 
 @router.post("/api/v1/settlements/{settlement_id}/upgrade-tier")
 async def upgrade_settlement_tier(
-    settlement_id: str, request: Request, user: CurrentPrincipal, body: Annotated[Any, Body()]
+    settlement_id: str, request: Request, user: CallerPrincipal, body: Annotated[Any, Body()]
 ) -> Any:
     """Upgrade a settlement to a higher civic tier (game_session checks upgrade)."""
     return await forward_json(
@@ -127,7 +127,7 @@ async def upgrade_settlement_tier(
 
 @router.post("/api/v1/establishments/{establishment_id}/upgrade")
 async def upgrade_establishment(
-    establishment_id: str, request: Request, user: CurrentPrincipal, body: Annotated[Any, Body()]
+    establishment_id: str, request: Request, user: CallerPrincipal, body: Annotated[Any, Body()]
 ) -> Any:
     """Upgrade an establishment tier, amenity, or capacity (game_session checks edit)."""
     return await forward_json(
@@ -141,7 +141,7 @@ async def upgrade_establishment(
 
 @router.post("/api/v1/settlements/{settlement_id}/bulletin", status_code=status.HTTP_201_CREATED)
 async def pin_bulletin_notice(
-    settlement_id: str, request: Request, user: CurrentPrincipal, body: Annotated[Any, Body()]
+    settlement_id: str, request: Request, user: CallerPrincipal, body: Annotated[Any, Body()]
 ) -> Any:
     """Pin a notice to the settlement bulletin board (game_session checks the board)."""
     return await forward_json(
@@ -154,9 +154,7 @@ async def pin_bulletin_notice(
 
 
 @router.get("/api/v1/settlements/{settlement_id}/bulletin")
-async def list_bulletin_notices(
-    settlement_id: str, request: Request, user: CurrentPrincipal
-) -> Any:
+async def list_bulletin_notices(settlement_id: str, request: Request, user: CallerPrincipal) -> Any:
     """List the bulletin notices of a settlement (game_session checks view)."""
     return await forward_json(
         request,
@@ -171,7 +169,7 @@ async def remove_bulletin_notice(
     settlement_id: str,
     notice_id: str,
     request: Request,
-    user: CurrentPrincipal,
+    user: CallerPrincipal,
     reason: str = "removed",
 ) -> Any:
     """Remove or fulfill a bulletin notice (game_session checks the board)."""
@@ -189,7 +187,7 @@ async def decrypt_cipher_notice(
     settlement_id: str,
     notice_id: str,
     request: Request,
-    user: CurrentPrincipal,
+    user: CallerPrincipal,
     body: Annotated[Any, Body()],
 ) -> Any:
     """Submit a cipher solution for a hidden bulletin notice (game_session checks the board)."""

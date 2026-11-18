@@ -12,14 +12,14 @@ from runefoble_events.voice_barge_in import (
     TTSStreamAttenuatedEvent,
 )
 from runefoble_platform.event_publish import publish_best_effort
-from voice_agent.auth import VoicePrincipal, get_voice_principal
+from voice_agent.auth import CallerPrincipal, get_principal
 from voice_agent.authz import require_speaker
 from voice_agent.dependencies import STREAM_SESSION, STREAM_VOICE, get_event_bus
 from voice_agent.dsp.barge_in_filter import BargeInOnsetFilter
 from voice_agent.dsp.cosine_crossfade import CosineCrossfadeAttenuator
 
 logger = logging.getLogger("runefoble.voice_agent.audio_filters")
-router = APIRouter(dependencies=[Depends(get_voice_principal)], tags=["Audio DSP Filters"])
+router = APIRouter(dependencies=[Depends(get_principal)], tags=["Audio DSP Filters"])
 
 
 class BargeInEvaluationRequest(BaseModel):
@@ -52,7 +52,7 @@ class BargeInEvaluationResponse(BaseModel):
 @router.post("/voice/filters/barge-in/evaluate", response_model=BargeInEvaluationResponse)
 @router.post("/api/v1/voice/filters/barge-in/evaluate", response_model=BargeInEvaluationResponse)
 async def evaluate_barge_in(
-    req: BargeInEvaluationRequest, principal: VoicePrincipal
+    req: BargeInEvaluationRequest, principal: CallerPrincipal
 ) -> BargeInEvaluationResponse:
     """Evaluate synthetic audio frames for speech onset and measure halt latency."""
     await require_speaker(req.session_id, req.speaker_id, principal.user_id)

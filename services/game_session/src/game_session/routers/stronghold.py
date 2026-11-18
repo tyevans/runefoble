@@ -12,7 +12,7 @@ from eventsource import AggregateNotFoundError
 from fastapi import APIRouter, Depends, HTTPException
 from game_session.dependencies import get_event_bus, get_spicedb_client, stronghold_repo
 from game_session.events import STREAM_STRONGHOLD
-from game_session.settlement.auth.tokens import CallerId, get_caller_principal
+from game_session.settlement.auth.tokens import CallerId, get_principal
 from game_session.stronghold import (
     FACILITY_TIERS,
     InsufficientStrongholdResources,
@@ -22,7 +22,7 @@ from game_session.stronghold import (
 from pydantic import BaseModel, ConfigDict, Field
 from runefoble_platform.event_publish import publish_or_fail
 
-router = APIRouter(dependencies=[Depends(get_caller_principal)], tags=["stronghold"])
+router = APIRouter(dependencies=[Depends(get_principal)], tags=["stronghold"])
 
 
 def _camp_uuid(campaign_id: str) -> UUID | str:

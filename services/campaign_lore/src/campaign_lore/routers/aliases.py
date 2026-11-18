@@ -16,11 +16,11 @@ from campaign_lore.dependencies import (
     get_repo,
     get_retrieval_engine,
 )
-from campaign_lore.identity import CallerId, get_campaign_principal
+from campaign_lore.identity import CallerId, get_principal
 from campaign_lore.permissions import check_user_can_run_session
 from campaign_lore.retrieval import LoreRetrievalEngine
 
-router = APIRouter(tags=["Entity Aliases"], dependencies=[Depends(get_campaign_principal)])
+router = APIRouter(tags=["Entity Aliases"], dependencies=[Depends(get_principal)])
 
 
 class ConsolidateAliasRequest(BaseModel):

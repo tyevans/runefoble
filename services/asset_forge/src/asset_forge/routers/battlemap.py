@@ -16,7 +16,7 @@ from runefoble_platform.storage import AssetNotFoundError, SiloStorageService
 
 from asset_forge.aggregate import AssetForgeAggregate
 from asset_forge.dependencies import (
-    VerifiedUserId,
+    CallerId,
     get_forge_repo,
     get_principal,
     get_storage,
@@ -44,7 +44,7 @@ router = APIRouter(
 @router.post("", response_model=BattlemapForgeResponse)
 async def forge_battlemap(
     request: BattlemapForgeRequest,
-    user_id: VerifiedUserId,
+    user_id: CallerId,
     storage: Annotated[SiloStorageService, Depends(get_storage)],
     spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
     repo: Annotated[AggregateRepository[AssetForgeAggregate], Depends(get_forge_repo)],
@@ -156,7 +156,7 @@ async def forge_battlemap(
 @router.get("/{asset_id}", response_model=dict)
 async def get_forged_battlemap(
     asset_id: str,
-    user_id: VerifiedUserId,
+    user_id: CallerId,
     spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
 ) -> dict:
     """Retrieve metadata for a previously forged battlemap. Requires `forged_asset.view`."""

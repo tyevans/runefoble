@@ -8,7 +8,7 @@ from the_watcher.dependencies import (
     require_dm,
     require_session_permission,
 )
-from the_watcher.identity import CallerId, get_caller_principal
+from the_watcher.identity import CallerId, get_principal
 from the_watcher.models import (
     ApproveActionRequest,
     ModifyActionRequest,
@@ -17,7 +17,7 @@ from the_watcher.models import (
     VetoActionRequest,
 )
 
-router = APIRouter(dependencies=[Depends(get_caller_principal)], tags=["copilot"])
+router = APIRouter(dependencies=[Depends(get_principal)], tags=["copilot"])
 
 
 @router.post("/api/v1/watcher/actions/propose", response_model=PendingAction)

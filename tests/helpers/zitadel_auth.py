@@ -92,6 +92,7 @@ def auth_environment(game_session_upstream, default_spicedb_client):
     auth_service = ZitadelAuthService(
         issuer="http://zitadel:8080",
         audience="runefoble-api",
+        internal_url=None,
         jwk_client=jwk_client,
     )
 

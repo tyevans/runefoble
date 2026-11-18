@@ -11,7 +11,7 @@ from the_watcher.dependencies import (
     require_character_permission,
     require_session_permission,
 )
-from the_watcher.identity import CallerId, get_caller_principal
+from the_watcher.identity import CallerId, get_principal
 from the_watcher.models import (
     IntentExecuteRequest,
     IntentExecuteResponse,
@@ -23,7 +23,7 @@ from the_watcher.routers.intent.disambiguation import (
     evaluate_target_ambiguity,
 )
 
-router = APIRouter(dependencies=[Depends(get_caller_principal)], tags=["intent"])
+router = APIRouter(dependencies=[Depends(get_principal)], tags=["intent"])
 
 
 @router.post("/api/v1/watcher/intent/parse", response_model=IntentParseResponse)

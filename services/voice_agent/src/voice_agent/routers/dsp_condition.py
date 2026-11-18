@@ -9,10 +9,10 @@ from typing import Any
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
-from voice_agent.auth import get_voice_principal
+from voice_agent.auth import get_principal
 from voice_agent.dependencies import dsp_pipeline
 
-router = APIRouter(dependencies=[Depends(get_voice_principal)], tags=["Voice DSP Conditioning"])
+router = APIRouter(dependencies=[Depends(get_principal)], tags=["Voice DSP Conditioning"])
 
 
 class DSPConditionRequest(BaseModel):

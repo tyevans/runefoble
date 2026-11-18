@@ -12,7 +12,7 @@ import logging
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from runefoble_auth.websocket import admit_websocket
 from runefoble_platform.event_publish import publish_best_effort
-from voice_agent.auth import VoicePrincipal, get_voice_verifier
+from voice_agent.auth import CallerPrincipal, get_voice_verifier
 from voice_agent.authz import require_action, speaker_authorizer
 from voice_agent.barge_in import BargeInDetector
 from voice_agent.coordinator import VoiceRoomCoordinator, get_voice_room_coordinator
@@ -25,7 +25,7 @@ router = APIRouter(prefix="/api/v1/voice/duplex", tags=["Voice Duplex & Interrup
 
 
 @router.post("/playback/start")
-async def start_playback(req: PlaybackStartRequest, principal: VoicePrincipal):
+async def start_playback(req: PlaybackStartRequest, principal: CallerPrincipal):
     await require_action("session.participate", req.session_id, principal.user_id)
     await get_voice_room_coordinator().start_playback(
         req.session_id, req.playback_id, req.text, req.duration_ms
@@ -34,7 +34,7 @@ async def start_playback(req: PlaybackStartRequest, principal: VoicePrincipal):
 
 
 @router.get("/status/{session_id}")
-async def get_playback_status(session_id: str, principal: VoicePrincipal):
+async def get_playback_status(session_id: str, principal: CallerPrincipal):
     await require_action("session.observe", session_id, principal.user_id)
     active = await get_voice_room_coordinator().playback_active(session_id)
     return {"session_id": session_id, "playback_active": active}

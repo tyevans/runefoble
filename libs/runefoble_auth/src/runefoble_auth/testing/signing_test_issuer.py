@@ -73,6 +73,7 @@ class SigningTestIssuer:
         return ZitadelAuthService(
             issuer=self.issuer,
             audience=self.audience,
+            internal_url=None,
             jwk_client=self.jwk_client(),
         )
 

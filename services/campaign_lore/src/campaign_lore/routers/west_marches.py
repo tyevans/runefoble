@@ -19,7 +19,7 @@ from runefoble_platform.event_sourcing import AggregateRepository
 from campaign_lore.dependencies import (
     get_west_marches_repo,
 )
-from campaign_lore.identity import CallerId, get_campaign_principal
+from campaign_lore.identity import CallerId, get_principal
 from campaign_lore.models import WestMarchesState
 from campaign_lore.permissions import (
     check_user_can_manage_campaign,
@@ -33,7 +33,7 @@ from campaign_lore.west_marches_prices import InsufficientOutpostResources
 router = APIRouter(
     prefix="/api/v1/campaigns/{campaign_id}/west-marches",
     tags=["West Marches Atlas"],
-    dependencies=[Depends(get_campaign_principal)],
+    dependencies=[Depends(get_principal)],
 )
 
 

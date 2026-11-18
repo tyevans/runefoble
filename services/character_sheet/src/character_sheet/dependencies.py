@@ -17,10 +17,13 @@ from character_sheet.models import CharacterState
 from character_sheet.schemas import CreateCharacterRequest
 from eventsource.domain.exceptions import AggregateNotFoundError
 from fastapi import Depends, HTTPException
-from runefoble_auth.caller import CallerIdentity, require_user_or_service_credential
-from runefoble_auth.principal import VerifiedPrincipal, require_principal
+from runefoble_auth.principal import VerifiedPrincipal
 from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
-from runefoble_auth.zitadel import ZitadelAuthService
+from runefoble_auth.wiring import (
+    build_identity_dependencies,
+    make_verifier_holder,
+    verifier_from_settings,
+)
 from runefoble_events.events import (
     CharacterAssignedToCampaign,
     StandInPolicyUpdated,
@@ -40,7 +43,6 @@ STREAM_CRAFTING = "runefoble.events.crafting"
 platform_settings = PlatformSettings()
 
 _spicedb_client: SpiceDBClient | MockSpiceDBClient | None = None
-_zitadel_auth_service: ZitadelAuthService | None = None
 
 # Global aggregate repositories
 repo: AggregateRepository[CharacterAggregate] = create_aggregate_repository(CharacterAggregate)
@@ -81,41 +83,13 @@ CraftingRepoDep = Annotated[
 SpiceDep = Annotated[SpiceDBClient | MockSpiceDBClient, Depends(get_spicedb_client)]
 
 
-def get_zitadel_auth_service() -> ZitadelAuthService:
-    """Provide the Zitadel verifier built from platform settings (ADR-0015 (c))."""
-    global _zitadel_auth_service
-    if _zitadel_auth_service is None:
-        _zitadel_auth_service = ZitadelAuthService(
-            issuer=platform_settings.zitadel_issuer,
-            audience=platform_settings.zitadel_audience,
-            internal_url=platform_settings.zitadel_internal_url,
-        )
-    return _zitadel_auth_service
-
-
-def set_zitadel_auth_service(service: ZitadelAuthService | None) -> None:
-    """Override the Zitadel verifier for tests."""
-    global _zitadel_auth_service
-    _zitadel_auth_service = service
-
-
-get_principal = require_principal(get_zitadel_auth_service)
-
-
-# Service credential (ADR-0015 e). Read once at import, so a service without it never starts.
-SERVICE_CREDENTIAL = expected_service_credential()
-get_caller_or_service = require_user_or_service_credential(
-    get_zitadel_auth_service, SERVICE_CREDENTIAL
+get_zitadel_auth_service, set_zitadel_auth_service = make_verifier_holder(
+    lambda: verifier_from_settings(platform_settings)
 )
-CallerOrService = Annotated[CallerIdentity, Depends(get_caller_or_service)]
-
-
-def verified_user_id(principal: Annotated[VerifiedPrincipal, Depends(get_principal)]) -> str:
-    """Project the verified token subject. Every route in this service requires it."""
-    return principal.user_id
-
-
-VerifiedUserId = Annotated[str, Depends(verified_user_id)]
+SERVICE_CREDENTIAL = expected_service_credential()
+get_principal, CallerPrincipal, CallerId, get_caller_or_service, CallerOrService = (
+    build_identity_dependencies(get_zitadel_auth_service, SERVICE_CREDENTIAL)
+)
 
 
 def require_character_permission(

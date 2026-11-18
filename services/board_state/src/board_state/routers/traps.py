@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-from typing import Annotated
 
 from board_state.authz import (
     MANAGE_TRAPS,
@@ -14,9 +13,10 @@ from board_state.authz import (
     require_board_permission,
 )
 from board_state.dependencies import (
+    CallerId,
     get_board,
-    get_current_user_id,
     get_event_bus,
+    get_principal,
     repo,
 )
 from board_state.events import publish_board_events
@@ -32,7 +32,7 @@ from board_state.traps import (
 from fastapi import APIRouter, Depends, HTTPException, status
 
 logger = logging.getLogger("runefoble.board_state.routers.traps")
-router = APIRouter(tags=["traps"], dependencies=[Depends(get_current_user_id)])
+router = APIRouter(tags=["traps"], dependencies=[Depends(get_principal)])
 
 
 @router.post("/api/v1/boards/{board_id}/traps", response_model=SecretTrapState, status_code=201)
@@ -40,7 +40,7 @@ router = APIRouter(tags=["traps"], dependencies=[Depends(get_current_user_id)])
 async def create_trap(
     board_id: str,
     req: CreateTrapRequest,
-    user_id: Annotated[str, Depends(get_current_user_id)],
+    user_id: CallerId,
 ) -> SecretTrapState:
     """Create a secret DM trap or trigger on the tactical board. Needs `board.manage_traps`."""
     await require_board_permission(user_id, board_id, MANAGE_TRAPS)
@@ -75,7 +75,7 @@ async def create_trap(
 @router.get("/boards/{board_id}/traps", response_model=TrapListResponse)
 async def list_traps(
     board_id: str,
-    user_id: Annotated[str, Depends(get_current_user_id)],
+    user_id: CallerId,
 ) -> TrapListResponse:
     """Retrieve traps on the board. Without `board.view_secret_layer` the secret ones are absent."""
     board = await get_board(board_id)
@@ -93,7 +93,7 @@ async def list_traps(
 async def switch_map_endpoint(
     board_id: str,
     req: SwitchMapRequest,
-    user_id: Annotated[str, Depends(get_current_user_id)],
+    user_id: CallerId,
 ) -> SwitchMapResponse:
     """Switch the battlemap and teleport party tokens in one transaction. Needs `board.switch_map`."""
     await require_board_permission(user_id, board_id, SWITCH_MAP)
@@ -115,7 +115,7 @@ async def switch_map_endpoint(
 async def disarm_trap_endpoint(
     board_id: str,
     trap_id: str,
-    user_id: Annotated[str, Depends(get_current_user_id)],
+    user_id: CallerId,
 ) -> dict[str, str]:
     """Disarm a trap on the board. Needs `board.manage_traps`.
 

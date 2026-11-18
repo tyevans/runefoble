@@ -12,14 +12,14 @@ from runefoble_events.voice_stream_quality import (
     VoiceStreamCodecAdaptedEvent,
     VoiceStreamQualityDegradedEvent,
 )
-from voice_agent.auth import VoicePrincipal, get_voice_principal
+from voice_agent.auth import CallerPrincipal, get_principal
 from voice_agent.authz import require_action
 from voice_agent.coordinator import get_voice_room_coordinator
 from voice_agent.dependencies import publish_voice_event
 from voice_agent.room_aggregate import PeerStreamState
 from voice_agent.webrtc.models import RTCPReportRequest, StreamQualityResponse
 
-router = APIRouter(dependencies=[Depends(get_voice_principal)], tags=["Voice Stream Diagnostics"])
+router = APIRouter(dependencies=[Depends(get_principal)], tags=["Voice Stream Diagnostics"])
 
 
 def _make_resp(
@@ -55,7 +55,7 @@ def _make_resp(
 @router.get("/voice/streams/{session_id}/quality")
 @router.get("/api/v1/voice/streams/{session_id}/quality")
 async def get_stream_quality(
-    session_id: str, principal: VoicePrincipal, peer_id: str | None = None
+    session_id: str, principal: CallerPrincipal, peer_id: str | None = None
 ) -> Any:
     """Query stream bitrate, packet loss, and codec mode."""
     await require_action("session.control", session_id, principal.user_id)
@@ -72,7 +72,7 @@ async def get_stream_quality(
 @router.post("/voice/streams/{session_id}/quality", response_model=StreamQualityResponse)
 @router.post("/api/v1/voice/streams/{session_id}/report", response_model=StreamQualityResponse)
 async def submit_rtcp_report(
-    session_id: str, req: RTCPReportRequest, principal: VoicePrincipal
+    session_id: str, req: RTCPReportRequest, principal: CallerPrincipal
 ) -> StreamQualityResponse:
     """Submit RTCP report, evaluate degradation, and adapt Opus bitrate."""
     await require_action("session.control", session_id, principal.user_id)

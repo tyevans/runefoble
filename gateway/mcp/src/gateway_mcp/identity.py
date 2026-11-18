@@ -19,7 +19,7 @@ from runefoble_auth.principal import (
     VerifiedPrincipal,
     authenticate_authorization,
 )
-from runefoble_auth.zitadel import ZitadelAuthService
+from runefoble_auth.wiring import make_verifier_holder, verifier_from_settings
 from runefoble_platform.config import PlatformSettings
 from starlette.datastructures import Headers
 from starlette.responses import JSONResponse
@@ -29,26 +29,10 @@ logger = logging.getLogger("runefoble.gateway_mcp.identity")
 
 PUBLIC_PATHS = frozenset({"/healthz"})
 
-_verifier: BearerVerifier | None = None
-
-
-def get_verifier() -> BearerVerifier:
-    """Return the Zitadel verifier for this process, built from platform settings on first use."""
-    global _verifier
-    if _verifier is None:
-        settings = PlatformSettings()
-        _verifier = ZitadelAuthService(
-            issuer=settings.zitadel_issuer,
-            audience=settings.zitadel_audience,
-            internal_url=settings.zitadel_internal_url,
-        )
-    return _verifier
-
-
-def set_verifier(verifier: BearerVerifier | None) -> None:
-    """Replace the verifier. Tests use this to trust a signing issuer."""
-    global _verifier
-    _verifier = verifier
+# The verifier for this process, built from platform settings on first use. Tests replace it.
+get_verifier, set_verifier = make_verifier_holder(
+    lambda: verifier_from_settings(PlatformSettings())
+)
 
 
 class BearerTransportAuth:

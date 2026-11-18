@@ -18,7 +18,7 @@ from game_session.queries import link_child, list_establishments_for_settlement
 from game_session.settlement.auth import (
     write_establishment_relationships,
 )
-from game_session.settlement.auth.tokens import CallerId, get_caller_principal
+from game_session.settlement.auth.tokens import CallerId, get_principal
 from game_session.settlement.establishment_aggregate import EstablishmentAggregate
 from game_session.settlement.haven.loaders import (
     load_establishment,
@@ -32,7 +32,7 @@ from game_session.settlement.models import (
 )
 from runefoble_platform.aggregate_loading import load_if_exists
 
-router = APIRouter(dependencies=[Depends(get_caller_principal)])
+router = APIRouter(dependencies=[Depends(get_principal)])
 
 
 @router.post("/api/v1/settlements/{settlement_id}/establishments", status_code=201)

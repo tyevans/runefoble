@@ -2,46 +2,28 @@
 
 import logging
 from collections.abc import Callable
-from typing import Annotated, Any
+from typing import Any
 
-from fastapi import Depends, Header, HTTPException, Request
+from fastapi import Header, HTTPException, Request
 from runefoble_auth.errors import AuthzUnavailableError
 from runefoble_auth.factory import get_spicedb_client
-from runefoble_auth.principal import (
-    VerifiedPrincipal,
-    authenticate_authorization,
-    require_principal,
+from runefoble_auth.principal import authenticate_authorization
+from runefoble_auth.wiring import (
+    build_identity_dependencies,
+    make_verifier_holder,
+    verifier_from_settings,
 )
-from runefoble_auth.zitadel import ZitadelAuthService
 from runefoble_platform.config import PlatformSettings
 
 logger = logging.getLogger("runefoble.gateway.auth")
 
 # The gateway uses the shared SpiceDB client factory. It holds no mock wiring.
-_zitadel_auth_service: ZitadelAuthService | None = None
-
-
-def get_zitadel_auth_service() -> ZitadelAuthService:
-    global _zitadel_auth_service
-    if _zitadel_auth_service is None:
-        settings = PlatformSettings()
-        _zitadel_auth_service = ZitadelAuthService(
-            issuer=settings.zitadel_issuer,
-            audience=settings.zitadel_audience,
-            internal_url=settings.zitadel_internal_url,
-        )
-    return _zitadel_auth_service
-
-
-def set_zitadel_auth_service(service: ZitadelAuthService | None) -> None:
-    global _zitadel_auth_service
-    _zitadel_auth_service = service
-
-
-get_current_user = require_principal(get_zitadel_auth_service)
-
-# Route parameter type: the verified principal for an authenticated request.
-CurrentPrincipal = Annotated[VerifiedPrincipal, Depends(get_current_user)]
+get_zitadel_auth_service, set_zitadel_auth_service = make_verifier_holder(
+    lambda: verifier_from_settings(PlatformSettings())
+)
+get_principal, CallerPrincipal, CallerId, get_caller_or_service, CallerOrService = (
+    build_identity_dependencies(get_zitadel_auth_service, None)
+)
 
 
 def require_zanzibar_permission(

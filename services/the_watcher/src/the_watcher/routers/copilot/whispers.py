@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Query
 from the_watcher.dependencies import get_whisper_service, require_dm
-from the_watcher.identity import CallerId, get_caller_principal
+from the_watcher.identity import CallerId, get_principal
 from the_watcher.models import (
     WhisperCreateRequest,
     WhisperGenerateRequest,
@@ -12,7 +12,7 @@ from the_watcher.models import (
     WhisperSuggestion,
 )
 
-router = APIRouter(dependencies=[Depends(get_caller_principal)], tags=["copilot"])
+router = APIRouter(dependencies=[Depends(get_principal)], tags=["copilot"])
 
 
 @router.get("/api/v1/watcher/whispers", response_model=WhisperListResponse)

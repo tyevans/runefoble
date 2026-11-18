@@ -9,23 +9,34 @@ Use this guide to protect a FastAPI HTTP route or WebSocket with a verified prin
 - A request has identity only when its bearer token passes `ZitadelAuthService.verify_token`.
 - Every failure raises a 401 (HTTP) or closes the handshake before accept (WebSocket). There is no fallback identity.
 
-## HTTP: Use `require_principal`
+## Build the Identity Dependencies Once Per Service
 
-`require_principal` builds a FastAPI dependency. It reads only `Authorization: Bearer <token>`.
+`runefoble_auth.wiring` is the only place that builds identity dependencies. A service does not write its own verifier getter, setter, or user-id helper. Three steps:
+
+1. `make_verifier_holder(build)` returns `(get, set)` for the process verifier. `get` builds it on first use. `set` replaces it, which tests use to trust a signing issuer.
+2. `build_identity_dependencies(get_verifier, service_credential)` returns the route dependencies: `get_principal`, `CallerPrincipal`, `CallerId`, `get_caller_or_service`, and `CallerOrService`.
+3. The service module binds those names. Routes import them from the service module.
+
+`service_credential` is the value that this service accepts from other services (ADR-0015 e). Pass `expected_service_credential()` when the service receives service calls. Pass `None` when it does not. A `None` value refuses every service-credential request with `401`. User bearer requests still work.
 
 ```python
 from typing import Annotated
 
 from fastapi import Depends, FastAPI
-from runefoble_auth.principal import VerifiedPrincipal, require_principal
-from runefoble_auth.zitadel import ZitadelAuthService
-
-verifier = ZitadelAuthService(
-    issuer="http://auth.localhost",  # Must equal the token `iss` claim
-    audience="364509876543210987",  # The project ID in a cluster
-    internal_url="http://zitadel:8080",  # In-cluster origin. Requests carry Host: auth.localhost
+from runefoble_auth.principal import VerifiedPrincipal
+from runefoble_auth.wiring import (
+    build_identity_dependencies,
+    make_verifier_holder,
+    verifier_from_settings,
 )
-get_principal = require_principal(lambda: verifier)
+from runefoble_platform.config import PlatformSettings
+
+get_zitadel_auth_service, set_zitadel_auth_service = make_verifier_holder(
+    lambda: verifier_from_settings(PlatformSettings())
+)
+get_principal, CallerPrincipal, CallerId, get_caller_or_service, CallerOrService = (
+    build_identity_dependencies(get_zitadel_auth_service, None)
+)
 
 app = FastAPI()
 
@@ -40,7 +51,7 @@ Behavior:
 - On success the dependency sets `request.state.principal`.
 - The dependency is synchronous. FastAPI runs it in a worker thread, so a JWKS fetch does not block the event loop.
 
-Gateway code uses the same pattern through `gateway_api.auth.get_current_user`.
+To build the verifier by hand, for example in a test, use `ZitadelAuthService(issuer=..., audience=..., internal_url=...)`. All three arguments are required. There is no default issuer. A blank issuer or audience raises `ConfigurationError` when the object is built.
 
 ## Routers: Depend on the Router and Take a `CallerId`
 
@@ -50,9 +61,9 @@ Bounded contexts that serve many routes apply the principal dependency at router
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
-from game_session.settlement.auth.tokens import CallerId, get_caller_principal
+from game_session.settlement.auth.tokens import CallerId, get_principal
 
-router = APIRouter(dependencies=[Depends(get_caller_principal)])
+router = APIRouter(dependencies=[Depends(get_principal)])
 
 
 @router.post("/api/v1/example/{item_id}")
@@ -64,21 +75,23 @@ async def act(item_id: str, caller_id: CallerId):
 - Do not add a query, header, or body field for identity. A forged value never reaches the route.
 - Keep public routes (health, manifests, OpenAPI) on the app, not on a guarded router.
 - WebSocket routes do not use `require_principal`. They call `admit_websocket` (below).
-- The Watcher uses the same names from `the_watcher.identity`.
+- Every service exposes the same names: `get_principal`, `CallerPrincipal`, and `CallerId`. The Watcher binds them in `the_watcher.identity`. Campaign Lore, Voice Agent, and the gateway bind them in their own identity modules.
 
 ## Routes That Another Service Calls: Accept the Service Credential
 
-Use `require_user_or_service_credential` only on a route that another service calls and that does not act for a user. The MCP gateway calls such routes. The dependency accepts either:
+Use `get_caller_or_service` (`CallerOrService`) only on a route that another service calls and that does not act for a user. The MCP gateway calls such routes. The dependency accepts either:
 
 - a verified user bearer in `Authorization`, which gives `CallerIdentity(user_id=<subject>)`; or
 - the service credential in `X-Runefoble-Service-Credential`, which gives `CallerIdentity(user_id=None)`.
 
 ```python
-from runefoble_auth.caller import CallerIdentity, require_user_or_service_credential
 from runefoble_platform.service_credential import expected_service_credential
+from runefoble_auth.wiring import build_identity_dependencies
 
 SERVICE_CREDENTIAL = expected_service_credential()  # refuses start-up when unset
-get_caller_or_service = require_user_or_service_credential(get_verifier, SERVICE_CREDENTIAL)
+get_principal, CallerPrincipal, CallerId, get_caller_or_service, CallerOrService = (
+    build_identity_dependencies(get_zitadel_auth_service, SERVICE_CREDENTIAL)
+)
 
 
 @router.get("/api/v1/things/{thing_id}", dependencies=[Depends(get_caller_or_service)])
@@ -86,7 +99,7 @@ async def read_thing(thing_id: UUID): ...
 ```
 
 Rules:
-- A route with a user-scoped permission check keeps `require_principal` or a `CallerId`. A service call must never reach it.
+- A route with a user-scoped permission check keeps `get_principal` or a `CallerId`. A service call must never reach it.
 - A route attaches the dependency per route. Do not put it on the router, because the router would then open every route in it to the service credential.
 - A presented `Authorization` header that fails verification gives `401`, even when the service credential is also present.
 
@@ -164,7 +177,7 @@ client.websocket_connect("/ws", subprotocols=["runefoble.v1", f"runefoble.bearer
 Negative cases to cover: no token, garbage, HS256 with a known secret, `alg: none`, unsigned, unknown key, expired, wrong `aud`, wrong `iss`, missing `sub`. The reference suite is `libs/runefoble_auth/tests/test_verified_principal.py`.
 
 ## Configuration
-- `RUNEFOBLE_ZITADEL_ISSUER` (`zitadel_issuer`): must equal the token `iss`.
+- `RUNEFOBLE_ZITADEL_ISSUER` (`zitadel_issuer`): must equal the token `iss`. The verifier has no default issuer. A blank value fails at start-up.
 - `RUNEFOBLE_ZITADEL_AUDIENCE` (`zitadel_audience`): must equal the token `aud`. In a cluster it is the project ID from the Secret `runefoble-zitadel-client`.
 - `RUNEFOBLE_ZITADEL_INTERNAL_URL` (`zitadel_internal_url`): optional. If set, discovery and JWKS requests go to this origin with `Host` set to the issuer host. If empty, the verifier reads discovery from the issuer.
 

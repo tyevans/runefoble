@@ -9,7 +9,7 @@ from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.spicedb import SpiceDBClient
 
 from soundscape.dependencies import (
-    VerifiedUserId,
+    CallerId,
     check_user_can_control_soundscape,
     get_principal,
 )
@@ -49,7 +49,7 @@ async def get_tension_status(
 )
 async def calculate_tension(
     request: TensionCalculationRequest,
-    user_id: VerifiedUserId,
+    user_id: CallerId,
     spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
 ) -> TensionStatusResponse:
     """Compute tension index (0-100) and adaptively update musical stems (session control)."""

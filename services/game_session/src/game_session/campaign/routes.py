@@ -13,7 +13,7 @@ from game_session.campaign import service_campaigns as campaigns
 from game_session.campaign import service_membership as membership
 from game_session.campaign import service_roles as roles
 from game_session.campaign.permissions import (
-    CampaignPrincipal,
+    CallerPrincipal,
     ManageCampaign,
     RunSessionCampaign,
     ViewCampaign,
@@ -37,10 +37,10 @@ from game_session.campaign.schemas import (
 )
 from game_session.campaign.tuples import SpiceDB
 from game_session.dependencies import get_spicedb_client
-from game_session.settlement.auth.tokens import get_caller_principal
+from game_session.settlement.auth.tokens import get_principal
 
 router = APIRouter(
-    dependencies=[Depends(get_caller_principal)],
+    dependencies=[Depends(get_principal)],
     prefix="/api/v1/campaigns",
     tags=["Campaigns & Sessions"],
 )
@@ -51,7 +51,7 @@ Spicedb = Annotated[SpiceDB, Depends(get_spicedb_client)]
 
 @router.get("", response_model=list[CampaignSummaryResponse])
 async def list_campaigns(
-    principal: CampaignPrincipal, repos: Repos, spicedb: Spicedb
+    principal: CallerPrincipal, repos: Repos, spicedb: Spicedb
 ) -> list[CampaignSummaryResponse]:
     """List the campaigns the caller can view."""
     return await campaigns.list_viewable_campaigns(repos, spicedb, principal.user_id)
@@ -60,7 +60,7 @@ async def list_campaigns(
 @router.post("", response_model=CampaignSummaryResponse, status_code=status.HTTP_201_CREATED)
 async def create_campaign(
     req: CreateCampaignRequest,
-    principal: CampaignPrincipal,
+    principal: CallerPrincipal,
     repos: Repos,
     spicedb: Spicedb,
 ) -> CampaignSummaryResponse:
@@ -109,7 +109,7 @@ async def create_invite(
 @router.post("/join", response_model=JoinCampaignResponse)
 async def join_campaign(
     req: JoinCampaignRequest,
-    principal: CampaignPrincipal,
+    principal: CallerPrincipal,
     repos: Repos,
     spicedb: Spicedb,
 ) -> JoinCampaignResponse:
@@ -183,7 +183,7 @@ async def assign_role(
 @router.get("/{campaign_id}/capabilities", response_model=CampaignCapabilitiesResponse)
 async def get_capabilities(
     campaign_id: str,
-    principal: CampaignPrincipal,
+    principal: CallerPrincipal,
     spicedb: Spicedb,
 ) -> CampaignCapabilitiesResponse:
     """Report which campaign actions the caller holds. Non-members receive all false."""

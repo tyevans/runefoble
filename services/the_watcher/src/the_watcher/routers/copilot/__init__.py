@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends
-from the_watcher.identity import get_caller_principal
+from the_watcher.identity import get_principal
 from the_watcher.routers.copilot.actions import (
     approve_action,
     list_pending_actions,
@@ -23,7 +23,7 @@ from the_watcher.routers.copilot.whispers import (
     router as whispers_router,
 )
 
-router = APIRouter(dependencies=[Depends(get_caller_principal)])
+router = APIRouter(dependencies=[Depends(get_principal)])
 router.include_router(actions_router)
 router.include_router(whispers_router)
 

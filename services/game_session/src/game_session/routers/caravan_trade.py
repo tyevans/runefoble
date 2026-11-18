@@ -19,7 +19,7 @@ from game_session.dependencies import (
 )
 from game_session.events import STREAM_WEST_MARCHES
 from game_session.routers.caravan_contracts.auth import _check_perm, _to_uuid
-from game_session.settlement.auth.tokens import CallerId, get_caller_principal
+from game_session.settlement.auth.tokens import CallerId, get_principal
 from game_session.west_marches_models import (
     CompleteCaravanRequest,
     DispatchCaravanRequest,
@@ -27,7 +27,7 @@ from game_session.west_marches_models import (
 from runefoble_platform.event_publish import publish_or_fail
 
 router = APIRouter(
-    dependencies=[Depends(get_caller_principal)],
+    dependencies=[Depends(get_principal)],
     prefix="/api/v1/shared-worlds",
     tags=["caravan-trade"],
 )

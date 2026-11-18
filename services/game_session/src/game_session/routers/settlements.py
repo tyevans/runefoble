@@ -17,7 +17,7 @@ from game_session.settlement.auth import (
     register_campaign_haven_discovery,
     write_settlement_relationships,
 )
-from game_session.settlement.auth.tokens import CallerId, get_caller_principal
+from game_session.settlement.auth.tokens import CallerId, get_principal
 from game_session.settlement.facility_prices import InsufficientSettlementResources
 from game_session.settlement.models import (
     CharterSettlementRequest,
@@ -29,7 +29,7 @@ from game_session.settlement.settlement_aggregate import SettlementAggregate
 from runefoble_platform.event_publish import publish_or_fail
 
 router = APIRouter(
-    dependencies=[Depends(get_caller_principal)], prefix="/settlements", tags=["settlements"]
+    dependencies=[Depends(get_principal)], prefix="/settlements", tags=["settlements"]
 )
 
 

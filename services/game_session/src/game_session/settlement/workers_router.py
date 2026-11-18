@@ -6,14 +6,14 @@ Governed by ADR-0003, ADR-0007, ADR-0013, and PRD-0024.
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends
-from game_session.settlement.auth.tokens import get_caller_principal
+from game_session.settlement.auth.tokens import get_principal
 from game_session.settlement.workers.routes_inventory import router as inventory_router
 from game_session.settlement.workers.routes_relationships import (
     router as relationships_router,
 )
 from game_session.settlement.workers.routes_roster import router as roster_router
 
-router = APIRouter(dependencies=[Depends(get_caller_principal)], tags=["settlement-npc-workers"])
+router = APIRouter(dependencies=[Depends(get_principal)], tags=["settlement-npc-workers"])
 router.include_router(roster_router)
 router.include_router(relationships_router)
 router.include_router(inventory_router)

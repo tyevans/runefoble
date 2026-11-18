@@ -14,7 +14,7 @@ from runefoble_platform.storage import AssetNotFoundError, SiloStorageService
 
 from asset_forge.dependencies import (
     STREAM_CHARACTER,
-    VerifiedUserId,
+    CallerId,
     get_principal,
     get_storage,
     get_wardrobe_generator,
@@ -36,7 +36,7 @@ router = APIRouter(
 @router.post("", response_model=WardrobeForgeResponse)
 async def forge_wardrobe_variant(
     request: WardrobeForgeRequest,
-    user_id: VerifiedUserId,
+    user_id: CallerId,
     storage: Annotated[SiloStorageService, Depends(get_storage)],
     spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
     generator: Annotated[WardrobeGenerator, Depends(get_wardrobe_generator)],
@@ -105,7 +105,7 @@ async def forge_wardrobe_variant(
 @router.get("/{variant_id}", response_model=dict)
 async def get_forged_wardrobe_variant(
     variant_id: str,
-    user_id: VerifiedUserId,
+    user_id: CallerId,
     spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
 ) -> dict:
     """Retrieve metadata for a forged wardrobe attire variant. Requires `forged_asset.view`."""

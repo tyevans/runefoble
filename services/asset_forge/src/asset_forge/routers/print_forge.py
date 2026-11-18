@@ -16,7 +16,7 @@ from runefoble_platform.storage import SiloStorageService
 
 from asset_forge.aggregate import AssetForgeAggregate
 from asset_forge.dependencies import (
-    VerifiedUserId,
+    CallerId,
     get_forge_repo,
     get_principal,
     get_storage,
@@ -55,7 +55,7 @@ async def _record_aggregate(
 @router.post("/api/v1/forge/print-pdf", response_model=None)
 async def export_print_pdf(
     request: PrintPdfRequest,
-    user_id: VerifiedUserId,
+    user_id: CallerId,
     storage: Annotated[SiloStorageService, Depends(get_storage)],
     spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
     repo: Annotated[AggregateRepository[AssetForgeAggregate], Depends(get_forge_repo)],
@@ -151,7 +151,7 @@ async def export_print_pdf(
 @router.post("/api/v1/forge/standees", response_model=None)
 async def export_standees(
     request: StandeesRequest,
-    user_id: VerifiedUserId,
+    user_id: CallerId,
     storage: Annotated[SiloStorageService, Depends(get_storage)],
     spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
     repo: Annotated[AggregateRepository[AssetForgeAggregate], Depends(get_forge_repo)],
@@ -229,7 +229,7 @@ async def export_standees(
 @router.post("/api/v1/forge/stl-token", response_model=None)
 async def export_stl_token(
     request: StlTokenRequest,
-    user_id: VerifiedUserId,
+    user_id: CallerId,
     storage: Annotated[SiloStorageService, Depends(get_storage)],
     spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
     repo: Annotated[AggregateRepository[AssetForgeAggregate], Depends(get_forge_repo)],

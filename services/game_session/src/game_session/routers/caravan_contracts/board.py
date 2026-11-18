@@ -23,12 +23,12 @@ from game_session.routers.caravan_contracts.auth import (
     _publish,
     _to_uuid,
 )
-from game_session.settlement.auth.tokens import CallerId, get_caller_principal
+from game_session.settlement.auth.tokens import CallerId, get_principal
 from game_session.west_marches_models import PostCaravanContractRequest
 from runefoble_platform.aggregate_loading import load_if_exists
 
 router = APIRouter(
-    dependencies=[Depends(get_caller_principal)],
+    dependencies=[Depends(get_principal)],
     prefix="/api/v1/shared-worlds",
     tags=["caravan-contracts"],
 )

@@ -17,8 +17,8 @@ from game_session.dependencies import get_spicedb_client
 from game_session.settlement.auth.tokens import get_zitadel_auth_service
 from runefoble_auth.principal import VerifiedPrincipal, require_principal
 
-get_campaign_principal = require_principal(get_zitadel_auth_service)
-CampaignPrincipal = Annotated[VerifiedPrincipal, Depends(get_campaign_principal)]
+get_principal = require_principal(get_zitadel_auth_service)
+CallerPrincipal = Annotated[VerifiedPrincipal, Depends(get_principal)]
 
 
 async def check_campaign_permission(
@@ -41,7 +41,7 @@ def campaign_permission(
 
     async def _dependency(
         campaign_id: str,
-        principal: CampaignPrincipal,
+        principal: CallerPrincipal,
         repos: Annotated[CampaignRepositories, Depends(get_campaign_repositories)],
     ) -> VerifiedPrincipal:
         await load_campaign(repos, parse_campaign_id(campaign_id))

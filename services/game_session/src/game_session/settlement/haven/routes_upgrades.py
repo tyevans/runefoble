@@ -11,7 +11,7 @@ from game_session.dependencies import (
     get_event_bus,
     get_settlement_repository,
 )
-from game_session.settlement.auth.tokens import CallerId, get_caller_principal
+from game_session.settlement.auth.tokens import CallerId, get_principal
 from game_session.settlement.haven.loaders import (
     build_settlement_projection,
     load_establishment,
@@ -25,7 +25,7 @@ from game_session.settlement.models import (
     UpgradeSettlementTierRequest,
 )
 
-router = APIRouter(dependencies=[Depends(get_caller_principal)])
+router = APIRouter(dependencies=[Depends(get_principal)])
 
 
 @router.post("/api/v1/settlements/{settlement_id}/upgrade-tier")

@@ -11,7 +11,7 @@ from __future__ import annotations
 from typing import Any
 
 from fastapi import APIRouter, Request
-from gateway_api.auth import CurrentPrincipal
+from gateway_api.auth import CallerPrincipal
 from gateway_api.models import TokenMoveRequest
 from gateway_api.proxy import forward_json
 from runefoble_platform.service_client import path
@@ -22,7 +22,7 @@ router = APIRouter(tags=["Boards & Tokens"])
 
 
 @router.get("/api/v1/boards/{session_id}")
-async def get_board(session_id: str, request: Request, user: CurrentPrincipal) -> Any:
+async def get_board(session_id: str, request: Request, user: CallerPrincipal) -> Any:
     """Read the board of a session (board_state)."""
     return await forward_json(
         request,
@@ -33,9 +33,7 @@ async def get_board(session_id: str, request: Request, user: CurrentPrincipal) -
 
 
 @router.get("/api/v1/boards/{session_id}/tokens/{token_id}")
-async def get_token(
-    session_id: str, token_id: str, request: Request, user: CurrentPrincipal
-) -> Any:
+async def get_token(session_id: str, token_id: str, request: Request, user: CallerPrincipal) -> Any:
     """Read one placed token of a session's board (board_state)."""
     return await forward_json(
         request,
@@ -51,7 +49,7 @@ async def move_token(
     token_id: str,
     req: TokenMoveRequest,
     request: Request,
-    user: CurrentPrincipal,
+    user: CallerPrincipal,
 ) -> Any:
     """Move a token on the board (board_state checks `board_token.move`)."""
     return await forward_json(

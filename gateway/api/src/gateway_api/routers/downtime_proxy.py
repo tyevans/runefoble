@@ -16,7 +16,7 @@ from __future__ import annotations
 from typing import Any
 
 from fastapi import APIRouter, Request
-from gateway_api.auth import CurrentPrincipal
+from gateway_api.auth import CallerPrincipal
 from gateway_api.models import (
     CampfireRestGatewayRequest,
     CombineReagentsGatewayRequest,
@@ -35,7 +35,7 @@ router = APIRouter(tags=["Downtime & Crafting"])
 
 
 @router.get("/api/v1/campaigns/{campaign_id}/stronghold")
-async def get_stronghold_gateway(campaign_id: str, request: Request, user: CurrentPrincipal) -> Any:
+async def get_stronghold_gateway(campaign_id: str, request: Request, user: CallerPrincipal) -> Any:
     """Read the campaign stronghold from game_session (requires `view` there)."""
     return await forward_json(
         request,
@@ -50,7 +50,7 @@ async def upgrade_stronghold_gateway(
     campaign_id: str,
     req: UpgradeStrongholdGatewayRequest,
     request: Request,
-    user: CurrentPrincipal,
+    user: CallerPrincipal,
 ) -> Any:
     """Upgrade a stronghold facility in game_session (owner checks `play` or `upgrade`)."""
     return await forward_json(
@@ -67,7 +67,7 @@ async def deposit_stronghold_gateway(
     campaign_id: str,
     req: DepositStrongholdGatewayRequest,
     request: Request,
-    user: CurrentPrincipal,
+    user: CallerPrincipal,
 ) -> Any:
     """Add gold and materials to the campaign stronghold in game_session (owner checks `stronghold.manage`)."""
     return await forward_json(
@@ -84,7 +84,7 @@ async def campfire_rest_gateway(
     session_id: str,
     req: CampfireRestGatewayRequest,
     request: Request,
-    user: CurrentPrincipal,
+    user: CallerPrincipal,
 ) -> Any:
     """Run a campfire rest in game_session and return its boons (owner checks `stronghold.manage`)."""
     return await forward_json(
@@ -100,7 +100,7 @@ async def campfire_rest_gateway(
 async def combine_reagents_gateway(
     req: CombineReagentsGatewayRequest,
     request: Request,
-    user: CurrentPrincipal,
+    user: CallerPrincipal,
 ) -> Any:
     """Combine reagents in character_sheet (owner checks `edit` on the character)."""
     return await forward_json(
@@ -117,7 +117,7 @@ async def start_minigame_gateway(
     session_id: str,
     req: StartMinigameGatewayRequest,
     request: Request,
-    user: CurrentPrincipal,
+    user: CallerPrincipal,
 ) -> Any:
     """Start a tavern minigame in game_session (owner checks session participation)."""
     return await forward_json(
@@ -135,7 +135,7 @@ async def haggle_merchant_gateway(
     merchant_id: str,
     req: HaggleGatewayRequest,
     request: Request,
-    user: CurrentPrincipal,
+    user: CallerPrincipal,
 ) -> Any:
     """Start a merchant negotiation in game_session.
 

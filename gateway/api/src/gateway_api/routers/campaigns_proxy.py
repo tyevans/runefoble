@@ -11,7 +11,7 @@ from __future__ import annotations
 from typing import Any
 
 from fastapi import APIRouter, Request, status
-from gateway_api.auth import CurrentPrincipal
+from gateway_api.auth import CallerPrincipal
 from gateway_api.character_view import campaign_character_names
 from gateway_api.models import (
     AssignRoleRequest,
@@ -32,14 +32,14 @@ router.include_router(tabletop_router)
 
 
 @router.get("/api/v1/campaigns")
-async def list_campaigns(request: Request, user: CurrentPrincipal) -> Any:
+async def list_campaigns(request: Request, user: CallerPrincipal) -> Any:
     """List the campaigns the caller can view (game_session)."""
     return await forward_json(request, service=SERVICE, method="GET", path=CAMPAIGNS)
 
 
 @router.post("/api/v1/campaigns", status_code=status.HTTP_201_CREATED)
 async def create_campaign(
-    req: CreateCampaignRequest, request: Request, user: CurrentPrincipal
+    req: CreateCampaignRequest, request: Request, user: CallerPrincipal
 ) -> Any:
     """Create a campaign. The caller becomes its owner (game_session)."""
     return await forward_json(
@@ -52,7 +52,7 @@ async def create_campaign(
 
 
 @router.get("/api/v1/campaigns/{campaign_id}")
-async def get_campaign(campaign_id: str, request: Request, user: CurrentPrincipal) -> Any:
+async def get_campaign(campaign_id: str, request: Request, user: CallerPrincipal) -> Any:
     """Read one campaign. Requires `view` (game_session)."""
     return await forward_json(
         request, service=SERVICE, method="GET", path=f"{CAMPAIGNS}/{campaign_id}"
@@ -64,7 +64,7 @@ async def update_campaign(
     campaign_id: str,
     req: UpdateCampaignRequest,
     request: Request,
-    user: CurrentPrincipal,
+    user: CallerPrincipal,
 ) -> Any:
     """Update campaign fields. Requires `manage` (game_session)."""
     return await forward_json(
@@ -78,7 +78,7 @@ async def update_campaign(
 
 @router.get("/api/v1/campaigns/{campaign_id}/capabilities")
 async def get_campaign_capabilities(
-    campaign_id: str, request: Request, user: CurrentPrincipal
+    campaign_id: str, request: Request, user: CallerPrincipal
 ) -> Any:
     """Report which campaign actions the caller holds (game_session)."""
     return await forward_json(
@@ -88,7 +88,7 @@ async def get_campaign_capabilities(
 
 @router.post("/api/v1/campaigns/{campaign_id}/invites", status_code=status.HTTP_201_CREATED)
 async def create_campaign_invite(
-    campaign_id: str, req: InviteRequest, request: Request, user: CurrentPrincipal
+    campaign_id: str, req: InviteRequest, request: Request, user: CallerPrincipal
 ) -> Any:
     """Issue a shareable invite. Requires `run_session` (game_session)."""
     return await forward_json(
@@ -101,7 +101,7 @@ async def create_campaign_invite(
 
 
 @router.post("/api/v1/campaigns/join")
-async def join_campaign(req: JoinCampaignRequest, request: Request, user: CurrentPrincipal) -> Any:
+async def join_campaign(req: JoinCampaignRequest, request: Request, user: CallerPrincipal) -> Any:
     """Redeem an invite token and join the campaign (game_session)."""
     return await forward_json(
         request,
@@ -113,7 +113,7 @@ async def join_campaign(req: JoinCampaignRequest, request: Request, user: Curren
 
 
 @router.get("/api/v1/campaigns/{campaign_id}/members")
-async def list_campaign_members(campaign_id: str, request: Request, user: CurrentPrincipal) -> Any:
+async def list_campaign_members(campaign_id: str, request: Request, user: CallerPrincipal) -> Any:
     """List the owner and every member. Requires `view` (game_session).
 
     The gateway adds each member's character name from its own character store.
@@ -129,7 +129,7 @@ async def list_campaign_members(campaign_id: str, request: Request, user: Curren
 
 @router.delete("/api/v1/campaigns/{campaign_id}/members/{user_id}")
 async def remove_campaign_member(
-    campaign_id: str, user_id: str, request: Request, user: CurrentPrincipal
+    campaign_id: str, user_id: str, request: Request, user: CallerPrincipal
 ) -> Any:
     """Remove a member and revoke their campaign relations. Requires `manage` (game_session)."""
     return await forward_json(
@@ -142,7 +142,7 @@ async def remove_campaign_member(
 
 @router.post("/api/v1/campaigns/{campaign_id}/roles")
 async def assign_campaign_role(
-    campaign_id: str, req: AssignRoleRequest, request: Request, user: CurrentPrincipal
+    campaign_id: str, req: AssignRoleRequest, request: Request, user: CallerPrincipal
 ) -> Any:
     """Grant a campaign role. Requires `manage` (game_session)."""
     return await forward_json(
@@ -155,7 +155,7 @@ async def assign_campaign_role(
 
 
 @router.get("/api/v1/campaigns/{campaign_id}/sessions")
-async def list_campaign_sessions(campaign_id: str, request: Request, user: CurrentPrincipal) -> Any:
+async def list_campaign_sessions(campaign_id: str, request: Request, user: CallerPrincipal) -> Any:
     """List the sessions and lobbies of a campaign. Requires `view` (game_session)."""
     return await forward_json(
         request, service=SERVICE, method="GET", path=f"{CAMPAIGNS}/{campaign_id}/sessions"
@@ -167,7 +167,7 @@ async def create_campaign_session(
     campaign_id: str,
     req: CreateCampaignSessionRequest,
     request: Request,
-    user: CurrentPrincipal,
+    user: CallerPrincipal,
 ) -> Any:
     """Create a session or staging lobby. Requires `run_session` (game_session)."""
     return await forward_json(

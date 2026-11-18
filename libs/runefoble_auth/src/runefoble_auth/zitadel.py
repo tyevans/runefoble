@@ -19,6 +19,7 @@ from typing import Any
 from urllib.parse import urlsplit
 
 import jwt
+from runefoble_platform.errors import ConfigurationError
 
 from runefoble_auth.principal import TokenVerificationError, VerifiedPrincipal
 
@@ -69,16 +70,25 @@ def _rebase(url: str, origin: str) -> str:
 
 
 class ZitadelAuthService:
-    """Verifies Zitadel access tokens against the issuer's signing keys."""
+    """Verifies Zitadel access tokens against the issuer's signing keys.
+
+    `issuer`, `audience`, and `internal_url` have no defaults. Build the verifier from
+    explicit settings (see `runefoble_auth.wiring`). A blank issuer or audience fails here,
+    at start-up, not on the first request.
+    """
 
     def __init__(
         self,
-        issuer: str = "http://localhost:8080",
-        audience: str = "runefoble-api",
-        internal_url: str | None = None,
+        issuer: str,
+        audience: str,
+        internal_url: str | None,
         jwks_cache_ttl: float = 300,
         jwk_client: jwt.PyJWKClient | None = None,
     ) -> None:
+        if not issuer.strip():
+            raise ConfigurationError("Zitadel issuer is not set (RUNEFOBLE_ZITADEL_ISSUER)")
+        if not audience.strip():
+            raise ConfigurationError("Zitadel audience is not set (RUNEFOBLE_ZITADEL_AUDIENCE)")
         self.issuer = issuer.rstrip("/")
         self.audience = audience
         self.internal_url = internal_url.rstrip("/") if internal_url else None

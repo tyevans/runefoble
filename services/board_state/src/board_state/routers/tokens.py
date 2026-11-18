@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Annotated
 from uuid import uuid4
 
 from board_state.aggregate import PlacedTokenState
@@ -14,8 +13,8 @@ from board_state.authz import (
     unbind_token,
 )
 from board_state.dependencies import (
+    CallerId,
     get_board,
-    get_current_user_id,
     get_event_bus,
     repo,
 )
@@ -25,7 +24,7 @@ from board_state.models import (
     MoveTokenResponse,
     PlaceTokenRequest,
 )
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, HTTPException
 
 router = APIRouter(tags=["tokens"])
 
@@ -34,9 +33,7 @@ router = APIRouter(tags=["tokens"])
     "/api/v1/boards/{session_id}/tokens",
     response_model=PlacedTokenState,
 )
-async def place_token(
-    session_id: str, req: PlaceTokenRequest, user_id: Annotated[str, Depends(get_current_user_id)]
-):
+async def place_token(session_id: str, req: PlaceTokenRequest, user_id: CallerId):
     """Place a token. A character token needs its owner. Other tokens need a board manager."""
     board = await get_board(session_id)
     token_id = req.token_id or str(uuid4())
@@ -65,7 +62,7 @@ async def place_token(
 async def read_token(
     session_id: str,
     token_id: str,
-    user_id: Annotated[str, Depends(get_current_user_id)],
+    user_id: CallerId,
 ):
     """Return one placed token of a board. Needs `board.view`. Respond 404 for an unknown token."""
     board = await get_board(session_id)
@@ -84,7 +81,7 @@ async def move_token_by_id(
     session_id: str,
     token_id: str,
     req: MoveTokenRequest,
-    user_id: Annotated[str, Depends(get_current_user_id)],
+    user_id: CallerId,
 ):
     board = await get_board(session_id)
     await require_token_move(user_id, session_id, token_id)
@@ -134,9 +131,7 @@ async def move_token_by_id(
     "/api/v1/boards/{session_id}/move",
     response_model=MoveTokenResponse,
 )
-async def move_token(
-    session_id: str, req: MoveTokenRequest, user_id: Annotated[str, Depends(get_current_user_id)]
-):
+async def move_token(session_id: str, req: MoveTokenRequest, user_id: CallerId):
     if not req.token_id:
         raise HTTPException(status_code=400, detail="token_id is required")
     return await move_token_by_id(session_id, req.token_id, req, user_id)
@@ -146,7 +141,7 @@ async def move_token(
 async def remove_token(
     session_id: str,
     token_id: str,
-    user_id: Annotated[str, Depends(get_current_user_id)],
+    user_id: CallerId,
     reason: str = "defeated",
 ):
     board = await get_board(session_id)

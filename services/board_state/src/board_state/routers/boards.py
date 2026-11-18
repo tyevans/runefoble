@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-from typing import Annotated
 from uuid import uuid4
 
 from board_state.aggregate import BoardAggregate, BoardState
@@ -16,16 +15,16 @@ from board_state.authz import (
     require_campaign_run_session,
 )
 from board_state.dependencies import (
+    CallerId,
     CallerOrService,
     get_board,
-    get_current_user_id,
     repo,
     to_board_uuid,
 )
 from board_state.models import CreateBoardRequest
 from board_state.projection import project_board
 from eventsource.domain.exceptions import OptimisticLockError
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, HTTPException
 
 logger = logging.getLogger("runefoble.board_state.routers.boards")
 
@@ -75,9 +74,7 @@ def get_ui_manifest():
 
 
 @router.post("/api/v1/boards", response_model=BoardState)
-async def create_board(
-    req: CreateBoardRequest, user_id: Annotated[str, Depends(get_current_user_id)]
-):
+async def create_board(req: CreateBoardRequest, user_id: CallerId):
     """Create the board for a session. The caller needs `campaign.run_session` on the campaign.
 
     The board is saved first. Then `board:<id>#campaign@campaign:<cid>` is written, so a

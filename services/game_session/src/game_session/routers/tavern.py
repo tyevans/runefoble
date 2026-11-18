@@ -31,13 +31,13 @@ from game_session.minigames import (
     to_uuid,
 )
 from game_session.settlement.auth import check_establishment_play_permission
-from game_session.settlement.auth.tokens import CallerId, get_caller_principal
+from game_session.settlement.auth.tokens import CallerId, get_principal
 from game_session.voice_client import VoiceAgentUnavailableError
 from pydantic import BaseModel
 from runefoble_platform.aggregate_loading import load_if_exists
 from runefoble_platform.event_publish import publish_or_fail
 
-router = APIRouter(dependencies=[Depends(get_caller_principal)], tags=["tavern"])
+router = APIRouter(dependencies=[Depends(get_principal)], tags=["tavern"])
 
 
 class StartMinigameRequest(BaseModel):

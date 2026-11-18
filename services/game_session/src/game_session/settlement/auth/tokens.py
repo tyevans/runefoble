@@ -5,39 +5,18 @@ Governed by ADR-0005 (Zitadel OIDC Authentication), ADR-0007, ADR-0013, and PRD-
 
 from __future__ import annotations
 
-from typing import Annotated
-
-from fastapi import Depends
-from runefoble_auth.caller import CallerIdentity, require_user_or_service_credential
-from runefoble_auth.principal import (
-    VerifiedPrincipal,
-    authenticate_authorization,
-    require_principal,
+from runefoble_auth.principal import VerifiedPrincipal, authenticate_authorization
+from runefoble_auth.wiring import (
+    build_identity_dependencies,
+    make_verifier_holder,
+    verifier_from_settings,
 )
-from runefoble_auth.zitadel import ZitadelAuthService
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.service_credential import expected_service_credential
 
-_auth_service: ZitadelAuthService | None = None
-
-
-def get_zitadel_auth_service() -> ZitadelAuthService:
-    """Retrieve singleton ZitadelAuthService configured from platform settings."""
-    global _auth_service
-    if _auth_service is None:
-        settings = PlatformSettings()
-        _auth_service = ZitadelAuthService(
-            issuer=settings.zitadel_issuer,
-            audience=settings.zitadel_audience,
-            internal_url=settings.zitadel_internal_url,
-        )
-    return _auth_service
-
-
-def set_zitadel_auth_service(service: ZitadelAuthService | None) -> None:
-    """Override singleton ZitadelAuthService for tests."""
-    global _auth_service
-    _auth_service = service
+get_zitadel_auth_service, set_zitadel_auth_service = make_verifier_holder(
+    lambda: verifier_from_settings(PlatformSettings())
+)
 
 
 def extract_bearer_token(authorization: str | None) -> str | None:
@@ -52,21 +31,9 @@ def decode_settlement_token(authorization: str | None = None) -> VerifiedPrincip
     return authenticate_authorization(get_zitadel_auth_service(), authorization)
 
 
-# Route identity (ADR-0015 c). Every game_session router depends on one of these.
-get_caller_principal = require_principal(get_zitadel_auth_service)
-CallerPrincipal = Annotated[VerifiedPrincipal, Depends(get_caller_principal)]
-
-
-def get_caller_id(principal: CallerPrincipal) -> str:
-    """Return the verified token subject. The only source of caller identity."""
-    return principal.user_id
-
-
-CallerId = Annotated[str, Depends(get_caller_id)]
-
-# Service credential (ADR-0015 e). Read once at import, so a service without it never starts.
+# Route identity (ADR-0015 c, e). Every game_session router depends on one of these.
+# The service credential is read once at import, so a service without it never starts.
 SERVICE_CREDENTIAL = expected_service_credential()
-get_caller_or_service = require_user_or_service_credential(
-    get_zitadel_auth_service, SERVICE_CREDENTIAL
+get_principal, CallerPrincipal, CallerId, get_caller_or_service, CallerOrService = (
+    build_identity_dependencies(get_zitadel_auth_service, SERVICE_CREDENTIAL)
 )
-CallerOrService = Annotated[CallerIdentity, Depends(get_caller_or_service)]
