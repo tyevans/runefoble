@@ -64,7 +64,12 @@ def build_tools_registry_router(
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         if existing is None:
-            await grant_tool_permissions(caller.user_id, payload.name, payload.campaign_id)
+            try:
+                await grant_tool_permissions(caller.user_id, payload.name, payload.campaign_id)
+            except HTTPException:
+                # Without an author tuple nobody could manage the tool. Undo the registration.
+                dynamic_registry.deregister_tool(payload.name, unregistered_by=caller.user_id)
+                raise
         return {"status": "registered", "tool": registered.model_dump()}
 
     @router.get("/{name}", response_model=dict[str, Any])

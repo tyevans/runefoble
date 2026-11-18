@@ -9,9 +9,14 @@ import pytest
 from fastapi.testclient import TestClient
 from gateway_mcp.server import mcp
 
+from tests.helpers.mcp_http import call_tool_json
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
 
 @pytest.mark.asyncio
-async def test_blackbox_dynamic_mcp_tool_registration_and_execution(gateway_client: TestClient):
+async def test_blackbox_dynamic_mcp_tool_registration_and_execution(
+    gateway_client: TestClient, mcp_endpoint: str
+):
     """Verify registering a dynamic tool via administrative frontdoor and invoking it in FastMCP."""
     tool_name = "calculate_spell_falloff"
     assert mcp._tool_manager.get_tool(tool_name) is None
@@ -46,7 +51,12 @@ async def test_blackbox_dynamic_mcp_tool_registration_and_execution(gateway_clie
     assert "distance" in registered_tool.parameters["properties"]
 
     # Invoke the dynamic tool through public FastMCP tool interface
-    mcp_result = await registered_tool.run({"base_damage": 25, "distance": 4})
+    mcp_result = await call_tool_json(
+        mcp_endpoint,
+        tool_name,
+        {"base_damage": 25, "distance": 4},
+        SIGNING_ISSUER.mint("user-test"),
+    )
     assert mcp_result["effective_damage"] == 17
     assert mcp_result["reduced_by"] == 8
 

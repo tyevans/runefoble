@@ -6,9 +6,14 @@ import pytest
 from fastapi.testclient import TestClient
 from gateway_mcp.server import mcp
 
+from tests.helpers.mcp_http import call_tool_json
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
 
 @pytest.mark.asyncio
-async def test_blackbox_hot_reload_tool_logic_without_restart(client: TestClient):
+async def test_blackbox_hot_reload_tool_logic_without_restart(
+    client: TestClient, mcp_endpoint: str
+):
     """Verify tool logic and schema can be hot-reloaded dynamically without restarting server."""
     tool_name = "dynamic_stealth_check"
 
@@ -28,7 +33,9 @@ async def test_blackbox_hot_reload_tool_logic_without_restart(client: TestClient
 
     tool_v1 = mcp._tool_manager.get_tool(tool_name)
     assert tool_v1 is not None
-    out1 = await tool_v1.run({"dex_mod": 3})
+    out1 = await call_tool_json(
+        mcp_endpoint, tool_name, {"dex_mod": 3}, SIGNING_ISSUER.mint("user-test")
+    )
     assert out1["total"] == 13
     assert out1["version"] == 1
 
@@ -53,7 +60,9 @@ async def test_blackbox_hot_reload_tool_logic_without_restart(client: TestClient
     # 3. Assert FastMCP immediately runs updated logic without server restart
     tool_v2 = mcp._tool_manager.get_tool(tool_name)
     assert "prof_bonus" in tool_v2.parameters["properties"]
-    out2 = await tool_v2.run({"dex_mod": 3, "prof_bonus": 4})
+    out2 = await call_tool_json(
+        mcp_endpoint, tool_name, {"dex_mod": 3, "prof_bonus": 4}, SIGNING_ISSUER.mint("user-test")
+    )
     assert out2["total"] == 17
     assert out2["version"] == 2
 

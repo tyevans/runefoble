@@ -71,12 +71,12 @@ def board_status(board_url: str, session_id: str) -> int:
 
 
 async def call_create_encounter(session_id: str, enemies: list[dict[str, Any]]) -> CallToolResult:
-    """Call create_encounter over MCP HTTP, with the `user-test` caller bearer."""
+    """Call create_encounter over MCP HTTP as the DM of the started session (`encounter-dm`)."""
     return await call_tool_over_http(
         _MCP["url"],
         "create_encounter",
         {"session_id": session_id, "enemies": enemies},
-        SIGNING_ISSUER.mint("user-test"),
+        SIGNING_ISSUER.mint("encounter-dm"),
     )
 
 

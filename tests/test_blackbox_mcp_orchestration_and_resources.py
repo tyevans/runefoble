@@ -19,6 +19,9 @@ from gateway_mcp.clients.caller import caller_bearer
 from gateway_mcp.server import mcp
 from mcp.shared.exceptions import McpError
 from mcp.types import CallToolResult
+from runefoble_auth.factory import get_spicedb_client
+from runefoble_auth.sync import ZitadelSpiceDBSyncService
+from runefoble_auth.sync_events import handle_domain_event
 from the_watcher.main import app as watcher_app
 
 from tests.helpers.live_services import closed_port_url, serve, unavailable_app
@@ -263,7 +266,13 @@ async def test_blackbox_encounter_resource_unknown_board_is_error(services: dict
 async def test_blackbox_action_plan_steps_are_proposed_to_the_watcher(services: dict[str, str]):
     """Verify each plan step returns the pending action The Watcher stored for it."""
     session_id = _create_session(services["session"], "Goblin Warren")
-    campaign_id = str(uuid4())
+    with httpx.Client(base_url=services["session"], headers=bearer("user-test")) as http:
+        campaign_id = http.get(f"/api/v1/sessions/{session_id}").json()["campaign_id"]
+    # board_state publishes TokenPlaced. The identity sync consumer links the token to the campaign.
+    await handle_domain_event(
+        ZitadelSpiceDBSyncService(spicedb_client=get_spicedb_client()),
+        {"event_type": "TokenPlaced", "token_id": "goblin-1", "campaign_id": campaign_id},
+    )
     plan = [
         {
             "tool": "move_board_token",

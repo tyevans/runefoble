@@ -10,6 +10,9 @@ import pytest
 from fastapi.testclient import TestClient
 from gateway_mcp.server import mcp
 
+from tests.helpers.mcp_http import call_tool_json
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
 PARAMS = {
     "type": "object",
     "properties": {
@@ -33,7 +36,7 @@ def _execute(client: TestClient, name: str, arguments: dict):
 
 
 @pytest.mark.asyncio
-async def test_template_expression_and_placeholder_results(client: TestClient):
+async def test_template_expression_and_placeholder_results(client: TestClient, mcp_endpoint: str):
     handler = {
         "effective": {"$expr": "max(0, base - dist * 2)"},
         "echo_base": "${base}",
@@ -51,7 +54,9 @@ async def test_template_expression_and_placeholder_results(client: TestClient):
         "label": "Ana hits for 25",
         "nested": [8, "fixed", 7],
     }
-    out = await mcp._tool_manager.get_tool("falloff").run({"base": 30, "dist": 10})
+    out = await call_tool_json(
+        mcp_endpoint, "falloff", {"base": 30, "dist": 10}, SIGNING_ISSUER.mint("user-test")
+    )
     assert out["effective"] == 10
 
 

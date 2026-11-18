@@ -7,11 +7,13 @@ caller identity part of the MCP request itself. In-memory sessions carry no head
 
 from __future__ import annotations
 
+import json
 from collections.abc import AsyncIterator, Iterator
 from contextlib import asynccontextmanager, contextmanager
 from typing import Any
 
 import httpx
+from gateway_mcp.identity import BearerTransportAuth
 from mcp.client.session import ClientSession
 from mcp.client.streamable_http import streamable_http_client
 from mcp.server.fastmcp import FastMCP
@@ -24,6 +26,7 @@ from starlette.applications import Starlette
 from starlette.routing import Route
 
 from tests.helpers.live_services import serve
+from tests.helpers.ws_identity import SIGNING_ISSUER
 
 
 def _mcp_http_app(server: FastMCP) -> Starlette:
@@ -47,8 +50,13 @@ def _mcp_http_app(server: FastMCP) -> Starlette:
 
 @contextmanager
 def serve_mcp(server: FastMCP) -> Iterator[str]:
-    """Serve `server` on a free loopback port and yield its MCP endpoint URL."""
-    with serve(_mcp_http_app(server), lifespan="on") as base_url:
+    """Serve `server` on a free loopback port and yield its MCP endpoint URL.
+
+    The endpoint verifies the bearer like production does (TASK-0532). It trusts the shared
+    test issuer, so each tool sees the verified caller of its request.
+    """
+    app = BearerTransportAuth(_mcp_http_app(server), verifier=SIGNING_ISSUER.verifier)
+    with serve(app, lifespan="on") as base_url:
         yield f"{base_url}/mcp"
 
 
@@ -71,6 +79,16 @@ async def call_tool_over_http(
     """Call one MCP tool through the HTTP transport, with the caller bearer if given."""
     async with mcp_session(endpoint, bearer) as session:
         return await session.call_tool(name, arguments)
+
+
+async def call_tool_json(
+    endpoint: str, name: str, arguments: dict[str, Any], bearer: str | None = None
+) -> Any:
+    """Call one MCP tool over HTTP and return its decoded JSON result. A tool error fails the test."""
+    result = await call_tool_over_http(endpoint, name, arguments, bearer)
+    text = result.content[0].text if result.content else ""
+    assert not result.isError, f"Tool '{name}' failed: {text}"
+    return json.loads(text)
 
 
 async def read_resource_over_http(endpoint: str, uri: str, bearer: str | None = None) -> str:

@@ -3,13 +3,16 @@
 from __future__ import annotations
 
 import base64
+from collections.abc import Iterator
 
 import pytest
 from board_state.main import app as board_app
 from fastapi.testclient import TestClient
 from gateway_api.main import app as gateway_app
 from gateway_mcp.dynamic import dynamic_registry
+from gateway_mcp.server import mcp
 
+from tests.helpers.mcp_http import serve_mcp
 from tests.helpers.silo_fixtures import PNG_SAMPLE_BYTES
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
@@ -28,6 +31,13 @@ def board_client() -> TestClient:
 def gateway_client(trusted_ws_issuer) -> TestClient:
     """Gateway client that sends a signed token for `user-test` on every request."""
     return TestClient(gateway_app, headers=bearer("user-test"))
+
+
+@pytest.fixture(scope="module")
+def mcp_endpoint() -> Iterator[str]:
+    """Serve the gateway MCP server over HTTP. The endpoint trusts the shared signing issuer."""
+    with serve_mcp(mcp) as endpoint:
+        yield endpoint
 
 
 @pytest.fixture(autouse=True)

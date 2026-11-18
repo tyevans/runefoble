@@ -15,6 +15,9 @@ import httpx
 import pytest
 from gateway_mcp.server import mcp
 from mcp.types import CallToolResult
+from runefoble_auth.factory import get_spicedb_client
+from runefoble_auth.sync import ZitadelSpiceDBSyncService
+from runefoble_auth.sync_events import handle_domain_event
 
 from tests.helpers.game_session_setup import start_session_with_player
 from tests.helpers.live_services import closed_port_url, serve, unavailable_app
@@ -86,9 +89,24 @@ def owning_services() -> Iterator[dict[str, str]]:
         set_zitadel_auth_service(previous_verifier)
 
 
-async def call_tool(name: str, arguments: dict[str, Any]) -> CallToolResult:
-    """Call a tool over MCP HTTP as the `user-test` caller."""
-    return await call_tool_over_http(_MCP["url"], name, arguments, bearer_token("user-test"))
+async def call_tool(
+    name: str, arguments: dict[str, Any], caller: str = "user-test"
+) -> CallToolResult:
+    """Call a tool over MCP HTTP as `caller`. The DM of a started session is `encounter-dm`."""
+    return await call_tool_over_http(_MCP["url"], name, arguments, bearer_token(caller))
+
+
+async def grant_token_to_campaign(session_url: str, session_id: str, token_id: str) -> None:
+    """Publish the TokenPlaced event to the identity sync consumer, as board_state does.
+
+    The consumer writes the `board_token` relations that `board_token.move` reads.
+    """
+    with httpx.Client(base_url=session_url, headers=bearer("encounter-dm")) as http:
+        campaign_id = http.get(f"/api/v1/sessions/{session_id}").json()["campaign_id"]
+    await handle_domain_event(
+        ZitadelSpiceDBSyncService(spicedb_client=get_spicedb_client()),
+        {"event_type": "TokenPlaced", "token_id": token_id, "campaign_id": campaign_id},
+    )
 
 
 def tool_text(result: CallToolResult) -> str:
@@ -108,9 +126,6 @@ def tool_payload(result: CallToolResult) -> dict[str, Any]:
 @pytest.mark.asyncio
 async def test_blackbox_execute_agent_action_plan_invalid_tool():
     """Verify error handling when action plan specifies an invalid or unknown tool."""
-    tool = mcp._tool_manager.get_tool("execute_agent_action_plan")
-    assert tool is not None
-
     plan = [
         {
             "tool": "nonexistent_secret_spell_destroy_everything",
@@ -118,7 +133,12 @@ async def test_blackbox_execute_agent_action_plan_invalid_tool():
         }
     ]
 
-    result = await tool.run({"session_id": "camp1", "campaign_id": "camp1", "actions": plan})
+    result = tool_payload(
+        await call_tool(
+            "execute_agent_action_plan",
+            {"session_id": "camp1", "campaign_id": "camp1", "actions": plan},
+        )
+    )
 
     assert result["status"] == "error"
     assert result["success"] is False
@@ -173,6 +193,7 @@ async def test_blackbox_create_encounter_stores_enemy_tokens(owning_services: di
                 "session_id": session_id,
                 "enemies": [{"name": "Bandit", "x": 4, "y": 4, "hp": 11}],
             },
+            "encounter-dm",
         )
     )
     assert created["status"] == "encounter_created"
@@ -198,15 +219,18 @@ async def test_blackbox_move_board_token_then_inspect_reports_new_position(
                 "session_id": combat_session_id,
                 "enemies": [{"name": "Goblin", "x": 2, "y": 2}],
             },
+            "encounter-dm",
         )
     )
     session_id = created["encounter_id"]
     token_id = created["enemies_spawned"][0]["token_id"]
+    await grant_token_to_campaign(owning_services["session"], session_id, token_id)
 
     moved = tool_payload(
         await call_tool(
             "move_board_token",
             {"session_id": session_id, "token_id": token_id, "to_x": 6, "to_y": 2},
+            "encounter-dm",
         )
     )
     assert moved["status"] == "success"
@@ -230,7 +254,13 @@ async def test_blackbox_move_board_token_out_of_bounds_is_error_result(
                 "session_id": combat_session_id,
                 "enemies": [{"name": "Imp", "x": 0, "y": 0}],
             },
+            "encounter-dm",
         )
+    )
+    await grant_token_to_campaign(
+        owning_services["session"],
+        created["encounter_id"],
+        created["enemies_spawned"][0]["token_id"],
     )
     result = await call_tool(
         "move_board_token",
@@ -240,6 +270,7 @@ async def test_blackbox_move_board_token_out_of_bounds_is_error_result(
             "to_x": 99,
             "to_y": -5,
         },
+        "encounter-dm",
     )
     assert result.isError is True
     assert "bounds" in tool_text(result).lower()

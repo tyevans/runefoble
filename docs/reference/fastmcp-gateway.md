@@ -72,6 +72,27 @@ All tools are registered onto FastMCP and callable by agents or action orchestra
 | `query_monster_stat_block` | `monster_name: str` | Read the monster stat block from `rules_compendium` (`GET /api/v1/compendium/monsters/{name}`). An unknown name returns a tool error. |
 | `calculate_encounter_balance` | `party_levels: list[int]`, `target_difficulty: str` | Call the `rules_compendium` route `POST /api/v1/compendium/encounters/balance`. Returns its CR XP thresholds and recommended monster group. |
 
+### Tool Permissions (TASK-0545)
+
+Each tool that changes state reads the caller from the verified MCP request. It checks one schema permission before it calls a service. A request with no verified caller, a denial, and a SpiceDB error each return a tool error. A SpiceDB error is never a success.
+
+| Tool | Permission checked |
+|---|---|
+| `apply_absentee_penalty`, `modify_character_hp`, `add_condition`, `apply_condition` | `campaign.run_session` on the campaign that the `character` object links to. A character with no campaign link is denied. |
+| `cast_spell` | `character.edit` |
+| `move_board_token` | `board_token.move` on the `token_id` |
+| `create_encounter` | `session.control` on the `session_id` |
+| `execute_agent_action_plan` | The permission of each step, checked before that step runs. A denied step stops the plan with a per-step error. |
+| A dynamic tool | `mcp_tool.execute` on the tool name, on the MCP path and on `POST /mcp/tools/{name}/execute` |
+
+Read-only tools take no extra check in the gateway. The owning service still checks the forwarded bearer.
+
+A plan step that names a dynamic tool needs `mcp_tool.execute` on that tool. A step that names a mutating static tool needs the permission in the table. A step must carry the id that its check needs (`character_id`, `token_id`, or `session_id`). A step without it fails.
+
+Tool-to-tool rule: a dynamic tool handler cannot call another tool yet. When a call step exists, it must check `mcp_tool.execute` for the caller on the called tool before it runs. The caller is the token subject of the MCP request. The tool author is not the caller.
+
+A new tuple write that fails returns `503` and registers nothing. `POST /mcp/tools/register` removes the tool again when the author relation cannot be written.
+
 ### Upstream Service Calls
 
 Board, encounter, and character tools hold no board, combat, or character state. They call the owning services over HTTP through `gateway/mcp/src/gateway_mcp/clients/services.py`:

@@ -15,11 +15,14 @@ import httpx
 import pytest
 from character_sheet.main import app as character_app
 from gateway_mcp.server import mcp
-from mcp.shared.memory import create_connected_server_and_client_session
 from mcp.types import CallToolResult
 
 from tests.helpers.live_services import closed_port_url, serve, unavailable_app
+from tests.helpers.mcp_http import call_tool_over_http, serve_mcp
 from tests.helpers.ws_identity import SIGNING_ISSUER
+
+_MCP: dict[str, str] = {}
+_CAMPAIGN: dict[str, str] = {}
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -28,6 +31,27 @@ def character_service() -> Iterator[str]:
     with pytest.MonkeyPatch.context() as env, serve(character_app) as url:
         env.setenv("CHARACTER_SHEET_URL", url)
         yield url
+
+
+@pytest.fixture(scope="module", autouse=True)
+def mcp_endpoint() -> Iterator[None]:
+    """Serve the gateway MCP server over HTTP so that each call carries the caller bearer."""
+    with serve_mcp(mcp) as endpoint:
+        _MCP["url"] = endpoint
+        yield
+    _MCP.clear()
+
+
+@pytest.fixture(autouse=True)
+def campaign(game_session_upstream: str) -> Iterator[str]:
+    """Create a campaign through game_session. `mcp-tester` owns it, so it runs the sessions."""
+    headers = {"Authorization": f"Bearer {SIGNING_ISSUER.mint('mcp-tester')}"}
+    with httpx.Client(base_url=game_session_upstream, headers=headers) as http:
+        res = http.post("/api/v1/campaigns", json={"title": "Tool Campaign", "setting": "Test"})
+        assert res.status_code == 201, res.text
+        _CAMPAIGN["id"] = res.json()["id"]
+    yield _CAMPAIGN["id"]
+    _CAMPAIGN.clear()
 
 
 @pytest.fixture
@@ -45,7 +69,13 @@ def create_character(http: httpx.Client, name: str, character_class: str, max_hp
         json={"name": name, "character_class": character_class, "max_hp": max_hp},
     )
     assert res.status_code == 200, res.text
-    return str(res.json()["character_id"])
+    character_id = str(res.json()["character_id"])
+    # Put the character in the campaign, so that the campaign DM may act on it.
+    assigned = http.patch(
+        f"/api/v1/characters/{character_id}/campaign", json={"campaign_id": _CAMPAIGN["id"]}
+    )
+    assert assigned.status_code == 200, assigned.text
+    return character_id
 
 
 def read_sheet(http: httpx.Client, character_id: str) -> dict[str, Any]:
@@ -57,9 +87,10 @@ def read_sheet(http: httpx.Client, character_id: str) -> dict[str, Any]:
 
 
 async def call_tool(name: str, arguments: dict[str, Any]) -> CallToolResult:
-    """Call a tool through the MCP protocol with an in-memory client session."""
-    async with create_connected_server_and_client_session(mcp) as session:
-        return await session.call_tool(name, arguments)
+    """Call a tool over MCP HTTP as `mcp-tester`, the owner of the character and the campaign."""
+    return await call_tool_over_http(
+        _MCP["url"], name, arguments, SIGNING_ISSUER.mint("mcp-tester")
+    )
 
 
 def tool_text(result: CallToolResult) -> str:
@@ -260,10 +291,10 @@ async def test_inspect_inventory_reads_items_added_through_inventory_routes(shee
     ],
 )
 async def test_character_tools_return_error_when_character_service_returns_503(
-    monkeypatch, tool, arguments
+    monkeypatch, sheet_http, tool, arguments
 ):
     """Every character tool returns an error result when character_sheet answers 503."""
-    character_id = str(uuid4())
+    character_id = create_character(sheet_http, "Valeros", "Fighter", max_hp=45)
     arguments = {**arguments, "character_id": character_id}
     with serve(unavailable_app(503)) as down_url:
         monkeypatch.setenv("CHARACTER_SHEET_URL", down_url)
@@ -275,11 +306,12 @@ async def test_character_tools_return_error_when_character_service_returns_503(
 
 @pytest.mark.asyncio
 async def test_modify_character_hp_returns_error_when_character_service_is_unreachable(
-    monkeypatch,
+    monkeypatch, sheet_http
 ):
     """An unreachable character_sheet is a tool error, not a substitute HP value."""
+    character_id = create_character(sheet_http, "Valeros", "Fighter", max_hp=45)
     monkeypatch.setenv("CHARACTER_SHEET_URL", closed_port_url())
-    result = await call_tool("modify_character_hp", {"character_id": str(uuid4()), "delta": -5})
+    result = await call_tool("modify_character_hp", {"character_id": character_id, "delta": -5})
 
     assert result.isError is True
     assert "unreachable" in tool_text(result)

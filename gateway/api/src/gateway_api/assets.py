@@ -9,6 +9,12 @@ from typing import Any
 from uuid import uuid4
 
 from fastapi import APIRouter, HTTPException, Query, Request, Response
+from gateway_api.asset_authz import (
+    require_asset_manage,
+    require_campaign_play,
+    revoke_asset_ownership,
+    write_asset_ownership,
+)
 from gateway_api.auth import CurrentPrincipal
 from gateway_api.dependencies import get_event_bus
 from pydantic import BaseModel
@@ -78,6 +84,7 @@ async def upload_asset(
     data: bytes = b""
     bucket: str | None = None
     asset_type: str = "avatar"
+    campaign_id: str | None = None
 
     if "application/json" in ct_header:
         try:
@@ -97,6 +104,7 @@ async def upload_asset(
 
         bucket = body.get("bucket")
         asset_type = body.get("asset_type", "avatar")
+        campaign_id = body.get("campaign_id") or None
 
     elif "multipart/form-data" in ct_header:
         form = await request.form()
@@ -112,6 +120,7 @@ async def upload_asset(
         )
         bucket = str(form.get("bucket")) if "bucket" in form else None
         asset_type = str(form.get("asset_type", "avatar"))
+        campaign_id = str(form.get("campaign_id")) if form.get("campaign_id") else None
 
     else:
         # Direct binary stream upload
@@ -120,8 +129,11 @@ async def upload_asset(
         filename = request.query_params.get("filename", "upload.bin")
         bucket = request.query_params.get("bucket")
         asset_type = request.query_params.get("asset_type", "avatar")
+        campaign_id = request.query_params.get("campaign_id") or None
 
     owner_id = principal.user_id
+    if campaign_id:
+        await require_campaign_play(owner_id, campaign_id)
     target_bucket = bucket or platform_settings.silo_bucket_assets
     safe_name = _sanitize_filename(filename)
     object_key = f"{asset_type}s/{uuid4().hex[:10]}_{safe_name}"
@@ -145,6 +157,18 @@ async def upload_asset(
     except Exception as exc:
         logger.exception("Asset upload failed: %s", exc)
         raise HTTPException(status_code=500, detail="Failed to store media asset.") from exc
+
+    try:
+        await write_asset_ownership(meta["asset_id"], owner_id, campaign_id)
+    except HTTPException:
+        # No owner tuple means nobody could manage the object. Remove it.
+        try:
+            storage_service.delete_asset(meta["bucket"], meta["object_key"])
+        except AssetStorageError:
+            logger.exception(
+                "Asset '%s' could not be removed after a failed owner write", meta["asset_id"]
+            )
+        raise
 
     await record_stored_asset(meta)
 
@@ -234,6 +258,7 @@ async def delete_asset(
         meta = await get_stored_asset(asset_id)
     except AssetNotFoundError as exc:
         raise HTTPException(status_code=404, detail=f"Asset '{asset_id}' not found.") from exc
+    await require_asset_manage(deleted_by, asset_id)
 
     try:
         get_storage_service().delete_asset(meta["bucket"], meta["object_key"])
@@ -246,6 +271,7 @@ async def delete_asset(
         ) from exc
 
     await remove_stored_asset(asset_id, deleted_by=deleted_by)
+    await revoke_asset_ownership(asset_id)
 
     # Publish AssetDeleted domain event
     delete_event = AssetDeleted(

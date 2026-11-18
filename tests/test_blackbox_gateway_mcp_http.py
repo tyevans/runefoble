@@ -24,6 +24,7 @@ import httpx
 import pytest
 import yaml
 from gateway_mcp.dynamic import DynamicToolDefinition, dynamic_registry, set_event_bus
+from gateway_mcp.dynamic.auth import grant_tool_permissions
 from gateway_mcp.identity import set_verifier
 from gateway_mcp.server import build_http_app
 from runefoble_platform.redis_bus import RedisStreamsEventBus
@@ -215,7 +216,7 @@ def test_tool_call_without_bearer_is_refused_before_dispatch(authenticated_endpo
 
 
 def test_dynamic_tool_call_over_http_records_the_verified_caller(authenticated_endpoint: str):
-    """A dynamic tool called over MCP reports the token subject, not any claimed user."""
+    """A dynamic tool called over MCP reports the token subject, who needs `mcp_tool.execute`."""
     name = "transport_identity_probe"
     bus_client = MockAsyncRedis()
     set_event_bus(RedisStreamsEventBus(client=bus_client))
@@ -225,8 +226,9 @@ def test_dynamic_tool_call_over_http_records_the_verified_caller(authenticated_e
             parameters={"type": "object", "properties": {"charge": {"type": "integer"}}},
             handler={"pulse": {"$expr": "charge * 2"}},
         ),
-        author_id="alex",
+        author_id="mallory",
     )
+    asyncio.run(grant_tool_permissions("mallory", name))
     try:
         result = asyncio.run(
             call_tool_over_http(

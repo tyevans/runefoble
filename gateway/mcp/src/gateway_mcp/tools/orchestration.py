@@ -9,6 +9,12 @@ from typing import TYPE_CHECKING, Any, Literal
 
 from gateway_mcp.clients import ServiceClient, ServiceError
 from gateway_mcp.clients.caller import caller_bearer
+from gateway_mcp.tool_authz import (
+    ToolAuthzError,
+    check_requirement,
+    require_caller_id,
+    step_requirement,
+)
 from mcp.server.fastmcp import Context
 
 if TYPE_CHECKING:
@@ -50,6 +56,7 @@ async def execute_agent_action_plan(
     Each step becomes a pending action. The DM can veto or change it before it takes
     effect. Planning stops at the first step that fails, and later steps do not run.
     """
+    caller_id = require_caller_id(ctx)
     client = ServiceClient(bearer=caller_bearer(ctx))
     step_results: list[dict[str, Any]] = []
     total_duration_ms: float = 0.0
@@ -103,6 +110,12 @@ async def execute_agent_action_plan(
             }
         )
         target = params.get("target", params.get("token_id"))
+        try:
+            requirement = step_requirement(tool_name, {"session_id": session_id, **params})
+            if requirement is not None:
+                await check_requirement(caller_id, requirement)
+        except ToolAuthzError as exc:
+            return _fail(str(exc), idx, tool_name)
 
         request = {
             "session_id": session_id,

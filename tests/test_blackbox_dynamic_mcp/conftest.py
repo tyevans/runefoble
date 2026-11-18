@@ -7,6 +7,8 @@ user pass their own Authorization header per request.
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -19,6 +21,7 @@ from runefoble_auth.principal import require_principal
 from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 
+from tests.helpers.mcp_http import serve_mcp
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
@@ -71,3 +74,10 @@ def clean_registry(spicedb: MockSpiceDBClient, event_bus: RedisStreamsEventBus):
     yield
     for tool_def in list(dynamic_registry.list_tools()):
         dynamic_registry.deregister_tool(tool_def.name)
+
+
+@pytest.fixture(scope="module")
+def mcp_endpoint() -> Iterator[str]:
+    """Serve the gateway MCP server over HTTP. The endpoint trusts the shared signing issuer."""
+    with serve_mcp(mcp) as endpoint:
+        yield endpoint
