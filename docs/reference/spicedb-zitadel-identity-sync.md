@@ -147,10 +147,10 @@ Only SpiceDB failures produce `unhealthy`. Any other exception is a defect and r
 
 `SpiceDBEventListener` subscribes to domain events on Redis Streams or the local event bus:
 
-- **`SessionCreated`**: Provisions `campaign:<id>#game_master@user:<dm_id>` and `session:<id>#campaign@campaign:<id>`.
+- **`SessionCreated`** (`runefoble.events.session.created`): Provisions `campaign:<id>#game_master@user:<dm_id>` and `session:<id>#campaign@campaign:<id>`.
 - **`ParticipantJoined` / `PlayerJoinedSession`**: Provisions `campaign:<id>#<role>@user:<user_id>`. If `character_id` is present, also establishes character ownership.
-- **`CharacterCreated`**: Provisions `character:<id>#owner@user:<player_id>` and `character:<id>#campaign@campaign:<id>`.
-- **`TokenPlaced`**: Provisions `board_token:<id>#character@character:<character_id>` and `board_token:<id>#campaign@campaign:<id>`.
+- **`CharacterCreated`** (`runefoble.events.character.created`): Provisions `character:<id>#owner@user:<player_id>` and `character:<id>#campaign@campaign:<id>`.
+- **`TokenPlaced`** (`runefoble.events.board.token_placed`): Provisions `board_token:<id>#character@character:<character_id>` and `board_token:<id>#campaign@campaign:<id>`.
 
 ## Modular Architecture & Submodules
 
@@ -164,7 +164,7 @@ To adhere to Hard Invariant 6 (file length < 500 lines) and separate operational
 
 2. **Domain Event Handlers (`sync_events.py`)**:
    - `extract_event_type` and `get_event_field` parsing domain event models and CloudEvent JSON dictionaries.
-   - `handle_domain_event` unified dispatcher routing `SessionCreated`, `ParticipantJoined`, `PlayerJoinedSession`, `CharacterCreated`, and `TokenPlaced`.
+   - `handle_domain_event` unified dispatcher routing `runefoble.events.session.created`, `runefoble.events.session.participant_joined`, `runefoble.events.session.player_joined_session`, `runefoble.events.character.created`, and `runefoble.events.board.token_placed`.
    - Granular event handlers (`handle_session_created`, `handle_participant_joined`, `handle_character_created`, `handle_token_placed`).
 
 3. **Service Coordinator (`sync.py`)**:

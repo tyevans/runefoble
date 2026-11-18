@@ -125,7 +125,7 @@ curl -X POST "http://localhost:8004/api/v1/sessions/sess-star-eater-15/start" \
 }
 ```
 
-Upon successful start, a `SessionStarted` domain event is broadcast across Redis Streams channel `events:session`, prompting all connected lobby clients to navigate to the active VTT board route `#/campaigns/:campaignId/sessions/:sessionId`.
+Upon successful start, a `runefoble.events.session.started` domain event is broadcast across Redis Streams channel `events:session`, prompting all connected lobby clients to navigate to the active VTT board route `#/campaigns/:campaignId/sessions/:sessionId`.
 
 ---
 

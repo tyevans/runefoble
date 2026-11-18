@@ -207,7 +207,7 @@ To unassign an adventurer back to free agent status in the player roster:
 ```
 
 ### Domain Event & Zanzibar Security
-1. **Domain Event**: `CharacterAssignedToCampaign` (`character.assigned_to_campaign`) is created and applied to the event stream, then published to the `runefoble.events.character` Redis stream.
+1. **Domain Event**: `runefoble.events.character.assigned_to_campaign` (`runefoble.events.character.assigned_to_campaign`) is created and applied to the event stream, then published to the `runefoble.events.character` Redis stream.
 2. **SpiceDB Synchronization**: Writing or removing the Zanzibar relationship `character:{id}#campaign@campaign:{campaign_id}` enforces fine-grained authorization under `runefoble.zed`.
 
 ---

@@ -63,14 +63,14 @@ The table below is the planned mapping for a future forwarder. It is not impleme
 
 | Domain Event | OpenPanel Metric | Tracked Properties (Anonymized) |
 |---|---|---|
-| `SessionStarted` / `GameSessionStarted` | `session.started` | `session_id`, `started_at_turn` |
-| `SessionCreated` | `session.created` | `session_id`, `dm_id` |
-| `SessionEnded` | `session.ended` | `session_id`, `summary` |
+| `runefoble.events.session.started` / `GameSessionStarted` | `session.started` | `session_id`, `started_at_turn` |
+| `runefoble.events.session.created` | `session.created` | `session_id`, `dm_id` |
+| `runefoble.events.session.ended` | `session.ended` | `session_id`, `summary` |
 | `DiceRolled` / `DiceRollEvent` | `dice.rolled` | `session_id`, `formula`, `total`, `is_crit`, `is_fumble`, `roll_type` |
-| `StandInActionDecided` / `StandInTurnExecuted` | `stand_in.turn_taken` | `character_name`, `action_type`, `penalties_applied` (no dialogue/transcripts) |
-| `AbsencePenaltyApplied` / `PlayerAbsenteePenalized` | `stand_in.penalty_applied` | `penalty_type`, `imposed_by` |
-| `PlayerJoinedSession` | `player.joined` | `session_id`, `character_class` |
-| `PlayerLeftSession` | `player.left` | `session_id`, `reason` |
+| `runefoble.events.watcher.stand_in_action_decided` / `StandInTurnExecuted` | `stand_in.turn_taken` | `character_name`, `action_type`, `penalties_applied` (no dialogue/transcripts) |
+| `runefoble.events.character.absence_penalty_applied` / `PlayerAbsenteePenalized` | `stand_in.penalty_applied` | `penalty_type`, `imposed_by` |
+| `runefoble.events.session.player_joined_session` | `player.joined` | `session_id`, `character_class` |
+| `runefoble.events.session.player_left_session` | `player.left` | `session_id`, `reason` |
 
 ---
 

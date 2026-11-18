@@ -4,120 +4,27 @@
 
 This table lists every registered domain event. The identifier column is the
 `event_type` that each event carries on the wire. The value comes from
-`event_type_name()` in `eventsource-py`. A class that sets no explicit
-`event_type` uses its class name as the identifier.
+`event_type_name()` in `eventsource-py`.
 
-CloudEvents exports (`to_cloudevent_dict()`) lower-case the identifier. They
-add the `runefoble.` prefix when the identifier lacks it.
+## Identifier rule
+
+Every identifier has this form:
+
+`runefoble.events.<bc>.<snake_case>`
+
+- `<bc>` names the owning bounded context or domain.
+- `<snake_case>` names the event in lower case. Words are separated by underscores.
+- An identifier never uses a class name. A retired identifier resolves to no event.
+  The platform keeps no alias for a retired identifier.
+
+A class sets its identifier in two places. The `@register_event("...")` decorator
+registers the identifier. The class field `event_type` sets the value that the
+event carries. Both must hold the same value.
+
+CloudEvents exports (`to_cloudevent_dict()`) lower-case the identifier.
 
 | Event identifier | Class | Module |
 |---|---|---|
-| `AbsencePenaltyApplied` | `AbsencePenaltyApplied` | `runefoble_events.character` |
-| `AbsencePenaltyCleared` | `AbsencePenaltyCleared` | `runefoble_events.character` |
-| `AliasesConsolidated` | `AliasesConsolidated` | `runefoble_events.lore` |
-| `AtlasLayerToggled` | `AtlasLayerToggled` | `runefoble_events.lore` |
-| `AtlasPinCreated` | `AtlasPinCreated` | `runefoble_events.lore` |
-| `AtlasPinUpdated` | `AtlasPinUpdated` | `runefoble_events.lore` |
-| `AtlasTerritoryUpdated` | `AtlasTerritoryUpdated` | `runefoble_events.lore` |
-| `BoardGridInitialized` | `BoardGridInitialized` | `runefoble_events.board_events.terrain` |
-| `CampaignCreated` | `CampaignCreated` | `runefoble_events.campaign_lifecycle` |
-| `CampaignInviteCreated` | `CampaignInviteCreated` | `runefoble_events.campaign_lifecycle` |
-| `CampaignInviteRedeemed` | `CampaignInviteRedeemed` | `runefoble_events.campaign_lifecycle` |
-| `CampaignMemberAdded` | `CampaignMemberAdded` | `runefoble_events.campaign_lifecycle` |
-| `CampaignMemberRemoved` | `CampaignMemberRemoved` | `runefoble_events.campaign_lifecycle` |
-| `CampaignRegisteredToSharedWorld` | `CampaignRegisteredToSharedWorld` | `runefoble_events.west_marches` |
-| `CampaignSessionCreated` | `CampaignSessionCreated` | `runefoble_events.campaign_lifecycle` |
-| `CampaignUpdated` | `CampaignUpdated` | `runefoble_events.campaign_lifecycle` |
-| `CampfireRestCompleted` | `CampfireRestCompleted` | `runefoble_events.downtime` |
-| `CaravanAmbushed` | `CaravanAmbushed` | `runefoble_events.west_marches` |
-| `CaravanContractAccepted` | `CaravanContractAccepted` | `runefoble_events.west_marches` |
-| `CaravanContractPosted` | `CaravanContractPosted` | `runefoble_events.west_marches` |
-| `CaravanDispatched` | `CaravanDispatched` | `runefoble_events.west_marches` |
-| `CaravanTradeCompleted` | `CaravanTradeCompleted` | `runefoble_events.west_marches` |
-| `CaravanTradeFulfilled` | `CaravanTradeFulfilled` | `runefoble_events.west_marches` |
-| `CharacterCreated` | `CharacterCreated` | `runefoble_events.character` |
-| `CharacterHealthChanged` | `CharacterHealthChanged` | `runefoble_events.character` |
-| `CharacterSelectedForLobby` | `CharacterSelectedForLobby` | `runefoble_events.session` |
-| `ChildLinked` | `ChildLinked` | `runefoble_events.child_index` |
-| `CodexEntryPublished` | `CodexEntryPublished` | `runefoble_events.lore` |
-| `CodexEntryUpdated` | `CodexEntryUpdated` | `runefoble_events.lore` |
-| `CombatEncounterEnded` | `CombatEncounterEnded` | `runefoble_events.session` |
-| `CombatEncounterStarted` | `CombatEncounterStarted` | `runefoble_events.session` |
-| `CombatRoundAdvanced` | `CombatRoundAdvanced` | `runefoble_events.session` |
-| `CommunalNoticePosted` | `CommunalNoticePosted` | `runefoble_events.west_marches` |
-| `ConditionApplied` | `ConditionApplied` | `runefoble_events.character` |
-| `ConditionRemoved` | `ConditionRemoved` | `runefoble_events.character` |
-| `CraftingAttempted` | `CraftingAttempted` | `runefoble_events.downtime` |
-| `CraftingMishapOccurred` | `CraftingMishapOccurred` | `runefoble_events.downtime` |
-| `CraftingSucceeded` | `CraftingSucceeded` | `runefoble_events.downtime` |
-| `CrapsRolled` | `CrapsRolled` | `runefoble_events.tavern_tables` |
-| `CrossCampaignDiscoveryShared` | `CrossCampaignDiscoveryShared` | `runefoble_events.west_marches` |
-| `DartThrown` | `DartThrown` | `runefoble_events.tavern_tables` |
-| `DynamicToolInvoked` | `DynamicToolInvokedEvent` | `runefoble_events.mcp_tools` |
-| `DynamicToolRegistered` | `DynamicToolRegisteredEvent` | `runefoble_events.mcp_tools` |
-| `DynamicToolUnregistered` | `DynamicToolUnregisteredEvent` | `runefoble_events.mcp_tools` |
-| `EncounterBalanced` | `EncounterBalanced` | `runefoble_events.compendium` |
-| `EntitiesExtracted` | `EntitiesExtracted` | `runefoble_events.lore` |
-| `EquipmentSlotUpdated` | `EquipmentSlotUpdated` | `runefoble_events.character` |
-| `FogOfWarRevealed` | `FogOfWarRevealed` | `runefoble_events.board_events.fog` |
-| `HagglingNegotiated` | `HagglingNegotiated` | `runefoble_events.tavern` |
-| `HandoutGenerated` | `HandoutGenerated` | `runefoble_events.lore` |
-| `HomebrewRuleRegistered` | `HomebrewRuleRegistered` | `runefoble_events.compendium` |
-| `InitiativeRolled` | `InitiativeRolled` | `runefoble_events.session` |
-| `InitiativeTurnAdvanced` | `InitiativeTurnAdvanced` | `runefoble_events.session` |
-| `IntoxicationLevelChanged` | `IntoxicationLevelChanged` | `runefoble_events.tavern` |
-| `InvisibleInkRevealed` | `InvisibleInkRevealed` | `runefoble_events.lore` |
-| `ItemAddedToInventory` | `ItemAddedToInventory` | `runefoble_events.character` |
-| `ItemRemovedFromInventory` | `ItemRemovedFromInventory` | `runefoble_events.character` |
-| `LoreDocumentIngested` | `LoreDocumentIngested` | `runefoble_events.lore` |
-| `MercenaryBountyClaimed` | `MercenaryBountyClaimed` | `runefoble_events.contracts` |
-| `MercenaryBountyFulfilled` | `MercenaryBountyFulfilled` | `runefoble_events.contracts` |
-| `MercenaryBountyPosted` | `MercenaryBountyPosted` | `runefoble_events.contracts` |
-| `MerchantCreated` | `MerchantCreated` | `runefoble_events.tavern` |
-| `MinigameEnded` | `MinigameEnded` | `runefoble_events.tavern` |
-| `MinigameStarted` | `MinigameStarted` | `runefoble_events.tavern` |
-| `MinigameTurnTaken` | `MinigameTurnTaken` | `runefoble_events.tavern` |
-| `OutpostEstablished` | `OutpostEstablished` | `runefoble_events.west_marches` |
-| `OutpostResourcesContributed` | `OutpostResourcesContributed` | `runefoble_events.west_marches` |
-| `ParticipantJoined` | `ParticipantJoined` | `runefoble_events.session` |
-| `PlayerJoinedSession` | `PlayerJoinedSession` | `runefoble_events.session` |
-| `PlayerLeftSession` | `PlayerLeftSession` | `runefoble_events.session` |
-| `PlayerSpokeEvent` | `PlayerSpokeEvent` | `runefoble_events.watcher_events.narrative` |
-| `ProfileUpdated` | `ProfileUpdated` | `runefoble_events.user_profile` |
-| `ReadinessToggled` | `ReadinessToggled` | `runefoble_events.session` |
-| `RegionalMerchantStockUpdated` | `RegionalMerchantStockUpdated` | `runefoble_events.west_marches` |
-| `RelicForged` | `RelicForged` | `runefoble_events.lore` |
-| `RelicInspected` | `RelicInspected` | `runefoble_events.lore` |
-| `RelicRuneTranslated` | `RelicRuneTranslated` | `runefoble_events.lore` |
-| `RouletteSpun` | `RouletteSpun` | `runefoble_events.tavern_tables` |
-| `SessionCreated` | `SessionCreated` | `runefoble_events.session` |
-| `SessionEnded` | `SessionEnded` | `runefoble_events.session` |
-| `SessionStarted` | `SessionStarted` | `runefoble_events.session` |
-| `SharedStrongholdUpgraded` | `SharedStrongholdUpgraded` | `runefoble_events.west_marches` |
-| `SharedWorldCreated` | `SharedWorldCreated` | `runefoble_events.west_marches` |
-| `SpeechIntentParsed` | `SpeechIntentParsed` | `runefoble_events.watcher_events.narrative` |
-| `StandInActionDecided` | `StandInActionDecided` | `runefoble_events.watcher_events.narrative` |
-| `StrongholdCreated` | `StrongholdCreated` | `runefoble_events.downtime` |
-| `StrongholdDeposited` | `StrongholdDeposited` | `runefoble_events.downtime` |
-| `StrongholdTreasuryContributed` | `StrongholdTreasuryContributed` | `runefoble_events.downtime` |
-| `StrongholdUpgraded` | `StrongholdUpgraded` | `runefoble_events.downtime` |
-| `TableBetPlaced` | `TableBetPlaced` | `runefoble_events.tavern_tables` |
-| `TableBidPlaced` | `TableBidPlaced` | `runefoble_events.tavern_tables` |
-| `TableChallengeResolved` | `TableChallengeResolved` | `runefoble_events.tavern_tables` |
-| `TableOpened` | `TableOpened` | `runefoble_events.tavern_tables` |
-| `TablePlayerSeated` | `TablePlayerSeated` | `runefoble_events.tavern_tables` |
-| `TokenMoved` | `TokenMoved` | `runefoble_events.board_events.token` |
-| `TokenPlaced` | `TokenPlaced` | `runefoble_events.board_events.token` |
-| `TokenRemoved` | `TokenRemoved` | `runefoble_events.board_events.token` |
-| `TurnAdvanced` | `TurnAdvanced` | `runefoble_events.session` |
-| `TurnStarted` | `TurnStarted` | `runefoble_events.session` |
-| `WatcherNarrationGenerated` | `WatcherNarrationGenerated` | `runefoble_events.watcher_events.narrative` |
-| `WaxSealBroken` | `WaxSealBroken` | `runefoble_events.lore` |
-| `character.assigned_to_campaign` | `CharacterAssignedToCampaign` | `runefoble_events.character` |
-| `combat.reaction.resolved` | `ReactionResolvedEvent` | `runefoble_events.combat_reactions` |
-| `combat.ready_action.registered` | `ReadyActionRegisteredEvent` | `runefoble_events.combat_reactions` |
-| `combat.ready_action.triggered` | `ReadyActionTriggeredEvent` | `runefoble_events.combat_reactions` |
-| `combat.turn.paused_for_reaction` | `CombatTurnPausedForReactionEvent` | `runefoble_events.combat_reactions` |
 | `runefoble.events.analytics.milestone_recorded` | `ChronicleMilestoneRecorded` | `runefoble_events.analytics` |
 | `runefoble.events.analytics.mvp_awarded` | `EncounterMvpAwarded` | `runefoble_events.analytics` |
 | `runefoble.events.analytics.telemetry_snapshot_created` | `CombatTelemetrySnapshotCreated` | `runefoble_events.analytics` |
@@ -137,30 +44,44 @@ add the `runefoble.` prefix when the identifier lacks it.
 | `runefoble.events.board.area_effect_exploded` | `AreaEffectExploded` | `runefoble_events.board_events.spells` |
 | `runefoble.events.board.battlemap_switched` | `BattlemapSwitchedEvent` | `runefoble_events.board_traps` |
 | `runefoble.events.board.decals_decayed` | `EphemeralDecalsDecayed` | `runefoble_events.board_events.spells` |
-| `runefoble.events.board.dice.settled` | `DiceSettled` | `runefoble_events.board_events.physics` |
 | `runefoble.events.board.door_toggled` | `BoardDoorToggledEvent` | `runefoble_events.board_events.lighting` |
 | `runefoble.events.board.elevation_changed` | `ElevationChanged` | `runefoble_events.board_events.token` |
+| `runefoble.events.board.fog_of_war_revealed` | `FogOfWarRevealed` | `runefoble_events.board_events.fog` |
 | `runefoble.events.board.fog_of_war_shrouded` | `FogOfWarShrouded` | `runefoble_events.board_events.fog` |
 | `runefoble.events.board.ghost_preview_candidate` | `CandidateGhostPreviewEmitted` | `runefoble_events.watcher_events.combat` |
+| `runefoble.events.board.grid_initialized` | `BoardGridInitialized` | `runefoble_events.board_events.terrain` |
 | `runefoble.events.board.hazard_triggered` | `TokenHazardTriggered` | `runefoble_events.board_events.terrain` |
 | `runefoble.events.board.light_source_placed` | `BoardLightSourcePlacedEvent` | `runefoble_events.board_events.lighting` |
 | `runefoble.events.board.map_imported` | `UniversalVTTImported` | `runefoble_events.board_events.terrain` |
-| `runefoble.events.board.physics.collision` | `PhysicsCollisionOccurred` | `runefoble_events.board_events.physics` |
+| `runefoble.events.board.physics_collision` | `PhysicsCollisionOccurred` | `runefoble_events.board_events.physics` |
 | `runefoble.events.board.secret_trap_triggered` | `SecretTrapTriggered` | `runefoble_events.watcher_events.combat` |
 | `runefoble.events.board.spell_cast` | `SpellCast` | `runefoble_events.board_events.spells` |
 | `runefoble.events.board.terrain_modified` | `TerrainCellModified` | `runefoble_events.board_events.terrain` |
 | `runefoble.events.board.token_action_executed` | `TokenActionExecuted` | `runefoble_events.board_events.token` |
 | `runefoble.events.board.token_knockback_applied` | `TokenKnockbackApplied` | `runefoble_events.board_events.token` |
+| `runefoble.events.board.token_moved` | `TokenMoved` | `runefoble_events.board_events.token` |
+| `runefoble.events.board.token_placed` | `TokenPlaced` | `runefoble_events.board_events.token` |
+| `runefoble.events.board.token_removed` | `TokenRemoved` | `runefoble_events.board_events.token` |
 | `runefoble.events.board.trap_disarmed` | `TrapDisarmedEvent` | `runefoble_events.board_traps` |
 | `runefoble.events.board.trap_placed` | `TrapPlacedEvent` | `runefoble_events.board_traps` |
 | `runefoble.events.board.trap_sprung` | `TrapSprungEvent` | `runefoble_events.board_traps` |
 | `runefoble.events.board.vfx_animation_finished` | `VFXAnimationFinished` | `runefoble_events.board_events.spells` |
 | `runefoble.events.board.visibility_mask_updated` | `VisibilityMaskUpdated` | `runefoble_events.board_events.fog` |
+| `runefoble.events.character.absence_penalty_applied` | `AbsencePenaltyApplied` | `runefoble_events.character` |
+| `runefoble.events.character.absence_penalty_cleared` | `AbsencePenaltyCleared` | `runefoble_events.character` |
+| `runefoble.events.character.assigned_to_campaign` | `CharacterAssignedToCampaign` | `runefoble_events.character` |
+| `runefoble.events.character.condition_applied` | `ConditionApplied` | `runefoble_events.character` |
+| `runefoble.events.character.condition_removed` | `ConditionRemoved` | `runefoble_events.character` |
+| `runefoble.events.character.created` | `CharacterCreated` | `runefoble_events.character` |
 | `runefoble.events.character.critical_hit_scored` | `CriticalHitScored` | `runefoble_events.character` |
 | `runefoble.events.character.currency_credited` | `CurrencyCredited` | `runefoble_events.haggling` |
 | `runefoble.events.character.currency_deducted` | `CurrencyDeducted` | `runefoble_events.haggling` |
 | `runefoble.events.character.damaged` | `CharacterDamaged` | `runefoble_events.character` |
 | `runefoble.events.character.death_save_started` | `DeathSaveStarted` | `runefoble_events.character` |
+| `runefoble.events.character.equipment_slot_updated` | `EquipmentSlotUpdated` | `runefoble_events.character` |
+| `runefoble.events.character.health_changed` | `CharacterHealthChanged` | `runefoble_events.character` |
+| `runefoble.events.character.item_added_to_inventory` | `ItemAddedToInventory` | `runefoble_events.character` |
+| `runefoble.events.character.item_removed_from_inventory` | `ItemRemovedFromInventory` | `runefoble_events.character` |
 | `runefoble.events.character.leveled_up` | `CharacterLeveledUp` | `runefoble_events.character` |
 | `runefoble.events.character.portrait_updated` | `CharacterPortraitUpdated` | `runefoble_events.character` |
 | `runefoble.events.character.portrait_variant_generated` | `PortraitVariantGenerated` | `runefoble_events.character` |
@@ -174,11 +95,34 @@ add the `runefoble.` prefix when the identifier lacks it.
 | `runefoble.events.character.stand_in_stabilized` | `StandInStabilized` | `runefoble_events.character` |
 | `runefoble.events.combat.reaction_opportunity_resolved` | `ReactionOpportunityResolved` | `runefoble_events.watcher_events.combat` |
 | `runefoble.events.combat.reaction_prompt_triggered` | `ReactionPromptTriggered` | `runefoble_events.watcher_events.combat` |
+| `runefoble.events.combat.reaction_resolved` | `ReactionResolvedEvent` | `runefoble_events.combat_reactions` |
+| `runefoble.events.combat.ready_action_registered` | `ReadyActionRegisteredEvent` | `runefoble_events.combat_reactions` |
+| `runefoble.events.combat.ready_action_triggered` | `ReadyActionTriggeredEvent` | `runefoble_events.combat_reactions` |
+| `runefoble.events.combat.turn_paused_for_reaction` | `CombatTurnPausedForReactionEvent` | `runefoble_events.combat_reactions` |
+| `runefoble.events.compendium.encounter_balanced` | `EncounterBalanced` | `runefoble_events.compendium` |
+| `runefoble.events.compendium.homebrew_rule_registered` | `HomebrewRuleRegistered` | `runefoble_events.compendium` |
 | `runefoble.events.dice.rolled` | `DiceRolled` | `runefoble_events.watcher_events.combat` |
+| `runefoble.events.dice.settled` | `DiceSettled` | `runefoble_events.board_events.physics` |
+| `runefoble.events.downtime.campfire_rest_completed` | `CampfireRestCompleted` | `runefoble_events.downtime` |
+| `runefoble.events.downtime.crafting_attempted` | `CraftingAttempted` | `runefoble_events.downtime` |
+| `runefoble.events.downtime.crafting_mishap_occurred` | `CraftingMishapOccurred` | `runefoble_events.downtime` |
+| `runefoble.events.downtime.crafting_succeeded` | `CraftingSucceeded` | `runefoble_events.downtime` |
+| `runefoble.events.downtime.stronghold_created` | `StrongholdCreated` | `runefoble_events.downtime` |
+| `runefoble.events.downtime.stronghold_deposited` | `StrongholdDeposited` | `runefoble_events.downtime` |
+| `runefoble.events.downtime.stronghold_treasury_contributed` | `StrongholdTreasuryContributed` | `runefoble_events.downtime` |
+| `runefoble.events.downtime.stronghold_upgraded` | `StrongholdUpgraded` | `runefoble_events.downtime` |
 | `runefoble.events.encounter.action_resolved` | `AutonomousActionResolved` | `runefoble_events.watcher_events.combat` |
 | `runefoble.events.encounter.spawned` | `EncounterSpawned` | `runefoble_events.watcher_events.combat` |
 | `runefoble.events.game_session.bulletin_notice_pinned` | `BulletinNoticePinnedEvent` | `runefoble_events.settlements` |
 | `runefoble.events.game_session.bulletin_notice_removed` | `BulletinNoticeRemovedEvent` | `runefoble_events.settlements` |
+| `runefoble.events.game_session.campaign_created` | `CampaignCreated` | `runefoble_events.campaign_lifecycle` |
+| `runefoble.events.game_session.campaign_invite_created` | `CampaignInviteCreated` | `runefoble_events.campaign_lifecycle` |
+| `runefoble.events.game_session.campaign_invite_redeemed` | `CampaignInviteRedeemed` | `runefoble_events.campaign_lifecycle` |
+| `runefoble.events.game_session.campaign_member_added` | `CampaignMemberAdded` | `runefoble_events.campaign_lifecycle` |
+| `runefoble.events.game_session.campaign_member_removed` | `CampaignMemberRemoved` | `runefoble_events.campaign_lifecycle` |
+| `runefoble.events.game_session.campaign_session_created` | `CampaignSessionCreated` | `runefoble_events.campaign_lifecycle` |
+| `runefoble.events.game_session.campaign_updated` | `CampaignUpdated` | `runefoble_events.campaign_lifecycle` |
+| `runefoble.events.game_session.child_linked` | `ChildLinked` | `runefoble_events.child_index` |
 | `runefoble.events.game_session.cipher_notice_decrypted` | `CipherNoticeDecryptedEvent` | `runefoble_events.settlements` |
 | `runefoble.events.game_session.dm_negotiation_overridden` | `DMNegotiationOverridden` | `runefoble_events.haggling` |
 | `runefoble.events.game_session.establishment_constructed` | `EstablishmentConstructedEvent` | `runefoble_events.settlements` |
@@ -191,18 +135,52 @@ add the `runefoble.` prefix when the identifier lacks it.
 | `runefoble.events.game_session.npc_relationship_formed` | `NPCRelationshipFormed` | `runefoble_events.settlement_workers` |
 | `runefoble.events.game_session.npc_worker_assigned` | `NPCWorkerAssigned` | `runefoble_events.settlement_workers` |
 | `runefoble.events.game_session.npc_worker_relieved` | `NPCWorkerRelieved` | `runefoble_events.settlement_workers` |
+| `runefoble.events.game_session.profile_updated` | `ProfileUpdated` | `runefoble_events.user_profile` |
 | `runefoble.events.game_session.settlement_chartered` | `SettlementCharteredEvent` | `runefoble_events.settlements` |
 | `runefoble.events.game_session.settlement_founded` | `SettlementFoundedEvent` | `runefoble_events.settlements` |
 | `runefoble.events.game_session.settlement_resources_deposited` | `SettlementResourcesDepositedEvent` | `runefoble_events.settlements` |
 | `runefoble.events.game_session.settlement_rest_boon_claimed` | `SettlementRestBoonClaimedEvent` | `runefoble_events.settlements` |
 | `runefoble.events.game_session.settlement_tier_upgraded` | `SettlementTierUpgradedEvent` | `runefoble_events.settlements` |
 | `runefoble.events.game_session.settlement_upgraded` | `SettlementUpgradedEvent` | `runefoble_events.settlements` |
+| `runefoble.events.lore.aliases_consolidated` | `AliasesConsolidated` | `runefoble_events.lore` |
+| `runefoble.events.lore.atlas_layer_toggled` | `AtlasLayerToggled` | `runefoble_events.lore` |
+| `runefoble.events.lore.atlas_pin_created` | `AtlasPinCreated` | `runefoble_events.lore` |
+| `runefoble.events.lore.atlas_pin_updated` | `AtlasPinUpdated` | `runefoble_events.lore` |
+| `runefoble.events.lore.atlas_territory_updated` | `AtlasTerritoryUpdated` | `runefoble_events.lore` |
+| `runefoble.events.lore.codex_entry_published` | `CodexEntryPublished` | `runefoble_events.lore` |
+| `runefoble.events.lore.codex_entry_updated` | `CodexEntryUpdated` | `runefoble_events.lore` |
+| `runefoble.events.lore.document_ingested` | `LoreDocumentIngested` | `runefoble_events.lore` |
+| `runefoble.events.lore.entities_extracted` | `EntitiesExtracted` | `runefoble_events.lore` |
+| `runefoble.events.lore.handout_generated` | `HandoutGenerated` | `runefoble_events.lore` |
+| `runefoble.events.lore.invisible_ink_revealed` | `InvisibleInkRevealed` | `runefoble_events.lore` |
+| `runefoble.events.lore.relic_forged` | `RelicForged` | `runefoble_events.lore` |
+| `runefoble.events.lore.relic_inspected` | `RelicInspected` | `runefoble_events.lore` |
+| `runefoble.events.lore.relic_rune_translated` | `RelicRuneTranslated` | `runefoble_events.lore` |
+| `runefoble.events.lore.wax_seal_broken` | `WaxSealBroken` | `runefoble_events.lore` |
+| `runefoble.events.mcp_tools.dynamic_tool_invoked` | `DynamicToolInvokedEvent` | `runefoble_events.mcp_tools` |
+| `runefoble.events.mcp_tools.dynamic_tool_registered` | `DynamicToolRegisteredEvent` | `runefoble_events.mcp_tools` |
+| `runefoble.events.mcp_tools.dynamic_tool_unregistered` | `DynamicToolUnregisteredEvent` | `runefoble_events.mcp_tools` |
 | `runefoble.events.recap.generated` | `AbsenteeRecapGenerated` | `runefoble_events.watcher_events.narrative` |
 | `runefoble.events.scene.atmosphere_set` | `SceneAtmosphereSet` | `runefoble_events.watcher_events.narrative` |
 | `runefoble.events.session.atmosphere_updated` | `AtmosphereUpdated` | `runefoble_events.session` |
 | `runefoble.events.session.camera_target_updated` | `CameraTargetUpdated` | `runefoble_events.session` |
 | `runefoble.events.session.character_control_transferred` | `CharacterControlTransferred` | `runefoble_events.session` |
+| `runefoble.events.session.character_selected_for_lobby` | `CharacterSelectedForLobby` | `runefoble_events.session` |
+| `runefoble.events.session.combat_encounter_ended` | `CombatEncounterEnded` | `runefoble_events.session` |
+| `runefoble.events.session.combat_encounter_started` | `CombatEncounterStarted` | `runefoble_events.session` |
+| `runefoble.events.session.combat_round_advanced` | `CombatRoundAdvanced` | `runefoble_events.session` |
+| `runefoble.events.session.created` | `SessionCreated` | `runefoble_events.session` |
 | `runefoble.events.session.dm_override_applied` | `DMOverrideApplied` | `runefoble_events.session` |
+| `runefoble.events.session.ended` | `SessionEnded` | `runefoble_events.session` |
+| `runefoble.events.session.initiative_rolled` | `InitiativeRolled` | `runefoble_events.session` |
+| `runefoble.events.session.initiative_turn_advanced` | `InitiativeTurnAdvanced` | `runefoble_events.session` |
+| `runefoble.events.session.participant_joined` | `ParticipantJoined` | `runefoble_events.session` |
+| `runefoble.events.session.player_joined_session` | `PlayerJoinedSession` | `runefoble_events.session` |
+| `runefoble.events.session.player_left_session` | `PlayerLeftSession` | `runefoble_events.session` |
+| `runefoble.events.session.readiness_toggled` | `ReadinessToggled` | `runefoble_events.session` |
+| `runefoble.events.session.started` | `SessionStarted` | `runefoble_events.session` |
+| `runefoble.events.session.turn_advanced` | `TurnAdvanced` | `runefoble_events.session` |
+| `runefoble.events.session.turn_started` | `TurnStarted` | `runefoble_events.session` |
 | `runefoble.events.soundscape.channel_volume_changed` | `ChannelVolumeChanged` | `runefoble_events.soundscape` |
 | `runefoble.events.soundscape.cue_triggered` | `SoundscapeCueTriggered` | `runefoble_events.soundscape` |
 | `runefoble.events.soundscape.ducking_engaged` | `DuckingEngaged` | `runefoble_events.soundscape` |
@@ -215,6 +193,20 @@ add the `runefoble.` prefix when the identifier lacks it.
 | `runefoble.events.soundscape.tension_updated` | `SoundscapeTensionUpdated` | `runefoble_events.soundscape` |
 | `runefoble.events.soundscape.track_changed` | `SoundscapeTrackChanged` | `runefoble_events.soundscape` |
 | `runefoble.events.spectator.connected` | `SpectatorSessionConnected` | `runefoble_events.session` |
+| `runefoble.events.tavern.craps_rolled` | `CrapsRolled` | `runefoble_events.tavern_tables` |
+| `runefoble.events.tavern.dart_thrown` | `DartThrown` | `runefoble_events.tavern_tables` |
+| `runefoble.events.tavern.haggling_negotiated` | `HagglingNegotiated` | `runefoble_events.tavern` |
+| `runefoble.events.tavern.intoxication_level_changed` | `IntoxicationLevelChanged` | `runefoble_events.tavern` |
+| `runefoble.events.tavern.merchant_created` | `MerchantCreated` | `runefoble_events.tavern` |
+| `runefoble.events.tavern.minigame_ended` | `MinigameEnded` | `runefoble_events.tavern` |
+| `runefoble.events.tavern.minigame_started` | `MinigameStarted` | `runefoble_events.tavern` |
+| `runefoble.events.tavern.minigame_turn_taken` | `MinigameTurnTaken` | `runefoble_events.tavern` |
+| `runefoble.events.tavern.roulette_spun` | `RouletteSpun` | `runefoble_events.tavern_tables` |
+| `runefoble.events.tavern.table_bet_placed` | `TableBetPlaced` | `runefoble_events.tavern_tables` |
+| `runefoble.events.tavern.table_bid_placed` | `TableBidPlaced` | `runefoble_events.tavern_tables` |
+| `runefoble.events.tavern.table_challenge_resolved` | `TableChallengeResolved` | `runefoble_events.tavern_tables` |
+| `runefoble.events.tavern.table_opened` | `TableOpened` | `runefoble_events.tavern_tables` |
+| `runefoble.events.tavern.table_player_seated` | `TablePlayerSeated` | `runefoble_events.tavern_tables` |
 | `runefoble.events.voice.aec_benchmark_completed` | `AECBenchmarkCompletedEvent` | `runefoble_events.aec` |
 | `runefoble.events.voice.audio_conditioned` | `VoiceAudioConditioned` | `runefoble_events.watcher_events.actions` |
 | `runefoble.events.voice.barge_in_detected` | `NeuralSpeechBargeInDetectedEvent` | `runefoble_events.voice_barge_in` |
@@ -256,12 +248,33 @@ add the `runefoble.` prefix when the identifier lacks it.
 | `runefoble.events.watcher.faction_skirmish_resolved` | `FactionSkirmishResolvedEvent` | `runefoble_events.turf_war` |
 | `runefoble.events.watcher.faction_territory_captured` | `FactionTerritoryCapturedEvent` | `runefoble_events.turf_war` |
 | `runefoble.events.watcher.geopolitical_shift_occurred` | `GeopoliticalShiftOccurred` | `runefoble_events.watcher_events.factions` |
+| `runefoble.events.watcher.narration_generated` | `WatcherNarrationGenerated` | `runefoble_events.watcher_events.narrative` |
 | `runefoble.events.watcher.narrative_whispered` | `DMNarrativeWhispered` | `runefoble_events.watcher_events.narrative` |
 | `runefoble.events.watcher.pending_action_approved` | `PendingActionApproved` | `runefoble_events.watcher_events.copilot_state` |
 | `runefoble.events.watcher.pending_action_expired` | `PendingActionExpired` | `runefoble_events.watcher_events.copilot_state` |
 | `runefoble.events.watcher.pending_action_modified` | `PendingActionModified` | `runefoble_events.watcher_events.copilot_state` |
 | `runefoble.events.watcher.pending_action_proposed` | `PendingActionProposed` | `runefoble_events.watcher_events.copilot_state` |
 | `runefoble.events.watcher.pending_action_vetoed` | `PendingActionVetoed` | `runefoble_events.watcher_events.copilot_state` |
+| `runefoble.events.watcher.player_spoke` | `PlayerSpokeEvent` | `runefoble_events.watcher_events.narrative` |
 | `runefoble.events.watcher.regional_unrest_escalated` | `RegionalUnrestEscalatedEvent` | `runefoble_events.turf_war` |
+| `runefoble.events.watcher.speech_intent_parsed` | `SpeechIntentParsed` | `runefoble_events.watcher_events.narrative` |
+| `runefoble.events.watcher.stand_in_action_decided` | `StandInActionDecided` | `runefoble_events.watcher_events.narrative` |
 | `runefoble.events.watcher.whisper_recorded` | `WhisperRecorded` | `runefoble_events.watcher_events.copilot_state` |
 | `runefoble.events.watcher.world_tick_executed` | `WorldTickExecuted` | `runefoble_events.watcher_events.factions` |
+| `runefoble.events.west_marches.campaign_registered_to_shared_world` | `CampaignRegisteredToSharedWorld` | `runefoble_events.west_marches` |
+| `runefoble.events.west_marches.caravan_ambushed` | `CaravanAmbushed` | `runefoble_events.west_marches` |
+| `runefoble.events.west_marches.caravan_contract_accepted` | `CaravanContractAccepted` | `runefoble_events.west_marches` |
+| `runefoble.events.west_marches.caravan_contract_posted` | `CaravanContractPosted` | `runefoble_events.west_marches` |
+| `runefoble.events.west_marches.caravan_dispatched` | `CaravanDispatched` | `runefoble_events.west_marches` |
+| `runefoble.events.west_marches.caravan_trade_completed` | `CaravanTradeCompleted` | `runefoble_events.west_marches` |
+| `runefoble.events.west_marches.caravan_trade_fulfilled` | `CaravanTradeFulfilled` | `runefoble_events.west_marches` |
+| `runefoble.events.west_marches.communal_notice_posted` | `CommunalNoticePosted` | `runefoble_events.west_marches` |
+| `runefoble.events.west_marches.cross_campaign_discovery_shared` | `CrossCampaignDiscoveryShared` | `runefoble_events.west_marches` |
+| `runefoble.events.west_marches.mercenary_bounty_claimed` | `MercenaryBountyClaimed` | `runefoble_events.contracts` |
+| `runefoble.events.west_marches.mercenary_bounty_fulfilled` | `MercenaryBountyFulfilled` | `runefoble_events.contracts` |
+| `runefoble.events.west_marches.mercenary_bounty_posted` | `MercenaryBountyPosted` | `runefoble_events.contracts` |
+| `runefoble.events.west_marches.outpost_established` | `OutpostEstablished` | `runefoble_events.west_marches` |
+| `runefoble.events.west_marches.outpost_resources_contributed` | `OutpostResourcesContributed` | `runefoble_events.west_marches` |
+| `runefoble.events.west_marches.regional_merchant_stock_updated` | `RegionalMerchantStockUpdated` | `runefoble_events.west_marches` |
+| `runefoble.events.west_marches.shared_stronghold_upgraded` | `SharedStrongholdUpgraded` | `runefoble_events.west_marches` |
+| `runefoble.events.west_marches.shared_world_created` | `SharedWorldCreated` | `runefoble_events.west_marches` |

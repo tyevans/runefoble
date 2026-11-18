@@ -47,10 +47,10 @@ curl -X POST http://localhost:8006/api/v1/lore/documents \
 ```
 
 This endpoint:
-1. Creates an event-sourced `LoreDocumentAggregate` and emits `LoreDocumentIngested`. The repository publishes it to the stream `runefoble.events.lore.document_ingested` before the save returns.
+1. Creates an event-sourced `LoreDocumentAggregate` and emits `runefoble.events.lore.document_ingested`. The repository publishes it to the stream `runefoble.events.lore.document_ingested` before the save returns.
 2. Extracts entities, aliases, and relationships with regex patterns. No model is called. Each entity records `extraction_method: "pattern"`.
 3. Indexes the graph, the BM25 and dense chunk corpus, and the entity vectors in the service process.
-4. Records extracted entities on the aggregate stream via `EntitiesExtracted`.
+4. Records extracted entities on the aggregate stream via `runefoble.events.lore.entities_extracted`.
 5. Writes SpiceDB Zanzibar relationship tuples binding the document to the campaign.
 
 ---
@@ -72,7 +72,7 @@ curl -X POST http://localhost:8006/api/v1/lore/aliases/consolidate \
   }'
 ```
 
-`document_id` is required. The service records the consolidation on that document's stream as `AliasesConsolidated`, so it survives a restart. An unknown document returns `404`.
+`document_id` is required. The service records the consolidation on that document's stream as `runefoble.events.lore.aliases_consolidated`, so it survives a restart. An unknown document returns `404`.
 
 Status codes for this route:
 
@@ -169,7 +169,7 @@ The service stops with an error when one of these checks fails. It does not serv
 ### Restarts
 
 - Document titles, secrecy, aliases, and search results survive a restart, because they come from the replayed events.
-- Codex entries survive a restart. `GET /api/v1/campaigns/{campaign_id}/codex/entries` reads the `CodexEntryPublished` events from the event store on each request. No process keeps a codex index.
+- Codex entries survive a restart. `GET /api/v1/campaigns/{campaign_id}/codex/entries` reads the `runefoble.events.lore.codex_entry_published` events from the event store on each request. No process keeps a codex index.
 - Every committed lore event is published to its `runefoble.events.lore.<name>` stream. The table is in [Campaign Lore Stream Topics](../reference/events-catalog-world-media.md#campaign-lore-stream-topics). A publish failure returns `503`, and the client retries.
 - Entity identifiers are derived from the campaign, document, name, and type. A restart writes the same pgvector rows again. It adds no duplicate rows.
 - Replay time grows with the number of stored documents. Each start re-indexes them.

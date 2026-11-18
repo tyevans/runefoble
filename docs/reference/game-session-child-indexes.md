@@ -9,7 +9,7 @@ Source: `services/game_session/src/game_session/child_index.py` (aggregate and k
 Each parent and kind pair has one index stream in the event store. The stream is a `ChildIndexAggregate`. It holds the child ids in link order.
 
 - The stream id is `uuid5` of `<kind>:<parent id>`. The id is deterministic, so no lookup table is needed.
-- Each link is one `ChildLinked` event. Linking the same child again emits no event.
+- Each link is one `runefoble.events.game_session.child_linked` event. Linking the same child again emits no event.
 - The index is saved through the aggregate repository. It is not published to a Redis stream.
 - A missing index stream means an empty list.
 

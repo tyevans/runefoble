@@ -33,12 +33,12 @@ const terrainCells = [
 
 Per PRD-0013 and US-0043 ("Speak and the board obeys"), spoken voice actions staged by The Watcher or players generate a real-time preview before committing to persistent game state:
 
-1. **Sub-200ms Latency**: The board microfrontend receives `SpeechIntentParsed` or `ghost_preview` events over WebSocket frontdoors (`/ws/boards/{session_id}` or `/ws/campaigns/{campaign_id}`).
+1. **Sub-200ms Latency**: The board microfrontend receives `runefoble.events.watcher.speech_intent_parsed` or `ghost_preview` events over WebSocket frontdoors (`/ws/boards/{session_id}` or `/ws/campaigns/{campaign_id}`).
 2. **Visual Staging Reticle**:
    - A semi-transparent ghost token (50% opacity with a pulsing Bauhaus accent ring) appears at the destination coordinates.
    - An animated dashed targeting vector line connects the origin cell to the destination with an arrowhead reticle.
 3. **Commit or Discard**:
-   - **Confirm**: Click the ghost token directly, or click the **"✓ Confirm Move"** button in the floating ghost banner. This commits the action and publishes `TokenMoved` / updates persistent state.
+   - **Confirm**: Click the ghost token directly, or click the **"✓ Confirm Move"** button in the floating ghost banner. This commits the action and publishes `runefoble.events.board.token_moved` / updates persistent state.
    - **Cancel**: Click **"✕ Cancel"** or let the 15-second countdown timer expire to rollback the preview without mutating board coordinates.
 
 ---
@@ -110,7 +110,7 @@ Every board route needs a verified bearer token. The board service checks one sc
 
 ### How a token gets its tuples
 
-The token placement route writes the tuples in the same request that saves the token. It writes `board_token:<id>#campaign@campaign:<cid>`. For a character token it also writes `board_token:<id>#character@character:<char_id>`. Removal deletes them. No stream consumer is involved. The `TokenPlaced` identity-sync consumer is not wired in any deployment and the board does not need it.
+The token placement route writes the tuples in the same request that saves the token. It writes `board_token:<id>#campaign@campaign:<cid>`. For a character token it also writes `board_token:<id>#character@character:<char_id>`. Removal deletes them. No stream consumer is involved. The `runefoble.events.board.token_placed` identity-sync consumer is not wired in any deployment and the board does not need it.
 
 Token ids are global in SpiceDB. A token id must use only letters, digits, and `_ - = + | /`. The route returns `409` when another campaign already owns the id.
 

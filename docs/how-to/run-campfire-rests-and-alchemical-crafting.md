@@ -69,7 +69,7 @@ When volatile reagents are combined without stabilizing catalysts or exceeding r
 ```
 Mishap damage and status conditions (e.g. `poisoned`, `blinded`) are directly applied to the character sheet.
 
-Mishap damage publishes `CharacterHealthChanged` and `CharacterDamaged` on the character stream. These are the same events that `POST /api/v1/characters/{id}/health` publishes.
+Mishap damage publishes `runefoble.events.character.health_changed` and `CharacterDamaged` on the character stream. These are the same events that `POST /api/v1/characters/{id}/health` publishes.
 
 If the character does not exist, the route answers `404`. If the event store fails, the route answers `503`. In both cases nothing is saved.
 

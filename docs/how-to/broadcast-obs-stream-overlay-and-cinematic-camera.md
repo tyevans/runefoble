@@ -42,8 +42,8 @@ The spectator overlay strictly enforces server-side SpiceDB Zanzibar permissions
 ## 3. Autonomous Cinematic Director Camera
 
 The cinematic director automatically tracks live gameplay events:
-1. **Turn Started (`TurnStarted`)**: When a combat round or turn cycles, the camera centers on the active token using smooth cubic-bezier easing within 300ms.
-2. **Action Centers (`TokenMoved`)**: When a token traverses the grid, the camera follows the destination center `(to_x, to_y)` at a configured zoom level (1.5x - 2.0x).
+1. **Turn Started (`runefoble.events.session.turn_started`)**: When a combat round or turn cycles, the camera centers on the active token using smooth cubic-bezier easing within 300ms.
+2. **Action Centers (`runefoble.events.board.token_moved`)**: When a token traverses the grid, the camera follows the destination center `(to_x, to_y)` at a configured zoom level (1.5x - 2.0x).
 3. **Hidden Movement Shielding**: Movements made by hidden monsters or invisible creatures are omitted from spectator feeds to prevent visual spoilers.
 
 ### WebSockets Integration

@@ -4,7 +4,7 @@ All handout and relic events inherit from `BaseRunefobleEvent` and are powered b
 
 ## Diegetic Handout Events (`aggregate_type: DiegeticHandout`)
 
-### `HandoutGenerated`
+### `runefoble.events.lore.handout_generated`
 Emitted when an in-world diegetic document is forged (`runefoble.events.lore.handout_generated`).
 - `handout_id`: UUID (Aggregate identifier)
 - `campaign_id`: UUID
@@ -20,7 +20,7 @@ Emitted when an in-world diegetic document is forged (`runefoble.events.lore.han
 - `created_by`: Optional[String]
 - `metadata`: Dict[str, Any]
 
-### `WaxSealBroken`
+### `runefoble.events.lore.wax_seal_broken`
 Emitted when a player or DM breaks the wax seal (`runefoble.events.lore.wax_seal_broken`).
 - `handout_id`: UUID
 - `campaign_id`: UUID
@@ -29,7 +29,7 @@ Emitted when a player or DM breaks the wax seal (`runefoble.events.lore.wax_seal
 - `haptic_audio_effect`: String ("wax_crack_crisp_01.wav", "wax_fracture_heavy.wav")
 - `revealed_content_preview`: String
 
-### `InvisibleInkRevealed`
+### `runefoble.events.lore.invisible_ink_revealed`
 Emitted when secret runes are revealed under UV torchlight (`runefoble.events.lore.invisible_ink_revealed`).
 - `handout_id`: UUID
 - `campaign_id`: UUID
@@ -41,7 +41,7 @@ Emitted when secret runes are revealed under UV torchlight (`runefoble.events.lo
 
 ## 3D Relic Events (`aggregate_type: Relic`)
 
-### `RelicForged`
+### `runefoble.events.lore.relic_forged`
 Emitted when a 3D relic model is forged (`runefoble.events.lore.relic_forged`).
 - `relic_id`: UUID (Aggregate identifier)
 - `campaign_id`: UUID
@@ -54,7 +54,7 @@ Emitted when a 3D relic model is forged (`runefoble.events.lore.relic_forged`).
 - `created_by`: Optional[String]
 - `metadata`: Dict[str, Any]
 
-### `RelicInspected`
+### `runefoble.events.lore.relic_inspected`
 Emitted when a player rotates and inspects a 3D relic (`runefoble.events.lore.relic_inspected`).
 - `relic_id`: UUID
 - `campaign_id`: UUID
@@ -65,7 +65,7 @@ Emitted when a player rotates and inspects a 3D relic (`runefoble.events.lore.re
 - `discovered_runes`: List[Dict[str, Any]]
 - `inspection_notes`: Optional[String]
 
-### `RelicRuneTranslated`
+### `runefoble.events.lore.relic_rune_translated`
 Emitted when an inscription is deciphered (`runefoble.events.lore.relic_rune_translated`).
 - `relic_id`: UUID
 - `campaign_id`: UUID

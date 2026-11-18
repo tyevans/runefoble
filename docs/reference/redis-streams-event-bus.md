@@ -53,7 +53,7 @@ Runefoble uses Redis Streams as a high-throughput, distributed event bus for cro
 4. **Projection status**: Three kinds of projection exist. Only the first two run in production.
    - **Running, Redis Streams**: the `analytics` consumer in `campaign_analytics` (`handle_domain_event`) updates the analytics read models. See [Production Consumers](#production-consumers).
    - **Running, rebuilt at start-up**: the Campaign Lore retrieval projection (`services/campaign_lore/src/campaign_lore/projection.py`). `rebuild_lore_projection` replays `LoreDocument` events from the PostgreSQL event store in the service lifespan. The retrieval engine is held in process memory and is rebuilt on each start.
-   - **Running, rebuilt at start-up**: the Rules Compendium homebrew index (`services/rules_compendium/src/rules_compendium/projection.py`). `rebuild_homebrew_projection` replays `HomebrewRuleRegistered` events from the event store in the service lifespan. The index serves search and monster lookup. The list route reads the campaign aggregate.
+   - **Running, rebuilt at start-up**: the Rules Compendium homebrew index (`services/rules_compendium/src/rules_compendium/projection.py`). `rebuild_homebrew_projection` replays `runefoble.events.compendium.homebrew_rule_registered` events from the event store in the service lifespan. The index serves search and monster lookup. The list route reads the campaign aggregate.
    - **In memory, never started**: `SessionReadProjection` (`services/game_session/src/game_session/projections/session.py`) and the projections it composes, `InitiativeProjection` (`projections/initiative.py`) and `PresenceProjection` (`projections/presence.py`). `apply_session_event` (`projections/appliers.py`) applies session events to those views. No service starts them, and no `/healthz` reports them. Their state is lost on restart. See [In-Memory Session Projections](#in-memory-session-projections). Tracked in TASK-0567.
 
 ---
@@ -125,7 +125,7 @@ Each publish site in these services belongs to one class.
 
 | Site | Class | Helper | On failure |
 |---|---|---|---|
-| `POST /api/v1/voice/transcribe` player speech (`PlayerSpokeEvent`) | Domain state | `publish_or_fail` | 503. The Watcher is not called. |
+| `POST /api/v1/voice/transcribe` player speech (`runefoble.events.watcher.player_spoke`) | Domain state | `publish_or_fail` | 503. The Watcher is not called. |
 | `POST /api/v1/voice/stream/chunk` and stream WebSocket player speech | Domain state | `publish_or_fail` | HTTP 503. On the WebSocket, a `{"status": "publish_failed"}` frame. The chunk is not kept. |
 | Transcription engine failure (`VoiceTranscriptionFailed`) | Notification | `publish_best_effort` | The route returns the engine 503. A failed publish is counted. |
 | Voice room peer events (`VoicePeerJoined`, `VoicePeerLeft`, mute) | Notification | `publish_best_effort` | Counted. The request succeeds. |
@@ -288,12 +288,12 @@ await projection.stop()
 ```
 
 ### Projected Events
-- `TokenPlaced`, `TokenMoved`, `TokenRemoved`: Spatial grid token coordinates and status.
+- `runefoble.events.board.token_placed`, `runefoble.events.board.token_moved`, `runefoble.events.board.token_removed`: Spatial grid token coordinates and status.
 - `SceneAtmosphereSet`: Scene lighting, mood, audio ambience prompts.
 - `EncounterSpawned`: Active encounters, monster rosters, tactical objectives.
 - `AutonomousActionResolved`: Append-only combat action log.
-- `TurnAdvanced`: Active turn index.
-- `SessionStarted`, `SessionEnded`: Session lifecycle status (`lobby`, `active`, `ended`).
+- `runefoble.events.session.turn_advanced`: Active turn index.
+- `runefoble.events.session.started`, `runefoble.events.session.ended`: Session lifecycle status (`lobby`, `active`, `ended`).
 
 ---
 

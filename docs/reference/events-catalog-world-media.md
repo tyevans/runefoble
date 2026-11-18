@@ -261,7 +261,7 @@ Part of the [Events Schema](events-schema.md). Each event identifier in this pag
 ### LoreDocument Events (`aggregate_type: LoreDocument`)
 
 
-- **`LoreDocumentIngested`**: Emitted when a new worldbuilding document is ingested (`LoreDocumentIngested`).
+- **`LoreDocumentIngested`**: Emitted when a new worldbuilding document is ingested (`runefoble.events.lore.document_ingested`).
   - `document_id`: UUID
   - `campaign_id`: UUID
   - `title`: String
@@ -269,23 +269,23 @@ Part of the [Events Schema](events-schema.md). Each event identifier in this pag
   - `is_secret`: Boolean (default False)
   - `author_id`: Optional[String]
   - `metadata`: Dict[str, Any]
-- **`EntitiesExtracted`**: Emitted when entities and relationships are extracted via redstring (`EntitiesExtracted`).
+- **`EntitiesExtracted`**: Emitted when entities and relationships are extracted via redstring (`runefoble.events.lore.entities_extracted`).
   - `document_id`: UUID
   - `campaign_id`: UUID
   - `entities`: List[Dict[str, Any]]
   - `relationships`: List[Dict[str, Any]]
-- **`AliasesConsolidated`**: Emitted when synonymous entity titles and aliases are consolidated into canonical nodes (`AliasesConsolidated`).
+- **`AliasesConsolidated`**: Emitted when synonymous entity titles and aliases are consolidated into canonical nodes (`runefoble.events.lore.aliases_consolidated`).
   - `campaign_id`: UUID
   - `canonical_entity_id`: UUID
   - `canonical_name`: String
   - `alias_entity_id`: UUID
   - `alias_name`: String
   - `reason`: String
-- For schemas of `HandoutGenerated`, `WaxSealBroken`, and `RelicInspected`, see [`diegetic-handouts-and-relics-events.md`](diegetic-handouts-and-relics-events.md).
+- For schemas of `runefoble.events.lore.handout_generated`, `runefoble.events.lore.wax_seal_broken`, and `runefoble.events.lore.relic_inspected`, see [`diegetic-handouts-and-relics-events.md`](diegetic-handouts-and-relics-events.md).
 
 ### Atlas & Party Codex Events (`aggregate_type: Atlas`, `Codex`)
 
-- **`AtlasPinCreated`**: Emitted when a milestone pin is placed on the campaign world atlas (`AtlasPinCreated`).
+- **`AtlasPinCreated`**: Emitted when a milestone pin is placed on the campaign world atlas (`runefoble.events.lore.atlas_pin_created`).
   - `pin_id`: UUID
   - `campaign_id`: UUID
   - `title`: String
@@ -297,12 +297,12 @@ Part of the [Events Schema](events-schema.md). Each event identifier in this pag
   - `linked_entity_ids`: List[String]
   - `created_by`: Optional[String]
   - `metadata`: Dict[str, Any]
-- **`AtlasLayerToggled`**: Emitted when map layer visibility is toggled (`AtlasLayerToggled`).
+- **`AtlasLayerToggled`**: Emitted when map layer visibility is toggled (`runefoble.events.lore.atlas_layer_toggled`).
   - `campaign_id`: UUID
   - `layer`: String
   - `is_visible`: Boolean
   - `toggled_by`: Optional[String]
-- **`AtlasTerritoryUpdated`**: Emitted when territory polygon boundaries or ownership is defined (`AtlasTerritoryUpdated`).
+- **`AtlasTerritoryUpdated`**: Emitted when territory polygon boundaries or ownership is defined (`runefoble.events.lore.atlas_territory_updated`).
   - `territory_id`: UUID
   - `campaign_id`: UUID
   - `name`: String
@@ -312,7 +312,7 @@ Part of the [Events Schema](events-schema.md). Each event identifier in this pag
   - `is_contested`: Boolean
   - `era`: Optional[String]
   - `metadata`: Dict[str, Any]
-- **`CodexEntryPublished`**: Emitted when a collaborative party codex note is published with redstring links (`CodexEntryPublished`).
+- **`CodexEntryPublished`**: Emitted when a collaborative party codex note is published with redstring links (`runefoble.events.lore.codex_entry_published`).
   - `entry_id`: UUID
   - `campaign_id`: UUID
   - `title`: String
@@ -323,7 +323,7 @@ Part of the [Events Schema](events-schema.md). Each event identifier in this pag
   - `tags`: List[String]
   - `linked_entity_ids`: List[String]
   - `metadata`: Dict[str, Any]
-- **`CodexEntryUpdated`**: Emitted when codex content, tags, or privacy status are updated (`CodexEntryUpdated`).
+- **`CodexEntryUpdated`**: Emitted when codex content, tags, or privacy status are updated (`runefoble.events.lore.codex_entry_updated`).
 
 
 ### Campaign Lore Stream Topics
@@ -360,7 +360,7 @@ Each stream entry carries the event type in the `event_type` field and the event
 
 ### Compendium & Encounter Events (`aggregate_type: Compendium`, `Encounter`)
 
-- **`HomebrewRuleRegistered`**: Emitted when a DM or player registers a campaign homebrew rule or custom monster (`HomebrewRuleRegistered`).
+- **`HomebrewRuleRegistered`**: Emitted when a DM or player registers a campaign homebrew rule or custom monster (`runefoble.events.compendium.homebrew_rule_registered`).
   - `rule_id`: UUID
   - `campaign_id`: UUID
   - `author_id`: String
@@ -368,7 +368,7 @@ Each stream entry carries the event type in the `event_type` field and the event
   - `title`: String
   - `content`: Dict[str, Any]
   - `metadata`: Dict[str, Any]
-- **`EncounterBalanced`**: Emitted when an automated combat encounter calculation is recorded (`EncounterBalanced`).
+- **`EncounterBalanced`**: Emitted when an automated combat encounter calculation is recorded (`runefoble.events.compendium.encounter_balanced`).
   - `encounter_id`: UUID
   - `campaign_id`: Optional[UUID]
   - `party_levels`: List[Integer]

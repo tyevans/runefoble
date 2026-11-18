@@ -76,7 +76,7 @@ curl -X POST http://localhost:8004/api/v1/shared-worlds/b17900f3-6a05-498d-8707-
   }'
 ```
 
-This records the waypoint on `SharedWorldAggregate` and broadcasts `CrossCampaignDiscoveryShared` onto the Redis Streams event bus (`runefoble.events.west_marches`).
+This records the waypoint on `SharedWorldAggregate` and broadcasts `runefoble.events.west_marches.cross_campaign_discovery_shared` onto the Redis Streams event bus (`runefoble.events.west_marches`).
 
 ### Step 2: Query Shared Discoveries
 
@@ -144,7 +144,7 @@ curl -X POST http://localhost:8004/api/v1/shared-worlds/b17900f3-6a05-498d-8707-
   }'
 ```
 
-This emits `CaravanTradeCompleted` to Redis Streams and updates Highport's regional merchant stock.
+This emits `runefoble.events.west_marches.caravan_trade_completed` to Redis Streams and updates Highport's regional merchant stock.
 
 ### Step 4: Access Unlocked Regional Stock
 
@@ -420,8 +420,8 @@ Decomposed under TASK-0145 with all test files strictly under 130 lines:
 
 - **`tests/test_blackbox_west_marches/conftest.py`**: Shared test harness providing `mock_bus`, `spicedb_client`, `client`, and standard party credential fixtures (< 50 lines).
 - **`tests/test_blackbox_west_marches/test_world_registration.py`**: Verifies establishing persistent frontier worlds (`POST /api/v1/shared-worlds`), linking participating campaigns, and handling duplicate registration validations (< 110 lines).
-- **`tests/test_blackbox_west_marches/test_discovery_synchronization.py`**: Verifies cross-party discovery waypoint sharing, `CrossCampaignDiscoveryShared` CloudEvent broadcast over Redis Streams, and fog-of-war landmark filtering (< 130 lines).
-- **`tests/test_blackbox_west_marches/test_caravan_transit.py`**: Verifies outpost establishment, caravan dispatch scheduling, trade fulfillment emitting `CaravanTradeCompleted`, and regional merchant stock unlocks (< 130 lines).
+- **`tests/test_blackbox_west_marches/test_discovery_synchronization.py`**: Verifies cross-party discovery waypoint sharing, `runefoble.events.west_marches.cross_campaign_discovery_shared` CloudEvent broadcast over Redis Streams, and fog-of-war landmark filtering (< 130 lines).
+- **`tests/test_blackbox_west_marches/test_caravan_transit.py`**: Verifies outpost establishment, caravan dispatch scheduling, trade fulfillment emitting `runefoble.events.west_marches.caravan_trade_completed`, and regional merchant stock unlocks (< 130 lines).
 - **`tests/test_blackbox_west_marches/test_security_isolation.py`**: Verifies SpiceDB Zanzibar object-level multi-tenancy isolation (protecting private character sheets while exposing shared frontier geography) and communal tavern notice boards (< 120 lines).
 
 Run the West Marches test suite:
@@ -483,7 +483,7 @@ Per **ADR-0003**, **ADR-0007**, **ADR-0011**, and **Hard Invariant 6** (< 500 li
 
 Per **ADR-0003**, **ADR-0007**, **ADR-0011**, and **Hard Invariant 6** (< 500 lines per file), the shared frontier domain logic in `services/campaign_lore/src/campaign_lore/` is modularized into:
 
-- **`west_marches_aggregate.py`** (under 500 lines): `WestMarchesAtlasAggregate` (`DeclarativeAggregate[WestMarchesState]`) handling declarative `@handles` routing for `SharedWorldCreated`, `CampaignRegisteredToSharedWorld`, `CrossCampaignDiscoveryShared`, `OutpostEstablished`, `SharedStrongholdUpgraded`, `OutpostResourcesContributed`, and `CommunalNoticePosted`.
+- **`west_marches_aggregate.py`** (under 500 lines): `WestMarchesAtlasAggregate` (`DeclarativeAggregate[WestMarchesState]`) handling declarative `@handles` routing for `runefoble.events.west_marches.shared_world_created`, `runefoble.events.west_marches.campaign_registered_to_shared_world`, `runefoble.events.west_marches.cross_campaign_discovery_shared`, `runefoble.events.west_marches.outpost_established`, `runefoble.events.west_marches.shared_stronghold_upgraded`, `runefoble.events.west_marches.outpost_resources_contributed`, and `runefoble.events.west_marches.communal_notice_posted`.
 - **`west_marches_handlers.py`** (< 130 lines): Pure domain calculation helpers (`calculate_boons`, `calculate_defensive_buffer`), outpost fortification logic (`build_default_outpost`, `apply_outpost_established`, `apply_outpost_upgraded`), POI mutation routines (`build_discovery_entry`, `apply_discovery`, `build_notice_entry`), and territory conflict evaluations (`evaluate_territory_claim`).
 - **`models.py`** (< 500 lines): Defines `WestMarchesState` Pydantic model for persistent world projection state.
 - **`tests/test_blackbox_west_marches.py`** (< 500 lines): Frontdoor verification covering territory claims, outpost facility upgrades, discovery pin publishing, and tavern notice postings.

@@ -48,7 +48,7 @@ curl -X POST "http://localhost:8000/api/v1/campaigns/{campaign_id}/atlas/territo
   }'
 ```
 
-When `is_contested` is `true`, the atlas engine automatically flags the borderlands as a contested zone with dashed red perimeter styling and emits an `AtlasTerritoryUpdated` domain event.
+When `is_contested` is `true`, the atlas engine automatically flags the borderlands as a contested zone with dashed red perimeter styling and emits an `runefoble.events.lore.atlas_territory_updated` domain event.
 
 ---
 
@@ -71,7 +71,7 @@ curl -X POST "http://localhost:8000/api/v1/campaigns/{campaign_id}/atlas/pins" \
   }'
 ```
 
-The engine applies ray-casting point-in-polygon containment against known territories, automatically annotating the pin metadata with its containing realm (`territory_id`, `territory_name`, and `territory_faction`), and emits `AtlasPinCreated`.
+The engine applies ray-casting point-in-polygon containment against known territories, automatically annotating the pin metadata with its containing realm (`territory_id`, `territory_name`, and `territory_faction`), and emits `runefoble.events.lore.atlas_pin_created`.
 
 Atlas permissions: viewing needs `view`. Placing a pin needs `play` (players and DMs). Layer toggles and territory updates need `run_session` (DM, GM, or owner). A spectator or an anonymous caller cannot change the atlas.
 

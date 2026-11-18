@@ -13,43 +13,43 @@ Aggregate state: `CampaignChronicleAggregate` (`services/campaign_analytics/src/
 - **`EncounterMvpAwarded`**: Defined, not produced by any service yet (`runefoble.events.analytics.mvp_awarded`). Fields: `campaign_id_str`, `session_id_str`, `encounter_id`, `combatant_id`, `combatant_name`, `award_title`, `metric_name`, `score`. MVP awards are computed at query time from `combat_performance_records`.
 
 ### Downtime, Crafting, Tavern Minigames & Merchant Haggling Events
-For full schemas of `CraftingAttempted`, `CraftingSucceeded`, `CraftingMishapOccurred`, `CampfireRestCompleted`, `StrongholdCreated`, and `StrongholdUpgraded`, see [`downtime-and-crafting-events.md`](downtime-and-crafting-events.md).
-For schemas of `MinigameStarted`, `MinigameTurnTaken`, `MinigameEnded`, `IntoxicationLevelChanged`, and `HagglingNegotiated`, see [`tavern-and-merchants-events.md`](tavern-and-merchants-events.md).
+For full schemas of `runefoble.events.downtime.crafting_attempted`, `runefoble.events.downtime.crafting_succeeded`, `runefoble.events.downtime.crafting_mishap_occurred`, `runefoble.events.downtime.campfire_rest_completed`, `runefoble.events.downtime.stronghold_created`, and `runefoble.events.downtime.stronghold_upgraded`, see [`downtime-and-crafting-events.md`](downtime-and-crafting-events.md).
+For schemas of `runefoble.events.tavern.minigame_started`, `runefoble.events.tavern.minigame_turn_taken`, `runefoble.events.tavern.minigame_ended`, `runefoble.events.tavern.intoxication_level_changed`, and `runefoble.events.tavern.haggling_negotiated`, see [`tavern-and-merchants-events.md`](tavern-and-merchants-events.md).
 
 ### West Marches & Cross-Campaign Trade Events (`aggregate_type: SharedWorld`, `CaravanLedger`)
 
-- **`SharedWorldCreated`**: Emitted when a persistent West Marches shared frontier is established. Fields: `shared_world_id`, `name`, `frontier_region`, `description`, `created_by`.
-- **`CampaignRegisteredToSharedWorld`**: Emitted when an adventuring campaign links into a shared world frontier. Fields: `shared_world_id`, `campaign_id`, `party_name`, `registered_by`.
+- **`SharedWorldCreated`** (`runefoble.events.west_marches.shared_world_created`): Emitted when a persistent West Marches shared frontier is established. Fields: `shared_world_id`, `name`, `frontier_region`, `description`, `created_by`.
+- **`CampaignRegisteredToSharedWorld`** (`runefoble.events.west_marches.campaign_registered_to_shared_world`): Emitted when an adventuring campaign links into a shared world frontier. Fields: `shared_world_id`, `campaign_id`, `party_name`, `registered_by`.
 - **`CrossCampaignDiscoveryShared`**: Emitted when an adventuring party maps a point of interest, dungeon, or waypoint. Broadcast on Redis Stream `runefoble.events.west_marches`. Fields: `shared_world_id`, `discovery_id`, `name`, `discovery_type`, `coordinates`, `discovered_by_campaign_id`, `discovered_by_party_name`, `description`, `danger_level`, `metadata`.
-- **`OutpostEstablished`**: Emitted when a regional settlement or base camp is established. Fields: `shared_world_id`, `outpost_id`, `name`, `region`, `level`, `facilities`, `contributing_campaign_id`, `resources_contributed`.
-- **`SharedStrongholdUpgraded`**: Emitted when communal outpost facilities are upgraded. Fields: `shared_world_id`, `outpost_id`, `facility_id`, `new_tier`, `contributing_campaign_id`, `gold_spent`, `materials_spent`.
-- **`OutpostResourcesContributed`**: Emitted when a contributing campaign credits gold to an outpost store, after the stronghold treasury debit succeeds (TASK-0795). Fields: `shared_world_id`, `outpost_id`, `contributing_campaign_id`, `gold`, `materials`.
-- **`CommunalNoticePosted`**: Emitted when a cross-campaign notice or bounty is posted to the tavern board. Fields: `shared_world_id`, `notice_id`, `campaign_id`, `author_name`, `title`, `content`, `notice_type`, `bounty_reward`.
-- **`CaravanContractPosted`**: Emitted when an asynchronous mercenary caravan escort contract is posted to the frontier board (`CaravanContractPosted`). Fields: `contract_id`, `shared_world_id`, `origin_outpost`, `destination_outpost`, `cargo`, `cargo_value`, `route_risk_level`, `transit_stages`, `escort_collateral`, `reward_gold`, `reward_reputation`, `posted_by_campaign_id`, `poster_user_id`, `expires_in_turns`, `status`, `created_at`.
-- **`CaravanContractAccepted`**: Emitted when an adventuring party claims or accepts an escort contract (`CaravanContractAccepted`). Fields: `contract_id`, `shared_world_id`, `contractor_campaign_id`, `contractor_party_name`, `accepted_by_user_id`, `status`, `accepted_at`.
-- **`CaravanDispatched`**: Emitted when a resource caravan sets off across the frontier. Fields: `contract_id`, `shared_world_id`, `caravan_id`, `origin_outpost`, `destination_outpost`, `cargo`, `dispatched_by_campaign_id`, `transit_turns`, `status`.
-- **`CaravanAmbushed`**: Emitted when a caravan encounters a wilderness hazard or ambush during transit stages (`CaravanAmbushed`). Fields: `contract_id`, `shared_world_id`, `caravan_id`, `stage_index`, `ambush_type`, `danger_level`, `outcome`, `cargo_loss_percentage`, `reported_by_campaign_id`, `notes`.
-- **`CaravanTradeFulfilled`**: Emitted when a caravan successfully reaches destination, delivering cargo, unlocking settlement stock, and paying out rewards (`CaravanTradeFulfilled`). Fields: `contract_id`, `shared_world_id`, `caravan_id`, `origin_outpost`, `destination_outpost`, `cargo_delivered`, `cargo_value_delivered`, `reward_gold_paid`, `reputation_awarded`, `contractor_campaign_id`, `fulfilled_at`, `status`.
+- **`OutpostEstablished`** (`runefoble.events.west_marches.outpost_established`): Emitted when a regional settlement or base camp is established. Fields: `shared_world_id`, `outpost_id`, `name`, `region`, `level`, `facilities`, `contributing_campaign_id`, `resources_contributed`.
+- **`SharedStrongholdUpgraded`** (`runefoble.events.west_marches.shared_stronghold_upgraded`): Emitted when communal outpost facilities are upgraded. Fields: `shared_world_id`, `outpost_id`, `facility_id`, `new_tier`, `contributing_campaign_id`, `gold_spent`, `materials_spent`.
+- **`OutpostResourcesContributed`** (`runefoble.events.west_marches.outpost_resources_contributed`): Emitted when a contributing campaign credits gold to an outpost store, after the stronghold treasury debit succeeds (TASK-0795). Fields: `shared_world_id`, `outpost_id`, `contributing_campaign_id`, `gold`, `materials`.
+- **`CommunalNoticePosted`** (`runefoble.events.west_marches.communal_notice_posted`): Emitted when a cross-campaign notice or bounty is posted to the tavern board. Fields: `shared_world_id`, `notice_id`, `campaign_id`, `author_name`, `title`, `content`, `notice_type`, `bounty_reward`.
+- **`CaravanContractPosted`**: Emitted when an asynchronous mercenary caravan escort contract is posted to the frontier board (`runefoble.events.west_marches.caravan_contract_posted`). Fields: `contract_id`, `shared_world_id`, `origin_outpost`, `destination_outpost`, `cargo`, `cargo_value`, `route_risk_level`, `transit_stages`, `escort_collateral`, `reward_gold`, `reward_reputation`, `posted_by_campaign_id`, `poster_user_id`, `expires_in_turns`, `status`, `created_at`.
+- **`CaravanContractAccepted`**: Emitted when an adventuring party claims or accepts an escort contract (`runefoble.events.west_marches.caravan_contract_accepted`). Fields: `contract_id`, `shared_world_id`, `contractor_campaign_id`, `contractor_party_name`, `accepted_by_user_id`, `status`, `accepted_at`.
+- **`CaravanDispatched`** (`runefoble.events.west_marches.caravan_dispatched`): Emitted when a resource caravan sets off across the frontier. Fields: `contract_id`, `shared_world_id`, `caravan_id`, `origin_outpost`, `destination_outpost`, `cargo`, `dispatched_by_campaign_id`, `transit_turns`, `status`.
+- **`CaravanAmbushed`**: Emitted when a caravan encounters a wilderness hazard or ambush during transit stages (`runefoble.events.west_marches.caravan_ambushed`). Fields: `contract_id`, `shared_world_id`, `caravan_id`, `stage_index`, `ambush_type`, `danger_level`, `outcome`, `cargo_loss_percentage`, `reported_by_campaign_id`, `notes`.
+- **`CaravanTradeFulfilled`**: Emitted when a caravan successfully reaches destination, delivering cargo, unlocking settlement stock, and paying out rewards (`runefoble.events.west_marches.caravan_trade_fulfilled`). Fields: `contract_id`, `shared_world_id`, `caravan_id`, `origin_outpost`, `destination_outpost`, `cargo_delivered`, `cargo_value_delivered`, `reward_gold_paid`, `reputation_awarded`, `contractor_campaign_id`, `fulfilled_at`, `status`.
 - **`CaravanTradeCompleted`**: Emitted when a caravan arrives at its destination outpost, unlocking regional merchant stock. Broadcast on Redis Stream `runefoble.events.west_marches`. Fields: `shared_world_id`, `caravan_id`, `origin_outpost`, `destination_outpost`, `cargo_delivered`, `unlocked_stock`, `completed_at`.
-- **`RegionalMerchantStockUpdated`**: Emitted when outpost merchant inventory adjusts due to trade or expeditions. Fields: `shared_world_id`, `outpost_name`, `inventory_updates`.
+- **`RegionalMerchantStockUpdated`** (`runefoble.events.west_marches.regional_merchant_stock_updated`): Emitted when outpost merchant inventory adjusts due to trade or expeditions. Fields: `shared_world_id`, `outpost_name`, `inventory_updates`.
 
 ### Campaign Lifecycle, Membership & Invite Events (`aggregate_type: Campaign`, `CampaignMembership`, `CampaignInvite`, `CampaignSessions`)
 
 Owned by `game_session` (ADR-0015 decision a). Defined in `libs/runefoble_events/src/runefoble_events/campaign_lifecycle.py`. The stream ID is the campaign UUID, except for `CampaignInvite`. There the stream ID is derived from a SHA-256 hash of the invite token, so the raw token never appears in the event store.
 
-- **`CampaignCreated`**: Emitted when a campaign is created. The creator becomes owner. Fields: `campaign_id`, `owner_id`, `title`, `description`, `setting`, `system`, `cover_image_url`, `settings`.
-- **`CampaignUpdated`**: Emitted when editable campaign fields change. Carries only the changed fields. Fields: `campaign_id`, `changes`.
-- **`CampaignMemberAdded`**: Emitted when a user joins with a `player` or `spectator` role. Fields: `campaign_id`, `user_id`, `role`.
-- **`CampaignMemberRemoved`**: Emitted when a member is removed. Fields: `campaign_id`, `user_id`.
-- **`CampaignInviteCreated`**: Emitted when an invite is issued. Fields: `campaign_id`, `role`, `created_by`, `expires_at`, `max_uses`.
-- **`CampaignInviteRedeemed`**: Emitted when a user redeems an invite. Fields: `campaign_id`, `user_id`.
-- **`CampaignSessionCreated`**: Emitted when a session or staging lobby is added to a campaign. Fields: `campaign_id`, `session_id`, `title`, `status`, `scheduled_at`, `description`.
+- **`CampaignCreated`** (`runefoble.events.game_session.campaign_created`): Emitted when a campaign is created. The creator becomes owner. Fields: `campaign_id`, `owner_id`, `title`, `description`, `setting`, `system`, `cover_image_url`, `settings`.
+- **`CampaignUpdated`** (`runefoble.events.game_session.campaign_updated`): Emitted when editable campaign fields change. Carries only the changed fields. Fields: `campaign_id`, `changes`.
+- **`CampaignMemberAdded`** (`runefoble.events.game_session.campaign_member_added`): Emitted when a user joins with a `player` or `spectator` role. Fields: `campaign_id`, `user_id`, `role`.
+- **`CampaignMemberRemoved`** (`runefoble.events.game_session.campaign_member_removed`): Emitted when a member is removed. Fields: `campaign_id`, `user_id`.
+- **`CampaignInviteCreated`** (`runefoble.events.game_session.campaign_invite_created`): Emitted when an invite is issued. Fields: `campaign_id`, `role`, `created_by`, `expires_at`, `max_uses`.
+- **`CampaignInviteRedeemed`** (`runefoble.events.game_session.campaign_invite_redeemed`): Emitted when a user redeems an invite. Fields: `campaign_id`, `user_id`.
+- **`CampaignSessionCreated`** (`runefoble.events.game_session.campaign_session_created`): Emitted when a session or staging lobby is added to a campaign. Fields: `campaign_id`, `session_id`, `title`, `status`, `scheduled_at`, `description`.
 
 ### User Profile Events (`aggregate_type: UserProfile`)
 
 Owned by `game_session` (ADR-0015 decision a, TASK-0742). Defined in `libs/runefoble_events/src/runefoble_events/user_profile.py`. The stream ID is a UUID derived from the Zitadel subject, so one user has one profile stream.
 
-- **`ProfileUpdated`**: Emitted when a user edits profile attributes. Carries only the changed fields. Fields: `subject`, `changes` (any of `display_name`, `avatar_url`, `bio`, `email`).
+- **`ProfileUpdated`** (`runefoble.events.game_session.profile_updated`): Emitted when a user edits profile attributes. Carries only the changed fields. Fields: `subject`, `changes` (any of `display_name`, `avatar_url`, `bio`, `email`).
 
 ### Cross-Campaign Settlement & Haven Events (`aggregate_type: Settlement`)
 
@@ -80,14 +80,14 @@ Owned by `game_session` (ADR-0015 decision a, TASK-0742). Defined in `libs/runef
 
 ### Frontier Mercenary Bounty & Retrieval Contract Events (`aggregate_type: MercenaryBounty`)
 
-- **`MercenaryBountyPosted`** (`MercenaryBountyPosted`): Emitted when a new mercenary bounty or retrieval contract is posted to the notice board with locked escrow. Broadcast on Redis Stream `runefoble.events.session`. Fields: `bounty_id`, `session_id`, `campaign_id`, `title`, `description`, `target_type`, `target_name`, `target_quantity`, `escrow_gold`, `escrow_items`, `poster_user_id`, `created_at`.
-- **`MercenaryBountyClaimed`** (`MercenaryBountyClaimed`): Emitted when an adventuring party claims an active bounty. Broadcast on Redis Stream `runefoble.events.session`. Fields: `bounty_id`, `session_id`, `claimant_user_id`, `claimant_campaign_id`, `claimant_party_name`, `claimed_at`.
-- **`MercenaryBountyFulfilled`** (`MercenaryBountyFulfilled`): Emitted when fulfillment proof is submitted, disputed, or completed with released escrow payout. Broadcast on Redis Stream `runefoble.events.session`. Fields: `bounty_id`, `session_id`, `proof`, `status`, `payout_gold`, `payout_items`, `fulfilled_by`, `fulfilled_at`.
+- **`MercenaryBountyPosted`** (`runefoble.events.west_marches.mercenary_bounty_posted`): Emitted when a new mercenary bounty or retrieval contract is posted to the notice board with locked escrow. Broadcast on Redis Stream `runefoble.events.session`. Fields: `bounty_id`, `session_id`, `campaign_id`, `title`, `description`, `target_type`, `target_name`, `target_quantity`, `escrow_gold`, `escrow_items`, `poster_user_id`, `created_at`.
+- **`MercenaryBountyClaimed`** (`runefoble.events.west_marches.mercenary_bounty_claimed`): Emitted when an adventuring party claims an active bounty. Broadcast on Redis Stream `runefoble.events.session`. Fields: `bounty_id`, `session_id`, `claimant_user_id`, `claimant_campaign_id`, `claimant_party_name`, `claimed_at`.
+- **`MercenaryBountyFulfilled`** (`runefoble.events.west_marches.mercenary_bounty_fulfilled`): Emitted when fulfillment proof is submitted, disputed, or completed with released escrow payout. Broadcast on Redis Stream `runefoble.events.session`. Fields: `bounty_id`, `session_id`, `proof`, `status`, `payout_gold`, `payout_items`, `fulfilled_by`, `fulfilled_at`.
 
 ### Dynamic FastMCP Tool Events (`aggregate_type: DynamicTool`)
 
-- **`DynamicToolRegisteredEvent`** (`DynamicToolRegistered`): Emitted when a dynamic FastMCP tool is registered or hot-reloaded at runtime. Broadcast on Redis Stream `runefoble.events.system`. Fields: `tool_name`, `description`, `parameters`, `author_id`, `campaign_id`, `metadata`.
-- **`DynamicToolUnregisteredEvent`** (`DynamicToolUnregistered`): Emitted when a dynamic tool is unregistered or retired from discovery. Broadcast on Redis Stream `runefoble.events.system`. Fields: `tool_name`, `unregistered_by`, `campaign_id`.
-- **`DynamicToolInvokedEvent`** (`DynamicToolInvoked`): Emitted when an agent or user invokes a dynamic tool via FastMCP or REST frontdoors. Broadcast on Redis Stream `runefoble.events.system`. Fields: `tool_name`, `user_id`, `session_id`, `campaign_id`, `arguments`, `duration_ms`, `success`, `error`.
+- **`DynamicToolRegisteredEvent`** (`runefoble.events.mcp_tools.dynamic_tool_registered`): Emitted when a dynamic FastMCP tool is registered or hot-reloaded at runtime. Broadcast on Redis Stream `runefoble.events.system`. Fields: `tool_name`, `description`, `parameters`, `author_id`, `campaign_id`, `metadata`.
+- **`DynamicToolUnregisteredEvent`** (`runefoble.events.mcp_tools.dynamic_tool_unregistered`): Emitted when a dynamic tool is unregistered or retired from discovery. Broadcast on Redis Stream `runefoble.events.system`. Fields: `tool_name`, `unregistered_by`, `campaign_id`.
+- **`DynamicToolInvokedEvent`** (`runefoble.events.mcp_tools.dynamic_tool_invoked`): Emitted when an agent or user invokes a dynamic tool via FastMCP or REST frontdoors. Broadcast on Redis Stream `runefoble.events.system`. Fields: `tool_name`, `user_id`, `session_id`, `campaign_id`, `arguments`, `duration_ms`, `success`, `error`.
 
 

@@ -21,10 +21,10 @@ The Encounter Tension Scoring Engine computes real-time tension (0–100) based 
 
 The event path derives these inputs from game state. No value is fixed:
 
-- **Enemy CR**: On `CombatEncounterStarted`, the engine sums the `cr` field of each roster combatant. A CR can be a number or an SRD fraction such as `"1/4"`. A combatant without `cr` adds nothing. Later rounds reuse this sum.
-- **Encounter end**: On `CombatEncounterEnded`, the engine clears the enemy CR and round inputs, and re-scores tension once with combat inactive. Later health changes do not raise combat tension until the next `CombatEncounterStarted`.
-- **Round**: `CombatRoundAdvanced` and `InitiativeTurnAdvanced` set the round.
-- **Party health**: Each `CharacterHealthChanged` event with a `session_id` stores that character's HP ratio (current HP / max HP). The engine uses the lowest stored ratio. A character that has not reported counts as full health. During combat, each health change re-scores tension at once.
+- **Enemy CR**: On `runefoble.events.session.combat_encounter_started`, the engine sums the `cr` field of each roster combatant. A CR can be a number or an SRD fraction such as `"1/4"`. A combatant without `cr` adds nothing. Later rounds reuse this sum.
+- **Encounter end**: On `runefoble.events.session.combat_encounter_ended`, the engine clears the enemy CR and round inputs, and re-scores tension once with combat inactive. Later health changes do not raise combat tension until the next `runefoble.events.session.combat_encounter_started`.
+- **Round**: `runefoble.events.session.combat_round_advanced` and `runefoble.events.session.initiative_turn_advanced` set the round.
+- **Party health**: Each `runefoble.events.character.health_changed` event with a `session_id` stores that character's HP ratio (current HP / max HP). The engine uses the lowest stored ratio. A character that has not reported counts as full health. During combat, each health change re-scores tension at once.
 
 ```bash
 curl -X POST http://localhost:8009/api/v1/soundscape/tension/calculate \
@@ -99,7 +99,7 @@ Available presets include:
 ## 3. WebAudio Background Ducking (-12dB)
 
 The soundscape aggregate owns the duck. A speech duck and a cue duck each record a `DuckingEngaged` event with a stored `duration_ms`:
-- Speech (`PlayerSpokeEvent`) ducks for 2500 ms.
+- Speech (`runefoble.events.watcher.player_spoke`) ducks for 2500 ms.
 - A cue with `duck_music: true` ducks for 2000 ms.
 
 After the stored duration passes, `GET /tension` and the other read routes report `is_ducked: false`. No client call is needed. No speech-end domain event exists in the platform, so the stored duration ends a speech duck.
@@ -177,7 +177,7 @@ Available instrument timbre presets:
 ### Reactive Tabletop Triggering
 - **Clutch Criticals**: When a player rolls a natural 20 (`CriticalHitScored` or `DiceRolled(is_crit=True)`), the audio mixer triggers their triumphant stinger within 250ms, blending seamlessly into active combat stems.
 - **Death Saves**: When a character drops to 0 HP (`DeathSaveStarted`), the audio soundtrack smoothly transitions to introduce their somber theme variant (e.g. solitary cello), amplifying dramatic tension.
-- **Voice Sidechain Ducking**: Whenever voice activity is detected (`PlayerSpokeEvent`), leitmotif stems are attenuated by -12dB alongside background music.
+- **Voice Sidechain Ducking**: Whenever voice activity is detected (`runefoble.events.watcher.player_spoke`), leitmotif stems are attenuated by -12dB alongside background music.
 
 ---
 
@@ -232,15 +232,15 @@ The gateway router (`gateway/api/src/gateway_api/routers/soundscape.py`) verifie
 
 The soundscape blackbox verification suite is partitioned into focused test modules strictly adhering to Hard Invariant 6 (< 500 lines per file) and Hard Invariant 7 (Blackbox TDD with frontdoor setup):
 - `tests/test_blackbox_soundscape_ui/`: Modular blackbox test suite (`test_manifest.py`, `test_stem_mixing.py`, `test_foley_ducking.py`, `conftest.py`) verifying microfrontend manifest advertising, package metadata integrity, TypeScript element exports, Storybook coverage, multi-channel stem mixing, tension scoring, WebAudio -12dB audio ducking, and Zanzibar authorization.
-- `tests/test_blackbox_soundscape_transitions.py`: Verifies multi-track stem layer mixing, ambient/combat crossfading, WebAudio -12dB voice ducking coordination triggered by `PlayerSpokeEvent`, manual mood overrides, and `<runefoble-soundscape-controls>` microfrontend component and token invariants.
-- `tests/test_blackbox_soundscape_tension.py`: Verifies encounter tension scoring heuristics across exploration and combat states, tactical foley cue triggers (`POST /api/v1/soundscape/cue`), autonomous Redis Streams reactivity to `CombatEncounterStarted` and `CombatRoundAdvanced`, and SpiceDB Zanzibar DM authorization enforcement.
+- `tests/test_blackbox_soundscape_transitions.py`: Verifies multi-track stem layer mixing, ambient/combat crossfading, WebAudio -12dB voice ducking coordination triggered by `runefoble.events.watcher.player_spoke`, manual mood overrides, and `<runefoble-soundscape-controls>` microfrontend component and token invariants.
+- `tests/test_blackbox_soundscape_tension.py`: Verifies encounter tension scoring heuristics across exploration and combat states, tactical foley cue triggers (`POST /api/v1/soundscape/cue`), autonomous Redis Streams reactivity to `runefoble.events.session.combat_encounter_started` and `runefoble.events.session.combat_round_advanced`, and SpiceDB Zanzibar DM authorization enforcement.
 - `tests/test_blackbox_leitmotif_events.py`: Verifies CloudEvents domain event class mapping (`LeitmotifProfileConfigured`, `LeitmotifTriggered`, `CriticalHitScored`, `DeathSaveStarted`) and payload serialization roundtrips.
 - `tests/test_blackbox_leitmotif_api.py`: Verifies REST API routes (`/api/v1/soundscape/leitmotif/timbres`, `profile`, `trigger`, `active`), SpiceDB Zanzibar character owner authorization enforcement, and `<runefoble-leitmotif-config>` microfrontend manifest and component invariants.
 - `tests/test_blackbox_leitmotif_triggers.py`: Verifies multi-modal combat and reactive triggers (critical hits, near-death cello themes, WebAudio sidechain -12dB voice ducking) and volume envelope stage calculations.
 - `tests/test_blackbox_soundscape_gateway.py`: Verifies API Gateway `/api/v1/soundscape/*` proxy routing, OpenAPI schema exposure, SpiceDB Zanzibar object authorization (`participate`, `control`, `run_session`), and downstream service forwarding (< 500 lines).
 - `tests/test_blackbox_analytics_soundscape_authz.py`: Verifies fail-closed authorization across the gateway analytics reads and soundscape controls. It covers 401 without a token, 403 for a player, 200 for the DM, and 503 on a SpiceDB outage.
-- `tests/test_blackbox_soundscape_event_handlers.py`: Verifies domain event subscription handlers (`CombatEncounterStarted`, `InitiativeTurnAdvanced`, `PlayerSpokeEvent`, `CriticalHitScored`, `DeathSaveStarted`) through the Redis Streams consumer path.
-- `tests/test_blackbox_soundscape_event_inputs.py`: Verifies that tension inputs come from events. It covers enemy CR from the roster, the encounter-end reset to ambient tension, and party health from `CharacterHealthChanged`.
+- `tests/test_blackbox_soundscape_event_handlers.py`: Verifies domain event subscription handlers (`runefoble.events.session.combat_encounter_started`, `runefoble.events.session.initiative_turn_advanced`, `runefoble.events.watcher.player_spoke`, `CriticalHitScored`, `DeathSaveStarted`) through the Redis Streams consumer path.
+- `tests/test_blackbox_soundscape_event_inputs.py`: Verifies that tension inputs come from events. It covers enemy CR from the roster, the encounter-end reset to ambient tension, and party health from `runefoble.events.character.health_changed`.
 - `tests/test_blackbox_soundscape_state_restart.py`: Verifies that mixer state (master volume), timed ducking, and the aggregate id survive a process restart. The restart runs `tests/helpers/soundscape_restart_child.py` in a new Python process on the same PostgreSQL event store.
 
 ---
@@ -251,7 +251,7 @@ Per ADR-0003, ADR-0006, ADR-0007, and Hard Invariant 6, the service keeps no ses
 - `services/soundscape/src/soundscape/dependencies.py`: Holds the event repository factory, the SpiceDB permission guards, the Zitadel verifier seam, and the event bus seam. It holds no mixer, tension, or leitmotif state.
 - `services/soundscape/src/soundscape/session_state.py`: Reads and writes one session's state through the aggregate. It projects the public tension and mixer view from the stored state.
 - `services/soundscape/src/soundscape/ids.py`: Derives the aggregate id from the session id with UUID v5. Every process resolves the same event stream for one session.
-- `services/soundscape/src/soundscape/event_handlers.py`: Contains the domain event handler `handle_incoming_domain_event`. It handles `CombatEncounterStarted`, `CombatEncounterEnded`, `CombatRoundAdvanced`, `InitiativeTurnAdvanced`, `PlayerSpokeEvent`, `CriticalHitScored`, `DiceRolled`, and `DeathSaveStarted`.
+- `services/soundscape/src/soundscape/event_handlers.py`: Contains the domain event handler `handle_incoming_domain_event`. It handles `runefoble.events.session.combat_encounter_started`, `runefoble.events.session.combat_encounter_ended`, `runefoble.events.session.combat_round_advanced`, `runefoble.events.session.initiative_turn_advanced`, `runefoble.events.watcher.player_spoke`, `CriticalHitScored`, `DiceRolled`, and `DeathSaveStarted`.
 - `services/soundscape/src/soundscape/consumer.py`: Runs the only caller of the handler. One Redis Streams consumer reads the `runefoble.events.session`, `runefoble.events.watcher`, and `runefoble.events.character` streams (TASK-0710). No in-process bus delivers events to the handler.
 - `services/soundscape/src/soundscape/main.py`: Coordinates service startup. The FastAPI lifespan connects the Redis Streams bus and starts the consumer.
 

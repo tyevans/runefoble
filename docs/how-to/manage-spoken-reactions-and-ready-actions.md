@@ -8,8 +8,8 @@ This guide explains how players halt ongoing combat turns with spoken reaction k
 
 In digital tabletop combat, rigid sequential turns prevent reactive play. Runefoble resolves this via event-driven reaction interrupts:
 1. **Spoken Intent Recognition**: Natural speech captured from players is parsed by `the_watcher` reaction grammar.
-2. **Turn Pause & Reaction Window**: `game_session` immediately halts active turn timers, emits `combat.turn.paused_for_reaction` (`runefoble.events.combat.turn_paused_for_reaction`) over Redis Streams, and prompts the reacting player.
-3. **Reaction Resolution**: The player confirms or dismisses the reaction via REST endpoint, emitting `combat.reaction.resolved` and resuming active combat turn flow.
+2. **Turn Pause & Reaction Window**: `game_session` immediately halts active turn timers, emits `runefoble.events.combat.turn_paused_for_reaction` (`runefoble.events.combat.turn_paused_for_reaction`) over Redis Streams, and prompts the reacting player.
+3. **Reaction Resolution**: The player confirms or dismisses the reaction via REST endpoint, emitting `runefoble.events.combat.reaction_resolved` and resuming active combat turn flow.
 
 ```mermaid
 sequenceDiagram
@@ -54,11 +54,11 @@ The reaction intent parser (`services/the_watcher/src/the_watcher/intent/reactio
 
 Players can declare conditional ready actions on their turn. The conditional registry (`ReadyActionRegistry`) evaluates incoming combat events against active triggers:
 
-- **Movement / Spatial Triggers**: Triggered when a token traverses grid cells (`TokenMoved`).
+- **Movement / Spatial Triggers**: Triggered when a token traverses grid cells (`runefoble.events.board.token_moved`).
 - **Spellcasting Triggers**: Triggered when a hostile creature casts a kinetic spell (`SpellCast`).
 - **Attack Triggers**: Triggered when a creature initiates an attack action (`TokenActionExecuted`).
 
-When matched, the registry emits `combat.ready_action.triggered` and executes the readied action.
+When matched, the registry emits `runefoble.events.combat.ready_action_triggered` and executes the readied action.
 
 ---
 

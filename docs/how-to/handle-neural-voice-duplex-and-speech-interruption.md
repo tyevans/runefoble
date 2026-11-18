@@ -301,7 +301,7 @@ When the engine fails to load a model or to infer text, the utterance is dropped
 - `POST /api/v1/voice/stream/chunk` returns `503` with `{"detail": {"error": "speech_engine_unavailable", "engine": "faster-whisper", "message": "..."}}`.
 - `WS /api/v1/voice/stream/ws` sends `{"error": "speech_engine_unavailable", "engine": "...", "message": "..."}` and keeps the socket open.
 - The service publishes `runefoble.events.voice.transcription_failed` (`VoiceTranscriptionFailed`) to `runefoble.events.voice`.
-- No `PlayerSpokeEvent` is published, and The Watcher receives no transcript.
+- No `runefoble.events.watcher.player_spoke` is published, and The Watcher receives no transcript.
 
 Check the active engine with `GET /healthz`. The response includes `"stt_engine": "faster-whisper"`.
 
@@ -323,7 +323,7 @@ Rules:
 - Send neither input, or a blank `transcript`, and the route returns `422`. No event is published.
 - Send invalid base64 in `audio_base64`, and the route returns `422`. No event is published.
 - Send both inputs, and the audio wins. The typed text is ignored.
-- Audio that the engine transcribes to no words returns `200` with `transcript` set to `""`. No `PlayerSpokeEvent` is published, and The Watcher receives nothing.
+- Audio that the engine transcribes to no words returns `200` with `transcript` set to `""`. No `runefoble.events.watcher.player_spoke` is published, and The Watcher receives nothing.
 - An unavailable engine returns `503` with `error: speech_engine_unavailable`. The route never falls back to typed or canned text.
 
 The response carries `source` so that callers can tell the two inputs apart.

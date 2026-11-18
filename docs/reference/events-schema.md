@@ -6,7 +6,7 @@ All domain events in Runefoble subclass `eventsource.domain.event.DomainEvent` v
 
 Every event includes standard metadata managed by `eventsource-py`:
 - `event_id`: UUIDv4
-- `event_type`: String (wire identifier: the class `event_type` value, or the class name when none is set; see [Event Identifiers](event-identifiers.md))
+- `event_type`: String (wire identifier in the form `runefoble.events.<bc>.<snake_case>`; see [Event Identifiers](event-identifiers.md))
 - `event_version`: Integer (schema migration version)
 - `occurred_at`: UTC Datetime
 - `aggregate_id`: UUIDv4
@@ -40,14 +40,14 @@ The `libs/runefoble_events` package organizes domain event definitions and re-ex
   - `platform_events.py`: Core event base models, privacy-preserving combat analytics, compendium indexing, mercenary contracts, and dynamic MCP tools.
 - **The Watcher Domain Events (`runefoble_events.watcher_events.*` and `runefoble_events.watcher` facade)**:
   - `watcher.py`: Public import module for the Watcher events.
-  - `watcher_events/narrative.py`: Speech transcription (`PlayerSpokeEvent`), parsed intent (`SpeechIntentParsed`), narration (`WatcherNarrationGenerated`), absentee recaps, and private DM whispers (< 120 lines).
+  - `watcher_events/narrative.py`: Speech transcription (`runefoble.events.watcher.player_spoke`), parsed intent (`runefoble.events.watcher.speech_intent_parsed`), narration (`runefoble.events.watcher.narration_generated`), absentee recaps, and private DM whispers (< 120 lines).
   - `watcher_events/combat.py`: Dice roll telemetry (`DiceRolled`), autonomous combat encounters, candidate ghost previews, combat reaction interrupts, and trap triggers (< 150 lines).
   - `watcher_events/actions.py`: The Watcher DM copilot proposal, veto, approval, modification, and compound action disambiguation (< 150 lines).
   - `watcher_events/factions.py`: Autonomous NPC faction agendas, progress advances, geopolitical territory shifts, and world ticks (< 150 lines).
 - **Board Domain Events (`runefoble_events.board_events.*` and `runefoble_events.board` facade)**:
   - `board.py`: Public import module for the board events.
   - `board_events/token.py`: Tactical token placement, movement, actions, knockback impulses (`TokenKnockbackApplied`), and elevation changes (`ElevationChanged`) (< 100 lines).
-  - `board_events/fog.py`: Fog-of-war reveal (`FogOfWarRevealed` / `FogRevealed`), shroud reset (`FogOfWarShrouded` / `ShroudReset`), and complete visibility mask updates (`VisibilityMaskUpdated`) (< 80 lines).
+  - `board_events/fog.py`: Fog-of-war reveal (`runefoble.events.board.fog_of_war_revealed` / `FogRevealed`), shroud reset (`FogOfWarShrouded` / `ShroudReset`), and complete visibility mask updates (`VisibilityMaskUpdated`) (< 80 lines).
   - `board_events/templates.py`: Geometric AoE spell template positioning and removal (`AoETemplatePlaced`, `AoETemplateRemoved`) (< 80 lines).
   - `board_events/lighting.py`: Dynamic point lights and interactive doors (`BoardLightSourcePlacedEvent`, `BoardDoorToggledEvent`) (< 80 lines).
   - `board_events/terrain.py`: Board grid initialization, cell elevation / hazard modifications, and Universal VTT map imports (< 80 lines).
@@ -58,7 +58,11 @@ The `libs/runefoble_events` package organizes domain event definitions and re-ex
 
 ## Event Identifiers
 
-[Event Identifiers](event-identifiers.md) lists every registered domain event. The page is generated from the `runefoble_events` registry by `scripts/generate_event_catalogue.py`. Its identifier column is the `event_type` that the code emits. Use it as the source of truth for wire names.
+Every registered domain event has one wire identifier. The identifier has the form `runefoble.events.<bc>.<snake_case>`. The identifier never uses a class name. A retired identifier resolves to no event, and the platform keeps no alias for it.
+
+[Event Identifiers](event-identifiers.md) lists every registered domain event. The page is generated from the `runefoble_events` registry by `scripts/generate_event_catalogue.py`, which fails when an identifier breaks the rule. Its identifier column is the `event_type` that the code emits. Use it as the source of truth for wire names.
+
+Consumers match on the full identifier. Stream readers do not match on a short name. The event deserializer resolves only the full identifier.
 
 ## Audience Studio Outbox
 
@@ -85,8 +89,8 @@ Each catalogue section lists the fields of its events. Field names come from the
 
 Two read routes project the session event stream. Neither writes state.
 
-- `GET /api/v1/sessions/{session_id}/events` reads the session stream and returns the chronicle feed lines for `StandInActionDecided`, `DiceRolled`, `SessionStarted`, and `SessionEnded`. Other event kinds are skipped.
-- `GET /api/v1/sessions/{session_id}/absentee-recap` summarises the stand-in actions that the session aggregate recorded from `StandInActionDecided`. Each penalty comes from that event's `penalties_applied` list.
+- `GET /api/v1/sessions/{session_id}/events` reads the session stream and returns the chronicle feed lines for `runefoble.events.watcher.stand_in_action_decided`, `DiceRolled`, `runefoble.events.session.started`, and `runefoble.events.session.ended`. Other event kinds are skipped.
+- `GET /api/v1/sessions/{session_id}/absentee-recap` summarises the stand-in actions that the session aggregate recorded from `runefoble.events.watcher.stand_in_action_decided`. Each penalty comes from that event's `penalties_applied` list.
 
 Both routes are proxied by the gateway, which checks the `observe` permission on the session first. Both return an empty result when the session has no matching events. See [Ports and Endpoints](ports-and-endpoints.md).
 
@@ -94,7 +98,7 @@ Both routes are proxied by the gateway, which checks the `observe` permission on
 
 These sections do not yet match the code. Each item lists its owner. Update a section when its owner lands the code fix.
 
-- **CharacterSheet events**: `StandInPolicyUpdated` payload fields differ from the class in `libs/runefoble_events/src/runefoble_events/character.py`. Items `ItemAddedToInventory`, `ItemRemovedFromInventory`, `EquipmentSlotUpdated`, `ConditionApplied` and `ConditionRemoved` are not yet in the catalogue. Audit: W1 character-sheet F6. Owner: no task yet.
+- **CharacterSheet events**: `StandInPolicyUpdated` payload fields differ from the class in `libs/runefoble_events/src/runefoble_events/character.py`. Items `runefoble.events.character.item_added_to_inventory`, `runefoble.events.character.item_removed_from_inventory`, `runefoble.events.character.equipment_slot_updated`, `runefoble.events.character.condition_applied` and `runefoble.events.character.condition_removed` are not yet in the catalogue. Audit: W1 character-sheet F6. Owner: no task yet.
 - **Payload drift**: `CharacterControlTransferred` and the hot-swap event payloads differ from the code. Audit: W1 game-session F16. Owner: no task yet.
 - **Orphan producers and consumers**: 17 registered classes have no producer and 38 have no code consumer. Some stream names in the catalogue have no producer or consumer. The Watcher world stream is `runefoble.events.world`. Audit: W3 event wiring. Owner: TASK-0579 (partly complete; see the task file).
 - **Dead read projections**: `PresenceProjection` and `SessionReadProjection` are never started in production. See [Redis Streams Event Bus](redis-streams-event-bus.md#in-memory-session-projections). Owner: TASK-0567.
