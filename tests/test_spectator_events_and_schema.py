@@ -9,7 +9,7 @@ Validates:
 
 from eventsource.domain.event_registry import get_event_class_or_none
 from gateway_api.spectator import sanitize_spectator_state
-from runefoble_events import SpectatorSessionConnected
+from runefoble_events.events import SpectatorSessionConnected
 
 
 def test_spectator_session_connected_event_registration():

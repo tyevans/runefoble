@@ -16,7 +16,7 @@ from uuid import uuid4
 import pytest
 import redis.asyncio
 from fastapi.testclient import TestClient
-from runefoble_events import CombatEncounterStarted, SessionCreated
+from runefoble_events.events import CombatEncounterStarted, SessionCreated
 from runefoble_platform.consumer_group import RedisConsumerGroup
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 from runefoble_platform.stream_consumer import StreamConsumer

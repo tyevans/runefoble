@@ -10,7 +10,7 @@ from uuid import uuid4
 import pytest
 from eventsource.domain.event_registry import get_event_class_or_none
 from fastapi.testclient import TestClient
-from runefoble_events import (
+from runefoble_events.events import (
     FactionBriberyAttemptedEvent,
     FactionMercenaryRecruitedEvent,
     FactionResourceUpdatedEvent,

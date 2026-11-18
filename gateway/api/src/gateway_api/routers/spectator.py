@@ -12,7 +12,7 @@ from gateway_api.spectator import (
     sanitize_spectator_state,
 )
 from runefoble_auth.principal import authenticate_authorization
-from runefoble_events import SpectatorSessionConnected
+from runefoble_events.events import SpectatorSessionConnected
 from runefoble_platform.event_publish import publish_best_effort
 
 router = APIRouter(tags=["Spectator"])

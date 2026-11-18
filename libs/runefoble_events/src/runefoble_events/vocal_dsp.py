@@ -52,12 +52,8 @@ class VoiceFilterToggledEvent(BaseRunefobleEvent):
 
 
 # Backward-compatible aliases
-VocalModulatorPresetApplied = VocalModulatorPresetAppliedEvent
-VoiceFilterToggled = VoiceFilterToggledEvent
 
 __all__ = [
-    "VocalModulatorPresetApplied",
     "VocalModulatorPresetAppliedEvent",
-    "VoiceFilterToggled",
     "VoiceFilterToggledEvent",
 ]

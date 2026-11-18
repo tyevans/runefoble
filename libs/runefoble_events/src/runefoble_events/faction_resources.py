@@ -65,15 +65,8 @@ class FactionBriberyAttemptedEvent(BaseRunefobleEvent):
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 
-FactionResourceUpdated = FactionResourceUpdatedEvent
-FactionMercenaryRecruited = FactionMercenaryRecruitedEvent
-FactionBriberyAttempted = FactionBriberyAttemptedEvent
-
 __all__ = [
     "FactionResourceUpdatedEvent",
-    "FactionResourceUpdated",
     "FactionMercenaryRecruitedEvent",
-    "FactionMercenaryRecruited",
     "FactionBriberyAttemptedEvent",
-    "FactionBriberyAttempted",
 ]

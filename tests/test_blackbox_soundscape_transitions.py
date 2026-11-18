@@ -14,7 +14,7 @@ import pytest
 from eventsource.domain.event_registry import get_event_class_or_none
 from fastapi.testclient import TestClient
 from gateway_api.main import app as gateway_app
-from runefoble_events import (
+from runefoble_events.events import (
     PlayerSpokeEvent,
     SoundscapeDuckingToggled,
     SoundscapeTrackChanged,

@@ -17,7 +17,7 @@ from character_sheet.dependencies import (
     set_event_bus as set_char_bus,
 )
 from fastapi.testclient import TestClient
-from runefoble_events import (
+from runefoble_events.events import (
     BaseRunefobleEvent,
     CharacterDamaged,
     CharacterPortraitUpdated,

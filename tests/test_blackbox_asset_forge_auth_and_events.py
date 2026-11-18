@@ -19,7 +19,7 @@ from asset_forge.main import app
 from eventsource.domain.event_registry import get_event_class_or_none
 from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import SpiceDBClient
-from runefoble_events import BattlemapForged, TokenAssetForged
+from runefoble_events.events import BattlemapForged, TokenAssetForged
 from runefoble_platform.bus import bus as platform_bus
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 

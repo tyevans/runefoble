@@ -13,7 +13,7 @@ from fastapi.testclient import TestClient
 from gateway_api.auth import get_spicedb_client
 from gateway_api.main import app
 from runefoble_auth.sync import ZitadelSpiceDBSyncService
-from runefoble_events import CharacterCreated, ParticipantJoined, SessionCreated
+from runefoble_events.events import CharacterCreated, ParticipantJoined, SessionCreated
 
 client = TestClient(app)
 
