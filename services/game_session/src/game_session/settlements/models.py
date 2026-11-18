@@ -83,6 +83,15 @@ class UpgradeFacilityRequest(BaseModel):
     contributing_campaign_id: str = ""
 
 
+class DepositSettlementRequest(BaseModel):
+    """Request payload to add gold and materials to a haven treasury (manage permission)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    gold: int = 0
+    materials: dict[str, int] = Field(default_factory=dict)
+
+
 class ClaimRestBoonRequest(BaseModel):
     """Request payload to claim a sanctum rest boon for a character or party."""
 

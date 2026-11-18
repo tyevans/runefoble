@@ -18,9 +18,11 @@ from game_session.settlement.auth import (
     write_settlement_relationships,
 )
 from game_session.settlement.auth.tokens import CallerId, get_caller_principal
+from game_session.settlement.facility_prices import InsufficientSettlementResources
 from game_session.settlements import (
     CharterSettlementRequest,
     ClaimRestBoonRequest,
+    DepositSettlementRequest,
     SettlementAggregate,
     UpgradeFacilityRequest,
 )
@@ -106,7 +108,12 @@ async def upgrade_settlement(
 ) -> dict[str, Any]:
     """Upgrade workshop, resting sanctum, or fortifications tier."""
     agg = await _load_haven(settlement_id, "upgrade", caller_id)
-    tier = agg.upgrade_facility(req.facility_id, req.contributing_campaign_id)
+    try:
+        tier = agg.upgrade_facility(req.facility_id, req.contributing_campaign_id)
+    except InsufficientSettlementResources as e:
+        raise HTTPException(status_code=409, detail=str(e)) from e
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
     await _save_and_publish(get_settlement_repository(), get_event_bus(), agg)
     if req.contributing_campaign_id:
         await register_campaign_haven_discovery(
@@ -118,6 +125,22 @@ async def upgrade_settlement(
         "new_tier": tier,
         **agg.state.model_dump(),
     }
+
+
+@router.post("/{settlement_id}/deposit")
+async def deposit_haven_resources(
+    caller_id: CallerId,
+    settlement_id: str,
+    req: DepositSettlementRequest,
+) -> dict[str, Any]:
+    """Add gold and materials to the haven treasury. Only a manager may fund a haven."""
+    agg = await _load_haven(settlement_id, "manage", caller_id)
+    try:
+        agg.deposit_resources(gold=req.gold, materials=req.materials, deposited_by=caller_id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    await _save_and_publish(get_settlement_repository(), get_event_bus(), agg)
+    return {"settlement_id": str(settlement_id), **agg.state.model_dump()}
 
 
 @router.post("/{settlement_id}/claim-boon")

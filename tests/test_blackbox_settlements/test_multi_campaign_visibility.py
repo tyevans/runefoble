@@ -75,6 +75,14 @@ async def test_blackbox_cross_campaign_haven_sharing_and_co_upgrading(
     assert gold_view.status_code == 200
     assert gold_view.json()["name"] == "Azure Redoubt"
 
+    # The founder funds the haven treasury before any co-upgrade
+    funded = client.post(
+        f"/settlements/{sid}/deposit",
+        json={"gold": 500, "materials": {"timber": 60}},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(blue_player)}"},
+    )
+    assert funded.status_code == 200, funded.text
+
     # Party Gold contributes materials to upgrade Azure Redoubt's watchtower
     gold_upgrade = client.post(
         f"/settlements/{sid}/upgrade",

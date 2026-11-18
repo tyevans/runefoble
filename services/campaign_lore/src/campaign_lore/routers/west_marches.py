@@ -27,6 +27,7 @@ from campaign_lore.permissions import (
     check_user_can_view_campaign,
 )
 from campaign_lore.west_marches_aggregate import WestMarchesAtlasAggregate
+from campaign_lore.west_marches_prices import InsufficientOutpostResources
 
 router = APIRouter(
     prefix="/api/v1/campaigns/{campaign_id}/west-marches",
@@ -210,11 +211,16 @@ async def upgrade_stronghold_facility(
     if not outpost_id and aggregate.state.outposts:
         outpost_id = next(iter(aggregate.state.outposts.keys()))
 
-    new_tier = aggregate.upgrade_outpost(
-        outpost_id=outpost_id,
-        facility_id=payload.facility_id,
-        contributing_campaign_id=str(campaign_id),
-    )
+    try:
+        new_tier = aggregate.upgrade_outpost(
+            outpost_id=outpost_id,
+            facility_id=payload.facility_id,
+            contributing_campaign_id=str(campaign_id),
+        )
+    except InsufficientOutpostResources as e:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e)) from e
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
     await repo.save(aggregate)
 
     outpost = aggregate.state.outposts.get(outpost_id, {})

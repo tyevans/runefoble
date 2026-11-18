@@ -1,7 +1,7 @@
 """Event-sourced aggregate for West Marches shared frontier and communal stronghold.
 
 Part of TASK-0135 / TASK-0205 / ADR-0003 / ADR-0007 / ADR-0011.
-Governed by Hard Invariant 2 (eventsource-py) and Hard Invariant 6 (< 150 lines).
+Governed by Hard Invariant 2 (eventsource-py) and Hard Invariant 6 (< 500 lines).
 """
 
 from __future__ import annotations
@@ -28,6 +28,12 @@ from campaign_lore.west_marches_handlers import (
     build_default_outpost,
     build_discovery_entry,
     build_notice_entry,
+)
+from campaign_lore.west_marches_prices import (
+    MAX_FACILITY_TIER,
+    OUTPOST_FACILITY_PRICES,
+    InsufficientOutpostResources,
+    stored_shortfalls,
 )
 
 
@@ -103,7 +109,14 @@ class WestMarchesAtlasAggregate(DeclarativeAggregate[WestMarchesState]):
     def upgrade_outpost(
         self, outpost_id: str, facility_id: str, contributing_campaign_id: str
     ) -> int:
-        """Upgrade an outpost facility. No client-set cost is accepted (TASK-0778)."""
+        """Upgrade an outpost facility. The price table sets the cost, spent from the store.
+
+        Raises InsufficientOutpostResources (409) before any event is created.
+        """
+        if facility_id not in OUTPOST_FACILITY_PRICES:
+            raise ValueError(
+                f"Unknown facility '{facility_id}'. Valid: {list(OUTPOST_FACILITY_PRICES)}"
+            )
         cid = str(contributing_campaign_id)
         oid = (
             outpost_id
@@ -112,7 +125,17 @@ class WestMarchesAtlasAggregate(DeclarativeAggregate[WestMarchesState]):
         )
         if not oid:
             oid = build_default_outpost(cid)["outpost_id"]
-        tier = self._state.outposts[oid]["facilities"].get(facility_id, 0) + 1
+        outpost = self._state.outposts[oid]
+        tier = outpost["facilities"].get(facility_id, 0) + 1
+        if tier > MAX_FACILITY_TIER:
+            raise ValueError(f"Facility '{facility_id}' has already reached maximum tier 3")
+        price = OUTPOST_FACILITY_PRICES[facility_id][tier]
+        spent_gold, spent_mats = price["cost_gold"], dict(price["cost_materials"])
+        problems = stored_shortfalls(outpost["stored_resources"], spent_gold, spent_mats)
+        if problems:
+            raise InsufficientOutpostResources(
+                "Insufficient outpost resources: " + "; ".join(problems)
+            )
         wid = _to_uuid(self._state.shared_world_id) or uuid4()
         self.create_event(
             SharedStrongholdUpgraded,
@@ -121,8 +144,8 @@ class WestMarchesAtlasAggregate(DeclarativeAggregate[WestMarchesState]):
             facility_id=facility_id,
             new_tier=tier,
             contributing_campaign_id=_to_uuid(cid) or cid,
-            gold_spent=0,
-            materials_spent={},
+            gold_spent=spent_gold,
+            materials_spent=spent_mats,
         )
         return tier
 

@@ -191,6 +191,7 @@ add the `runefoble.` prefix when the identifier lacks it.
 | `runefoble.events.game_session.npc_worker_relieved` | `NPCWorkerRelieved` | `runefoble_events.settlement_workers` |
 | `runefoble.events.game_session.settlement_chartered` | `SettlementCharteredEvent` | `runefoble_events.settlements` |
 | `runefoble.events.game_session.settlement_founded` | `SettlementFoundedEvent` | `runefoble_events.settlements` |
+| `runefoble.events.game_session.settlement_resources_deposited` | `SettlementResourcesDepositedEvent` | `runefoble_events.settlements` |
 | `runefoble.events.game_session.settlement_rest_boon_claimed` | `SettlementRestBoonClaimedEvent` | `runefoble_events.settlements` |
 | `runefoble.events.game_session.settlement_tier_upgraded` | `SettlementTierUpgradedEvent` | `runefoble_events.settlements` |
 | `runefoble.events.game_session.settlement_upgraded` | `SettlementUpgradedEvent` | `runefoble_events.settlements` |

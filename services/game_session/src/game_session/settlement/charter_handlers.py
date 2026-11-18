@@ -9,6 +9,12 @@ from typing import TYPE_CHECKING, Any
 from uuid import UUID, uuid4
 
 from eventsource.domain.decorators import handles
+from game_session.settlement.facility_prices import (
+    MAX_FACILITY_TIER,
+    SETTLEMENT_FACILITY_PRICES,
+    InsufficientSettlementResources,
+    treasury_shortfalls,
+)
 from game_session.settlement.models import (
     DEFAULT_FACILITIES,
     FACILITY_REST_BOONS,
@@ -63,7 +69,8 @@ class CharterHandlersMixin:
         if (cid := str(ev.contributing_campaign_id)) and cid not in s.contributing_campaigns:
             s.contributing_campaigns.append(cid)
         for mat, qty in ev.materials_spent.items():
-            s.materials_treasury[mat] = s.materials_treasury.get(mat, 0) + qty
+            s.materials_treasury[mat] = s.materials_treasury.get(mat, 0) - qty
+        s.gold_treasury -= ev.gold_spent
         s.gold_invested += ev.gold_spent
         if ev.facility_id == "fortifications":
             s.defense_rating = max(s.defense_rating, ev.defense_rating)
@@ -99,15 +106,34 @@ class CharterHandlersMixin:
         contributing_campaign_id: str = "",
         **kw: Any,
     ) -> int:
-        """Upgrade haven facilities. No client-set cost is accepted (TASK-0778)."""
+        """Upgrade a haven facility. The price table sets the cost, spent from the treasury.
+
+        Raises InsufficientSettlementResources (409) before any event is created.
+        """
+        if facility_id not in SETTLEMENT_FACILITY_PRICES:
+            raise ValueError(
+                f"Unknown facility '{facility_id}'. "
+                f"Valid: {list(SETTLEMENT_FACILITY_PRICES.keys())}"
+            )
         next_tier = self._state.facilities.get(facility_id, 0) + 1
+        if next_tier > MAX_FACILITY_TIER:
+            raise ValueError(f"Facility '{facility_id}' has already reached maximum tier 3")
+        price = SETTLEMENT_FACILITY_PRICES[facility_id][next_tier]
+        spent_gold, spent_mats = price["cost_gold"], dict(price["cost_materials"])
+        problems = treasury_shortfalls(
+            self._state.gold_treasury, self._state.materials_treasury, spent_gold, spent_mats
+        )
+        if problems:
+            raise InsufficientSettlementResources(
+                "Insufficient haven resources: " + "; ".join(problems)
+            )
         tier_name = FACILITY_TIER_NAMES.get(facility_id, {}).get(next_tier, f"Tier {next_tier}")
         new_def = self._state.defense_rating + (5 if facility_id == "fortifications" else 0)
         sid = str(self._state.settlement_id or self.aggregate_id)
         p = {"shared_world_id": self._state.shared_world_id, "facility_id": facility_id}
-        p |= {"new_tier": next_tier, "tier_name": tier_name, "gold_spent": 0}
+        p |= {"new_tier": next_tier, "tier_name": tier_name, "gold_spent": spent_gold}
         p |= {"contributing_campaign_id": str(contributing_campaign_id), "defense_rating": new_def}
-        p |= {"materials_spent": {}, "metadata": kw.get("metadata") or {}}
+        p |= {"materials_spent": spent_mats, "metadata": kw.get("metadata") or {}}
         self.create_event(
             SettlementUpgradedEvent, aggregate_id=_to_uuid(sid), settlement_id=sid, **p
         )

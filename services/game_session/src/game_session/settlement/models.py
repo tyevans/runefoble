@@ -156,6 +156,7 @@ class SettlementState(BaseModel):
     contributing_campaigns: list[str] = Field(default_factory=list)
     active_boons: dict[str, str] = Field(default_factory=dict)
     materials_treasury: dict[str, int] = Field(default_factory=dict)
+    gold_treasury: int = 0
     gold_invested: int = 0
     level: int = 1
     settlement_type: str = "haven"

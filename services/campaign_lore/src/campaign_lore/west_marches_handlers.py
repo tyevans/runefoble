@@ -108,8 +108,10 @@ def apply_outpost_upgraded(outposts: dict[str, dict[str, Any]], event: Any) -> N
     cid = str(event.contributing_campaign_id)
     if cid and cid not in out["contributing_campaigns"]:
         out["contributing_campaigns"].append(cid)
+    store = out["stored_resources"]
+    store["gold"] = store.get("gold", 0) - event.gold_spent
     for m, q in event.materials_spent.items():
-        out["stored_resources"][m] = out["stored_resources"].get(m, 0) + q
+        store[m] = store.get(m, 0) - q
     _enrich_outpost(out)
 
 
