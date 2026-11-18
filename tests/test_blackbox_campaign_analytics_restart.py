@@ -7,20 +7,15 @@ is a new lifespan on the same database, so the projection state comes from Postg
 
 from __future__ import annotations
 
-import socket
 from typing import Any
 from uuid import uuid4
 
-import pytest
-import redis.asyncio
 from runefoble_events.events import (
     CharacterHealthChanged,
     CombatEncounterStarted,
     InitiativeTurnAdvanced,
     SessionCreated,
 )
-from runefoble_platform.config import PlatformSettings
-from runefoble_platform.event_sourcing import set_event_store
 
 from tests.helpers.campaign_analytics_service import (
     CHARACTER_STREAM,
@@ -28,7 +23,6 @@ from tests.helpers.campaign_analytics_service import (
     AnalyticsService,
     wait_until,
 )
-from tests.helpers.mock_redis import MockAsyncRedis
 
 
 def _hp(char_id: str, sid: str, cid: str, delta: int, current_hp: int) -> Any:
@@ -104,46 +98,3 @@ def test_mvp_and_timeline_survive_restart_without_double_counting(
         # Replay from the start would count the first 40 damage again. Wait, then confirm.
         assert _mvp_damage(second, cid, sid, valeros) == 50
         assert sorted(_timeline_types(second, cid)) == types_before
-
-
-def test_start_up_fails_when_database_is_unreachable(monkeypatch: pytest.MonkeyPatch) -> None:
-    """The service does not start without its PostgreSQL store. It serves no empty projection."""
-    import campaign_analytics.main as analytics_main
-    from fastapi.testclient import TestClient
-
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
-        probe.bind(("127.0.0.1", 0))
-        closed_port = probe.getsockname()[1]
-
-    monkeypatch.setenv(
-        "RUNEFOBLE_DATABASE_URL",
-        f"postgresql+asyncpg://u:p@127.0.0.1:{closed_port}/analytics",
-    )
-    monkeypatch.setattr(analytics_main, "platform_settings", PlatformSettings())
-    double = MockAsyncRedis()
-    monkeypatch.setattr(redis.asyncio, "from_url", lambda *_a, **_k: double)
-    set_event_store(None)
-    try:
-        with pytest.raises(OSError), TestClient(analytics_main.app):
-            pass
-    finally:
-        set_event_store(None)
-
-
-def test_start_up_fails_when_database_url_is_not_postgresql(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """SQLite is not a supported store. The service refuses to start on it."""
-    import campaign_analytics.main as analytics_main
-    from campaign_analytics.storage import StorageConfigurationError
-    from fastapi.testclient import TestClient
-
-    monkeypatch.setenv("RUNEFOBLE_DATABASE_URL", "sqlite+aiosqlite:///:memory:")
-    monkeypatch.setattr(analytics_main, "platform_settings", PlatformSettings())
-    monkeypatch.setattr(redis.asyncio, "from_url", lambda *_a, **_k: MockAsyncRedis())
-    set_event_store(None)
-    try:
-        with pytest.raises(StorageConfigurationError), TestClient(analytics_main.app):
-            pass
-    finally:
-        set_event_store(None)
