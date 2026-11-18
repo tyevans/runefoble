@@ -131,10 +131,6 @@ class AddInventoryItemRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
 
-class RemoveInventoryItemRequest(BaseModel):
-    quantity: int = 1
-
-
 class ApplyConditionRequest(BaseModel):
     condition: str
     duration_rounds: int | None = Field(default=None, alias="durationRounds")
@@ -171,5 +167,4 @@ __all__ = [
     "EquipItemRequest",
     "HealthChangeRequest",
     "PrepareSpellRequest",
-    "RemoveInventoryItemRequest",
 ]

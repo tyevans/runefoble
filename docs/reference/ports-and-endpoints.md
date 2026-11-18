@@ -322,6 +322,15 @@ Campaign Lore routes require a verified bearer token, except `/health`, `/health
 | `gateway-api` | POST | `/api/v1/characters` | Proxies to `character_sheet`, which writes the owner tuple. Returns 201. Returns 422 for `level`, `currentHp`, `portraitUrl`, `isAiStandIn` or `id` values the owner cannot store |
 | `gateway-api` | GET | `/api/v1/characters/{character_id}` | Proxies to `character_sheet` (requires `view`, checked by the owner) |
 | `gateway-api` | PATCH | `/api/v1/characters/{character_id}/campaign` | Proxies to `character_sheet` (requires `edit`, checked and written by the owner) |
+| `gateway-api` | POST | `/api/v1/characters/{character_id}/health` | Proxies to `character_sheet`: changes HP (requires `edit`, checked by the gateway and the owner). Owner `4xx` answers pass through unchanged. An unreachable owner returns `503` |
+| `gateway-api` | POST | `/api/v1/characters/{character_id}/equipment` | Proxies to `character_sheet`: equips an item into a slot (requires `edit`) |
+| `gateway-api` | DELETE | `/api/v1/characters/{character_id}/equipment/{slot}` | Proxies to `character_sheet`: clears an equipment slot (requires `edit`) |
+| `gateway-api` | POST | `/api/v1/characters/{character_id}/inventory` | Proxies to `character_sheet`: adds an inventory item (requires `edit`) |
+| `gateway-api` | DELETE | `/api/v1/characters/{character_id}/inventory/{item_id}` | Proxies to `character_sheet`: removes or decrements an item, with optional `quantity` query (requires `edit`) |
+| `gateway-api` | POST | `/api/v1/characters/{character_id}/conditions` | Proxies to `character_sheet`: applies a tactical condition with optional `durationRounds` (requires `edit`) |
+| `gateway-api` | DELETE | `/api/v1/characters/{character_id}/conditions/{condition}` | Proxies to `character_sheet`: clears a tactical condition (requires `edit`) |
+| `gateway-api` | POST | `/api/v1/characters/{character_id}/spells/cast` | Proxies to `character_sheet`: casts a spell and deducts the slot tier (requires `edit`) |
+| `gateway-api` | POST | `/api/v1/characters/{character_id}/spells/prepare` | Proxies to `character_sheet`: prepares or unprepares a spell (requires `edit`) |
 | `gateway-api` | PUT | `/api/v1/characters/{character_id}/guardrails` | Configures tactical guardrail constraints for character stand-in AI (requires `edit`) |
 | `gateway-api` | GET | `/api/v1/characters/{character_id}/guardrails` | Retrieves active tactical guardrails for character stand-in AI (requires `view`) |
 | `gateway-api` | GET | `/api/v1/auth/sync/health` | Reports Zanzibar synchronization service health and SpiceDB connectivity |
