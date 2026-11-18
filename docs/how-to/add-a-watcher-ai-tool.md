@@ -14,16 +14,16 @@ Locate the relevant domain module in `gateway/mcp/src/gateway_mcp/tools/` (e.g.,
 A tool that owns no data must not return fixed data. It calls the owning service over HTTP:
 
 ```python
-from gateway_mcp.clients import ServiceClient
+from gateway_mcp.owning_services import OwningServices
 
 
 async def inspect_tactical_board(session_id: str) -> dict:
     """Read tokens and grid dimensions for the session from board_state."""
-    board = await ServiceClient().get_board(session_id)
+    board = await OwningServices().get_board(session_id)
     return {"session_id": session_id, "tokens": list(board["tokens"].values())}
 ```
 
-Add a typed method to `gateway/mcp/src/gateway_mcp/clients/services.py` for each new upstream route. Use `self._request(...)`. It maps 5xx and connection failures to `ServiceUnavailableError`, and 4xx responses to `ServiceRejectedError`. Do not catch these errors in the tool. FastMCP reports them as MCP tool error results.
+Add a typed method to `OwningServices` in `gateway/mcp/src/gateway_mcp/owning_services.py` for each new upstream route. Build the route with `path(...)` from `runefoble_platform.service_client`, so that every agent-supplied segment stays inside one segment. Call `self._json(service, method, route, body)`. It sends through the shared service client. It maps 5xx and connection failures to `ServiceUnavailableError`, and 4xx responses to `ServiceRejectedError`. Do not catch these errors in the tool. FastMCP reports them as MCP tool error results.
 
 Add the base URL to `gateway/mcp/src/gateway_mcp/settings.py` and to the Helm `services.gatewayMcp` values when a new upstream service is added.
 

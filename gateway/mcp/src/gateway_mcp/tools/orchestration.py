@@ -7,8 +7,8 @@ the_watcher public routes and return its answer unchanged.
 import time
 from typing import TYPE_CHECKING, Any, Literal
 
-from gateway_mcp.clients import ServiceClient, ServiceError
-from gateway_mcp.clients.caller import caller_bearer
+from gateway_mcp.caller import caller_bearer
+from gateway_mcp.owning_services import OwningServices, ServiceError
 from mcp.server.fastmcp import Context
 
 if TYPE_CHECKING:
@@ -36,7 +36,7 @@ async def narrate_with_the_watcher(
         "scene_environment": scene_environment,
         "tone": tone,
     }
-    return await ServiceClient(bearer=caller_bearer(ctx)).narrate(request)
+    return await OwningServices(bearer=caller_bearer(ctx)).narrate(request)
 
 
 async def execute_agent_action_plan(
@@ -50,7 +50,7 @@ async def execute_agent_action_plan(
     Each step becomes a pending action. The DM can veto or change it before it takes
     effect. Planning stops at the first step that fails, and later steps do not run.
     """
-    client = ServiceClient(bearer=caller_bearer(ctx))
+    client = OwningServices(bearer=caller_bearer(ctx))
     step_results: list[dict[str, Any]] = []
     total_duration_ms: float = 0.0
 
