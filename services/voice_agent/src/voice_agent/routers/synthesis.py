@@ -8,7 +8,8 @@ import logging
 from typing import Any
 
 from fastapi import APIRouter, Depends
-from voice_agent.auth import get_voice_principal
+from voice_agent.auth import VoicePrincipal, get_voice_principal
+from voice_agent.authz import require_speaker
 from voice_agent.dependencies import (
     _dispatch_voice_audio_conditioned,
     dsp_pipeline,
@@ -40,8 +41,9 @@ async def list_personas():
 
 @router.post("/api/v1/voice/synthesize", response_model=TTSResponse)
 @router.post("/api/v1/voice/tts", response_model=TTSResponse)
-async def synthesize_voice(req: TTSRequest):
+async def synthesize_voice(req: TTSRequest, principal: VoicePrincipal):
     """Synthesize persona speech, apply DSP filters to that audio, and return the audio it describes."""
+    await require_speaker(req.session_id, req.speaker_id, principal.user_id)
     filters = list(req.filters)
     if req.apply_drunk_filter and "drunk" not in filters:
         filters.append("drunk")

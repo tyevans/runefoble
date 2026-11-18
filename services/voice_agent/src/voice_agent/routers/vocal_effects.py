@@ -7,17 +7,12 @@ import base64
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from voice_agent.auth import VoicePrincipal, get_voice_principal
+from voice_agent.authz import require_action
 from voice_agent.coordinator import get_voice_room_coordinator
 from voice_agent.dsp.pipeline import StreamPipelineFilter
 from voice_agent.dsp.presets import NPCVoicePreset, get_preset, list_presets
 
 router = APIRouter(dependencies=[Depends(get_voice_principal)], tags=["Vocal Modulator"])
-AUTH_SPECS = (
-    ("game_session", "control"),
-    ("session", "control"),
-    ("game_session", "participate"),
-    ("session", "participate"),
-)
 
 
 class ModulateVoiceRequest(BaseModel):
@@ -48,15 +43,6 @@ class ModulateVoiceResponse(BaseModel):
     status: str = "success"
 
 
-async def _check_session_auth(coord, session_id: str, user_id: str) -> None:
-    for rtype, perm in AUTH_SPECS:
-        if await coord.spicedb.check_permission(rtype, session_id, perm, "user", user_id):
-            return
-    raise HTTPException(
-        status_code=403, detail=f"Forbidden: '{user_id}' lacks permission for '{session_id}'"
-    )
-
-
 @router.get("/voice/presets", response_model=list[NPCVoicePreset])
 @router.get("/api/v1/voice/presets", response_model=list[NPCVoicePreset])
 async def get_presets():
@@ -73,7 +59,7 @@ async def modulate_voice(
     """Set active preset or fine-tune pitch/formant parameters on an active stream session."""
     user_id = principal.user_id
     coord = get_voice_room_coordinator()
-    await _check_session_auth(coord, req.session_id, user_id)
+    await require_action("session.participate", req.session_id, user_id)
 
     preset = get_preset(req.preset_name) if req.preset_name else None
     if req.preset_name and preset is None:

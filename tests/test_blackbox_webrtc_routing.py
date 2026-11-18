@@ -20,6 +20,7 @@ from runefoble_platform.redis_bus import RedisStreamsEventBus
 from voice_agent.room import VoiceRoomCoordinator, set_voice_room_coordinator
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.voice_grants import grant_voice_session
 from tests.helpers.voice_identity import voice_auth_headers
 from tests.helpers.ws_identity import ws_subprotocols
 
@@ -34,7 +35,7 @@ def reset_voice_signaling_environment():
     bus = RedisStreamsEventBus(client=mock_redis)
     set_event_bus(bus)
     va_main.set_event_bus(bus)
-    coord = VoiceRoomCoordinator(event_bus=bus, spicedb_client=mock_spicedb)
+    coord = VoiceRoomCoordinator(event_bus=bus)
     set_voice_room_coordinator(coord)
     signaling_manager.active_rooms.clear()
     signaling_manager.peer_sessions.clear()
@@ -174,6 +175,7 @@ def test_dm_moderation_kick_authorized_succeeds_and_disconnects_peer():
     session_id, dm_user, bad_user = "sess-dm-kick-success", "the_watcher_dm", "troll_user"
     for r, u in (("dungeon_master", dm_user), ("player", bad_user)):
         asyncio.run(spicedb.write_relationship("campaign", session_id, r, "user", u))
+    asyncio.run(grant_voice_session(session_id, dm=dm_user, players=[bad_user]))
 
     client = TestClient(app)
     with client.websocket_connect(

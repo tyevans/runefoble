@@ -12,13 +12,13 @@ from collections.abc import Callable
 
 import pytest
 from fastapi.testclient import TestClient
-from runefoble_auth.spicedb import MockSpiceDBClient
+from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
 from starlette.websockets import WebSocketDisconnect
-from voice_agent.coordinator import get_voice_room_coordinator
 from voice_agent.main import app as voice_app
 
 from tests.helpers.audio_synth import generate_synthetic_audio
+from tests.helpers.voice_grants import grant_voice_session
 from tests.helpers.voice_identity import VOICE_SIGNING_ISSUER, voice_auth_headers
 
 pytestmark = pytest.mark.usefixtures("trusted_voice_issuer")
@@ -66,12 +66,9 @@ def client() -> TestClient:
 
 
 @pytest.fixture
-def spicedb() -> MockSpiceDBClient:
-    mock = MockSpiceDBClient()
-    coord = get_voice_room_coordinator()
-    coord.set_spicedb(mock)
-    yield mock
-    coord.set_spicedb(MockSpiceDBClient())
+def spicedb():
+    """The per-test strict SpiceDB mock that every voice route reads through the factory."""
+    return get_spicedb_client()
 
 
 def _send(client: TestClient, method: str, path: str, body: Callable[[], dict] | None, headers):
@@ -154,9 +151,9 @@ def test_token_subject_drives_the_modulate_permission(client, spicedb):
     assert res.status_code == 200, res.text
 
 
-def _grant_control(spicedb: MockSpiceDBClient, user_id: str) -> None:
-    """Grant DM control on the session. voice_agent has no grant frontdoor, so the mock is seeded."""
-    asyncio.run(spicedb.write_relationship("session", SESSION_ID, "control", "user", user_id))
+def _grant_control(spicedb, user_id: str) -> None:
+    """Make `user_id` the DM of the session. voice_agent has no grant frontdoor, so tuples are written."""
+    asyncio.run(grant_voice_session(SESSION_ID, dm=user_id))
 
 
 @pytest.mark.parametrize(
@@ -217,6 +214,7 @@ def test_websocket_refuses_token_in_query_string():
 
 
 def test_duplex_websocket_accepts_valid_bearer_subprotocol():
+    asyncio.run(grant_voice_session(SESSION_ID, dm="user-dm", players=["spk-1"]))
     client = TestClient(voice_app)
     token = VOICE_SIGNING_ISSUER.mint("user-dm")
 

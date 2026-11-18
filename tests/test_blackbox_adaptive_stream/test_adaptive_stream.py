@@ -13,6 +13,7 @@ Frontdoor Entrypoints:
 
 from __future__ import annotations
 
+import asyncio
 import json
 import time
 from uuid import uuid4
@@ -28,6 +29,7 @@ from voice_agent.main import app, set_event_bus
 from voice_agent.routers.stream_diagnostics import reset_diagnostics
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.voice_grants import grant_voice_session
 from tests.helpers.voice_identity import voice_auth_headers
 
 pytestmark = pytest.mark.usefixtures("trusted_voice_issuer")
@@ -53,6 +55,7 @@ def client() -> TestClient:
 def test_initial_stream_quality_query(client: TestClient):
     """Query baseline stream quality before any RTCP reports."""
     session_id = f"sess-{uuid4().hex[:6]}"
+    asyncio.run(grant_voice_session(session_id, players=[]))
     peer_id = "peer_marcus"
 
     res = client.get(f"/voice/streams/{session_id}/quality?peer_id={peer_id}")
@@ -70,6 +73,7 @@ def test_initial_stream_quality_query(client: TestClient):
 def test_packet_loss_steps_down_bitrate_under_200ms(client: TestClient, clean_environment: dict):
     """Simulated packet loss (>5%) steps bitrate down to 12 kbps within 200ms."""
     session_id = f"sess-{uuid4().hex[:6]}"
+    asyncio.run(grant_voice_session(session_id, players=[]))
     peer_id = "peer_mobile_marcus"
 
     t0 = time.perf_counter()
@@ -124,6 +128,7 @@ def test_packet_loss_steps_down_bitrate_under_200ms(client: TestClient, clean_en
 def test_severe_loss_and_delay_steps_down_to_ultra_low(client: TestClient):
     """Severe packet loss (18%) steps bitrate down to 8 kbps ultra_low mode."""
     session_id = f"sess-{uuid4().hex[:6]}"
+    asyncio.run(grant_voice_session(session_id, players=[]))
     peer_id = "peer_remote"
 
     res = client.post(
@@ -147,6 +152,7 @@ def test_severe_loss_and_delay_steps_down_to_ultra_low(client: TestClient):
 def test_network_recovery_steps_up_bitrate(client: TestClient):
     """Network stabilization (<2% loss, low RTT) recovers bitrate back to standard."""
     session_id = f"sess-{uuid4().hex[:6]}"
+    asyncio.run(grant_voice_session(session_id, players=[]))
     peer_id = "peer_recovering"
 
     # Step down first
@@ -171,6 +177,7 @@ def test_network_recovery_steps_up_bitrate(client: TestClient):
 def test_multi_peer_stream_isolation(client: TestClient):
     """Network degradation on mobile participant does not affect other room peers."""
     session_id = f"sess-{uuid4().hex[:6]}"
+    asyncio.run(grant_voice_session(session_id, players=[]))
     peer_mobile, peer_desktop = "peer_mobile", "peer_desktop"
 
     # Mobile participant experiences packet loss

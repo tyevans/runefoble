@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from voice_agent.auth import VoicePrincipal, get_voice_principal
+from voice_agent.authz import require_action
 from voice_agent.room import get_voice_room_coordinator
 
 logger = logging.getLogger("runefoble.voice_agent.room_routes")
@@ -37,33 +38,7 @@ async def kick_voice_peer(
     """DM moderation endpoint: kick peer from active voice room (Zanzibar enforced)."""
     user_id = principal.user_id
     coord = get_voice_room_coordinator()
-
-    # Enforce SpiceDB Zanzibar authorization (Hard Invariant 1)
-    spicedb = coord.spicedb
-    is_allowed = (
-        await spicedb.check_permission("game_session", session_id, "control", "user", user_id)
-        or await spicedb.check_permission("session", session_id, "control", "user", user_id)
-        or await spicedb.check_permission("campaign", session_id, "run_session", "user", user_id)
-        or await spicedb.check_permission("campaign", session_id, "manage", "user", user_id)
-    )
-
-    if not is_allowed:
-        logger.warning(
-            "DM kick rejected: subject '%s' lacks DM control permissions on session '%s'",
-            user_id,
-            session_id,
-        )
-        raise HTTPException(
-            status_code=403,
-            detail={
-                "error": "permission_denied",
-                "message": f"Subject 'user:{user_id}' lacks DM moderation permissions on session '{session_id}'.",
-                "required_permission": "control",
-                "resource": f"session:{session_id}",
-                "subject": f"user:{user_id}",
-            },
-        )
-
+    await require_action("session.control", session_id, user_id)
     return await coord.kick_peer(
         session_id=session_id,
         peer_id=req.peer_id,

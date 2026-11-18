@@ -14,7 +14,8 @@ from typing import Literal
 import httpx
 from fastapi import APIRouter, Depends, HTTPException
 from runefoble_events.events import PlayerSpokeEvent
-from voice_agent.auth import get_voice_principal
+from voice_agent.auth import VoicePrincipal, get_voice_principal
+from voice_agent.authz import require_speaker
 from voice_agent.dependencies import (
     STREAM_SESSION,
     WATCHER_URL,
@@ -59,12 +60,13 @@ async def _transcript_from_request(req: TranscribeRequest) -> tuple[str, Transcr
 
 
 @router.post("/api/v1/voice/transcribe", response_model=TranscribeResponse)
-async def transcribe_speech(req: TranscribeRequest):
+async def transcribe_speech(req: TranscribeRequest, principal: VoicePrincipal):
     """Transcribe player speech, emit PlayerSpokeEvent, and forward to The Watcher.
 
     Audio goes through the STT port. Typed text is used as given. Audio that yields no words
     publishes nothing and forwards nothing.
     """
+    await require_speaker(req.session_id, req.speaker_id, principal.user_id)
     transcript, source = await _transcript_from_request(req)
     if not transcript:
         return TranscribeResponse(
