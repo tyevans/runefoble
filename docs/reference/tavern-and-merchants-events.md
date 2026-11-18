@@ -94,6 +94,24 @@ All events subclass `BaseRunefobleEvent` and are CloudEvents 1.0-compliant.
 - **Aggregate Type**: `Negotiation`
 - **Payload Fields**: `negotiation_id`, `character_id`, `item_id`, `final_price`, `status`, `currency_deducted`, `closing_bark`.
 
+
+### Multiplayer Table Events (`runefoble_events.tavern_tables`)
+
+Table state is event-sourced on the `TavernGame` aggregate, where `game_id` is the table id. Each event carries the outcome that the command decided. Replaying the events gives the table state. All table events publish to `runefoble.events.tavern`.
+
+| Event | Payload Fields |
+|---|---|
+| `TableOpened` | `game_id`, `establishment_id`, `game_type` |
+| `TablePlayerSeated` | `game_id`, `player_id`, `name`, `chips`, `score`, `dice` |
+| `TableBetPlaced` | `game_id`, `player_id`, `amount`, `bet_type`, `target` |
+| `DartThrown` | `game_id`, `player_id`, `hit`, `score_remaining`, `is_bust`, `is_won`, `next_turn_index`, `payout` |
+| `TableBidPlaced` | `game_id`, `player_id`, `quantity`, `face`, `next_turn_index` |
+| `TableChallengeResolved` | `game_id`, `challenger_id`, `bidder_id`, `loser_id`, `winner_id`, `loser_dice_after`, `next_hands`, `champion_id`, `payout` |
+| `RouletteSpun` | `game_id`, `winning_number`, `color`, `payouts` |
+| `CrapsRolled` | `game_id`, `dice`, `point`, `payouts`, `remaining_bets`, `narrative` |
+
+A table ends with `MinigameEnded` when a darts winner or a Liar's Dice champion is set.
+
 ---
 
 ## Public REST Endpoints
@@ -103,6 +121,8 @@ All events subclass `BaseRunefobleEvent` and are CloudEvents 1.0-compliant.
 | `/api/v1/sessions/{id}/tavern/games` | `POST` | `game_session` / `gateway` | `campaign:play` | Initiates minigame with secret hands and gold pot. |
 | `/api/v1/sessions/{id}/tavern/games/{gid}/turn` | `POST` | `game_session` | `session:participate` | Submits bid, calls bluff, or rolls drinking save. |
 | `/api/v1/sessions/{id}/tavern/games/{gid}` | `GET` | `game_session` | `session:participate` | Retrieves live minigame state machine status. |
+| `/api/v1/tavern/tables` | `POST` | `game_session` | `establishment:play` (or `view`, `manage`) | Opens a minigame table (`table_id`, `establishment_id`, `game_type`). Returns `409` when the id is already open. Sockets never open a table. |
+| `/api/v1/tavern/tables/{table_id}` | `GET` | `game_session` | `establishment:play` (or `view`, `manage`) | Returns the seats, chips, pot, bets, and current game state of an open table. Returns `404` when the table is not open. |
 | `/api/v1/sessions/{id}/merchants/{mid}/haggle` | `POST` | `game_session` / `gateway` | `campaign:play` | Evaluates charisma, mood, and computes counter-quote. |
 | `/api/v1/merchants/{mid}` | `GET` | `game_session` | — | Queries merchant temperament and negotiation record. |
 | `/api/v1/establishments/{id}/haggle` | `POST` | `game_session` | `establishment:view` | Starts interactive bartering encounter within establishment. |
