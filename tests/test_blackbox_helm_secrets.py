@@ -75,6 +75,7 @@ def test_rendered_secret_holds_every_chart_credential():
         "spicedb-preshared-key",
         "postgres-password",
         "grafana-admin-password",
+        "service-credential",
     }
 
 

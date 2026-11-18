@@ -46,3 +46,11 @@ __all__ = [
     "get_voice_verifier",
     "set_voice_verifier",
 ]
+
+
+def caller_headers(authorization: str | None) -> dict[str, str]:
+    """Return the headers that forward the speaker's own bearer to a downstream service.
+
+    The downstream service verifies the token itself. No identity is set here.
+    """
+    return {"Authorization": authorization} if authorization else {}

@@ -26,7 +26,7 @@ SRC_DIR = FRONTEND_DIR / "src"
 
 
 @pytest.fixture
-def client(game_session_upstream) -> Iterator[TestClient]:
+def client(game_session_upstream, character_sheet_upstream) -> Iterator[TestClient]:
     with TestClient(gateway_app) as gateway_client:
         yield gateway_client
 

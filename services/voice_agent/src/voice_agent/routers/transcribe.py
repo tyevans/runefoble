@@ -9,12 +9,12 @@ from __future__ import annotations
 import base64
 import binascii
 import logging
-from typing import Literal
+from typing import Annotated, Literal
 
 import httpx
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException
 from runefoble_events.events import PlayerSpokeEvent
-from voice_agent.auth import get_voice_principal
+from voice_agent.auth import caller_headers, get_voice_principal
 from voice_agent.dependencies import (
     STREAM_SESSION,
     WATCHER_URL,
@@ -59,7 +59,10 @@ async def _transcript_from_request(req: TranscribeRequest) -> tuple[str, Transcr
 
 
 @router.post("/api/v1/voice/transcribe", response_model=TranscribeResponse)
-async def transcribe_speech(req: TranscribeRequest):
+async def transcribe_speech(
+    req: TranscribeRequest,
+    authorization: Annotated[str | None, Header(alias="Authorization")] = None,
+):
     """Transcribe player speech, emit PlayerSpokeEvent, and forward to The Watcher.
 
     Audio goes through the STT port. Typed text is used as given. Audio that yields no words
@@ -103,6 +106,7 @@ async def transcribe_speech(req: TranscribeRequest):
         if watcher_client:
             resp = await watcher_client.post(
                 "/api/v1/watcher/transcribe-and-act",
+                headers=caller_headers(authorization),
                 json={
                     "speaker_id": req.speaker_id,
                     "speaker_name": req.speaker_name,
@@ -117,6 +121,7 @@ async def transcribe_speech(req: TranscribeRequest):
             async with httpx.AsyncClient(timeout=5.0) as client:
                 resp = await client.post(
                     f"{WATCHER_URL}/api/v1/watcher/transcribe-and-act",
+                    headers=caller_headers(authorization),
                     json={
                         "speaker_id": req.speaker_id,
                         "speaker_name": req.speaker_name,

@@ -187,8 +187,10 @@ add the `runefoble.` prefix when the identifier lacks it.
 | `runefoble.events.game_session.settlement_upgraded` | `SettlementUpgradedEvent` | `runefoble_events.settlements` |
 | `runefoble.events.recap.generated` | `AbsenteeRecapGenerated` | `runefoble_events.watcher_events.narrative` |
 | `runefoble.events.scene.atmosphere_set` | `SceneAtmosphereSet` | `runefoble_events.watcher_events.narrative` |
+| `runefoble.events.session.atmosphere_updated` | `AtmosphereUpdated` | `runefoble_events.session` |
 | `runefoble.events.session.camera_target_updated` | `CameraTargetUpdated` | `runefoble_events.session` |
 | `runefoble.events.session.character_control_transferred` | `CharacterControlTransferred` | `runefoble_events.session` |
+| `runefoble.events.session.dm_override_applied` | `DMOverrideApplied` | `runefoble_events.session` |
 | `runefoble.events.soundscape.cue_triggered` | `SoundscapeCueTriggered` | `runefoble_events.soundscape` |
 | `runefoble.events.soundscape.ducking_toggled` | `SoundscapeDuckingToggled` | `runefoble_events.soundscape` |
 | `runefoble.events.soundscape.leitmotif_configured` | `LeitmotifProfileConfigured` | `runefoble_events.soundscape` |

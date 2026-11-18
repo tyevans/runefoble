@@ -261,7 +261,9 @@ from inference_worker import api
 from runefoble_platform.service_credential import SERVICE_CREDENTIAL_HEADER
 
 headers = {SERVICE_CREDENTIAL_HEADER: os.environ["RUNEFOBLE_SERVICE_CREDENTIAL"]}
-async with AsyncClient(transport=ASGITransport(app=api.app), base_url="http://test", headers=headers) as ac:
+async with AsyncClient(
+    transport=ASGITransport(app=api.app), base_url="http://test", headers=headers
+) as ac:
     ...
 ```
 

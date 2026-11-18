@@ -25,9 +25,6 @@ from tests.helpers.ws_identity import SIGNING_ISSUER
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
-pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
-
-
 @pytest.fixture
 def mock_bus() -> MockAsyncRedis:
     bus_client = MockAsyncRedis()
@@ -46,7 +43,9 @@ def spicedb_client() -> MockSpiceDBClient:
 
 
 @pytest.fixture
-def client(mock_bus: MockAsyncRedis, spicedb_client: MockSpiceDBClient) -> TestClient:
+def client(
+    mock_bus: MockAsyncRedis, spicedb_client: MockSpiceDBClient, trusted_ws_issuer
+) -> TestClient:
     return TestClient(
         session_app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"}
     )

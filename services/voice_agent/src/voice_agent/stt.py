@@ -18,6 +18,7 @@ from runefoble_events.events import PlayerSpokeEvent, VoiceTranscriptionFailed
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.engine_ports import EngineUnavailableError
 from runefoble_platform.redis_bus import RedisStreamsEventBus
+from voice_agent.auth import caller_headers
 from voice_agent.speech_settings import VoiceAgentSettings, build_transcriber
 from voice_agent.transcriber import BaseTranscriber
 from voice_agent.vad import (
@@ -172,6 +173,7 @@ class StreamingAudioPipeline:
         is_whisper: bool = False,
         target_character_id: str | None = None,
         is_final: bool = False,
+        caller_authorization: str | None = None,
     ) -> ChunkProcessingResult:
         start_t = time.perf_counter()
         participant = self.get_or_create_participant(session_id, speaker_id, sample_rate)
@@ -242,10 +244,14 @@ class StreamingAudioPipeline:
                 "session_id": session_id,
                 "campaign_id": campaign_id or session_id,
             }
+            # The Watcher takes identity only from a verified bearer. The speaker's own token
+            # is forwarded on their behalf (ADR-0015 c).
+            watcher_headers = caller_headers(caller_authorization)
             if self._watcher_client:
                 resp = await self._watcher_client.post(
                     "/api/v1/watcher/transcribe-and-act",
                     json=watcher_payload,
+                    headers=watcher_headers,
                 )
                 if resp.status_code == 200:
                     watcher_intent = resp.json()
@@ -254,6 +260,7 @@ class StreamingAudioPipeline:
                     resp = await client.post(
                         f"{self._watcher_url}/api/v1/watcher/transcribe-and-act",
                         json=watcher_payload,
+                        headers=watcher_headers,
                     )
                     if resp.status_code == 200:
                         watcher_intent = resp.json()

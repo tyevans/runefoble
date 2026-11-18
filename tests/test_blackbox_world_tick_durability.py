@@ -39,6 +39,7 @@ from the_watcher.main import app
 from the_watcher.simulation_engine import FactionSimulationEngine
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.ws_identity import SIGNING_ISSUER
 
 WATCHER_STREAM = "runefoble.events.watcher"
 WORLD_TICK_TYPE = "runefoble.events.watcher.world_tick_executed"
@@ -76,7 +77,7 @@ def durable_environment():
 
 
 @pytest.mark.asyncio
-async def test_tick_count_registry_and_latest_bulletin_survive_restart():
+async def test_tick_count_registry_and_latest_bulletin_survive_restart(trusted_ws_issuer):
     """After a restart the tick resumes at 3, the registry keeps one faction, and no defaults return."""
     store = InMemoryEventStore()
     redis = MockAsyncRedis()
@@ -92,7 +93,7 @@ async def test_tick_count_registry_and_latest_bulletin_survive_restart():
         subject_type="user",
         subject_id=dm_user,
     )
-    headers = {"X-User-Id": dm_user}
+    headers = {"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_user)}"}
 
     created = client.post(
         f"/api/v1/campaigns/{camp_id}/factions",
@@ -147,7 +148,7 @@ async def test_tick_count_registry_and_latest_bulletin_survive_restart():
 
 
 @pytest.mark.asyncio
-async def test_each_world_tick_writes_one_stream_entry_in_order():
+async def test_each_world_tick_writes_one_stream_entry_in_order(trusted_ws_issuer):
     """Three ticks, spread across a restart, write three world_tick_executed entries in order."""
     store = InMemoryEventStore()
     redis = MockAsyncRedis()
@@ -163,7 +164,7 @@ async def test_each_world_tick_writes_one_stream_entry_in_order():
         subject_type="user",
         subject_id=dm_user,
     )
-    headers = {"X-User-Id": dm_user}
+    headers = {"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_user)}"}
 
     client.post(
         f"/api/v1/campaigns/{camp_id}/world-tick",
