@@ -11,6 +11,8 @@ from __future__ import annotations
 
 import argparse
 import contextlib
+import ctypes
+import functools
 import os
 import shutil
 import signal
@@ -35,6 +37,36 @@ RED = "\033[31m"
 MAGENTA = "\033[35m"
 BOLD = "\033[1m"
 RESET = "\033[0m"
+
+
+PR_SET_PDEATHSIG = 1
+_LIBC = ctypes.CDLL(None, use_errno=True) if sys.platform.startswith("linux") else None
+
+
+def _die_with_parent(libc: ctypes.CDLL, parent_pid: int) -> None:
+    """Forked-child hook: the kernel sends SIGTERM to this child when the dev server dies."""
+    if libc.prctl(PR_SET_PDEATHSIG, signal.SIGTERM) != 0:
+        raise OSError(ctypes.get_errno(), "prctl(PR_SET_PDEATHSIG) failed")
+    if os.getppid() != parent_pid:  # The dev server died before the signal was armed.
+        os.kill(os.getpid(), signal.SIGTERM)
+
+
+def spawn_child(
+    cmd: list[str], *, cwd: str | None = None, env: dict[str, str] | None = None
+) -> subprocess.Popen:
+    """Start a child in its own process group, with output piped to the orchestrator."""
+    preexec_fn = None
+    if _LIBC is not None:
+        preexec_fn = functools.partial(_die_with_parent, _LIBC, os.getpid())
+    return subprocess.Popen(
+        cmd,
+        cwd=cwd,
+        env=env,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        start_new_session=True,
+        preexec_fn=preexec_fn,
+    )
 
 
 def is_port_open(host: str, port: int, timeout: float = 0.5) -> bool:
@@ -72,12 +104,7 @@ def ensure_spicedb_available(
                     f"{CYAN}[dev-orchestrator]{RESET} Establishing SpiceDB port-forward (svc/spicedb:{port})...",
                     flush=True,
                 )
-                pf_proc = subprocess.Popen(
-                    ["kubectl", "port-forward", "svc/spicedb", f"{port}:{port}"],
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.STDOUT,
-                    start_new_session=True,
-                )
+                pf_proc = spawn_child(["kubectl", "port-forward", "svc/spicedb", f"{port}:{port}"])
                 start_time = time.monotonic()
                 while time.monotonic() - start_time < timeout:
                     if is_port_open(host, port):
@@ -132,11 +159,8 @@ def ensure_redis_available(host: str, port: int, timeout: float = 5.0) -> subpro
                 f"(svc/runefoble-redis:{port})...",
                 flush=True,
             )
-            pf_proc = subprocess.Popen(
-                ["kubectl", "port-forward", "svc/runefoble-redis", f"{port}:6379"],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                start_new_session=True,
+            pf_proc = spawn_child(
+                ["kubectl", "port-forward", "svc/runefoble-redis", f"{port}:6379"]
             )
             deadline = time.monotonic() + timeout
             while time.monotonic() < deadline and pf_proc.poll() is None:
@@ -224,34 +248,39 @@ def pipe_output(proc: subprocess.Popen, prefix: str, color: str) -> None:
 
 
 def terminate_processes(processes: list[subprocess.Popen]) -> None:
-    """Cleanly terminate child processes and their process groups."""
+    """Stop every child that is still running, and its process group. Safe to call more than once."""
+    live = [p for p in processes if p.poll() is None]
+    if not live:
+        return
     print(
         f"\n{YELLOW}[dev-orchestrator] Shutting down all development processes...{RESET}",
         flush=True,
     )
-    for p in processes:
-        if p.poll() is None:
-            try:
-                os.killpg(p.pid, signal.SIGTERM)
-            except (ProcessLookupError, OSError):
-                with contextlib.suppress(OSError):
-                    p.terminate()
+    for p in live:
+        _signal_group(p, signal.SIGTERM)
 
     # Give processes a graceful shutdown window
     deadline = time.monotonic() + 3.0
-    for p in processes:
+    for p in live:
         while time.monotonic() < deadline and p.poll() is None:
             time.sleep(0.1)
 
     # Force kill any lingering processes
-    for p in processes:
+    for p in live:
         if p.poll() is None:
-            try:
-                os.killpg(p.pid, signal.SIGKILL)
-            except (ProcessLookupError, OSError):
-                with contextlib.suppress(OSError):
-                    p.kill()
+            _signal_group(p, signal.SIGKILL)
     print(f"{GREEN}[dev-orchestrator] All processes cleanly stopped.{RESET}", flush=True)
+
+
+def _signal_group(proc: subprocess.Popen, signum: int) -> None:
+    """Send a signal to the child's process group. Fall back to the child alone."""
+    try:
+        os.killpg(proc.pid, signum)
+    except ProcessLookupError:
+        return  # The group has no members left.
+    except OSError:
+        with contextlib.suppress(OSError):
+            proc.send_signal(signum)
 
 
 def parse_args(args: Sequence[str] | None = None) -> argparse.Namespace:
@@ -312,12 +341,20 @@ def parse_args(args: Sequence[str] | None = None) -> argparse.Namespace:
 
 
 def run_orchestrator(args: argparse.Namespace) -> int:
-    """Main execution orchestrator."""
+    """Run the local environment. Every child stops on every exit path, including errors."""
     processes: list[subprocess.Popen] = []
+    try:
+        return supervise(args, processes)
+    finally:
+        terminate_processes(processes)
+
+
+def supervise(args: argparse.Namespace, processes: list[subprocess.Popen]) -> int:
+    """Start the children and monitor them. The caller stops them, so every return path is covered."""
     threads: list[threading.Thread] = []
 
     def sig_handler(signum: int, _frame: object) -> None:
-        terminate_processes(processes)
+        # SystemExit unwinds to run_orchestrator, which stops the children.
         sys.exit(0)
 
     signal.signal(signal.SIGINT, sig_handler)
@@ -342,8 +379,7 @@ def run_orchestrator(args: argparse.Namespace) -> int:
         redis_proc = ensure_redis_available(redis_host, redis_port)
     except RuntimeError as exc:
         print(f"{RED}[dev-orchestrator] {exc}{RESET}", flush=True)
-        terminate_processes(processes)
-        sys.exit(1)
+        return 1
     if redis_proc is not None:
         processes.append(redis_proc)
         t_redis = threading.Thread(
@@ -378,14 +414,7 @@ def run_orchestrator(args: argparse.Namespace) -> int:
         else [sys.executable, "gateway/api/src/gateway_api/main.py"]
     )
 
-    gateway_proc = subprocess.Popen(
-        gateway_cmd,
-        cwd=str(REPO_ROOT),
-        env=gateway_env,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        start_new_session=True,
-    )
+    gateway_proc = spawn_child(gateway_cmd, cwd=str(REPO_ROOT), env=gateway_env)
     processes.append(gateway_proc)
 
     t_gateway = threading.Thread(
@@ -401,13 +430,7 @@ def run_orchestrator(args: argparse.Namespace) -> int:
             if shutil.which("uv")
             else ["runefoble-inference-worker"]
         )
-        worker_proc = subprocess.Popen(
-            worker_cmd,
-            cwd=str(REPO_ROOT),
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            start_new_session=True,
-        )
+        worker_proc = spawn_child(worker_cmd, cwd=str(REPO_ROOT))
         processes.append(worker_proc)
         t_worker = threading.Thread(
             target=pipe_output, args=(worker_proc, "worker", MAGENTA), daemon=True
@@ -424,7 +447,6 @@ def run_orchestrator(args: argparse.Namespace) -> int:
     )
 
     if not healthy:
-        terminate_processes(processes)
         return 1
 
     # 4. Start Vite Frontend
@@ -436,14 +458,7 @@ def run_orchestrator(args: argparse.Namespace) -> int:
 
         vite_cmd = ["pnpm", "run", "dev", "--host", "0.0.0.0", "--port", str(args.frontend_port)]
 
-        frontend_proc = subprocess.Popen(
-            vite_cmd,
-            cwd=str(REPO_ROOT / "frontend"),
-            env=frontend_env,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            start_new_session=True,
-        )
+        frontend_proc = spawn_child(vite_cmd, cwd=str(REPO_ROOT / "frontend"), env=frontend_env)
         processes.append(frontend_proc)
 
         t_frontend = threading.Thread(
@@ -466,11 +481,9 @@ def run_orchestrator(args: argparse.Namespace) -> int:
                         f"{YELLOW}[dev-orchestrator] Process {p.pid} terminated with code {p.returncode}. Stopping environment.{RESET}",
                         flush=True,
                     )
-                    terminate_processes(processes)
                     return p.returncode
             time.sleep(0.5)
     except KeyboardInterrupt:
-        terminate_processes(processes)
         return 0
 
 

@@ -135,7 +135,7 @@ Expected result: the log prints `API Gateway is healthy and ready!` and `Ready! 
 curl -fsS -o /dev/null -w "%{http_code}\n" http://localhost:8000/api/v1/health
 curl -fsS -o /dev/null -w "%{http_code}\n" http://localhost:5173/api/v1/health
 ```
-Both print `200`. The second command checks the Vite proxy. Press `Ctrl+C` in the `make dev` terminal to stop all background processes.
+Both print `200`. The second command checks the Vite proxy. Press `Ctrl+C` in the `make dev` terminal to stop all background processes. The port-forwards and the gateway stop with it, even when the orchestrator is killed with `SIGKILL` on Linux.
 
 ### Run the SpiceDB port-forward by hand
 `make dev` starts the SpiceDB port-forward only when port 50051 is closed. Other targets do not start it. For example, `make dev-api` does not. Run the port-forward yourself before you run such a target:
