@@ -106,18 +106,6 @@ class CharacterResponse(BaseModel):
             self.isStabilized = self.is_stabilized
 
 
-class StandInGuardrailsRequest(BaseModel):
-    preserve_spell_slots: dict[int, int] = Field(default_factory=dict, alias="preserveSpellSlots")
-    protect_allies: list[str] = Field(default_factory=list, alias="protectAllies")
-    protect_ally_hp_threshold: float = Field(default=0.3, alias="protectAllyHpThreshold")
-    risk_threshold: str = Field(default="cautious", alias="riskThreshold")
-    avoid_melee: bool = Field(default=True, alias="avoidMelee")
-    permadeath_safeguard: bool = Field(default=True, alias="permadeathSafeguard")
-    custom_priorities: list[str] = Field(default_factory=list, alias="customPriorities")
-
-    model_config = ConfigDict(populate_by_name=True, extra="forbid")
-
-
 class HealthChangeRequest(BaseModel):
     delta: int
     source: str = "damage"
@@ -184,5 +172,4 @@ __all__ = [
     "HealthChangeRequest",
     "PrepareSpellRequest",
     "RemoveInventoryItemRequest",
-    "StandInGuardrailsRequest",
 ]

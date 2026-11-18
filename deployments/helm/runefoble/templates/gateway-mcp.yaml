@@ -29,7 +29,7 @@ spec:
             {{- include "runefoble.zitadelServiceEnv" $ | nindent 12 }}
             - name: BOARD_STATE_URL
               value: {{ $mcp.boardStateUrl | quote }}
-            - name: CHARACTER_SHEET_URL
+            - name: RUNEFOBLE_CHARACTER_SHEET_URL
               value: {{ $mcp.characterSheetUrl | quote }}
             - name: GAME_SESSION_URL
               value: {{ $mcp.gameSessionUrl | quote }}

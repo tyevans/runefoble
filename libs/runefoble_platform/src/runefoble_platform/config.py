@@ -188,9 +188,9 @@ class PlatformSettings(BaseSettings):
     )
 
     # Gateway upstream base URLs. A None value means the gateway has no route to that
-    # service, and a proxy call to it returns 503. The four gateway names below are the
-    # names TASK-0624 renders in the Helm chart for gateway-api. The other names follow
-    # the RUNEFOBLE_<SERVICE>_URL pattern. Helm does not render them for gateway-api yet.
+    # service, and a proxy call to it returns 503. game_session reads the character sheet
+    # URL from this same field, so both processes share one variable name. The other names
+    # follow the RUNEFOBLE_<SERVICE>_URL pattern or the names that Helm renders for gateway-api.
     game_session_url: str | None = Field(
         default=None, description="Base URL of the game_session service"
     )
@@ -201,9 +201,8 @@ class PlatformSettings(BaseSettings):
         default=None, description="Base URL of the the_watcher service"
     )
     character_sheet_url: str | None = Field(
-        default="http://character-sheet:8003",
-        validation_alias=AliasChoices("CHARACTER_SHEET_URL"),
-        description="Base URL of the character_sheet service",
+        default=None,
+        description="Base URL of the character_sheet service (RUNEFOBLE_CHARACTER_SHEET_URL)",
     )
     campaign_lore_url: str | None = Field(
         default=None,

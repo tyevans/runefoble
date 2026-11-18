@@ -62,7 +62,7 @@ The gateway MCP reads its upstream addresses from the environment:
 | Environment variable | Owning service |
 |---|---|
 | `BOARD_STATE_URL` | `board_state` |
-| `CHARACTER_SHEET_URL` | `character_sheet` |
+| `RUNEFOBLE_CHARACTER_SHEET_URL` | `character_sheet` |
 | `RULES_COMPENDIUM_URL` | `rules_compendium` |
 
 `OwningServices` reads these settings on each tool call. The shared service client is reused per event loop, service, and base URL. A test can therefore set the variable with `monkeypatch.setenv` inside the test body, and a new base URL starts a new client.

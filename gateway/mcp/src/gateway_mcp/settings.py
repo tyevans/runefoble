@@ -18,8 +18,8 @@ class GatewayMcpSettings(BaseSettings):
         description="Base URL of the board_state service (BOARD_STATE_URL).",
     )
     character_sheet_url: str = Field(
-        validation_alias="CHARACTER_SHEET_URL",
-        description="Base URL of the character_sheet service (CHARACTER_SHEET_URL).",
+        validation_alias="RUNEFOBLE_CHARACTER_SHEET_URL",
+        description="Base URL of the character_sheet service (RUNEFOBLE_CHARACTER_SHEET_URL).",
     )
     game_session_url: str = Field(
         validation_alias="GAME_SESSION_URL",

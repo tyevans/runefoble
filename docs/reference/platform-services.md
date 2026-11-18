@@ -143,7 +143,7 @@ The chart sets each service-to-service URL. The URL uses the in-cluster service 
 | `SOUNDSCAPE_SERVICE_URL` | `http://soundscape:8009` | `gateway-api` | Gateway soundscape proxy (default `http://soundscape:8009`) |
 | `CAMPAIGN_LORE_URL` | `http://campaign-lore:8006` | `gateway-api` | Gateway hub views |
 | `CAMPAIGN_ANALYTICS_URL` | `http://campaign-analytics:8011` | `gateway-api` | Gateway hub views |
-| `CHARACTER_SHEET_URL` | `http://character-sheet:8003` | `gateway-api` | Gateway character sub-resources |
+| `RUNEFOBLE_CHARACTER_SHEET_URL` | `http://character-sheet:8003` | `game-session`, `gateway-api`, `gateway-mcp` | Stand-in calls (`game_session`), gateway character routes, and MCP character tools. One name for all three processes. Unset means the process cannot reach `character_sheet` and fails with 503 or 502. |
 
 The chart defines these keys in one block in `deployments/helm/runefoble/templates/services.yaml`. To add a consumer, add its container name to that key's `consumers` list.
 

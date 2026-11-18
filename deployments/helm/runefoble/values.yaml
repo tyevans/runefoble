@@ -341,7 +341,7 @@ services:
     replicas: 1
     port: 8012
     # Upstream URLs that MCP tools call over HTTP. Rendered as BOARD_STATE_URL,
-    # CHARACTER_SHEET_URL, GAME_SESSION_URL, RULES_COMPENDIUM_URL, and THE_WATCHER_URL.
+    # RUNEFOBLE_CHARACTER_SHEET_URL, GAME_SESSION_URL, RULES_COMPENDIUM_URL, and THE_WATCHER_URL.
     boardStateUrl: "http://board-state:8002"
     characterSheetUrl: "http://character-sheet:8003"
     gameSessionUrl: "http://game-session:8004"

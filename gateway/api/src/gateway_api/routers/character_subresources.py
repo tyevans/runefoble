@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from typing import Any
 
 from fastapi import APIRouter, Depends, Request
@@ -14,10 +15,9 @@ from gateway_api.character_models import (
     EquipItemRequest,
     HealthChangeRequest,
     PrepareSpellRequest,
-    StandInGuardrailsRequest,
 )
 from gateway_api.character_view import to_character_response
-from gateway_api.proxy import forward_json
+from gateway_api.proxy import forward_bytes, forward_json
 
 router = APIRouter(tags=["characters-subresources"])
 
@@ -219,17 +219,16 @@ async def prepare_spell(
 )
 async def update_guardrails(
     character_id: str,
-    req: StandInGuardrailsRequest,
     request: Request,
 ) -> CharacterResponse:
-    """Update stand-in policy guardrails (requires 'edit')."""
-    res = await _forward(
+    """Update stand-in policy guardrails (requires 'edit'). character_sheet validates the body."""
+    res = await forward_bytes(
         request,
-        "PUT",
-        f"/api/v1/characters/{character_id}/guardrails",
-        json_body=req.model_dump(by_alias=False),
+        service="character_sheet",
+        method="PUT",
+        path=f"/api/v1/characters/{character_id}/guardrails",
     )
-    return to_character_response(res, None)
+    return to_character_response(json.loads(res.body), None)
 
 
 @router.get(
