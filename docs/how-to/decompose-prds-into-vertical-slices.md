@@ -3,7 +3,7 @@
 ## Overview
 The Runefoble product-to-engineering pipeline converts high-level user needs in Product Requirement Records (`docs/project/product/`) into actionable, vertically-sliced engineering tasks in `docs/project/backlog/proposed/`.
 
-Autonomous task execution via `scripts/run-backlog-engine.sh` relies on tasks that can be completed within a single `agy -p` pass (under 30 minutes, producing focused source files strictly under 500 lines with frontdoor blackbox tests). When proposed tasks are monolithic or PRDs remain undecomposed, the team runs out of refinable work.
+Autonomous task execution via `make backlog-worker` relies on tasks that can be completed within a single `agy -p` pass (under 30 minutes, producing focused source files strictly under 500 lines with frontdoor blackbox tests). When proposed tasks are monolithic or PRDs remain undecomposed, the team runs out of refinable work.
 
 The PRD pipeline utility (`scripts/decompose-prds.sh` and `tools/prd_pipeline/`) automates PRD creation, registry maintenance, and task decomposition.
 
@@ -125,7 +125,7 @@ The PRD pipeline completes the three-tier autonomous engineering loop:
        ↓
 [Backlog Curator]       ./scripts/curate-backlog.sh    (JIT Refinement -> refined/ buffer ~10)
        ↓
-[Backlog Worker Engine] ./scripts/run-backlog-engine.sh (Parallel worktrees -> single agy -p pass -> main)
+[Backlog Worker Engine] make backlog-worker (Parallel worktrees -> single agy -p pass -> main)
 ```
 
 ---

@@ -191,7 +191,7 @@ The project management system powers fully autonomous, conflict-free software de
                                ▼
 ┌─────────────────────────────────────────────────────────────┐
 │ Tier 3: Autonomous Backlog Worker Engine                    │
-│ ./scripts/run-backlog-engine.sh (tools.backlog_engine)      │
+│ make backlog-worker (tools.backlog_engine)                  │
 │ Parallel worktrees → Pre-flight checks → CI Watcher → main   │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -207,7 +207,7 @@ The project management system powers fully autonomous, conflict-free software de
 - Refines items JIT to maintain a ready buffer of ~10 tasks in [`backlog/refined/`](backlog/refined/).
 - Reconciles [`backlog/PRIORITY.md`](backlog/PRIORITY.md) with filesystem state.
 
-### 3. Backlog Worker Engine (`tools/backlog_engine/`, `scripts/run-backlog-engine.sh`)
+### 3. Backlog Worker Engine (`tools/backlog_engine/`, `make backlog-worker`)
 - **Parallel Worktree Execution**: Runs concurrent worker agents in isolated git worktrees (`feat/<task-slug>`).
 - **Strict Backlog Isolation**: Feature branches are **strictly forbidden from modifying `docs/project/backlog/`**. This guarantees zero git merge conflicts across parallel PRs.
 - **In-Worktree Pre-Flight Verification**: Executes pytest suites, frontend builds, and Helm linting with automatic agent repair loops (up to 3 attempts).
@@ -249,7 +249,7 @@ spec-ops (`specops.toml` at the repository root) is the project management tool 
 | **Decompose PRD into Slices** | `make prd-decompose ARGS="--prd PRD-XXXX"` | [`decompose-prds-into-vertical-slices.md`](../how-to/decompose-prds-into-vertical-slices.md) |
 | **Check File Length Invariants** | `make health-check` | [`curate-backlog-and-roadmap.md`](../how-to/curate-backlog-and-roadmap.md) |
 | **Curate Backlog & Refine JIT** | `./scripts/curate-backlog.sh` | [`curate-backlog-and-roadmap.md`](../how-to/curate-backlog-and-roadmap.md) |
-| **Launch Autonomous Workers** | `make backlog-worker` or `./scripts/run-backlog-engine.sh` | [`run-autonomous-backlog-engine.md`](../how-to/run-autonomous-backlog-engine.md) |
+| **Launch Autonomous Workers** | `make backlog-worker` | [`run-autonomous-backlog-engine.md`](../how-to/run-autonomous-backlog-engine.md) |
 | **Run Interactive Visualizer** | `make visualize-project` (port 8787) | [`visualize-project-content.md`](../how-to/visualize-project-content.md) |
 | **Run Playwright BDD Suite** | `make test-e2e` or `make test-bdd` | [`test-user-flows-with-playwright-bdd.md`](../how-to/test-user-flows-with-playwright-bdd.md) |
 | **Build Static Doc Portal** | `make docs-build` | [`visualize-project-content.md`](../how-to/visualize-project-content.md) |

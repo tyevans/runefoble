@@ -24,7 +24,7 @@ health-check: ## Run spec-ops health and schema gates, plus the backlog link and
 	@uv run python scripts/check_backlog_links.py
 
 clean-worktrees: ## Clean up merged and stale git worktrees safely
-	@./scripts/cleanup-worktrees.sh $(ARGS)
+	@uv run python scripts/cleanup_worktrees.py $(ARGS)
 
 prd-audit: ## Audit PRDs, buffer health, and granularity
 	@uv run python -m tools.prd_pipeline.cli audit

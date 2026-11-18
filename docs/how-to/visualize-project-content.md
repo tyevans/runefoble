@@ -19,11 +19,6 @@ To run the local visualizer with dynamic file synchronization:
 make visualize-project
 ```
 
-Or using the runner script:
-```bash
-./scripts/visualize-project.sh
-```
-
 By default, the server listens on `http://127.0.0.1:8787/`.
 When you edit or save any markdown file in `docs/project/`, the visualizer dynamically re-parses the repository and updates active views in real time.
 
