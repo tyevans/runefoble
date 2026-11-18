@@ -380,6 +380,14 @@ If the event store cannot load or save the room, the route answers `503`. The se
 
 Blackbox tests start a playback through the HTTP route, build a new coordinator to model a restart, and then read the status through the same route. See `tests/test_blackbox_voice_duplex_state.py`.
 
+### Graceful Restart Keeps Room Seats
+
+When voice_agent stops gracefully (SIGTERM or a rolling deploy), it closes each signaling socket with code `1012` (service restart). A peer that closes with `1012` keeps its seat. The service does not save `VoicePeerLeft` and does not broadcast `webrtc_peer_left` for it. The room aggregate in the event store still lists the peer after the restart.
+
+A client reconnects to `/ws/voice/{session_id}` with the same `peer_id`. The service then sends `webrtc_joined` with the room's peers. Browsers cannot send close code `1012`, so only the server sends it. A crash (SIGKILL) runs no shutdown code. A peer that the crash leaves behind stays in the room until it leaves or is kicked.
+
+Blackbox test: `tests/test_blackbox_voice_room_restart.py`.
+
 ### Peer Telemetry Is Not Stored
 
 Peer audio telemetry (`webrtc_telemetry`) is not domain state. The service does not save it to the event store. The service keeps the latest sample for each peer in a bounded, in-process view. A restart clears the view, and each replica sees only the samples that reach it. Each sample also feeds OpenTelemetry instruments (`voice.telemetry.updates`, `voice.telemetry.latency`). The platform does not yet configure a meter provider, so these instruments record nothing until one is set up.

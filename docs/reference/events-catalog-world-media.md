@@ -49,7 +49,7 @@ Part of the [Events Schema](events-schema.md). Each event identifier in this pag
 - **`VoicePeerLeft`**: Emitted when an audio peer leaves or is kicked/disconnected from the voice room (`runefoble.events.voice.peer_left`).
   - `session_id`: String
   - `peer_id`: String
-  - `reason`: String ("disconnected", "user_exit", "kicked_by_dm")
+  - `reason`: String ("disconnected", "user_exit", "kicked_by_dm"). A graceful service restart (close `1012`) emits no `VoicePeerLeft`.
 - **`VoicePeerMuteToggled`**: Emitted when an audio peer toggles microphone mute state (`runefoble.events.voice.mute_toggled`).
   - `session_id`: String
   - `peer_id`: String
