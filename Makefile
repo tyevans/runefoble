@@ -18,9 +18,10 @@ override SPEC_OPS_SOURCE := git+https://github.com/tyevans/spec-ops@2c8d073180eb
 install-spec-ops: ## Install the pinned spec-ops CLI with uv (pin: SPEC_OPS_SOURCE)
 	uv tool install --from $(SPEC_OPS_SOURCE) spec-ops
 
-health-check: ## Run spec-ops health (file length, numbering, backlog) and schema gates
+health-check: ## Run spec-ops health and schema gates, plus the backlog link and status check
 	@spec-ops health
 	@spec-ops schema check
+	@uv run python scripts/check_backlog_links.py
 
 clean-worktrees: ## Clean up merged and stale git worktrees safely
 	@./scripts/cleanup-worktrees.sh $(ARGS)

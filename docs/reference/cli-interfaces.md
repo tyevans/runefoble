@@ -6,7 +6,7 @@
 |---|---|
 | `make help` | Displays all available developer commands |
 | `make setup` | Installs Python UV workspace dependencies and frontend packages |
-| `make health-check` | Gate. Runs `spec-ops health` (file length <500 lines in `libs/`, `services/`, `gateway/`, `frontend/`, `tests/`, `scripts/`, `e2e/`, `tools/`; numbering; backlog state) and `spec-ops schema check` (frontmatter and Markdown grammar in `docs/project/`) |
+| `make health-check` | Gate. Runs `spec-ops health` (file length <500 lines in `libs/`, `services/`, `gateway/`, `frontend/`, `tests/`, `scripts/`, `e2e/`, `tools/`; numbering; backlog state) `spec-ops schema check` (frontmatter and Markdown grammar in `docs/project/`); then `scripts/check_backlog_links.py` (dead links in refined and proposed tasks, stale PRD links, complete-record body status, unresolved cited paths, missing governance keys; all must be zero) |
 | `make install-spec-ops` | Installs the pinned spec-ops CLI with `uv tool install`. The pin is the `SPEC_OPS_SOURCE` variable in the `Makefile`, the only pin source. CI and AGENTS.md use this target. A command-line override is ignored |
 | `make clean-worktrees` | Cleans up merged and stale git worktrees safely (`ARGS="--dry-run"`) |
 | `make backlog-worker` | Runs autonomous backlog execution engine (`ARGS="--drain --concurrency 2"`). Local tool, kept. See the parity record below |
