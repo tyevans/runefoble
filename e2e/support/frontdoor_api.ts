@@ -184,5 +184,35 @@ export class FrontdoorApi {
     }
     return res.json();
   }
-}
 
+  /** Publishes a codex entry through the gateway. Throws with the response body on refusal. */
+  async publishCodexEntry(
+    campaignId: string,
+    payload: { title: string; content: string; privacy: 'private' | 'party_shared' | 'public'; era?: string; tags?: string[] },
+    token?: string
+  ): Promise<any> {
+    const res = await this.request.post(`${this.baseUrl}/api/v1/campaigns/${campaignId}/codex/entries`, {
+      headers: { 'Content-Type': 'application/json', ...this.authHeaders(token) },
+      data: payload,
+    });
+    if (!res.ok()) {
+      const errText = await res.text();
+      throw new Error(
+        `Failed to publish codex entry "${payload.title}": ${res.status()} ${res.statusText()} - ${errText}`
+      );
+    }
+    return res.json();
+  }
+
+  /** Reads the atlas through the gateway. The pins in the response are the public projection. */
+  async getAtlas(campaignId: string, token?: string): Promise<{ pins: Array<{ pin_id: string; title: string }> }> {
+    const res = await this.request.get(`${this.baseUrl}/api/v1/campaigns/${campaignId}/atlas`, {
+      headers: this.authHeaders(token),
+    });
+    if (!res.ok()) {
+      const errText = await res.text();
+      throw new Error(`Failed to read atlas: ${res.status()} ${res.statusText()} - ${errText}`);
+    }
+    return res.json();
+  }
+}
