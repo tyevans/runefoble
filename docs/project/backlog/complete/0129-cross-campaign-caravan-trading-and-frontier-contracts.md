@@ -42,7 +42,7 @@ While shared frontier discovery is enabled by TASK-0127, parties still lack stru
 - **User Story**: [`us-0058-west-marches-shared-world-state-and-caravan-trade.md`](../../user_stories/accepted/us-0058-west-marches-shared-world-state-and-caravan-trade.md)
 
 ## Detailed Specification & Implementation Plan
-1. **Caravan Manifest & Contract Domain Modeling (`services/game_session/src/game_session/caravan.py`)**:
+1. **Caravan Manifest & Contract Domain Modeling (`services/game_session/src/game_session/caravan/`)**:
    - `CaravanContractAggregate` modeling cargo inventory, route risk level, transit stages, escort collateral, and reward gold/reputation.
    - Declarative command handlers for `post_contract`, `accept_contract`, `dispatch_caravan`, `report_ambush_outcome`, and `fulfill_contract`.
 2. **Asynchronous Multi-Party Notice Board**:

@@ -23,10 +23,10 @@ pr_url: https://github.com/tyevans/runefoble/pull/246
 Complete
 
 ## Summary
-Decompose `services/game_session/src/game_session/caravan.py` (351 lines, 70.2% of limit) and `caravan_ledger.py` (342 lines) into modular submodules under `services/game_session/src/game_session/caravan/`, extracting `CaravanContractState` Pydantic models, transit stage calculations, and escrow ledger validation into separate files (< 150 lines each) per Hard Invariant 6 and ADR-0007.
+Decompose `services/game_session/src/game_session/caravan/` (351 lines, 70.2% of limit) and `caravan_ledger.py` (342 lines) into modular submodules under `services/game_session/src/game_session/caravan/`, extracting `CaravanContractState` Pydantic models, transit stage calculations, and escrow ledger validation into separate files (< 150 lines each) per Hard Invariant 6 and ADR-0007.
 
 ## Problem Statement
-`services/game_session/src/game_session/caravan.py` (351 lines) and `caravan_ledger.py` (342 lines) combine aggregate state transitions, event handling logic, escrow state tracking, and transit stage validation. As Milestone 9 introduces frontier mercenary bounty routers (TASK-0165) and settlement registries (TASK-0164), adding contract types and reward escalations will push both files over 400 lines and breach the 500-line invariant unless decomposed.
+`services/game_session/src/game_session/caravan/` (351 lines) and `caravan_ledger.py` (342 lines) combine aggregate state transitions, event handling logic, escrow state tracking, and transit stage validation. As Milestone 9 introduces frontier mercenary bounty routers (TASK-0165) and settlement registries (TASK-0164), adding contract types and reward escalations will push both files over 400 lines and breach the 500-line invariant unless decomposed.
 
 ## Governing Architecture & ADRs
 - **ADR-0003: UV Monorepo Workspace for Python BCs**: Clean module layout in `services/game_session/`.
@@ -40,7 +40,7 @@ Decompose `services/game_session/src/game_session/caravan.py` (351 lines, 70.2% 
    - Focus strictly on `CaravanContractAggregate` DeclarativeAggregate lifecycle and event handling (< 140 lines).
 3. **Caravan Escrow & Ledger Submodule (`services/game_session/src/game_session/caravan/ledger.py`)**:
    - Decompose `caravan_ledger.py` into focused ledger accounting, payout validation, and escrow resolution (< 140 lines).
-4. **Backward-Compatible Facade (`services/game_session/src/game_session/caravan.py`)**:
+4. **Backward-Compatible Facade (`services/game_session/src/game_session/caravan/`)**:
    - Re-export aggregate, models, and ledger routines (< 50 lines).
 5. **Verification**:
    - Run `uv run pytest tests/test_blackbox_caravan_board_ui.py` to confirm zero regression.

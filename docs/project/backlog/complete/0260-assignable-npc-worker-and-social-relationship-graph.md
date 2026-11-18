@@ -49,7 +49,7 @@ Town establishments currently lack living staff. Merchants are stateless entitie
    - `NPCWorkerRelieved`: `npc_id`, `establishment_id`, `reason`.
    - `NPCMoodUpdated`: `npc_id`, `mood`, `temperament`, `patience_delta`.
    - `NPCRelationshipFormed`: `source_npc_id`, `target_npc_id`, `relation_type` (ally, rival, debtor, lover, mentor), `intensity`.
-2. **Worker Aggregate & Graph Model (`services/game_session/src/game_session/settlement/workers.py`)**:
+2. **Worker Aggregate & Graph Model (`services/game_session/src/game_session/settlement/workers/`)**:
    - Track NPC Big Five personality traits, vices, and trade proficiencies.
    - Maintain shelf inventory (accessible to customers) versus backroom inventory (vault/secret goods).
    - Relationship adjacency list computing interpersonal tensions and supply chain dependencies.

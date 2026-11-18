@@ -22,10 +22,10 @@ pr_url: https://github.com/tyevans/runefoble/pull/178
 Complete
 
 ## Summary
-Decompose `services/character_sheet/src/character_sheet/crafting.py` (375 lines, 75.0% of limit) into modular domain submodules under `services/character_sheet/src/character_sheet/crafting/` (`recipes.py`, `mishaps.py`, `engine.py`, `__init__.py`), keeping all modules < 160 lines per Hard Invariant 6.
+Decompose `services/character_sheet/src/character_sheet/crafting/` (375 lines, 75.0% of limit) into modular domain submodules under `services/character_sheet/src/character_sheet/crafting/` (`recipes.py`, `mishaps.py`, `engine.py`, `__init__.py`), keeping all modules < 160 lines per Hard Invariant 6.
 
 ## Problem Statement
-`services/character_sheet/src/character_sheet/crafting.py` encapsulates reagent combination recipes, volatile mishap roll calculation, resting campfire boons, and stronghold crafting workshop bonuses in a single 375-line file. As new alchemical concoctions and masterwork tiers are added, decomposing it into focused modules prevents invariant violations.
+`services/character_sheet/src/character_sheet/crafting/` encapsulates reagent combination recipes, volatile mishap roll calculation, resting campfire boons, and stronghold crafting workshop bonuses in a single 375-line file. As new alchemical concoctions and masterwork tiers are added, decomposing it into focused modules prevents invariant violations.
 
 ## Governing Architecture & ADRs
 - **ADR-0003: UV Monorepo Workspace for Python BCs**: Clean module layout within `services/character_sheet/`.

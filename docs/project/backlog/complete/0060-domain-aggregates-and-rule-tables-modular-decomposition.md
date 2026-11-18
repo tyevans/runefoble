@@ -29,7 +29,7 @@ Decompose monolithic domain aggregate files across `game_session`, `board_state`
 
 ## Problem Statement
 Health scans identify the three primary event-sourced domain aggregate implementations rapidly approaching the 400-line warning threshold:
-- `services/game_session/src/game_session/aggregate.py` (393 lines, 78.6% of limit)
+- `services/game_session/src/game_session/aggregate/` (393 lines, 78.6% of limit)
 - `services/board_state/src/board_state/aggregate.py` (419 lines, 83.8% of limit)
 - `services/character_sheet/src/character_sheet/aggregate.py` (386 lines, 77.2% of limit)
 

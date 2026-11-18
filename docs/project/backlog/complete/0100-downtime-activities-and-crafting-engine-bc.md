@@ -42,7 +42,7 @@ Tabletop downtime is frequently reduced to hand-waved bookkeeping (PRD-0014, US-
 
 ## Detailed Specification & Implementation Plan
 1. **Crafting & Alchemical Reagents Aggregate (`CraftingAggregate`)**:
-   - Model ingredient affinities, catalysts, and volatile reaction risk matrices in `services/character_sheet/src/character_sheet/crafting.py`.
+   - Model ingredient affinities, catalysts, and volatile reaction risk matrices in `services/character_sheet/src/character_sheet/crafting/`.
    - Event-sourced execution of crafting attempts emitting `CraftingSucceeded` or `CraftingMishapOccurred` via `eventsource-py`.
 2. **Campfire Rest Interlude & Boons**:
    - Session resting mechanics with collaborative storytelling prompts and resting condition buffs in `services/game_session`.

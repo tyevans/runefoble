@@ -23,10 +23,10 @@ pr_url: https://github.com/tyevans/runefoble/pull/310
 Complete
 
 ## Summary
-Decompose `services/character_sheet/src/character_sheet/models.py` (372 lines, 74.4% of limit) into modular Python submodules under `services/character_sheet/src/character_sheet/models/` (`base.py`, `character.py`, `inventory.py`, `conditions.py`, `progression.py`), ensuring all domain model modules remain strictly < 120 lines per Hard Invariant 6.
+Decompose `services/character_sheet/src/character_sheet/models/` (372 lines, 74.4% of limit) into modular Python submodules under `services/character_sheet/src/character_sheet/models/` (`base.py`, `character.py`, `inventory.py`, `conditions.py`, `progression.py`), ensuring all domain model modules remain strictly < 120 lines per Hard Invariant 6.
 
 ## Problem Statement
-`services/character_sheet/src/character_sheet/models.py` defines Pydantic domain models for character attributes, health points, spell slots, inventory items, equipment slots, encumbrance limits, condition effects, and level progression in a single 372-line file. As new condition modifiers and equipment traits are introduced, this model definition will breach the 500-line limit unless decomposed.
+`services/character_sheet/src/character_sheet/models/` defines Pydantic domain models for character attributes, health points, spell slots, inventory items, equipment slots, encumbrance limits, condition effects, and level progression in a single 372-line file. As new condition modifiers and equipment traits are introduced, this model definition will breach the 500-line limit unless decomposed.
 
 ## Documentation & Architecture Review
 - **Documentation Consulted**:
@@ -49,7 +49,7 @@ Decompose `services/character_sheet/src/character_sheet/models.py` (372 lines, 7
    - Extract `InventoryItem`, `EquipmentSlot`, and `Encumbrance` (< 90 lines).
 3. **Conditions & Progression Models (`services/character_sheet/src/character_sheet/models/conditions.py` & `progression.py`)**:
    - Extract condition modifiers and spell progression models (< 90 lines each).
-4. **Aggregator Facade (`services/character_sheet/src/character_sheet/models.py`)**:
+4. **Aggregator Facade (`services/character_sheet/src/character_sheet/models/`)**:
    - Re-export all models maintaining full backwards compatibility (< 30 lines).
 5. **Verification**:
    - Run character sheet test suites to verify zero breaking changes.
@@ -63,7 +63,7 @@ Decompose `services/character_sheet/src/character_sheet/models.py` (372 lines, 7
 - **Testable (T)**: Existing test suite verifies serialization and validation parity.
 
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
-1. `services/character_sheet/src/character_sheet/models.py` re-export facade reduced to < 40 lines.
+1. `services/character_sheet/src/character_sheet/models/` re-export facade reduced to < 40 lines.
 2. All extracted model submodules strictly < 120 lines per Hard Invariant 6.
 3. Passes `uv run pytest services/character_sheet/` and character sheet blackbox suites.
 4. Code passes `uv run ruff check .` and `uv run ruff format --check .`.

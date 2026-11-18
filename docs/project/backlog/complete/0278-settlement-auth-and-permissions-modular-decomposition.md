@@ -25,10 +25,10 @@ pr_url: https://github.com/tyevans/runefoble/pull/333
 Complete
 
 ## Summary
-Decompose `services/game_session/src/game_session/settlement/auth.py` (385 lines, 77.0% of limit) into modular auth and permission submodules under `services/game_session/src/game_session/settlement/auth/` (`tokens.py`, `permissions.py`, `dependencies.py`), ensuring all auth modules remain strictly < 130 lines per Hard Invariant 6.
+Decompose `services/game_session/src/game_session/settlement/auth/` (385 lines, 77.0% of limit) into modular auth and permission submodules under `services/game_session/src/game_session/settlement/auth/` (`tokens.py`, `permissions.py`, `dependencies.py`), ensuring all auth modules remain strictly < 130 lines per Hard Invariant 6.
 
 ## Problem Statement
-`services/game_session/src/game_session/settlement/auth.py` bundles Zitadel JWT token extraction, fallback mock auth handlers for local testing, SpiceDB Zanzibar object authorization checks (haven ownership, DM delegation, establishment tenancy), and FastAPI dependency fixtures in a single 385-line file. As multi-party West Marches haven permissions and worker tenancy checks expand, this file will breach the 500-line invariant unless decomposed into cohesive, single-responsibility submodules.
+`services/game_session/src/game_session/settlement/auth/` bundles Zitadel JWT token extraction, fallback mock auth handlers for local testing, SpiceDB Zanzibar object authorization checks (haven ownership, DM delegation, establishment tenancy), and FastAPI dependency fixtures in a single 385-line file. As multi-party West Marches haven permissions and worker tenancy checks expand, this file will breach the 500-line invariant unless decomposed into cohesive, single-responsibility submodules.
 
 ## Documentation & Architecture Review
 - **Documentation Consulted**:
@@ -55,7 +55,7 @@ Decompose `services/game_session/src/game_session/settlement/auth.py` (385 lines
    - Extract SpiceDB client helpers for checking haven viewer, builder, DM, and tenant permissions (< 120 lines).
 3. **FastAPI Route Dependencies Submodule (`services/game_session/src/game_session/settlement/auth/dependencies.py`)**:
    - Extract FastAPI route dependency injectors (`get_current_settlement_user`, `require_haven_builder`, `require_establishment_manager`) (< 110 lines).
-4. **Package Facade (`services/game_session/src/game_session/settlement/auth.py` / `__init__.py`)**:
+4. **Package Facade (`services/game_session/src/game_session/settlement/auth/` / `__init__.py`)**:
    - Maintain re-export facade with 100% backwards compatibility for existing imports (< 35 lines).
 5. **Verification**:
    - Run settlement test suites to verify auth and permission check parity.
@@ -69,7 +69,7 @@ Decompose `services/game_session/src/game_session/settlement/auth.py` (385 lines
 - **Testable (T)**: Existing test suites `test_blackbox_settlements_integration.py` and unit tests verify complete parity.
 
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
-1. `services/game_session/src/game_session/settlement/auth.py` reduced to strictly < 40 lines (or package facade).
+1. `services/game_session/src/game_session/settlement/auth/` reduced to strictly < 40 lines (or package facade).
 2. Extracted submodules under `services/game_session/src/game_session/settlement/auth/` strictly < 130 lines each per Hard Invariant 6.
 3. 100% backwards compatibility preserved for all external imports from `game_session.settlement.auth`.
 4. Passes all settlement blackbox tests via `uv run pytest tests/test_blackbox_settlements_integration.py tests/test_blackbox_merchant_haggling.py`.

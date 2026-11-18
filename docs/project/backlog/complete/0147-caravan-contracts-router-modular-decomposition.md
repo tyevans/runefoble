@@ -24,10 +24,10 @@ pr_url: https://github.com/tyevans/runefoble/pull/170
 Complete
 
 ## Summary
-Decompose `services/game_session/src/game_session/routers/caravan_contracts.py` (433 lines, 86.6% of limit) into modular sub-routers under `services/game_session/src/game_session/routers/caravan_contracts/` (`auth.py`, `board.py`, `lifecycle.py`, `__init__.py`), keeping all router modules < 180 lines per Hard Invariant 6.
+Decompose `services/game_session/src/game_session/routers/caravan_contracts.py` (removed) (433 lines, 86.6% of limit) into modular sub-routers under `services/game_session/src/game_session/routers/caravan_contracts/` (`auth.py`, `board.py`, `lifecycle.py`, `__init__.py`), keeping all router modules < 180 lines per Hard Invariant 6.
 
 ## Problem Statement
-`services/game_session/src/game_session/routers/caravan_contracts.py` currently handles notice board posting, query filters, SpiceDB Zanzibar officer checks, contract acceptance, caravan dispatching, ambush reports, and settlement fulfillment in a single 433-line file. Decomposing it prevents imminent violation of Hard Invariant 6 (< 500 lines).
+`services/game_session/src/game_session/routers/caravan_contracts.py` (removed) currently handles notice board posting, query filters, SpiceDB Zanzibar officer checks, contract acceptance, caravan dispatching, ambush reports, and settlement fulfillment in a single 433-line file. Decomposing it prevents imminent violation of Hard Invariant 6 (< 500 lines).
 
 ## Governing Architecture & ADRs
 - **ADR-0001: Fine-Grained Authorization with SpiceDB Zanzibar**: Clean authorization helper extraction for party leader and officer permissions.
@@ -49,7 +49,7 @@ Decompose `services/game_session/src/game_session/routers/caravan_contracts.py` 
 4. **Aggregated Router Export (`services/game_session/src/game_session/routers/caravan_contracts/__init__.py`)**:
    - Combine sub-routers and export unified `router` preserving identical URL prefixes and tags (< 40 lines).
 5. **Facade Backward Compatibility**:
-   - `services/game_session/src/game_session/routers/caravan_contracts.py` re-exports `router` from package for existing imports (< 20 lines).
+   - `services/game_session/src/game_session/routers/caravan_contracts.py` (removed) re-exports `router` from package for existing imports (< 20 lines).
 
 ## INVEST Criteria Evaluation
 - **Independent (I)**: Internal refactoring with zero change to public HTTP API endpoints or contracts.

@@ -22,10 +22,10 @@ pr_url: https://github.com/tyevans/runefoble/pull/271
 Complete
 
 ## Summary
-Decompose `libs/runefoble_platform/src/runefoble_platform/email_client.py` (358 lines, 71.6% of limit) into modular submodules under `libs/runefoble_platform/src/runefoble_platform/email/` (`models.py`, `smtp.py`, and `mailpit.py`), keeping all submodules strictly < 130 lines per Hard Invariant 6 and ADR-0003.
+Decompose `libs/runefoble_platform/src/runefoble_platform/email/` (358 lines, 71.6% of limit) into modular submodules under `libs/runefoble_platform/src/runefoble_platform/email/` (`models.py`, `smtp.py`, and `mailpit.py`), keeping all submodules strictly < 130 lines per Hard Invariant 6 and ADR-0003.
 
 ## Problem Statement
-`libs/runefoble_platform/src/runefoble_platform/email_client.py` was introduced to support local Mailpit email delivery and test verification for user signups. At 358 lines, it combines Pydantic email models (`EmailMessage`, `EmailRecipient`, `EmailVerificationPayload`), low-level SMTP client delivery with HTML MIME multipart composition, and HTTP REST client interactions with Mailpit's API (`/api/v1/messages`, message deletion, search). As transactional email templates (invites, password resets, campaign alerts) are added, this file will rapidly approach the 500-line invariant limit unless decoupled.
+`libs/runefoble_platform/src/runefoble_platform/email/` was introduced to support local Mailpit email delivery and test verification for user signups. At 358 lines, it combines Pydantic email models (`EmailMessage`, `EmailRecipient`, `EmailVerificationPayload`), low-level SMTP client delivery with HTML MIME multipart composition, and HTTP REST client interactions with Mailpit's API (`/api/v1/messages`, message deletion, search). As transactional email templates (invites, password resets, campaign alerts) are added, this file will rapidly approach the 500-line invariant limit unless decoupled.
 
 ## Governing Architecture & ADRs
 - **ADR-0003: UV Monorepo Workspace for Python BCs**: Clean module layout in `libs/runefoble_platform/`.
@@ -55,7 +55,7 @@ Decompose `libs/runefoble_platform/src/runefoble_platform/email_client.py` (358 
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
 1. **Module Architecture**:
    - `libs/runefoble_platform/src/runefoble_platform/email/` created with all submodules strictly < 130 lines each.
-   - `libs/runefoble_platform/src/runefoble_platform/email_client.py` refactored as a backward-compatible shim (< 40 lines).
+   - `libs/runefoble_platform/src/runefoble_platform/email/` refactored as a backward-compatible shim (< 40 lines).
 2. **Frontdoor Verification**:
    - All email tests pass via `uv run pytest tests/test_blackbox_email_signup_mailpit.py`.
 3. **Quality Gates**:

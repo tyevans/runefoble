@@ -24,10 +24,10 @@ pr_url: https://github.com/tyevans/runefoble/pull/180
 Complete
 
 ## Summary
-Decompose `services/game_session/src/game_session/aggregate.py` (453 lines, 90.6% of limit) into modular domain handler modules under `services/game_session/src/game_session/aggregate/` (`session_handlers.py`, `combat_handlers.py`, `reaction_handlers.py`, `aggregate.py`, `__init__.py`), keeping all modules < 160 lines per Hard Invariant 6.
+Decompose `services/game_session/src/game_session/aggregate/` (453 lines, 90.6% of limit) into modular domain handler modules under `services/game_session/src/game_session/aggregate/` (`session_handlers.py`, `combat_handlers.py`, `reaction_handlers.py`, `aggregate.py`, `__init__.py`), keeping all modules < 160 lines per Hard Invariant 6.
 
 ## Problem Statement
-`services/game_session/src/game_session/aggregate.py` encapsulates game session lifecycle (lobby, start, player join/leave, hot-swap), turn and initiative ordering, combat encounters, and spoken reaction/ready-action combat interrupt event handlers in a single 453-line file. Approaching the 500-line hard invariant limit, it must be decomposed into focused submodules with clean separation of concerns.
+`services/game_session/src/game_session/aggregate/` encapsulates game session lifecycle (lobby, start, player join/leave, hot-swap), turn and initiative ordering, combat encounters, and spoken reaction/ready-action combat interrupt event handlers in a single 453-line file. Approaching the 500-line hard invariant limit, it must be decomposed into focused submodules with clean separation of concerns.
 
 ## Governing Architecture & ADRs
 - **ADR-0003: UV Monorepo Workspace for Python BCs**: Clean submodule layout in `services/game_session/`.
@@ -48,7 +48,7 @@ Decompose `services/game_session/src/game_session/aggregate.py` (453 lines, 90.6
    - Extract reaction pausing, reaction resolution, ready-action trigger registration, and ready-action execution (< 130 lines).
 4. **Root Aggregate Class (`services/game_session/src/game_session/aggregate/aggregate.py`)**:
    - Inherit handler mixins and define `GameSessionAggregate(DeclarativeAggregate[GameSessionState])` (< 100 lines).
-5. **Package Facade & Backward Compatibility (`services/game_session/src/game_session/aggregate.py` and `__init__.py`)**:
+5. **Package Facade & Backward Compatibility (`services/game_session/src/game_session/aggregate/` and `__init__.py`)**:
    - Re-export `GameSessionAggregate`, `GameSessionState`, and `ParticipantState` for existing imports (< 30 lines).
 
 ## INVEST Criteria Evaluation

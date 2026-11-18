@@ -46,7 +46,7 @@ Buying weapons, armor, bread, or potions in virtual tabletops is typically a sta
 - **User Story**: [`us-0075-dynamic-merchant-haggling-with-dm-arbitration.md`](../../user_stories/accepted/us-0075-dynamic-merchant-haggling-with-dm-arbitration.md)
 
 ## Detailed Specification & Implementation Plan
-1. **Domain Logic & Valuation Rules (`services/game_session/src/game_session/settlement/haggling.py`)**:
+1. **Domain Logic & Valuation Rules (`services/game_session/src/game_session/settlement/haggling/`)**:
    - `NegotiationSession`: Tracks original price, current offer, merchant base margin, patience points (1-5), and temperament modifiers (Greedy, Stubborn, Vain, Generous).
    - Bargaining Gambits: "Flattery / Praise", "Bulk Order Promise", "Point Out Flaw", "Hard Intimidation", "Walk Away Bluff".
    - Persuasion/Intimidation roll evaluation against merchant DC.

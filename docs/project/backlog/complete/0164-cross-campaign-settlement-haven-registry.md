@@ -42,7 +42,7 @@ Outposts founded or liberated by one adventuring party currently remain invisibl
 - **User Story**: [`us-0058-west-marches-shared-world-and-cross-campaign-trade.md`](../../user_stories/accepted/us-0058-west-marches-shared-world-and-cross-campaign-trade.md)
 
 ## Detailed Specification & Implementation Plan
-1. **Settlement Aggregate & Models (`services/game_session/src/game_session/settlements/aggregate.py`)**:
+1. **Settlement Aggregate & Models (`services/game_session/src/game_session/settlements/aggregate.py` (removed))**:
    - Pydantic models and DeclarativeAggregate for outposts, fortresses, defensive fortifications, and workshop tiers (< 150 lines).
 2. **SpiceDB Haven Permissions (`services/game_session/src/game_session/settlements/auth.py` (removed))**:
    - Check and write Zanzibar relations for campaign discovery and settlement access (< 110 lines).

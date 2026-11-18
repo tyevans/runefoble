@@ -51,7 +51,7 @@ The event-sourced `CharacterAggregate` and `CharacterState` currently track inve
      - `campaign_id: str | None`
      - `assigned_by: str`
    - Register event with `@register_event("character.assigned_to_campaign", schema_version=1)`.
-2. **State Extension (`services/character_sheet/src/character_sheet/models.py`)**:
+2. **State Extension (`services/character_sheet/src/character_sheet/models/`)**:
    - Add fields to `CharacterState`:
      - `campaign_id: str | None = None`
      - `subclass: str | None = None`
