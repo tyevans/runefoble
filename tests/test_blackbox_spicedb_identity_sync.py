@@ -9,6 +9,7 @@ Verifies:
 6. Transient fault resilience and exponential backoff retry logic.
 """
 
+from collections.abc import Iterator
 from uuid import uuid4
 
 import pytest
@@ -21,10 +22,15 @@ from runefoble_platform.redis_bus import RedisStreamsEventBus
 
 from tests.helpers.mock_redis import MockAsyncRedis
 
-client = TestClient(app)
+
+@pytest.fixture
+def client(game_session_upstream) -> Iterator[TestClient]:
+    """Enter the gateway lifespan after game_session is served, so proxied routes work."""
+    with TestClient(app) as gateway_client:
+        yield gateway_client
 
 
-def test_sync_health_frontdoor() -> None:
+def test_sync_health_frontdoor(client) -> None:
     """GET /api/v1/auth/sync/health reports operational status and SpiceDB connectivity."""
     res = client.get("/api/v1/auth/sync/health")
     assert res.status_code == 200
@@ -33,12 +39,12 @@ def test_sync_health_frontdoor() -> None:
     assert data["sync_service"] == "operational"
 
 
-def test_sync_user_route_is_removed(signing_issuer) -> None:
+def test_sync_user_route_is_removed(trusted_ws_issuer, client) -> None:
     """POST /api/v1/auth/sync/user is gone. Token roles never write SpiceDB relations (TASK-0534)."""
     campaign_id = f"camp-sync-{uuid4().hex[:8]}"
     user_id = f"user-{uuid4().hex[:8]}"
     body = {"user_id": user_id, "roles": ["owner"], "campaign_id": campaign_id}
-    token = signing_issuer.mint(user_id, extra_claims={"roles": ["owner"]})
+    token = trusted_ws_issuer.mint(user_id, extra_claims={"roles": ["owner"]})
 
     assert client.post("/api/v1/auth/sync/user", json=body).status_code == 404
     assert (
@@ -55,7 +61,7 @@ def _bearer(issuer, sub: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {issuer.mint(sub)}"}
 
 
-def _create_campaign_as_owner(issuer, owner_sub: str) -> str:
+def _create_campaign_as_owner(client: TestClient, issuer, owner_sub: str) -> str:
     """Create a campaign through the public route. The creator becomes its owner."""
     res = client.post(
         "/api/v1/campaigns",
@@ -67,18 +73,18 @@ def _create_campaign_as_owner(issuer, owner_sub: str) -> str:
 
 
 @pytest.mark.asyncio
-async def test_gm_synchronization_dm_override_and_atmosphere(signing_issuer) -> None:
+async def test_gm_synchronization_dm_override_and_atmosphere(trusted_ws_issuer, client) -> None:
     """Synchronized GM can execute DM override and update campaign atmosphere."""
     spicedb = get_spicedb_client()
     owner_id = "owner_arthur"
     gm_id = "gm_elena"
     stranger_id = "stranger_pete"
-    campaign_id = _create_campaign_as_owner(signing_issuer, owner_id)
+    campaign_id = _create_campaign_as_owner(client, trusted_ws_issuer, owner_id)
 
     # 1. Before sync: GM and stranger are rejected with 403
     res_before = client.post(
         f"/api/v1/sessions/{campaign_id}/dm-override",
-        headers=_bearer(signing_issuer, gm_id),
+        headers=_bearer(trusted_ws_issuer, gm_id),
         json={"action": "pause_encounter", "reason": "DM bathroom break"},
     )
     assert res_before.status_code == 403
@@ -87,7 +93,7 @@ async def test_gm_synchronization_dm_override_and_atmosphere(signing_issuer) -> 
     res_sync = client.post(
         f"/api/v1/campaigns/{campaign_id}/roles",
         json={"user_id": gm_id, "role": "dungeon_master"},
-        headers=_bearer(signing_issuer, owner_id),
+        headers=_bearer(trusted_ws_issuer, owner_id),
     )
     assert res_sync.status_code == 200
     assert res_sync.json()["status"] == "role_assigned"
@@ -98,7 +104,7 @@ async def test_gm_synchronization_dm_override_and_atmosphere(signing_issuer) -> 
     # 4. Synchronized GM can execute DM override
     res_override = client.post(
         f"/api/v1/sessions/{campaign_id}/dm-override",
-        headers=_bearer(signing_issuer, gm_id),
+        headers=_bearer(trusted_ws_issuer, gm_id),
         json={"action": "pause_encounter", "reason": "DM narrative pause"},
     )
     assert res_override.status_code == 200
@@ -113,7 +119,7 @@ async def test_gm_synchronization_dm_override_and_atmosphere(signing_issuer) -> 
     }
     res_atmo = client.post(
         f"/api/v1/sessions/{campaign_id}/atmosphere",
-        headers=_bearer(signing_issuer, gm_id),
+        headers=_bearer(trusted_ws_issuer, gm_id),
         json=atmo_payload,
     )
     assert res_atmo.status_code == 200
@@ -123,26 +129,26 @@ async def test_gm_synchronization_dm_override_and_atmosphere(signing_issuer) -> 
     # 6. Unassigned stranger is denied on both endpoints
     res_stranger_override = client.post(
         f"/api/v1/sessions/{campaign_id}/dm-override",
-        headers=_bearer(signing_issuer, stranger_id),
+        headers=_bearer(trusted_ws_issuer, stranger_id),
         json={"action": "end_session"},
     )
     assert res_stranger_override.status_code == 403
 
     res_stranger_atmo = client.post(
         f"/api/v1/sessions/{campaign_id}/atmosphere",
-        headers=_bearer(signing_issuer, stranger_id),
+        headers=_bearer(trusted_ws_issuer, stranger_id),
         json={"location_name": "Sunny Meadow"},
     )
     assert res_stranger_atmo.status_code == 403
 
 
 @pytest.mark.asyncio
-async def test_idempotence_and_instant_revocation(signing_issuer) -> None:
+async def test_idempotence_and_instant_revocation(trusted_ws_issuer, client) -> None:
     """Re-granting produces no duplicates; removal immediately revokes permissions."""
     owner_id = "owner_idem"
-    campaign_id = _create_campaign_as_owner(signing_issuer, owner_id)
+    campaign_id = _create_campaign_as_owner(client, trusted_ws_issuer, owner_id)
     user_id = "test_player_grant"
-    owner_headers = _bearer(signing_issuer, owner_id)
+    owner_headers = _bearer(trusted_ws_issuer, owner_id)
     grant_payload = {"user_id": user_id, "role": "player"}
 
     assert (
@@ -161,7 +167,7 @@ async def test_idempotence_and_instant_revocation(signing_issuer) -> None:
     # User can view session
     assert (
         client.get(
-            f"/api/v1/sessions/{campaign_id}", headers=_bearer(signing_issuer, user_id)
+            f"/api/v1/sessions/{campaign_id}", headers=_bearer(trusted_ws_issuer, user_id)
         ).status_code
         == 200
     )
@@ -175,14 +181,14 @@ async def test_idempotence_and_instant_revocation(signing_issuer) -> None:
     # Immediately after revocation: view attempt must fail with 403 Forbidden
     assert (
         client.get(
-            f"/api/v1/sessions/{campaign_id}", headers=_bearer(signing_issuer, user_id)
+            f"/api/v1/sessions/{campaign_id}", headers=_bearer(trusted_ws_issuer, user_id)
         ).status_code
         == 403
     )
 
 
 @pytest.mark.asyncio
-async def test_redis_streams_event_bus_deserialization_and_sync() -> None:
+async def test_redis_streams_event_bus_deserialization_and_sync(client) -> None:
     """Verify RedisStreamsEventBus publish and synchronization with SpiceDB."""
     mock_redis = MockAsyncRedis()
     event_bus = RedisStreamsEventBus(client=mock_redis)

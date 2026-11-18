@@ -5,6 +5,8 @@ Governed by ADR-0001, ADR-0003, ADR-0006, and Hard Invariants 6 and 7.
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+
 import pytest
 from character_sheet.dependencies import set_spicedb_client as set_char_spicedb
 from character_sheet.main import app as character_app
@@ -13,7 +15,6 @@ from game_session.dependencies import set_event_bus
 from game_session.dependencies import set_spicedb_client as set_sess_spicedb
 from game_session.main import app as session_app
 from gateway_api.auth import get_spicedb_client
-from gateway_api.campaign_store import campaign_store
 from gateway_api.main import app as gateway_app
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 
@@ -28,8 +29,7 @@ def auth_headers(sub: str) -> dict[str, str]:
 
 @pytest.fixture(autouse=True)
 def reset_stores():
-    """Reset gateway campaign store and configure isolated event bus and shared SpiceDB."""
-    campaign_store.reset()
+    """Configure isolated event bus and shared SpiceDB."""
     spicedb = get_spicedb_client()
     set_char_spicedb(spicedb)
     set_sess_spicedb(spicedb)
@@ -41,15 +41,18 @@ def reset_stores():
 
 
 @pytest.fixture
-def client_gw() -> TestClient:
-    return TestClient(gateway_app)
+def client_gw(game_session_upstream) -> Iterator[TestClient]:
+    with TestClient(gateway_app) as gateway_client:
+        yield gateway_client
 
 
 @pytest.fixture
-def client_sess() -> TestClient:
-    return TestClient(session_app)
+def client_sess(game_session_upstream) -> Iterator[TestClient]:
+    with TestClient(session_app) as session_client:
+        yield session_client
 
 
 @pytest.fixture
-def client_char() -> TestClient:
-    return TestClient(character_app, headers=auth_headers("character-owner"))
+def client_char(game_session_upstream) -> Iterator[TestClient]:
+    with TestClient(character_app, headers=auth_headers("character-owner")) as character_client:
+        yield character_client

@@ -16,7 +16,6 @@ from typing import Any
 import pytest
 from fastapi import FastAPI, Request
 from fastapi.testclient import TestClient
-from gateway_api.campaign_store import campaign_store
 from gateway_api.main import app as gateway_app
 from runefoble_auth.principal import authenticate_authorization
 from runefoble_auth.zitadel import ZitadelAuthService
@@ -56,13 +55,6 @@ def _recording_upstream(received: list[dict[str, Any]], verifier: ZitadelAuthSer
     return app
 
 
-@pytest.fixture(autouse=True)
-def reset_store() -> Iterator[None]:
-    campaign_store.reset()
-    yield
-    campaign_store.reset()
-
-
 @pytest.fixture
 def upstream_received(monkeypatch, signing_issuer) -> Iterator[dict[str, list[dict[str, Any]]]]:
     """Serve recording stand-ins for campaign_lore and campaign_analytics, and set their URLs.
@@ -81,16 +73,16 @@ def upstream_received(monkeypatch, signing_issuer) -> Iterator[dict[str, list[di
 
 
 @pytest.fixture
-def client(upstream_received) -> Iterator[TestClient]:
+def client(upstream_received, game_session_upstream) -> Iterator[TestClient]:
     """Run the gateway lifespan after the upstream URLs are set, so clients see them."""
     with TestClient(gateway_app) as gateway_client:
         yield gateway_client
 
 
 @pytest.fixture
-def owner(client: TestClient, signing_issuer) -> tuple[str, dict[str, str]]:
+def owner(client: TestClient, trusted_ws_issuer) -> tuple[str, dict[str, str]]:
     """Create a campaign through the public frontdoor. Return its id and the owner's headers."""
-    headers = {"Authorization": f"Bearer {signing_issuer.mint('dm_valeros')}"}
+    headers = {"Authorization": f"Bearer {trusted_ws_issuer.mint('dm_valeros')}"}
     res = client.post(
         "/api/v1/campaigns",
         json={

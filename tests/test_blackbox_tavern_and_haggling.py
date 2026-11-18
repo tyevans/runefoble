@@ -3,6 +3,7 @@
 Part of TASK-0103 / PRD-0014 / US-0047 / ADR-0003 / ADR-0006 / ADR-0011 / ADR-0013.
 """
 
+from collections.abc import Iterator
 from pathlib import Path
 from uuid import uuid4
 
@@ -54,10 +55,13 @@ def live_voice_agent(monkeypatch, trusted_voice_issuer):
 
 
 @pytest.fixture
-def gateway_client():
+def gateway_client(game_session_upstream) -> Iterator[TestClient]:
+    """Gateway client with the lifespan entered. game_session shares the same SpiceDB double."""
     mock_spicedb = MockSpiceDBClient()
     set_gateway_spicedb(mock_spicedb)
-    return TestClient(gateway_app)
+    set_session_spicedb(mock_spicedb)
+    with TestClient(gateway_app) as client:
+        yield client
 
 
 def test_tavern_parlor_microfrontend_manifest_and_files(session_client):
@@ -268,14 +272,14 @@ def _bearer(issuer, sub: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {issuer.mint(sub)}"}
 
 
-def test_blackbox_gateway_zanzibar_authorization(gateway_client, signing_issuer):
+def test_blackbox_gateway_zanzibar_authorization(gateway_client, trusted_ws_issuer):
     """Verify Gateway Zanzibar authorization enforcement for tavern minigames and merchant haggling.
 
     Membership is created through frontdoors only: the owner creates the campaign,
     issues a player invite, and the player redeems it.
     """
-    owner_headers = _bearer(signing_issuer, "user_dm")
-    user_headers = _bearer(signing_issuer, "user_bram")
+    owner_headers = _bearer(trusted_ws_issuer, "user_dm")
+    user_headers = _bearer(trusted_ws_issuer, "user_bram")
 
     create_res = gateway_client.post(
         "/api/v1/campaigns",
@@ -311,7 +315,7 @@ def test_blackbox_gateway_zanzibar_authorization(gateway_client, signing_issuer)
     denied_res = gateway_client.post(
         f"/api/v1/sessions/{camp_id}/tavern/games",
         json={"game_type": "liars_dice", "wager_gold": 10, "initiator_id": "bram"},
-        headers=_bearer(signing_issuer, "unauthorized_stranger"),
+        headers=_bearer(trusted_ws_issuer, "unauthorized_stranger"),
     )
     assert denied_res.status_code == 403
 

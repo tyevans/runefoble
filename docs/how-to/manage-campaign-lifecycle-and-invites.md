@@ -2,7 +2,7 @@
 
 This recipe demonstrates how to create campaigns, generate shareable invite tokens, join existing campaigns, and inspect active party membership. The `game_session` service owns these records and their SpiceDB Zanzibar tuples (ADR-0015 decision a). It is the only service that writes them.
 
-Clients call these routes through the Gateway API. The gateway forwards them to `game_session` after TASK-0591 lands. Until then, the gateway still answers from its own in-memory copy, which is not durable (see section 10).
+Clients call these routes through the Gateway API. The gateway checks the bearer token and forwards each call to `game_session`. It keeps no campaign state (see section 10).
 
 ## Prerequisites
 
@@ -156,7 +156,7 @@ A user who is already a member gets `200` again. The join does not use up anothe
 
 ## 5. Querying Campaign Members and Active Roles
 
-Inspect the owner and every member via `GET /api/v1/campaigns/{id}/members`. The roster comes from the membership record. `character_name` is `null` here, because character data is owned by `character_sheet`:
+Inspect the owner and every member via `GET /api/v1/campaigns/{id}/members`. The roster comes from the membership record that `game_session` owns. `username` is derived from the user ID. The gateway adds `character_name` from the characters assigned to the campaign, and it is `null` when none is assigned:
 
 ```bash
 curl -X GET "http://localhost:8000/api/v1/campaigns/6f1c2b8e-3a4d-4e5f-9a7b-8c9d0e1f2a3b/members" \
@@ -171,7 +171,7 @@ curl -X GET "http://localhost:8000/api/v1/campaigns/6f1c2b8e-3a4d-4e5f-9a7b-8c9d
     "role": "owner",
     "subject_type": "user",
     "zanzibar_relation": "campaign:6f1c2b8e-3a4d-4e5f-9a7b-8c9d0e1f2a3b#owner@user:dm-evelyn",
-    "username": "Evelyn Vance",
+    "username": "Evelyn",
     "character_name": null
   },
   {
@@ -187,15 +187,13 @@ curl -X GET "http://localhost:8000/api/v1/campaigns/6f1c2b8e-3a4d-4e5f-9a7b-8c9d
 
 ### Assigning a Role to a Member
 
-Assign a role with `POST /api/v1/campaigns/{id}/roles`. The caller must hold the `manage` permission on the campaign. Only the campaign owner holds `manage` by default.
-
-This route is not yet owned by `game_session`. It writes a SpiceDB tuple and no membership record, so a role granted here does not appear in the `game_session` roster. TASK-0591 must not move it until its authorization gap is fixed.
+Assign a role with `POST /api/v1/campaigns/{id}/roles`. `game_session` owns this route. The caller must hold the `manage` permission on the campaign. Only the campaign owner holds `manage` by default. The grant is saved as a membership, so it appears in the roster. Then the SpiceDB relation is written.
 
 - Grantable roles: `dungeon_master`, `game_master`, `player`, `spectator`.
 - `owner` is not grantable. Ownership moves only with campaign creation. The route returns `422` for `owner`.
 - A caller without `manage` gets `403` (`permission_denied`). A refused request writes no tuple.
-- If the authorization store cannot write the tuple, the route returns `503`. The role is not granted.
-- To read the caller's flags (`manage`, `run_session`, `play`, `view`), call `GET /api/v1/campaigns/{id}/capabilities`.
+- If the authorization store cannot write the relation, the owner answers `503`. The gateway returns `502`, because the owner's answer is an upstream 5xx. Retry the request: a repeated grant writes the relation again.
+- To read the caller's flags (`manage`, `run_session`, `play`, `view`), call `GET /api/v1/campaigns/{id}/capabilities`. Non-members receive all flags as `false`.
 
 ```bash
 curl -X POST "http://localhost:8000/api/v1/campaigns/6f1c2b8e-3a4d-4e5f-9a7b-8c9d0e1f2a3b/roles" \
@@ -373,17 +371,14 @@ Key features of `<runefoble-campaign-members>`:
 
 ---
 
-## 10. Gateway Campaign Store (Transitional, Retired by TASK-0591)
+## 10. Gateway Routing for Campaign Routes
 
-The Gateway API still holds a copy of the campaign and invite records under `gateway/api/src/gateway_api/campaign_store/`. That copy is in memory and is lost on restart. It is not the source of truth. `game_session` is the owner (ADR-0015 a). TASK-0591 removes the gateway copy. Do not add code that depends on it. The submodules are:
-- **Record Models (`models.py`)**: Defines `CampaignRecord`, `CampaignMemberRecord`, and `InviteTokenRecord` (aliased as `InviteRecord`) dataclasses with dictionary serialization and default participant constants (`DEFAULT_SESSION_PARTICIPANTS`, `DEFAULT_BOARD_TOKENS`).
-- **Session Management (`sessions.py`)**: Defines `CampaignSessionRecord` dataclass and `SessionManager` managing campaign session lifecycles, active states, and lobbies.
-- **Invite Management (`invites.py`)**: Provides secure token generation (`generate_invite_token`), expiration tracking (`calculate_invite_expiry`), `InviteManager` state storage, response formatting (`format_invite_response`), and Zanzibar redemption (`join_from_invite`).
-- **SpiceDB Zanzibar Queries (`queries.py`)**: Encapsulates fine-grained Zanzibar authorization queries, including `get_user_campaign_role`, `build_campaign_summary`, `get_all_viewable_campaigns`, and `get_campaign_members`.
-- **Store Repository (`store.py`)**: Implements thread-safe in-memory campaign lifecycle mutations (`create_campaign`, `update_campaign`, `create_from_request`, `update_from_request`), delegating invite tracking to `InviteManager` and session management to `SessionManager`.
-- **Package Facade (`__init__.py`)**: Re-exports all core classes, helpers, and default constants. Defect (DoR 9): it serves existing Gateway API routers and test suites. Removal: TASK-0488.
+The gateway holds no campaign, invite, membership, or session state. Each campaign route verifies the bearer token, then forwards the request and the same `Authorization` value to `game_session`. The gateway never reads a user ID from the body or from a header. The owner checks every object permission (ADR-0015 a, c).
 
----
+- `game_session` unreachable or not configured: the gateway returns `503` with `{"detail": "Upstream service is unavailable", "upstream": "game_session"}`.
+- `game_session` returns a 5xx: the gateway returns `502` with the same body shape.
+- `game_session` returns a 4xx (for example `403 permission_denied`, `404 campaign_not_found`, `409 invite_exhausted`): the gateway returns that status and body unchanged.
+- An unknown campaign ID returns `404` with `campaign_not_found`. The owner checks existence before permission, so a caller cannot read a fixture campaign for an unknown ID.
 
 ## 11. Campaign Detail Hero Header & Metadata Component
 

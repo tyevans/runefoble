@@ -13,11 +13,15 @@ Verifies:
 import pytest
 from fastapi.testclient import TestClient
 from gateway_api.auth import get_spicedb_client
-from gateway_api.campaign_store import campaign_store
 from gateway_api.character_store import character_store
 from gateway_api.main import app
 
-client = TestClient(app)
+
+@pytest.fixture
+def client(game_session_upstream):
+    """Enter the gateway lifespan after game_session is served, so the proxy reaches it."""
+    with TestClient(app) as gateway_client:
+        yield gateway_client
 
 
 def _auth(issuer, sub: str) -> dict[str, str]:
@@ -29,14 +33,13 @@ def _auth(issuer, sub: str) -> dict[str, str]:
 def reset_stores():
     """Reset character and campaign memory stores before each test."""
     character_store.reset(load_defaults=False)
-    campaign_store.reset()
     yield
 
 
 @pytest.mark.asyncio
-async def test_character_creation_and_ownership(signing_issuer):
+async def test_character_creation_and_ownership(trusted_ws_issuer, client):
     """Verify POST /api/v1/characters creates character and writes SpiceDB owner tuple."""
-    headers_valeros = _auth(signing_issuer, "user_valeros")
+    headers_valeros = _auth(trusted_ws_issuer, "user_valeros")
 
     payload = {
         "name": "Valeros of Korvosa",
@@ -83,10 +86,10 @@ async def test_character_creation_and_ownership(signing_issuer):
 
 
 @pytest.mark.asyncio
-async def test_character_listing_isolation(signing_issuer):
+async def test_character_listing_isolation(trusted_ws_issuer, client):
     """Verify GET /api/v1/characters lists only characters owned or viewable by the user."""
-    headers_alice = _auth(signing_issuer, "user_alice")
-    headers_bob = _auth(signing_issuer, "user_bob")
+    headers_alice = _auth(trusted_ws_issuer, "user_alice")
+    headers_bob = _auth(trusted_ws_issuer, "user_bob")
 
     # Alice creates a wizard
     res_a = client.post(
@@ -120,10 +123,10 @@ async def test_character_listing_isolation(signing_issuer):
 
 
 @pytest.mark.asyncio
-async def test_character_detail_and_zanzibar_view_guard(signing_issuer):
+async def test_character_detail_and_zanzibar_view_guard(trusted_ws_issuer, client):
     """Verify GET /api/v1/characters/{id} returns details for owner and 403 for strangers."""
-    headers_alice = _auth(signing_issuer, "user_alice")
-    headers_stranger = _auth(signing_issuer, "user_stranger")
+    headers_alice = _auth(trusted_ws_issuer, "user_alice")
+    headers_stranger = _auth(trusted_ws_issuer, "user_stranger")
 
     res = client.post(
         "/api/v1/characters",
@@ -144,12 +147,12 @@ async def test_character_detail_and_zanzibar_view_guard(signing_issuer):
 
 
 @pytest.mark.asyncio
-async def test_character_campaign_assignment_and_view_propagation(signing_issuer):
+def test_character_campaign_assignment_and_view_propagation(trusted_ws_issuer, client):
     """Verify PATCH /api/v1/characters/{id}/campaign writes campaign tuple and propagates view."""
-    headers_alice = _auth(signing_issuer, "user_alice")
-    headers_dm = _auth(signing_issuer, "dm_merlin")
-    headers_party_member = _auth(signing_issuer, "user_grognak")
-    headers_outsider = _auth(signing_issuer, "user_outsider")
+    headers_alice = _auth(trusted_ws_issuer, "user_alice")
+    headers_dm = _auth(trusted_ws_issuer, "dm_merlin")
+    headers_party_member = _auth(trusted_ws_issuer, "user_grognak")
+    headers_outsider = _auth(trusted_ws_issuer, "user_outsider")
 
     # DM creates Campaign
     camp_res = client.post(
@@ -160,9 +163,16 @@ async def test_character_campaign_assignment_and_view_propagation(signing_issuer
     campaign_id = camp_res.json()["id"]
 
     # Add Grognak as a player in the campaign
-    await get_spicedb_client().write_relationship(
-        "campaign", campaign_id, "player", "user", "user_grognak"
+    invite = client.post(
+        f"/api/v1/campaigns/{campaign_id}/invites", json={"role": "player"}, headers=headers_dm
     )
+    assert invite.status_code == 201, invite.text
+    joined = client.post(
+        "/api/v1/campaigns/join",
+        json={"invite_token": invite.json()["token"]},
+        headers=headers_party_member,
+    )
+    assert joined.status_code == 200, joined.text
 
     # Alice creates an unassigned character
     res = client.post(
@@ -193,12 +203,15 @@ async def test_character_campaign_assignment_and_view_propagation(signing_issuer
     assert res_patch.status_code == 200
     assert res_patch.json()["campaign_id"] == campaign_id
     assert res_patch.json()["campaignId"] == campaign_id
-    assert res_patch.json()["campaignTitle"] == "Curse of Strahd"
+    # Alice is not a campaign member, so the owner withholds the campaign title from her.
+    assert res_patch.json()["campaignTitle"] is None
 
     # After assignment: Campaign party member Grognak now has Zanzibar view permission!
     res_grognak_after = client.get(f"/api/v1/characters/{char_id}", headers=headers_party_member)
     assert res_grognak_after.status_code == 200
     assert res_grognak_after.json()["name"] == "Alice Barovian"
+    # A member can read the campaign title through the owner.
+    assert res_grognak_after.json()["campaignTitle"] == "Curse of Strahd"
 
     # Outsider still has 403 Forbidden
     res_outsider_after = client.get(f"/api/v1/characters/{char_id}", headers=headers_outsider)
@@ -221,10 +234,10 @@ async def test_character_campaign_assignment_and_view_propagation(signing_issuer
 
 
 @pytest.mark.asyncio
-async def test_character_deletion_owner_only(signing_issuer):
+async def test_character_deletion_owner_only(trusted_ws_issuer, client):
     """Verify DELETE /api/v1/characters/{id} allows owner and blocks non-owners with 403."""
-    headers_alice = _auth(signing_issuer, "user_alice")
-    headers_bob = _auth(signing_issuer, "user_bob")
+    headers_alice = _auth(trusted_ws_issuer, "user_alice")
+    headers_bob = _auth(trusted_ws_issuer, "user_bob")
 
     res = client.post(
         "/api/v1/characters",
@@ -252,18 +265,18 @@ async def test_character_deletion_owner_only(signing_issuer):
 
 
 @pytest.mark.asyncio
-async def test_default_characters_loaded_and_accessible(signing_issuer):
+async def test_default_characters_loaded_and_accessible(trusted_ws_issuer, client):
     """Verify default seed characters are accessible to their verified owners."""
     character_store.load_defaults()
 
     # Valeros is owned by user-valeros
-    res_valeros = client.get("/api/v1/characters", headers=_auth(signing_issuer, "user-valeros"))
+    res_valeros = client.get("/api/v1/characters", headers=_auth(trusted_ws_issuer, "user-valeros"))
     assert res_valeros.status_code == 200
     ids_valeros = [c["id"] for c in res_valeros.json()]
     assert "char-valeros" in ids_valeros
 
     # Ezren is owned by user-evelyn
-    res_ezren = client.get("/api/v1/characters", headers=_auth(signing_issuer, "user-evelyn"))
+    res_ezren = client.get("/api/v1/characters", headers=_auth(trusted_ws_issuer, "user-evelyn"))
     assert res_ezren.status_code == 200
     ids_ezren = [c["id"] for c in res_ezren.json()]
     assert "char-ezren" in ids_ezren

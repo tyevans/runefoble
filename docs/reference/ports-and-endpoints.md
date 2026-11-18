@@ -116,6 +116,8 @@ Campaign Lore routes require a verified bearer token, except `/health`, `/health
 | `game-session` | DELETE | `/api/v1/campaigns/{campaign_id}/members/{user_id}` | Removes a member and revokes campaign tuples. The owner cannot be removed (Zanzibar `manage`) |
 | `game-session` | GET | `/api/v1/campaigns/{campaign_id}/sessions` | Lists sessions and lobbies of a campaign (Zanzibar `view`) |
 | `game-session` | POST | `/api/v1/campaigns/{campaign_id}/sessions` | Creates a session or staging lobby (Zanzibar `run_session`) |
+| `game-session` | POST | `/api/v1/campaigns/{campaign_id}/roles` | Grants `dungeon_master`, `game_master`, `player`, or `spectator` and records the membership (Zanzibar `manage`). `owner` returns `422`. A failed write returns `503` |
+| `game-session` | GET | `/api/v1/campaigns/{campaign_id}/capabilities` | Returns the caller's `manage`, `run_session`, `play`, and `view` flags. Non-members receive all `false` |
 | `voice-agent` | POST | `/api/v1/voice/stream/chunk` | Streaming PCM/WAV chunk ingestion with sub-250ms VAD segmentation and Whisper STT. Returns `503` with `error: speech_engine_unavailable` when the configured engine cannot transcribe a completed utterance; publishes `VoiceTranscriptionFailed` to `runefoble.events.voice` and no `PlayerSpokeEvent` |
 | `voice-agent` | WS | `/api/v1/voice/stream/ws` | Real-time bidirectional WebSocket stream for continuous PCM audio frames and STT events. Sends `{"error": "speech_engine_unavailable", ...}` for a failed utterance and keeps the socket open |
 | `voice-agent` | POST | `/api/v1/voice/transcribe` | Transcribes player speech from `audio_base64` (STT port) or uses a non-empty typed `transcript`. Returns `source` (`audio` or `client_text`). Returns `422` when neither input is present or the audio is malformed, and `503` with `error: speech_engine_unavailable` when the engine fails. Emits `PlayerSpokeEvent` to Redis Streams only for non-empty text, and forwards that text to The Watcher. Never invents text |
@@ -252,18 +254,18 @@ Campaign Lore routes require a verified bearer token, except `/health`, `/health
 | `campaign-analytics` | GET | `/ui/manifest` | Discovers vendored microfrontend (`runefoble-campaign-analytics`) |
 | `gateway-api` | GET | `/api/v1/profile` | Retrieves the verified bearer token's user profile (`user_id`, `username`, `email`, `display_name`, `avatar_url`, `bio`). Requires a valid Zitadel bearer token (401 otherwise) |
 | `gateway-api` | PATCH | `/api/v1/profile` | Updates user profile display name, avatar URL, and bio |
-| `gateway-api` | GET | `/api/v1/campaigns` | Lists all campaigns where authenticated user has Zanzibar `view` permission |
-| `gateway-api` | POST | `/api/v1/campaigns` | Creates new campaign, registers owner in SpiceDB Zanzibar (`owner`), returns campaign summary |
-| `gateway-api` | GET | `/api/v1/campaigns/{campaign_id}` | Retrieves campaign overview details (requires `view`) |
-| `gateway-api` | PATCH | `/api/v1/campaigns/{campaign_id}` | Updates campaign title, description, and settings (requires `manage`) |
-| `gateway-api` | POST | `/api/v1/campaigns/{campaign_id}/invites` | Generates shareable invite token for player or spectator (requires `run_session`) |
-| `gateway-api` | POST | `/api/v1/campaigns/join` | Accepts invite token and registers membership relation in SpiceDB Zanzibar |
-| `gateway-api` | GET | `/api/v1/campaigns/{campaign_id}/members` | Lists campaign members and active Zanzibar roles (requires `view`) |
-| `gateway-api` | DELETE | `/api/v1/campaigns/{campaign_id}/members/{user_id}` | Removes a member from campaign and purges SpiceDB Zanzibar relationships (requires `manage`) |
-| `gateway-api` | GET | `/api/v1/campaigns/{campaign_id}/capabilities` | Returns the caller's `manage`, `run_session`, `play`, and `view` flags from SpiceDB checks (requires a verified token; non-members get all false) |
-| `gateway-api` | GET | `/api/v1/campaigns/{campaign_id}/sessions` | Lists all sessions and staging lobbies for a campaign (requires `view`) |
-| `gateway-api` | POST | `/api/v1/campaigns/{campaign_id}/sessions` | Creates a new session or staging lobby for a campaign (requires `run_session`) |
-| `gateway-api` | POST | `/api/v1/campaigns/{campaign_id}/roles` | Grants a campaign role (`dungeon_master`, `game_master`, `player`, `spectator`) as a SpiceDB tuple. Requires `manage`. `owner` returns 422. A failed write returns 503 |
+| `gateway-api` | GET | `/api/v1/campaigns` | Proxies to `game_session`: lists the campaigns the caller can `view` (owner-enforced; ADR-0015 a) |
+| `gateway-api` | POST | `/api/v1/campaigns` | Proxies to `game_session`: creates a campaign. The caller becomes its owner. Returns `201` |
+| `gateway-api` | GET | `/api/v1/campaigns/{campaign_id}` | Proxies to `game_session`: campaign overview (requires `view`). Unknown ID returns `404` |
+| `gateway-api` | PATCH | `/api/v1/campaigns/{campaign_id}` | Proxies to `game_session`: updates campaign fields (requires `manage`) |
+| `gateway-api` | POST | `/api/v1/campaigns/{campaign_id}/invites` | Proxies to `game_session`: issues an invite for `player` or `spectator` (requires `run_session`). Returns `201` |
+| `gateway-api` | POST | `/api/v1/campaigns/join` | Proxies to `game_session`: redeems an invite and records membership. A used-up invite returns `409` |
+| `gateway-api` | GET | `/api/v1/campaigns/{campaign_id}/members` | Proxies to `game_session`: owner and members (requires `view`). The gateway adds `character_name` from its character store |
+| `gateway-api` | DELETE | `/api/v1/campaigns/{campaign_id}/members/{user_id}` | Proxies to `game_session`: removes a member and revokes campaign relations (requires `manage`). The owner cannot be removed |
+| `gateway-api` | GET | `/api/v1/campaigns/{campaign_id}/capabilities` | Proxies to `game_session`: the caller's `manage`, `run_session`, `play`, and `view` flags. Non-members get all `false` |
+| `gateway-api` | GET | `/api/v1/campaigns/{campaign_id}/sessions` | Proxies to `game_session`: sessions and staging lobbies of a campaign (requires `view`) |
+| `gateway-api` | POST | `/api/v1/campaigns/{campaign_id}/sessions` | Proxies to `game_session`: creates a session or staging lobby (requires `run_session`). Returns `201` |
+| `gateway-api` | POST | `/api/v1/campaigns/{campaign_id}/roles` | Proxies to `game_session`: grants `dungeon_master`, `game_master`, `player`, or `spectator` (requires `manage`). `owner` returns `422`. A failed SpiceDB write returns `502` through the gateway |
 | `gateway-api` | GET | `/api/v1/campaigns/{campaign_id}/atlas` | Retrieves world atlas map layers, milestone pins, and geopolitical territories (requires `view`) |
 | `gateway-api` | GET | `/api/v1/campaigns/{campaign_id}/codex` | Retrieves campaign lore codex entries and cross-references (requires `view`) |
 | `gateway-api` | GET | `/api/v1/analytics/campaigns/{campaign_id}` | Retrieves campaign chronicle analytics and telemetry summary (requires `view`) |
