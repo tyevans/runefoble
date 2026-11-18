@@ -11,9 +11,8 @@ from game_session.events import STREAM_WEST_MARCHES
 from runefoble_auth.spicedb import MockSpiceDBClient
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.stream_events import assert_stream_events
 from tests.helpers.ws_identity import SIGNING_ISSUER
-
-from .conftest import assert_stream_event
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
@@ -39,7 +38,7 @@ def test_found_settlement_and_upgrade_tier_flow(
     assert found.status_code == 201
     sid = found.json()["settlement_id"]
     assert found.json()["scale"] == "hamlet" and found.json()["tier"] == 1
-    assert_stream_event(mock_bus, STREAM_WEST_MARCHES, "SettlementFounded")
+    assert_stream_events(mock_bus, "SettlementFounded", stream=STREAM_WEST_MARCHES)
 
     assert session_client.get(f"{url}/{sid}", headers=h).status_code == 200
 
@@ -52,7 +51,7 @@ def test_found_settlement_and_upgrade_tier_flow(
     u = upg.json()
     assert u["tier"] == 2 and u["scale"] == "village" and u["max_districts"] == 4
     assert "defensive_palisade" in u["districts"]
-    assert_stream_event(mock_bus, STREAM_WEST_MARCHES, "SettlementTierUpgraded")
+    assert_stream_events(mock_bus, "SettlementTierUpgraded", stream=STREAM_WEST_MARCHES)
 
 
 def test_establishment_creation_and_worker_assignment(
@@ -78,7 +77,7 @@ def test_establishment_creation_and_worker_assignment(
     )
     assert est_res.status_code == 201
     eid = est_res.json()["establishment_id"]
-    assert_stream_event(mock_bus, STREAM_WEST_MARCHES, "EstablishmentConstructed")
+    assert_stream_events(mock_bus, "EstablishmentConstructed", stream=STREAM_WEST_MARCHES)
 
     def _inv(i: str, s: int, p: int) -> dict:
         return {"item_id": i, "stock": s, "price_gp": p}
@@ -99,7 +98,7 @@ def test_establishment_creation_and_worker_assignment(
     assert worker_res.status_code == 201
     worker = worker_res.json()
     assert worker["role"] == "armorer" and worker["service_quality_contribution"] > 1.2
-    assert_stream_event(mock_bus, STREAM_WEST_MARCHES, "NPCWorkerAssigned")
+    assert_stream_events(mock_bus, "NPCWorkerAssigned", stream=STREAM_WEST_MARCHES)
 
     roster = session_client.get(f"/api/v1/establishments/{eid}/workers", headers=h).json()
     assert len(roster) == 1

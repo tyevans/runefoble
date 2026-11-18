@@ -9,15 +9,10 @@ Governed by Hard Invariant 7 and ADR-0015 (each service verifies its own token).
 
 from __future__ import annotations
 
-from collections.abc import Iterator
-
 import pytest
-from character_sheet import dependencies as sheet_deps
 from character_sheet.main import app as character_app
 from fastapi.testclient import TestClient
-from game_session import dependencies as session_deps
 from game_session.main import app as game_app
-from runefoble_platform.redis_bus import RedisStreamsEventBus
 
 from tests.helpers.campaign_analytics_service import AnalyticsService, wait_until
 from tests.helpers.ws_identity import SIGNING_ISSUER
@@ -26,18 +21,9 @@ pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
 @pytest.fixture
-def shared_transport(analytics_service: AnalyticsService) -> Iterator[None]:
+def shared_transport(analytics_service: AnalyticsService, use_redis_client) -> None:
     """Route game session and character sheet publishes to the analytics transport."""
-    bus = RedisStreamsEventBus(client=analytics_service.redis)
-    previous_session = session_deps.get_event_bus()
-    previous_sheet = sheet_deps.get_event_bus()
-    session_deps.set_event_bus(bus)
-    sheet_deps.set_event_bus(bus)
-    try:
-        yield
-    finally:
-        session_deps.set_event_bus(previous_session)
-        sheet_deps.set_event_bus(previous_sheet)
+    use_redis_client(analytics_service.redis)
 
 
 def _headers() -> dict[str, str]:

@@ -19,15 +19,12 @@ from runefoble_events.events import (
     WatcherActionProposed,
     WatcherActionVetoed,
 )
-from runefoble_platform.redis_bus import RedisStreamsEventBus
 from the_watcher.dependencies import (
     get_copilot_engine,
-    set_event_bus,
 )
 from the_watcher.main import app
 from the_watcher.models import ProposeActionRequest
 
-from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.spicedb_factory import bind_session_to_campaign
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
@@ -36,13 +33,11 @@ pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 @pytest.fixture(autouse=True)
 def clean_environment():
-    """Ensure clean SpiceDB, CopilotEngine, and event bus state before and after each test."""
-    set_event_bus(RedisStreamsEventBus(client=MockAsyncRedis()))
+    """Clear the CopilotEngine state before and after each test."""
     engine = get_copilot_engine()
     engine.clear()
     yield
     engine.clear()
-    set_event_bus(None)
 
 
 @pytest.fixture

@@ -12,9 +12,8 @@ from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import MockSpiceDBClient
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.stream_events import assert_stream_events
 from tests.helpers.ws_identity import SIGNING_ISSUER
-
-from .conftest import assert_event_emitted
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
@@ -107,7 +106,7 @@ async def test_blackbox_morale_swings_and_grievance_escalation(
     }
     patch_res = client.patch(f"/api/v1/npcs/{npc_id}/mood", json=patch_body, headers=h)
     assert patch_res.status_code == 200 and patch_res.json()["patience"] == 4
-    assert_event_emitted(mock_bus, "NPCMoodUpdated")
+    assert_stream_events(mock_bus, "NPCMoodUpdated")
 
     updated_q = client.get(f"/api/v1/establishments/{est_id}", headers=h).json()[
         "projected_service_quality"

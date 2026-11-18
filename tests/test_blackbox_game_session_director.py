@@ -12,9 +12,7 @@ from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
-from game_session.dependencies import set_event_bus
 from game_session.main import app as session_app
-from runefoble_platform.redis_bus import RedisStreamsEventBus
 
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.ws_identity import SIGNING_ISSUER
@@ -32,11 +30,8 @@ def client() -> TestClient:
 
 
 @pytest.fixture
-def stream_redis() -> Generator[MockAsyncRedis]:
-    mock_redis = MockAsyncRedis()
-    set_event_bus(RedisStreamsEventBus(client=mock_redis))
-    yield mock_redis
-    set_event_bus(None)
+def stream_redis(mock_bus) -> Generator[MockAsyncRedis]:
+    yield mock_bus
 
 
 def _create(client: TestClient) -> str:

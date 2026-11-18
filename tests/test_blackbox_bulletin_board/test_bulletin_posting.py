@@ -12,9 +12,8 @@ from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import MockSpiceDBClient
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.stream_events import assert_stream_events
 from tests.helpers.ws_identity import SIGNING_ISSUER
-
-from .conftest import assert_event_emitted
 
 
 def test_blackbox_bulletin_board_manifest_and_components(client: TestClient) -> None:
@@ -55,7 +54,7 @@ async def test_blackbox_pin_and_list_bulletin_notices(
         base_url, json=ordinance, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(mayor)}"}
     )
     assert ord_res.status_code == 201
-    assert_event_emitted(mock_bus, "BulletinNoticePinned")
+    assert_stream_events(mock_bus, "BulletinNoticePinned")
 
     # List all and filter by board_type and category
     all_notices = client.get(

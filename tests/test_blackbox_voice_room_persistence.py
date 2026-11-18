@@ -24,14 +24,11 @@ import pytest
 import voice_agent.main as va_main
 from fastapi.testclient import TestClient
 from gateway_api.main import app as gateway_app
-from gateway_api.main import set_event_bus
 from gateway_api.signaling import signaling_manager
 from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_platform.event_sourcing import get_event_store
-from runefoble_platform.redis_bus import RedisStreamsEventBus
 from voice_agent.room import VoiceRoomCoordinator, set_voice_room_coordinator
 
-from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.voice_identity import voice_auth_headers
 from tests.helpers.ws_identity import ws_subprotocols
 
@@ -77,12 +74,10 @@ def reset_coordinator() -> Iterator[None]:
 
 
 def test_joined_peer_is_still_present_after_a_coordinator_restart(
-    session_id: str, spicedb: MockSpiceDBClient
+    session_id: str, spicedb: MockSpiceDBClient, default_redis_event_bus
 ) -> None:
     """A peer joins through the WebSocket. A new coordinator then reads the room from the store."""
-    bus = RedisStreamsEventBus(client=MockAsyncRedis())
-    set_event_bus(bus)
-    va_main.set_event_bus(bus)
+    bus = default_redis_event_bus
     original = VoiceRoomCoordinator(event_bus=bus)
     set_voice_room_coordinator(original)
     signaling_manager._coordinator = original

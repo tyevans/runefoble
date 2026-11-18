@@ -13,10 +13,8 @@ from fastapi.responses import JSONResponse
 from httpx import ASGITransport, AsyncClient
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 from the_watcher.main import app as watcher_app
-from the_watcher.main import set_event_bus as watcher_set_event_bus
 
 from tests.helpers.live_services import closed_port_url, serve
-from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.spicedb_factory import bind_character_owner, make_table_runner
 from tests.helpers.watcher_engine import error_fields, select_worker_engine
 from tests.helpers.ws_identity import SIGNING_ISSUER
@@ -72,9 +70,8 @@ BOARD_TOKENS: dict[str, Any] = {
 
 
 @pytest.fixture
-def bus() -> RedisStreamsEventBus:
-    event_bus = RedisStreamsEventBus(client=MockAsyncRedis())
-    watcher_set_event_bus(event_bus)
+def bus(default_redis_event_bus) -> RedisStreamsEventBus:
+    event_bus = default_redis_event_bus
     return event_bus
 
 

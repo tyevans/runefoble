@@ -14,7 +14,7 @@ import pytest
 from fastapi.testclient import TestClient
 from runefoble_events.events import VoiceAudioConditioned
 from runefoble_platform.redis_bus import RedisStreamsEventBus
-from voice_agent.main import app, set_event_bus
+from voice_agent.main import app
 
 from tests.helpers.audio_synth import generate_pcm_sine
 from tests.helpers.mock_redis import MockAsyncRedis
@@ -69,11 +69,9 @@ def mock_redis() -> MockAsyncRedis:
 
 
 @pytest.fixture(autouse=True)
-def mock_event_bus(mock_redis: MockAsyncRedis):
-    bus = RedisStreamsEventBus(client=mock_redis)
-    set_event_bus(bus)
+def mock_event_bus(mock_redis: MockAsyncRedis, use_redis_client):
+    bus = use_redis_client(mock_redis)
     yield bus
-    set_event_bus(None)
 
 
 # ---------------------------------------------------------------------------

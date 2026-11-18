@@ -16,7 +16,6 @@ from collections.abc import Iterator
 import jwt
 import pytest
 from fastapi.testclient import TestClient
-from game_session.dependencies import set_spicedb_client as set_session_spicedb
 from game_session.settlement.auth.tokens import (
     get_zitadel_auth_service as get_session_auth,
 )
@@ -28,7 +27,6 @@ from gateway_api.auth import (
     set_zitadel_auth_service,
 )
 from gateway_api.main import app
-from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
 from starlette.websockets import WebSocketDisconnect
 
@@ -67,7 +65,6 @@ def client(issuer: SigningTestIssuer) -> Iterator[TestClient]:
     previous_session = get_session_auth()
     set_zitadel_auth_service(issuer.verifier())
     set_session_auth(issuer.verifier())
-    set_session_spicedb(MockSpiceDBClient())
     yield TestClient(app)
     set_zitadel_auth_service(previous_gateway)
     set_session_auth(previous_session)

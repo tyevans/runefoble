@@ -6,7 +6,6 @@ from typing import Any
 import pytest
 from board_state.main import app as board_app
 from fastapi.testclient import TestClient
-from gateway_api.main import set_event_bus
 
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
@@ -21,9 +20,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 
 @pytest.fixture(autouse=True)
 def reset_test_state():
-    set_event_bus(None)
     yield
-    set_event_bus(None)
 
 
 @pytest.fixture

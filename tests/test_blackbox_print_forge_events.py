@@ -10,12 +10,9 @@ from __future__ import annotations
 from uuid import uuid4
 
 import pytest
-from asset_forge.dependencies import set_event_bus
 from asset_forge.main import app
 from fastapi.testclient import TestClient
-from runefoble_platform.redis_bus import RedisStreamsEventBus
 
-from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 
@@ -24,19 +21,9 @@ def auth_headers(sub: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
 
 
-@pytest.fixture(autouse=True)
-def clean_environment():
-    """Reset the injected event bus before and after each test."""
-    set_event_bus(None)
-    yield
-    set_event_bus(None)
-
-
 @pytest.mark.asyncio
-async def test_standee_export_publishes_print_pdf_forged(spicedb):
+async def test_standee_export_publishes_print_pdf_forged(spicedb, mock_bus):
     """Exporting standees through the public route writes one PrintPdfForged entry."""
-    mock_redis = MockAsyncRedis()
-    set_event_bus(RedisStreamsEventBus(client=mock_redis))
     client = TestClient(app, headers=auth_headers("crafter-rowan"))
     campaign_id = str(uuid4())
     await spicedb.write_relationship(
@@ -61,7 +48,7 @@ async def test_standee_export_publishes_print_pdf_forged(spicedb):
 
     entries = [
         payload
-        for _, payload in mock_redis.streams.get("runefoble.events.asset", [])
+        for _, payload in mock_bus.streams.get("runefoble.events.asset", [])
         if payload["event_type"] == "runefoble.events.asset.print_pdf_forged"
     ]
     assert len(entries) == 1

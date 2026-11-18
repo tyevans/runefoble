@@ -33,29 +33,15 @@ from character_sheet.crafting.recipes import Recipe as ModuleRecipe
 from character_sheet.dependencies import (
     STREAM_CRAFTING,
 )
-from character_sheet.dependencies import (
-    set_event_bus as set_char_event_bus,
-)
 from character_sheet.main import app as character_app
 from fastapi.testclient import TestClient
-from runefoble_platform.redis_bus import RedisStreamsEventBus
 
-from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 
 def auth_headers(sub: str) -> dict[str, str]:
     """Return Bearer headers for a token that the service verifier accepts."""
     return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
-
-
-@pytest.fixture
-def mock_bus():
-    redis_client = MockAsyncRedis()
-    bus = RedisStreamsEventBus(client=redis_client)
-    set_char_event_bus(bus)
-    yield redis_client
-    set_char_event_bus(None)
 
 
 @pytest.fixture

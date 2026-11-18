@@ -31,7 +31,7 @@ async def test_start_up_fails_when_redis_url_is_empty():
             pass
 
 
-def test_service_app_does_not_start_when_redis_is_unreachable(default_redis_event_bus):
+def test_service_app_does_not_start_when_redis_is_unreachable():
     board_provider.set(RedisStreamsEventBus(redis_url="redis://127.0.0.1:1/0"))
 
     with (

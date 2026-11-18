@@ -6,7 +6,6 @@ import uuid
 
 import pytest
 from gateway_api.main import app as gateway_app
-from gateway_api.main import set_event_bus
 from httpx import ASGITransport, AsyncClient
 from opentelemetry import trace
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
@@ -104,7 +103,7 @@ async def test_blackbox_w3c_incoming_trace_propagation():
 
 
 @pytest.mark.asyncio
-async def test_blackbox_trace_propagation_across_redis_streams():
+async def test_blackbox_trace_propagation_across_redis_streams(mock_bus):
     """Verify trace context injection into Redis Streams and child span extraction."""
     memory_exporter = InMemorySpanExporter()
     settings = PlatformSettings(environment="test")
@@ -117,10 +116,6 @@ async def test_blackbox_trace_propagation_across_redis_streams():
         force=True,
     )
 
-    mock_redis = MockAsyncRedis()
-    event_bus = RedisStreamsEventBus(client=mock_redis)
-    set_event_bus(event_bus)
-
     stream_name = "runefoble.events.spectator"
 
     # Execute request to spectator frontdoor endpoint that dispatches a domain event
@@ -130,10 +125,10 @@ async def test_blackbox_trace_propagation_across_redis_streams():
         assert res.status_code == 200
 
     # Verify event was published to mock Redis stream
-    assert stream_name in mock_redis.streams
-    assert len(mock_redis.streams[stream_name]) == 1
+    assert stream_name in mock_bus.streams
+    assert len(mock_bus.streams[stream_name]) == 1
 
-    _msg_id, fields = mock_redis.streams[stream_name][0]
+    _msg_id, fields = mock_bus.streams[stream_name][0]
     assert "traceparent" in fields, "Stream entry fields must include injected traceparent"
 
     # Extract trace context and verify child span inherits parent trace ID

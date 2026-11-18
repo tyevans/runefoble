@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import pytest
 from fastapi.testclient import TestClient
-from gateway_api.main import app, set_event_bus
+from gateway_api.main import app
 from gateway_api.websocket_validator import (
     DM_ACTIONS,
     HEALTH_ACTIONS,
@@ -20,7 +20,6 @@ from gateway_api.websocket_validator import (
     WebSocketActionValidator,
 )
 from runefoble_auth.factory import get_spicedb_client
-from runefoble_platform.redis_bus import RedisStreamsEventBus
 
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.ws_identity import ws_subprotocols
@@ -31,9 +30,7 @@ pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 @pytest.fixture(autouse=True)
 def reset_gateway_state():
     """Reset SpiceDB client and event bus before and after each test."""
-    set_event_bus(None)
     yield
-    set_event_bus(None)
 
 
 @pytest.mark.asyncio
@@ -79,7 +76,7 @@ async def test_websocket_action_validator_direct_evaluation():
     assert "spawn_monster" in DM_ACTIONS
 
 
-def test_frontdoor_websocket_lifecycle_and_broadcast():
+def test_frontdoor_websocket_lifecycle_and_broadcast(mock_bus: MockAsyncRedis):
     """Frontdoor test: connect, mutate state, verify broadcast and Redis stream publishing."""
     campaign_id = "camp-frontdoor-flow"
     dm_id = "dm_gandalf"
@@ -91,10 +88,7 @@ def test_frontdoor_websocket_lifecycle_and_broadcast():
         spicedb.write_relationship("campaign", campaign_id, "dungeon_master", "user", dm_id)
     )
 
-    mock_redis = MockAsyncRedis()
-    bus = RedisStreamsEventBus(redis_url="redis://fake:6379")
-    bus._client = mock_redis
-    set_event_bus(bus)
+    mock_redis = mock_bus
 
     client = TestClient(app)
     with client.websocket_connect(

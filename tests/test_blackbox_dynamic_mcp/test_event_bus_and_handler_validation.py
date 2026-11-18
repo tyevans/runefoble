@@ -16,7 +16,6 @@ from gateway_mcp.dynamic import (
     DynamicToolDefinition,
     DynamicToolRegistry,
     get_event_bus,
-    set_event_bus,
 )
 from gateway_mcp.dynamic.events import publish_system_event
 from gateway_mcp.server import mcp
@@ -78,9 +77,9 @@ def test_blackbox_gateway_startup_refuses_missing_redis_url():
         configure_dynamic_tool_event_bus("")
 
 
-def test_blackbox_publish_failure_is_logged(caplog: pytest.LogCaptureFixture):
+def test_blackbox_publish_failure_is_logged(caplog: pytest.LogCaptureFixture, use_redis_client):
     """A failed publish is logged as an error with the event type and cause."""
-    set_event_bus(RedisStreamsEventBus(client=_UnreachableRedisClient()))
+    use_redis_client(_UnreachableRedisClient())
     event = DynamicToolUnregisteredEvent(tool_name="probe", unregistered_by=None, campaign_id=None)
 
     with caplog.at_level(logging.ERROR, logger=EVENTS_LOGGER):
@@ -90,9 +89,9 @@ def test_blackbox_publish_failure_is_logged(caplog: pytest.LogCaptureFixture):
     assert "redis unreachable" in caplog.text
 
 
-def test_blackbox_publish_without_bus_is_logged(caplog: pytest.LogCaptureFixture):
+def test_blackbox_publish_without_bus_is_logged(caplog: pytest.LogCaptureFixture, use_event_bus):
     """An event with no injected bus is logged as dropped, never swallowed."""
-    set_event_bus(None)
+    use_event_bus(None)
     event = DynamicToolUnregisteredEvent(tool_name="probe", unregistered_by=None, campaign_id=None)
 
     with caplog.at_level(logging.ERROR, logger=EVENTS_LOGGER):
@@ -104,7 +103,6 @@ def test_blackbox_publish_without_bus_is_logged(caplog: pytest.LogCaptureFixture
 
 def test_blackbox_registration_without_event_loop_is_logged(caplog: pytest.LogCaptureFixture):
     """A registration outside a running loop logs the event it could not dispatch."""
-    set_event_bus(None)
     registry = DynamicToolRegistry()
     definition = DynamicToolDefinition(name="sync_probe", handler={"ok": True})
 

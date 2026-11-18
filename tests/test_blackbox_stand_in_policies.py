@@ -2,12 +2,11 @@
 
 import pytest
 from character_sheet.main import app as character_app
-from character_sheet.main import set_event_bus as character_set_event_bus
 from character_sheet.main import set_spicedb_client as character_set_spicedb
 from httpx import ASGITransport, AsyncClient
 from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_events.events import StandInPolicyUpdated, StandInStabilized
-from runefoble_platform.redis_bus import RedisStreamsEventBus, deserialize_event
+from runefoble_platform.redis_bus import deserialize_event
 from the_watcher.watcher_ai import TheWatcherEngine
 
 from tests.helpers.mock_redis import MockAsyncRedis
@@ -44,10 +43,11 @@ def watcher_engine() -> TheWatcherEngine:
 
 
 @pytest.mark.asyncio
-async def test_character_guardrails_configuration_and_events(mock_redis: MockAsyncRedis):
+async def test_character_guardrails_configuration_and_events(
+    mock_redis: MockAsyncRedis, use_redis_client
+):
     """PUT /api/v1/characters/{id}/guardrails configures tactical constraints and emits event."""
-    bus = RedisStreamsEventBus(client=mock_redis)
-    character_set_event_bus(bus)
+    use_redis_client(mock_redis)
     spicedb = MockSpiceDBClient()
     character_set_spicedb(spicedb)
 
@@ -165,10 +165,9 @@ def test_stand_in_guardrails_evaluation_and_humorous_adaptation(watcher_engine: 
 
 
 @pytest.mark.asyncio
-async def test_zero_hp_permadeath_safeguard_invariant(mock_redis: MockAsyncRedis):
+async def test_zero_hp_permadeath_safeguard_invariant(mock_redis: MockAsyncRedis, use_redis_client):
     """Aggregate invariant: Damage reducing a stand-in character to <= 0 HP stabilizes them."""
-    bus = RedisStreamsEventBus(client=mock_redis)
-    character_set_event_bus(bus)
+    use_redis_client(mock_redis)
 
     async with AsyncClient(
         transport=ASGITransport(app=character_app),

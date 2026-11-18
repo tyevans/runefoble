@@ -11,7 +11,6 @@ import pytest
 from board_state.main import app as board_app
 from fastapi.testclient import TestClient
 from gateway_api.main import app as gateway_app
-from gateway_api.main import set_event_bus
 from runefoble_auth.factory import get_spicedb_client
 
 from tests.helpers.ws_identity import SIGNING_ISSUER, ws_subprotocols
@@ -27,9 +26,7 @@ pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 @pytest.fixture(autouse=True)
 def reset_spicedb_state():
-    set_event_bus(None)
     yield
-    set_event_bus(None)
 
 
 def test_http_preview_endpoint_waypoint_measuring_and_terrain_hazards():

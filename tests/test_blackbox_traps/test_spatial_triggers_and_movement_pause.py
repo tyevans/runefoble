@@ -16,18 +16,13 @@ from uuid import uuid4
 import pytest
 from board_state.dependencies import (
     get_spicedb_client,
-    set_event_bus,
-    set_spicedb_client,
 )
 from board_state.main import app as board_app
 from fastapi.testclient import TestClient
-from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
-from runefoble_platform.redis_bus import RedisStreamsEventBus
+from runefoble_auth.spicedb import MockSpiceDBClient
 
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.ws_identity import SIGNING_ISSUER
-
-_mock_redis: MockAsyncRedis | None = None
 
 
 def bearer(sub: str) -> dict[str, str]:
@@ -35,21 +30,8 @@ def bearer(sub: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
 
 
-@pytest.fixture(autouse=True)
-def setup_auth_and_bus():
-    global _mock_redis
-    mock_spicedb = MockSpiceDBClient()
-    set_spicedb_client(mock_spicedb)
-    _mock_redis = MockAsyncRedis()
-    bus = RedisStreamsEventBus(client=_mock_redis)
-    set_event_bus(bus)
-    yield
-    set_spicedb_client(SpiceDBClient())
-    set_event_bus(None)
-
-
 @pytest.mark.asyncio
-async def test_step_trap_breach_pauses_movement():
+async def test_step_trap_breach_pauses_movement(mock_bus: MockAsyncRedis):
     """Verify stepping onto a secret trap pauses token movement at the breach cell."""
     spicedb: MockSpiceDBClient = get_spicedb_client()
     client = TestClient(board_app, headers=bearer("user-test"))
@@ -112,9 +94,8 @@ async def test_step_trap_breach_pauses_movement():
     assert sprung_trap["is_armed"] is False
 
     # 6. Verify event was published over Redis Streams
-    assert _mock_redis is not None
-    assert "runefoble.events.board" in _mock_redis.streams
-    stream_events = _mock_redis.streams["runefoble.events.board"]
+    assert "runefoble.events.board" in mock_bus.streams
+    stream_events = mock_bus.streams["runefoble.events.board"]
     assert any(
         e[1].get("event_type") in ("TrapSprungEvent", "runefoble.events.board.trap_sprung")
         for e in stream_events

@@ -24,7 +24,7 @@ from runefoble_events.voice_barge_in import (
     TTSStreamAttenuatedEvent,
 )
 from runefoble_platform.redis_bus import RedisStreamsEventBus, deserialize_event
-from voice_agent.main import app, set_event_bus
+from voice_agent.main import app
 
 from tests.helpers.audio_synth import generate_pcm_silence, generate_pcm_sine
 from tests.helpers.mock_redis import MockAsyncRedis
@@ -62,11 +62,9 @@ def mock_redis() -> MockAsyncRedis:
 
 
 @pytest.fixture
-def mock_event_bus(mock_redis: MockAsyncRedis):
-    bus = RedisStreamsEventBus(client=mock_redis)
-    set_event_bus(bus)
+def mock_event_bus(mock_redis: MockAsyncRedis, use_redis_client):
+    bus = use_redis_client(mock_redis)
     yield bus
-    set_event_bus(None)
 
 
 @pytest.fixture

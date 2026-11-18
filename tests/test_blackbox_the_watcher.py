@@ -5,9 +5,8 @@ import uuid
 import pytest
 from httpx import ASGITransport, AsyncClient
 from runefoble_events.events import SpeechIntentParsed, TokenMoved, WatcherNarrationGenerated
-from runefoble_platform.redis_bus import RedisStreamsEventBus, deserialize_event
+from runefoble_platform.redis_bus import deserialize_event
 from the_watcher.main import app as watcher_app
-from the_watcher.main import set_event_bus as watcher_set_event_bus
 
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.spicedb_factory import bind_character_owner, make_table_runner
@@ -31,10 +30,9 @@ def mock_redis() -> MockAsyncRedis:
 
 
 @pytest.mark.asyncio
-async def test_blackbox_coordinate_movement_frontdoor(mock_redis: MockAsyncRedis):
+async def test_blackbox_coordinate_movement_frontdoor(mock_redis: MockAsyncRedis, use_redis_client):
     sid, cid = await _bound_session()
-    event_bus = RedisStreamsEventBus(client=mock_redis)
-    watcher_set_event_bus(event_bus)
+    use_redis_client(mock_redis)
 
     transport = ASGITransport(app=watcher_app)
     async with AsyncClient(
@@ -81,10 +79,11 @@ async def test_blackbox_coordinate_movement_frontdoor(mock_redis: MockAsyncRedis
 
 
 @pytest.mark.asyncio
-async def test_blackbox_cardinal_movement_with_boundary_clamping(mock_redis: MockAsyncRedis):
+async def test_blackbox_cardinal_movement_with_boundary_clamping(
+    mock_redis: MockAsyncRedis, use_redis_client
+):
     sid, cid = await _bound_session()
-    event_bus = RedisStreamsEventBus(client=mock_redis)
-    watcher_set_event_bus(event_bus)
+    use_redis_client(mock_redis)
 
     transport = ASGITransport(app=watcher_app)
     async with AsyncClient(
@@ -121,10 +120,11 @@ async def test_blackbox_cardinal_movement_with_boundary_clamping(mock_redis: Moc
 
 
 @pytest.mark.asyncio
-async def test_blackbox_intent_endpoint_attack_and_spell(mock_redis: MockAsyncRedis):
+async def test_blackbox_intent_endpoint_attack_and_spell(
+    mock_redis: MockAsyncRedis, use_redis_client
+):
     sid, cid = await _bound_session()
-    event_bus = RedisStreamsEventBus(client=mock_redis)
-    watcher_set_event_bus(event_bus)
+    use_redis_client(mock_redis)
 
     transport = ASGITransport(app=watcher_app)
     async with AsyncClient(
@@ -167,10 +167,11 @@ async def test_blackbox_intent_endpoint_attack_and_spell(mock_redis: MockAsyncRe
 
 
 @pytest.mark.asyncio
-async def test_blackbox_skill_check_and_dice_roll_frontdoors(mock_redis: MockAsyncRedis):
+async def test_blackbox_skill_check_and_dice_roll_frontdoors(
+    mock_redis: MockAsyncRedis, use_redis_client
+):
     sid, cid = await _bound_session()
-    event_bus = RedisStreamsEventBus(client=mock_redis)
-    watcher_set_event_bus(event_bus)
+    use_redis_client(mock_redis)
 
     transport = ASGITransport(app=watcher_app)
     async with AsyncClient(

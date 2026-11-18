@@ -14,14 +14,12 @@ import asyncio
 import json
 
 import pytest
-import voice_agent.main as va_main
 from fastapi import WebSocketDisconnect
 from fastapi.testclient import TestClient
-from gateway_api.main import app, set_event_bus
+from gateway_api.main import app
 from gateway_api.signaling import signaling_manager
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.spicedb import MockSpiceDBClient
-from runefoble_platform.redis_bus import RedisStreamsEventBus
 from voice_agent.room import VoiceRoomCoordinator, set_voice_room_coordinator
 
 from tests.helpers.mock_redis import MockAsyncRedis
@@ -31,14 +29,11 @@ pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
 @pytest.fixture(autouse=True)
-def reset_voice_signaling_environment():
+def reset_voice_signaling_environment(default_redis_event_bus, mock_bus):
     """Reset SpiceDB client, Redis event bus, and voice room coordinator before each test."""
     mock_spicedb = get_spicedb_client()
 
-    mock_redis = MockAsyncRedis()
-    bus = RedisStreamsEventBus(client=mock_redis)
-    set_event_bus(bus)
-    va_main.set_event_bus(bus)
+    bus = default_redis_event_bus
 
     coord = VoiceRoomCoordinator(event_bus=bus)
     set_voice_room_coordinator(coord)
@@ -50,7 +45,7 @@ def reset_voice_signaling_environment():
 
     yield {
         "spicedb": mock_spicedb,
-        "redis": mock_redis,
+        "redis": mock_bus,
         "bus": bus,
         "coordinator": coord,
     }
@@ -58,8 +53,6 @@ def reset_voice_signaling_environment():
     signaling_manager.active_rooms.clear()
     signaling_manager.peer_sessions.clear()
     signaling_manager._coordinator = None
-    va_main.set_event_bus(None)
-    set_event_bus(None)
     set_voice_room_coordinator(None)
 
 

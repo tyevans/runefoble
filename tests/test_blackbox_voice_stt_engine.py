@@ -15,9 +15,8 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 from runefoble_events.events import PlayerSpokeEvent, VoiceTranscriptionFailed
-from runefoble_platform.redis_bus import RedisStreamsEventBus, deserialize_event
+from runefoble_platform.redis_bus import deserialize_event
 from voice_agent.main import app as voice_app
-from voice_agent.main import set_event_bus as voice_set_event_bus
 from voice_agent.stt import set_streaming_pipeline
 from voice_agent.synthesis_engine import set_speech_synthesizer
 
@@ -56,7 +55,7 @@ def _stream_events(mock_redis: MockAsyncRedis, stream: str) -> list:
 
 @pytest.fixture
 def production_engine_client(
-    monkeypatch: pytest.MonkeyPatch, mock_redis: MockAsyncRedis, tmp_path: Path
+    monkeypatch: pytest.MonkeyPatch, mock_redis: MockAsyncRedis, tmp_path: Path, use_redis_client
 ) -> Generator[TestClient]:
     """Voice app wired to the production engine, forced unavailable through settings.
 
@@ -71,9 +70,8 @@ def production_engine_client(
     monkeypatch.setenv("RUNEFOBLE_VOICE_TTS_BINARY", str(stub))
     set_speech_synthesizer(None)
     set_streaming_pipeline(None)
-    voice_set_event_bus(RedisStreamsEventBus(client=mock_redis))
+    use_redis_client(mock_redis)
     yield TestClient(voice_app, headers=voice_auth_headers())
-    voice_set_event_bus(None)
     set_streaming_pipeline(None)
     set_speech_synthesizer(None)
 

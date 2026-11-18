@@ -4,9 +4,8 @@ import asyncio
 
 import pytest
 from fastapi.testclient import TestClient
-from gateway_api.main import app, set_event_bus
+from gateway_api.main import app
 from runefoble_auth.factory import get_spicedb_client
-from runefoble_platform.redis_bus import RedisStreamsEventBus
 
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.ws_identity import ws_subprotocols
@@ -17,9 +16,7 @@ pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 @pytest.fixture(autouse=True)
 def reset_state():
     """Reset SpiceDB client and event bus before and after each test."""
-    set_event_bus(None)
     yield
-    set_event_bus(None)
 
 
 def _grant(resource_type: str, resource_id: str, relation: str, subject_id: str) -> None:
@@ -164,15 +161,12 @@ def test_character_hp_modification_permissions():
         assert err["action"] == "modify_hp"
 
 
-def test_redis_publishing_on_authorized_and_rejection_suppression():
+def test_redis_publishing_on_authorized_and_rejection_suppression(mock_bus: MockAsyncRedis):
     """Verify that authorized mutations are published to Redis, while denied actions are suppressed."""
     campaign_id, dm_id = "camp-redis-publish", "dm_elminster"
     _grant("campaign", campaign_id, "dungeon_master", dm_id)
 
-    mock_redis = MockAsyncRedis()
-    bus = RedisStreamsEventBus(redis_url="redis://fake:6379")
-    bus._client = mock_redis
-    set_event_bus(bus)
+    mock_redis = mock_bus
 
     client = TestClient(app)
     with client.websocket_connect(

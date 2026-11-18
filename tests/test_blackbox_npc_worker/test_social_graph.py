@@ -12,9 +12,8 @@ from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import MockSpiceDBClient
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.stream_events import assert_stream_events
 from tests.helpers.ws_identity import SIGNING_ISSUER
-
-from .conftest import assert_event_emitted
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
@@ -48,7 +47,7 @@ async def test_blackbox_social_graph_edges_and_redstring_serialization(
         f"/api/v1/establishments/{est_id}/workers", json=worker_payload, headers=h
     ).json()
     npc_id = worker["npc_id"]
-    assert_event_emitted(mock_bus, "NPCRelationshipFormed")
+    assert_stream_events(mock_bus, "NPCRelationshipFormed")
 
     # Form secondary mentor tie
     mentor_payload = {"target_npc": "leo", "relation": "mentor", "intensity": 0.8}

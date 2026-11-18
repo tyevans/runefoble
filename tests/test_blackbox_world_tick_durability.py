@@ -24,10 +24,8 @@ from runefoble_platform.event_sourcing import (
     AggregateRepository,
     InMemoryEventStore,
 )
-from runefoble_platform.redis_bus import RedisStreamsEventBus
 from the_watcher.dependencies import (
     set_campaign_world_repo,
-    set_event_bus,
     set_faction_repo,
     set_faction_simulation_engine,
 )
@@ -46,7 +44,7 @@ WORLD_TICK_TYPE = "runefoble.events.watcher.world_tick_executed"
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
-def _boot(store: InMemoryEventStore, redis: MockAsyncRedis) -> None:
+def _boot(store: InMemoryEventStore) -> None:
     """Start a fresh process: new engine and repositories over the durable store."""
     set_faction_repo(
         AggregateRepository(
@@ -63,13 +61,11 @@ def _boot(store: InMemoryEventStore, redis: MockAsyncRedis) -> None:
         )
     )
     set_faction_simulation_engine(FactionSimulationEngine())
-    set_event_bus(RedisStreamsEventBus(client=redis))
 
 
 @pytest.fixture(autouse=True)
 def durable_environment():
     yield
-    set_event_bus(None)
     set_faction_repo(None)
     set_campaign_world_repo(None)
     set_faction_simulation_engine(FactionSimulationEngine())
@@ -79,8 +75,7 @@ def durable_environment():
 async def test_tick_count_registry_and_latest_bulletin_survive_restart(trusted_ws_issuer):
     """After a restart the tick resumes at 3, the registry keeps one faction, and no defaults return."""
     store = InMemoryEventStore()
-    redis = MockAsyncRedis()
-    _boot(store, redis)
+    _boot(store)
     client = TestClient(app)
 
     camp_id = str(uuid4())
@@ -119,7 +114,7 @@ async def test_tick_count_registry_and_latest_bulletin_survive_restart(trusted_w
     assert last_tick.json()["tick_number"] == 2
     bulletin_before_restart = last_tick.json()["intelligence_bulletin"]
 
-    _boot(store, redis)
+    _boot(store)
     client = TestClient(app)
 
     resumed = client.post(
@@ -147,11 +142,13 @@ async def test_tick_count_registry_and_latest_bulletin_survive_restart(trusted_w
 
 
 @pytest.mark.asyncio
-async def test_each_world_tick_writes_one_stream_entry_in_order(trusted_ws_issuer):
+async def test_each_world_tick_writes_one_stream_entry_in_order(
+    trusted_ws_issuer, mock_bus: MockAsyncRedis
+):
     """Three ticks, spread across a restart, write three world_tick_executed entries in order."""
     store = InMemoryEventStore()
-    redis = MockAsyncRedis()
-    _boot(store, redis)
+    redis = mock_bus
+    _boot(store)
     client = TestClient(app)
 
     camp_id = str(uuid4())
@@ -176,7 +173,7 @@ async def test_each_world_tick_writes_one_stream_entry_in_order(trusted_ws_issue
         headers=headers,
     )
 
-    _boot(store, redis)
+    _boot(store)
     client = TestClient(app)
     res = client.post(
         f"/api/v1/campaigns/{camp_id}/world-tick",

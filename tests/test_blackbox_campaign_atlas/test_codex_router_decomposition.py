@@ -14,7 +14,6 @@ from __future__ import annotations
 from uuid import uuid4
 
 import pytest
-from campaign_lore.identity import set_zitadel_auth_service
 from campaign_lore.main import app as lore_app
 from campaign_lore.routers.codex import router
 from campaign_lore.routers.codex.entries import (
@@ -48,14 +47,6 @@ VISITOR_SUBJECT = "lore-test-visitor"
 def _bearer(user_id: str) -> dict[str, str]:
     """Return headers carrying a signed bearer token for `user_id`."""
     return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(user_id)}"}
-
-
-@pytest.fixture(autouse=True)
-def _trust_signing_issuer():
-    """Campaign Lore verifies bearer tokens with the test issuer for each test in this module."""
-    set_zitadel_auth_service(SIGNING_ISSUER.verifier())
-    yield
-    set_zitadel_auth_service(None)
 
 
 def test_codex_router_exposes_endpoints_and_models() -> None:

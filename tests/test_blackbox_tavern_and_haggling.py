@@ -8,17 +8,12 @@ from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
-from game_session.dependencies import (
-    set_event_bus as set_session_event_bus,
-)
 from game_session.events import STREAM_TAVERN
 from game_session.main import app as session_app
 from gateway_api.main import app as gateway_app
-from runefoble_platform.redis_bus import RedisStreamsEventBus
 from voice_agent.main import app as voice_app
 
 from tests.helpers.live_services import serve
-from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.voice_identity import voice_auth_headers
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
@@ -37,15 +32,6 @@ def _owned_session(client: TestClient) -> str:
     )
     assert session.status_code == 201, session.text
     return session.json()["id"]
-
-
-@pytest.fixture
-def mock_bus():
-    redis_client = MockAsyncRedis()
-    bus = RedisStreamsEventBus(client=redis_client)
-    set_session_event_bus(bus)
-    yield redis_client
-    set_session_event_bus(None)
 
 
 @pytest.fixture

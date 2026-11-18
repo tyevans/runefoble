@@ -16,20 +16,10 @@ import pytest
 from eventsource.domain.event_registry import get_event_class_or_none
 from fastapi.testclient import TestClient
 from gateway_api.main import app as gateway_app
-from gateway_api.main import set_event_bus
 from runefoble_events.events import AssetDeleted, AssetUploaded
 from runefoble_platform.bus import bus as platform_bus
-from runefoble_platform.redis_bus import RedisStreamsEventBus
 
-from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.silo_fixtures import PNG_SAMPLE_BYTES
-
-
-@pytest.fixture(autouse=True)
-def _isolate_storage(clean_storage_and_bus):
-    """Ensure clean storage and bus before and after each test."""
-    yield
-
 
 # --- 1. Event Registration & CloudEvents Compliance Tests ---
 
@@ -73,12 +63,8 @@ def test_asset_events_registration_and_cloudevents():
 
 
 @pytest.mark.asyncio
-async def test_blackbox_event_emission_on_upload_and_delete(signing_issuer):
+async def test_blackbox_event_emission_on_upload_and_delete(signing_issuer, mock_bus):
     """Verify AssetUploaded and AssetDeleted domain events are emitted to event buses."""
-    mock_redis = MockAsyncRedis()
-    mock_bus = RedisStreamsEventBus(client=mock_redis)
-    set_event_bus(mock_bus)
-
     received_in_memory_events: list[Any] = []
 
     async def in_memory_upload_handler(event: Any):
@@ -100,7 +86,7 @@ async def test_blackbox_event_emission_on_upload_and_delete(signing_issuer):
     asset_id = upload_res.json()["asset_id"]
 
     # Check Redis stream events
-    stream_events = mock_redis.streams.get("runefoble.events.asset", [])
+    stream_events = mock_bus.streams.get("runefoble.events.asset", [])
     assert len(stream_events) >= 1
     _evt_id, payload = stream_events[0]
     assert payload["event_type"] == "runefoble.events.asset.uploaded"

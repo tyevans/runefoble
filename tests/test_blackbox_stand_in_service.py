@@ -10,12 +10,10 @@ from uuid import uuid4
 
 import pytest
 from game_session.main import app as session_app
-from game_session.main import set_event_bus as session_set_event_bus
 from httpx import ASGITransport, AsyncClient
 from runefoble_events.events import AbsencePenaltyApplied, StandInActionDecided
-from runefoble_platform.redis_bus import RedisStreamsEventBus, deserialize_event
+from runefoble_platform.redis_bus import deserialize_event
 from the_watcher.main import app as watcher_app
-from the_watcher.main import set_event_bus as watcher_set_event_bus
 
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.spicedb_factory import make_table_runner
@@ -40,10 +38,9 @@ def mock_redis() -> MockAsyncRedis:
 
 
 @pytest.mark.asyncio
-async def test_watcher_stand_in_event_emission(mock_redis: MockAsyncRedis):
+async def test_watcher_stand_in_event_emission(mock_redis: MockAsyncRedis, use_redis_client):
     """POST /api/v1/watcher/stand-in/act must publish StandInActionDecided and AbsencePenaltyApplied."""
-    event_bus = RedisStreamsEventBus(client=mock_redis)
-    watcher_set_event_bus(event_bus)
+    use_redis_client(mock_redis)
 
     session_id, campaign_id = str(uuid4()), str(uuid4())
     await make_table_runner("test-user", session_id, campaign_id)
@@ -101,11 +98,10 @@ async def test_watcher_stand_in_event_emission(mock_redis: MockAsyncRedis):
 
 @pytest.mark.asyncio
 async def test_game_session_auto_pilot_turn(
-    mock_redis: MockAsyncRedis, monkeypatch: pytest.MonkeyPatch
+    mock_redis: MockAsyncRedis, monkeypatch: pytest.MonkeyPatch, use_redis_client
 ):
     """POST /api/v1/sessions/{session_id}/turns/auto-pilot must advance turn and record stand-in action."""
-    event_bus = RedisStreamsEventBus(client=mock_redis)
-    session_set_event_bus(event_bus)
+    use_redis_client(mock_redis)
 
     transport = ASGITransport(app=session_app)
     async with AsyncClient(

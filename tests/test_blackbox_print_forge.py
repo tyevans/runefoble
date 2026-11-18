@@ -15,7 +15,7 @@ import struct
 from uuid import uuid4
 
 import pytest
-from asset_forge.dependencies import get_storage, set_event_bus
+from asset_forge.dependencies import get_storage
 from asset_forge.main import app
 from fastapi.testclient import TestClient
 
@@ -36,12 +36,9 @@ class MockEventBus:
 
 
 @pytest.fixture(autouse=True)
-def clean_environment():
-    """Ensure clean storage and bus states before and after each test."""
-    bus = MockEventBus()
-    set_event_bus(bus)
-    yield bus
-    set_event_bus(None)
+def clean_environment(use_event_bus):
+    """Record published events on a plain list for each test."""
+    return use_event_bus(MockEventBus())
 
 
 CAMPAIGN_ID = str(uuid4())

@@ -16,12 +16,11 @@ from uuid import uuid4
 import pytest
 from board_state.dependencies import (
     get_spicedb_client,
-    set_spicedb_client,
 )
 from board_state.main import app as board_app
 from eventsource.domain.event_registry import get_event_class_or_none
 from fastapi.testclient import TestClient
-from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
+from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_events.board_traps import (
     BattlemapSwitchedEvent,
     TrapDisarmedEvent,
@@ -35,14 +34,6 @@ from tests.helpers.ws_identity import SIGNING_ISSUER
 def bearer(sub: str) -> dict[str, str]:
     """Return the Authorization header for a token that the shared test issuer signs for `sub`."""
     return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
-
-
-@pytest.fixture(autouse=True)
-def setup_auth_and_bus():
-    mock_spicedb = MockSpiceDBClient()
-    set_spicedb_client(mock_spicedb)
-    yield
-    set_spicedb_client(SpiceDBClient())
 
 
 def test_board_traps_cloudevents_registration():

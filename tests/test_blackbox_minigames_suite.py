@@ -12,28 +12,16 @@ from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
-from game_session.dependencies import set_event_bus, set_spicedb_client
 from game_session.events import STREAM_TAVERN
 from game_session.main import app as session_app
 from gateway_api.main import app as gateway_app
-from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.spicedb import MockSpiceDBClient
-from runefoble_platform.redis_bus import RedisStreamsEventBus
 
 from tests.helpers.minigame_tables import open_minigame_table
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.ws_identity import SIGNING_ISSUER, ws_subprotocols
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
-
-
-@pytest.fixture
-def mock_bus() -> MockAsyncRedis:
-    redis_client = MockAsyncRedis()
-    bus = RedisStreamsEventBus(client=redis_client)
-    set_event_bus(bus)
-    yield redis_client
-    set_event_bus(None)
 
 
 @pytest.fixture(autouse=True)
@@ -43,14 +31,6 @@ def clean_minigame_state():
     minigame_table_manager.connections.clear()
     yield
     minigame_table_manager.connections.clear()
-
-
-@pytest.fixture
-def spicedb() -> MockSpiceDBClient:
-    mock_db = get_spicedb_client()
-    set_spicedb_client(mock_db)
-    yield mock_db
-    set_spicedb_client(MockSpiceDBClient())
 
 
 @pytest.fixture(autouse=True)

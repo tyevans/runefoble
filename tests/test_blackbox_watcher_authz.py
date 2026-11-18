@@ -21,11 +21,8 @@ from fastapi.testclient import TestClient
 from runefoble_auth.errors import AuthzSchemaError, AuthzUnavailableError
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.spicedb import MockSpiceDBClient
-from runefoble_platform.redis_bus import RedisStreamsEventBus
-from the_watcher.dependencies import set_event_bus
 from the_watcher.main import app
 
-from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.spicedb_factory import (
     bind_character_owner,
     make_table_runner,
@@ -52,9 +49,7 @@ class _DefectSpiceDB(MockSpiceDBClient):
 
 @pytest.fixture(autouse=True)
 def watcher_bus():
-    set_event_bus(RedisStreamsEventBus(client=MockAsyncRedis()))
     yield
-    set_event_bus(None)
 
 
 @pytest.fixture

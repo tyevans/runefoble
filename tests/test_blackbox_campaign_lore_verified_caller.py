@@ -12,7 +12,6 @@ from collections.abc import Iterator
 from uuid import uuid4
 
 import pytest
-from campaign_lore.identity import set_zitadel_auth_service
 from campaign_lore.main import app
 from fastapi.testclient import TestClient
 from runefoble_auth.factory import get_spicedb_client
@@ -36,13 +35,6 @@ SECRET_TITLE = "Vault of the Dragon Eye"
 def _bearer(user_id: str, issuer: SigningTestIssuer = SIGNING_ISSUER) -> dict[str, str]:
     """Return headers carrying a signed bearer token for `user_id`."""
     return {"Authorization": f"Bearer {issuer.mint(user_id)}"}
-
-
-@pytest.fixture(autouse=True)
-def _trust_signing_issuer() -> Iterator[None]:
-    set_zitadel_auth_service(SIGNING_ISSUER.verifier())
-    yield
-    set_zitadel_auth_service(None)
 
 
 @pytest.fixture

@@ -10,15 +10,13 @@ Governed by:
 
 from __future__ import annotations
 
-from collections.abc import Generator, Iterator
+from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
 from gateway_api.main import app as gateway_app
-from gateway_api.main import set_event_bus as set_gw_event_bus
-from soundscape.dependencies import reset_dependencies, set_event_bus
 from soundscape.main import app as soundscape_app
 
 from tests.helpers.ws_identity import SIGNING_ISSUER
@@ -30,20 +28,6 @@ def auth_headers(sub: str) -> dict[str, str]:
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-
-
-@pytest.fixture(autouse=True)
-def clean_environment(default_redis_event_bus) -> Generator[None]:
-    """Ensure clean soundscape and gateway state for each test.
-
-    The shared SpiceDB double comes from the autouse fixture in tests/conftest.py.
-    """
-    set_gw_event_bus(default_redis_event_bus)
-    reset_dependencies()
-    set_event_bus(default_redis_event_bus)
-    yield
-    reset_dependencies()
-    set_gw_event_bus(None)
 
 
 @pytest.fixture

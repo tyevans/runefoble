@@ -13,11 +13,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from asset_forge.dependencies import set_event_bus as set_forge_bus
 from asset_forge.main import app as asset_forge_app
-from character_sheet.dependencies import (
-    set_event_bus as set_char_bus,
-)
 from character_sheet.main import app as character_app
 from fastapi.testclient import TestClient
 
@@ -31,16 +27,6 @@ def auth_headers(sub: str) -> dict[str, str]:
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
-
-
-@pytest.fixture(autouse=True)
-def clean_environment():
-    """Ensure clean storage and bus states before and after each test."""
-    set_char_bus(None)
-    set_forge_bus(None)
-    yield
-    set_char_bus(None)
-    set_forge_bus(None)
 
 
 @pytest.fixture

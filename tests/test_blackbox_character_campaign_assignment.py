@@ -13,11 +13,9 @@ from uuid import uuid4
 
 import pytest
 from character_sheet.aggregate import CharacterAggregate
-from character_sheet.dependencies import set_spicedb_client
 from character_sheet.main import app
 from eventsource.domain.event_registry import default_registry
 from fastapi.testclient import TestClient
-from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_events.events import CharacterAssignedToCampaign
 from runefoble_platform.event_sourcing import AggregateRepository, InMemoryEventStore
 
@@ -30,14 +28,7 @@ def auth_headers(sub: str) -> dict[str, str]:
 
 
 @pytest.fixture
-def mock_spicedb():
-    client = MockSpiceDBClient()
-    set_spicedb_client(client)
-    return client
-
-
-@pytest.fixture
-def client(mock_spicedb):
+def client(spicedb):
     return TestClient(app, headers=auth_headers("character-owner"))
 
 
@@ -239,7 +230,7 @@ def test_blackbox_character_campaign_assignment_patch(client):
 
 
 @pytest.mark.asyncio
-async def test_blackbox_campaign_assignment_spicedb_authorization(client, mock_spicedb):
+async def test_blackbox_campaign_assignment_spicedb_authorization(client, spicedb):
     """Verify SpiceDB Zanzibar permissions on campaign assignment endpoint."""
     owner_user = "usr-owner-001"
     unauthorized_user = "usr-stranger-999"
@@ -259,7 +250,7 @@ async def test_blackbox_campaign_assignment_spicedb_authorization(client, mock_s
     char_id = create_res.json()["character_id"]
 
     # Write explicit owner relation in mock SpiceDB
-    await mock_spicedb.write_relationship("character", char_id, "owner", "user", owner_user)
+    await spicedb.write_relationship("character", char_id, "owner", "user", owner_user)
 
     # Attempt to assign campaign as unauthorized user -> 403 Forbidden
     unauth_patch = client.patch(
@@ -280,7 +271,7 @@ async def test_blackbox_campaign_assignment_spicedb_authorization(client, mock_s
     assert auth_patch.json()["campaign_id"] == "camp-cazador"
 
     # Verify SpiceDB relationship was written
-    rels = await mock_spicedb.read_relationships(
+    rels = await spicedb.read_relationships(
         resource_type="character", resource_id=char_id, relation="campaign"
     )
     assert any(r.subject_id == "camp-cazador" for r in rels)
@@ -295,7 +286,7 @@ async def test_blackbox_campaign_assignment_spicedb_authorization(client, mock_s
     assert unassign_patch.json()["campaign_id"] is None
 
     # Verify SpiceDB campaign relationship was deleted
-    rels_after = await mock_spicedb.read_relationships(
+    rels_after = await spicedb.read_relationships(
         resource_type="character", resource_id=char_id, relation="campaign"
     )
     assert len(rels_after) == 0

@@ -15,9 +15,7 @@ from runefoble_platform.event_sourcing import (
     AggregateRepository,
     InMemoryEventStore,
 )
-from runefoble_platform.redis_bus import RedisStreamsEventBus
 from the_watcher.dependencies import (
-    set_event_bus,
     set_regional_unrest_repo,
 )
 from the_watcher.main import app
@@ -35,9 +33,9 @@ def mock_redis() -> MockAsyncRedis:
 
 
 @pytest.fixture(autouse=True)
-def clean_turf_war_environment(mock_redis: MockAsyncRedis):
+def clean_turf_war_environment(mock_redis: MockAsyncRedis, use_redis_client):
     """Configure mock SpiceDB, event store, mock redis bus, and unrest repo before each test."""
-    set_event_bus(RedisStreamsEventBus(client=mock_redis))
+    use_redis_client(mock_redis)
     set_regional_unrest_repo(
         AggregateRepository(
             event_store=InMemoryEventStore(),
@@ -46,7 +44,6 @@ def clean_turf_war_environment(mock_redis: MockAsyncRedis):
         )
     )
     yield
-    set_event_bus(None)
     set_regional_unrest_repo(None)
 
 

@@ -17,7 +17,6 @@ from uuid import uuid4
 
 import pytest
 from campaign_lore.dependencies import set_west_marches_repo
-from campaign_lore.identity import set_zitadel_auth_service
 from campaign_lore.main import app as lore_app
 from campaign_lore.west_marches_aggregate import WestMarchesAtlasAggregate
 from eventsource.adapters.memory.store import InMemoryEventStore
@@ -35,7 +34,6 @@ from soundscape.main import app as soundscape_app
 from starlette.websockets import WebSocketDisconnect
 
 from tests.helpers.leitmotif_fixtures import (  # noqa: F401 (registers the fixtures)
-    clean_environment,
     leitmotif_session_id_fixture,
 )
 from tests.helpers.spicedb_factory import shared_spicedb_client
@@ -55,13 +53,6 @@ def _connection_refused(*_args: object, **_kwargs: object) -> None:
 
 async def _spicedb_unreachable(*_args: object, **_kwargs: object) -> bool:
     raise AuthzUnavailableError("SpiceDB did not answer in time")
-
-
-@pytest.fixture(autouse=True)
-def _trust_signing_issuer() -> Iterator[None]:
-    set_zitadel_auth_service(SIGNING_ISSUER.verifier())
-    yield
-    set_zitadel_auth_service(None)
 
 
 @pytest.fixture(autouse=True)

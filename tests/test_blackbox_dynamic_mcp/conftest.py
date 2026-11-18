@@ -12,8 +12,6 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from gateway_mcp.dynamic import (
     dynamic_registry,
-    set_event_bus,
-    set_spicedb_client,
 )
 from gateway_mcp.routers import build_tools_registry_router
 from gateway_mcp.server import mcp
@@ -38,9 +36,8 @@ def mock_redis() -> MockAsyncRedis:
 
 
 @pytest.fixture
-def event_bus(mock_redis: MockAsyncRedis) -> RedisStreamsEventBus:
-    bus = RedisStreamsEventBus(client=mock_redis)
-    set_event_bus(bus)
+def event_bus(mock_redis: MockAsyncRedis, use_redis_client) -> RedisStreamsEventBus:
+    bus = use_redis_client(mock_redis)
     return bus
 
 
@@ -74,5 +71,3 @@ def clean_registry(spicedb: MockSpiceDBClient, event_bus: RedisStreamsEventBus):
     yield
     for tool_def in list(dynamic_registry.list_tools()):
         dynamic_registry.deregister_tool(tool_def.name)
-    set_spicedb_client(None)
-    set_event_bus(None)

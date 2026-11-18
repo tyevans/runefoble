@@ -11,12 +11,9 @@ from collections.abc import Iterator
 from uuid import uuid4
 
 import pytest
-from game_session.dependencies import set_event_bus
 from game_session.main import app as session_app
 from httpx import ASGITransport, AsyncClient
-from runefoble_platform.redis_bus import RedisStreamsEventBus
 
-from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.watcher_double import serve_watcher_double, watcher_stand_in_app
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
@@ -27,9 +24,7 @@ AUTO_PILOT_PATH = "/api/v1/sessions/{session_id}/turns/auto-pilot"
 
 @pytest.fixture
 def session_bus() -> Iterator[None]:
-    set_event_bus(RedisStreamsEventBus(client=MockAsyncRedis()))
     yield
-    set_event_bus(None)
 
 
 @pytest.fixture

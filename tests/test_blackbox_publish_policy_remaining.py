@@ -19,7 +19,6 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 from gateway_mcp.dynamic import get_event_bus as get_dynamic_event_bus
-from gateway_mcp.dynamic import set_event_bus as set_dynamic_event_bus
 from gateway_mcp.dynamic.events import publish_system_event
 from gateway_mcp.server import configure_dynamic_event_bus, mcp
 from runefoble_events.events import PlayerSpokeEvent, VoiceTranscriptionFailed
@@ -28,7 +27,6 @@ from runefoble_platform.config import PlatformSettings
 from runefoble_platform.event_bus import EventBusUnavailableError
 from runefoble_platform.redis_bus import RedisStreamsEventBus, deserialize_event
 from voice_agent.main import app as voice_app
-from voice_agent.main import set_event_bus as voice_set_event_bus
 from voice_agent.stt import set_streaming_pipeline
 
 from tests.helpers.audio_synth import generate_pcm_sine
@@ -81,29 +79,27 @@ def _transcribe_body(**extra) -> dict:
 def restore_dynamic_event_bus() -> Generator[None]:
     """Clear the gateway_mcp dynamic tool bus after a test that replaces it."""
     yield
-    set_dynamic_event_bus(None)
 
 
 @pytest.fixture
 def production_engine_client(
-    monkeypatch: pytest.MonkeyPatch, mock_redis: MockAsyncRedis, tmp_path: Path
+    monkeypatch: pytest.MonkeyPatch, mock_redis: MockAsyncRedis, tmp_path: Path, use_redis_client
 ) -> Generator[TestClient]:
     """Voice app wired to the production engine, forced unavailable through settings."""
     monkeypatch.setenv("RUNEFOBLE_VOICE_STT_MODEL_SIZE", "runefoble-missing-model")
     monkeypatch.setenv("HF_HUB_OFFLINE", "1")
     monkeypatch.setenv("HF_HOME", str(tmp_path / "hf-cache"))
     set_streaming_pipeline(None)
-    voice_set_event_bus(RedisStreamsEventBus(client=mock_redis))
+    use_redis_client(mock_redis)
     yield TestClient(voice_app, headers=voice_auth_headers())
-    voice_set_event_bus(None)
     set_streaming_pipeline(None)
 
 
 def test_transcribe_returns_503_and_records_nothing_when_player_event_unpublished(
-    client: TestClient, mock_redis: MockAsyncRedis
+    client: TestClient, mock_redis: MockAsyncRedis, use_redis_client
 ):
     """Domain state: a spoken action whose event cannot be published fails with 503."""
-    voice_set_event_bus(RedisStreamsEventBus(client=FailingRedis()))
+    use_redis_client(FailingRedis())
 
     resp = client.post(TRANSCRIBE_URL, json=_transcribe_body())
 
@@ -114,7 +110,9 @@ def test_transcribe_returns_503_and_records_nothing_when_player_event_unpublishe
     ]
 
 
-def test_notification_route_succeeds_and_counts_each_failed_delivery(client: TestClient):
+def test_notification_route_succeeds_and_counts_each_failed_delivery(
+    client: TestClient, use_redis_client
+):
     """Notification: barge-in events succeed when Redis is down. Each failed delivery is counted."""
     speech_pcm = generate_pcm_sine(duration_ms=100, freq=440.0, amplitude=9000)
     payload = {
@@ -126,7 +124,7 @@ def test_notification_route_succeeds_and_counts_each_failed_delivery(client: Tes
         "energy_threshold": 350.0,
     }
     before = _publish_failures(client)
-    voice_set_event_bus(RedisStreamsEventBus(client=FailingRedis()))
+    use_redis_client(FailingRedis())
 
     resp = client.post(BARGE_IN_URL, json=payload)
 
@@ -163,10 +161,10 @@ def test_engine_failure_on_transcribe_route_publishes_transcription_failed(
 
 
 def test_stream_chunk_publish_failure_is_reported_on_socket_and_not_recorded(
-    client: TestClient, mock_redis: MockAsyncRedis
+    client: TestClient, mock_redis: MockAsyncRedis, use_redis_client
 ):
     """Domain state on the stream path: the client gets a publish_failed frame, nothing is kept."""
-    voice_set_event_bus(RedisStreamsEventBus(client=FailingRedis()))
+    use_redis_client(FailingRedis())
     chunk = {
         "session_id": _granted_session("spk-stream-policy"),
         "speaker_id": "spk-stream-policy",
@@ -190,12 +188,12 @@ def test_stream_chunk_publish_failure_is_reported_on_socket_and_not_recorded(
 
 
 def test_dropped_dynamic_tool_event_is_counted_on_gateway_mcp_healthz(
-    restore_dynamic_event_bus: None,
+    restore_dynamic_event_bus: None, use_redis_client
 ):
     """Dropped system events are counted and reported on the gateway_mcp health route."""
     client = TestClient(mcp.streamable_http_app())
     before = client.get("/healthz").json()["event_publish_failures"]
-    set_dynamic_event_bus(RedisStreamsEventBus(client=FailingRedis()))
+    use_redis_client(FailingRedis())
     event = DynamicToolUnregisteredEvent(tool_name="probe", unregistered_by=None, campaign_id=None)
 
     asyncio.run(publish_system_event(event))

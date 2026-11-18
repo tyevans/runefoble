@@ -9,10 +9,8 @@ import pytest
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 from pydantic import ValidationError
-from runefoble_platform.redis_bus import RedisStreamsEventBus
 from starlette.testclient import TestClient
 from the_watcher.main import app as watcher_app
-from the_watcher.main import set_event_bus as watcher_set_event_bus
 
 from tests.helpers.live_services import closed_port_url, serve
 from tests.helpers.mock_redis import MockAsyncRedis
@@ -32,11 +30,9 @@ SPEECH_PAYLOAD = {
 
 
 @pytest.fixture
-def event_store() -> MockAsyncRedis:
+def event_store(mock_bus) -> MockAsyncRedis:
     """Route The Watcher's published events into an in-memory stream store."""
-    redis = MockAsyncRedis()
-    watcher_set_event_bus(RedisStreamsEventBus(client=redis))
-    return redis
+    return mock_bus
 
 
 def _empty_board() -> FastAPI:

@@ -19,13 +19,10 @@ from gateway_mcp.clients.caller import caller_bearer
 from gateway_mcp.server import mcp
 from mcp.shared.exceptions import McpError
 from mcp.types import CallToolResult
-from runefoble_platform.redis_bus import RedisStreamsEventBus
 from the_watcher.main import app as watcher_app
-from the_watcher.main import set_event_bus as watcher_set_event_bus
 
 from tests.helpers.live_services import closed_port_url, serve, unavailable_app
 from tests.helpers.mcp_http import call_tool_over_http, read_resource_over_http, serve_mcp
-from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.watcher_engine import select_worker_engine
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
@@ -71,7 +68,6 @@ def upstreams() -> Iterator[dict[str, str]]:
     from game_session.main import app as session_app
     from rules_compendium.main import app as compendium_app
 
-    watcher_set_event_bus(RedisStreamsEventBus(client=MockAsyncRedis()))
     with (
         serve(watcher_app) as watcher_url,
         serve(session_app) as session_url,
@@ -84,7 +80,6 @@ def upstreams() -> Iterator[dict[str, str]]:
             "board": board_url,
             "compendium": compendium_url,
         }
-    watcher_set_event_bus(None)
 
 
 @pytest.fixture

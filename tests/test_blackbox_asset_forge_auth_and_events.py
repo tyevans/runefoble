@@ -15,7 +15,7 @@ from typing import Any
 from uuid import uuid4
 
 import pytest
-from asset_forge.dependencies import get_forge_repo, set_event_bus
+from asset_forge.dependencies import get_forge_repo
 from asset_forge.main import app
 from eventsource.domain.event_registry import get_event_class_or_none
 from fastapi.testclient import TestClient
@@ -23,23 +23,13 @@ from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_events.events import BattlemapForged, TokenAssetForged
 from runefoble_platform.bus import bus as platform_bus
-from runefoble_platform.redis_bus import RedisStreamsEventBus
 
-from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 
 def auth_headers(sub: str) -> dict[str, str]:
     """Return Bearer headers for a token that the service verifier accepts."""
     return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
-
-
-@pytest.fixture(autouse=True)
-def clean_environment():
-    """Ensure clean storage and bus states before and after each test."""
-    set_event_bus(None)
-    yield
-    set_event_bus(None)
 
 
 @pytest.fixture
@@ -79,11 +69,10 @@ def test_asset_forge_cloudevents_registration():
 
 
 @pytest.mark.asyncio
-async def test_blackbox_event_publication_to_redis_streams_and_event_sourcing(client: TestClient):
+async def test_blackbox_event_publication_to_redis_streams_and_event_sourcing(
+    client: TestClient, mock_bus
+):
     """Verify BattlemapForged & TokenAssetForged published over Redis Streams & recorded in aggregate."""
-    mock_redis = MockAsyncRedis()
-    bus = RedisStreamsEventBus(client=mock_redis)
-    set_event_bus(bus)
 
     mem_events: list[Any] = []
 
@@ -125,7 +114,7 @@ async def test_blackbox_event_publication_to_redis_streams_and_event_sourcing(cl
     assert res_tok.status_code == 200
     tok_asset_id = res_tok.json()["asset_id"]
 
-    stream_entries = mock_redis.streams.get("runefoble.events.asset", [])
+    stream_entries = mock_bus.streams.get("runefoble.events.asset", [])
     assert len(stream_entries) == 2
 
     _, map_evt = stream_entries[0]

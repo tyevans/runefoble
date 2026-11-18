@@ -12,9 +12,8 @@ from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import MockSpiceDBClient
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.stream_events import assert_stream_events
 from tests.helpers.ws_identity import SIGNING_ISSUER
-
-from .conftest import assert_event_emitted
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
@@ -118,7 +117,7 @@ async def test_blackbox_cipher_notice_decryption_workflow(
         headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(sleuth)}"},
     )
     assert solve.status_code == 200 and solve.json()["decrypted_content"] == secret
-    assert_event_emitted(mock_bus, "CipherNoticeDecrypted")
+    assert_stream_events(mock_bus, "CipherNoticeDecrypted")
 
     # Sleuth now sees hidden content; spectator still masked
     unlocked = client.get(

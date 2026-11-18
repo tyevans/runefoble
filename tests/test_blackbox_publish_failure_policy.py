@@ -15,10 +15,8 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 from runefoble_auth.factory import get_spicedb_client
-from runefoble_platform.redis_bus import RedisStreamsEventBus
 from the_watcher.dependencies import (
     get_copilot_engine,
-    set_event_bus,
 )
 from the_watcher.main import app
 
@@ -38,11 +36,9 @@ class FailingRedis(MockAsyncRedis):
 
 @pytest.fixture(autouse=True)
 def clean_environment():
-    set_event_bus(RedisStreamsEventBus(client=MockAsyncRedis()))
     get_copilot_engine().clear()
     yield
     get_copilot_engine().clear()
-    set_event_bus(None)
 
 
 @pytest.fixture
@@ -95,13 +91,13 @@ def _publish_failures(client: TestClient) -> int:
 
 @pytest.mark.asyncio
 async def test_veto_returns_503_and_action_stays_pending_when_event_unpublished(
-    client: TestClient,
+    client: TestClient, use_redis_client
 ):
     """Fail before, pass after: a veto whose audit event cannot be written must not apply."""
     camp_id, sess_id = await _setup_dm("dm_evelyn")
     action_id = _propose(client, sess_id, camp_id)
 
-    set_event_bus(RedisStreamsEventBus(client=FailingRedis()))
+    use_redis_client(FailingRedis())
     res = client.post(
         "/api/v1/watcher/veto",
         json={"action_id": action_id, "session_id": sess_id, "campaign_id": camp_id},
@@ -114,13 +110,13 @@ async def test_veto_returns_503_and_action_stays_pending_when_event_unpublished(
 
 @pytest.mark.asyncio
 async def test_approve_returns_503_and_action_stays_pending_when_event_unpublished(
-    client: TestClient,
+    client: TestClient, use_redis_client
 ):
     """A failed approval must not commit the action or skip its audit event."""
     camp_id, sess_id = await _setup_dm("dm_evelyn")
     action_id = _propose(client, sess_id, camp_id)
 
-    set_event_bus(RedisStreamsEventBus(client=FailingRedis()))
+    use_redis_client(FailingRedis())
     res = client.post(
         "/api/v1/watcher/approve",
         json={"action_id": action_id, "session_id": sess_id, "campaign_id": camp_id},
@@ -132,12 +128,14 @@ async def test_approve_returns_503_and_action_stays_pending_when_event_unpublish
 
 
 @pytest.mark.asyncio
-async def test_side_effect_route_returns_200_and_counts_publish_failure(client: TestClient):
+async def test_side_effect_route_returns_200_and_counts_publish_failure(
+    client: TestClient, use_redis_client
+):
     """Fail before, pass after: a read-model side effect logs and counts, and does not fail."""
     camp_id, sess_id = await _setup_dm("dm_evelyn")
     before = _publish_failures(client)
 
-    set_event_bus(RedisStreamsEventBus(client=FailingRedis()))
+    use_redis_client(FailingRedis())
     res = client.post(
         "/api/v1/watcher/actions/propose",
         headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('dm_evelyn')}"},

@@ -15,9 +15,8 @@ from collections.abc import Generator
 import pytest
 from fastapi.testclient import TestClient
 from runefoble_events.events import PlayerSpokeEvent
-from runefoble_platform.redis_bus import RedisStreamsEventBus, deserialize_event
+from runefoble_platform.redis_bus import deserialize_event
 from voice_agent.main import app as voice_app
-from voice_agent.main import set_event_bus as voice_set_event_bus
 from voice_agent.stt import set_streaming_pipeline
 
 from tests.helpers.audio_synth import generate_pcm_sine
@@ -66,7 +65,7 @@ def _player_spoke_events(mock_redis: MockAsyncRedis) -> list[PlayerSpokeEvent]:
 
 @pytest.fixture
 def production_engine_client(
-    monkeypatch: pytest.MonkeyPatch, mock_redis: MockAsyncRedis
+    monkeypatch: pytest.MonkeyPatch, mock_redis: MockAsyncRedis, use_redis_client
 ) -> Generator[TestClient]:
     """Voice app wired to the production engine, forced unavailable through settings.
 
@@ -75,9 +74,8 @@ def production_engine_client(
     monkeypatch.setenv("RUNEFOBLE_VOICE_STT_MODEL_SIZE", "runefoble-missing-model")
     monkeypatch.setenv("HF_HUB_OFFLINE", "1")
     set_streaming_pipeline(None)
-    voice_set_event_bus(RedisStreamsEventBus(client=mock_redis))
+    use_redis_client(mock_redis)
     yield TestClient(voice_app, headers=voice_auth_headers())
-    voice_set_event_bus(None)
     set_streaming_pipeline(None)
 
 
