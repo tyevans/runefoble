@@ -10,10 +10,10 @@ Governed by:
 import asyncio
 
 import pytest
-from board_state.dependencies import repo
 from board_state.main import app
 from fastapi.testclient import TestClient
 from runefoble_events.events import DiceSettled, PhysicsCollisionOccurred
+from runefoble_platform.event_sourcing import get_event_store
 
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
@@ -84,7 +84,7 @@ def test_3d_tabletop_physical_dice_simulation_and_settlement():
     assert len(throw_data["trajectory"]) > 0
 
     # Verify emitted CloudEvent DiceSettled
-    store = repo.event_store
+    store = get_event_store()
     dice_events = [
         env.event
         for env in store._events
@@ -156,7 +156,7 @@ def test_3d_miniature_knockback_impulse_and_wall_collision():
     assert kb_data["impact_energy"] > 0
 
     # Verify domain event PhysicsCollisionOccurred
-    store = repo.event_store
+    store = get_event_store()
     col_events = [
         env.event
         for env in store._events

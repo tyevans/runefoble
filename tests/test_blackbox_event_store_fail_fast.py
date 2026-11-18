@@ -33,8 +33,8 @@ from fastapi.testclient import TestClient
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.event_sourcing import (
     EventStoreInitializationError,
+    build_event_store,
     event_store_kind,
-    get_event_store,
     set_event_store,
 )
 
@@ -128,7 +128,7 @@ def test_healthz_reports_memory_store_under_test_settings():
 
 def test_event_store_kind_reports_memory_for_explicit_memory_backend():
     """An explicit memory backend yields the in-memory store in development."""
-    store = get_event_store(settings=PlatformSettings(event_store_backend="memory"))
+    store = build_event_store(PlatformSettings(event_store_backend="memory"))
 
     assert isinstance(store, InMemoryEventStore)
     assert event_store_kind(store) == "memory"
@@ -139,7 +139,7 @@ def test_deployed_environment_refuses_memory_backend():
     settings = PlatformSettings(environment="production", event_store_backend="memory")
 
     with pytest.raises(EventStoreInitializationError):
-        get_event_store(settings=settings, force_new=True)
+        build_event_store(settings)
 
 
 def test_unset_backend_defaults_to_postgresql_and_never_falls_back_to_memory(monkeypatch):
@@ -149,7 +149,7 @@ def test_unset_backend_defaults_to_postgresql_and_never_falls_back_to_memory(mon
 
     assert settings.event_store_backend == "postgresql"
     with pytest.raises(EventStoreInitializationError):
-        get_event_store(settings=settings, force_new=True)
+        build_event_store(settings)
 
 
 def test_offline_postgres_raises_instead_of_falling_back():
@@ -160,7 +160,7 @@ def test_offline_postgres_raises_instead_of_falling_back():
     )
 
     with pytest.raises(EventStoreInitializationError):
-        get_event_store(settings=settings, force_new=True)
+        build_event_store(settings)
 
 
 def test_deployed_service_with_reachable_postgres_starts_on_postgresql(postgres_service):
@@ -174,7 +174,7 @@ def test_deployed_service_with_reachable_postgres_starts_on_postgresql(postgres_
         event_store_backend="postgresql",
     )
 
-    store = get_event_store(settings=settings, force_new=True)
+    store = build_event_store(settings)
 
     assert isinstance(store, PostgreSQLEventStore)
     assert event_store_kind(store) == "postgresql"

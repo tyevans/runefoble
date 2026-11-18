@@ -3,16 +3,12 @@
 from __future__ import annotations
 
 from game_session.profile.aggregate import UserProfileAggregate, profile_stream_id
-from runefoble_platform.event_sourcing import (
-    AggregateRepository,
-    create_aggregate_repository,
-    get_event_store,
-)
+from runefoble_platform.event_sourcing import AggregateRepository, create_aggregate_repository
 
 
 def get_profile_repository() -> AggregateRepository[UserProfileAggregate]:
-    """Bind the repository to the process event store on each call, so no state is cached."""
-    return create_aggregate_repository(UserProfileAggregate, event_store=get_event_store())
+    """Build the repository. It resolves the process event store per operation."""
+    return create_aggregate_repository(UserProfileAggregate)
 
 
 async def load_profile(

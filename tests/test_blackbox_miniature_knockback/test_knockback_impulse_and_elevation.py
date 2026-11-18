@@ -14,9 +14,9 @@ from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
 import pytest
-from board_state.dependencies import repo
 from fastapi.testclient import TestClient
 from runefoble_events.events import PhysicsCollisionOccurred, TokenMoved
+from runefoble_platform.event_sourcing import get_event_store
 
 from tests.helpers.mock_redis import MockAsyncRedis
 
@@ -162,7 +162,7 @@ def test_knockback_elevation_step_fall(
     assert data["status"] == "settled"
 
     # Verify TokenMoved event recorded in event store
-    store = repo.event_store
+    store = get_event_store()
     moved_events = [
         env.event
         for env in store._events
@@ -205,7 +205,7 @@ def test_knockback_obstacle_wall_collision_and_impact_energy(
     assert data["to_x"] >= 1
 
     # Verify PhysicsCollisionOccurred event was recorded
-    store = repo.event_store
+    store = get_event_store()
     collision_events = [
         env.event
         for env in store._events

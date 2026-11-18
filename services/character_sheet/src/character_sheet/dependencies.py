@@ -15,6 +15,7 @@ from character_sheet.crafting import CraftingAggregate
 from character_sheet.health_events import health_change_events
 from character_sheet.models import CharacterState
 from character_sheet.schemas import CreateCharacterRequest, UpdateGuardrailsRequest
+from eventsource.domain.exceptions import AggregateNotFoundError
 from fastapi import Depends, HTTPException
 from runefoble_auth.caller import CallerIdentity, require_user_or_service_credential
 from runefoble_auth.principal import VerifiedPrincipal, require_principal
@@ -165,9 +166,10 @@ async def publish_crafting_event(event: Any) -> None:
 async def load_character(
     repo: AggregateRepository[CharacterAggregate], character_id: UUID
 ) -> CharacterAggregate:
+    """Load the character. Only a missing stream is a 404. A store outage answers 503."""
     try:
         return await repo.load(character_id)
-    except Exception as e:
+    except AggregateNotFoundError as e:
         raise HTTPException(status_code=404, detail=f"Character not found: {e}") from e
 
 

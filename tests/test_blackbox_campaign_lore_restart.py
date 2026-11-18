@@ -23,7 +23,7 @@ from campaign_lore.main import create_app
 from fastapi.testclient import TestClient
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_platform.config import PlatformSettings
-from runefoble_platform.event_sourcing import get_event_store, set_event_store
+from runefoble_platform.event_sourcing import build_event_store, set_event_store
 
 from tests.helpers.lore_backends import (
     LORE_DOCUMENTS,
@@ -50,7 +50,7 @@ def _bearer(user_id: str) -> dict[str, str]:
 def _use_postgres_event_store(dsn: str):
     """Build a fresh PostgreSQL event store and make it the process-wide store."""
     settings = PlatformSettings(database_url=dsn, event_store_backend="postgresql")
-    store = get_event_store(settings=settings, force_new=True)
+    store = build_event_store(settings)
     set_event_store(store)
     return store
 

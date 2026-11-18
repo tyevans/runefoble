@@ -29,6 +29,7 @@ pytest_plugins = [
     "tests.realtime_session",
     "tests.helpers.audio_synth",
     "tests.helpers.campaign_analytics_service",
+    "tests.helpers.event_store_seam",
     "tests.helpers.lore_backends",
     "tests.helpers.postgres",
     "tests.helpers.prd_fixtures",

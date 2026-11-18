@@ -69,12 +69,9 @@ class CharacterInventoryAggregate(DeclarativeAggregate[CharacterInventoryState])
 ## 4. Save and Reconstitute via AggregateRepository
 
 ```python
-from runefoble_platform.event_sourcing import (
-    create_aggregate_repository,
-    get_event_store,
-)
+from runefoble_platform.event_sourcing import create_aggregate_repository
 
-# Initialize repository
+# Initialize repository. It resolves the process event store on every operation.
 repo = create_aggregate_repository(CharacterInventoryAggregate)
 
 # Create and mutate
@@ -112,7 +109,9 @@ found = await load_if_exists(repo, char_id)  # read path: None means not found
 
 ## 5. Testing with InMemoryEventStore
 
-In pytest test fixtures, use `InMemoryEventStore()` for instant, zero-dependency unit tests. The root test configuration selects the memory backend with `RUNEFOBLE_EVENT_STORE_BACKEND=memory`. A deployed environment refuses that backend, so production code never selects it by default:
+In pytest test fixtures, use `InMemoryEventStore()` for instant, zero-dependency unit tests. The root test configuration selects the memory backend with `RUNEFOBLE_EVENT_STORE_BACKEND=memory`. A deployed environment refuses that backend, so production code never selects it by default.
+
+Repositories hold no store. Each one resolves the process store from the provider on every call, so a test replaces the store through `set_event_store`. The shared test harness (`tests/helpers/event_store_seam.py`) gives each test a fresh store and restores the previous one. Use `store_outage()` from the same module to make every store read fail for one block. Do not patch store classes.
 
 ```python
 import pytest
@@ -127,13 +126,27 @@ async def test_inventory_aggregate():
     ...
 ```
 
+To test a service route against a store, install the store through the provider seam instead of building a repository by hand:
+
+```python
+from tests.helpers.event_store_seam import store_outage
+
+with store_outage():  # every read fails with a connection error
+    res = client.get(f"/api/v1/characters/{char_id}")
+assert res.status_code == 503
+```
+
 ## 6. Persistent Event Store (PostgreSQL)
 
 The event store backend defaults to `postgresql`. In staging and production deployments, Helm sets `RUNEFOBLE_EVENT_STORE_BACKEND=postgresql` for every service that owns aggregate state. The setting maps to `PlatformSettings.event_store_backend`. Durable persistence uses `PostgreSQLEventStore`:
 
 ```python
 from runefoble_platform.config import PlatformSettings
-from runefoble_platform.event_sourcing import get_event_store, create_aggregate_repository
+from runefoble_platform.event_sourcing import (
+    build_event_store,
+    create_aggregate_repository,
+    set_event_store,
+)
 
 settings = PlatformSettings(
     database_url="postgresql+asyncpg://runefoble_user:secret@postgres:5432/runefoble",
@@ -144,11 +157,13 @@ settings = PlatformSettings(
 
 # Automatically configures connection pooling, validates TCP reachability,
 # and lazily provisions the events schema upon first access.
-store = get_event_store(settings=settings)
-repo = create_aggregate_repository(CharacterInventoryAggregate, event_store=store)
+set_event_store(build_event_store(settings))
+repo = create_aggregate_repository(CharacterInventoryAggregate)
 ```
 
-If the backend is `postgresql` and the PostgreSQL host is offline or unreachable during startup, `get_event_store` raises `EventStoreInitializationError`. The service process exits instead of running on `InMemoryEventStore`. Select `memory` only for in-memory test runs. A deployed environment raises `EventStoreInitializationError` for `memory`. Use `event_store_kind()` to report the store kind (`postgresql` or `memory`) in health endpoints.
+The process store is owned by `EventStoreProvider`. `get_event_store()` builds it from the environment on first use. `set_event_store()` replaces it. `build_event_store(settings)` builds a store without installing it.
+
+If the backend is `postgresql` and the PostgreSQL host is offline or unreachable during startup, `build_event_store` (and `get_event_store` on first use) raises `EventStoreInitializationError`. The service process exits instead of running on `InMemoryEventStore`. Select `memory` only for in-memory test runs. A deployed environment raises `EventStoreInitializationError` for `memory`. Use `event_store_kind()` to report the store kind (`postgresql` or `memory`) in health endpoints.
 
 ## 7. Modular Aggregate Decomposition
 

@@ -26,8 +26,8 @@ from game_session.aggregate import GameSessionAggregate
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.event_sourcing import (
     PostgreSQLEventStore,
+    build_event_store,
     create_aggregate_repository,
-    get_event_store,
     set_event_store,
 )
 
@@ -51,7 +51,7 @@ async def test_postgres_event_store_durable_aggregate_roundtrip(postgres_service
         event_store_backend="postgresql",
     )
 
-    store = get_event_store(settings=settings, force_new=True)
+    store = build_event_store(settings)
     assert isinstance(store, PostgreSQLEventStore)
 
     # 1. GameSessionAggregate Lifecycle
@@ -128,7 +128,7 @@ async def test_postgres_event_store_optimistic_concurrency(postgres_service):
         database_url=str(postgres_service["dsn"]),
         event_store_backend="postgresql",
     )
-    store = get_event_store(settings=settings, force_new=True)
+    store = build_event_store(settings)
     repo = create_aggregate_repository(CharacterAggregate, event_store=store)
 
     char_id = uuid4()
@@ -162,7 +162,7 @@ async def test_postgres_raw_event_stream_verification(postgres_service):
         database_url=str(postgres_service["dsn"]),
         event_store_backend="postgresql",
     )
-    store = get_event_store(settings=settings, force_new=True)
+    store = build_event_store(settings)
     repo = create_aggregate_repository(GameSessionAggregate, event_store=store)
 
     session_id = uuid4()
