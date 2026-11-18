@@ -21,6 +21,7 @@
   "CAMPAIGN_ANALYTICS_URL" (dict "url" (printf "http://campaign-analytics:%v" .Values.services.campaignAnalytics.port) "consumers" (list "gateway-api"))
   "RUNEFOBLE_CHARACTER_SHEET_URL" (dict "url" (printf "http://character-sheet:%v" .Values.services.characterSheet.port) "consumers" (list "game-session"))
   "CHARACTER_SHEET_URL" (dict "url" (printf "http://character-sheet:%v" .Values.services.characterSheet.port) "consumers" (list "gateway-api"))
+  "RUNEFOBLE_GAME_SESSION_URL" (dict "url" (printf "http://game-session:%v" .Values.services.gameSession.port) "consumers" (list "gateway-api"))
 -}}
 {{- with .Values.services.inferenceWorker }}
 {{- $_ := set $serviceUrls "RUNEFOBLE_INFERENCE_URL" (dict "url" (printf "http://inference-worker:%v" .port) "consumers" (list "the-watcher")) }}
