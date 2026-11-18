@@ -20,9 +20,7 @@ from runefoble_events.events import (
     SoundscapeCueTriggered,
     SoundscapeTensionUpdated,
 )
-from soundscape.dependencies import (
-    handle_incoming_domain_event,
-)
+from soundscape.event_handlers import handle_incoming_domain_event
 from soundscape.main import app
 from soundscape.scoring import calculate_encounter_tension, derive_stem_profile
 

@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from eventsource.domain.decorators import handles
-from runefoble_events.soundscape import SoundscapeMoodOverridden, SoundscapeTensionUpdated
+from runefoble_events.soundscape import SoundscapeTensionUpdated, StemProfileOverridden
 
 from soundscape.mixer import STEM_PROFILE_WEIGHTS
 
@@ -43,15 +43,15 @@ class TensionHandlersMixin:
             lowest_health_ratio=lowest_health_ratio,
         )
 
-    def record_mood_override(
+    def record_stem_profile_overridden(
         self,
         session_id: str,
         mood: str,
         overridden_by: str = "dm",
     ) -> None:
-        """Record domain state event for manual DM mood override."""
+        """Record domain state event for a manual DM stem profile override."""
         self.create_event(
-            SoundscapeMoodOverridden,
+            StemProfileOverridden,
             aggregate_id=self.aggregate_id,
             session_id=session_id,
             mood=mood,
@@ -71,8 +71,8 @@ class TensionHandlersMixin:
             )
             self.state.stem_volumes = weights.copy()
 
-    @handles(SoundscapeMoodOverridden)
-    def _on_mood_overridden(self, event: SoundscapeMoodOverridden) -> None:
+    @handles(StemProfileOverridden)
+    def _on_stem_profile_overridden(self, event: StemProfileOverridden) -> None:
         if self._state is None:
             self._state = self.init_state()
         self.state.manual_override = True

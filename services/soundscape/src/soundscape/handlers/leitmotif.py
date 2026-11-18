@@ -69,12 +69,16 @@ class LeitmotifHandlersMixin:
         duration_ms: int = 4000,
         duck_music: bool = False,
         trigger_reason: str = "critical_hit",
+        playback_id: str = "",
+        triggered_at: float = 0.0,
     ) -> None:
         """Record domain state event for character leitmotif trigger."""
         self.create_event(
             LeitmotifTriggered,
             aggregate_id=self.aggregate_id,
             session_id=session_id,
+            playback_id=playback_id,
+            triggered_at=triggered_at,
             character_id=character_id,
             character_name=character_name,
             motif_type=motif_type,
@@ -112,6 +116,8 @@ class LeitmotifHandlersMixin:
         if self._state is None:
             self._state = self.init_state()
         motif_data = {
+            "playback_id": event.playback_id,
+            "triggered_at": event.triggered_at,
             "session_id": event.session_id,
             "character_id": event.character_id,
             "character_name": event.character_name,

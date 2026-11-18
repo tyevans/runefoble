@@ -21,18 +21,22 @@ from runefoble_events.events import (
     PlayerSpokeEvent,
 )
 from runefoble_platform.bus import bus as platform_bus
-from soundscape.dependencies import (
-    get_or_create_leitmotif_engine,
-    handle_incoming_domain_event,
-)
-from soundscape.leitmotif import calculate_envelope_gain
+from soundscape.event_handlers import handle_incoming_domain_event
+from soundscape.leitmotif import LeitmotifEngine, calculate_envelope_gain
 from soundscape.mixer import DUCKING_ATTENUATION_DB, DUCKING_LINEAR_MULTIPLIER
+from soundscape.session_state import read_session_state, utc_now
 
 from tests.helpers.leitmotif_fixtures import (
     client,
     leitmotif_session_id_fixture,  # noqa: F401 (registers the leitmotif_session_id fixture)
     setup_leitmotif_profile,
 )
+
+
+async def _engine(session_id: str) -> LeitmotifEngine:
+    """Rebuild the leitmotif view from the stored aggregate state, as the routes do."""
+    return LeitmotifEngine.from_state(session_id, await read_session_state(session_id), utc_now())
+
 
 __all__ = ["client"]
 
@@ -65,7 +69,7 @@ async def test_clutch_critical_hit_triggers_triumphant_leitmotif(
     )
     await handle_incoming_domain_event(crit_event)
 
-    engine = get_or_create_leitmotif_engine(leitmotif_session_id)
+    engine = await _engine(leitmotif_session_id)
     playback = engine.get_active_status()
     assert playback is not None and playback.character_id == "char-nadia"
     assert playback.motif_type == "triumphant" and playback.instrument_timbre == "lute"
@@ -91,7 +95,7 @@ async def test_dice_rolled_crit_triggers_triumphant_stinger(leitmotif_session_id
     )
     await handle_incoming_domain_event(dice_event)
 
-    engine = get_or_create_leitmotif_engine(leitmotif_session_id)
+    engine = await _engine(leitmotif_session_id)
     playback = engine.get_active_status()
     assert (
         playback is not None
@@ -121,7 +125,7 @@ async def test_near_death_triggers_somber_cello_leitmotif(
     )
     await handle_incoming_domain_event(death_event)
 
-    engine = get_or_create_leitmotif_engine(leitmotif_session_id)
+    engine = await _engine(leitmotif_session_id)
     playback = engine.get_active_status()
     assert playback is not None and playback.character_id == "char-kyra"
     assert playback.motif_type == "somber" and playback.instrument_timbre == "strings"
@@ -158,7 +162,7 @@ async def test_automatic_voice_ducking_attenuates_leitmotif_by_12db(client: Test
         },
     )
 
-    engine = get_or_create_leitmotif_engine(session_id_str)
+    engine = await _engine(session_id_str)
     status_before = engine.get_active_status()
     assert (
         status_before is not None
@@ -175,6 +179,7 @@ async def test_automatic_voice_ducking_attenuates_leitmotif_by_12db(client: Test
     )
     await handle_incoming_domain_event(spoke_event)
 
+    engine = await _engine(session_id_str)
     status_ducked = engine.get_active_status()
     assert status_ducked is not None and status_ducked.is_ducked is True
     assert status_ducked.ducking_attenuation_db == DUCKING_ATTENUATION_DB
@@ -186,7 +191,7 @@ async def test_automatic_voice_ducking_attenuates_leitmotif_by_12db(client: Test
     )
     assert duck_resp.status_code == 200
 
-    engine.set_ducking(False)
+    engine = await _engine(session_id_str)
     status_restored = engine.get_active_status()
     assert (
         status_restored is not None

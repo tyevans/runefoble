@@ -58,31 +58,67 @@ class SoundscapeTensionUpdated(BaseRunefobleEvent):
     lowest_health_ratio: float = 1.0
 
 
-@register_event("runefoble.events.soundscape.mood_overridden")
-class SoundscapeMoodOverridden(BaseRunefobleEvent):
-    """Emitted when DM applies a manual mood override."""
+@register_event("runefoble.events.soundscape.stem_profile_overridden")
+class StemProfileOverridden(BaseRunefobleEvent):
+    """Emitted when DM forces a stem profile (mood) override."""
 
     suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "Soundscape"
     aggregate_id: UUID = Field(default_factory=uuid4)
-    event_type: str = "runefoble.events.soundscape.mood_overridden"
+    event_type: str = "runefoble.events.soundscape.stem_profile_overridden"
     session_id: str
     mood: str
     overridden_by: str = "dm"
 
 
-@register_event("runefoble.events.soundscape.ducking_toggled")
-class SoundscapeDuckingToggled(BaseRunefobleEvent):
-    """Emitted when background audio ducking state toggles."""
+@register_event("runefoble.events.soundscape.master_volume_changed")
+class MasterVolumeChanged(BaseRunefobleEvent):
+    """Emitted when the session master volume changes (0.0 to 1.0)."""
 
     suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "Soundscape"
     aggregate_id: UUID = Field(default_factory=uuid4)
-    event_type: str = "runefoble.events.soundscape.ducking_toggled"
+    event_type: str = "runefoble.events.soundscape.master_volume_changed"
     session_id: str
-    is_ducked: bool
+    master_volume: float
+
+
+@register_event("runefoble.events.soundscape.channel_volume_changed")
+class ChannelVolumeChanged(BaseRunefobleEvent):
+    """Emitted when the stem channel sliders change. Holds the full channel map after the change."""
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    aggregate_type: str = "Soundscape"
+    aggregate_id: UUID = Field(default_factory=uuid4)
+    event_type: str = "runefoble.events.soundscape.channel_volume_changed"
+    session_id: str
+    channel_volumes: dict[str, float] = Field(default_factory=dict)
+
+
+@register_event("runefoble.events.soundscape.ducking_engaged")
+class DuckingEngaged(BaseRunefobleEvent):
+    """Emitted when background audio ducking engages. duration_ms of 0 holds until released."""
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    aggregate_type: str = "Soundscape"
+    aggregate_id: UUID = Field(default_factory=uuid4)
+    event_type: str = "runefoble.events.soundscape.ducking_engaged"
+    session_id: str
     attenuation_db: float = -12.0
-    reason: str = "speech"
+    reason: str = "speech"  # speech, cue, manual
+    duration_ms: int = 0
+
+
+@register_event("runefoble.events.soundscape.ducking_released")
+class DuckingReleased(BaseRunefobleEvent):
+    """Emitted when background audio ducking is released before any stored duration ends."""
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    aggregate_type: str = "Soundscape"
+    aggregate_id: UUID = Field(default_factory=uuid4)
+    event_type: str = "runefoble.events.soundscape.ducking_released"
+    session_id: str
+    reason: str = "manual"
 
 
 @register_event("runefoble.events.soundscape.leitmotif_configured")
@@ -117,6 +153,8 @@ class LeitmotifTriggered(BaseRunefobleEvent):
     session_id: str
     character_id: str
     character_name: str = ""
+    playback_id: str = ""
+    triggered_at: float = 0.0  # Unix seconds at trigger time
     motif_type: str = "triumphant"  # triumphant, somber, clutch, fanfare
     instrument_timbre: str = "lute"
     stem_url: str

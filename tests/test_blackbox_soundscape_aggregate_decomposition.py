@@ -19,13 +19,16 @@ from eventsource.application.aggregates.repository import AggregateRepository
 from fastapi.testclient import TestClient
 from gateway_api.main import app as gateway_app
 from runefoble_events.soundscape import (
+    ChannelVolumeChanged,
+    DuckingEngaged,
+    DuckingReleased,
     LeitmotifProfileConfigured,
     LeitmotifTriggered,
+    MasterVolumeChanged,
     SoundscapeCueTriggered,
-    SoundscapeDuckingToggled,
-    SoundscapeMoodOverridden,
     SoundscapeTensionUpdated,
     SoundscapeTrackChanged,
+    StemProfileOverridden,
 )
 from soundscape.aggregate import (
     SoundscapeAggregate,
@@ -87,8 +90,11 @@ def test_soundscape_event_handlers_registry_completeness():
         SoundscapeTrackChanged,
         SoundscapeCueTriggered,
         SoundscapeTensionUpdated,
-        SoundscapeMoodOverridden,
-        SoundscapeDuckingToggled,
+        StemProfileOverridden,
+        DuckingEngaged,
+        DuckingReleased,
+        ChannelVolumeChanged,
+        MasterVolumeChanged,
         LeitmotifProfileConfigured,
         LeitmotifTriggered,
     }
@@ -135,7 +141,7 @@ async def test_full_aggregate_domain_lifecycle_and_reconstitution():
     assert agg.state.stem_profile == "combat"
 
     # Tension mixin mood override
-    agg.record_mood_override(session_id=session_id, mood="boss")
+    agg.record_stem_profile_overridden(session_id=session_id, mood="boss")
     assert agg.state.manual_override is True
     assert agg.state.stem_profile == "boss"
 
@@ -150,9 +156,16 @@ async def test_full_aggregate_domain_lifecycle_and_reconstitution():
     assert len(agg.state.cues_history) == 1
     assert agg.state.cues_history[0]["cue_id"] == "cue-sword-clash"
 
-    agg.record_ducking_toggle(session_id=session_id, is_ducked=True, attenuation_db=-12.0)
+    agg.record_ducking_engaged(session_id=session_id, reason="speech", duration_ms=0)
     assert agg.state.is_ducked is True
     assert agg.state.ducking_attenuation_db == -12.0
+    agg.record_ducking_released(session_id=session_id)
+    assert agg.state.is_ducked is False
+    agg.record_ducking_engaged(session_id=session_id, reason="speech", duration_ms=0)
+    agg.record_channel_volumes(session_id=session_id, channel_volumes={"melody": 0.3})
+    agg.record_master_volume(session_id=session_id, master_volume=0.5)
+    assert agg.state.channel_volumes["melody"] == 0.3
+    assert agg.state.master_volume == 0.5
 
     # Leitmotif mixin
     agg.record_leitmotif_profile(
