@@ -9,10 +9,7 @@ from runefoble_events.events import (
     WatcherNarrationGenerated,
 )
 from runefoble_platform.event_publish import publish_best_effort
-from the_watcher.board_client import fetch_visible_tokens
 from the_watcher.dependencies import (
-    BOARD_STATE_URL,
-    INFERENCE_URL,
     STREAM_BOARD,
     STREAM_WATCHER,
     engine,
@@ -21,47 +18,14 @@ from the_watcher.dependencies import (
     require_speaker,
     to_uuid,
 )
+from the_watcher.engine_selection import load_watcher_ports
 from the_watcher.identity import CallerId, get_caller_principal
 from the_watcher.models import (
     IntentResult,
     SpeechInputRequest,
 )
-from the_watcher.worker_client import call_worker
 
 router = APIRouter(dependencies=[Depends(get_caller_principal)], tags=["intent"])
-
-
-async def _parse_with_worker(req: SpeechInputRequest) -> IntentResult:
-    """Parse speech with the inference worker. The worker receives the session's visible tokens.
-
-    A worker or board state failure is raised as HTTP 503. It is never replaced by a template.
-    """
-    visible_tokens = await fetch_visible_tokens(BOARD_STATE_URL, req.session_id)
-    data = await call_worker(
-        INFERENCE_URL,
-        "/inference/v1/intent",
-        {
-            "campaign_id": req.campaign_id,
-            "session_id": req.session_id,
-            "speaker_id": req.speaker_id,
-            "speaker_name": req.speaker_name,
-            "transcript": req.transcript,
-            "visible_tokens": visible_tokens,
-        },
-        timeout=2.0,
-    )
-    action = data["action"]
-    target_name = action.get("target_token_name") or action.get("target_token_id")
-    return IntentResult(
-        action_type=action["action_type"],
-        confidence=action.get("confidence"),
-        parameters=action,
-        target=target_name,
-        details=action.get("narrative_flavor", req.transcript),
-        watcher_reply=action.get("narrative_flavor", ""),
-        source=data["source"],
-        degraded=data["degraded"],
-    )
 
 
 @router.post("/api/v1/watcher/transcribe-and-act", response_model=IntentResult)
@@ -70,13 +34,7 @@ async def process_speech_action(caller_id: CallerId, req: SpeechInputRequest) ->
     """Parse player speech, translate to game action, dispatch events, and trigger board state update."""
     await require_session_permission(caller_id, req.session_id, "session.participate")
     await require_speaker(caller_id, req.speaker_id)
-    intent: IntentResult | None = None
-
-    if INFERENCE_URL:
-        intent = await _parse_with_worker(req)
-
-    if intent is None:
-        intent = engine.parse_speech_intent(req.transcript, req.speaker_name)
+    intent = await load_watcher_ports(engine).intent.parse(req)
 
     bus = get_event_bus()
     session_uuid = to_uuid(req.session_id)

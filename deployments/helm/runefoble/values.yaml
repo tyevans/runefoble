@@ -263,6 +263,10 @@ services:
     image: runefoble/the-watcher:0.1.0
     replicas: 1
     port: 8001
+    env:
+      # Selects the engine adapter for every Watcher port (ADR-0015 decision 4). The worker
+      # URL comes from services.inferenceWorker. Start-up fails when that URL is missing.
+      RUNEFOBLE_WATCHER_ENGINE: inference_worker
   boardState:
     image: runefoble/board-state:0.1.0
     replicas: 1

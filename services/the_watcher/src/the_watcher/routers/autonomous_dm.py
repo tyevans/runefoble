@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from runefoble_events.events import (
     AutonomousActionResolved,
     EncounterSpawned,
@@ -10,13 +10,13 @@ from runefoble_events.events import (
 )
 from runefoble_platform.event_publish import publish_or_fail
 from the_watcher.dependencies import (
-    INFERENCE_URL,
     STREAM_WATCHER,
     autonomous_dm_engine,
+    engine,
     get_event_bus,
-    logger,
     require_session_permission,
 )
+from the_watcher.engine_selection import load_watcher_ports
 from the_watcher.identity import CallerId, get_caller_principal
 from the_watcher.models import (
     DMGuidanceRequest,
@@ -25,7 +25,6 @@ from the_watcher.models import (
     NpcTurnRequest,
     SceneGenerateRequest,
 )
-from the_watcher.worker_client import call_worker
 
 router = APIRouter(dependencies=[Depends(get_caller_principal)], tags=["autonomous_dm"])
 
@@ -80,34 +79,8 @@ async def execute_npc_turn(caller_id: CallerId, req: NpcTurnRequest) -> Autonomo
 async def narrate_scene(caller_id: CallerId, req: DMGuidanceRequest) -> DMNarrationResult:
     """Autonomous DM scene description and event resolution.
 
-    The narration comes only from the inference worker. Without a configured worker, or when
-    the worker fails, the route returns HTTP 503. It never returns canned narrative text.
+    The narration comes only from the selected narrator port. A failed engine returns HTTP 503.
+    The route never returns canned narrative text.
     """
     await require_session_permission(caller_id, req.session_id, "session.control")
-    if not INFERENCE_URL:
-        logger.error("RUNEFOBLE_INFERENCE_URL is not set. Scene narration has no backend.")
-        raise HTTPException(
-            status_code=503,
-            detail={"error": "backend_unavailable", "backend": "inference_worker"},
-        )
-    data = await call_worker(
-        INFERENCE_URL,
-        "/inference/v1/dm-narration",
-        {
-            "campaign_id": req.campaign_id,
-            "session_id": req.session_id,
-            "scene_environment": req.scene_environment,
-            "tone": req.tone,
-            "guidance_prompt": req.prompt,
-        },
-        timeout=10.0,
-    )
-    return DMNarrationResult(
-        session_id=req.session_id,
-        narrative=data["narration"],
-        sensory_details=data["sensory_details"],
-        suggested_dm_prompts=data["suggested_dm_prompts"],
-        tension_level=data["tension_level"],
-        source=data["source"],
-        degraded=data["degraded"],
-    )
+    return await load_watcher_ports(engine).narrator.narrate(req)

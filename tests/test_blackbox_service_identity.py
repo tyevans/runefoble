@@ -22,10 +22,10 @@ from inference_worker.llm_factory import build_llm_port
 from runefoble_platform.service_credential import SERVICE_CREDENTIAL_HEADER
 from the_watcher import dependencies as watcher_dependencies
 from the_watcher.main import app as watcher_app
-from the_watcher.routers import autonomous_dm
 
 from tests.helpers.inference_worker_port import install_worker_port
 from tests.helpers.spicedb_factory import make_table_runner
+from tests.helpers.watcher_engine import error_fields, select_worker_engine
 from tests.helpers.ws_identity import SIGNING_ISSUER, ws_subprotocols
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
@@ -203,7 +203,7 @@ def test_worker_refuses_to_start_with_blank_service_credential():
 @pytest.mark.asyncio
 async def test_watcher_refuses_to_call_worker_without_configured_credential(monkeypatch):
     """The Watcher does not call the worker without a credential. It reports 503, never a template."""
-    monkeypatch.setattr(autonomous_dm, "INFERENCE_URL", "http://worker.invalid:8100")
+    select_worker_engine(monkeypatch, "http://worker.invalid:8100")
     monkeypatch.setattr(watcher_dependencies.platform_settings, "service_credential", None)
     await make_table_runner("dm-1", "sess-1", "camp-1")
     async with AsyncClient(
@@ -222,7 +222,10 @@ async def test_watcher_refuses_to_call_worker_without_configured_credential(monk
             },
         )
     assert res.status_code == 503
-    assert res.json()["detail"] == {"error": "backend_unavailable", "backend": "inference_worker"}
+    assert error_fields(res.json()["detail"]) == {
+        "error": "backend_unavailable",
+        "backend": "inference_worker",
+    }
 
 
 def test_default_table_refuses_user_without_patron_seat():

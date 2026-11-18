@@ -14,12 +14,11 @@ from httpx import ASGITransport, AsyncClient
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 from the_watcher.main import app as watcher_app
 from the_watcher.main import set_event_bus as watcher_set_event_bus
-from the_watcher.routers import autonomous_dm, stand_in
-from the_watcher.routers.intent import speech
 
 from tests.helpers.live_services import closed_port_url, serve
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.spicedb_factory import bind_character_owner, make_table_runner
+from tests.helpers.watcher_engine import error_fields, select_worker_engine
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
@@ -163,39 +162,42 @@ async def test_narrate_without_scene_environment_is_422(bus):
 async def test_stand_in_act_surfaces_worker_503(bus, monkeypatch):
     captured: list[dict[str, Any]] = []
     with serve(_recording_worker(captured, 503, WORKER_503)) as worker_url:
-        monkeypatch.setattr(stand_in, "INFERENCE_URL", worker_url)
+        select_worker_engine(monkeypatch, worker_url)
         resp = await _post("/api/v1/watcher/stand-in/act", STAND_IN_PAYLOAD)
 
     assert resp.status_code == 503
-    assert resp.json()["detail"] == WORKER_503
+    assert error_fields(resp.json()["detail"]) == WORKER_503
     assert captured[0]["campaign_id"] == "camp-1"
     assert captured[0]["session_id"] == "sess-1"
 
 
 @pytest.mark.asyncio
 async def test_stand_in_act_unreachable_worker_is_503(bus, monkeypatch):
-    monkeypatch.setattr(stand_in, "INFERENCE_URL", closed_port_url())
+    select_worker_engine(monkeypatch, closed_port_url())
     resp = await _post("/api/v1/watcher/stand-in/act", STAND_IN_PAYLOAD)
 
     assert resp.status_code == 503
-    assert resp.json()["detail"] == {"error": "backend_unavailable", "backend": "inference_worker"}
+    assert error_fields(resp.json()["detail"]) == {
+        "error": "backend_unavailable",
+        "backend": "inference_worker",
+    }
 
 
 @pytest.mark.asyncio
 async def test_narrate_surfaces_worker_503(bus, monkeypatch):
     captured: list[dict[str, Any]] = []
     with serve(_recording_worker(captured, 503, WORKER_503)) as worker_url:
-        monkeypatch.setattr(autonomous_dm, "INFERENCE_URL", worker_url)
+        select_worker_engine(monkeypatch, worker_url)
         resp = await _post("/api/v1/watcher/narrate", NARRATE_PAYLOAD)
 
     assert resp.status_code == 503
-    assert resp.json()["detail"] == WORKER_503
+    assert error_fields(resp.json()["detail"]) == WORKER_503
     assert "narrative" not in resp.json()
 
 
 @pytest.mark.asyncio
 async def test_narrate_unreachable_worker_is_503_not_canned_text(bus, monkeypatch):
-    monkeypatch.setattr(autonomous_dm, "INFERENCE_URL", closed_port_url())
+    select_worker_engine(monkeypatch, closed_port_url())
     resp = await _post("/api/v1/watcher/narrate", NARRATE_PAYLOAD)
 
     assert resp.status_code == 503
@@ -203,8 +205,8 @@ async def test_narrate_unreachable_worker_is_503_not_canned_text(bus, monkeypatc
 
 
 @pytest.mark.asyncio
-async def test_narrate_without_worker_configuration_is_503(bus, monkeypatch):
-    monkeypatch.setattr(autonomous_dm, "INFERENCE_URL", None)
+async def test_narrate_with_heuristic_engine_is_503(bus, monkeypatch):
+    monkeypatch.setenv("RUNEFOBLE_WATCHER_ENGINE", "heuristic")
     resp = await _post("/api/v1/watcher/narrate", NARRATE_PAYLOAD)
 
     assert resp.status_code == 503
@@ -224,7 +226,7 @@ async def test_narrate_passes_scene_data_and_reports_provenance(bus, monkeypatch
         "degraded": False,
     }
     with serve(_recording_worker(captured, 200, body)) as worker_url:
-        monkeypatch.setattr(autonomous_dm, "INFERENCE_URL", worker_url)
+        select_worker_engine(monkeypatch, worker_url)
         resp = await _post("/api/v1/watcher/narrate", NARRATE_PAYLOAD)
 
     assert resp.status_code == 200
@@ -258,8 +260,8 @@ async def test_speech_sends_board_tokens_and_reports_worker_provenance(bus, monk
         serve(_recording_worker(captured, 200, body)) as worker_url,
         serve(_fake_board(BOARD_TOKENS)) as board_url,
     ):
-        monkeypatch.setattr(speech, "INFERENCE_URL", worker_url)
-        monkeypatch.setattr(speech, "BOARD_STATE_URL", board_url)
+        select_worker_engine(monkeypatch, worker_url)
+        monkeypatch.setenv("RUNEFOBLE_BOARD_STATE_URL", board_url)
         resp = await _post("/api/v1/watcher/intent", SPEECH_PAYLOAD)
 
     assert resp.status_code == 200
@@ -284,8 +286,8 @@ async def test_speech_board_unavailable_is_503_and_worker_not_called(bus, monkey
         "degraded": False,
     }
     with serve(_recording_worker(captured, 200, body)) as worker_url:
-        monkeypatch.setattr(speech, "INFERENCE_URL", worker_url)
-        monkeypatch.setattr(speech, "BOARD_STATE_URL", closed_port_url())
+        select_worker_engine(monkeypatch, worker_url)
+        monkeypatch.setenv("RUNEFOBLE_BOARD_STATE_URL", closed_port_url())
         resp = await _post("/api/v1/watcher/intent", SPEECH_PAYLOAD)
 
     assert resp.status_code == 503

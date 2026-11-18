@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-import os
 from uuid import NAMESPACE_DNS, UUID, uuid4, uuid5
 
 from fastapi import HTTPException
@@ -28,8 +27,6 @@ from the_watcher.turf_war.aggregate import RegionalUnrestAggregate
 from the_watcher.watcher_ai import TheWatcherEngine
 
 logger = logging.getLogger("runefoble.the_watcher")
-INFERENCE_URL = os.environ.get("RUNEFOBLE_INFERENCE_URL")
-BOARD_STATE_URL = os.environ.get("RUNEFOBLE_BOARD_STATE_URL")
 
 STREAM_WATCHER = "runefoble.events.watcher"
 STREAM_BOARD = "runefoble.events.board"

@@ -20,6 +20,9 @@ for _upstream in (
 # The inference worker refuses to start without its service token (ADR-0015 e). Tests use a
 # throwaway value. Process-level tests remove it from the child environment on purpose.
 os.environ.setdefault("RUNEFOBLE_SERVICE_CREDENTIAL", "test-only-service-credential")
+# The Watcher defaults to its inference worker (TASK-0741). Tests that need the local rule engine
+# select it here. Tests that need the worker set the worker URL themselves with monkeypatch.
+os.environ.setdefault("RUNEFOBLE_WATCHER_ENGINE", "heuristic")
 # ruff: noqa: E402  (imports below construct settings, so the key must be set first)
 
 import pytest
