@@ -1,7 +1,7 @@
 ---
 id: '0584'
 title: Gateway Downtime Routes Proxy to Game Session and Character Sheet
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0580
@@ -21,10 +21,10 @@ target_release: 0.9.0
 # TASK-0584: Gateway Downtime Routes Proxy to Game Session and Character Sheet
 
 ## Status
-Refined
+Complete
 
 ## Summary
-Replace the canned downtime handlers in `gateway/api/src/gateway_api/routers/downtime.py` with proxies. Stronghold, campfire, tavern and haggling calls go to `game_session`. Recipe combine goes to `character_sheet`. The fixed gold balance, the fixed campsite and the formula payloads are deleted.
+Replace the canned downtime handlers in `gateway/api/src/gateway_api/routers/downtime.py` (removed) with proxies. Stronghold, campfire, tavern and haggling calls go to `game_session`. Recipe combine goes to `character_sheet`. The fixed gold balance, the fixed campsite and the formula payloads are deleted.
 
 ## Problem Statement
 - `downtime.py:19-35` returns a fixed `treasury_gold: 100` and a "Party Campsite" for every campaign.

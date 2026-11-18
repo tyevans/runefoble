@@ -1,7 +1,7 @@
 ---
 id: '0576'
 title: Soundscape Mixer and Session State Held in the Aggregate, With Ducking Released
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0560
@@ -20,7 +20,7 @@ target_release: 0.9.0
 # TASK-0576: Soundscape Mixer and Session State Held in the Aggregate, With Ducking Released
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Soundscape changes the mixer and master volume without recording an event, keeps the mixer and leitmotif engines in process-local dicts, and generates a random aggregate id per process. Ducking turns on for speech and cues but nothing turns it off on the backend. This task moves all user-visible mixer state into the aggregate, derives the aggregate id from the session id, and releases ducking through an event.

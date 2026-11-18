@@ -1,7 +1,7 @@
 ---
 id: '0592'
 title: Gateway Settlement REST and Minigame WebSocket Proxy to Game Session
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0580
@@ -20,7 +20,7 @@ target_release: 0.9.0
 # TASK-0592: Gateway Settlement REST and Minigame WebSocket Proxy to Game Session
 
 ## Status
-Refined
+Complete
 
 ## Summary
 `gateway/api/src/gateway_api/main.py` imports `game_session.settlement.router` and `game_session.routers.minigames_ws` and mounts them in the gateway process. The gateway therefore loads game-session code, and its state lives in the gateway process. Replace both mounts with HTTP proxies for REST and a byte relay for WebSockets.

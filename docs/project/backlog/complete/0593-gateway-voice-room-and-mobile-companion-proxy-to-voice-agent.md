@@ -1,7 +1,7 @@
 ---
 id: '0593'
 title: Gateway Voice Room, Diagnostics, and Companion Proxy to Voice Agent
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0580
@@ -20,7 +20,7 @@ target_release: 0.9.0
 # TASK-0593: Gateway Voice Room, Diagnostics, and Companion Proxy to Voice Agent
 
 ## Status
-Refined
+Complete
 
 ## Summary
 The gateway mounts `voice_agent` routers in process and keeps its own companion and signaling managers. Those managers hold connection state that belongs to `voice_agent`. Replace the in-process mounts and the managers with proxies. The duplex audio socket and the DSP route are owned by TASK-0508 and TASK-0480. This task does not change them.

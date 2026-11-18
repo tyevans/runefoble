@@ -1,7 +1,7 @@
 ---
 id: '0582'
 title: Gateway Board and Token Routes Proxy to Board State
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0580
@@ -22,7 +22,7 @@ target_release: 0.9.0
 # TASK-0582: Gateway Board and Token Routes Proxy to Board State
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Route the board and token reads and writes from the gateway to `board_state`. The gateway forwards with the shared client from TASK-0580. Two gateway routes have no session id, so they cannot reach an owner aggregate. Remove them. Callers use the session-scoped `board_state` routes instead. The canned board and token handlers are deleted.

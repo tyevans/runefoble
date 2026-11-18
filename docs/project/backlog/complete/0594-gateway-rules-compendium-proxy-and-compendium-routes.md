@@ -1,7 +1,7 @@
 ---
 id: '0594'
 title: Gateway Rules Compendium Proxy for Rules, Encounters, and Homebrew
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0580
@@ -20,7 +20,7 @@ target_release: 0.9.0
 # TASK-0594: Gateway Rules Compendium Proxy for Rules, Encounters, and Homebrew
 
 ## Status
-Refined
+Complete
 
 ## Summary
 `rules_compendium` is not reachable through the gateway. `gateway/api/src` has no compendium route. The how-to tells browsers to call `localhost:8007` directly. Add gateway proxies for the public compendium routes. Forward the caller identity. Update the how-to so the UI calls the gateway.

@@ -44,6 +44,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Campaign analytics worker `process_event` alias, tracking property wrappers, and package root re-exports. Callers use `handle_event`. (TASK-0500)
 
 ### Added
+- Board State: `GET /api/v1/boards/{session_id}/tokens/{token_id}` returns one placed token. It needs `board.view`. (TASK-0582)
+- Campfire rest accepts campaign session ids. The campaign link comes from SpiceDB. (TASK-0584)
+- Gateway routes for the rules compendium: rule search, monster, spell, and condition lookup, encounter balance, and campaign homebrew register and list. Each route forwards to `rules_compendium` with the caller's bearer token. A closed upstream returns 503. An upstream 5xx returns 502. (TASK-0594)
+- Backlog link and status check (`scripts/check_backlog_links.py`) in `make health-check`, with an idempotent repair script (`scripts/fix_backlog_records.py`). (TASK-0666)
 - Frontdoor negative authentication suite. Every public HTTP and WebSocket surface refuses forged, expired, wrong-audience, wrong-issuer, unsigned, `alg: none`, and malformed credentials, and the retired sign-in, seed, and body-claim sync routes are absent (TASK-0535).
 - `ProfileUpdated` domain event. game_session owns each user's profile as event-sourced state. (TASK-0742)
 - Gateway routes `GET /api/v1/sessions/{session_id}/events` (session chronicle feed) and `GET /api/v1/sessions/{session_id}/absentee-recap` (stand-in turns and penalties). Both require `session.observe`. (TASK-0641)
@@ -93,6 +97,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
 
 ### Changed
+- Voice signaling, mobile companion sockets, and companion dispatch routes run in voice_agent. The gateway relays them. Session refusals still close with 4403. An unreachable owner closes with 1013. (TASK-0593)
+- The gateway proxies the `/api/v1` settlement, establishment, and bulletin routes to `game_session`. It no longer serves the unprefixed settlement paths. (TASK-0592)
+- The platform showcase (`docs/marketing.md`) labels each capability Live, In progress, or Planned. Each Live row cites a passing frontdoor test. Roadmap status follows `docs/project/backlog/ROADMAP.md`. Removed the "zero-trust", "time-travel debugging", and "single-command cloud" claims and the unverified latency numbers. (TASK-0659)
+- Gateway campaign lore views and lore write routes call the real campaign_lore service. Upstream failure returns 503 or 502. The gateway no longer uses a default campaign_lore URL. (TASK-0587)
+- Soundscape mixer volumes, stem profile overrides, and ducking are now event-sourced. The soundscape aggregate id derives from the session id, so a process restart keeps the session state. Timed ducks end when their stored duration passes. (TASK-0576)
 - The Watcher keeps DM pending actions, whispers, and open disambiguations in event-sourced aggregates. They survive a restart. Open action timers re-arm from stored deadlines at start-up. (TASK-0568)
 - Campaign Lore publishes every committed lore event through its repository to a `runefoble.events.lore.<name>` stream. A failed publish returns 503. (TASK-0572)
 - Voice duplex playback and stream quality state is stored in the voice room aggregate. A replica or a restarted voice service reports the same playback and codec state. (TASK-0577)

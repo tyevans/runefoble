@@ -1,7 +1,7 @@
 ---
 id: '0659'
 title: Platform Showcase Marketing Page Labels Only Verified Capabilities as Live
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies: []
 governing_adrs:
@@ -14,7 +14,7 @@ target_release: 0.9.0
 # TASK-0659: Platform Showcase Marketing Page Labels Only Verified Capabilities as Live
 
 ## Status
-Refined
+Complete
 
 ## Summary
 `docs/marketing.md` describes several capabilities as live that the audit found canned, unwired, or not persisted. Its roadmap labels also disagree with `docs/project/backlog/ROADMAP.md`. AGENTS.md DoD 11 requires the showcase to keep live capabilities and roadmap status aligned with the platform. Correct each claim to one of three verdicts: Supported, Partly supported (with the limit stated), or Not yet live (with the blocking task). Sync the roadmap status from ROADMAP.md and PRIORITY.md.
@@ -51,7 +51,7 @@ Marketing and platform communication. The governing PRDs are the ones the claims
 6. Keep the file under 500 lines.
 
 ## Frontdoor Blackbox Test Plan
-- A script (`scripts/check_marketing_status.py`, run with `uv run`) reads `ROADMAP.md` and `PRIORITY.md` and fails when a milestone or item is ticked on the marketing page but not Complete in the backlog.
+- A script (`scripts/check_marketing_status.py` (removed), run with `uv run`) reads `ROADMAP.md` and `PRIORITY.md` and fails when a milestone or item is ticked on the marketing page but not Complete in the backlog.
 - A second check fails when the page contains "zero-trust", "time-travel", or "single-command cloud" without a link to a verdict.
 - Before the edit the script FAILS on lines 102-135 and 60-80. After the edit it PASSES.
 
