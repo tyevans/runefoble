@@ -50,21 +50,6 @@ class VoicePeerMuteToggled(BaseRunefobleEvent):
     is_muted: bool = False
 
 
-@register_event("runefoble.events.voice.telemetry_recorded")
-class VoicePeerTelemetryRecorded(BaseRunefobleEvent):
-    """Emitted when a peer reports its audio level, latency, or speaking state."""
-
-    suppress_event_type_warning: ClassVar[bool] = True
-    aggregate_type: str = "VoiceRoom"
-    aggregate_id: UUID = Field(default_factory=uuid4)
-    event_type: str = "runefoble.events.voice.telemetry_recorded"
-    session_id: str
-    peer_id: str
-    audio_level: float | None = None
-    latency_ms: float | None = None
-    is_speaking: bool | None = None
-
-
 @register_event("runefoble.events.voice.mobile_connected")
 class MobileCompanionConnected(BaseRunefobleEvent):
     """Emitted when a mobile companion connects via the low-bandwidth gateway."""

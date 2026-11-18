@@ -379,3 +379,7 @@ If the event store cannot load or save the room, the route answers `503`. The se
 ### Test Setup
 
 Blackbox tests start a playback through the HTTP route, build a new coordinator to model a restart, and then read the status through the same route. See `tests/test_blackbox_voice_duplex_state.py`.
+
+### Peer Telemetry Is Not Stored
+
+Peer audio telemetry (`webrtc_telemetry`) is not domain state. The service does not save it to the event store. The service keeps the latest sample for each peer in a bounded, in-process view. A restart clears the view, and each replica sees only the samples that reach it. Each sample also feeds OpenTelemetry instruments (`voice.telemetry.updates`, `voice.telemetry.latency`). The platform does not yet configure a meter provider, so these instruments record nothing until one is set up.

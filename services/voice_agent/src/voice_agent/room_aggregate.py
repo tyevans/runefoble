@@ -21,7 +21,6 @@ from runefoble_events.voice import (
     VoicePeerJoined,
     VoicePeerLeft,
     VoicePeerMuteToggled,
-    VoicePeerTelemetryRecorded,
 )
 from runefoble_events.voice_playback import (
     VoicePlaybackAttenuated,
@@ -54,9 +53,6 @@ class VoicePeerState(BaseModel):
     role: str = "player"
     joined_at: str
     is_muted: bool = False
-    audio_level: float = 0.0
-    latency_ms: float = 0.0
-    is_speaking: bool = False
     active_preset: str | None = None
     pitch_shift_semitones: float = 0.0
     formant_shift: float = 1.0
@@ -233,23 +229,6 @@ class VoiceRoomAggregate(DeclarativeAggregate[VoiceRoomState]):
             reason=reason,
         )
 
-    def record_telemetry(
-        self,
-        session_id: str,
-        peer_id: str,
-        audio_level: float | None,
-        latency_ms: float | None,
-        is_speaking: bool | None,
-    ) -> VoicePeerTelemetryRecorded:
-        return self.create_event(
-            VoicePeerTelemetryRecorded,
-            session_id=session_id,
-            peer_id=peer_id,
-            audio_level=audio_level,
-            latency_ms=latency_ms,
-            is_speaking=is_speaking,
-        )
-
     def current_playback(self) -> VoicePlaybackState | None:
         return self._state.playback if self._state else None
 
@@ -317,22 +296,6 @@ class VoiceRoomAggregate(DeclarativeAggregate[VoiceRoomState]):
         )
         stream = self._stream_for(event.peer_id).model_copy(update={"codec": codec})
         self._with_state(event.session_id, streams={**self._streams(), event.peer_id: stream})
-
-    @handles(VoicePeerTelemetryRecorded)
-    def _on_telemetry_recorded(self, event: VoicePeerTelemetryRecorded) -> None:
-        if self._state and event.peer_id in self.state.peers:
-            updates = {
-                k: v
-                for k, v in {
-                    "audio_level": event.audio_level,
-                    "latency_ms": event.latency_ms,
-                    "is_speaking": event.is_speaking,
-                }.items()
-                if v is not None
-            }
-            peers = dict(self.state.peers)
-            peers[event.peer_id] = peers[event.peer_id].model_copy(update=updates)
-            self._state = self.state.model_copy(update={"peers": peers})
 
     def _streams(self) -> dict[str, PeerStreamState]:
         return dict(self._state.streams) if self._state else {}

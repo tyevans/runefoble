@@ -25,6 +25,7 @@ from runefoble_platform.redis_bus import RedisStreamsEventBus
 from voice_agent.event_bus import get_event_bus
 from voice_agent.interruption import InterruptionResult, build_interruption
 from voice_agent.room_aggregate import PeerStreamState, VoiceRoomAggregate, to_uuid
+from voice_agent.telemetry_view import PeerTelemetrySample, PeerTelemetryView
 from voice_agent.webrtc.adaptive_bitrate import AdaptiveBitrateRegulator, OpusCodecParameters
 from voice_agent.webrtc.models import RTCPReportRequest
 from voice_agent.webrtc.quality_monitor import NetworkQualityMonitor, QualityMetrics
@@ -56,6 +57,7 @@ class VoiceRoomCoordinator:
         self._repository = create_aggregate_repository(VoiceRoomAggregate)
         self._quality = NetworkQualityMonitor()
         self._regulator = AdaptiveBitrateRegulator()
+        self._telemetry = PeerTelemetryView()
         self._kick_callbacks: list[Callable[[str, str, str], Any]] = []
 
     def set_event_bus(self, bus: RedisStreamsEventBus | None) -> None:
@@ -92,6 +94,7 @@ class VoiceRoomCoordinator:
         agg = await self._load_room(session_id)
         event = agg.leave_peer(session_id, peer_id, reason)
         await self._commit(agg, event)
+        self._telemetry.forget(session_id, peer_id)
         return event
 
     async def mute_toggled(
@@ -126,20 +129,35 @@ class VoiceRoomCoordinator:
         latency_ms: float | None = None,
         is_speaking: bool | None = None,
     ) -> None:
-        """Save a peer's audio telemetry. Telemetry from a peer that is not in the room is dropped.
+        """Keep a peer's latest telemetry in the bounded view. Nothing is saved to the store.
 
-        The gateway broadcasts telemetry itself, so this save publishes no event.
+        Telemetry from a peer that is not in the room is dropped.
         """
         agg = await self._load_room(session_id)
         if agg.state is None or peer_id not in agg.state.peers:
             return
-        agg.record_telemetry(session_id, peer_id, audio_level, latency_ms, is_speaking)
-        await self._repository.save(agg)
+        self._telemetry.record(
+            session_id,
+            peer_id,
+            audio_level=audio_level,
+            latency_ms=latency_ms,
+            is_speaking=is_speaking,
+        )
 
     async def get_room_summary(self, session_id: str) -> dict[str, Any]:
         agg = await self._load_room(session_id)
         peers = agg.state.peers if agg.state else {}
-        participants = [p.model_dump() for p in peers.values()]
+        samples = self._telemetry.for_session(session_id)
+        participants = []
+        for p in peers.values():
+            item = p.model_dump()
+            sample = samples.get(p.peer_id, PeerTelemetrySample())
+            item.update(
+                audio_level=sample.audio_level,
+                latency_ms=sample.latency_ms,
+                is_speaking=sample.is_speaking,
+            )
+            participants.append(item)
         return {
             "session_id": session_id,
             "active": True,

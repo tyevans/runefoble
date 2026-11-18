@@ -227,7 +227,6 @@ add the `runefoble.` prefix when the identifier lacks it.
 | `runefoble.events.voice.stream_codec_adapted` | `VoiceStreamCodecAdaptedEvent` | `runefoble_events.voice_stream_quality` |
 | `runefoble.events.voice.stream_quality_degraded` | `VoiceStreamQualityDegradedEvent` | `runefoble_events.voice_stream_quality` |
 | `runefoble.events.voice.stream_quality_measured` | `VoiceStreamQualityMeasured` | `runefoble_events.voice_stream_quality` |
-| `runefoble.events.voice.telemetry_recorded` | `VoicePeerTelemetryRecorded` | `runefoble_events.voice` |
 | `runefoble.events.voice.transcription_failed` | `VoiceTranscriptionFailed` | `runefoble_events.voice` |
 | `runefoble.events.voice.tts_stream_attenuated` | `TTSStreamAttenuatedEvent` | `runefoble_events.voice_barge_in` |
 | `runefoble.events.watcher.action_approved` | `WatcherActionApproved` | `runefoble_events.watcher_events.actions` |
