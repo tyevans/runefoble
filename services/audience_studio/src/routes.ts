@@ -5,7 +5,7 @@
 
 import type { FastifyInstance, FastifyPluginAsync, FastifyReply } from 'fastify';
 import type { ApprovalQueue } from './approvalQueue.js';
-import { DependencyUnavailableError, DomainError } from './errors.js';
+import { HttpError } from './errors.js';
 import { principalOf } from './identity/principal.js';
 import type { PollEngine } from './pollEngine.js';
 import type { ProposalStatus } from './types.js';
@@ -15,13 +15,10 @@ interface RouteContext {
   approvalQueue: ApprovalQueue;
 }
 
-/** Maps domain and dependency errors to HTTP status codes. Other errors reach Fastify as 500. */
+/** Maps typed HTTP errors to their status codes. Other errors reach Fastify as 500. */
 function sendError(reply: FastifyReply, err: unknown) {
-  if (err instanceof DomainError) {
+  if (err instanceof HttpError) {
     return reply.code(err.statusCode).send({ error: err.message });
-  }
-  if (err instanceof DependencyUnavailableError) {
-    return reply.code(503).send({ error: err.message });
   }
   throw err;
 }
@@ -42,7 +39,7 @@ export function createAudienceRoutes(ctx: RouteContext): FastifyPluginAsync {
       };
     }>('/polls', {
       schema: {
-        description: 'Create a live audience chaos poll',
+        description: 'Create a live audience chaos poll. The actor needs run_session on the campaign.',
         tags: ['Audience'],
         body: {
           type: 'object',
@@ -62,7 +59,7 @@ export function createAudienceRoutes(ctx: RouteContext): FastifyPluginAsync {
     }, async (request, reply) => {
       const b = request.body;
       try {
-        const poll = await ctx.pollEngine.createPoll({
+        const poll = await ctx.pollEngine.createPoll(principalOf(request), {
           campaignId: b.campaign_id,
           sessionId: b.session_id,
           title: b.title,
@@ -81,12 +78,12 @@ export function createAudienceRoutes(ctx: RouteContext): FastifyPluginAsync {
     // 2. List audience polls
     fastify.get<{ Querystring: { campaign_id?: string } }>('/polls', {
       schema: {
-        description: 'List active and past audience polls',
+        description: 'List audience polls the caller can view (audience_poll.view).',
         tags: ['Audience'],
       },
     }, async (request, reply) => {
       try {
-        const polls = await ctx.pollEngine.listPolls(request.query.campaign_id);
+        const polls = await ctx.pollEngine.listPolls(principalOf(request), request.query.campaign_id);
         return reply.send({ polls });
       } catch (err: unknown) {
         return sendError(reply, err);
@@ -96,16 +93,12 @@ export function createAudienceRoutes(ctx: RouteContext): FastifyPluginAsync {
     // 3. Get single poll details
     fastify.get<{ Params: { pollId: string } }>('/polls/:pollId', {
       schema: {
-        description: 'Get details and live results of an audience poll',
+        description: 'Get details and live results of an audience poll (audience_poll.view).',
         tags: ['Audience'],
       },
     }, async (request, reply) => {
       try {
-        const poll = await ctx.pollEngine.getPoll(request.params.pollId);
-        if (!poll) {
-          return reply.code(404).send({ error: 'Poll not found' });
-        }
-        return reply.send(poll);
+        return reply.send(await ctx.pollEngine.getPoll(request.params.pollId, principalOf(request)));
       } catch (err: unknown) {
         return sendError(reply, err);
       }
@@ -117,7 +110,7 @@ export function createAudienceRoutes(ctx: RouteContext): FastifyPluginAsync {
       Body: { option_id: string; channel?: string };
     }>('/polls/:pollId/votes', {
       schema: {
-        description: 'Cast an audience spectator vote. The voter is the token subject.',
+        description: 'Cast an audience vote (audience_poll.vote). The voter is the token subject.',
         tags: ['Audience'],
         body: {
           type: 'object',
@@ -132,12 +125,7 @@ export function createAudienceRoutes(ctx: RouteContext): FastifyPluginAsync {
       const { pollId } = request.params;
       const { option_id, channel } = request.body;
       try {
-        const poll = await ctx.pollEngine.castVote(
-          pollId,
-          principalOf(request).userId,
-          option_id,
-          channel ?? 'web'
-        );
+        const poll = await ctx.pollEngine.castVote(pollId, principalOf(request), option_id, channel ?? 'web');
         return reply.send({ success: true, poll });
       } catch (err: unknown) {
         return sendError(reply, err);
@@ -147,12 +135,12 @@ export function createAudienceRoutes(ctx: RouteContext): FastifyPluginAsync {
     // 5. Close a poll and trigger quorum aggregation
     fastify.post<{ Params: { pollId: string } }>('/polls/:pollId/close', {
       schema: {
-        description: 'Close poll and resolve modifier proposals',
+        description: 'Close poll and resolve modifier proposals (audience_poll.moderate).',
         tags: ['Audience'],
       },
     }, async (request, reply) => {
       try {
-        const poll = await ctx.pollEngine.closePoll(request.params.pollId);
+        const poll = await ctx.pollEngine.closePoll(request.params.pollId, principalOf(request));
         return reply.send(poll);
       } catch (err: unknown) {
         return sendError(reply, err);
@@ -164,12 +152,13 @@ export function createAudienceRoutes(ctx: RouteContext): FastifyPluginAsync {
       Querystring: { campaign_id?: string; status?: ProposalStatus };
     }>('/proposals', {
       schema: {
-        description: 'List modifier proposals in DM approval queue',
+        description: 'List modifier proposals the caller can view. Parameters appear only with audience_poll.approve.',
         tags: ['Audience'],
       },
     }, async (request, reply) => {
       try {
         const proposals = await ctx.approvalQueue.getProposals(
+          principalOf(request),
           request.query.campaign_id,
           request.query.status
         );
@@ -182,15 +171,12 @@ export function createAudienceRoutes(ctx: RouteContext): FastifyPluginAsync {
     // 7. Approve modifier proposal (DM Zanzibar authorized)
     fastify.post<{ Params: { proposalId: string } }>('/proposals/:proposalId/approve', {
       schema: {
-        description: 'Approve chaos modifier proposal. The actor is the token subject, checked against SpiceDB.',
+        description: 'Approve chaos modifier proposal (audience_poll.approve). The actor is the token subject.',
         tags: ['Audience'],
       },
     }, async (request, reply) => {
       try {
-        const proposal = await ctx.approvalQueue.approveProposal(
-          request.params.proposalId,
-          principalOf(request).userId
-        );
+        const proposal = await ctx.approvalQueue.approveProposal(request.params.proposalId, principalOf(request));
         return reply.send({ success: true, proposal });
       } catch (err: unknown) {
         return sendError(reply, err);
@@ -200,15 +186,12 @@ export function createAudienceRoutes(ctx: RouteContext): FastifyPluginAsync {
     // 8. Veto modifier proposal (DM Zanzibar authorized)
     fastify.post<{ Params: { proposalId: string } }>('/proposals/:proposalId/veto', {
       schema: {
-        description: 'Veto chaos modifier proposal. The actor is the token subject, checked against SpiceDB.',
+        description: 'Veto chaos modifier proposal (audience_poll.veto). The actor is the token subject.',
         tags: ['Audience'],
       },
     }, async (request, reply) => {
       try {
-        const proposal = await ctx.approvalQueue.vetoProposal(
-          request.params.proposalId,
-          principalOf(request).userId
-        );
+        const proposal = await ctx.approvalQueue.vetoProposal(request.params.proposalId, principalOf(request));
         return reply.send({ success: true, proposal });
       } catch (err: unknown) {
         return sendError(reply, err);

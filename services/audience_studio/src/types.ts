@@ -25,8 +25,16 @@ export interface AudiencePoll {
   winningOptionId?: string;
   quorumMet?: boolean;
   totalVotes: number;
-  proposedModifier?: AudienceModifierProposal;
+  proposedModifier?: AudienceModifierProposal | ProposalSummary;
 }
+
+/** A proposal as a viewer without `audience_poll.approve` sees it. Parameters are omitted. */
+export type ProposalSummary = Omit<AudienceModifierProposal, 'modifierType' | 'description' | 'parameters'>;
+
+/** A poll with the full proposal, as the engine stores it. Only the access layer turns it into a caller view. */
+export type AudiencePollRecord = Omit<AudiencePoll, 'proposedModifier'> & {
+  proposedModifier?: AudienceModifierProposal;
+};
 
 export interface AudienceVote {
   pollId: string;
