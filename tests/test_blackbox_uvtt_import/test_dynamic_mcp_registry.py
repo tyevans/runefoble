@@ -5,8 +5,8 @@ Governed by TASK-0193 and ADR-0008.
 
 from __future__ import annotations
 
+import httpx
 import pytest
-from fastapi.testclient import TestClient
 from gateway_mcp.server import mcp
 
 from tests.helpers.mcp_http import call_tool_json
@@ -15,7 +15,7 @@ from tests.helpers.ws_identity import SIGNING_ISSUER
 
 @pytest.mark.asyncio
 async def test_blackbox_dynamic_mcp_tool_registration_and_execution(
-    gateway_client: TestClient, mcp_endpoint: str
+    tools_client: httpx.Client, mcp_endpoint: str
 ):
     """Verify registering a dynamic tool via administrative frontdoor and invoking it in FastMCP."""
     tool_name = "calculate_spell_falloff"
@@ -40,7 +40,7 @@ async def test_blackbox_dynamic_mcp_tool_registration_and_execution(
         "metadata": {"author": "Alex (Modder)", "version": "1.0.0"},
     }
 
-    reg_resp = gateway_client.post("/mcp/tools", json=tool_payload)
+    reg_resp = tools_client.post("/mcp/tools", json=tool_payload)
     assert reg_resp.status_code == 200, reg_resp.text
     assert reg_resp.json()["status"] == "registered"
 
@@ -61,7 +61,7 @@ async def test_blackbox_dynamic_mcp_tool_registration_and_execution(
     assert mcp_result["reduced_by"] == 8
 
     # Invoke through administrative HTTP execution frontdoor
-    exec_resp = gateway_client.post(
+    exec_resp = tools_client.post(
         f"/mcp/tools/{tool_name}/execute",
         json={"arguments": {"base_damage": 30, "distance": 10}},
     )
@@ -72,13 +72,13 @@ async def test_blackbox_dynamic_mcp_tool_registration_and_execution(
     assert res_data["result"]["reduced_by"] == 20
 
     # Listing dynamic tools endpoint
-    list_resp = gateway_client.get("/mcp/tools")
+    list_resp = tools_client.get("/mcp/tools")
     assert list_resp.status_code == 200
     tool_names = [t["name"] for t in list_resp.json()["tools"]]
     assert tool_name in tool_names
 
 
-def test_blackbox_dynamic_mcp_handler_rejection_security(gateway_client: TestClient):
+def test_blackbox_dynamic_mcp_handler_rejection_security(tools_client: httpx.Client):
     """Verify registration refuses handlers that reach for system calls or imports."""
     unsafe_cases = [
         ("os", "__import__('os').getcwd()"),
@@ -92,12 +92,12 @@ def test_blackbox_dynamic_mcp_handler_rejection_security(gateway_client: TestCli
             "parameters": {"type": "object", "properties": {}},
             "handler": {"out": {"$expr": expression}},
         }
-        resp = gateway_client.post("/mcp/tools", json=payload)
+        resp = tools_client.post("/mcp/tools", json=payload)
         assert resp.status_code == 400, f"Expected rejection for {name}"
         assert mcp._tool_manager.get_tool(name) is None
 
 
-def test_blackbox_dynamic_mcp_tool_lifecycle(gateway_client: TestClient):
+def test_blackbox_dynamic_mcp_tool_lifecycle(tools_client: httpx.Client):
     """Verify updating and deregistering dynamic tools cleanly."""
     tool_name = "tactical_flare"
     initial_payload = {
@@ -112,7 +112,7 @@ def test_blackbox_dynamic_mcp_tool_lifecycle(gateway_client: TestClient):
     }
 
     # Register tool
-    reg = gateway_client.post("/mcp/tools", json=initial_payload)
+    reg = tools_client.post("/mcp/tools", json=initial_payload)
     assert reg.status_code == 200
     assert mcp._tool_manager.get_tool(tool_name) is not None
 
@@ -127,15 +127,15 @@ def test_blackbox_dynamic_mcp_tool_lifecycle(gateway_client: TestClient):
         },
         "handler": {"radius": "${radius}", "color": "${color}"},
     }
-    upd = gateway_client.put(f"/mcp/tools/{tool_name}", json=update_payload)
+    upd = tools_client.put(f"/mcp/tools/{tool_name}", json=update_payload)
     assert upd.status_code == 200
     updated_tool = mcp._tool_manager.get_tool(tool_name)
     assert updated_tool is not None
     assert "color" in updated_tool.parameters["properties"]
 
     # Deregister tool
-    del_resp = gateway_client.delete(f"/mcp/tools/{tool_name}")
+    del_resp = tools_client.delete(f"/mcp/tools/{tool_name}")
     assert del_resp.status_code == 200
     assert del_resp.json()["status"] == "deregistered"
     assert mcp._tool_manager.get_tool(tool_name) is None
-    assert gateway_client.delete(f"/mcp/tools/{tool_name}").status_code == 404
+    assert tools_client.delete(f"/mcp/tools/{tool_name}").status_code == 404

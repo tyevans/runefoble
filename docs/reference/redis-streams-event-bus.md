@@ -155,7 +155,7 @@ These consumers had no running process. TASK-0578 removed them or started them. 
 | `SpiceDBEventListener` | Removed. | No service called `register_bus_handlers`. The listener used the in-process `EventBus`, not Redis Streams. Tuple sync runs through `ZitadelSpiceDBSyncService` on the gateway sync routes (`/api/v1/auth/sync/*`). |
 | `RedisInferenceConsumer` (`services/inference_worker`) | Removed. Config keys `RUNEFOBLE_WORKER_REDIS_*` removed. | No producer writes `runefoble.inference.requests`. TASK-0448 may add a producer and a dead-letter path later. |
 | `AnalyticsEventWorker` | Removed. | No service started it. OpenPanel forwarding is not deployed. Domain services call `OpenPanelClient` directly if they need it. |
-| Gateway MCP dynamic tool bus | Kept. No mock fallback. | `configure_dynamic_tool_event_bus` in `gateway_api.main` injects the Redis bus when the module loads. It raises when `REDIS_URL` is empty. Dropped events log at `ERROR`. |
+| Gateway MCP dynamic tool bus | Kept. No mock fallback. | `configure_dynamic_event_bus` in `gateway_mcp.server` injects the Redis bus when the MCP process starts. It raises when `REDIS_URL` is empty. Dropped events log at `ERROR`. |
 
 ---
 

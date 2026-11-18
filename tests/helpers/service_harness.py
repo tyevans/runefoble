@@ -130,11 +130,22 @@ def _modules(attr: str, scope: VerifierScope | None = None) -> list[ModuleType]:
     return [importlib.import_module(name) for name in names]
 
 
+def _current(module: ModuleType, getter: str) -> object:
+    """Return the seam value now. A seam that no startup configured yet reads as None.
+
+    The gateway-mcp bus raises until its own process start-up injects one.
+    """
+    try:
+        return getattr(module, getter)()
+    except RuntimeError:
+        return None
+
+
 def _swap(
     modules: list[ModuleType], getter: str, setter: str, value_for: Callable[[], object]
 ) -> list[tuple[ModuleType, object]]:
     """Set a seam on each module and return the previous values for the restore."""
-    previous = [(mod, getattr(mod, getter)()) for mod in modules]
+    previous = [(mod, _current(mod, getter)) for mod in modules]
     for mod in modules:
         getattr(mod, setter)(value_for())
     return previous

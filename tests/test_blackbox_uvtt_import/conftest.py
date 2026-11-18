@@ -5,10 +5,10 @@ from __future__ import annotations
 import base64
 from collections.abc import Iterator
 
+import httpx
 import pytest
 from board_state.main import app as board_app
 from fastapi.testclient import TestClient
-from gateway_api.main import app as gateway_app
 from gateway_mcp.dynamic import dynamic_registry
 from gateway_mcp.server import mcp
 
@@ -27,17 +27,20 @@ def board_client() -> TestClient:
     return TestClient(board_app, headers=bearer("user-test"))
 
 
-@pytest.fixture
-def gateway_client(trusted_ws_issuer) -> TestClient:
-    """Gateway client that sends a signed token for `user-test` on every request."""
-    return TestClient(gateway_app, headers=bearer("user-test"))
-
-
 @pytest.fixture(scope="module")
 def mcp_endpoint() -> Iterator[str]:
     """Serve the gateway MCP server over HTTP. The endpoint trusts the shared signing issuer."""
     with serve_mcp(mcp) as endpoint:
         yield endpoint
+
+
+@pytest.fixture
+def tools_client(mcp_endpoint: str) -> Iterator[httpx.Client]:
+    """Tool admin client for the MCP process. It sends a signed token for `user-test`."""
+    with httpx.Client(
+        base_url=mcp_endpoint.removesuffix("/mcp"), headers=bearer("user-test")
+    ) as client:
+        yield client
 
 
 @pytest.fixture(autouse=True)

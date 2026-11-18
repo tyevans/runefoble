@@ -44,7 +44,7 @@ When running the local development environment via `make dev`, Vite proxies requ
 | `audience-studio` | `8010` | `/openapi.json` |
 | `campaign-analytics` | `8011` | `/openapi.json` |
 | `inference-worker` | `8100` | `/openapi.json` |
-| `gateway-mcp` | `8012` | Bearer token on every MCP request (`401` without one). MCP over streamable HTTP at `/mcp`. `/healthz` reports `event_publish_failures`. Exempt from the OpenAPI invariant. ClusterIP only, with no ingress path |
+| `gateway-mcp` | `8012` | Bearer token on every MCP request (`401` without one). MCP over streamable HTTP at `/mcp`. `/healthz` reports `event_publish_failures`. `/openapi.json` documents the tool admin routes (Swagger UI lists it). The MCP protocol itself has no OpenAPI spec. ClusterIP only, with no ingress path, so the tool routes are reachable inside the cluster only |
 
 ## Key Microservice Endpoints
 
@@ -327,9 +327,9 @@ Campaign Lore routes require a verified bearer token, except `/health`, `/health
 | `gateway-api` | POST | `/api/v1/assets/upload` | Uploads binary or base64 assets (battlemap, avatar, audio) to Silo S3. Needs a bearer. The uploader becomes the `forged_asset` creator. An optional `campaign_id` needs `campaign.play` |
 | `gateway-api` | GET | `/api/v1/assets/{asset_id}` | Retrieves or streams stored asset files from Silo S3 storage |
 | `gateway-api` | DELETE | `/api/v1/assets/{asset_id}` | Deletes an asset. Needs bearer and `forged_asset.manage` (creator, campaign owner, or DM). `401` without a token, `403` without the right |
-| `gateway-api` | GET/POST | `/mcp/tools` | Lists or registers dynamic FastMCP tools with JSON schema and a declarative handler (ADR-0020). Requires a bearer token (`401` without one). The author is the token subject. Body `author_id` is ignored (alias: `/api/v1/mcp/tools`) |
-| `gateway-api` | GET/PUT/DELETE | `/mcp/tools/{name}` | Inspects, updates, or deregisters runtime FastMCP tools without server restarts |
-| `gateway-api` | POST | `/mcp/tools/{name}/execute` | Evaluates a dynamic tool's declarative handler as the verified caller. Requires a bearer token. Body `user_id` is ignored |
+| `gateway-mcp` | GET/POST | `/mcp/tools` | Lists or registers dynamic FastMCP tools with JSON schema and a declarative handler (ADR-0020). Requires a bearer token (`401` without one). The author is the token subject. Body `author_id` is ignored. The route runs in the MCP process, because that process owns the registry. `gateway-api` returns `404` for it (TASK-0727) |
+| `gateway-mcp` | GET/PUT/DELETE | `/mcp/tools/{name}` | Inspects, updates, or deregisters runtime FastMCP tools without server restarts |
+| `gateway-mcp` | POST | `/mcp/tools/{name}/execute` | Evaluates a dynamic tool's declarative handler as the verified caller. Requires a bearer token. Body `user_id` is ignored |
 | `gateway-mcp` | MCP | `http://gateway-mcp:8012/mcp` (streamable HTTP) | Tabletop tools (`execute_agent_action_plan`, `cast_spell`, `modify_character_hp`, etc.) and resources `session://{session_id}/state` and `encounter://{session_id}/current`. Reached only inside the cluster. The caller sends its bearer on each MCP request. Without a verified bearer the request returns `401` before any tool runs |
 | `inference-worker` | GET | `/healthz` | Liveness and readiness check. Reports the active backend and model names. Also served at `/health` |
 | `inference-worker` | POST | `/inference/v1/intent` | Parses a natural speech transcript into a `ParsedAction` list (`IntentParseResponse`) |

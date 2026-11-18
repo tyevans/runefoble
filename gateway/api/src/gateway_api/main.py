@@ -12,7 +12,7 @@ from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from game_session.settlement.router import router as settlement_haven_router
 from gateway_api.assets import router as assets_router
-from gateway_api.auth import get_current_user, get_zitadel_auth_service
+from gateway_api.auth import get_zitadel_auth_service
 from gateway_api.auth_sync import router as auth_sync_router
 from gateway_api.companion import companion_router, mobile_companion_websocket_endpoint
 from gateway_api.dependencies import (
@@ -39,12 +39,8 @@ from gateway_api.signaling import voice_signaling_websocket_endpoint
 from gateway_api.upstream_errors import register_upstream_error_handlers
 from gateway_api.upstreams import UpstreamRegistry
 from gateway_api.websocket_endpoint import campaign_websocket_endpoint
-from gateway_mcp.dynamic import set_event_bus as set_dynamic_tool_event_bus
-from gateway_mcp.routers import build_tools_registry_router
 from runefoble_auth.authz_http import install_authz_error_handlers
 from runefoble_platform.config import PlatformSettings
-from runefoble_platform.event_bus import create_event_bus
-from runefoble_platform.redis_bus import RedisStreamsEventBus
 from runefoble_platform.telemetry import init_telemetry
 from voice_agent.room_routes import router as voice_rooms_router
 from voice_agent.routers.stream_diagnostics import router as stream_diagnostics_router
@@ -102,26 +98,9 @@ app.include_router(auth_sync_router, prefix="/api/v1/auth/sync", tags=["Auth Syn
 app.include_router(voice_rooms_router)
 app.include_router(companion_router)
 app.include_router(stream_diagnostics_router)
-tools_registry_router = build_tools_registry_router(get_current_user)
-app.include_router(tools_registry_router)
-app.include_router(tools_registry_router, prefix="/api/v1")
 
 
 init_telemetry("gateway-api", settings=platform_settings, app=app)
-
-
-def configure_dynamic_tool_event_bus(redis_url: str) -> RedisStreamsEventBus:
-    """Inject the Redis Streams bus that dynamic MCP tool events publish to.
-
-    Raises EventBusUnavailableError when no Redis URL is configured, so the gateway never
-    runs dynamic tools with events that cannot reach the system stream.
-    """
-    bus = create_event_bus(PlatformSettings(redis_url=redis_url))
-    set_dynamic_tool_event_bus(bus)
-    return bus
-
-
-configure_dynamic_tool_event_bus(platform_settings.redis_url)
 
 
 @app.websocket("/ws/campaigns/{campaign_id}")
@@ -186,7 +165,6 @@ if __name__ == "__main__":
 
 __all__ = [
     "app",
-    "configure_dynamic_tool_event_bus",
     "get_event_bus",
     "platform_settings",
     "set_event_bus",

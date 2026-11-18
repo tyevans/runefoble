@@ -102,7 +102,14 @@ The FastMCP Gateway (`gateway/mcp`) provides dynamic runtime tool registration, 
 
 ### Registering a Tool via REST API
 
-Post a `DynamicToolDefinition` to `/mcp/tools` (or `/api/v1/mcp/tools` on the unified API gateway). The request needs a Zitadel bearer token. The gateway records the token subject as the tool's author. The body fields `author_id` and `user_id`, and the `X-User-Id` header, are ignored (TASK-0532).
+Post a `DynamicToolDefinition` to `/mcp/tools` on the MCP gateway (`http://gateway-mcp:8012` inside the cluster). The API gateway does not serve this route. The request needs a Zitadel bearer token. The gateway records the token subject as the tool's author. The body fields `author_id` and `user_id`, and the `X-User-Id` header, are ignored (TASK-0532).
+
+The MCP gateway has no ingress path. It is reachable only inside the cluster (ADR-0001). To call it
+from a developer machine, forward its port first. The examples below then use `localhost:8012`:
+
+```bash
+kubectl port-forward svc/gateway-mcp 8012:8012
+```
 
 ```python
 import httpx
@@ -127,7 +134,7 @@ tool_spec = {
     "metadata": {"author": "Alex", "version": "1.0.0"},
 }
 
-response = httpx.post("http://localhost:8000/mcp/tools", json=tool_spec, headers=auth)
+response = httpx.post("http://localhost:8012/mcp/tools", json=tool_spec, headers=auth)
 assert response.status_code == 200
 print("Tool registered successfully:", response.json())
 ```
@@ -169,7 +176,7 @@ Use `PUT /mcp/tools/{name}` to update parameters, description, or handler logic.
 
 ```python
 response = httpx.put(
-    "http://localhost:8000/mcp/tools/calculate_spell_falloff",
+    "http://localhost:8012/mcp/tools/calculate_spell_falloff",
     headers=auth,
     json={
         "name": "calculate_spell_falloff",
@@ -197,6 +204,6 @@ response = httpx.put(
 Use `DELETE /mcp/tools/{name}` to cleanly remove the tool from FastMCP discovery. The caller needs `manage`. The gateway revokes the author relation:
 
 ```python
-response = httpx.delete("http://localhost:8000/mcp/tools/calculate_spell_falloff", headers=auth)
+response = httpx.delete("http://localhost:8012/mcp/tools/calculate_spell_falloff", headers=auth)
 assert response.status_code == 200
 ```

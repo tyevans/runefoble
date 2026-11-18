@@ -7,7 +7,7 @@ and AI DM controls to MCP-compliant agents and LLMs.
 import uvicorn
 from gateway_mcp.dynamic import dynamic_registry
 from gateway_mcp.dynamic import set_event_bus as set_dynamic_event_bus
-from gateway_mcp.identity import BearerTransportAuth
+from gateway_mcp.identity import BearerTransportAuth, get_verifier
 from gateway_mcp.prompts import (
     dm_narrative_guidance,
     register_prompts,
@@ -18,6 +18,7 @@ from gateway_mcp.resources import (
     get_session_state,
     register_resources,
 )
+from gateway_mcp.routers import mount_tools_registry
 from gateway_mcp.settings import load_listen_settings, load_settings
 from gateway_mcp.tools import (
     add_condition,
@@ -39,6 +40,7 @@ from gateway_mcp.tools import (
     roll_dice,
 )
 from mcp.server.fastmcp import FastMCP
+from runefoble_auth.principal import require_principal
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.event_bus import create_event_bus
 from runefoble_platform.event_publish import event_publish_failures
@@ -58,8 +60,10 @@ dynamic_registry.set_mcp_server(mcp)
 
 
 def build_http_app() -> BearerTransportAuth:
-    """Return the streamable HTTP MCP app. Every request needs a verified bearer (ADR-0015 c)."""
-    return BearerTransportAuth(mcp.streamable_http_app())
+    """Return the MCP app with the tool admin routes. Every request needs a verified bearer (ADR-0015 c)."""
+    app = mcp.streamable_http_app()
+    mount_tools_registry(app, require_principal(get_verifier))
+    return BearerTransportAuth(app)
 
 
 def configure_dynamic_event_bus(settings: PlatformSettings) -> None:
