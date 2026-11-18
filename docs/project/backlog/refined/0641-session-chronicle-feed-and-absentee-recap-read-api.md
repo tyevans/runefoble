@@ -19,9 +19,6 @@ governing_stories:
 - US-0027
 - US-0040
 target_release: 0.9.0
-severity: high
-source_audits:
-- w2-app-shell.md
 ---
 
 # TASK-0641: Session Chronicle Feed and Absentee Recap Read API Replace Canned App Shell Data
@@ -75,3 +72,8 @@ Playwright BDD (`e2e/features/absentee_recap.feature`): setup uses only public r
 4. `docs/reference/ports-and-endpoints.md` and `docs/reference/events-schema.md` list the routes.
 5. Changelog entry under `[Unreleased]`.
 6. Files changed stay under 500 lines each.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w2-app-shell.md`

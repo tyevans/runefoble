@@ -4,6 +4,7 @@ title: OBS Transparent Party Vitals Overlay and Multi-Track Audio Output
 status: Accepted
 created: 2026-09-25
 governing_prd: PRD-0011
+persona: Devon (Streamer)
 ---
 
 # US-0030 — OBS Transparent Party Vitals Overlay and Multi-Track Audio Output

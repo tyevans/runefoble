@@ -3,6 +3,8 @@ id: '0014'
 title: Downtime Activities, Alchemical Crafting & Party Stronghold Engine
 status: Accepted
 created: 2026-09-26
+target_persona: Bram, Evelyn
+component: game_session
 ---
 
 # PRD-0014 — Downtime Activities, Alchemical Crafting & Party Stronghold Engine

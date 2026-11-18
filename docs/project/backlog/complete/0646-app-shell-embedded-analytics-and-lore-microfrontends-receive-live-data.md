@@ -17,10 +17,6 @@ governing_stories:
 - US-0050
 - US-0054
 target_release: 0.9.0
-severity: high
-source_audits:
-- w2-campaign-analytics.md
-- w2-campaign-lore.md
 ---
 
 # TASK-0646: Embedded Analytics and Lore Microfrontends Receive Live Data From the Gateway
@@ -74,3 +70,8 @@ Playwright BDD (`e2e/features/campaign_analytics_and_codex.feature`):
 4. Docs in the two how-to guides name the gateway routes used.
 5. Storybook stories for the analytics and atlas components build with zero console errors.
 6. `pnpm run build` passes. Changelog entry under `[Unreleased]`.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w2-campaign-analytics.md`, `w2-campaign-lore.md`

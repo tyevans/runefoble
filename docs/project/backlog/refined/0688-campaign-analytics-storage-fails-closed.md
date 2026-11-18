@@ -14,9 +14,6 @@ governing_prds:
 governing_stories:
 - US-0040
 target_release: 0.9.0
-severity: high
-source_audits:
-- work/0578.md
 ---
 
 # TASK-0688: Campaign Analytics Storage Fails Closed When PostgreSQL Is Unreachable
@@ -55,3 +52,8 @@ Refined. Discovered in round 2 audit of report 0578. ADR-0015 (f) makes the Post
 - No silent fallback in `campaign_analytics` production code.
 - `uv run pytest` and `make lint` pass. Docker is needed for the container tests.
 - Reference doc states the start-up failure mode.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `work/0578.md`

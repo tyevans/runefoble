@@ -15,9 +15,6 @@ governing_prds:
 governing_stories:
 - US-0068
 target_release: 0.9.0
-severity: medium
-source_audits:
-- work/0620.md
 ---
 
 # TASK-0674: Gateway Health Reports Probed Downstream Status
@@ -56,3 +53,8 @@ The gateway health route lists five downstream services as "operational" with no
 - Tests above pass. No literal `"operational"` string remains in `gateway/api/src`.
 - Gateway route ownership table (TASK-0598) and ports reference updated.
 - Changed files under 500 lines. `uv run pytest` and `make lint` pass.
+
+## Audit Provenance
+
+- Severity: medium
+- Source audits: `work/0620.md`

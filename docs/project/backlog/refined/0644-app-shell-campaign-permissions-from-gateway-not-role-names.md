@@ -15,9 +15,6 @@ governing_stories:
 - US-0013
 - US-0063
 target_release: 0.9.0
-severity: medium
-source_audits:
-- w2-app-shell.md
 ---
 
 # TASK-0644: Campaign Permissions Computed by the Gateway From SpiceDB Replace Client Role-Name Checks
@@ -65,3 +62,8 @@ The App Shell decides who may manage a campaign, launch a session, or invite pla
 4. Mutating gateway routes still return 403 for unauthorised callers (existing tests stay green).
 5. `pnpm run lint`, `pnpm test`, and `pnpm run build` pass.
 6. Changelog entry under `[Unreleased]`.
+
+## Audit Provenance
+
+- Severity: medium
+- Source audits: `w2-app-shell.md`

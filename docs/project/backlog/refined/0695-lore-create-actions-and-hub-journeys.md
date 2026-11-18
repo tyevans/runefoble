@@ -16,9 +16,6 @@ governing_stories:
 - US-0050
 - US-0040
 target_release: 0.9.0
-severity: medium
-source_audits:
-- work/0646.md
 ---
 
 # TASK-0695: Lore Create Actions in the Codex and Atlas, and Hub Journeys Through the Gateway
@@ -56,3 +53,8 @@ The Codex and Lore tab emits `pin-create-requested`, but the App Shell does not 
 ## Definition of Done
 - Both scenarios pass in Playwright BDD with no `page.route` or direct DOM edits.
 - `pnpm run build` passes. No console errors.
+
+## Audit Provenance
+
+- Severity: medium
+- Source audits: `work/0646.md`

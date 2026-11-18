@@ -4,6 +4,7 @@ title: Natural Speech Equipment Swapping and Hands-Free Wake-Word
 status: Accepted
 created: 2026-09-25
 governing_prd: PRD-0006
+persona: Marcus (Adventurer)
 ---
 
 # US-0024 — Natural Speech Equipment Swapping and Hands-Free Wake-Word

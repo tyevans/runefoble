@@ -20,11 +20,6 @@ governing_stories:
 - US-0058
 - US-0001
 target_release: 0.9.0
-severity: high
-source_audits:
-- work/0613.md
-- work/0677.md
-- work/0563.md
 ---
 
 # TASK-0685: App Shell Mounts Print Forge, Caravan Board, and Board DM Controls
@@ -68,3 +63,8 @@ Three owned microfrontends are built and tested in Storybook, but the App Shell 
 - `pnpm run build` and the Storybook build pass with zero console errors.
 - The three feature groups run without `@blocked` in Playwright BDD.
 - Documentation names the new routes.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `work/0613.md`, `work/0677.md`, `work/0563.md`

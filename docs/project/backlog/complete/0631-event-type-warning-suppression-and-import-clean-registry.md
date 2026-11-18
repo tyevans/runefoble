@@ -10,12 +10,6 @@ governing_adrs:
 governing_prds: []
 governing_stories: []
 target_release: 0.9.0
-severity: low
-source_audits:
-- w1-gates-python.md
-- w1-libs.md
-- w3-event-wiring.md
-- w2-voice-agent.md
 ---
 
 # TASK-0631: Silence Intentional Event Type Warnings and Keep Event Registry Imports Clean
@@ -55,3 +49,8 @@ Importing `runefoble_events` prints `Event class X has event_type='Y' which diff
 3. The registry import test passes.
 4. Coordination with TASK-0487 recorded.
 5. No file above 500 lines.
+
+## Audit Provenance
+
+- Severity: low
+- Source audits: `w1-gates-python.md`, `w1-libs.md`, `w3-event-wiring.md`, `w2-voice-agent.md`

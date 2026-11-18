@@ -40,6 +40,27 @@ def _create_character(client: TestClient) -> str:
     return str(res.json()["character_id"])
 
 
+def _create_session(client: TestClient) -> str:
+    """Create a campaign as the owner, then a session. The owner holds run_session on it."""
+    campaign = client.post(
+        "/api/v1/campaigns",
+        json={"title": "Credential Campaign", "setting": "Sword Coast"},
+        headers=_owner_headers(),
+    )
+    assert campaign.status_code == 201, campaign.text
+    created = client.post(
+        "/api/v1/sessions/create",
+        json={
+            "campaign_id": campaign.json()["id"],
+            "title": "Credential Test",
+            "dm_id": "the_watcher",
+        },
+        headers=_owner_headers(),
+    )
+    assert created.status_code == 200, created.text
+    return str(created.json()["session_id"])
+
+
 def test_character_read_accepts_the_service_credential_without_a_user():
     client = TestClient(character_app)
     character_id = _create_character(client)
@@ -98,13 +119,7 @@ def test_invalid_user_bearer_is_refused_even_with_the_service_credential():
 
 def test_game_session_read_accepts_the_service_credential():
     client = TestClient(session_app)
-    created = client.post(
-        "/api/v1/sessions/create",
-        json={"campaign_id": str(uuid4()), "title": "Credential Test", "dm_id": "the_watcher"},
-        headers=_owner_headers(),
-    )
-    assert created.status_code == 200, created.text
-    session_id = created.json()["session_id"]
+    session_id = _create_session(client)
 
     res = client.get(f"/api/v1/sessions/{session_id}", headers=SERVICE_ONLY)
 
@@ -114,12 +129,7 @@ def test_game_session_read_accepts_the_service_credential():
 def test_game_session_join_refuses_the_service_credential():
     """Joining a session acts for a player, so it needs a verified user."""
     client = TestClient(session_app)
-    created = client.post(
-        "/api/v1/sessions/create",
-        json={"campaign_id": str(uuid4()), "title": "Credential Test", "dm_id": "the_watcher"},
-        headers=_owner_headers(),
-    )
-    session_id = created.json()["session_id"]
+    session_id = _create_session(client)
 
     res = client.post(
         f"/api/v1/sessions/{session_id}/join",

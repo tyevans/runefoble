@@ -13,14 +13,6 @@ governing_prds:
 governing_stories:
 - US-0010
 target_release: 0.9.0
-severity: high
-source_audits:
-- w2-soundscape.md
-- w2-voice-agent.md
-- w2-asset-forge.md
-- w2-rules-compendium.md
-- w2-campaign-lore.md
-- w1-game-session.md
 ---
 
 # TASK-0561: Narrow Aggregate Load Errors to Not-Found Across Services
@@ -79,3 +71,8 @@ Source: `.audit/synth/discovered-round1.md`.
 Source: `.audit/synth/discovered-round2.md`.
 
 - services/the_watcher/src/the_watcher/routers/factions.py:199 get_faction maps every exception to 404. Map only not-found to 404 and let load failures raise.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w2-soundscape.md`, `w2-voice-agent.md`, `w2-asset-forge.md`, `w2-rules-compendium.md`, `w2-campaign-lore.md`, `w1-game-session.md`

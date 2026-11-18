@@ -15,9 +15,6 @@ governing_prds:
 governing_stories:
 - US-0058
 target_release: 0.9.0
-severity: medium
-source_audits:
-- work/0613.md
 ---
 
 # TASK-0677: Caravan Client Shows Failed Dispatch and Fulfilment as Errors
@@ -56,3 +53,8 @@ Complete
 - Tests above pass. `grep -n "offline fallback" services/game_session/ui/src/caravan/caravan_api.ts` returns nothing.
 - Storybook builds with zero console errors. `pnpm run build` passes for the package.
 - Changed files under 500 lines.
+
+## Audit Provenance
+
+- Severity: medium
+- Source audits: `work/0613.md`

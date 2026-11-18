@@ -13,11 +13,6 @@ governing_prds: []
 governing_stories:
 - US-0013
 target_release: 0.9.0
-severity: high
-source_audits:
-- w3-authz-coverage.md
-- w2-campaign-lore.md
-- w2-audience-studio.md
 ---
 
 # TASK-0542: SpiceDB Live Schema Harness and Strict Name Contract
@@ -86,3 +81,8 @@ The test suite passes while production calls fail. `MockSpiceDBClient` accepts u
 Source: `.audit/synth/discovered-round2.md`.
 
 - grpc_lookup_resources in libs/runefoble_auth has no live SpiceDB test. Only the mock path is covered. Add a live case to the live schema harness.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w3-authz-coverage.md`, `w2-campaign-lore.md`, `w2-audience-studio.md`

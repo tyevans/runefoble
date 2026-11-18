@@ -17,11 +17,6 @@ governing_prds:
 - PRD-0023
 governing_stories:
 - US-0013
-severity: medium
-source_audits:
-- w3-ddd-architecture.md
-- w1-gateway-api.md
-- w3-docs-integrity.md
 target_release: 0.9.0
 ---
 
@@ -77,3 +72,8 @@ After the proxy tasks merge, `gateway/api` must import only `libs/*` and its own
 3. `docs/reference/gateway-route-ownership.md` exists and matches the routes.
 4. `docs/reference/architecture-overview.md` and `docs/reference/ports-and-endpoints.md` are updated.
 5. `uv run ruff check .` passes. `uv run pytest` passes.
+
+## Audit Provenance
+
+- Severity: medium
+- Source audits: `w3-ddd-architecture.md`, `w1-gateway-api.md`, `w3-docs-integrity.md`

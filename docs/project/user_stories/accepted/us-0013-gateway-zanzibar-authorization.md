@@ -4,6 +4,7 @@ title: Zanzibar Campaign Role Authorization Gateway Enforcement
 status: Accepted
 created: 2026-09-25
 governing_prd: PRD-0013
+persona: Evelyn (DM)
 ---
 
 # US-0013: Zanzibar Campaign Role Authorization Gateway Enforcement

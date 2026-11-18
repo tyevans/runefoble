@@ -12,10 +12,6 @@ governing_adrs:
 governing_prds: []
 governing_stories: []
 target_release: 0.9.0
-severity: medium
-source_audits:
-- w3-backlog-specops.md
-- w3-docs-integrity.md
 ---
 
 # TASK-0668: Health and Backlog Gates Move to the spec-ops CLI and Duplicate Local Tooling Is Retired
@@ -66,3 +62,8 @@ Project management tooling. No product record applies.
 5. CI runs `spec-ops health` and `spec-ops schema check`.
 6. Local tools that remain have a recorded reason.
 7. Files stay under 500 lines. Changes are merged, and the orchestrator closes the moot visualizer tasks.
+
+## Audit Provenance
+
+- Severity: medium
+- Source audits: `w3-backlog-specops.md`, `w3-docs-integrity.md`

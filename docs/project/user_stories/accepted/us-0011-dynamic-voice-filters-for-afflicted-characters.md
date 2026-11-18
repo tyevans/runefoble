@@ -4,6 +4,7 @@ title: Real-Time Dynamic Voice Filters for Afflicted Characters
 status: Accepted
 created: 2026-09-25
 governing_prd: PRD-0004
+persona: Sarah (Absent Player)
 ---
 
 # US-0011: Real-Time Dynamic Voice Filters for Afflicted Characters

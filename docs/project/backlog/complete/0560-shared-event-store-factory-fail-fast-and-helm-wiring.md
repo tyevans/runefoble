@@ -13,15 +13,6 @@ governing_prds:
 governing_stories:
 - US-0010
 target_release: 0.9.0
-severity: critical
-source_audits:
-- w3-event-wiring.md
-- w1-game-session.md
-- w1-board-state.md
-- w2-asset-forge.md
-- w2-rules-compendium.md
-- w2-campaign-lore.md
-- w1-libs.md
 ---
 
 # TASK-0560: Shared Event Store Factory, Fail-Fast Initialization & Helm Wiring
@@ -78,3 +69,8 @@ Files expected to change: `event_sourcing.py`, `config.py`, `services.yaml`, two
 4. The two reference docs no longer describe a fallback.
 5. Blackbox test for fail-fast passes. `uv run pytest` and `make health-check` pass.
 6. No file exceeds 500 lines. Changes recorded in `CHANGELOG.md` under `[Unreleased]`.
+
+## Audit Provenance
+
+- Severity: critical
+- Source audits: `w3-event-wiring.md`, `w1-game-session.md`, `w1-board-state.md`, `w2-asset-forge.md`, `w2-rules-compendium.md`, `w2-campaign-lore.md`, `w1-libs.md`

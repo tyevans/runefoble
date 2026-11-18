@@ -4,6 +4,7 @@ title: Mid-Session Hot-Swap Takeover and Permadeath Safety Safeguards
 status: Shipped
 created: 2026-09-25
 governing_prd: PRD-0002
+persona: Sarah (Absent Player)
 ---
 
 # US-0026 — Mid-Session Hot-Swap Takeover and Permadeath Safety Safeguards

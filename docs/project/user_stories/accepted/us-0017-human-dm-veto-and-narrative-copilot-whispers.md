@@ -4,6 +4,7 @@ title: Human DM Veto and Private Narrative Co-Pilot Whispers
 status: Accepted
 created: 2026-09-25
 governing_prd: PRD-0001
+persona: Evelyn (DM)
 ---
 
 # US-0017 — Human DM Veto and Private Narrative Co-Pilot Whispers

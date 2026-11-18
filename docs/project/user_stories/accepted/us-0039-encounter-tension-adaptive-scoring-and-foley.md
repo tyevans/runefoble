@@ -4,6 +4,7 @@ title: Encounter Tension-Driven Adaptive Musical Scoring and Foley
 status: Accepted
 created: 2026-09-25
 governing_prd: PRD-0010
+persona: Marcus (Adventurer)
 ---
 
 # US-0039 — Encounter Tension-Driven Adaptive Musical Scoring and Foley

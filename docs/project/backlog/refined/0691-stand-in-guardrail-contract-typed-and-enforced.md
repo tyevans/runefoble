@@ -14,9 +14,6 @@ governing_prds:
 governing_stories:
 - US-0025
 target_release: 0.9.0
-severity: medium
-source_audits:
-- work/0608.md
 ---
 
 # TASK-0691: Stand-In Guardrail Contract Is Typed and Enforced in Every Engine
@@ -57,3 +54,8 @@ The guardrail policy has three gaps. Autopilot forwards an untyped dict to The W
 - One typed model in use. No untyped guardrail dict remains in the path.
 - Both engines report the same names. The two spell and priority rules are enforced in mock mode.
 - `uv run pytest` and `make lint` pass. Docs updated.
+
+## Audit Provenance
+
+- Severity: medium
+- Source audits: `work/0608.md`

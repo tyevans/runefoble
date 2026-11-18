@@ -15,9 +15,6 @@ governing_stories:
 - US-0001
 - US-0002
 target_release: 0.9.0
-severity: high
-source_audits:
-- w3-docs-integrity.md
 ---
 
 # TASK-0658: Tutorial 02 Describes Only Results the Running Platform Produces
@@ -64,3 +61,8 @@ Tutorial 02 is not executable as written. Steps 2 to 4 show canned output, fixtu
 3. The string check script passes and is documented in `docs/reference/cli-interfaces.md`.
 4. The tutorial is re-verified after TASK-0640 and TASK-0641 land, and the status lines are updated in the same change if they landed.
 5. Files stay under 500 lines.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w3-docs-integrity.md`

@@ -4,6 +4,7 @@ title: Custom LLM Provider Injection and Intent Middleware Interceptors
 status: Accepted
 created: 2026-09-25
 governing_prd: PRD-0001
+persona: Alex (Developer)
 ---
 
 # US-0032 — Custom LLM Provider Injection and Intent Middleware Interceptors

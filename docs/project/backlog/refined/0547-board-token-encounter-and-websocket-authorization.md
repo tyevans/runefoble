@@ -24,10 +24,6 @@ governing_stories:
 - US-0056
 - US-0001
 target_release: 0.9.0
-severity: critical
-source_audits:
-- w1-board-state.md
-- w3-authz-coverage.md
 ---
 
 # TASK-0547: Board Token, Encounter, and WebSocket Action Authorization
@@ -95,3 +91,8 @@ Setup: the campaign, the board, a character, and a token are created through the
 Source: `.audit/synth/discovered-round2.md`.
 
 - Re-add the token movement isolation scenario that TASK-0543 removed (player isolation and spectator read-only). Use a public token creation route for setup once one exists.
+
+## Audit Provenance
+
+- Severity: critical
+- Source audits: `w1-board-state.md`, `w3-authz-coverage.md`

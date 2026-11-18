@@ -9,10 +9,6 @@ governing_adrs:
 governing_prds: []
 governing_stories: []
 target_release: 0.9.0
-severity: low
-source_audits:
-- w1-gates-frontend.md
-- w2-audience-studio.md
 ---
 
 # TASK-0630: Align audience_studio TypeScript Pins with the Workspace Version
@@ -50,3 +46,8 @@ Eleven workspace packages pin `typescript` to `~7.0.2`. The two audience-studio 
 2. Lockfile updated.
 3. Typecheck and build gates pass.
 4. No file above 500 lines.
+
+## Audit Provenance
+
+- Severity: low
+- Source audits: `w1-gates-frontend.md`, `w2-audience-studio.md`

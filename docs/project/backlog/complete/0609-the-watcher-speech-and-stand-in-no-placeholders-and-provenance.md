@@ -16,10 +16,6 @@ governing_stories:
 - US-0001
 - US-0002
 target_release: 0.9.0
-severity: medium
-source_audits:
-- w1-the-watcher.md
-- w2-inference-worker.md
 ---
 
 # TASK-0609: The Watcher Speech and Stand-In Routes Stop Sending Placeholder Ids and Report Provenance
@@ -68,3 +64,8 @@ Sources: `.audit/reports/w1-the-watcher.md` F10; `.audit/reports/w2-inference-wo
 3. Blackbox tests pass. Pytest for `services/the_watcher` passes.
 4. Ruff check and format pass.
 5. Event and endpoint docs updated.
+
+## Audit Provenance
+
+- Severity: medium
+- Source audits: `w1-the-watcher.md`, `w2-inference-worker.md`

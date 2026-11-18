@@ -14,11 +14,6 @@ governing_prds:
 governing_stories:
 - US-0037
 - US-0052
-severity: high
-source_audits:
-- w2-rules-compendium.md
-- w3-ddd-architecture.md
-- w1-gateway-mcp.md
 target_release: 0.9.0
 ---
 
@@ -71,3 +66,8 @@ Test file: `tests/test_blackbox_gateway_compendium_proxy.py`. `rules_compendium`
 2. `rg "8007" docs/how-to gateway/api/src` returns no compendium base URL.
 3. The blackbox test file passes. `uv run ruff check .` passes.
 4. The how-to and the ports reference match the routes.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w2-rules-compendium.md`, `w3-ddd-architecture.md`, `w1-gateway-mcp.md`

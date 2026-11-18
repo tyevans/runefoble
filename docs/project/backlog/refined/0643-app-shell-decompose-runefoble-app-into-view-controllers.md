@@ -16,9 +16,6 @@ governing_stories:
 - US-0066
 - US-0068
 target_release: 0.9.0
-severity: high
-source_audits:
-- w2-app-shell.md
 ---
 
 # TASK-0643: Decompose runefoble-app.ts Into Route View Controllers, Session Client, and Data Loader
@@ -87,3 +84,8 @@ Source: `.audit/synth/discovered-round1.md`.
 Source: `.audit/synth/discovered-round2.md`.
 
 - frontend/src/app/session-socket.ts (handleMessage) uses a catch with an ignore comment. It hides message parse and handler errors. Log them and show the connection state to the player.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w2-app-shell.md`

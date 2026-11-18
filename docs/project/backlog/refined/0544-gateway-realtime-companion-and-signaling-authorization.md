@@ -23,10 +23,6 @@ governing_stories:
 - US-0059
 - US-0030
 target_release: 0.9.0
-severity: critical
-source_audits:
-- w3-authz-coverage.md
-- w1-gateway-api.md
 ---
 
 # TASK-0544: Gateway Realtime, Companion, and Signaling Authorization
@@ -83,3 +79,8 @@ Setup: campaign and session created through the public routes; players join thro
 4. `docs/how-to/broadcast-obs-stream-overlay-and-cinematic-camera.md` and `docs/how-to/authenticate-with-zitadel-oidc.md` describe the new rules.
 5. `uv run pytest` passes for the changed gateway tests. `uv run ruff check gateway/api` passes.
 6. No file in the change exceeds 500 lines. Split `websocket_validator.py` or `signaling/auth.py` if needed.
+
+## Audit Provenance
+
+- Severity: critical
+- Source audits: `w3-authz-coverage.md`, `w1-gateway-api.md`

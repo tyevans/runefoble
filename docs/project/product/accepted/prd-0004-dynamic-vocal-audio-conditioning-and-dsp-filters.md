@@ -1,3 +1,12 @@
+---
+id: 0004
+title: Dynamic Vocal Audio Conditioning and DSP Filters
+status: Accepted
+created: 2026-09-25
+target_persona: Marcus, Evelyn
+component: voice_agent
+---
+
 # PRD-0004: Dynamic Vocal Audio Conditioning and DSP Filters
 
 ## Status

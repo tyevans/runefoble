@@ -3,6 +3,8 @@ id: '0017'
 title: Autonomous NPC Faction Agendas, Geopolitical Radar & Living World Simulation
 status: Accepted
 created: 2026-09-26
+target_persona: Evelyn, Rowan
+component: the_watcher
 ---
 
 # PRD-0017 — Autonomous NPC Faction Agendas, Geopolitical Radar & Living World Simulation

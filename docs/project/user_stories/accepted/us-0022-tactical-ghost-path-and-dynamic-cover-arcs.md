@@ -4,6 +4,7 @@ title: Tactical Ghost Path Trajectory and Dynamic Cover Arcs
 status: Accepted
 created: 2026-09-25
 governing_prd: PRD-0003
+persona: Marcus (Adventurer)
 ---
 
 # US-0022 — Tactical Ghost Path Trajectory and Dynamic Cover Arcs

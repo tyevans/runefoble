@@ -17,14 +17,6 @@ governing_stories:
 - US-0010
 - US-0039
 target_release: 0.9.0
-severity: critical
-source_audits:
-- w3-event-wiring.md
-- w2-campaign-analytics.md
-- w2-soundscape.md
-- w2-inference-worker.md
-- w1-gateway-mcp.md
-- w1-libs.md
 ---
 
 # TASK-0578: Start or Remove Redis Stream Consumers That Never Run in Deployed Processes
@@ -75,3 +67,8 @@ Every deployed stream is written and none is read by a running process. Four con
 3. `grep -rn "bus.client\|MockAsyncRedis" services gateway libs` returns no production hits.
 4. `uv run pytest` and `make health-check` pass. Files under 500 lines.
 5. `CHANGELOG.md` entry.
+
+## Audit Provenance
+
+- Severity: critical
+- Source audits: `w3-event-wiring.md`, `w2-campaign-analytics.md`, `w2-soundscape.md`, `w2-inference-worker.md`, `w1-gateway-mcp.md`, `w1-libs.md`

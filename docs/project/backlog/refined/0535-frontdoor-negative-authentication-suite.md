@@ -17,11 +17,6 @@ governing_stories:
 - US-0062
 - US-0013
 target_release: 0.9.0
-severity: high
-source_audits:
-- w1-libs.md
-- w3-authz-coverage.md
-- w2-e2e-bdd.md
 ---
 
 # TASK-0535: Frontdoor Negative Authentication Suite (Forged, Expired, Wrong Audience, Body Claims)
@@ -74,3 +69,8 @@ Source: `.audit/synth/discovered-round2.md`.
 
 - tests/helpers/zitadel_auth.py:56 and :88 build tokens with issuer http://zitadel:8080 and a JWKS URL on the same host. Align the helper with the chart issuer and the in-cluster JWKS setting from TASK-0687.
 - Move the gateway frontdoor tests that still send X-User-Id (for example tests/test_blackbox_campaign_detail_view.py) to the signed-token helper.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w1-libs.md`, `w3-authz-coverage.md`, `w2-e2e-bdd.md`

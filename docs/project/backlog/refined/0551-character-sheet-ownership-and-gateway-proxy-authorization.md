@@ -22,11 +22,6 @@ governing_stories:
 - US-0051
 - US-0055
 target_release: 0.9.0
-severity: critical
-source_audits:
-- w1-character-sheet.md
-- w3-authz-coverage.md
-- w1-gateway-api.md
 ---
 
 # TASK-0551: Character Sheet Ownership and Gateway Character Proxy Authorization
@@ -83,3 +78,8 @@ Setup: a character is created through `POST /api/v1/characters`. The owner is th
 4. `docs/how-to/interact-with-character-sheet-and-inventory.md` is updated.
 5. `uv run pytest services/character_sheet gateway/api` passes for the changed tests. `uv run ruff check` passes for both packages.
 6. No file in the change exceeds 500 lines. `router.py` is split by route group if it grows past the limit.
+
+## Audit Provenance
+
+- Severity: critical
+- Source audits: `w1-character-sheet.md`, `w3-authz-coverage.md`, `w1-gateway-api.md`

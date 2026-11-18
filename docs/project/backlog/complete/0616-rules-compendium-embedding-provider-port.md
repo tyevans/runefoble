@@ -13,9 +13,6 @@ governing_prds:
 governing_stories:
 - US-0037
 target_release: 0.9.0
-severity: medium
-source_audits:
-- w2-rules-compendium.md
 ---
 
 # TASK-0616: Rules Compendium Semantic Search Uses a Configured Embedding Provider
@@ -60,3 +57,8 @@ Source: `.audit/reports/w2-rules-compendium.md` F7.
 3. Blackbox tests pass. `uv run pytest services/rules_compendium` passes.
 4. Ruff check and format pass.
 5. README and docs corrected. `CHANGELOG.md` `[Unreleased]` entry added.
+
+## Audit Provenance
+
+- Severity: medium
+- Source audits: `w2-rules-compendium.md`

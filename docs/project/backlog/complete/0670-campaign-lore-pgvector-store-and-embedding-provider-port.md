@@ -15,9 +15,6 @@ governing_prds:
 governing_stories:
 - US-0036
 target_release: 0.9.0
-severity: high
-source_audits:
-- w2-campaign-lore.md
 ---
 
 # TASK-0670: Campaign Lore pgvector Store and OpenAI-Compatible Embedding Provider Port
@@ -55,3 +52,8 @@ Campaign lore vector search uses an in-process vector index and a fake embedding
 ## Definition of Done
 - Tests above pass. No fake embedding or in-memory vector store in production code.
 - Docs and Helm values updated. CHANGELOG line given to the orchestrator.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w2-campaign-lore.md`

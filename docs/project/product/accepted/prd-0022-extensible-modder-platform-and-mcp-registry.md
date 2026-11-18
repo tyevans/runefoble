@@ -3,6 +3,8 @@ id: '0022'
 title: Extensible Modder Platform, Universal VTT Asset Bridge & FastMCP Tool Registry
 status: Accepted
 created: 2026-09-26
+target_persona: Alex, Evelyn
+component: gateway-mcp
 ---
 
 # PRD-0022 — Extensible Modder Platform, Universal VTT Asset Bridge & FastMCP Tool Registry

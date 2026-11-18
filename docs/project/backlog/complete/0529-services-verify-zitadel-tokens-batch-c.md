@@ -18,12 +18,6 @@ governing_prds:
 governing_stories:
 - US-0013
 target_release: 0.9.0
-severity: critical
-source_audits:
-- w1-game-session.md
-- w1-the-watcher.md
-- w2-inference-worker.md
-- w3-authz-coverage.md
 ---
 
 # TASK-0529: Services Verify Zitadel Tokens (game_session, the_watcher, and Inference Worker Service Token)
@@ -80,3 +74,8 @@ HTTP tests through `TestClient` and `httpx` for the Inference Worker.
 Source: `.audit/synth/discovered-round2.md`.
 
 - services/game_session/src/game_session/settlement/auth/tokens.py holds the game_session verifier singleton. Move it to a game_session identity module (no re-export) and update the callers.
+
+## Audit Provenance
+
+- Severity: critical
+- Source audits: `w1-game-session.md`, `w1-the-watcher.md`, `w2-inference-worker.md`, `w3-authz-coverage.md`

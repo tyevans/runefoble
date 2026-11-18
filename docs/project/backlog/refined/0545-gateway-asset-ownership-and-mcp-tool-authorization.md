@@ -20,11 +20,6 @@ governing_stories:
 - US-0008
 - US-0038
 target_release: 0.9.0
-severity: critical
-source_audits:
-- w3-authz-coverage.md
-- w1-gateway-mcp.md
-- w1-gateway-api.md
 ---
 
 # TASK-0545: Gateway Asset Ownership and MCP Tool Authorization
@@ -85,3 +80,8 @@ The gateway MCP registry lets anonymous callers register, overwrite, delete, and
 4. `uv run pytest gateway/mcp` and `uv run pytest tests/test_blackbox_mcp*` pass. `uv run ruff check gateway` passes.
 5. The sandbox `exec` removal is listed in the index report as a follow-up, not done here.
 6. No file in the change exceeds 500 lines.
+
+## Audit Provenance
+
+- Severity: critical
+- Source audits: `w3-authz-coverage.md`, `w1-gateway-mcp.md`, `w1-gateway-api.md`

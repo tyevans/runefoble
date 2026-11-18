@@ -33,11 +33,6 @@ governing_stories:
 - US-0068
 - US-0009
 target_release: 0.9.0
-severity: high
-source_audits:
-- w3-authz-coverage.md
-- w2-app-shell.md
-- w1-libs.md
 ---
 
 # TASK-0559: Hard Invariant 1 Sweep and SpiceDB Name Contract Gate
@@ -90,3 +85,8 @@ This is the closing task of the SpiceDB authorization theme. The domain tasks re
 6. `pnpm run build` in `frontend/` passes. `make build` passes. `uv run pytest` passes for the full Python suite.
 7. `docs/how-to/define-spicedb-zanzibar-permissions.md` and the App Shell how-to docs are updated.
 8. No file in the change exceeds 500 lines.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w3-authz-coverage.md`, `w2-app-shell.md`, `w1-libs.md`

@@ -17,9 +17,6 @@ governing_stories:
 - US-0007
 - US-0008
 target_release: 0.9.0
-severity: critical
-source_audits:
-- w1-gateway-mcp.md
 ---
 
 # TASK-0605: Gateway MCP Narration and Session Resources Call The Watcher and Game Session
@@ -71,3 +68,8 @@ Source: `.audit/reports/w1-gateway-mcp.md` F1.
 Source: `.audit/synth/discovered-round1.md`.
 
 - `gateway/mcp/src/gateway_mcp/tools/compendium.py:13-28` (`query_monster_stat_block`) falls back to an in-process scan of `rules_compendium.srd_data.CANONICAL_MONSTERS`. Call the `rules_compendium` public route only.
+
+## Audit Provenance
+
+- Severity: critical
+- Source audits: `w1-gateway-mcp.md`

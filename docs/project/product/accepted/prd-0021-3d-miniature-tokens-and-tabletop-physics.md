@@ -3,6 +3,8 @@ id: '0021'
 title: 3D WebGL Tabletop Physics, Miniature Mini-Ragdolls & Kinetic Dice Collision
 status: Accepted
 created: 2026-09-26
+target_persona: Devon, Marcus, Nadia
+component: board_state
 ---
 
 # PRD-0021 — 3D WebGL Tabletop Physics, Miniature Mini-Ragdolls & Kinetic Dice Collision

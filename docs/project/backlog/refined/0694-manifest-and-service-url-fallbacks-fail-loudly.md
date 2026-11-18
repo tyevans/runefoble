@@ -11,11 +11,6 @@ governing_adrs:
 governing_prds: []
 governing_stories: []
 target_release: 0.9.0
-severity: medium
-source_audits:
-- work/0604.md
-- work/0578.md
-- work/0624.md
 ---
 
 # TASK-0694: UI Manifest and Service URL Fallbacks Fail Loudly
@@ -51,3 +46,8 @@ None. Startup and configuration hygiene.
 ## Definition of Done
 - No hardcoded manifest and no silent Watcher skip in production code.
 - `uv run pytest` and `make lint` pass.
+
+## Audit Provenance
+
+- Severity: medium
+- Source audits: `work/0604.md`, `work/0578.md`, `work/0624.md`

@@ -3,6 +3,8 @@ id: '0016'
 title: Personal Character Leitmotifs, Wardrobe Gallery & Kinetic WebGL Spell VFX
 status: Accepted
 created: 2026-09-26
+target_persona: Nadia, Marcus, Devon
+component: board_state
 ---
 
 # PRD-0016 — Personal Character Leitmotifs, Wardrobe Gallery & Kinetic WebGL Spell VFX

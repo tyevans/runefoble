@@ -16,10 +16,6 @@ governing_stories:
 - US-0037
 - US-0052
 target_release: 0.9.0
-severity: medium
-source_audits:
-- w2-app-shell.md
-- w2-rules-compendium.md
 ---
 
 # TASK-0648: App Shell Composes Rules Compendium and Removes Orphaned Microfrontend Imports
@@ -70,3 +66,8 @@ Playwright BDD (`e2e/features/rules_compendium_route.feature`):
 4. Storybook builds with zero console errors for every remaining story.
 5. `pnpm run build` passes. Changelog entry under `[Unreleased]`.
 6. The task file lists every deleted path.
+
+## Audit Provenance
+
+- Severity: medium
+- Source audits: `w2-app-shell.md`, `w2-rules-compendium.md`

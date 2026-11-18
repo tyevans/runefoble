@@ -4,6 +4,7 @@ title: Universal VTT Map Importer and Scriptable Grid Tiles
 status: Accepted
 created: 2026-09-25
 governing_prd: PRD-0009
+persona: Alex (Developer)
 ---
 
 # US-0033 — Universal VTT Map Importer and Scriptable Grid Tiles

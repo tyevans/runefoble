@@ -16,11 +16,6 @@ governing_prds:
 - PRD-0023
 governing_stories:
 - US-0013
-severity: medium
-source_audits:
-- w1-gateway-api.md
-- w3-ddd-architecture.md
-- w1-gates-python.md
 target_release: 0.9.0
 ---
 
@@ -73,3 +68,8 @@ Refined
 4. No gateway test asserts a canned or fallback value.
 5. `make test-gateway` exists and is documented.
 6. `uv run ruff check .` passes.
+
+## Audit Provenance
+
+- Severity: medium
+- Source audits: `w1-gateway-api.md`, `w3-ddd-architecture.md`, `w1-gates-python.md`

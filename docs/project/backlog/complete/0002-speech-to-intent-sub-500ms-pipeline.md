@@ -1,3 +1,19 @@
+---
+id: '0002'
+title: Speech-to-Intent Sub-500ms Pipeline
+status: Complete
+created: 2026-09-25
+target_bc: the_watcher
+governing_adrs:
+- ADR-0002
+- ADR-0006
+- ADR-0007
+governing_prds:
+- PRD-0001
+governing_stories:
+- US-0001
+- US-0007
+---
 # TASK-0002: Speech-to-Intent Sub-500ms Pipeline
 
 ## Description

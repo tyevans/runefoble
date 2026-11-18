@@ -10,9 +10,6 @@ governing_adrs:
 governing_prds: []
 governing_stories: []
 target_release: 0.9.0
-severity: medium
-source_audits:
-- w3-docs-integrity.md
 ---
 
 # TASK-0661: AGENTS.md Documentation Index and Repository Layout Match the Repository
@@ -63,3 +60,8 @@ Developer documentation. Not user-facing.
 Source: `.audit/synth/discovered-round1.md`.
 
 - `docs/reference/inference-worker-response-contract.md` exists on main but is not in the AGENTS.md reference index.
+
+## Audit Provenance
+
+- Severity: medium
+- Source audits: `w3-docs-integrity.md`
