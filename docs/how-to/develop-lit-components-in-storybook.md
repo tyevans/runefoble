@@ -66,3 +66,14 @@ Run the check for one package:
 pnpm --filter ./services/<bc>/ui run typecheck
 ```
 A story with a wrong prop type or a missing component import fails this check. Fix the story to match the component API. Do not change the component API only to satisfy a story.
+
+### 6. Reference Portrait Images in Stories
+Storybook does not serve a static asset directory. A story that requests a path such as `/assets/portraits/fighter.svg` logs a 404 error and fails the zero-console-error rule.
+
+Use the shared Bauhaus portrait placeholders from `@runefoble/ui-core` instead:
+```typescript
+import { PORTRAIT_PLACEHOLDERS } from '@runefoble/ui-core';
+
+const hero = { name: 'Valeros', portraitUrl: PORTRAIT_PLACEHOLDERS.fighter };
+```
+The available ids are `fighter`, `wizard`, `cleric`, `rogue` and `paladin`. Each value is an inline SVG data URI. Add a new id in `libs/runefoble_ui/src/portrait-placeholders.ts` when a story needs another class.

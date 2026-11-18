@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/web-components';
 import { html } from 'lit';
+import { PORTRAIT_PLACEHOLDERS } from '@runefoble/ui-core';
 import './runefoble-session-lobby.ts';
 import type { LobbyParticipant, LobbyCharacterOption } from './types.ts';
 
@@ -18,14 +19,14 @@ const sampleCharacters: LobbyCharacterOption[] = [
     name: 'Valeros of Korvosa',
     characterClass: 'Fighter',
     level: 4,
-    portraitUrl: '/assets/portraits/fighter.svg',
+    portraitUrl: PORTRAIT_PLACEHOLDERS.fighter,
   },
   {
     id: 'char-ezren-2',
     name: 'Ezren the Gray',
     characterClass: 'Wizard',
     level: 5,
-    portraitUrl: '/assets/portraits/wizard.svg',
+    portraitUrl: PORTRAIT_PLACEHOLDERS.wizard,
   },
 ];
 
@@ -51,7 +52,7 @@ const sampleParticipants: LobbyParticipant[] = [
     characterName: 'Valeros of Korvosa',
     characterClass: 'Fighter',
     characterLevel: 4,
-    portraitUrl: '/assets/portraits/fighter.svg',
+    portraitUrl: PORTRAIT_PLACEHOLDERS.fighter,
   },
   {
     userId: 'usr-lyra',
@@ -64,7 +65,7 @@ const sampleParticipants: LobbyParticipant[] = [
     characterName: 'Aeloria',
     characterClass: 'Elf Wizard',
     characterLevel: 4,
-    portraitUrl: '/assets/portraits/wizard.svg',
+    portraitUrl: PORTRAIT_PLACEHOLDERS.wizard,
   },
 ];
 
@@ -82,7 +83,7 @@ const participantsWithAbsentee: LobbyParticipant[] = [
     characterName: 'Kyra the Cleric',
     characterClass: 'Cleric',
     characterLevel: 4,
-    portraitUrl: '/assets/portraits/cleric.svg',
+    portraitUrl: PORTRAIT_PLACEHOLDERS.cleric,
   },
 ];
 

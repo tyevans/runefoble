@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/web-components';
 import { html } from 'lit';
+import { PORTRAIT_PLACEHOLDERS } from '@runefoble/ui-core';
 import './runefoble-character-roster.ts';
 import type { CharacterItem, RosterCampaignOption } from './types.ts';
 
@@ -31,7 +32,7 @@ const sampleCharacters: CharacterItem[] = [
     speed: 30,
     campaignId: 'camp-101',
     campaignTitle: 'Tomb of the Star-Eater',
-    portraitUrl: '/assets/portraits/fighter.svg',
+    portraitUrl: PORTRAIT_PLACEHOLDERS.fighter,
   },
   {
     id: 'char-2',
@@ -45,7 +46,7 @@ const sampleCharacters: CharacterItem[] = [
     speed: 25,
     campaignId: 'camp-101',
     campaignTitle: 'Tomb of the Star-Eater',
-    portraitUrl: '/assets/portraits/cleric.svg',
+    portraitUrl: PORTRAIT_PLACEHOLDERS.cleric,
   },
   {
     id: 'char-3',
@@ -59,7 +60,7 @@ const sampleCharacters: CharacterItem[] = [
     speed: 30,
     campaignId: null,
     campaignTitle: null,
-    portraitUrl: '/assets/portraits/wizard.svg',
+    portraitUrl: PORTRAIT_PLACEHOLDERS.wizard,
   },
   {
     id: 'char-4',
@@ -73,7 +74,7 @@ const sampleCharacters: CharacterItem[] = [
     speed: 35,
     campaignId: null,
     campaignTitle: null,
-    portraitUrl: '/assets/portraits/rogue.svg',
+    portraitUrl: PORTRAIT_PLACEHOLDERS.rogue,
   },
 ];
 
