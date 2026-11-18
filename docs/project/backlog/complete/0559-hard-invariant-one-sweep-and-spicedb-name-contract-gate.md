@@ -1,7 +1,7 @@
 ---
 id: '0559'
 title: Hard Invariant 1 Sweep and SpiceDB Name Contract Gate
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0542
@@ -38,7 +38,7 @@ target_release: 0.9.0
 # TASK-0559: Hard Invariant 1 Sweep and SpiceDB Name Contract Gate
 
 ## Status
-Refined
+Complete
 
 ## Summary
 This is the closing task of the SpiceDB authorization theme. The domain tasks remove the fail-open paths and the wrong names in their own bounded contexts. This task adds the gate that stops them from coming back. It adds a static test that checks every literal permission and relation name in production code against the schema. It removes the last role-name branches in Python. The App Shell role checks are removed by TASK-0538. It removes the `game_session` definition once no check uses it.
@@ -90,3 +90,6 @@ This is the closing task of the SpiceDB authorization theme. The domain tasks re
 
 - Severity: high
 - Source audits: `w3-authz-coverage.md`, `w2-app-shell.md`, `w1-libs.md`
+
+## Completion Note
+Item 4 closed with no change: `link_session` writes `game_session#campaign`, and ADR-0015 (a) names that relation authoritative, so the definition stays.

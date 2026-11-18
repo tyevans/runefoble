@@ -47,3 +47,6 @@ None. Platform quality work.
 ## Audit Provenance
 - Severity: medium
 - Source audits: `work/0579.md`
+
+## Progress (batch 29)
+CombatRoundAdvanced and TurnStarted are now produced, and 11 dead event classes are deleted. 39 orphans stay open; see `.audit/work/0703.md`.

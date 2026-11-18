@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Security
+- MCP tools `get_character_sheet` and `inspect_inventory` check `character.view` for the caller before they read. `GET /api/v1/characters/{id}` no longer accepts the service credential without a user. (TASK-0808)
+- Spectator and overlay HTTP routes need a verified bearer and `session.observe`, and read state from the owners. The `?token=` viewer, the anonymous guest viewer and the gateway fixture state are removed. The GET publishes nothing. (TASK-0809)
+- The session WebSocket relays inbound frames only from callers with `session.participate`, and rejects malformed or unknown frames with an error frame. (TASK-0810)
 - Forged, uploaded and imported map assets no longer return unsigned Silo object URLs. Replies name `/api/v1/assets/{id}?stream=true`, which needs `forged_asset.view` (TASK-0785).
 - Asset reads (`GET /api/v1/assets/{asset_id}`, `/stream`, `/download`) now need a bearer and `forged_asset.view`. Before, any caller could read any asset.
 - A deployed service again refuses to start when its event store is unreachable. The store is built at start-up, not on the first request.
@@ -33,6 +36,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Gateway WebSocket routes admit a connection only with a verified `runefoble.bearer.<jwt>` subprotocol, checked before accept. Refused handshakes close with 1008. Removed the `?user_id=`, `?token=`, `x-user-id`, and `guest_user` identity paths on WebSocket and voice/companion signaling routes. (TASK-0522)
 
 ### Removed
+- Eleven event classes with no producer and no reader. (TASK-0703)
 - Gateway campaign summary route `GET /api/v1/analytics/campaigns/{campaign_id}` and `gateway_api/routers/hub_views.py`, which returned literal values. (TASK-0588)
 - The canned speak-and-act handler and `gateway_api/routers/tabletop.py`. (TASK-0583)
 - Unused gateway `RemoveInventoryItemRequest` model. (TASK-0586)
@@ -126,6 +130,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
 
 ### Changed
+- The App Shell gates campaign views and DM controls on `GET /api/v1/campaigns/{campaign_id}/capabilities`. A gate checks every literal SpiceDB name in production code against `runefoble.zed`. (TASK-0559)
+- Advancing the initiative order publishes `CombatRoundAdvanced` and `TurnStarted`. (TASK-0703)
 - Gateway character subresource routes forward to `character_sheet` through the shared service client. Owner 4xx answers pass through; an unreachable owner returns 503. (TASK-0586)
 - Campaign analytics gateway views (heatmap, MVP, timeline) forward the owner answer and query values. (TASK-0588)
 - `make health-check` prints curation warnings for the refined buffer band and for refined tasks that wait on incomplete tasks. The warnings do not fail the gate. Epics are flagged by one scope rule. (TASK-0667)

@@ -1,7 +1,7 @@
 ---
 id: '0809'
 title: "Spectator and Overlay Routes Check Session Access and Serve Owner State"
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies: []
 governing_adrs:
@@ -16,7 +16,7 @@ target_release: 0.9.0
 # TASK-0809: Spectator and Overlay Routes Check Session Access and Serve Owner State
 
 ## Status
-Refined
+Complete
 
 ## Summary
 The spectator and overlay HTTP routes make no permission check, and they serve a fixture state (with DM-only fields) for every session that is not in a gateway memory store.

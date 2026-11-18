@@ -1,7 +1,7 @@
 ---
 id: '0583'
 title: Gateway Speak-and-Act Proxies to The Watcher Intent Pipeline
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0580
@@ -22,7 +22,7 @@ target_release: 0.9.0
 # TASK-0583: Gateway Speak-and-Act Proxies to The Watcher Intent Pipeline
 
 ## Status
-Refined
+Complete
 
 ## Summary
 `POST /api/v1/watcher/speak-and-act` returns a fixed sentence. Replace it with a proxy to The Watcher speech intent route. The Watcher owns intent parsing. Board changes happen in `board_state` after The Watcher emits an event (ADR-0002). The gateway does not parse speech and does not change the board.
@@ -72,3 +72,6 @@ Test file: `tests/test_blackbox_gateway_speech_proxy.py`. The Watcher and `board
 
 - Severity: critical
 - Source audits: `w1-gateway-api.md`, `w3-authz-coverage.md`, `w3-ddd-architecture.md`
+
+## Completion Note
+The gateway proxy is done. Board commit of a Watcher move stays on the player confirm path (design: The Watcher proposes, players confirm). The end-to-end test moves to TASK-0814.

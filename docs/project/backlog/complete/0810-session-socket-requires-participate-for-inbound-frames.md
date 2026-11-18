@@ -1,7 +1,7 @@
 ---
 id: '0810'
 title: "Session WebSocket Requires session.participate for Inbound Frames"
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies: []
 governing_adrs:
@@ -16,7 +16,7 @@ target_release: 0.9.0
 # TASK-0810: Session WebSocket Requires session.participate for Inbound Frames
 
 ## Status
-Refined
+Complete
 
 ## Summary
 The gateway session WebSocket admits `session.observe` users and then rebroadcasts every frame they send to the whole session.

@@ -1,7 +1,7 @@
 ---
 id: '0808'
 title: "MCP Read Tools Authorize the Caller Before They Read Owner Data"
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies: []
 governing_adrs:
@@ -16,7 +16,7 @@ target_release: 0.9.0
 # TASK-0808: MCP Read Tools Authorize the Caller Before They Read Owner Data
 
 ## Status
-Refined
+Complete
 
 ## Summary
 The MCP tools `get_character_sheet` and `inspect_inventory` read any character by id. They call character_sheet with only the service credential, and character_sheet skips the object check for that credential.

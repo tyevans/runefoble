@@ -54,3 +54,7 @@ None. Platform quality work.
 ## Audit Provenance
 - Severity: high
 - Source audits: Orchestrator Kind deploy for TASK-0525, 2026-11-18 (`.audit/work/kind-helm.log`)
+
+## Progress (2026-11-18)
+All images rebuilt and deployed. 27 pods run and the gateway probes report every service operational. Fixed on the way: the chart loaded a stale SpiceDB schema; campaign-lore did not declare runefoble-embeddings; the voice model cache is filled with `make voice-model-cache`.
+Open gap (user decision: leave for now): campaign-lore needs an OpenAI-compatible embedding endpoint, and the Kind chart has none, so its pod stops at start.
