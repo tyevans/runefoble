@@ -13,7 +13,7 @@ import assert from 'node:assert/strict';
 import { AppDataService } from '../../src/services/app-data-service.ts';
 import { registerDefaultPlugins, pluginRegistry } from '../../src/components/plugins/plugin_registry.ts';
 import { installFakeGateway, type FakeGateway } from '../support/fake-gateway.ts';
-import { FALLBACK_BOARD_TOKENS } from '../../src/fixtures/app-data-service.fixtures.ts';
+import { FALLBACK_BOARD_TOKENS } from '../support/app-data-service.fixtures.ts';
 
 describe('App Shell Board State & Plugin Slot Wiring', () => {
   let dataService: AppDataService;

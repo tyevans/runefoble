@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/web-components';
 import { html } from 'lit';
 import '../styles/themes.css';
 import '../components/runefoble-theme-switcher.ts';
-import '../components/runefoble-character-card.ts';
+import '@runefoble/character-sheet-ui';
 
 const meta: Meta = {
   title: 'Theme/RunefobleThemeSwitcher',

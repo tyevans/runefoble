@@ -12,7 +12,7 @@ import { AppDataService } from '../src/services/app-data-service.ts';
 import {
   FALLBACK_CAMPAIGNS, FALLBACK_CHARACTERS, FALLBACK_MEMBERS, FALLBACK_PARTICIPANTS,
   FALLBACK_CAMPAIGN_SESSIONS_MAP, FALLBACK_BOARD_TOKENS,
-} from '../src/fixtures/app-data-service.fixtures.ts';
+} from './support/app-data-service.fixtures.ts';
 import { installFakeGateway, type FakeGateway } from './support/fake-gateway.ts';
 
 const SESSION_BODY = {

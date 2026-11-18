@@ -12,7 +12,7 @@ make dev-storybook
 Storybook will open at `http://localhost:6006`.
 
 ### 2. Create the Lit Element
-In `frontend/src/components/<component-name>.ts`:
+In the owning bounded context, `services/<bc>/ui/src/<component-name>.ts` (ADR-0013). Do not add components under `frontend/src/`.
 ```typescript
 import { LitElement, html, css } from 'lit';
 import { customElement, property } from 'lit/decorators.js';

@@ -8,7 +8,7 @@ import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { Router } from '../src/router/router.ts';
 import { AppDataService } from '../src/services/app-data-service.ts';
-import { FALLBACK_CAMPAIGNS } from '../src/fixtures/app-data-service.fixtures.ts';
+import { FALLBACK_CAMPAIGNS } from './support/app-data-service.fixtures.ts';
 import { installFakeGateway, type FakeGateway } from './support/fake-gateway.ts';
 import type { CampaignItem, CreateCampaignPayload } from '../../services/game_session/ui/src/campaigns/types.ts';
 import { resolveActiveView as resolveView, type AppActiveView } from '../src/router/view-resolver.ts';

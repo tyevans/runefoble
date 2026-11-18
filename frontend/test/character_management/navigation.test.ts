@@ -15,7 +15,7 @@ import type { CharacterItem, InspectCharacterEventDetail } from '../../../servic
 import type { LobbyParticipant } from '../../../services/game_session/ui/src/campaigns/types.ts';
 import { installFakeGateway } from '../support/fake-gateway.ts';
 import { readAppShellSource } from '../support/app-shell-source.ts';
-import { FALLBACK_CHARACTERS, FALLBACK_PARTICIPANTS } from '../../src/fixtures/app-data-service.fixtures.ts';
+import { FALLBACK_CHARACTERS, FALLBACK_PARTICIPANTS } from '../support/app-data-service.fixtures.ts';
 
 
 describe('Character Roster & Deep Route Navigation (US-0064, US-0069, TASK-0288)', () => {

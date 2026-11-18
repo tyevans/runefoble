@@ -260,12 +260,8 @@ export class RunefobleBoard extends LitElement {
   }
 }
 
-@customElement('runefoble-tactical-board')
-export class RunefobleTacticalBoard extends RunefobleBoard {}
-
 declare global {
   interface HTMLElementTagNameMap {
     'runefoble-board': RunefobleBoard;
-    'runefoble-tactical-board': RunefobleTacticalBoard;
   }
 }

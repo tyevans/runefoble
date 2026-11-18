@@ -32,9 +32,6 @@ def test_compendium_manifest_and_exports(client: TestClient) -> None:
     assert manifest_path.is_file()
     assert json.loads(manifest_path.read_text(encoding="utf-8")) == data
 
-    fwd = REPO_ROOT / "frontend/src/components/runefoble-rules-compendium.ts"
-    assert "@runefoble/rules-compendium-ui" in fwd.read_text(encoding="utf-8")
-
 
 def test_rest_data_binding_rules_search(client: TestClient) -> None:
     """Verify REST search frontdoor delivers schemas matching microfrontend data bindings."""
