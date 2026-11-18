@@ -36,10 +36,11 @@ A blob URL exists only in the current document. Do not store it, send it to a se
 |---|---|---|
 | `runefoble-map-dropzone` (`services/board_state/ui`) | `download_url` in the `POST /api/v1/assets/upload` response, `/api/v1/assets/{id}?stream=true` | Fetched with the bearer. The blob URL goes to `upload-success`. |
 | `runefoble-map-uploader` (`services/board_state/ui`) | The blob URL from the dropzone | Revoked on `resetMap`. |
+| `runefoble-print-forge` (`services/asset_forge/ui`) | `download_url` in the print-pdf, standees and stl-token replies, `/api/v1/assets/{id}?stream=true` | Fetched with the bearer. The blob URL is the download link. Revoked on the next export and on disconnect. |
 
-## URLs that are not asset routes
+## No Silo URLs in replies
 
-Some forge responses return a Silo object URL (`http://<silo>/<bucket>/<key>?expires=3600`). Examples are `download_url` in the print forge, and `image_url` in the battlemap, token, and wardrobe responses. These URLs do not point at `/api/v1/assets`. The helper does not apply to them. A `<img src>` or `<a href>` can use them directly.
+No reply holds a Silo object URL (TASK-0785). Every forged output, uploaded asset and imported map image is named by `/api/v1/assets/{id}?stream=true`. That path needs the bearer and `forged_asset.view`. A `<img src>` cannot send the bearer. Load the path with `fetchAssetObjectUrl`.
 
 ## Failure
 

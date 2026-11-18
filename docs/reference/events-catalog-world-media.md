@@ -210,7 +210,6 @@ Part of the [Events Schema](events-schema.md). Each event identifier in this pag
   - `content_type`: String
   - `byte_size`: Integer
   - `owner_id`: String
-  - `url`: String
 - **`AssetDeleted`**: Emitted when an asset is deleted from object storage (`runefoble.events.asset.deleted`).
   - `asset_id`: String
   - `bucket`: String
