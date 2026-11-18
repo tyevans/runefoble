@@ -63,27 +63,40 @@ class AnalyticsEventDispatcher:
         description: str,
         meta: dict[str, Any] | None = None,
     ) -> None:
-        """Record the milestone on the chronicle aggregate, then project the saved event."""
+        """Record the milestone on the chronicle aggregate, then project the saved event.
+
+        The milestone is saved with the id of the stream message that caused it. When a replay
+        of that message finds the milestone already saved, the saved event is reused. No second
+        event is recorded, and the projection writes the same row.
+        """
         campaign = cid or sid
         metadata = meta or {}
+        source = f"{tx.stream}/{tx.message_id}/{milestone_type}"
         aggregate = await self.chronicle.load_or_create(chronicle_aggregate_id(campaign))
-        aggregate.record_milestone(
-            campaign_id=campaign,
-            session_id=sid,
-            milestone_type=milestone_type,
-            title=title,
-            description=description,
-            metadata=metadata,
-        )
-        recorded = list(aggregate.uncommitted_events)[-1]
-        await self.chronicle.save(aggregate)
+        saved = next((m for m in aggregate.state.milestones if m.source_message_id == source), None)
+        if saved is None:
+            aggregate.record_milestone(
+                campaign_id=campaign,
+                session_id=sid,
+                milestone_type=milestone_type,
+                title=title,
+                description=description,
+                metadata=metadata,
+                source_message_id=source,
+            )
+            recorded = list(aggregate.uncommitted_events)[-1]
+            await self.chronicle.save(aggregate)
+            milestone_id, timestamp = str(recorded.event_id), recorded.occurred_at.isoformat()
+        else:
+            milestone_id, timestamp = saved.id, saved.timestamp
         await tx.add_milestone(
+            milestone_id,
             campaign,
             sid,
             milestone_type,
             title,
             description,
-            recorded.occurred_at.isoformat(),
+            timestamp,
             metadata,
         )
 

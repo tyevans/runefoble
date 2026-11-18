@@ -28,7 +28,9 @@ def _session_ended(sid: str, cid: str, summary: str) -> SessionEnded:
     return SessionEnded(aggregate_id=sid, session_id=sid, campaign_id=cid, summary=summary)
 
 
-def test_redelivered_session_end_projects_one_milestone(analytics_service: AnalyticsService) -> None:
+def test_redelivered_session_end_projects_one_milestone(
+    analytics_service: AnalyticsService,
+) -> None:
     """A redelivered SessionEnded message adds no second milestone row.
 
     The second message is published after the redelivery. The stream keeps order, so once its
@@ -48,7 +50,9 @@ def test_redelivered_session_end_projects_one_milestone(analytics_service: Analy
         assert _session_end_descriptions(client, cid) == ["first", "second"]
 
 
-def test_redelivery_after_restart_projects_one_milestone(analytics_service: AnalyticsService) -> None:
+def test_redelivery_after_restart_projects_one_milestone(
+    analytics_service: AnalyticsService,
+) -> None:
     """A message projected before a restart is not projected again when it is redelivered."""
     cid, sid = str(uuid4()), str(uuid4())
     analytics_service.grant_view(cid)
