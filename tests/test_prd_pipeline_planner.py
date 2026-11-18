@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from tools.prd_pipeline.decomposer import PRDDecomposer
+from tools.prd_pipeline.manager import PRDManager
 from tools.prd_pipeline.models import PRD, SliceType
 from tools.prd_pipeline.planner import (
     DecompositionPlanner,
@@ -12,7 +13,6 @@ from tools.prd_pipeline.planner import (
     requires_ui_component,
     requires_worker_slice,
 )
-from tools.prd_pipeline.prd_manager import PRDManager
 
 
 def test_decomposer_generates_spikes_and_vertical_slices(temp_project: Path):
@@ -110,10 +110,9 @@ def test_slice_detection_backward_compatibility_delegates(temp_project: Path):
         summary="Canvas UI component.",
         status="Accepted",
     )
-    decomposer = PRDDecomposer(temp_project)
 
-    assert decomposer._requires_ui_component(prd) is True
-    assert decomposer._requires_architectural_spike(prd) is False
+    assert requires_ui_component(prd) is True
+    assert requires_architectural_spike(prd) is False
 
     plain_prd = PRD(
         id="PRD-0999",
@@ -134,4 +133,4 @@ def test_slice_detection_backward_compatibility_delegates(temp_project: Path):
         body="Purely static visual layout without background processing.",
         target_bc="board_state",
     )
-    assert decomposer._requires_worker_slice(plain_prd) is False
+    assert requires_worker_slice(plain_prd) is False

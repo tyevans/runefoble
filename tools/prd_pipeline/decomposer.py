@@ -1,4 +1,4 @@
-"""PRD decomposition orchestrator facade."""
+"""PRD decomposition orchestrator."""
 
 from __future__ import annotations
 
@@ -6,17 +6,7 @@ import re
 from pathlib import Path
 
 from .models import PRD, DecompositionPlan
-from .planner import (
-    DecompositionPlanner,
-    create_api_slice_draft,
-    create_domain_slice_draft,
-    create_spike_draft,
-    create_ui_slice_draft,
-    create_worker_slice_draft,
-    requires_architectural_spike,
-    requires_ui_component,
-    requires_worker_slice,
-)
+from .planner import DecompositionPlanner
 from .writer import PlanWriter
 
 
@@ -66,13 +56,3 @@ class PRDDecomposer:
             "tasks": [writer.write_task(t) for t in plan.all_tasks],
             "stories": [writer.write_user_story(s) for s in plan.stories],
         }
-
-    # Backward compatibility delegates
-    _requires_architectural_spike = staticmethod(requires_architectural_spike)
-    _requires_ui_component = staticmethod(requires_ui_component)
-    _requires_worker_slice = staticmethod(requires_worker_slice)
-    _create_spike_draft = staticmethod(create_spike_draft)
-    _create_domain_slice_draft = staticmethod(create_domain_slice_draft)
-    _create_api_slice_draft = staticmethod(create_api_slice_draft)
-    _create_ui_slice_draft = staticmethod(create_ui_slice_draft)
-    _create_worker_slice_draft = staticmethod(create_worker_slice_draft)

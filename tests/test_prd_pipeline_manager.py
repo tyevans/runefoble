@@ -7,12 +7,12 @@ from pathlib import Path
 from tools.prd_pipeline.decomposer import PRDDecomposer
 from tools.prd_pipeline.manager import (
     AuditSummary,
+    PRDManager,
     PRDRecord,
     PRDScanner,
     PRDStage,
     RequirementAuditor,
 )
-from tools.prd_pipeline.prd_manager import PRDManager
 from tools.prd_pipeline.registry_sync import RegistrySynchronizer
 from tools.prd_pipeline.writer import PlanWriter
 
