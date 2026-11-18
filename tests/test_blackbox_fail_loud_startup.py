@@ -91,14 +91,23 @@ def test_game_session_starts_in_development_without_watcher_url() -> None:
     assert result.returncode == 0, result.stderr
 
 
-def test_game_session_starts_in_deployed_mode_with_watcher_url() -> None:
-    """A configured Watcher URL satisfies the deployed-mode start-up rule."""
+def test_game_session_starts_in_deployed_mode_with_watcher_url(postgres_service) -> None:
+    """A configured Watcher URL satisfies the deployed-mode start-up rule.
+
+    A deployed service also needs its PostgreSQL event store (TASK-0707), so the child
+    process gets a reachable database.
+    """
+    if not postgres_service:
+        pytest.skip("Docker not available for PostgreSQL event store test")
+
     result = _import_module(
         "game_session.main",
         None,
         {
             "RUNEFOBLE_ENVIRONMENT": "production",
             "RUNEFOBLE_WATCHER_URL": "http://the-watcher:8001",
+            "RUNEFOBLE_EVENT_STORE_BACKEND": "postgresql",
+            "RUNEFOBLE_DATABASE_URL": str(postgres_service["dsn"]),
         },
     )
 

@@ -163,7 +163,7 @@ The service stops with an error when one of these checks fails. It does not serv
 
 - The embedding endpoint does not answer the start-up probe, or it returns a different width. The error contains `embedding endpoint is unreachable`.
 - PostgreSQL does not accept the pgvector connection. The error contains `vector store (PostgreSQL) is unreachable`.
-- `RUNEFOBLE_USE_POSTGRES_EVENT_STORE=true` and PostgreSQL cannot be reached. The service does not serve an empty projection.
+- `RUNEFOBLE_EVENT_STORE_BACKEND=postgresql` (the default) and PostgreSQL cannot be reached. The service does not serve an empty projection.
 
 ### Restarts
 

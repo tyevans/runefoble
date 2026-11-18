@@ -48,7 +48,7 @@ async def test_postgres_event_store_durable_aggregate_roundtrip(postgres_service
 
     settings = PlatformSettings(
         database_url=str(postgres_service["dsn"]),
-        use_postgres_event_store=True,
+        event_store_backend="postgresql",
     )
 
     store = get_event_store(settings=settings, force_new=True)
@@ -126,7 +126,7 @@ async def test_postgres_event_store_optimistic_concurrency(postgres_service):
 
     settings = PlatformSettings(
         database_url=str(postgres_service["dsn"]),
-        use_postgres_event_store=True,
+        event_store_backend="postgresql",
     )
     store = get_event_store(settings=settings, force_new=True)
     repo = create_aggregate_repository(CharacterAggregate, event_store=store)
@@ -160,7 +160,7 @@ async def test_postgres_raw_event_stream_verification(postgres_service):
 
     settings = PlatformSettings(
         database_url=str(postgres_service["dsn"]),
-        use_postgres_event_store=True,
+        event_store_backend="postgresql",
     )
     store = get_event_store(settings=settings, force_new=True)
     repo = create_aggregate_repository(GameSessionAggregate, event_store=store)

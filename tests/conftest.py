@@ -20,6 +20,9 @@ for _upstream in (
 # The inference worker refuses to start without its service token (ADR-0015 e). Tests use a
 # throwaway value. Process-level tests remove it from the child environment on purpose.
 os.environ.setdefault("RUNEFOBLE_SERVICE_CREDENTIAL", "test-only-service-credential")
+# Tests select the in-memory event store explicitly. The platform default is PostgreSQL, and a
+# deployed environment refuses memory (TASK-0707). Tests that need PostgreSQL pass settings.
+os.environ["RUNEFOBLE_EVENT_STORE_BACKEND"] = "memory"
 # ruff: noqa: E402  (imports below construct settings, so the key must be set first)
 
 import pytest

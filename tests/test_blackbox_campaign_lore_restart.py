@@ -58,7 +58,7 @@ def _trust_signing_issuer():
 
 def _use_postgres_event_store(dsn: str):
     """Build a fresh PostgreSQL event store and make it the process-wide store."""
-    settings = PlatformSettings(database_url=dsn, use_postgres_event_store=True)
+    settings = PlatformSettings(database_url=dsn, event_store_backend="postgresql")
     store = get_event_store(settings=settings, force_new=True)
     set_event_store(store)
     return store
@@ -293,7 +293,7 @@ def test_start_up_fails_when_configured_event_store_is_unreachable():
 
     env = {
         **os.environ,
-        "RUNEFOBLE_USE_POSTGRES_EVENT_STORE": "true",
+        "RUNEFOBLE_EVENT_STORE_BACKEND": "postgresql",
         "RUNEFOBLE_DATABASE_URL": f"postgresql+asyncpg://u:p@127.0.0.1:{closed_port}/lore",
     }
     code = (

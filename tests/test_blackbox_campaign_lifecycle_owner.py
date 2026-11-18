@@ -398,7 +398,7 @@ async def test_campaign_membership_and_invites_survive_restart_on_postgres(
     dsn = str(postgres_service["dsn"])
 
     def bind_process() -> CampaignRepositories:
-        settings = PlatformSettings(database_url=dsn, use_postgres_event_store=True)
+        settings = PlatformSettings(database_url=dsn, event_store_backend="postgresql")
         store = get_event_store(settings=settings, force_new=True)
         repos = build_campaign_repositories(store)
         set_campaign_repositories(repos)
