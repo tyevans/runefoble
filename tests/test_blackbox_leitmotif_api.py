@@ -95,7 +95,7 @@ def test_trigger_and_audition_leitmotif_frontdoor(
     playback = trigger_resp.json()
     assert playback["character_id"] == "char-valeros" and playback["motif_type"] == "triumphant"
     assert playback["instrument_timbre"] == "brass" and playback["is_ducked"] is False
-    assert playback["scheduled_latency_ms"] <= 250
+    assert "scheduled_latency_ms" not in playback
 
     active_resp = client.get(
         f"/api/v1/soundscape/leitmotif/active?session_id={leitmotif_session_id}"

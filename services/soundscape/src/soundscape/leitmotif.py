@@ -176,7 +176,6 @@ class ActiveLeitmotifPlayback(BaseModel):
     attack_ms: int
     release_ms: int
     duration_ms: int
-    scheduled_latency_ms: int = 45  # Guaranteed sub-250ms scheduling
     triggered_at: float
     trigger_reason: str
     envelope_stage: str = "attack"
@@ -311,7 +310,6 @@ class LeitmotifEngine:
             attack_ms=profile.attack_ms,
             release_ms=profile.release_ms,
             duration_ms=profile.duration_ms,
-            scheduled_latency_ms=45,
             triggered_at=now,
             trigger_reason=trigger_reason,
             envelope_stage="attack",
