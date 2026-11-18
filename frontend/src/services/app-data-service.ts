@@ -106,7 +106,7 @@ export class AppDataService {
     return dataOk({
       id: data.id || sessionId,
       campaignId: data.campaign_id || data.campaignId || '',
-      title: data.title || `Session #${sessionId}`,
+      title: data.title || '',
       status: data.status || 'active',
       round: data.round || 1,
       participantsCount: Array.isArray(data.participants) ? data.participants.length : (data.participantsCount || 0),

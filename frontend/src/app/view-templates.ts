@@ -7,7 +7,8 @@
 
 import { html } from 'lit';
 import { router } from '../router/index.ts';
-import type { RunefobleApp, AppActiveView } from '../runefoble-app.ts';
+import type { RunefobleApp } from '../runefoble-app.ts';
+import type { AppActiveView } from '../router/view-resolver.ts';
 import type { DataFailure } from '../services/data-result.ts';
 import { createCampaignFromEvent } from './campaign-actions.ts';
 import { createEntryFromEvent, createPinFromEvent } from './lore-actions.ts';

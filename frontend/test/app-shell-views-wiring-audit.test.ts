@@ -10,22 +10,9 @@ import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { Router, type MatchedRoute } from '../src/router/router.ts';
 import { AppDataService } from '../src/services/app-data-service.ts';
-import type { AppActiveView } from '../src/runefoble-app.ts';
+import { resolveActiveView, type AppActiveView } from '../src/router/view-resolver.ts';
 import { installFakeGateway, type FakeGateway } from './support/fake-gateway.ts';
 import { FALLBACK_CAMPAIGNS, FALLBACK_CHARACTERS, FALLBACK_CAMPAIGN_SESSIONS_MAP } from '../src/fixtures/app-data-service.fixtures.ts';
-
-// Pure frontdoor view resolver mirroring RunefobleApp.getActiveView()
-function resolveActiveView(route: MatchedRoute | null): AppActiveView {
-  const pat = route?.pattern || '';
-  if (pat === '#/login' || pat === '#/register') return 'login';
-  if (pat.startsWith('#/campaigns/:campaignId/lobby/')) return 'session-lobby';
-  if (pat.startsWith('#/campaigns/:campaignId/sessions/')) return 'session-active';
-  if (pat === '#/campaigns/:campaignId/characters') return 'campaign-characters';
-  if (pat.startsWith('#/campaigns/:campaignId')) return 'campaign-detail';
-  if (pat.startsWith('#/characters/') && pat !== '#/characters') return 'character-sheet';
-  if (pat === '#/characters') return 'characters';
-  return pat === '#/profile' ? 'profile' : 'campaigns';
-}
 
 // Route-bound WebSocket requirement rule
 function isSessionWebSocketRequired(route: MatchedRoute | null): boolean {

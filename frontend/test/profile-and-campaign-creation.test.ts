@@ -11,20 +11,10 @@ import { AppDataService } from '../src/services/app-data-service.ts';
 import { FALLBACK_CAMPAIGNS } from '../src/fixtures/app-data-service.fixtures.ts';
 import { installFakeGateway, type FakeGateway } from './support/fake-gateway.ts';
 import type { CampaignItem, CreateCampaignPayload } from '../../services/game_session/ui/src/campaigns/types.ts';
-import type { AppActiveView } from '../src/runefoble-app.ts';
+import { resolveActiveView as resolveView, type AppActiveView } from '../src/router/view-resolver.ts';
 
 function resolveActiveView(path: string): AppActiveView {
-  const router = Router.getInstance();
-  const matched = router.match(path);
-  const pat = matched?.pattern || '';
-  if (pat === '#/login' || pat === '#/register') return 'login';
-  if (pat.startsWith('#/campaigns/:campaignId/lobby/')) return 'session-lobby';
-  if (pat.startsWith('#/campaigns/:campaignId/sessions/')) return 'session-active';
-  if (pat === '#/campaigns/:campaignId/characters') return 'campaign-characters';
-  if (pat.startsWith('#/campaigns/:campaignId')) return 'campaign-detail';
-  if (pat === '#/characters') return 'characters';
-  if (pat === '#/profile') return 'profile';
-  return 'campaigns';
+  return resolveView(Router.getInstance().match(path));
 }
 
 describe('Profile Navigation & Breadcrumb Trail (TASK-0257)', () => {
