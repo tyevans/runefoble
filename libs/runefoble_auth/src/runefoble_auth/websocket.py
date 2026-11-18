@@ -23,7 +23,7 @@ import logging
 from collections.abc import Awaitable, Callable
 from typing import Any
 
-from fastapi import WebSocket
+from fastapi import WebSocket, WebSocketDisconnect
 
 from runefoble_auth.contract import permission_for_action
 from runefoble_auth.errors import AuthzError
@@ -40,6 +40,9 @@ WS_AUTHORIZATION_UNAVAILABLE = 1011
 
 WebSocketAuthorizer = Callable[[str], Awaitable[bool]]
 """Return True when the user id may open the socket. May raise AuthzError."""
+
+FrameReceiver = Callable[[WebSocket], Awaitable[Any]]
+"""Read one inbound frame: `WebSocket.receive_json` or `WebSocket.receive_text`."""
 
 
 class WebSocketAuthError(Exception):
@@ -140,6 +143,37 @@ async def admit_websocket(
     return principal
 
 
+async def serve_authorized_socket(
+    websocket: WebSocket,
+    *,
+    admit: Callable[[WebSocket], Awaitable[VerifiedPrincipal | None]],
+    on_open: Callable[[VerifiedPrincipal], Awaitable[bool]],
+    on_frame: Callable[[VerifiedPrincipal, Any], Awaitable[None]],
+    on_close: Callable[[], None],
+    receive: FrameReceiver = WebSocket.receive_json,
+) -> None:
+    """Run one WebSocket from handshake to disconnect. Every WebSocket route uses this loop.
+
+    1. `admit` verifies the handshake and the permission. A refused socket ends at once.
+    2. `on_open` registers the socket and sends its first frame. Returning False means the route
+       refused the socket after admission and has closed it. The loop then ends.
+    3. For each inbound frame, `receive` reads it and `on_frame` handles it, until the peer leaves.
+    4. `on_close` runs once when the loop ends, so a finished socket never stays registered.
+    """
+    principal = await admit(websocket)
+    if principal is None:
+        return
+    try:
+        if await on_open(principal):
+            while True:
+                frame = await receive(websocket)
+                await on_frame(principal, frame)
+    except WebSocketDisconnect:
+        pass
+    finally:
+        on_close()
+
+
 async def send_socket_error(websocket: WebSocket, code: str, message: str, **fields: Any) -> None:
     """Send one per-message error frame. Extra fields (for example `action`) join the frame."""
     await websocket.send_json({"type": "error", "code": code, "message": message, **fields})
@@ -158,5 +192,6 @@ __all__ = [
     "authenticate_websocket",
     "bearer_token_from_subprotocols",
     "send_socket_error",
+    "serve_authorized_socket",
     "verify_websocket",
 ]

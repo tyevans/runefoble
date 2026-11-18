@@ -21,7 +21,6 @@ from campaign_lore.main import app as lore_app
 from campaign_lore.west_marches_aggregate import WestMarchesAtlasAggregate
 from eventsource.adapters.memory.store import InMemoryEventStore
 from fastapi.testclient import TestClient
-from game_session.minigame_tables.ws_manager import MinigameTableManager
 from runefoble_auth.errors import AuthzUnavailableError
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.spicedb import MockSpiceDBClient
@@ -30,6 +29,7 @@ from runefoble_platform.event_sourcing import (
     get_event_store,
     set_event_store,
 )
+from runefoble_platform.ws_groups import WebSocketGroups
 from soundscape.main import app as soundscape_app
 from starlette.websockets import WebSocketDisconnect
 
@@ -215,45 +215,47 @@ def test_leitmotif_profile_answers_503_when_spicedb_is_unreachable(
     assert resp.json()["error"] == "authorization_unavailable"
 
 
-# Minigame table broadcast: closed sockets are removed, other failures are counted
+# Socket groups: a failing socket is pruned, and the other sockets still receive the broadcast
 
 
 class _Socket:
-    """A WebSocket double at the socket boundary. It records sends or raises on send."""
+    """A WebSocket double at the socket boundary. It counts sends and raises on send."""
 
     def __init__(self, error: BaseException | None = None) -> None:
         self.error = error
+        self.attempts = 0
         self.sent: list[dict] = []
 
     async def send_json(self, message: dict) -> None:
+        self.attempts += 1
         if self.error is not None:
             raise self.error
         self.sent.append(message)
 
 
-def test_broadcast_removes_a_closed_socket_and_delivers_to_the_rest() -> None:
-    manager = MinigameTableManager()
+def test_broadcast_prunes_a_closed_socket_and_delivers_to_the_rest() -> None:
+    groups = WebSocketGroups[str]()
     closed = _Socket(WebSocketDisconnect(code=1006))
     live = _Socket()
-    manager.register("table-a", closed)
-    manager.register("table-a", live)
+    groups.register("table-a", closed)
+    groups.register("table-a", live)
 
-    asyncio.run(manager.broadcast("table-a", {"type": "turn"}))
+    asyncio.run(groups.broadcast("table-a", {"type": "turn"}))
+    asyncio.run(groups.broadcast("table-a", {"type": "turn"}))
 
-    assert live.sent == [{"type": "turn"}]
-    assert closed not in manager.connections.get("table-a", set())
-    assert manager.send_failures == 0
+    assert live.sent == [{"type": "turn"}, {"type": "turn"}]
+    assert closed.attempts == 1
 
 
-def test_broadcast_counts_other_send_failures_and_keeps_the_socket() -> None:
-    manager = MinigameTableManager()
+def test_broadcast_prunes_a_failing_socket_and_delivers_to_the_rest() -> None:
+    groups = WebSocketGroups[str]()
     broken = _Socket(RuntimeError("transport fault"))
     live = _Socket()
-    manager.register("table-b", broken)
-    manager.register("table-b", live)
+    groups.register("table-b", broken)
+    groups.register("table-b", live)
 
-    asyncio.run(manager.broadcast("table-b", {"type": "turn"}))
+    asyncio.run(groups.broadcast("table-b", {"type": "turn"}))
+    asyncio.run(groups.broadcast("table-b", {"type": "turn"}))
 
-    assert live.sent == [{"type": "turn"}]
-    assert broken in manager.connections["table-b"]
-    assert manager.send_failures == 1
+    assert live.sent == [{"type": "turn"}, {"type": "turn"}]
+    assert broken.attempts == 1

@@ -28,9 +28,9 @@ pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 def clean_minigame_state():
     from game_session.minigame_tables.ws_manager import minigame_table_manager
 
-    minigame_table_manager.connections.clear()
+    minigame_table_manager.clear()
     yield
-    minigame_table_manager.connections.clear()
+    minigame_table_manager.clear()
 
 
 @pytest.fixture(autouse=True)

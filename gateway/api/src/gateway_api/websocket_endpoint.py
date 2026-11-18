@@ -6,7 +6,7 @@ import logging
 from datetime import UTC, datetime
 from typing import Any
 
-from fastapi import WebSocket, WebSocketDisconnect
+from fastapi import WebSocket
 from gateway_api.dependencies import get_event_bus
 from gateway_api.websocket_auth import admit_gateway_websocket
 from gateway_api.websocket_manager import ws_campaign_manager
@@ -16,7 +16,8 @@ from gateway_api.websocket_validator import (
     WebSocketActionValidator,
     default_action_validator,
 )
-from runefoble_auth.websocket import send_socket_error
+from runefoble_auth.principal import VerifiedPrincipal
+from runefoble_auth.websocket import send_socket_error, serve_authorized_socket
 from runefoble_auth.zitadel import ZitadelAuthService
 from runefoble_platform.event_publish import publish_best_effort
 
@@ -63,65 +64,64 @@ async def campaign_websocket_endpoint(
     denied_msg = (
         f"Zanzibar authorization denied: insufficient permissions to view campaign '{campaign_id}'"
     )
-    principal = await admit_gateway_websocket(
-        websocket, may_connect, verifier=auth_service, denial_message=denied_msg
-    )
-    if principal is None:
-        return
-    subject_id = principal.user_id
 
-    await ws_campaign_manager.connect(campaign_id, websocket, subject_id)
-
-    try:
+    async def open_room(principal: VerifiedPrincipal) -> bool:
+        ws_campaign_manager.register(campaign_id, websocket)
         await websocket.send_json(
             {
                 "type": "connected",
                 "campaign_id": campaign_id,
-                "user_id": subject_id,
+                "user_id": principal.user_id,
                 "message": "Connected to Runefoble real-time campaign stream. The Watcher is listening.",
             }
         )
+        return True
 
-        while True:
-            data = await websocket.receive_json()
-            action = data.get("action") or data.get("type") or "unknown"
+    async def handle_frame(principal: VerifiedPrincipal, data: dict[str, Any]) -> None:
+        subject_id = principal.user_id
+        action = data.get("action") or data.get("type") or "unknown"
 
-            if action not in KNOWN_ACTIONS:
-                await send_socket_error(
-                    websocket, "UNKNOWN_ACTION", f"Unknown action '{action}'", action=action
-                )
-                continue
+        if action not in KNOWN_ACTIONS:
+            await send_socket_error(
+                websocket, "UNKNOWN_ACTION", f"Unknown action '{action}'", action=action
+            )
+            return
 
-            # 2. Verify permission for incoming action
-            if not await action_validator.validate_action(campaign_id, subject_id, action, data):
-                logger.warning(
-                    "Zanzibar denied action '%s' for subject '%s' in campaign '%s'",
-                    action,
-                    subject_id,
-                    campaign_id,
-                )
-                msg = (
-                    f"Zanzibar authorization denied: insufficient permissions for action '{action}'"
-                )
-                await send_socket_error(websocket, "PERMISSION_DENIED", msg, action=action)
-                continue
+        # 2. Verify permission for incoming action
+        if not await action_validator.validate_action(campaign_id, subject_id, action, data):
+            logger.warning(
+                "Zanzibar denied action '%s' for subject '%s' in campaign '%s'",
+                action,
+                subject_id,
+                campaign_id,
+            )
+            msg = f"Zanzibar authorization denied: insufficient permissions for action '{action}'"
+            await send_socket_error(websocket, "PERMISSION_DENIED", msg, action=action)
+            return
 
-            # 3. Publish authorized event to Redis stream
-            await _publish_event(action, campaign_id, subject_id, data)
+        # 3. Publish authorized event to Redis stream
+        await _publish_event(action, campaign_id, subject_id, data)
 
-            # 4. Broadcast state to connected party clients
-            broadcast = {
-                "type": data.get("type", action),
-                "action": action,
-                "status": "applied",
-                "campaign_id": campaign_id,
-                "user_id": subject_id,
-                **{k: v for k, v in data.items() if k not in ("type", "action")},
-            }
-            await ws_campaign_manager.broadcast_to_campaign(campaign_id, broadcast)
+        # 4. Broadcast state to connected party clients
+        broadcast = {
+            "type": data.get("type", action),
+            "action": action,
+            "status": "applied",
+            "campaign_id": campaign_id,
+            "user_id": subject_id,
+            **{k: v for k, v in data.items() if k not in ("type", "action")},
+        }
+        await ws_campaign_manager.broadcast(campaign_id, broadcast)
 
-    except WebSocketDisconnect:
-        ws_campaign_manager.disconnect(campaign_id, websocket)
+    await serve_authorized_socket(
+        websocket,
+        admit=lambda ws: admit_gateway_websocket(
+            ws, may_connect, verifier=auth_service, denial_message=denied_msg
+        ),
+        on_open=open_room,
+        on_frame=handle_frame,
+        on_close=lambda: ws_campaign_manager.disconnect(campaign_id, websocket),
+    )
 
 
 __all__ = [

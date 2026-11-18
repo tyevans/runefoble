@@ -6,8 +6,8 @@ party vitals HUD with sub-100ms WebSocket updates and Zanzibar sanitization.
 
 from __future__ import annotations
 
-import contextlib
 import logging
+from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
 
@@ -19,7 +19,6 @@ from fastapi import (
     Request,
     Response,
     WebSocket,
-    WebSocketDisconnect,
 )
 from fastapi.responses import HTMLResponse, JSONResponse
 from gateway_api.auth import require_zanzibar_permission
@@ -48,10 +47,12 @@ from runefoble_auth.websocket import (
     action_authorizer,
     bearer_token_from_subprotocols,
     send_socket_error,
+    serve_authorized_socket,
 )
 from runefoble_events.events import SpectatorSessionConnected
 from runefoble_platform.event_publish import publish_best_effort
 from runefoble_platform.service_client import UpstreamError
+from runefoble_platform.ws_groups import WebSocketGroups
 
 logger = logging.getLogger("runefoble.gateway.overlay")
 
@@ -60,31 +61,8 @@ WS_UPSTREAM_UNAVAILABLE = 1011
 router = APIRouter(tags=["OBS Overlay"])
 
 
-class OverlayConnectionManager:
-    """Manages active live spectator WebSocket connections per session."""
-
-    def __init__(self) -> None:
-        self.active_connections: dict[str, list[WebSocket]] = {}
-
-    def register(self, session_id: str, websocket: WebSocket) -> None:
-        """Track an admitted, accepted socket. The route accepts it first."""
-        self.active_connections.setdefault(session_id, []).append(websocket)
-
-    def disconnect(self, session_id: str, websocket: WebSocket) -> None:
-        if session_id in self.active_connections:
-            conns = [ws for ws in self.active_connections[session_id] if ws != websocket]
-            if conns:
-                self.active_connections[session_id] = conns
-            else:
-                self.active_connections.pop(session_id, None)
-
-    async def broadcast_to_session(self, session_id: str, message: dict[str, Any]) -> None:
-        for ws in list(self.active_connections.get(session_id, [])):
-            with contextlib.suppress(Exception):
-                await ws.send_json(message)
-
-
-ws_overlay_manager = OverlayConnectionManager()
+# Live spectator sockets, one WebSocket group per session.
+ws_overlay_manager = WebSocketGroups[str]()
 
 
 @router.get(
@@ -147,93 +125,124 @@ async def _publish_spectator_connected(session_id: str, principal: VerifiedPrinc
         await publish_best_effort(bus, "runefoble.events.spectator", event)
 
 
-@router.websocket("/overlay/ws/{session_id}")
-@router.websocket("/ws/overlay/{session_id}")
-async def overlay_websocket_endpoint(websocket: WebSocket, session_id: str) -> None:
-    """Real-time spectator WebSocket feed delivering sanitized updates."""
-    principal = await admit_gateway_websocket(
-        websocket, action_authorizer("session.observe", session_id)
-    )
-    if principal is None:
-        return
+@dataclass
+class _OverlayFeed:
+    """The source state that one overlay socket reads when it opens."""
+
+    raw: dict[str, Any] = field(default_factory=dict)
+
+
+async def _open_overlay(
+    websocket: WebSocket, session_id: str, principal: VerifiedPrincipal, feed: _OverlayFeed
+) -> bool:
+    """Read the source, join the group, and send the initial state. False when the owners fail."""
     raw = await _read_source_for_socket(websocket, session_id)
     if raw is None:
-        return
+        return False
+    feed.raw = raw
     ws_overlay_manager.register(session_id, websocket)
     await _publish_spectator_connected(session_id, principal)
     director = get_cinematic_director(session_id)
     initial = sanitize_party_vitals({**raw, "tokens": party_tokens(raw)}, director.current_target)
+    await websocket.send_json(
+        {
+            "type": "overlay_connected",
+            "session_id": session_id,
+            "party": [m.model_dump() for m in initial.party],
+            "camera": director.current_target.model_dump(),
+            "recent_rolls": [r.model_dump() for r in initial.recent_rolls],
+            "round": initial.round,
+            "transparent": True,
+        }
+    )
+    return True
 
-    try:
-        await websocket.send_json(
-            {
-                "type": "overlay_connected",
-                "session_id": session_id,
-                "party": [m.model_dump() for m in initial.party],
-                "camera": director.current_target.model_dump(),
-                "recent_rolls": [r.model_dump() for r in initial.recent_rolls],
-                "round": initial.round,
-                "transparent": True,
-            }
+
+async def _handle_overlay_frame(
+    websocket: WebSocket,
+    session_id: str,
+    principal: VerifiedPrincipal,
+    feed: _OverlayFeed,
+    data: dict[str, Any],
+) -> None:
+    """Apply one inbound frame to the camera or the roll feed, then broadcast the result."""
+    action = data.get("action") or data.get("type") or "unknown"
+    if not await may_publish_frame(websocket, session_id, principal.user_id, action):
+        return
+    director = get_cinematic_director(session_id)
+    if action in ("turn_started", "runefoble.events.session.turn_started"):
+        cam = director.handle_turn_started(
+            data,
+            tokens=feed.raw.get("tokens"),
+            duration_ms=data.get("duration_ms"),
+            easing=data.get("easing"),
         )
-        while True:
-            data = await websocket.receive_json()
-            action = data.get("action") or data.get("type") or "unknown"
-            if not await may_publish_frame(websocket, session_id, principal.user_id, action):
-                continue
-            if action in ("turn_started", "runefoble.events.session.turn_started"):
-                cam = director.handle_turn_started(
-                    data,
-                    tokens=raw.get("tokens"),
-                    duration_ms=data.get("duration_ms"),
-                    easing=data.get("easing"),
-                )
-                msg = {
-                    "type": "camera_target_updated",
-                    "action": "turn_started",
-                    "session_id": session_id,
-                    "character_id": data.get("character_id"),
-                    "token_id": data.get("token_id"),
-                    "camera": cam.model_dump(),
-                }
-                await ws_overlay_manager.broadcast_to_session(session_id, msg)
-            elif action in ("token_moved", "move_token", "runefoble.events.board.token_moved"):
-                token_id = str(data.get("token_id", ""))
-                tokens = raw.get("tokens", [])
-                if not any(
-                    str(t.get("id")) == token_id
-                    and (t.get("hidden") or t.get("is_secret") or t.get("secret"))
-                    for t in tokens
-                ):
-                    cam = director.handle_token_moved(
-                        data, duration_ms=data.get("duration_ms"), easing=data.get("easing")
-                    )
-                    msg = {
-                        "type": "camera_target_updated",
-                        "action": "token_moved",
-                        "session_id": session_id,
-                        "token_id": token_id,
-                        "to_x": data.get("to_x"),
-                        "to_y": data.get("to_y"),
-                        "camera": cam.model_dump(),
-                    }
-                    await ws_overlay_manager.broadcast_to_session(session_id, msg)
-            elif action in ("dice_rolled", "roll_animation"):
-                msg = {
-                    "type": "roll_animation",
-                    "roller_name": str(data.get("roller_name", "Adventurer")),
-                    "dice_formula": str(data.get("dice_formula", "1d20")),
-                    "result": int(data.get("result", 0)),
-                    "is_critical": bool(data.get("is_critical", False)),
-                    "is_fumble": bool(data.get("is_fumble", False)),
-                }
-                await ws_overlay_manager.broadcast_to_session(session_id, msg)
-    except WebSocketDisconnect:
-        ws_overlay_manager.disconnect(session_id, websocket)
+        msg = {
+            "type": "camera_target_updated",
+            "action": "turn_started",
+            "session_id": session_id,
+            "character_id": data.get("character_id"),
+            "token_id": data.get("token_id"),
+            "camera": cam.model_dump(),
+        }
+        await ws_overlay_manager.broadcast(session_id, msg)
+    elif action in ("token_moved", "move_token", "runefoble.events.board.token_moved"):
+        token_id = str(data.get("token_id", ""))
+        tokens = feed.raw.get("tokens", [])
+        if not any(
+            str(t.get("id")) == token_id
+            and (t.get("hidden") or t.get("is_secret") or t.get("secret"))
+            for t in tokens
+        ):
+            cam = director.handle_token_moved(
+                data, duration_ms=data.get("duration_ms"), easing=data.get("easing")
+            )
+            msg = {
+                "type": "camera_target_updated",
+                "action": "token_moved",
+                "session_id": session_id,
+                "token_id": token_id,
+                "to_x": data.get("to_x"),
+                "to_y": data.get("to_y"),
+                "camera": cam.model_dump(),
+            }
+            await ws_overlay_manager.broadcast(session_id, msg)
+    elif action in ("dice_rolled", "roll_animation"):
+        msg = {
+            "type": "roll_animation",
+            "roller_name": str(data.get("roller_name", "Adventurer")),
+            "dice_formula": str(data.get("dice_formula", "1d20")),
+            "result": int(data.get("result", 0)),
+            "is_critical": bool(data.get("is_critical", False)),
+            "is_fumble": bool(data.get("is_fumble", False)),
+        }
+        await ws_overlay_manager.broadcast(session_id, msg)
+
+
+@router.websocket("/overlay/ws/{session_id}")
+@router.websocket("/ws/overlay/{session_id}")
+async def overlay_websocket_endpoint(websocket: WebSocket, session_id: str) -> None:
+    """Real-time spectator WebSocket feed delivering sanitized updates."""
+    feed = _OverlayFeed()
+
+    async def open_feed(principal: VerifiedPrincipal) -> bool:
+        return await _open_overlay(websocket, session_id, principal, feed)
+
+    async def handle_frame(principal: VerifiedPrincipal, data: dict[str, Any]) -> None:
+        await _handle_overlay_frame(websocket, session_id, principal, feed, data)
+
+    await serve_authorized_socket(
+        websocket,
+        admit=lambda ws: admit_gateway_websocket(
+            ws, action_authorizer("session.observe", session_id)
+        ),
+        on_open=open_feed,
+        on_frame=handle_frame,
+        on_close=lambda: ws_overlay_manager.disconnect(session_id, websocket),
+    )
 
 
 __all__ = [
-    "OverlayConnectionManager",
     "PartyMemberVitals",
     "PartyVitalsData",
     "RollAnimationData",

@@ -38,9 +38,9 @@ def default_table_patron(spicedb: MockSpiceDBClient) -> None:
 def clean_minigame_state():
     from game_session.minigame_tables.ws_manager import minigame_table_manager
 
-    minigame_table_manager.connections.clear()
+    minigame_table_manager.clear()
     yield
-    minigame_table_manager.connections.clear()
+    minigame_table_manager.clear()
 
 
 def test_darts_and_billiards_multiplayer_turn_sync(
