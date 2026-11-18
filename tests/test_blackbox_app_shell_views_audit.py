@@ -26,8 +26,8 @@ AUDIT_TEST_TS = FRONTEND_DIR / "test" / "app-shell-views-wiring-audit.test.ts"
 
 
 @pytest.fixture
-def client(game_session_upstream, character_sheet_upstream):
-    """Enter the gateway lifespan after game_session is served, so the proxy reaches it."""
+def client(game_session_upstream, character_sheet_upstream, board_state_upstream):
+    """Enter the gateway lifespan after game_session and board_state are served."""
     with TestClient(gateway_app) as gateway_client:
         yield gateway_client
 
@@ -114,10 +114,23 @@ def test_gateway_frontdoor_endpoints_for_audited_views(trusted_ws_issuer, client
     # 5. Session Lobby & Active VTT View (#/campaigns/:id/lobby/:id & #/campaigns/:id/sessions/:id)
     session_res = client.get(f"/api/v1/sessions/{session_id}", headers=headers)
     assert session_res.status_code == 200
+    _owner_board(campaign_id, session_id, headers)
 
     board_res = client.get(f"/api/v1/boards/{session_id}", headers=headers)
     assert board_res.status_code == 200
     assert "tokens" in board_res.json()
+
+
+def _owner_board(campaign_id: str, session_id: str, headers: dict[str, str]) -> None:
+    """Create the session board through board_state's public route, as the campaign owner."""
+    url = os.environ["RUNEFOBLE_BOARD_STATE_URL"]
+    res = httpx.post(
+        f"{url}/api/v1/boards",
+        json={"session_id": session_id, "campaign_id": campaign_id},
+        headers=headers,
+        timeout=5.0,
+    )
+    assert res.status_code == 200, res.text
 
 
 def _owner_session(campaign_id: str, headers: dict[str, str]) -> str:

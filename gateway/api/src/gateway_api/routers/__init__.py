@@ -1,6 +1,7 @@
 """Modular APIRouter packages for Gateway API."""
 
 from gateway_api.routers.auth import router as auth_router
+from gateway_api.routers.boards_proxy import router as boards_router
 from gateway_api.routers.campaigns_proxy import router as campaigns_router
 from gateway_api.routers.characters_proxy import router as characters_router
 from gateway_api.routers.compendium_proxy import router as compendium_router
@@ -15,6 +16,7 @@ from gateway_api.routers.spectator import router as spectator_router
 
 __all__ = [
     "auth_router",
+    "boards_router",
     "campaigns_router",
     "compendium_router",
     "characters_router",

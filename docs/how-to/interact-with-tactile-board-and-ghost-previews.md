@@ -106,6 +106,7 @@ Every board route needs a verified bearer token. The board service checks one sc
 | Move or remove a token, run a token action, knock a token back | `board_token.move` on the token, or `board.manage_traps` |
 | Place or remove an AoE template, cast spell VFX, throw dice, toggle a door | `campaign.play` on the board campaign |
 | Preview a move, evaluate an AoE, list templates, decals, doors, and lights | `board.view` |
+| Read the board, one token, the visibility mask, or the trap list | `board.view` (`403` otherwise; secret layer still needs `board.view_secret_layer`) |
 
 ### How a token gets its tuples
 

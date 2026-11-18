@@ -34,9 +34,9 @@ def test_gateway_openapi_routes_completeness(client):
         "/api/v1/sessions/{session_id}/turns/advance",
         "/api/v1/sessions/{session_id}/dm-override",
         "/api/v1/sessions/{session_id}/atmosphere",
-        "/api/v1/board/tokens/{token_id}/move",
-        "/api/v1/board/tokens/{token_id}",
         "/api/v1/boards/{session_id}",
+        "/api/v1/boards/{session_id}/tokens/{token_id}",
+        "/api/v1/boards/{session_id}/tokens/{token_id}/move",
         "/api/v1/watcher/speak-and-act",
         "/api/v1/spectate/{session_id}",
     ]

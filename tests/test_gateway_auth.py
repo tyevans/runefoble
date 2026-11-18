@@ -14,8 +14,8 @@ from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
 
 
 @pytest.fixture
-def client(game_session_upstream):
-    """Enter the gateway lifespan after game_session is served, so the proxy reaches it."""
+def client(game_session_upstream, board_state_upstream):
+    """Enter the gateway lifespan after game_session and board_state are served."""
     with TestClient(app) as gateway_client:
         yield gateway_client
 
@@ -110,7 +110,9 @@ async def test_zanzibar_board_view_permission(trusted_ws_issuer, client):
     """Verify board query endpoint requires Zanzibar view permission."""
     owner = _bearer(trusted_ws_issuer, "owner_dana")
     spectator = _bearer(trusted_ws_issuer, "spectator_devon")
+    stranger = _bearer(trusted_ws_issuer, "stranger_mallory")
     campaign_id, session_id = _create_campaign_with_session(client, owner)
+    _owner_board(campaign_id, session_id, owner)
 
     # Owner invites a spectator; the spectator redeems the invite
     _join_with_invite(client, campaign_id, owner, spectator, role="spectator")
@@ -118,6 +120,21 @@ async def test_zanzibar_board_view_permission(trusted_ws_issuer, client):
     res = client.get(f"/api/v1/boards/{session_id}", headers=spectator)
     assert res.status_code == 200
     assert "tokens" in res.json()
+    # board_state decides: a caller with no campaign role gets 403 through the gateway.
+    refused = client.get(f"/api/v1/boards/{session_id}", headers=stranger)
+    assert refused.status_code == 403
+
+
+def _owner_board(campaign_id: str, session_id: str, headers: dict[str, str]) -> None:
+    """Create the session board through board_state's public route, as the campaign owner."""
+    url = os.environ["RUNEFOBLE_BOARD_STATE_URL"]
+    res = httpx.post(
+        f"{url}/api/v1/boards",
+        json={"session_id": session_id, "campaign_id": campaign_id},
+        headers=headers,
+        timeout=5.0,
+    )
+    assert res.status_code == 200, res.text
 
 
 def _owner_session(campaign_id: str, headers: dict[str, str]) -> str:

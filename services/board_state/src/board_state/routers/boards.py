@@ -8,9 +8,11 @@ from uuid import uuid4
 
 from board_state.aggregate import BoardAggregate, BoardState
 from board_state.authz import (
+    VIEW,
     VIEW_SECRET_LAYER,
     bind_board_to_campaign,
     can_on_board,
+    require_board_permission,
     require_campaign_run_session,
 )
 from board_state.dependencies import (
@@ -108,5 +110,8 @@ async def read_board(session_id: str, caller: CallerOrService):
     secret doors, and secret portals are absent from it.
     """
     board = await get_board(session_id)
+    if caller.user_id is not None:
+        # A service call with no user (the internal service credential) has no board role to check.
+        await require_board_permission(caller.user_id, session_id, VIEW)
     can_view_secret = await can_on_board(caller.user_id, session_id, VIEW_SECRET_LAYER)
     return project_board(board.state, can_view_secret)

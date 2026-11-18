@@ -6,7 +6,13 @@ from typing import Annotated
 from uuid import uuid4
 
 from board_state.aggregate import PlacedTokenState
-from board_state.authz import bind_token, require_token_move, unbind_token
+from board_state.authz import (
+    VIEW,
+    bind_token,
+    require_board_permission,
+    require_token_move,
+    unbind_token,
+)
 from board_state.dependencies import (
     get_board,
     get_current_user_id,
@@ -50,6 +56,24 @@ async def place_token(
         return board.state.tokens[token_id]
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
+
+
+@router.get(
+    "/api/v1/boards/{session_id}/tokens/{token_id}",
+    response_model=PlacedTokenState,
+)
+async def read_token(
+    session_id: str,
+    token_id: str,
+    user_id: Annotated[str, Depends(get_current_user_id)],
+):
+    """Return one placed token of a board. Needs `board.view`. Respond 404 for an unknown token."""
+    board = await get_board(session_id)
+    await require_board_permission(user_id, session_id, VIEW)
+    token = board.state.tokens.get(token_id)
+    if token is None:
+        raise HTTPException(status_code=404, detail=f"Token not found: {token_id}")
+    return token
 
 
 @router.post(
