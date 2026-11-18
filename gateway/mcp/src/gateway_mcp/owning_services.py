@@ -115,6 +115,7 @@ class OwningServices:
         method: str,
         route: str,
         json_body: dict[str, Any] | None = None,
+        params: dict[str, str] | None = None,
     ) -> UpstreamReply:
         """Send one call through the shared client, inside a client span, and map failures."""
         base_url = getattr(self._settings, _SERVICE_URL_FIELDS[service])
@@ -133,6 +134,7 @@ class OwningServices:
                     authorization=authorization,
                     timeout_s=TIMEOUT_SECONDS,
                     json=json_body,
+                    params=params,
                 )
             except UpstreamUnavailableError as exc:
                 raise ServiceUnavailableError(
@@ -157,9 +159,10 @@ class OwningServices:
         method: str,
         route: str,
         json_body: dict[str, Any] | None = None,
+        params: dict[str, str] | None = None,
     ) -> dict[str, Any]:
         """Send one call and decode its 2xx JSON object. A body that is not an object is an error."""
-        reply = await self._send(service, method, route, json_body)
+        reply = await self._send(service, method, route, json_body, params)
         try:
             decoded = json.loads(reply.body)
         except ValueError as exc:
@@ -305,10 +308,14 @@ class OwningServices:
             {"to_x": to_x, "to_y": to_y, "initiated_by": initiated_by},
         )
 
-    async def get_monster(self, name: str) -> dict[str, Any]:
-        """Read a monster stat block from rules_compendium."""
+    async def get_monster(self, name: str, *, campaign_id: str | None = None) -> dict[str, Any]:
+        """Read a monster stat block from rules_compendium. `campaign_id` adds that campaign's homebrew."""
+        params = {"campaign_id": campaign_id} if campaign_id else None
         return await self._json(
-            "rules_compendium", "GET", path("api", "v1", "compendium", "monsters", name)
+            "rules_compendium",
+            "GET",
+            path("api", "v1", "compendium", "monsters", name),
+            params=params,
         )
 
     async def narrate(self, request: dict[str, Any]) -> dict[str, Any]:

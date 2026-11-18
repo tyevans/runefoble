@@ -77,7 +77,7 @@ def owning_services() -> Iterator[dict[str, str]]:
             asyncio.run(
                 campaign_roles.write_relationship(
                     resource_type="campaign",
-                    resource_id="camp-board-fixture",
+                    resource_id="5f0c7a0e-6b1d-4c8e-9a2b-3d4e5f607182",
                     relation="dungeon_master",
                     subject_type="user",
                     subject_id="user-test",
@@ -91,7 +91,7 @@ def owning_services() -> Iterator[dict[str, str]]:
                     "/api/v1/boards",
                     json={
                         "session_id": "camp1",
-                        "campaign_id": "camp-board-fixture",
+                        "campaign_id": "5f0c7a0e-6b1d-4c8e-9a2b-3d4e5f607182",
                         "cols": 10,
                         "rows": 10,
                     },
@@ -213,7 +213,7 @@ async def test_blackbox_create_encounter_stores_enemy_tokens(owning_services: di
             "create_encounter",
             {
                 "session_id": session_id,
-                "campaign_id": "camp-board-fixture",
+                "campaign_id": "5f0c7a0e-6b1d-4c8e-9a2b-3d4e5f607182",
                 "enemies": [{"name": "Bandit", "x": 4, "y": 4, "hp": 11}],
             },
             "user-test",
@@ -246,7 +246,7 @@ async def test_blackbox_create_encounter_reads_missing_cr_from_compendium(
             "create_encounter",
             {
                 "session_id": session_id,
-                "campaign_id": "camp-board-fixture",
+                "campaign_id": "5f0c7a0e-6b1d-4c8e-9a2b-3d4e5f607182",
                 "enemies": [{"name": "Goblin", "x": 1, "y": 1}],
             },
             "user-test",
@@ -269,7 +269,7 @@ async def test_blackbox_create_encounter_request_cr_is_kept_over_compendium(
             "create_encounter",
             {
                 "session_id": session_id,
-                "campaign_id": "camp-board-fixture",
+                "campaign_id": "5f0c7a0e-6b1d-4c8e-9a2b-3d4e5f607182",
                 "enemies": [{"name": "Goblin", "x": 1, "y": 1, "cr": 2.0}],
             },
             "user-test",
@@ -291,7 +291,7 @@ async def test_blackbox_create_encounter_without_any_rating_is_validation_error(
         "create_encounter",
         {
             "session_id": session_id,
-            "campaign_id": "camp-board-fixture",
+            "campaign_id": "5f0c7a0e-6b1d-4c8e-9a2b-3d4e5f607182",
             "enemies": [{"name": "Unlisted Horror", "x": 2, "y": 2}],
         },
         "user-test",
@@ -311,7 +311,7 @@ async def test_blackbox_move_board_token_then_inspect_reports_new_position(
             "create_encounter",
             {
                 "session_id": combat_session_id,
-                "campaign_id": "camp-board-fixture",
+                "campaign_id": "5f0c7a0e-6b1d-4c8e-9a2b-3d4e5f607182",
                 "enemies": [{"name": "Goblin", "x": 2, "y": 2}],
             },
             "user-test",
@@ -347,7 +347,7 @@ async def test_blackbox_move_board_token_out_of_bounds_is_error_result(
             "create_encounter",
             {
                 "session_id": combat_session_id,
-                "campaign_id": "camp-board-fixture",
+                "campaign_id": "5f0c7a0e-6b1d-4c8e-9a2b-3d4e5f607182",
                 "enemies": [{"name": "Imp", "x": 0, "y": 0, "cr": 1.0}],
             },
             "user-test",
@@ -427,7 +427,7 @@ def _board_campaign_dm(spicedb):
     asyncio.run(
         spicedb.write_relationship(
             resource_type="campaign",
-            resource_id="camp-board-fixture",
+            resource_id="5f0c7a0e-6b1d-4c8e-9a2b-3d4e5f607182",
             relation="dungeon_master",
             subject_type="user",
             subject_id="user-test",
@@ -436,7 +436,7 @@ def _board_campaign_dm(spicedb):
     asyncio.run(
         spicedb.write_relationship(
             resource_type="campaign",
-            resource_id="camp-board-fixture",
+            resource_id="5f0c7a0e-6b1d-4c8e-9a2b-3d4e5f607182",
             relation="dungeon_master",
             subject_type="user",
             subject_id="user-test",
