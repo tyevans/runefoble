@@ -55,9 +55,3 @@ class DynamicToolInvokedEvent(BaseRunefobleEvent):
     duration_ms: float = 0.0
     success: bool = True
     error: str | None = None
-
-
-# Aliases
-DynamicToolRegistered = DynamicToolRegisteredEvent
-DynamicToolUnregistered = DynamicToolUnregisteredEvent
-DynamicToolInvoked = DynamicToolInvokedEvent

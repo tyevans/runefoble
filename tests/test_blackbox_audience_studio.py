@@ -11,7 +11,7 @@ from collections.abc import Generator
 
 import httpx
 import pytest
-from runefoble_events import (
+from runefoble_events.events import (
     AudiencePollStarted,
 )
 

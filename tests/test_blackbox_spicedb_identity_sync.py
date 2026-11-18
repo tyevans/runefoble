@@ -16,7 +16,7 @@ from fastapi.testclient import TestClient
 from gateway_api.auth import get_spicedb_client
 from gateway_api.main import app
 from runefoble_auth.sync import ZitadelSpiceDBSyncService
-from runefoble_events import SessionCreated
+from runefoble_events.events import SessionCreated
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 
 from tests.helpers.mock_redis import MockAsyncRedis

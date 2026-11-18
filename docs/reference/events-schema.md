@@ -28,9 +28,9 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
 The `libs/runefoble_events` package organizes domain event definitions and re-exports into discrete, single-responsibility category modules governed by Hard Invariant 6 (< 150 lines per submodule, < 80 lines per aggregator facade):
 
 - **Aggregator Facades**:
-  - `runefoble_events`: Package root. It exports every domain event class.
+  - `runefoble_events`: Package root. It exports the base event types only: `BaseRunefobleEvent`, `DomainEvent` and `register_event`.
   - `runefoble_events.events`: Subpackage aggregator facade providing unified access to domain event models.
-- **Domain Category Submodules (`runefoble_events.events.*` and root aliases `runefoble_events.*_events`)**:
+- **Domain Category Submodules (`runefoble_events.events.*`)**:
   - `session_events.py`: Game session lifecycle, turn sequencing, initiative rolls, combat rounds, and reaction pause/triggers.
   - `board_events.py`: Tactical board grid initialization, token kinematics, fog-of-war, spell AoE templates, and secret traps.
   - `narrative_events.py`: The Watcher DM narrations, intent parsing, candidate ghost previews, story recaps, and AI stand-ins.
@@ -49,7 +49,7 @@ The `libs/runefoble_events` package organizes domain event definitions and re-ex
   - `board_events/token.py`: Tactical token placement, movement, actions, knockback impulses (`TokenKnockbackApplied`), and elevation changes (`ElevationChanged`) (< 100 lines).
   - `board_events/fog.py`: Fog-of-war reveal (`FogOfWarRevealed` / `FogRevealed`), shroud reset (`FogOfWarShrouded` / `ShroudReset`), and complete visibility mask updates (`VisibilityMaskUpdated`) (< 80 lines).
   - `board_events/templates.py`: Geometric AoE spell template positioning and removal (`AoETemplatePlaced`, `AoETemplateRemoved`) (< 80 lines).
-  - `board_events/lighting.py`: Dynamic point lights and interactive doors (`BoardLightSourcePlaced`, `BoardDoorToggled`) (< 80 lines).
+  - `board_events/lighting.py`: Dynamic point lights and interactive doors (`BoardLightSourcePlacedEvent`, `BoardDoorToggledEvent`) (< 80 lines).
   - `board_events/terrain.py`: Board grid initialization, cell elevation / hazard modifications, and Universal VTT map imports (< 80 lines).
   - `board_events/physics.py`: Rigid-body physical collisions and 3D tumbling dice resting telemetry (< 80 lines).
   - `board_events/spells.py`: Kinetic spell launches, area-of-effect blooms, WebGL particle VFX completion, and decal decay (< 120 lines).
@@ -78,4 +78,4 @@ These sections do not yet match the code. Each item lists its owner. Update a se
 - **Canonical rules events never emitted**: `MonsterIndexed`, `SpellIndexed` and `ConditionIndexed` have no producer. Audit: W2 rules-compendium F10. Owner: TASK-0579.
 - **Missing streams and orphan producers**: the Watcher world stream `runefoble:events:world` is not listed. Some stream names in the catalogue have no producer or consumer. Audit: W1 the-watcher F11 and W3 event wiring. Owner: TASK-0579.
 - **Dead read projections**: `PresenceProjection` and `SessionReadProjection` are never started in production. See [Redis Streams Event Bus](redis-streams-event-bus.md#in-memory-session-projections). Owner: TASK-0567.
-- **Code aliases**: some sections list alias names in parentheses. These names are removed with the code aliases. Owner: TASK-0487.
+- **Code aliases**: the `X = XEvent` aliases are removed. Some `X = Y` aliases remain in code (for example `FogRevealed`, `ShroudReset`, `BoardMapImported`, `BoardMoveEvent`, `GameSessionStarted`). They are not part of TASK-0487. Owner: follow-up task needed.

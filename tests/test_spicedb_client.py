@@ -11,7 +11,7 @@ from runefoble_auth.sync_tuples import (
     format_tuple,
     normalize_campaign_role,
 )
-from runefoble_events import CharacterCreated, ParticipantJoined, SessionCreated
+from runefoble_events.events import CharacterCreated, ParticipantJoined, SessionCreated
 
 
 @pytest.mark.asyncio

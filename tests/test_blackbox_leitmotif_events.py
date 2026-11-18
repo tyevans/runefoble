@@ -9,7 +9,7 @@ Governed by:
 from __future__ import annotations
 
 from eventsource.domain.event_registry import get_event_class_or_none
-from runefoble_events import (
+from runefoble_events.events import (
     CriticalHitRolled,
     CriticalHitScored,
     DeathSaveStarted,

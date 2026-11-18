@@ -3,15 +3,11 @@
 from __future__ import annotations
 
 from runefoble_events.board_events.lighting import (
-    BoardDoorToggled,
     BoardDoorToggledEvent,
-    BoardLightSourcePlaced,
     BoardLightSourcePlacedEvent,
 )
 
 __all__ = [
-    "BoardDoorToggled",
     "BoardDoorToggledEvent",
-    "BoardLightSourcePlaced",
     "BoardLightSourcePlacedEvent",
 ]

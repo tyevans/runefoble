@@ -87,9 +87,3 @@ class ReadyActionTriggeredEvent(BaseRunefobleEvent):
     trigger_type: str = ""
     readied_action: str = ""
     details: dict[str, Any] = Field(default_factory=dict)
-
-
-CombatTurnPausedForReaction = CombatTurnPausedForReactionEvent
-ReactionResolved = ReactionResolvedEvent
-ReadyActionRegistered = ReadyActionRegisteredEvent
-ReadyActionTriggered = ReadyActionTriggeredEvent

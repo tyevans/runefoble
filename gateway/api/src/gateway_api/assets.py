@@ -11,7 +11,7 @@ from uuid import uuid4
 from fastapi import APIRouter, HTTPException, Query, Request, Response
 from gateway_api.auth import CurrentPrincipal
 from pydantic import BaseModel
-from runefoble_events import AssetDeleted, AssetUploaded
+from runefoble_events.events import AssetDeleted, AssetUploaded
 from runefoble_platform.asset_index import (
     get_stored_asset,
     record_stored_asset,

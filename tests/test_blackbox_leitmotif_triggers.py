@@ -13,7 +13,7 @@ from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
-from runefoble_events import (
+from runefoble_events.events import (
     CriticalHitScored,
     DeathSaveStarted,
     DiceRolled,
