@@ -8,7 +8,7 @@ from uuid import uuid4
 from board_state.aggregate import BoardAggregate
 from board_state.aoe import evaluate_aoe_targets
 from board_state.dependencies import repo
-from board_state.preview import board_ws_manager
+from board_state.realtime import board_ws_manager
 
 
 async def _handle_token_action(
@@ -43,6 +43,18 @@ async def _handle_token_action(
     )
 
 
+def _origin_cell(data: dict[str, Any], key: str) -> int:
+    """Read an AoE origin as a whole grid cell index. Fractional values are rejected."""
+    value = data.get(key, 0)
+    if (
+        isinstance(value, bool)
+        or not isinstance(value, int | float)
+        or not float(value).is_integer()
+    ):
+        raise ValueError(f"{key} must be a whole grid cell index, got {value!r}")
+    return int(value)
+
+
 async def _handle_aoe_msg(
     session_id: str, action: str, data: dict[str, Any], board: BoardAggregate
 ) -> None:
@@ -53,8 +65,8 @@ async def _handle_aoe_msg(
         cols=board.state.cols,
         rows=board.state.rows,
         shape=data.get("shape", "cone"),
-        origin_x=float(data.get("origin_x", 0)),
-        origin_y=float(data.get("origin_y", 0)),
+        origin_x=_origin_cell(data, "origin_x"),
+        origin_y=_origin_cell(data, "origin_y"),
         direction_deg=float(data.get("direction_deg", 0)),
         radius_ft=float(data["radius_ft"]) if data.get("radius_ft") is not None else None,
         length_ft=float(data["length_ft"]) if data.get("length_ft") is not None else None,

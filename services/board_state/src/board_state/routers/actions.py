@@ -7,7 +7,7 @@ import logging
 from board_state.dependencies import get_board, get_current_user_id, get_event_bus, repo
 from board_state.events import publish_board_events
 from board_state.models import TokenActionRequest, TokenActionResponse
-from board_state.preview import board_ws_manager
+from board_state.realtime import board_ws_manager
 from fastapi import APIRouter, Depends, HTTPException
 from runefoble_platform.event_publish import deliver_best_effort
 

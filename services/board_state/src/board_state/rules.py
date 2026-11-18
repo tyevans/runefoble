@@ -3,6 +3,8 @@
 from collections.abc import Callable, Iterable
 from typing import Any
 
+from board_state.geometry import cells_as_set, cells_in_shape
+
 DEFAULT_HAZARD_DAMAGE: dict[str, str] = {
     "lava": "2d10",
     "fire": "1d6",
@@ -129,20 +131,23 @@ def compute_spell_vfx_impact(
     spell_archetype: str,
     damage_type: str | None,
 ) -> tuple[list[list[int]], list[str], str | None]:
-    """Compute cells and tokens enclosed in spell radius bloom, plus ephemeral decal type."""
-    radius_cells = max(0, radius_ft // 5)
+    """Compute cells and tokens enclosed in spell radius bloom, plus ephemeral decal type.
+
+    The bloom is a sphere placed on the target cell. It uses the same containment rule as
+    the AoE template evaluation (board_state.geometry).
+    """
     affected_cells: list[list[int]] = []
     affected_token_ids: list[str] = []
     decal_type: str | None = None
 
-    if radius_cells > 0:
-        for x in range(max(0, target_x - radius_cells), min(cols, target_x + radius_cells + 1)):
-            for y in range(max(0, target_y - radius_cells), min(rows, target_y + radius_cells + 1)):
-                if (x - target_x) ** 2 + (y - target_y) ** 2 <= (radius_cells + 0.5) ** 2:
-                    affected_cells.append([x, y])
+    if radius_ft > 0:
+        affected_cells = cells_in_shape(
+            cols, rows, "sphere", target_x, target_y, radius_ft=float(radius_ft)
+        )
+        affected_cell_set = cells_as_set(affected_cells)
 
         for tok_id, tok in tokens.items():
-            if [tok.x, tok.y] in affected_cells:
+            if (tok.x, tok.y) in affected_cell_set:
                 affected_token_ids.append(tok_id)
 
         sp_lower = spell_name.lower()

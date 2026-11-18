@@ -44,8 +44,8 @@ class AoEEvaluateRequest(BaseModel):
     template_id: str | None = None
     caster_token_id: str | None = None
     shape: str = "cone"  # "cone", "sphere", "line", "cube"
-    origin_x: float
-    origin_y: float
+    origin_x: int
+    origin_y: int
     direction_deg: float = 0.0
     radius_ft: float | None = 15.0
     length_ft: float | None = None
@@ -58,8 +58,8 @@ class AoETemplatePlaceRequest(BaseModel):
     template_id: str | None = None
     caster_token_id: str | None = None
     shape: str = "cone"
-    origin_x: float
-    origin_y: float
+    origin_x: int
+    origin_y: int
     direction_deg: float = 0.0
     radius_ft: float | None = 15.0
     length_ft: float | None = None
@@ -72,8 +72,8 @@ class AoETemplateResponse(BaseModel):
     template_id: str
     caster_token_id: str | None = None
     shape: str
-    origin_x: float
-    origin_y: float
+    origin_x: int
+    origin_y: int
     direction_deg: float
     radius_ft: float | None = None
     length_ft: float | None = None

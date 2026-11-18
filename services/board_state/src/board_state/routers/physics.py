@@ -13,7 +13,7 @@ from board_state.models import (
     SimulateThrowResponse,
 )
 from board_state.physics import apply_dice_throw, apply_token_knockback
-from board_state.preview import board_ws_manager
+from board_state.realtime import board_ws_manager
 from fastapi import APIRouter, Depends, HTTPException
 from runefoble_platform.event_publish import deliver_best_effort
 
