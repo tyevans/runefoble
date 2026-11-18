@@ -1198,6 +1198,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **Documentation & Build Navigation**: Featured the Platform Showcase and Changelog in `zensical.toml` and root documentation landing page (`docs/index.md`), and enhanced `scripts/build_docs.py` to synchronize `CHANGELOG.md` to `docs/changelog.md` during documentation compilation.
 
 ### Fixed
+- The Helm chart loaded a stale SpiceDB schema (8 of 27 definitions), so Kind used an old authorization schema. The chart now carries the service schema, and a test keeps the two equal.
 - The Kind stack starts Zitadel with `--masterkeyFromEnv`. Zitadel publishes its admin PAT to the `zitadel-admin` Secret with no manual step. The SpiceDB schema Job no longer races the datastore migration. `gateway-mcp` reads the SpiceDB preshared key. Postgres allows 300 connections. (TASK-0798)
 - The MCP `create_encounter` tool reads a missing enemy challenge rating from the campaign's homebrew monsters, not only the SRD. (TASK-0800)
 - The auth sync health probe reports `unhealthy` with the cause only for SpiceDB failures. Other errors are no longer hidden. (TASK-0796)
