@@ -102,7 +102,7 @@ def _create_session(session_url: str, title: str) -> str:
     with httpx.Client(base_url=session_url, headers=bearer("user-test")) as http:
         created = http.post(
             "/api/v1/sessions/create",
-            json={"campaign_id": str(uuid4()), "title": title, "dm_id": "the_watcher"},
+            json={"campaign_id": _owned_campaign(http), "title": title, "dm_id": "the_watcher"},
         )
         assert created.status_code == 200, created.text
         return str(created.json()["session_id"])
@@ -424,3 +424,10 @@ def test_blackbox_caller_bearer_reads_authorization_header_of_mcp_request():
     assert caller_bearer(no_request) is None
     assert caller_bearer(basic_scheme) is None
     assert caller_bearer(None) is None
+
+
+def _owned_campaign(client) -> str:
+    """Create a campaign as the calling user, so that the caller can run sessions in it."""
+    res = client.post("/api/v1/campaigns", json={"title": "Owned Campaign"})
+    assert res.status_code == 201, res.text
+    return res.json()["id"]

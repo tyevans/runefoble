@@ -177,3 +177,29 @@ class CharacterControlTransferred(BaseRunefobleEvent):
     player_id: str
     previous_controller: str = "ai_stand_in"
     new_controller: str = "player"
+
+
+@register_event("runefoble.events.session.dm_override_applied")
+class DMOverrideApplied(BaseRunefobleEvent):
+    """The DM applied an override to the live session (TASK-0581)."""
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    aggregate_type: str = "GameSession"
+    event_type: str = "runefoble.events.session.dm_override_applied"
+    action: str
+    reason: str | None = None
+    payload: dict[str, Any] = Field(default_factory=dict)
+
+
+@register_event("runefoble.events.session.atmosphere_updated")
+class AtmosphereUpdated(BaseRunefobleEvent):
+    """The DM changed the location, lighting, and mood of the session (TASK-0581)."""
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    aggregate_type: str = "GameSession"
+    event_type: str = "runefoble.events.session.atmosphere_updated"
+    location_name: str
+    lighting: str = "Normal"
+    mood: str = "Neutral"
+    description: str = ""
+    ambient_audio_prompt: str | None = None

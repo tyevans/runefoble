@@ -11,12 +11,14 @@ from typing import Any
 
 from eventsource.domain.event import DomainEvent
 from runefoble_events.events import (
+    AtmosphereUpdated,
     CharacterControlTransferred,
     CharacterSelectedForLobby,
     CombatEncounterEnded,
     CombatEncounterStarted,
     CombatTurnPausedForReactionEvent,
     DiceRolled,
+    DMOverrideApplied,
     InitiativeRolled,
     InitiativeTurnAdvanced,
     PlayerJoinedSession,
@@ -58,6 +60,8 @@ SESSION_EVENT_STREAMS: dict[type[DomainEvent], str] = {
     ReactionResolvedEvent: STREAM_SESSION,
     ReadyActionRegisteredEvent: STREAM_SESSION,
     ReadyActionTriggeredEvent: STREAM_SESSION,
+    DMOverrideApplied: STREAM_SESSION,
+    AtmosphereUpdated: STREAM_SESSION,
     StandInActionDecided: STREAM_WATCHER,
 }
 

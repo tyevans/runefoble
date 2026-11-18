@@ -74,7 +74,7 @@ async def test_mid_session_hot_swap_takeover_and_turn_continuity(
         base_url="http://test",
         headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"},
     ) as client:
-        campaign_id, player_id = str(uuid4()), "sarah-user"
+        campaign_id, player_id = await _owned_campaign(client), "sarah-user"
         char_id = _create_stand_in_character(character_service)
 
         # 1. Setup session, join player, start session & combat encounter
@@ -175,7 +175,7 @@ async def test_hot_swap_unauthorized_user_rejected_by_spicedb(mock_redis: MockAs
         base_url="http://test",
         headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"},
     ) as client:
-        campaign_id, char_id, player_id = str(uuid4()), str(uuid4()), "sarah-user"
+        campaign_id, char_id, player_id = await _owned_campaign(client), str(uuid4()), "sarah-user"
         create_res = await client.post(
             "/api/v1/sessions/create",
             json={"campaign_id": campaign_id, "title": "Crypt", "dm_id": "the_watcher"},
@@ -212,7 +212,7 @@ async def test_hot_swap_returns_502_when_character_sheet_is_not_configured(
         base_url="http://test",
         headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"},
     ) as client:
-        campaign_id, char_id, player_id = str(uuid4()), str(uuid4()), "sarah-user"
+        campaign_id, char_id, player_id = await _owned_campaign(client), str(uuid4()), "sarah-user"
         create_res = await client.post(
             "/api/v1/sessions/create",
             json={"campaign_id": campaign_id, "title": "Vault", "dm_id": "the_watcher"},
@@ -251,3 +251,10 @@ async def test_hot_swap_returns_502_when_character_sheet_is_not_configured(
         # The failed hand-off leaves the stand-in in control.
         state = await client.get(f"/api/v1/sessions/{session_id}")
         assert state.json()["participants"][player_id]["is_stand_in_active"] is True
+
+
+async def _owned_campaign(client) -> str:
+    """Create a campaign as the calling user, so that the caller can run sessions in it."""
+    res = await client.post("/api/v1/campaigns", json={"title": "Owned Campaign"})
+    assert res.status_code == 201, res.text
+    return res.json()["id"]

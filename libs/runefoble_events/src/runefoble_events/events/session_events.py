@@ -7,6 +7,7 @@ from runefoble_events.combat_reactions import (
     ReadyActionTriggeredEvent,
 )
 from runefoble_events.session import (
+    AtmosphereUpdated,
     CameraTargetUpdated,
     CharacterControlTransferred,
     CharacterSelectedForLobby,
@@ -14,6 +15,7 @@ from runefoble_events.session import (
     CombatEncounterStarted,
     CombatRoundAdvanced,
     CombatStarted,
+    DMOverrideApplied,
     GameSessionStarted,
     InitiativeRolled,
     InitiativeTurnAdvanced,
@@ -30,7 +32,9 @@ from runefoble_events.session import (
 )
 
 __all__ = [
+    "AtmosphereUpdated",
     "CameraTargetUpdated",
+    "DMOverrideApplied",
     "CharacterControlTransferred",
     "CharacterSelectedForLobby",
     "CombatEncounterEnded",
