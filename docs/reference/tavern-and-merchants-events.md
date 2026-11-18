@@ -127,12 +127,12 @@ A table ends with `MinigameEnded` when a darts winner or a Liar's Dice champion 
 
 | Endpoint | Method | Service | Zanzibar Permission | Description |
 |---|---|---|---|---|
-| `/api/v1/sessions/{id}/tavern/games` | `POST` | `game_session` / `gateway` | `campaign:play` | Initiates minigame with secret hands and gold pot. |
+| `/api/v1/sessions/{id}/tavern/games` | `POST` | `game_session` (gateway proxy) | `campaign:play` | Initiates minigame with secret hands and gold pot. |
 | `/api/v1/sessions/{id}/tavern/games/{gid}/turn` | `POST` | `game_session` | `session:participate` | Submits bid, calls bluff, or rolls drinking save. |
 | `/api/v1/sessions/{id}/tavern/games/{gid}` | `GET` | `game_session` | `session:participate` | Retrieves live minigame state machine status. |
 | `/api/v1/tavern/tables` | `POST` | `game_session` | `establishment:play` (or `view`, `manage`) | Opens a minigame table (`table_id`, `establishment_id`, `game_type`). Returns `409` when the id is already open. Sockets never open a table. |
 | `/api/v1/tavern/tables/{table_id}` | `GET` | `game_session` | `establishment:play` (or `view`, `manage`) | Returns the seats, chips, pot, bets, and current game state of an open table. Returns `404` when the table is not open. |
-| `/api/v1/sessions/{id}/merchants/{mid}/haggle` | `POST` | `game_session` / `gateway` | `campaign:play` | Evaluates charisma, mood, and computes counter-quote. Records a new merchant first (`MerchantCreated`) when the id has no history. Returns `503` when the event store is unavailable. |
+| `/api/v1/sessions/{id}/merchants/{mid}/haggle` | `POST` | `game_session` (gateway proxy) | `establishment:play` | Gateway route. It forwards to the owner `POST /api/v1/haggling/start` with the session and merchant ids in the body. Requires `campaign_id`, `establishment_id`, and `item_id` in the request. Returns the owner negotiation state and the owner status codes. |
 | `/api/v1/merchants/{mid}` | `GET` | `game_session` | — | Queries merchant temperament and negotiation record. Returns `404` when no merchant exists for the id. Returns `503` when the event store is unavailable. |
 | `/api/v1/establishments/{id}/haggle` | `POST` | `game_session` | `establishment:view` | Starts interactive bartering encounter within establishment. |
 | `/api/v1/haggling/{id}/gambit` | `POST` | `game_session` | `negotiation:participate` | Executes bargaining gambit (flattery, bulk, flaw, intimidate, bluff). |
