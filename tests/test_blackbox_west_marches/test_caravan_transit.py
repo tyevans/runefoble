@@ -41,7 +41,7 @@ async def _setup_world(
 async def test_blackbox_caravan_trade_and_merchant_stock_unlocks(
     client: TestClient,
     mock_bus: MockAsyncRedis,
-    spicedb_client: MockSpiceDBClient,
+    spicedb: MockSpiceDBClient,
     party_ids: dict[str, str],
 ):
     """Test Scenario 2 (US-0058): Caravan Trading and Outpost Resource Ledgers."""
@@ -51,7 +51,7 @@ async def test_blackbox_caravan_trade_and_merchant_stock_unlocks(
 
     world_id = await _setup_world(
         client,
-        spicedb_client,
+        spicedb,
         officer_id,
         [(c_blue, blue_trader, "Party Blue"), (c_gold, gold_buyer, "Party Gold")],
     )

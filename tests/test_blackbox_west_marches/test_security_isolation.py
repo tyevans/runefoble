@@ -40,7 +40,7 @@ async def _setup_world(
 
 @pytest.mark.asyncio
 async def test_blackbox_spicedb_zanzibar_multi_party_isolation(
-    client: TestClient, spicedb_client: MockSpiceDBClient, party_ids: dict[str, str]
+    client: TestClient, spicedb: MockSpiceDBClient, party_ids: dict[str, str]
 ):
     """Verify ADR-0001: While geography is shared, private character sheets remain isolated."""
     officer_id = party_ids["officer"]
@@ -51,13 +51,13 @@ async def test_blackbox_spicedb_zanzibar_multi_party_isolation(
 
     world_id = await _setup_world(
         client,
-        spicedb_client,
+        spicedb,
         officer_id,
         [(c_blue, blue_player, "Party Blue"), (c_gold, gold_player, "Party Gold")],
         "Frontier Sanctum",
     )
     for rel, stype, sid in [("owner", "user", blue_player), ("campaign", "campaign", c_blue)]:
-        await spicedb_client.write_relationship("character", char_blue_id, rel, stype, sid)
+        await spicedb.write_relationship("character", char_blue_id, rel, stype, sid)
 
     # Outsiders are forbidden from reading or mutating the shared world
     h_out = {"Authorization": f"Bearer {SIGNING_ISSUER.mint(outsider)}"}
@@ -82,7 +82,7 @@ async def test_blackbox_spicedb_zanzibar_multi_party_isolation(
         assert r.status_code == 200
 
     # Cross-party Zanzibar scoping: private character sheets remain isolated
-    can_view = spicedb_client.check_permission
+    can_view = spicedb.check_permission
     assert await can_view("character", char_blue_id, "view", "user", blue_player)
     assert not await can_view("character", char_blue_id, "view", "user", gold_player)
     assert not await can_view("character", char_blue_id, "view", "user", outsider)
@@ -90,7 +90,7 @@ async def test_blackbox_spicedb_zanzibar_multi_party_isolation(
 
 @pytest.mark.asyncio
 async def test_blackbox_communal_tavern_board_and_notices(
-    client: TestClient, spicedb_client: MockSpiceDBClient, party_ids: dict[str, str]
+    client: TestClient, spicedb: MockSpiceDBClient, party_ids: dict[str, str]
 ):
     """Test communal tavern notice board for bounties and expedition requests."""
     officer_id = party_ids["officer"]
@@ -100,7 +100,7 @@ async def test_blackbox_communal_tavern_board_and_notices(
 
     world_id = await _setup_world(
         client,
-        spicedb_client,
+        spicedb,
         officer_id,
         [(c_blue, blue_player, "Party Blue"), (c_gold, gold_player, "Party Gold")],
         "Frontier Outskirts",

@@ -42,7 +42,7 @@ async def _setup_world(
 async def test_blackbox_west_marches_shared_frontier_and_cross_party_discoveries(
     client: TestClient,
     mock_bus: MockAsyncRedis,
-    spicedb_client: MockSpiceDBClient,
+    spicedb: MockSpiceDBClient,
     party_ids: dict[str, str],
 ):
     """Test Scenario 1 (US-0058): Cross-Party Discovery Synchronization."""
@@ -52,7 +52,7 @@ async def test_blackbox_west_marches_shared_frontier_and_cross_party_discoveries
 
     world_id = await _setup_world(
         client,
-        spicedb_client,
+        spicedb,
         officer_id,
         [(c_blue, blue_uid, "Party Blue"), (c_gold, gold_uid, "Party Gold")],
     )
@@ -97,7 +97,7 @@ async def test_blackbox_west_marches_shared_frontier_and_cross_party_discoveries
 @pytest.mark.asyncio
 async def test_shared_landmark_discovery_and_filtering(
     client: TestClient,
-    spicedb_client: MockSpiceDBClient,
+    spicedb: MockSpiceDBClient,
     party_ids: dict[str, str],
 ):
     """Test fog-of-war landmark recording and discovery type filtering."""
@@ -106,7 +106,7 @@ async def test_shared_landmark_discovery_and_filtering(
     c_blue = party_ids["campaign_blue"]
 
     world_id = await _setup_world(
-        client, spicedb_client, officer_id, [(c_blue, blue_uid, "Party Blue")], "Whispering Crags"
+        client, spicedb, officer_id, [(c_blue, blue_uid, "Party Blue")], "Whispering Crags"
     )
 
     client.post(

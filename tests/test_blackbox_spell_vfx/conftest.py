@@ -7,9 +7,7 @@ import pytest
 from board_state.main import app as board_app
 from fastapi.testclient import TestClient
 from gateway_api.main import set_event_bus
-from runefoble_platform.redis_bus import RedisStreamsEventBus
 
-from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 
@@ -25,15 +23,6 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 def reset_test_state():
     set_event_bus(None)
     yield
-    set_event_bus(None)
-
-
-@pytest.fixture
-def mock_bus() -> MockAsyncRedis:
-    bus_client = MockAsyncRedis()
-    bus = RedisStreamsEventBus(client=bus_client)
-    set_event_bus(bus)
-    yield bus_client
     set_event_bus(None)
 
 

@@ -5,22 +5,16 @@ Governed by ADR-0003, ADR-0006, ADR-0007, ADR-0011, and Hard Invariant 7.
 
 from __future__ import annotations
 
-from collections.abc import Generator, Iterator
+from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
-from character_sheet.dependencies import set_event_bus as set_char_event_bus
 from character_sheet.main import app as character_app
 from fastapi.testclient import TestClient
-from game_session.dependencies import set_event_bus as set_session_event_bus
 from game_session.main import app as session_app
 from gateway_api.main import app as gateway_app
-from runefoble_auth.factory import get_spicedb_client
-from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
-from runefoble_platform.redis_bus import RedisStreamsEventBus
 
-from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 
@@ -30,23 +24,6 @@ def auth_headers(sub: str) -> dict[str, str]:
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
-
-
-@pytest.fixture
-def mock_bus() -> Generator[MockAsyncRedis]:
-    redis_client = MockAsyncRedis()
-    bus = RedisStreamsEventBus(client=redis_client)
-    set_char_event_bus(bus)
-    set_session_event_bus(bus)
-    yield redis_client
-    set_char_event_bus(None)
-    set_session_event_bus(None)
-
-
-@pytest.fixture
-def mock_spicedb() -> Generator[MockSpiceDBClient]:
-    """The shared SpiceDB double that the autouse fixture installs in the factory."""
-    yield get_spicedb_client()
 
 
 @pytest.fixture

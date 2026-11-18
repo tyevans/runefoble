@@ -5,38 +5,18 @@ Governed by: ADR-0001, ADR-0006, ADR-0011, Hard Invariant 7.
 
 from __future__ import annotations
 
-from collections.abc import Generator
 from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
-from game_session.dependencies import set_event_bus, set_spicedb_client
 from game_session.events import STREAM_WEST_MARCHES
 from game_session.main import app as session_app
 from runefoble_auth.spicedb import MockSpiceDBClient
-from runefoble_platform.redis_bus import RedisStreamsEventBus
 
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
-
-
-@pytest.fixture
-def mock_bus() -> Generator[MockAsyncRedis]:
-    redis_client = MockAsyncRedis()
-    bus = RedisStreamsEventBus(client=redis_client)
-    set_event_bus(bus)
-    yield redis_client
-    set_event_bus(None)
-
-
-@pytest.fixture
-def spicedb() -> Generator[MockSpiceDBClient]:
-    mock = MockSpiceDBClient()
-    set_spicedb_client(mock)
-    yield mock
-    set_spicedb_client(None)
 
 
 @pytest.fixture
