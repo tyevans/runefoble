@@ -22,7 +22,7 @@ def _auth(issuer, sub: str) -> dict[str, str]:
 
 
 @pytest.fixture
-def client(game_session_upstream: str) -> Iterator[TestClient]:
+def client(game_session_upstream: str, character_sheet_upstream: str) -> Iterator[TestClient]:
     """Enter the gateway lifespan after the upstream URL is set, so the proxy sees it."""
     with TestClient(gateway_app) as gateway_client:
         yield gateway_client
