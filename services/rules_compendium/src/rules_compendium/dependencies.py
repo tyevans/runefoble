@@ -4,6 +4,7 @@ from uuid import UUID
 
 from fastapi import Request
 from runefoble_auth.factory import get_spicedb_client as get_spicedb_client
+from runefoble_auth.permissions import check_subject
 from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
 from runefoble_auth.wiring import (
     build_identity_dependencies,
@@ -59,13 +60,7 @@ async def check_user_can_view_homebrew_rule(
     spicedb: SpiceDBClient | MockSpiceDBClient,
 ) -> bool:
     """Check `homebrew_rule.view` (campaign viewers or the author) under the Zanzibar schema."""
-    return await spicedb.check_permission(
-        resource_type="homebrew_rule",
-        resource_id=rule_id,
-        permission="view",
-        subject_type="user",
-        subject_id=user_id,
-    )
+    return await check_subject(spicedb, "homebrew_rule", rule_id, "view", user_id)
 
 
 async def check_user_can_manage_homebrew(
@@ -75,13 +70,7 @@ async def check_user_can_manage_homebrew(
 ) -> bool:
     """Check `campaign.manage` or `campaign.run_session` before a new homebrew rule is written."""
     for permission in ("manage", "run_session"):
-        allowed = await spicedb.check_permission(
-            resource_type="campaign",
-            resource_id=str(campaign_id),
-            permission=permission,
-            subject_type="user",
-            subject_id=user_id,
-        )
+        allowed = await check_subject(spicedb, "campaign", str(campaign_id), permission, user_id)
         if allowed:
             return True
     return False

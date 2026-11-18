@@ -18,12 +18,12 @@ from game_session.dependencies import (
     get_spicedb_client,
 )
 from game_session.events import STREAM_WEST_MARCHES
-from game_session.routers.caravan_contracts.auth import _check_perm
 from game_session.settlement.auth.tokens import CallerId, get_principal
 from game_session.west_marches_models import (
     CompleteCaravanRequest,
     DispatchCaravanRequest,
 )
+from runefoble_auth.permissions import require_subject
 from runefoble_platform.event_publish import publish_or_fail
 from runefoble_platform.identifiers import parse_uuid
 
@@ -52,7 +52,7 @@ async def dispatch_caravan(
     """Dispatch scheduled caravan delivering crafted goods/reagents between outposts."""
     wid = parse_uuid(shared_world_id, field="shared_world_id")
     spicedb = get_spicedb_client()
-    await _check_perm(spicedb, "shared_world", str(wid), "trade", caller_id)
+    await require_subject(spicedb, "shared_world", str(wid), "trade", caller_id)
 
     repo, ledger = await _load_ledger(wid)
 
@@ -84,7 +84,7 @@ async def complete_caravan_trade(
     """Complete caravan transit, delivering cargo and unlocking regional merchant stock."""
     wid = parse_uuid(shared_world_id, field="shared_world_id")
     spicedb = get_spicedb_client()
-    await _check_perm(spicedb, "shared_world", str(wid), "trade", caller_id)
+    await require_subject(spicedb, "shared_world", str(wid), "trade", caller_id)
 
     repo, ledger = await _load_ledger(wid)
 
@@ -122,7 +122,7 @@ async def get_outpost_merchant_stock(
     """Retrieve merchant stock and rare crafting reagents unlocked at a regional outpost."""
     wid = parse_uuid(shared_world_id, field="shared_world_id")
     spicedb = get_spicedb_client()
-    await _check_perm(spicedb, "shared_world", str(wid), "view", caller_id)
+    await require_subject(spicedb, "shared_world", str(wid), "view", caller_id)
 
     _, ledger = await _load_ledger(wid)
 

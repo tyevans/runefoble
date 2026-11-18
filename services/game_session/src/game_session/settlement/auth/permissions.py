@@ -8,6 +8,7 @@ from __future__ import annotations
 from typing import Any
 
 from fastapi import HTTPException
+from runefoble_auth.permissions import check_subject
 
 
 async def _enforce(
@@ -17,7 +18,7 @@ async def _enforce(
     if not uid:
         raise HTTPException(status_code=401, detail="Authentication required.")
     for p in perms:
-        if await spicedb.check_permission(res, str(rid), p, "user", str(uid)):
+        if await check_subject(spicedb, res, rid, p, uid):
             return
     err = f"Permission denied: subject '{uid}' {verb} {res}:{rid}"
     raise HTTPException(status_code=403, detail=err)
@@ -82,9 +83,7 @@ async def check_establishment_play_permission(
 ) -> bool:
     """Ensure user has permission to play minigames / patronize establishment."""
     for p in ("play", "view", "manage"):
-        if await spicedb.check_permission(
-            "establishment", str(establishment_id), p, "user", str(user_id)
-        ):
+        if await check_subject(spicedb, "establishment", establishment_id, p, user_id):
             return True
     return False
 

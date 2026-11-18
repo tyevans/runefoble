@@ -12,6 +12,7 @@ from eventsource import AggregateNotFoundError
 from fastapi import Depends, HTTPException, status
 from runefoble_auth.errors import AuthzError
 from runefoble_auth.factory import get_spicedb_client
+from runefoble_auth.permissions import check_subject
 from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_platform.errors import ServiceUnavailableError
 from runefoble_platform.event_sourcing import AggregateRepository
@@ -27,18 +28,14 @@ async def check_user_can_view_codex_entry(
     user_id: str, entry: CodexEntryState, spicedb: SpiceDBClient
 ) -> bool:
     """Check the schema permission `codex_entry.view` for the caller."""
-    return await spicedb.check_permission(
-        "codex_entry", str(entry.entry_id), "view", "user", user_id
-    )
+    return await check_subject(spicedb, "codex_entry", str(entry.entry_id), "view", user_id)
 
 
 async def check_user_can_edit_codex_entry(
     user_id: str, entry: CodexEntryState, spicedb: SpiceDBClient
 ) -> bool:
     """Check the schema permission `codex_entry.edit` for the caller."""
-    return await spicedb.check_permission(
-        "codex_entry", str(entry.entry_id), "edit", "user", user_id
-    )
+    return await check_subject(spicedb, "codex_entry", str(entry.entry_id), "edit", user_id)
 
 
 async def require_campaign_view(user_id: str, campaign_id: UUID, spicedb: SpiceDBClient) -> None:

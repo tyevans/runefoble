@@ -21,6 +21,7 @@ from game_session.west_marches_models import (
     RecordDiscoveryRequest,
     RegisterCampaignRequest,
 )
+from runefoble_auth.permissions import require_subject
 from runefoble_platform.event_publish import publish_or_fail
 from runefoble_platform.identifiers import parse_uuid
 
@@ -29,15 +30,6 @@ router = APIRouter(
     prefix="/api/v1/shared-worlds",
     tags=["west-marches"],
 )
-
-
-async def _check_perm(spicedb, res_type: str, res_id: str, perm: str, user_id: str) -> None:
-    """Deny unless the verified caller holds `perm` on the resource (schema name only)."""
-    if not await spicedb.check_permission(res_type, str(res_id), perm, "user", user_id):
-        raise HTTPException(
-            status_code=403,
-            detail=f"Permission denied: subject '{user_id}' lacks '{perm}' on {res_type}:{res_id}",
-        )
 
 
 @router.post("", status_code=201)
@@ -80,7 +72,7 @@ async def get_shared_world(
     """Retrieve shared frontier world state (discoveries, outposts, tavern notices)."""
     wid = parse_uuid(shared_world_id, field="shared_world_id")
     spicedb = get_spicedb_client()
-    await _check_perm(spicedb, "shared_world", str(wid), "view", caller_id)
+    await require_subject(spicedb, "shared_world", str(wid), "view", caller_id)
 
     repo = get_shared_world_repository()
     try:
@@ -100,8 +92,8 @@ async def register_campaign_to_world(
     wid = parse_uuid(shared_world_id, field="shared_world_id")
     repo = get_shared_world_repository()
     spicedb = get_spicedb_client()
-    await _check_perm(spicedb, "shared_world", str(wid), "manage", caller_id)
-    await _check_perm(spicedb, "campaign", str(req.campaign_id), "manage", caller_id)
+    await require_subject(spicedb, "shared_world", str(wid), "manage", caller_id)
+    await require_subject(spicedb, "campaign", str(req.campaign_id), "manage", caller_id)
 
     world = await repo.load(wid)
     world.register_campaign(
@@ -136,7 +128,7 @@ async def record_discovery(
     """Record a cross-campaign milestone / waypoint discovery and broadcast on Redis Streams."""
     wid = parse_uuid(shared_world_id, field="shared_world_id")
     spicedb = get_spicedb_client()
-    await _check_perm(spicedb, "shared_world", str(wid), "discover", caller_id)
+    await require_subject(spicedb, "shared_world", str(wid), "discover", caller_id)
 
     repo = get_shared_world_repository()
     world = await repo.load(wid)
@@ -172,7 +164,7 @@ async def list_discoveries(
     """List shared frontier discoveries mapped by participating adventuring parties."""
     wid = parse_uuid(shared_world_id, field="shared_world_id")
     spicedb = get_spicedb_client()
-    await _check_perm(spicedb, "shared_world", str(wid), "view", caller_id)
+    await require_subject(spicedb, "shared_world", str(wid), "view", caller_id)
 
     repo = get_shared_world_repository()
     world = await repo.load(wid)
@@ -191,7 +183,7 @@ async def establish_outpost(
     """Establish or reinforce a regional trading outpost in the frontier."""
     wid = parse_uuid(shared_world_id, field="shared_world_id")
     spicedb = get_spicedb_client()
-    await _check_perm(spicedb, "shared_world", str(wid), "manage", caller_id)
+    await require_subject(spicedb, "shared_world", str(wid), "manage", caller_id)
 
     repo = get_shared_world_repository()
     world = await repo.load(wid)
@@ -216,7 +208,7 @@ async def post_tavern_notice(
     """Post an expedition bounty, request, or rumor to the communal tavern notice board."""
     wid = parse_uuid(shared_world_id, field="shared_world_id")
     spicedb = get_spicedb_client()
-    await _check_perm(spicedb, "shared_world", str(wid), "discover", caller_id)
+    await require_subject(spicedb, "shared_world", str(wid), "discover", caller_id)
 
     repo = get_shared_world_repository()
     world = await repo.load(wid)
@@ -241,7 +233,7 @@ async def list_tavern_notices(
     """List communal tavern notice board bounties and rumors across all campaigns."""
     wid = parse_uuid(shared_world_id, field="shared_world_id")
     spicedb = get_spicedb_client()
-    await _check_perm(spicedb, "shared_world", str(wid), "view", caller_id)
+    await require_subject(spicedb, "shared_world", str(wid), "view", caller_id)
 
     repo = get_shared_world_repository()
     world = await repo.load(wid)

@@ -19,16 +19,8 @@ from game_session.dependencies import (
     get_spicedb_client,
 )
 from game_session.events import STREAM_WEST_MARCHES
+from runefoble_auth.permissions import check_subject, require_subject
 from runefoble_platform.event_publish import publish_or_fail
-
-
-async def _check_perm(spicedb, res_type: str, res_id: str, perm: str, user_id: str) -> None:
-    """Deny unless the verified caller holds `perm` on the resource (schema name only)."""
-    if not await spicedb.check_permission(res_type, str(res_id), perm, "user", user_id):
-        raise HTTPException(
-            status_code=403,
-            detail=f"Permission denied: subject '{user_id}' lacks '{perm}' on {res_type}:{res_id}",
-        )
 
 
 async def _check_high_tier_auth(
@@ -37,8 +29,8 @@ async def _check_high_tier_auth(
     """Enforce Zanzibar authorization: high-tier contracts require party leader or guild officer."""
     is_high_tier = risk_level.lower() in ("high", "deadly")
     if is_high_tier and not (
-        await spicedb.check_permission("shared_world", shared_world_id, "manage", "user", user_id)
-        or await spicedb.check_permission("campaign", campaign_id, "run_session", "user", user_id)
+        await check_subject(spicedb, "shared_world", shared_world_id, "manage", user_id)
+        or await check_subject(spicedb, "campaign", campaign_id, "run_session", user_id)
     ):
         raise HTTPException(
             status_code=403,
@@ -51,7 +43,7 @@ async def _set_contractor(spicedb, cid: UUID, user_id: str) -> None:
 
 
 async def _load_contract(cid: UUID, perm: str, user_id: str) -> CaravanContractAggregate:
-    await _check_perm(get_spicedb_client(), "caravan_contract", str(cid), perm, user_id)
+    await require_subject(get_spicedb_client(), "caravan_contract", str(cid), perm, user_id)
     try:
         return await get_caravan_contract_repository().load(cid)
     except AggregateNotFoundError as e:
@@ -73,7 +65,6 @@ async def _publish(events: list[Any]) -> None:
 
 __all__ = [
     "_check_high_tier_auth",
-    "_check_perm",
     "_load_contract",
     "_publish",
     "_set_contractor",

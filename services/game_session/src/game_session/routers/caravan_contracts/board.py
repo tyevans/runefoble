@@ -19,11 +19,11 @@ from game_session.dependencies import (
 from game_session.queries import link_child, list_world_contracts_for_world
 from game_session.routers.caravan_contracts.auth import (
     _check_high_tier_auth,
-    _check_perm,
     _publish,
 )
 from game_session.settlement.auth.tokens import CallerId, get_principal
 from game_session.west_marches_models import PostCaravanContractRequest
+from runefoble_auth.permissions import require_subject
 from runefoble_platform.aggregate_loading import load_if_exists
 from runefoble_platform.identifiers import parse_uuid
 
@@ -43,7 +43,7 @@ async def post_caravan_contract(
     """Post an asynchronous mercenary escort contract to the shared world notice board."""
     wid = parse_uuid(shared_world_id, field="shared_world_id")
     spicedb = get_spicedb_client()
-    await _check_perm(spicedb, "shared_world", str(wid), "trade", caller_id)
+    await require_subject(spicedb, "shared_world", str(wid), "trade", caller_id)
     await _check_high_tier_auth(
         spicedb, str(wid), req.posted_by_campaign_id, req.route_risk_level, caller_id
     )
@@ -93,7 +93,7 @@ async def list_caravan_contracts(
     """Query available notice board contracts applying optional frontier filters."""
     wid = parse_uuid(shared_world_id, field="shared_world_id")
     spicedb = get_spicedb_client()
-    await _check_perm(spicedb, "shared_world", str(wid), "view", caller_id)
+    await require_subject(spicedb, "shared_world", str(wid), "view", caller_id)
 
     contract_repo = get_caravan_contract_repository()
     cids = await list_world_contracts_for_world(str(wid))
@@ -128,7 +128,7 @@ async def get_caravan_contract(
         parse_uuid(contract_id, field="contract_id"),
     )
     spicedb = get_spicedb_client()
-    await _check_perm(spicedb, "caravan_contract", str(cid), "view", caller_id)
+    await require_subject(spicedb, "caravan_contract", str(cid), "view", caller_id)
 
     try:
         contract = await get_caravan_contract_repository().load(cid)

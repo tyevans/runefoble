@@ -19,16 +19,11 @@ from game_session.stronghold import (
     StrongholdState,
 )
 from pydantic import BaseModel, ConfigDict, Field
+from runefoble_auth.permissions import require_subject
 from runefoble_platform.event_publish import publish_or_fail
 from runefoble_platform.identifiers import parse_uuid
 
 router = APIRouter(dependencies=[Depends(get_principal)], tags=["stronghold"])
-
-
-async def _require(spicedb: Any, resource: str, rid: str, perm: str, uid: str, detail: str) -> None:
-    """Deny unless the verified caller holds `perm` on the resource (schema name only)."""
-    if not await spicedb.check_permission(resource, rid, perm, "user", uid):
-        raise HTTPException(status_code=403, detail=detail)
 
 
 async def _link_stronghold(spicedb: Any, campaign_id: str) -> None:
@@ -80,8 +75,13 @@ class CreateStrongholdRequest(BaseModel):
 @router.get("/api/v1/campaigns/{campaign_id}/stronghold", response_model=StrongholdState)
 async def get_stronghold(caller_id: CallerId, campaign_id: str) -> StrongholdState:
     """Retrieve party stronghold / campsite status and facility tiers."""
-    await _require(
-        get_spicedb_client(), "campaign", campaign_id, "view", caller_id, "Campaign view required"
+    await require_subject(
+        get_spicedb_client(),
+        "campaign",
+        campaign_id,
+        "view",
+        caller_id,
+        detail="Campaign view required",
     )
     try:
         stronghold = await stronghold_repo.load(parse_uuid(campaign_id, field="campaign_id"))
@@ -99,13 +99,13 @@ async def initialize_stronghold(
 ) -> StrongholdState:
     """Initialize or rename party stronghold / campsite."""
     spicedb = get_spicedb_client()
-    await _require(
+    await require_subject(
         spicedb,
         "campaign",
         campaign_id,
         "run_session",
         caller_id,
-        "DM or owner permission required",
+        detail="DM or owner permission required",
     )
     camp_uuid = parse_uuid(campaign_id, field="campaign_id")
     try:
@@ -127,7 +127,7 @@ async def _load_or_start_stronghold(
     try:
         return await stronghold_repo.load(camp_uuid)
     except AggregateNotFoundError:
-        await _require(spicedb, "campaign", campaign_id, "play", caller_id, detail)
+        await require_subject(spicedb, "campaign", campaign_id, "play", caller_id, detail=detail)
         stronghold = StrongholdAggregate(camp_uuid)
         stronghold.create_stronghold(campaign_id=str(campaign_id))
         await _link_stronghold(spicedb, str(campaign_id))
@@ -147,7 +147,7 @@ async def deposit_stronghold_resources(
     spicedb = get_spicedb_client()
     detail = "DM permission required to fund campsite"
     stronghold = await _load_or_start_stronghold(spicedb, campaign_id, caller_id, detail)
-    await _require(spicedb, "stronghold", campaign_id, "manage", caller_id, detail)
+    await require_subject(spicedb, "stronghold", campaign_id, "manage", caller_id, detail=detail)
     try:
         stronghold.deposit_resources(gold=req.gold, materials=req.materials)
         events_to_publish = list(stronghold.uncommitted_events)
@@ -174,7 +174,7 @@ async def upgrade_stronghold_facility(
     spicedb = get_spicedb_client()
     detail = "Player or DM permission required to upgrade campsite"
     stronghold = await _load_or_start_stronghold(spicedb, campaign_id, caller_id, detail)
-    await _require(spicedb, "stronghold", campaign_id, "upgrade", caller_id, detail)
+    await require_subject(spicedb, "stronghold", campaign_id, "upgrade", caller_id, detail=detail)
 
     try:
         upgrade_result = stronghold.upgrade_facility(facility_id=req.facility_id)
@@ -206,8 +206,13 @@ async def upgrade_stronghold_facility(
 @router.get("/api/v1/campaigns/{campaign_id}/stronghold/boons")
 async def get_stronghold_boons(caller_id: CallerId, campaign_id: str) -> dict[str, Any]:
     """Retrieve active party rest bonuses granted by camp facilities."""
-    await _require(
-        get_spicedb_client(), "campaign", campaign_id, "view", caller_id, "Campaign view required"
+    await require_subject(
+        get_spicedb_client(),
+        "campaign",
+        campaign_id,
+        "view",
+        caller_id,
+        detail="Campaign view required",
     )
     try:
         stronghold = await stronghold_repo.load(parse_uuid(campaign_id, field="campaign_id"))
@@ -236,7 +241,7 @@ async def contribute_treasury_gold(
     """
     spicedb = get_spicedb_client()
     detail = "DM or stronghold manager permission required to contribute treasury gold"
-    await _require(spicedb, "stronghold", campaign_id, "manage", caller_id, detail)
+    await require_subject(spicedb, "stronghold", campaign_id, "manage", caller_id, detail=detail)
     camp_uuid = parse_uuid(campaign_id, field="campaign_id")
     try:
         stronghold = await stronghold_repo.load(camp_uuid)

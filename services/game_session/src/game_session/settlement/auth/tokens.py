@@ -5,7 +5,6 @@ Governed by ADR-0005 (Zitadel OIDC Authentication), ADR-0007, ADR-0013, and PRD-
 
 from __future__ import annotations
 
-from runefoble_auth.principal import VerifiedPrincipal, authenticate_authorization
 from runefoble_auth.wiring import (
     build_identity_dependencies,
     make_verifier_holder,
@@ -17,18 +16,6 @@ from runefoble_platform.service_credential import expected_service_credential
 get_zitadel_auth_service, set_zitadel_auth_service = make_verifier_holder(
     lambda: verifier_from_settings(PlatformSettings())
 )
-
-
-def extract_bearer_token(authorization: str | None) -> str | None:
-    """Extract raw bearer token string from HTTP Authorization header value."""
-    if authorization and authorization.startswith("Bearer "):
-        return authorization[7:].strip()
-    return None
-
-
-def decode_settlement_token(authorization: str | None = None) -> VerifiedPrincipal:
-    """Verify the bearer token. Raise HTTP 401 on any failure. No fallback identity."""
-    return authenticate_authorization(get_zitadel_auth_service(), authorization)
 
 
 # Route identity (ADR-0015 c, e). Every game_session router depends on one of these.
