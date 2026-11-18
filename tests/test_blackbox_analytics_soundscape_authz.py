@@ -187,7 +187,9 @@ def test_soundscape_mood_override_denies_player_and_allows_dm(
     soundscape: TestClient, campaign: dict[str, str]
 ) -> None:
     body = _mood_body(campaign["sid"])
-    player = soundscape.post("/api/v1/soundscape/stems/override", headers=_bearer(PLAYER), json=body)
+    player = soundscape.post(
+        "/api/v1/soundscape/stems/override", headers=_bearer(PLAYER), json=body
+    )
     assert player.status_code == 403
 
     dm = soundscape.post("/api/v1/soundscape/stems/override", headers=_bearer(DM), json=body)
