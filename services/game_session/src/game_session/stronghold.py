@@ -12,7 +12,7 @@ from uuid import UUID
 from eventsource.domain.aggregate import DeclarativeAggregate
 from eventsource.domain.decorators import handles
 from pydantic import BaseModel, Field
-from runefoble_events.events import StrongholdCreated, StrongholdUpgraded
+from runefoble_events.events import StrongholdCreated, StrongholdDeposited, StrongholdUpgraded
 
 FACILITY_TIERS: dict[str, dict[int, dict[str, Any]]] = {
     "watchtower": {
@@ -78,6 +78,10 @@ FACILITY_TIERS: dict[str, dict[int, dict[str, Any]]] = {
 }
 
 
+class InsufficientStrongholdResources(ValueError):
+    """Raised when the treasury or the material store cannot pay for a command."""
+
+
 class StrongholdState(BaseModel):
     """Event-sourced state for persistent campsite and stronghold progression."""
 
@@ -112,15 +116,23 @@ class StrongholdAggregate(DeclarativeAggregate[StrongholdState]):
             location=event.location,
         )
 
+    @handles(StrongholdDeposited)
+    def handle_deposited(self, event: StrongholdDeposited) -> None:
+        if self._state is None:
+            self._state = StrongholdState(campaign_id=event.campaign_id)
+        self.state.treasury_gold += event.gold
+        for mat, qty in event.materials.items():
+            self.state.stored_materials[mat] = self.state.stored_materials.get(mat, 0) + qty
+
     @handles(StrongholdUpgraded)
     def handle_upgraded(self, event: StrongholdUpgraded) -> None:
         if self._state is None:
             self._state = StrongholdState(campaign_id=event.campaign_id)
         self.state.campaign_id = event.campaign_id
         self.state.facilities[event.facility_id] = event.new_tier
-        self.state.treasury_gold += event.gold_spent
+        self.state.treasury_gold -= event.gold_spent
         for mat, qty in event.materials_spent.items():
-            self.state.stored_materials[mat] = self.state.stored_materials.get(mat, 0) + qty
+            self.state.stored_materials[mat] = self.state.stored_materials.get(mat, 0) - qty
         for b in event.unlocked_boons:
             if b not in self.state.unlocked_boons:
                 self.state.unlocked_boons.append(b)
@@ -154,6 +166,40 @@ class StrongholdAggregate(DeclarativeAggregate[StrongholdState]):
             location=location,
         )
 
+    def deposit_resources(self, gold: int = 0, materials: dict[str, int] | None = None) -> None:
+        """Add gold and materials to the treasury and the material store."""
+        mats = dict(materials or {})
+        if gold < 0 or any(qty < 0 for qty in mats.values()):
+            raise ValueError("Deposited gold and materials must not be negative")
+        if gold == 0 and not any(mats.values()):
+            raise ValueError("Deposit must add gold or materials")
+        self.create_event(
+            StrongholdDeposited,
+            campaign_id=self._campaign_uuid(),
+            gold=gold,
+            materials=mats,
+        )
+
+    def _campaign_uuid(self) -> UUID | None:
+        target_id = self.state.campaign_id or str(self.aggregate_id)
+        if not target_id:
+            return None
+        try:
+            return UUID(str(target_id))
+        except ValueError:
+            return None
+
+    def shortfalls(self, gold: int, materials: dict[str, int]) -> list[str]:
+        """Describe each gold or material amount that the stores cannot cover."""
+        problems: list[str] = []
+        if gold > self.state.treasury_gold:
+            problems.append(f"gold: need {gold}, treasury holds {self.state.treasury_gold}")
+        for mat, qty in materials.items():
+            held = self.state.stored_materials.get(mat, 0)
+            if qty > held:
+                problems.append(f"{mat}: need {qty}, store holds {held}")
+        return problems
+
     def upgrade_facility(
         self,
         facility_id: str,
@@ -176,17 +222,17 @@ class StrongholdAggregate(DeclarativeAggregate[StrongholdState]):
         spent_gold = gold_spent if gold_spent > 0 else tier_info["cost_gold"]
         unlocked_boon = tier_info["boon"]
 
-        camp_uuid = None
-        target_id = self.state.campaign_id or str(self.aggregate_id)
-        if target_id:
-            try:
-                camp_uuid = UUID(str(target_id))
-            except ValueError:
-                camp_uuid = None
+        if any(qty < 0 for qty in spent_mats.values()):
+            raise ValueError("Materials spent must not be negative")
+        problems = self.shortfalls(spent_gold, spent_mats)
+        if problems:
+            raise InsufficientStrongholdResources(
+                "Insufficient stronghold resources: " + "; ".join(problems)
+            )
 
         self.create_event(
             StrongholdUpgraded,
-            campaign_id=camp_uuid,
+            campaign_id=self._campaign_uuid(),
             facility_id=facility_id,
             new_tier=next_tier,
             gold_spent=spent_gold,
@@ -217,6 +263,7 @@ class StrongholdAggregate(DeclarativeAggregate[StrongholdState]):
 
 __all__ = [
     "FACILITY_TIERS",
+    "InsufficientStrongholdResources",
     "StrongholdAggregate",
     "StrongholdState",
 ]

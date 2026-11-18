@@ -53,6 +53,12 @@ def _campaign_with_session(client: TestClient, headers: dict[str, str]) -> tuple
 def test_stronghold_get_returns_the_owner_treasury(client: TestClient, trusted_ws_issuer) -> None:
     headers = _headers(trusted_ws_issuer, "dm_stronghold_get")
     campaign_id, _ = _campaign_with_session(client, headers)
+    funded = client.post(
+        f"/api/v1/campaigns/{campaign_id}/stronghold/deposit",
+        json={"gold": 250, "materials": {"wood": 20}},
+        headers=headers,
+    )
+    assert funded.status_code == 200, funded.text
     upgraded = client.post(
         f"/api/v1/campaigns/{campaign_id}/stronghold/upgrade",
         json={"facility_id": "watchtower", "gold_spent": 100},
@@ -64,7 +70,7 @@ def test_stronghold_get_returns_the_owner_treasury(client: TestClient, trusted_w
 
     assert res.status_code == 200, res.text
     body = res.json()
-    assert body["treasury_gold"] == 100
+    assert body["treasury_gold"] == 150
     assert body["facilities"]["watchtower"] == 1
 
 
@@ -73,6 +79,12 @@ def test_stronghold_upgrade_returns_the_owner_outcome(
 ) -> None:
     headers = _headers(trusted_ws_issuer, "dm_stronghold_upgrade")
     campaign_id, _ = _campaign_with_session(client, headers)
+    funded = client.post(
+        f"/api/v1/campaigns/{campaign_id}/stronghold/deposit",
+        json={"gold": 40, "materials": {"flora": 15}},
+        headers=headers,
+    )
+    assert funded.status_code == 200, funded.text
 
     res = client.post(
         f"/api/v1/campaigns/{campaign_id}/stronghold/upgrade",

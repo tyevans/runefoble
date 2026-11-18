@@ -15,6 +15,7 @@ from game_session.events import STREAM_STRONGHOLD
 from game_session.settlement.auth.tokens import CallerId, get_caller_principal
 from game_session.stronghold import (
     FACILITY_TIERS,
+    InsufficientStrongholdResources,
     StrongholdAggregate,
     StrongholdState,
 )
@@ -58,6 +59,11 @@ class UpgradeStrongholdResponse(BaseModel):
     materials_spent: dict[str, int]
     unlocked_boon: str
     state: StrongholdState
+
+
+class DepositStrongholdRequest(BaseModel):
+    gold: int = 0
+    materials: dict[str, int] = Field(default_factory=dict)
 
 
 class CreateStrongholdRequest(BaseModel):
@@ -107,6 +113,49 @@ async def initialize_stronghold(
     return stronghold.state
 
 
+async def _load_or_start_stronghold(
+    spicedb: Any, campaign_id: str, caller_id: str, detail: str
+) -> StrongholdAggregate:
+    """Load the campsite. A new campsite needs a campaign player, and the link lets it resolve."""
+    camp_uuid = _camp_uuid(campaign_id)
+    try:
+        return await stronghold_repo.load(camp_uuid)
+    except AggregateNotFoundError:
+        await _require(spicedb, "campaign", campaign_id, "play", caller_id, detail)
+        stronghold = StrongholdAggregate(camp_uuid)
+        stronghold.create_stronghold(campaign_id=str(campaign_id))
+        await _link_stronghold(spicedb, str(campaign_id))
+        return stronghold
+
+
+@router.post("/api/v1/campaigns/{campaign_id}/stronghold/deposit", response_model=StrongholdState)
+async def deposit_stronghold_resources(
+    caller_id: CallerId,
+    campaign_id: str,
+    req: DepositStrongholdRequest,
+) -> StrongholdState:
+    """Add gold and materials to the campsite treasury and material store.
+
+    A deposit creates resources, so only a DM or stronghold manager (`manage`) may make one.
+    """
+    spicedb = get_spicedb_client()
+    detail = "DM permission required to fund campsite"
+    stronghold = await _load_or_start_stronghold(spicedb, campaign_id, caller_id, detail)
+    await _require(spicedb, "stronghold", campaign_id, "manage", caller_id, detail)
+    try:
+        stronghold.deposit_resources(gold=req.gold, materials=req.materials)
+        events_to_publish = list(stronghold.uncommitted_events)
+        await stronghold_repo.save(stronghold)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
+    bus = get_event_bus()
+    if bus:
+        for ev in events_to_publish:
+            await publish_or_fail(bus, STREAM_STRONGHOLD, ev)
+    return stronghold.state
+
+
 @router.post(
     "/api/v1/campaigns/{campaign_id}/stronghold/upgrade", response_model=UpgradeStrongholdResponse
 )
@@ -118,15 +167,7 @@ async def upgrade_stronghold_facility(
     """Upgrade campsite/stronghold facility, consuming gold/materials and granting resting boons."""
     spicedb = get_spicedb_client()
     detail = "Player or DM permission required to upgrade campsite"
-    camp_uuid = _camp_uuid(campaign_id)
-    try:
-        stronghold = await stronghold_repo.load(camp_uuid)
-    except AggregateNotFoundError:
-        # A new campsite needs a campaign player. The link lets stronghold.upgrade resolve.
-        await _require(spicedb, "campaign", campaign_id, "play", caller_id, detail)
-        stronghold = StrongholdAggregate(camp_uuid)
-        stronghold.create_stronghold(campaign_id=str(campaign_id))
-        await _link_stronghold(spicedb, str(campaign_id))
+    stronghold = await _load_or_start_stronghold(spicedb, campaign_id, caller_id, detail)
     await _require(spicedb, "stronghold", campaign_id, "upgrade", caller_id, detail)
 
     try:
@@ -137,6 +178,8 @@ async def upgrade_stronghold_facility(
         )
         events_to_publish = list(stronghold.uncommitted_events)
         await stronghold_repo.save(stronghold)
+    except InsufficientStrongholdResources as e:
+        raise HTTPException(status_code=409, detail=str(e)) from e
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
 

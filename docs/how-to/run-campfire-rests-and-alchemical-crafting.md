@@ -126,7 +126,24 @@ Parties invest gold and raw materials into campsite upgrades that grant persiste
 curl http://localhost:8004/api/v1/campaigns/camp-55/stronghold
 ```
 
-### Step 2: Upgrade Facility
+The treasury starts at zero. Fund it before you upgrade.
+
+### Step 2: Fund the Treasury
+
+Gold and materials enter the stronghold only through this route. Only a DM or stronghold manager can deposit (`stronghold.manage`), because a deposit creates resources. A player gets `403`.
+
+```bash
+curl -X POST http://localhost:8004/api/v1/campaigns/camp-55/stronghold/deposit \
+  -H "Content-Type: application/json" \
+  -d '{
+    "gold": 500,
+    "materials": {"wood": 40}
+  }'
+```
+
+The route answers `200` with the new state. It answers `400` when a value is negative or when the deposit adds nothing.
+
+### Step 3: Upgrade Facility
 
 ```bash
 curl -X POST http://localhost:8004/api/v1/campaigns/camp-55/stronghold/upgrade \
@@ -137,6 +154,8 @@ curl -X POST http://localhost:8004/api/v1/campaigns/camp-55/stronghold/upgrade \
     "materials_spent": {"wood": 20}
   }'
 ```
+
+An upgrade subtracts its gold and materials from the treasury and the material store. When the treasury holds too little gold, or the store holds too little of a material, the route answers `409 Conflict`. The `detail` field names each shortfall. A refused upgrade records no event, and the stores do not change.
 
 ### Upgrades Catalog:
 1. **Watchtower**:
