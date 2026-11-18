@@ -3,10 +3,9 @@
 from __future__ import annotations
 
 import logging
-from typing import Annotated
 
 from board_state.authz import PLAY, require_campaign_permission, require_token_move
-from board_state.dependencies import get_board, get_current_user_id, get_event_bus, repo
+from board_state.dependencies import CallerId, get_board, get_event_bus, get_principal, repo
 from board_state.events import publish_board_events
 from board_state.models import (
     KnockbackRequest,
@@ -20,14 +19,14 @@ from fastapi import APIRouter, Depends, HTTPException
 from runefoble_platform.event_publish import deliver_best_effort
 
 logger = logging.getLogger("runefoble.board_state.routers.physics")
-router = APIRouter(tags=["physics"], dependencies=[Depends(get_current_user_id)])
+router = APIRouter(tags=["physics"], dependencies=[Depends(get_principal)])
 
 
 @router.post(
     "/api/v1/boards/{board_id}/physics/simulate-throw", response_model=SimulateThrowResponse
 )
 async def simulate_throw_endpoint(
-    board_id: str, req: SimulateThrowRequest, user_id: Annotated[str, Depends(get_current_user_id)]
+    board_id: str, req: SimulateThrowRequest, user_id: CallerId
 ) -> SimulateThrowResponse:
     """Simulate a 3D physical tumbling dice throw with gravity, floor/wall bounces, and resting face."""
     board = await get_board(board_id)
@@ -75,7 +74,7 @@ async def simulate_throw_endpoint(
 
 @router.post("/api/v1/boards/{board_id}/physics/knockback", response_model=KnockbackResponse)
 async def knockback_endpoint(
-    board_id: str, req: KnockbackRequest, user_id: Annotated[str, Depends(get_current_user_id)]
+    board_id: str, req: KnockbackRequest, user_id: CallerId
 ) -> KnockbackResponse:
     """Apply physical knockback impulse to a miniature token, halting upon wall or elevation collisions."""
     board = await get_board(board_id)

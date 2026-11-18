@@ -3,15 +3,15 @@
 from __future__ import annotations
 
 import logging
-from typing import Annotated
 from uuid import NAMESPACE_DNS, UUID, uuid5
 
 from board_state.aggregate import BoardAggregate
 from eventsource.domain.exceptions import AggregateNotFoundError
-from fastapi import Depends
-from runefoble_auth.caller import CallerIdentity, require_user_or_service_credential
-from runefoble_auth.principal import VerifiedPrincipal, require_principal
-from runefoble_auth.zitadel import ZitadelAuthService
+from runefoble_auth.wiring import (
+    build_identity_dependencies,
+    make_verifier_holder,
+    verifier_from_settings,
+)
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.event_bus import EventBusProvider
 from runefoble_platform.event_sourcing import (
@@ -22,7 +22,6 @@ from runefoble_platform.service_credential import expected_service_credential
 
 logger = logging.getLogger("runefoble.board_state")
 platform_settings = PlatformSettings()
-_zitadel_auth_service: ZitadelAuthService | None = None
 
 repo: AggregateRepository[BoardAggregate] = create_aggregate_repository(BoardAggregate)
 
@@ -48,40 +47,13 @@ get_event_bus = event_bus_provider.get
 set_event_bus = event_bus_provider.set
 
 
-def get_zitadel_auth_service() -> ZitadelAuthService:
-    """Provide the Zitadel verifier that this service trusts, built from platform settings."""
-    global _zitadel_auth_service
-    if _zitadel_auth_service is None:
-        _zitadel_auth_service = ZitadelAuthService(
-            issuer=platform_settings.zitadel_issuer,
-            audience=platform_settings.zitadel_audience,
-            internal_url=platform_settings.zitadel_internal_url,
-        )
-    return _zitadel_auth_service
-
-
-def set_zitadel_auth_service(service: ZitadelAuthService | None) -> None:
-    """Override the Zitadel verifier for tests."""
-    global _zitadel_auth_service
-    _zitadel_auth_service = service
-
-
-get_current_principal = require_principal(get_zitadel_auth_service)
-
-
-# Service credential (ADR-0015 e). Read once at import, so a service without it never starts.
-SERVICE_CREDENTIAL = expected_service_credential()
-get_caller_or_service = require_user_or_service_credential(
-    get_zitadel_auth_service, SERVICE_CREDENTIAL
+get_zitadel_auth_service, set_zitadel_auth_service = make_verifier_holder(
+    lambda: verifier_from_settings(platform_settings)
 )
-CallerOrService = Annotated[CallerIdentity, Depends(get_caller_or_service)]
-
-
-def get_current_user_id(
-    principal: Annotated[VerifiedPrincipal, Depends(get_current_principal)],
-) -> str:
-    """Return the subject of the verified bearer token. Raise 401 when no token verifies."""
-    return principal.user_id
+SERVICE_CREDENTIAL = expected_service_credential()
+get_principal, CallerPrincipal, CallerId, get_caller_or_service, CallerOrService = (
+    build_identity_dependencies(get_zitadel_auth_service, SERVICE_CREDENTIAL)
+)
 
 
 async def get_board(session_id: str) -> BoardAggregate:

@@ -3,10 +3,9 @@
 from __future__ import annotations
 
 import logging
-from typing import Annotated
 
 from board_state.authz import require_token_move
-from board_state.dependencies import get_board, get_current_user_id, get_event_bus, repo
+from board_state.dependencies import CallerId, get_board, get_event_bus, get_principal, repo
 from board_state.events import publish_board_events
 from board_state.models import TokenActionRequest, TokenActionResponse
 from board_state.realtime import board_ws_manager
@@ -15,7 +14,7 @@ from runefoble_platform.event_publish import deliver_best_effort
 
 logger = logging.getLogger("runefoble.board_state.routers.actions")
 
-router = APIRouter(tags=["actions"], dependencies=[Depends(get_current_user_id)])
+router = APIRouter(tags=["actions"], dependencies=[Depends(get_principal)])
 
 
 @router.post(
@@ -26,7 +25,7 @@ async def execute_token_action(
     session_id: str,
     token_id: str,
     req: TokenActionRequest,
-    user_id: Annotated[str, Depends(get_current_user_id)],
+    user_id: CallerId,
 ):
     """Execute a contextual tactical action for a token (Dodge, Dash, Melee, Disengage, Cast)."""
     board = await get_board(session_id)
@@ -85,9 +84,7 @@ async def execute_token_action(
 
 
 @router.post("/api/v1/boards/{session_id}/actions", response_model=TokenActionResponse)
-async def execute_action_root(
-    session_id: str, req: TokenActionRequest, user_id: Annotated[str, Depends(get_current_user_id)]
-):
+async def execute_action_root(session_id: str, req: TokenActionRequest, user_id: CallerId):
     """Execute action with token_id provided in request body."""
     if not req.token_id:
         raise HTTPException(status_code=400, detail="token_id is required in request body")

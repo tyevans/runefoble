@@ -14,7 +14,7 @@ from board_state.authz import (
     require_board_permission,
     require_campaign_permission,
 )
-from board_state.dependencies import get_board, get_current_user_id, get_event_bus, repo
+from board_state.dependencies import CallerId, get_board, get_event_bus, get_principal, repo
 from board_state.events import publish_board_events
 from board_state.models import (
     PlaceLightRequest,
@@ -31,7 +31,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
 from runefoble_platform.storage import AssetStorageError
 
 logger = logging.getLogger("runefoble.board_state.routers.uvtt_import")
-router = APIRouter(tags=["uvtt"], dependencies=[Depends(get_current_user_id)])
+router = APIRouter(tags=["uvtt"], dependencies=[Depends(get_principal)])
 
 
 async def _publish_board_events(events: list) -> None:
@@ -47,7 +47,7 @@ async def _publish_board_events(events: list) -> None:
 async def import_uvtt_map_endpoint(
     id: str,
     request: Request,
-    user_id: Annotated[str, Depends(get_current_user_id)],
+    user_id: CallerId,
     file: Annotated[UploadFile | None, File()] = None,
 ) -> UVTTImportResponse:
     """Import a Universal VTT map, extracting walls, interactive doors, lights, and texture."""
@@ -112,7 +112,7 @@ async def import_uvtt_map_endpoint(
 async def toggle_door_endpoint(
     id: str,
     door_id: str,
-    user_id: Annotated[str, Depends(get_current_user_id)],
+    user_id: CallerId,
     body: ToggleDoorRequest | None = None,
 ) -> dict:
     """Toggle state of an interactive door or portal on the board."""
@@ -128,9 +128,7 @@ async def toggle_door_endpoint(
 
 @router.get("/board/{id}/doors")
 @router.get("/boards/{id}/doors")
-async def get_doors_endpoint(
-    id: str, user_id: Annotated[str, Depends(get_current_user_id)]
-) -> dict:
+async def get_doors_endpoint(id: str, user_id: CallerId) -> dict:
     """Query the doors and portals. Secret ones need `board.view_secret_layer`."""
     board = await get_board(id)
     await require_board_permission(user_id, id, VIEW)
@@ -145,9 +143,7 @@ async def get_doors_endpoint(
 @router.post("/board/{id}/lights")
 @router.post("/boards/{id}/lights")
 @router.post("/api/v1/board/{id}/lights")
-async def place_light_endpoint(
-    id: str, req: PlaceLightRequest, user_id: Annotated[str, Depends(get_current_user_id)]
-) -> dict:
+async def place_light_endpoint(id: str, req: PlaceLightRequest, user_id: CallerId) -> dict:
     """Place or update a dynamic point light source on the tactical board."""
     board = await get_board(id)
     await require_board_permission(user_id, id, MANAGE_TRAPS)
@@ -171,9 +167,7 @@ async def place_light_endpoint(
 
 @router.get("/board/{id}/lights")
 @router.get("/boards/{id}/lights")
-async def get_lights_endpoint(
-    id: str, user_id: Annotated[str, Depends(get_current_user_id)]
-) -> dict:
+async def get_lights_endpoint(id: str, user_id: CallerId) -> dict:
     """Query active dynamic light sources on the board."""
     board = await get_board(id)
     await require_board_permission(user_id, id, VIEW)
