@@ -186,3 +186,21 @@ def test_character_sheet_penalties_and_guardrails_frontdoors(char_client):
     get_guard_res = char_client.get(f"/api/v1/characters/{cid}/guardrails")
     assert get_guard_res.status_code == 200
     assert get_guard_res.json()["risk_threshold"] == "cautious"
+
+
+def test_stand_in_guardrails_write_rejects_an_unknown_policy_field(char_client):
+    """A misspelled guardrail is refused with 422 and the field name. Nothing is stored."""
+    cid = char_client.post(
+        "/api/v1/characters",
+        json={"name": "Shadowheart", "character_class": "Cleric", "max_hp": 20},
+    ).json()["character_id"]
+
+    res = char_client.put(
+        f"/api/v1/characters/{cid}/guardrails",
+        json={"protect_allys": ["Lae'zel"]},
+    )
+
+    assert res.status_code == 422
+    assert "protect_allys" in res.text
+    stored = char_client.get(f"/api/v1/characters/{cid}/guardrails").json()
+    assert stored["protect_allies"] == []

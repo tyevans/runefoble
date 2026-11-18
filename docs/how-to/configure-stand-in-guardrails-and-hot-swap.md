@@ -20,9 +20,21 @@ These names are the fields of `StandInGuardrails` (character sheet) and `StandIn
 - `risk_threshold` (string, default `"cautious"`): Risk appetite profile (`"cautious"`, `"balanced"`, `"reckless"`).
 - `avoid_melee` (bool, default `false` in the Watcher and worker, `true` on the character sheet): Forces ranged positioning when enemies enter close proximity.
 - `permadeath_safeguard` (bool, default `true` on the character sheet): Stabilizes the character at 0 HP. See section 2.
-- `custom_priorities` (list of strings, default `[]`): Free-text tactical directives. They are passed to the model as prompt text.
+- `custom_priorities` (list of strings, default `[]`): Ordered target names. The stand-in engines pick the first priority that names a visible or scene target. They also pass the list to the model as prompt text.
 
-An unknown name fails. The Watcher and the inference worker return HTTP 422. A field that a request omits has no effect in the Watcher and worker.
+An unknown name fails. The Watcher, the inference worker, and the auto-pilot route return HTTP 422 with the field name. A field that a request omits has no effect in the Watcher and worker.
+
+### Enforced Guardrails
+The stand-in engines enforce four guardrails. They report each one by name in `guardrails_applied`:
+- `protect_allies`: Heals a named ally when the scene names that ally or mentions healing.
+- `preserve_spell_slots`: Casts a cantrip instead of a spell. The reserved slots stay unspent.
+- `custom_priorities`: Targets the first priority that names a foe.
+- `avoid_melee`: Chooses a ranged action.
+
+The other fields are stored but not enforced by the stand-in engines yet. The engines do not report them.
+
+### Auto-Pilot Requests
+The auto-pilot route (`POST /api/v1/sessions/{session_id}/turns/auto-pilot`) takes the policy in its `guardrails` field. It validates the policy with the same model. A rejected policy returns HTTP 422 with the field name, and no action is recorded. The route does not read the policy stored on the character sheet yet.
 
 ### Updating Guardrails via REST API
 
@@ -46,7 +58,7 @@ curl -X PUT http://localhost:8000/api/v1/characters/char-sarah-cleric/guardrails
 
 ### Reading the Applied Guardrails
 
-When the stand-in acts, The Watcher returns `guardrails_applied` in the response of `POST /api/v1/watcher/stand-in/act`. The list holds the names of the guardrails that the decision enforced, for example `["protect_allies"]`. A guardrail that did not change the decision is not listed. When the model backend names a guardrail, the worker reports it only if the request activated that guardrail. See `docs/reference/inference-worker-response-contract.md`.
+When the stand-in acts, The Watcher returns `guardrails_applied` in the response of `POST /api/v1/watcher/stand-in/act`. The list holds the names of the guardrails that the decision enforced, for example `["protect_allies"]`. Every name comes from the `GuardrailName` enumeration, and the local engine and the worker use the same names. A guardrail that did not change the decision is not listed. When the model backend names a guardrail, the worker reports it only if the request activated that guardrail. See `docs/reference/inference-worker-response-contract.md`.
 
 ```bash
 curl -X POST http://localhost:8001/api/v1/watcher/stand-in/act \

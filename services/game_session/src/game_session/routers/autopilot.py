@@ -116,7 +116,11 @@ async def auto_pilot_turn(
             "penalties": request_data.penalties,
             "scene_context": request_data.scene_context,
             "personality_traits": request_data.personality_traits,
-            "guardrails": request_data.guardrails,
+            "guardrails": (
+                request_data.guardrails.model_dump(mode="json")
+                if request_data.guardrails is not None
+                else None
+            ),
             "session_id": str(session_id),
             "campaign_id": str(session.state.campaign_id),
         },
