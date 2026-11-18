@@ -41,12 +41,29 @@ def client(spicedb_client: MockSpiceDBClient) -> TestClient:
     )
 
 
+def _auth(sub: str) -> dict[str, str]:
+    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
+
+
 @pytest.fixture
-def party_ids() -> dict[str, str]:
-    return {
-        "officer": "rowan_officer",
-        "blue_player": "blue_explorer",
-        "gold_player": "gold_scout",
-        "campaign_blue": "c1a2b3c4-d5e6-7f8a-9b0c-1d2e3f4a5b6c",
-        "campaign_gold": "d2b3c4d5-e6f7-8a9b-0c1d-2e3f4a5b6c7d",
-    }
+def party_ids(client: TestClient) -> dict[str, str]:
+    """Create two party campaigns through public routes. The officer owns both (registration
+    needs campaign ownership). Each player joins its own campaign through an invite."""
+    officer, blue, gold = "rowan_officer", "blue_explorer", "gold_scout"
+    ids = {"officer": officer, "blue_player": blue, "gold_player": gold}
+    for key, player in (("campaign_blue", blue), ("campaign_gold", gold)):
+        created = client.post("/api/v1/campaigns", json={"title": key}, headers=_auth(officer))
+        assert created.status_code == 201, created.text
+        cid = created.json()["id"]
+        invite = client.post(
+            f"/api/v1/campaigns/{cid}/invites", json={"role": "player"}, headers=_auth(officer)
+        )
+        assert invite.status_code == 201, invite.text
+        joined = client.post(
+            "/api/v1/campaigns/join",
+            json={"invite_token": invite.json()["token"]},
+            headers=_auth(player),
+        )
+        assert joined.status_code == 200, joined.text
+        ids[key] = cid
+    return ids

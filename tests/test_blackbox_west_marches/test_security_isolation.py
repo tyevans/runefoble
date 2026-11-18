@@ -29,8 +29,7 @@ async def _setup_world(
         headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(officer)}"},
     ).json()
     wid = res["shared_world_id"]
-    for cid, uid, pname in parties:
-        await spicedb.write_relationship("campaign", cid, "player", "user", uid)
+    for cid, _uid, pname in parties:
         client.post(
             f"/api/v1/shared-worlds/{wid}/campaigns",
             json={"campaign_id": cid, "party_name": pname},
@@ -41,12 +40,14 @@ async def _setup_world(
 
 @pytest.mark.asyncio
 async def test_blackbox_spicedb_zanzibar_multi_party_isolation(
-    client: TestClient, spicedb_client: MockSpiceDBClient
+    client: TestClient, spicedb_client: MockSpiceDBClient, party_ids: dict[str, str]
 ):
     """Verify ADR-0001: While geography is shared, private character sheets remain isolated."""
-    officer_id, blue_player, gold_player = "rowan_officer", "blue_ranger", "gold_paladin"
+    officer_id = party_ids["officer"]
+    blue_player, gold_player = party_ids["blue_player"], party_ids["gold_player"]
     outsider = "stranger_malicious"
-    c_blue, c_gold, char_blue_id = str(uuid4()), str(uuid4()), str(uuid4())
+    c_blue, c_gold = party_ids["campaign_blue"], party_ids["campaign_gold"]
+    char_blue_id = str(uuid4())
 
     world_id = await _setup_world(
         client,

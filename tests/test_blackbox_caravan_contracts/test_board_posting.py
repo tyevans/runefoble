@@ -9,8 +9,6 @@ Governed by:
 
 from __future__ import annotations
 
-from uuid import uuid4
-
 import pytest
 from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import MockSpiceDBClient
@@ -18,7 +16,7 @@ from runefoble_auth.spicedb import MockSpiceDBClient
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
-from .conftest import assert_stream_events
+from .conftest import assert_stream_events, create_campaign
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
@@ -31,7 +29,6 @@ async def test_blackbox_caravan_contract_posting_and_board_queries(
 ):
     """Test Scenario 1: Posting contracts and filtering the notice board through frontdoor REST APIs."""
     officer_id = "guild_officer_rowan"
-    campaign_a = str(uuid4())
 
     # 1. Establish shared frontier world
     world_res = client.post(
@@ -47,7 +44,7 @@ async def test_blackbox_caravan_contract_posting_and_board_queries(
     world_id = world_res.json()["shared_world_id"]
 
     # Register campaign A
-    await spicedb.write_relationship("campaign", campaign_a, "owner", "user", officer_id)
+    campaign_a = create_campaign(client, officer_id)
     reg_res = client.post(
         f"/api/v1/shared-worlds/{world_id}/campaigns",
         json={"campaign_id": campaign_a, "party_name": "The Amber Vanguard"},

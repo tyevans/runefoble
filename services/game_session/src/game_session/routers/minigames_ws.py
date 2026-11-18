@@ -116,7 +116,7 @@ async def handle_table_websocket(
             else:
                 # Echo / broadcast generic table action
                 await minigame_table_manager.broadcast(table_id, data)
-    except (WebSocketDisconnect, Exception):
+    except WebSocketDisconnect:
         pass
     finally:
         minigame_table_manager.disconnect(table_id, websocket)

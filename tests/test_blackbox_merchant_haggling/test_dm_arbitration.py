@@ -16,6 +16,8 @@ from runefoble_auth.spicedb import MockSpiceDBClient
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
+from .conftest import create_campaign_for, create_test_establishment, invite_player
+
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
@@ -24,12 +26,11 @@ async def test_blackbox_dm_arbitration_controls_and_override(
     client: TestClient, spicedb: MockSpiceDBClient, mock_bus: MockAsyncRedis
 ) -> None:
     """US-0075 Scenario 2: DM intervenes in real time, alters mood, and forces acceptance."""
-    campaign_id = str(uuid4())
     dm_user_id = f"dm_{uuid4().hex[:8]}"
     player_id = f"player_{uuid4().hex[:8]}"
-
-    await spicedb.write_relationship("campaign", campaign_id, "dungeon_master", "user", dm_user_id)
-    await spicedb.write_relationship("campaign", campaign_id, "player", "user", player_id)
+    campaign_id = create_campaign_for(client, dm_user_id)
+    invite_player(client, campaign_id, dm_user_id, player_id)
+    establishment_id = create_test_establishment(client, campaign_id, dm_user_id)
 
     # 1. Start negotiation
     start_res = client.post(
@@ -40,6 +41,7 @@ async def test_blackbox_dm_arbitration_controls_and_override(
             "base_price": 200,
             "initial_offer_gp": 140,
             "campaign_id": campaign_id,
+            "establishment_id": establishment_id,
         },
         headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(player_id)}"},
     )
@@ -89,11 +91,12 @@ async def test_blackbox_spicedb_zanzibar_arbitration_permission(
     client: TestClient, spicedb: MockSpiceDBClient
 ) -> None:
     """Verify unauthorized player cannot execute DM overrides (ADR-0001 Zanzibar enforcement)."""
-    campaign_id = str(uuid4())
+    owner_id = f"owner_{uuid4().hex[:8]}"
     player_id = f"player_{uuid4().hex[:8]}"
     stranger_id = f"stranger_{uuid4().hex[:8]}"
-
-    await spicedb.write_relationship("campaign", campaign_id, "player", "user", player_id)
+    campaign_id = create_campaign_for(client, owner_id)
+    invite_player(client, campaign_id, owner_id, player_id)
+    establishment_id = create_test_establishment(client, campaign_id, owner_id)
 
     start_res = client.post(
         "/api/v1/haggling/start",
@@ -102,6 +105,7 @@ async def test_blackbox_spicedb_zanzibar_arbitration_permission(
             "item_id": "helm_iron",
             "base_price": 50,
             "campaign_id": campaign_id,
+            "establishment_id": establishment_id,
         },
         headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(player_id)}"},
     )

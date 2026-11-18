@@ -8,6 +8,7 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID, uuid4
 
+from eventsource import AggregateNotFoundError
 from fastapi import APIRouter, Depends, HTTPException, Query
 from game_session.caravan import CaravanContractAggregate
 from game_session.dependencies import (
@@ -99,17 +100,17 @@ async def list_caravan_contracts(
     for c_id in cids:
         try:
             c_agg = await contract_repo.load(UUID(c_id))
-            c_state = c_agg.state
-            if (
-                (status and c_state.status != status)
-                or (risk_level and c_state.route_risk_level.lower() != risk_level.lower())
-                or (destination and c_state.destination_outpost.lower() != destination.lower())
-                or (min_reward is not None and c_state.reward_gold < min_reward)
-            ):
-                continue
-            contracts.append(c_state.model_dump())
-        except Exception:
+        except AggregateNotFoundError:
             continue
+        c_state = c_agg.state
+        if (
+            (status and c_state.status != status)
+            or (risk_level and c_state.route_risk_level.lower() != risk_level.lower())
+            or (destination and c_state.destination_outpost.lower() != destination.lower())
+            or (min_reward is not None and c_state.reward_gold < min_reward)
+        ):
+            continue
+        contracts.append(c_state.model_dump())
 
     return {"shared_world_id": str(wid), "contracts": contracts}
 
@@ -127,7 +128,7 @@ async def get_caravan_contract(
 
     try:
         contract = await get_caravan_contract_repository().load(cid)
-    except Exception as e:
+    except AggregateNotFoundError as e:
         raise HTTPException(status_code=404, detail="Contract not found") from e
 
     return {"shared_world_id": str(wid), "contract": contract.state.model_dump()}

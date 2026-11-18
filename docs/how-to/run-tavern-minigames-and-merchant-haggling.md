@@ -206,7 +206,7 @@ Game Masters can intervene in live negotiations without halting game flow via `P
 ```bash
 curl -X PATCH http://localhost:8004/api/v1/haggling/neg-101/dm-override \
   -H "Content-Type: application/json" \
-  -H "x-user-id: dm_wyvern_01" \
+  -H "Authorization: Bearer ${TOKEN_DM_WYVERN_01}" \
   -d '{
     "action": "force_accept",
     "override_price_gp": 280,

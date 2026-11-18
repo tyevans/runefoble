@@ -14,7 +14,11 @@ from runefoble_auth.spicedb import MockSpiceDBClient
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
-from .conftest import assert_session_stream_events
+from .conftest import (
+    assert_session_stream_events,
+    create_campaign_session,
+    join_campaign,
+)
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
@@ -25,13 +29,13 @@ async def test_bounty_lifecycle_claim_and_complete_with_escrow(
     mock_bus: MockAsyncRedis,
     spicedb: MockSpiceDBClient,
 ) -> None:
-    session_id = str(uuid4())
     creator_id = "user_questgiver_bram"
     claimant_id = "user_mercenary_rowan"
     claimant_camp = str(uuid4())
 
-    await spicedb.write_relationship("session", session_id, "participate", "user", creator_id)
-    await spicedb.write_relationship("session", session_id, "participate", "user", claimant_id)
+    # The creator owns the campaign. The claimant joins as a player through an invite.
+    campaign_id, session_id = create_campaign_session(client, creator_id)
+    join_campaign(client, campaign_id, creator_id, claimant_id)
 
     # 1. Post bounty with 600 gold and healing elixir in escrow
     res_post = client.post(
