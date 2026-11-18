@@ -1,6 +1,6 @@
 /**
  * Base class for event-sourced aggregates (Hard Invariant 2, TypeScript flavour).
- * Commands call `raise`. The repository persists `uncommitted` after publishing.
+ * Commands call `raise`. The repository persists `uncommitted`. The outbox relay then publishes it.
  */
 
 import type { AppendChange, NewEvent, StoredEvent } from '../eventStore/types.js';

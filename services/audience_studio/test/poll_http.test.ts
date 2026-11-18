@@ -25,15 +25,45 @@ after(async () => {
   await issuer.close();
 });
 
+/**
+ * Database boundary double. The next `count` poll reads wait in pairs, so two writers
+ * read the same stream version before either one appends.
+ */
+class PollReadBarrier extends MemoryEventStore {
+  private remaining = 0;
+  private waiting: Array<() => void> = [];
+
+  holdNextPollReads(count: number): void {
+    this.remaining = count;
+  }
+
+  override async load(streamId: string) {
+    const events = await super.load(streamId);
+    if (this.remaining === 0 || !streamId.startsWith('AudiencePoll-')) return events;
+    this.remaining -= 1;
+    await new Promise<void>((resolve) => {
+      this.waiting.push(resolve);
+      if (this.waiting.length === 2) {
+        const release = this.waiting;
+        this.waiting = [];
+        release.forEach((r) => r());
+      }
+    });
+    return events;
+  }
+}
+
 async function start(
   store: MemoryEventStore,
-  publisher: InMemoryStreamPublisher
+  publisher: InMemoryStreamPublisher,
+  options: { outboxIntervalMs?: number } = {}
 ) {
   const ctx = await buildServer({
     spicedb,
     logger: false,
     zitadel: { issuer: TEST_ISSUER, audience: TEST_AUDIENCE, internalUrl: issuer.internalUrl },
     createAdapters: async () => ({ eventStore: store, streamPublisher: publisher }),
+    outboxIntervalMs: options.outboxIntervalMs,
   });
   return ctx;
 }
@@ -92,10 +122,10 @@ test('poll and its votes survive a restart', async () => {
   await second.server.close();
 });
 
-test('a publish failure rejects the command and stores nothing', async () => {
+test('a publish failure after the append keeps the event pending until the relay publishes it', async () => {
   const store = new MemoryEventStore();
   const publisher = new InMemoryStreamPublisher();
-  const ctx = await start(store, publisher);
+  const ctx = await start(store, publisher, { outboxIntervalMs: 20 });
   spicedb.grant('camp-fail', 'dungeon_master', 'dm-fail');
   publisher.failNextPublishes(1);
 
@@ -105,13 +135,70 @@ test('a publish failure rejects the command and stores nothing', async () => {
     headers: bearer(await issuer.mint('dm-fail')),
     payload: { campaign_id: 'camp-fail', title: 'T', prompt: 'P', options: ['A'] },
   });
-  assert.equal(res.statusCode, 503);
+  assert.equal(res.statusCode, 201);
+  const created = jsonBody(res);
+  assert.equal(publisher.published.length, 0);
+
+  await waitFor(() => publisher.published.some((e) => e.type.endsWith('poll_started')));
+  assert.deepEqual(
+    publisher.published.map((e) => e.id),
+    [`AudiencePoll-${created.id}#1`]
+  );
 
   const list = jsonBody(
     await ctx.server.inject({ method: 'GET', url: POLLS, headers: bearer(await issuer.mint('dm-fail')) })
   );
-  assert.equal(list.polls.length, 0);
+  assert.equal(list.polls.length, 1);
   await ctx.server.close();
+});
+
+test('two votes from two replicas on one poll: one is recorded and the other gets 409', async () => {
+  const store = new PollReadBarrier();
+  const publisher = new InMemoryStreamPublisher();
+  const replicaA = await start(store, publisher);
+  const replicaB = await start(store, publisher);
+  spicedb.grant('camp-race', 'dungeon_master', 'dm-race');
+  spicedb.grant('camp-race', 'spectator', 'racer-1');
+  spicedb.grant('camp-race', 'spectator', 'racer-2');
+  const created = jsonBody(
+    await replicaA.server.inject({
+      method: 'POST',
+      url: POLLS,
+      headers: bearer(await issuer.mint('dm-race')),
+      payload: { campaign_id: 'camp-race', title: 'Race', prompt: 'Who wins?', options: ['Left', 'Right'] },
+    })
+  );
+
+  store.holdNextPollReads(4);
+  const [a, b] = await Promise.all([
+    replicaA.server.inject({
+      method: 'POST',
+      url: `${POLLS}/${created.id}/votes`,
+      headers: bearer(await issuer.mint('racer-1')),
+      payload: { option_id: 'opt_1' },
+    }),
+    replicaB.server.inject({
+      method: 'POST',
+      url: `${POLLS}/${created.id}/votes`,
+      headers: bearer(await issuer.mint('racer-2')),
+      payload: { option_id: 'opt_2' },
+    }),
+  ]);
+
+  assert.deepEqual([a.statusCode, b.statusCode].sort(), [200, 409]);
+  const loser = a.statusCode === 409 ? a : b;
+  assert.match(jsonBody(loser).error, /retry/i);
+
+  const read = jsonBody(
+    await replicaA.server.inject({
+      method: 'GET',
+      url: `${POLLS}/${created.id}`,
+      headers: bearer(await issuer.mint('dm-race')),
+    })
+  );
+  assert.equal(read.totalVotes, 1);
+  await replicaA.server.close();
+  await replicaB.server.close();
 });
 
 test('readyz reports 503 while the stream is unavailable and 200 after recovery', async () => {

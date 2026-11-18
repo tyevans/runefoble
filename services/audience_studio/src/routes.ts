@@ -5,8 +5,9 @@
 
 import type { FastifyInstance, FastifyPluginAsync, FastifyReply } from 'fastify';
 import type { ApprovalQueue } from './approvalQueue.js';
-import { HttpError } from './errors.js';
+import { ConflictError, HttpError } from './errors.js';
 import { principalOf } from './identity/principal.js';
+import { ConcurrencyConflictError } from './eventStore/types.js';
 import type { PollEngine } from './pollEngine.js';
 import type { ProposalStatus } from './types.js';
 
@@ -17,10 +18,22 @@ interface RouteContext {
 
 /** Maps typed HTTP errors to their status codes. Other errors reach Fastify as 500. */
 function sendError(reply: FastifyReply, err: unknown) {
-  if (err instanceof HttpError) {
-    return reply.code(err.statusCode).send({ error: err.message });
+  const httpError = toHttpError(err);
+  if (httpError) {
+    return reply.code(httpError.statusCode).send({ error: httpError.message });
   }
   throw err;
+}
+
+/** A lost write race is a 409 for the client. The stream id stays out of the response. */
+function toHttpError(err: unknown): HttpError | undefined {
+  if (err instanceof HttpError) return err;
+  if (err instanceof ConcurrencyConflictError) {
+    return new ConflictError('The poll or proposal changed while the command ran. Retry the command.', {
+      cause: err,
+    });
+  }
+  return undefined;
 }
 
 export function createAudienceRoutes(ctx: RouteContext): FastifyPluginAsync {

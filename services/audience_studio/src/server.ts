@@ -16,6 +16,7 @@ import { registerIdentityHook } from './identity/identityHook.js';
 import { type ZitadelSettings, ZitadelVerifier } from './identity/zitadelVerifier.js';
 import { KeyedMutex } from './eventSourcing/keyedMutex.js';
 import { AudienceEventRepository } from './eventSourcing/repository.js';
+import { OutboxRelay } from './eventSourcing/outboxRelay.js';
 import type { Logger } from './logger.js';
 import { PollEngine } from './pollEngine.js';
 import { createAudienceRoutes } from './routes.js';
@@ -32,7 +33,11 @@ export interface ServerOptions {
   logger?: boolean;
   /** Supplies the event store and stream publisher. Production passes createAdapters. */
   createAdapters: (log: Logger) => Promise<Adapters>;
+  /** How often the outbox relay retries unsent events, in milliseconds. Defaults to one second. */
+  outboxIntervalMs?: number;
 }
+
+const DEFAULT_OUTBOX_INTERVAL_MS = 1000;
 
 export interface AppContext {
   server: FastifyInstance;
@@ -59,7 +64,14 @@ export async function buildServer(options: ServerOptions): Promise<AppContext> {
   await eventStore.init();
 
   const access = new AudienceAccess(options.spicedb);
-  const repo = new AudienceEventRepository(eventStore, streamPublisher, log);
+  const relay = new OutboxRelay(
+    eventStore,
+    streamPublisher,
+    log,
+    options.outboxIntervalMs ?? DEFAULT_OUTBOX_INTERVAL_MS
+  );
+  relay.start();
+  const repo = new AudienceEventRepository(eventStore, relay);
   const mutex = new KeyedMutex();
   const approvalQueue = new ApprovalQueue(access, repo, mutex, log);
   const pollEngine = new PollEngine(repo, mutex, approvalQueue, access, log);
@@ -67,6 +79,7 @@ export async function buildServer(options: ServerOptions): Promise<AppContext> {
 
   server.addHook('onClose', async () => {
     pollEngine.close();
+    relay.stop();
     await streamPublisher.close();
     await eventStore.close();
   });

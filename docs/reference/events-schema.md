@@ -60,6 +60,18 @@ The `libs/runefoble_events` package organizes domain event definitions and re-ex
 
 [Event Identifiers](event-identifiers.md) lists every registered domain event. The page is generated from the `runefoble_events` registry by `scripts/generate_event_catalogue.py`. Its identifier column is the `event_type` that the code emits. Use it as the source of truth for wire names.
 
+## Audience Studio Outbox
+
+Audience Studio (TypeScript) stores its events in PostgreSQL. It sends them to the Redis Stream `runefoble.events.audience` through an outbox.
+
+- The `audience_studio_events` table holds one row per event. Its primary key `(stream_id, version)` rejects a second writer on the same version.
+- The `audience_studio_outbox` table holds one row per event. Its `published_at` column is empty until the event is sent.
+- A command writes its events and outbox rows in one transaction. A failed write rejects the command. Nothing is sent.
+- After the commit, the outbox relay sends each pending event. It retries on a timer, so events that a failed send left pending are sent later.
+- Event ids have the form `<stream_id>#<version>`. A retry sends the same id. Consumers dedupe on `id`.
+- Delivery is at least once. A consumer must handle a repeated event.
+- A concurrent write that loses the version race returns `409 Conflict`. The client may retry the command.
+
 ## Catalogue Pages
 
 - [Gameplay](events-catalog-gameplay.md): GameSession and BoardState events.
