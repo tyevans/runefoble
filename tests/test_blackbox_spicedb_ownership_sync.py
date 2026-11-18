@@ -87,7 +87,7 @@ async def test_character_create_writes_owner_and_removed_sync_routes_return_404(
         assert res.status_code == 201, res.text
         char_id = res.json()["id"]
         assert client.get(f"/api/v1/characters/{char_id}", headers=owner_headers).status_code == 200
-        assert await spicedb.check_permission("character", char_id, "owner", "user", owner_id)
+        assert await spicedb.check_permission("character", char_id, "delete", "user", owner_id)
 
         # The public character-ownership sync route is removed (TASK-0543)
         res_removed = client.post(

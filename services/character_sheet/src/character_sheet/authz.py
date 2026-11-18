@@ -10,8 +10,8 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from uuid import UUID
 
-from fastapi import HTTPException
 from character_sheet.roster import permission_denied
+from fastapi import HTTPException
 from runefoble_auth.errors import AuthzError
 from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
 

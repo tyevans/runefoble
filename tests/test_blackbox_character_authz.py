@@ -24,14 +24,10 @@ import pytest
 from character_sheet.main import app as character_sheet_app
 from fastapi.testclient import TestClient
 from gateway_api.auth import get_spicedb_client
-from gateway_api.campaign_store import campaign_store
 from gateway_api.main import app as gateway_app
 from runefoble_auth.errors import AuthzUnavailableError
 
 from tests.helpers.live_services import closed_port_url
-
-sheet = TestClient(character_sheet_app)
-gateway = TestClient(gateway_app)
 
 
 def _auth(issuer, sub: str) -> dict[str, str]:
@@ -39,14 +35,20 @@ def _auth(issuer, sub: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {issuer.mint(sub)}"}
 
 
-@pytest.fixture(autouse=True)
-def reset_gateway_stores() -> Iterator[None]:
-    campaign_store.reset()
-    yield
-    campaign_store.reset()
+@pytest.fixture
+def sheet(character_sheet_upstream) -> TestClient:
+    """In-process Character Sheet client over the same fresh repository the upstream serves."""
+    return TestClient(character_sheet_app)
 
 
-def _create_campaign(issuer, owner_sub: str) -> tuple[str, dict[str, str]]:
+@pytest.fixture
+def gateway(character_sheet_upstream, game_session_upstream) -> Iterator[TestClient]:
+    """Gateway client with the lifespan entered after both upstreams serve."""
+    with TestClient(gateway_app) as client:
+        yield client
+
+
+def _create_campaign(gateway, issuer, owner_sub: str) -> tuple[str, dict[str, str]]:
     """Create a campaign as the DM (owner) through the gateway. Return its id and DM headers."""
     headers = _auth(issuer, owner_sub)
     res = gateway.post("/api/v1/campaigns", json={"title": "Ownership Test"}, headers=headers)
@@ -54,7 +56,7 @@ def _create_campaign(issuer, owner_sub: str) -> tuple[str, dict[str, str]]:
     return res.json()["id"], headers
 
 
-def _join_campaign(issuer, campaign_id: str, owner_headers, sub: str) -> None:
+def _join_campaign(gateway, issuer, campaign_id: str, owner_headers, sub: str) -> None:
     """The DM creates a player invite. `sub` redeems it through the gateway."""
     inv = gateway.post(
         f"/api/v1/campaigns/{campaign_id}/invites",
@@ -70,7 +72,7 @@ def _join_campaign(issuer, campaign_id: str, owner_headers, sub: str) -> None:
     assert join.status_code == 200, join.text
 
 
-def _create_sheet_character(issuer, sub: str, campaign_id: str | None = None) -> str:
+def _create_sheet_character(sheet, issuer, sub: str, campaign_id: str | None = None) -> str:
     """Create a character on the Character Sheet service as `sub`. Return its id."""
     body = {"name": "Authz Subject", "character_class": "Rogue", "max_hp": 20}
     if campaign_id:
@@ -84,18 +86,18 @@ PENALTY = {"penalty_type": "drunk", "description": "Too much ale", "imposed_by":
 HEALTH = {"delta": -2, "source": "damage"}
 
 
-def test_anonymous_guardrails_update_is_refused(trusted_ws_issuer) -> None:
+def test_anonymous_guardrails_update_is_refused(trusted_ws_issuer, sheet) -> None:
     """An anonymous PUT to guardrails returns 401 and changes nothing."""
-    char_id = _create_sheet_character(trusted_ws_issuer, "player_owner")
+    char_id = _create_sheet_character(sheet, trusted_ws_issuer, "player_owner")
 
     res = sheet.put(f"/api/v1/characters/{char_id}/guardrails", json={})
 
     assert res.status_code == 401
 
 
-def test_non_member_cannot_mutate_or_read_character(trusted_ws_issuer) -> None:
+def test_non_member_cannot_mutate_or_read_character(trusted_ws_issuer, sheet) -> None:
     """A stranger gets 403 on penalties, health, and reads of the character."""
-    char_id = _create_sheet_character(trusted_ws_issuer, "player_owner")
+    char_id = _create_sheet_character(sheet, trusted_ws_issuer, "player_owner")
     stranger = _auth(trusted_ws_issuer, "stranger_mallory")
 
     assert (
@@ -113,12 +115,14 @@ def test_non_member_cannot_mutate_or_read_character(trusted_ws_issuer) -> None:
     assert sheet.get(f"/api/v1/characters/{char_id}", headers=stranger).status_code == 403
 
 
-def test_owner_may_change_health_and_non_owner_player_may_not(trusted_ws_issuer) -> None:
+def test_owner_may_change_health_and_non_owner_player_may_not(
+    trusted_ws_issuer, sheet, gateway
+) -> None:
     """The owner passes 'edit'. A party player with no edit right gets 403 on health."""
-    campaign_id, dm_headers = _create_campaign(trusted_ws_issuer, "dm_valeros")
-    _join_campaign(trusted_ws_issuer, campaign_id, dm_headers, "player_kira")
-    _join_campaign(trusted_ws_issuer, campaign_id, dm_headers, "player_marcus")
-    char_id = _create_sheet_character(trusted_ws_issuer, "player_kira", campaign_id)
+    campaign_id, dm_headers = _create_campaign(gateway, trusted_ws_issuer, "dm_valeros")
+    _join_campaign(gateway, trusted_ws_issuer, campaign_id, dm_headers, "player_kira")
+    _join_campaign(gateway, trusted_ws_issuer, campaign_id, dm_headers, "player_marcus")
+    char_id = _create_sheet_character(sheet, trusted_ws_issuer, "player_kira", campaign_id)
 
     res_party = sheet.post(
         f"/api/v1/characters/{char_id}/health",
@@ -135,12 +139,14 @@ def test_owner_may_change_health_and_non_owner_player_may_not(trusted_ws_issuer)
     assert res_owner.status_code == 200, res_owner.text
 
 
-def test_campaign_dm_may_penalize_and_party_player_may_not(trusted_ws_issuer) -> None:
+def test_campaign_dm_may_penalize_and_party_player_may_not(
+    trusted_ws_issuer, sheet, gateway
+) -> None:
     """The campaign DM passes 'edit' through campaign->run_session. A player does not."""
-    campaign_id, dm_headers = _create_campaign(trusted_ws_issuer, "dm_valeros")
-    _join_campaign(trusted_ws_issuer, campaign_id, dm_headers, "player_kira")
-    _join_campaign(trusted_ws_issuer, campaign_id, dm_headers, "player_marcus")
-    char_id = _create_sheet_character(trusted_ws_issuer, "player_kira", campaign_id)
+    campaign_id, dm_headers = _create_campaign(gateway, trusted_ws_issuer, "dm_valeros")
+    _join_campaign(gateway, trusted_ws_issuer, campaign_id, dm_headers, "player_kira")
+    _join_campaign(gateway, trusted_ws_issuer, campaign_id, dm_headers, "player_marcus")
+    char_id = _create_sheet_character(sheet, trusted_ws_issuer, "player_kira", campaign_id)
 
     res_player = sheet.post(
         f"/api/v1/characters/{char_id}/penalties",
@@ -154,12 +160,12 @@ def test_campaign_dm_may_penalize_and_party_player_may_not(trusted_ws_issuer) ->
     assert "drunk" in res_dm.json()["penalties"]
 
 
-def test_party_player_may_read_and_stranger_may_not(trusted_ws_issuer) -> None:
+def test_party_player_may_read_and_stranger_may_not(trusted_ws_issuer, sheet, gateway) -> None:
     """Campaign membership grants 'view' on the character. A non-member does not."""
-    campaign_id, dm_headers = _create_campaign(trusted_ws_issuer, "dm_valeros")
-    _join_campaign(trusted_ws_issuer, campaign_id, dm_headers, "player_kira")
-    _join_campaign(trusted_ws_issuer, campaign_id, dm_headers, "player_marcus")
-    char_id = _create_sheet_character(trusted_ws_issuer, "player_kira", campaign_id)
+    campaign_id, dm_headers = _create_campaign(gateway, trusted_ws_issuer, "dm_valeros")
+    _join_campaign(gateway, trusted_ws_issuer, campaign_id, dm_headers, "player_kira")
+    _join_campaign(gateway, trusted_ws_issuer, campaign_id, dm_headers, "player_marcus")
+    char_id = _create_sheet_character(sheet, trusted_ws_issuer, "player_kira", campaign_id)
 
     assert (
         sheet.get(
@@ -176,7 +182,7 @@ def test_party_player_may_read_and_stranger_may_not(trusted_ws_issuer) -> None:
 
 
 def test_character_sheet_creation_fails_loudly_when_owner_write_fails(
-    trusted_ws_issuer, default_spicedb_client, monkeypatch
+    trusted_ws_issuer, default_spicedb_client, monkeypatch, sheet
 ) -> None:
     """A failed owner tuple write on the Character Sheet service returns 503, not 200."""
 
@@ -195,8 +201,13 @@ def test_character_sheet_creation_fails_loudly_when_owner_write_fails(
     assert "character_id" not in res.json()
 
 
-def test_gateway_creation_fails_loudly_and_lists_nothing(trusted_ws_issuer, monkeypatch) -> None:
-    """A failed owner tuple write on gateway creation returns 503. The character is not listed."""
+def test_gateway_creation_fails_loudly_and_lists_nothing(
+    trusted_ws_issuer, monkeypatch, gateway
+) -> None:
+    """A failed owner tuple write on gateway creation fails the call. The character is not listed.
+
+    Character Sheet answers 503. The gateway maps an upstream 5xx to 502 (upstream_errors.py).
+    """
     spicedb = get_spicedb_client()
 
     async def _unavailable(*_args, **_kwargs):
@@ -210,27 +221,21 @@ def test_gateway_creation_fails_loudly_and_lists_nothing(trusted_ws_issuer, monk
         json={"name": "Ghost Gateway", "characterClass": "Monk", "maxHp": 12},
         headers=headers,
     )
-    assert res.status_code == 503, res.text
+    assert res.status_code == 502, res.text
 
     listed = gateway.get("/api/v1/characters", headers=headers).json()
     assert "Ghost Gateway" not in [c["name"] for c in listed]
 
 
 def test_gateway_sub_resource_returns_503_when_owner_is_unreachable(
-    trusted_ws_issuer, monkeypatch
+    trusted_ws_issuer, monkeypatch, sheet
 ) -> None:
     """With the Character Sheet URL pointing at nothing, the gateway returns 503, not a memory copy."""
-    monkeypatch.setenv("CHARACTER_SHEET_URL", closed_port_url())
     headers = _auth(trusted_ws_issuer, "player_owner")
-    with TestClient(gateway_app) as client:
-        res = client.post(
-            "/api/v1/characters",
-            json={"name": "Unreachable", "characterClass": "Ranger", "maxHp": 14},
-            headers=headers,
-        )
-        assert res.status_code == 201, res.text
-        char_id = res.json()["id"]
+    char_id = _create_sheet_character(sheet, trusted_ws_issuer, "player_owner")
+    monkeypatch.setenv("CHARACTER_SHEET_URL", closed_port_url())
 
+    with TestClient(gateway_app) as client:
         res_health = client.post(
             f"/api/v1/characters/{char_id}/health",
             json={"delta": -3, "source": "damage"},

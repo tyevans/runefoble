@@ -72,7 +72,7 @@ async def test_character_crud_and_zanzibar_ownership(trusted_ws_issuer, client):
     # 2. Assert SpiceDB owner and permission tuples written
     spicedb = get_spicedb_client()
     assert (
-        await spicedb.check_permission("character", char_id, "owner", "user", "user_valeros")
+        await spicedb.check_permission("character", char_id, "delete", "user", "user_valeros")
         is True
     )
     assert (
@@ -231,6 +231,6 @@ async def test_campaign_creation_and_ownership(trusted_ws_issuer, client):
 
     spicedb = get_spicedb_client()
     has_owner = await spicedb.check_permission(
-        "campaign", camp_id, "owner", "user", "user_gm_evelyn"
+        "campaign", camp_id, "manage", "user", "user_gm_evelyn"
     )
     assert has_owner is True
