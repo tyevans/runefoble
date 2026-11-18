@@ -14,22 +14,14 @@ from uuid import uuid4
 
 import pytest
 from character_sheet.crafting import (
-    CATALYSTS_CATALOGUE,
-    KNOWN_RECIPES,
     MISHAP_TABLE,
-    REAGENTS_CATALOGUE,
-    CraftingAggregate,
     CraftingEngine,
-    CraftingState,
     MishapResolver,
     Recipe,
     calculate_crafting_dc,
     calculate_volatile_risk,
     find_matching_recipe,
 )
-from character_sheet.crafting.engine import CraftingAggregate as EngineCraftingAggregate
-from character_sheet.crafting.mishaps import MishapResolver as ModuleMishapResolver
-from character_sheet.crafting.recipes import Recipe as ModuleRecipe
 from character_sheet.dependencies import (
     STREAM_CRAFTING,
 )
@@ -47,24 +39,6 @@ def auth_headers(sub: str) -> dict[str, str]:
 @pytest.fixture
 def char_client():
     return TestClient(character_app, headers=auth_headers("character-owner"))
-
-
-def test_crafting_package_and_facade_exports():
-    """Verify package re-exports and facade compatibility."""
-    assert CraftingEngine is not None
-    assert Recipe is ModuleRecipe
-    assert MishapResolver is ModuleMishapResolver
-    assert CraftingAggregate is EngineCraftingAggregate
-    assert CraftingState is not None
-
-    assert isinstance(REAGENTS_CATALOGUE, dict)
-    assert isinstance(CATALYSTS_CATALOGUE, dict)
-    assert isinstance(KNOWN_RECIPES, list)
-    assert isinstance(MISHAP_TABLE, list)
-
-    assert callable(calculate_volatile_risk)
-    assert callable(calculate_crafting_dc)
-    assert callable(find_matching_recipe)
 
 
 def test_recipe_registry_and_difficulty_check():

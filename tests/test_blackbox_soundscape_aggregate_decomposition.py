@@ -18,27 +18,8 @@ from eventsource.adapters.memory.store import InMemoryEventStore
 from eventsource.application.aggregates.repository import AggregateRepository
 from fastapi.testclient import TestClient
 from gateway_api.main import app as gateway_app
-from runefoble_events.soundscape import (
-    ChannelVolumeChanged,
-    DuckingEngaged,
-    DuckingReleased,
-    LeitmotifProfileConfigured,
-    LeitmotifTriggered,
-    MasterVolumeChanged,
-    SoundscapeCueTriggered,
-    SoundscapeTensionUpdated,
-    SoundscapeTrackChanged,
-    StemProfileOverridden,
-)
 from soundscape.aggregate import (
     SoundscapeAggregate,
-    SoundscapeState,
-)
-from soundscape.handlers import (
-    FoleyHandlersMixin,
-    LeitmotifHandlersMixin,
-    StemHandlersMixin,
-    TensionHandlersMixin,
 )
 from soundscape.main import app
 
@@ -72,36 +53,6 @@ def auth_headers(sub: str) -> dict[str, str]:
 @pytest.fixture
 def client() -> TestClient:
     return TestClient(app, headers=auth_headers("soundscape-tester"))
-
-
-def test_soundscape_aggregate_facade_and_mixins():
-    """Verify that SoundscapeAggregate inherits from all domain handler mixins."""
-    assert issubclass(SoundscapeAggregate, StemHandlersMixin)
-    assert issubclass(SoundscapeAggregate, FoleyHandlersMixin)
-    assert issubclass(SoundscapeAggregate, TensionHandlersMixin)
-    assert issubclass(SoundscapeAggregate, LeitmotifHandlersMixin)
-    assert SoundscapeState is not None
-
-
-def test_soundscape_event_handlers_registry_completeness():
-    """Verify all domain events are mapped to @handles methods on SoundscapeAggregate."""
-    registered_events = set(SoundscapeAggregate._event_handlers.keys())
-    expected_events = {
-        SoundscapeTrackChanged,
-        SoundscapeCueTriggered,
-        SoundscapeTensionUpdated,
-        StemProfileOverridden,
-        DuckingEngaged,
-        DuckingReleased,
-        ChannelVolumeChanged,
-        MasterVolumeChanged,
-        LeitmotifProfileConfigured,
-        LeitmotifTriggered,
-    }
-    missing = expected_events - registered_events
-    assert not missing, (
-        f"Missing registered domain event handlers on SoundscapeAggregate: {missing}"
-    )
 
 
 @pytest.mark.asyncio

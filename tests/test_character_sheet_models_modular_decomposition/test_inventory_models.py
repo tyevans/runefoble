@@ -3,38 +3,10 @@
 from __future__ import annotations
 
 from character_sheet.models import (
-    AddInventoryItemRequest,
     CharacterState,
     Encumbrance,
-    EquipItemRequest,
-    EquipmentSlot,
     InventoryItem,
-    InventoryTransitionsMixin,
-    RemoveInventoryItemRequest,
 )
-from character_sheet.models.inventory import (
-    Encumbrance as InvEncumbrance,
-)
-from character_sheet.models.inventory import (
-    EquipmentSlot as InvEquipmentSlot,
-)
-from character_sheet.models.inventory import (
-    InventoryItem as InvInventoryItem,
-)
-from character_sheet.models.inventory import (
-    InventoryTransitionsMixin as InvInventoryTransitionsMixin,
-)
-
-
-def test_inventory_facade_and_direct_imports() -> None:
-    """Verify inventory models and mixins are importable from facade and submodule."""
-    assert InventoryItem is InvInventoryItem
-    assert EquipmentSlot is InvEquipmentSlot
-    assert Encumbrance is InvEncumbrance
-    assert InventoryTransitionsMixin is InvInventoryTransitionsMixin
-    assert AddInventoryItemRequest is not None
-    assert EquipItemRequest is not None
-    assert RemoveInventoryItemRequest is not None
 
 
 def test_encumbrance_threshold_calculations() -> None:

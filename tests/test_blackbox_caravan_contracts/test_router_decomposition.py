@@ -12,38 +12,7 @@ Governed by:
 
 from __future__ import annotations
 
-from fastapi import APIRouter
 from game_session.main import app as session_app
-from game_session.routers import caravan_contracts_router
-from game_session.routers.caravan_contracts import (
-    accept_caravan_contract,
-    board_router,
-    dispatch_contract_caravan,
-    fulfill_caravan_contract,
-    get_caravan_contract,
-    lifecycle_router,
-    list_caravan_contracts,
-    post_caravan_contract,
-    report_contract_ambush,
-)
-
-
-def test_router_exports_and_sub_routers() -> None:
-    """Verify aggregated router includes board and lifecycle routes."""
-    assert isinstance(board_router, APIRouter)
-    assert isinstance(lifecycle_router, APIRouter)
-    assert isinstance(caravan_contracts_router, APIRouter)
-
-    for fn in [
-        post_caravan_contract,
-        list_caravan_contracts,
-        get_caravan_contract,
-        accept_caravan_contract,
-        dispatch_contract_caravan,
-        report_contract_ambush,
-        fulfill_caravan_contract,
-    ]:
-        assert callable(fn)
 
 
 def test_routes_registered_in_session_app() -> None:

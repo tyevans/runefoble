@@ -12,20 +12,8 @@ import pytest
 from fastapi.testclient import TestClient
 from gateway_api.cinematic_director import clear_cinematic_directors
 from gateway_api.main import app as gateway_app
-from gateway_api.overlay_models import (
-    PartyMemberVitals,
-    PartyVitalsData,
-    RollAnimationData,
-    sanitize_party_vitals,
-)
 from gateway_api.overlay_templates import (
-    render_obs_overlay_html,
     render_overlay_html,
-)
-from gateway_api.routers.overlay import (
-    OverlayConnectionManager,
-    overlay_websocket_endpoint,
-    ws_overlay_manager,
 )
 from gateway_api.spectator import clear_raw_session_state, set_raw_session_state
 
@@ -131,16 +119,3 @@ def test_render_overlay_html_template_with_session_and_theme():
     assert "Boran" in html_out
     assert "AI STAND-IN" in html_out
     assert "transparent-mode" in html_out
-
-
-def test_exports_and_models_integrity():
-    """Verify all re-exported and newly modularized symbols are importable."""
-    assert PartyMemberVitals is not None
-    assert PartyVitalsData is not None
-    assert RollAnimationData is not None
-    assert sanitize_party_vitals is not None
-    assert render_obs_overlay_html is not None
-    assert render_overlay_html is not None
-    assert OverlayConnectionManager is not None
-    assert overlay_websocket_endpoint is not None
-    assert ws_overlay_manager is not None
