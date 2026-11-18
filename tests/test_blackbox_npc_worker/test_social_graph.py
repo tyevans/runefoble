@@ -41,7 +41,7 @@ async def test_blackbox_social_graph_edges_and_redstring_serialization(
     worker_payload = {
         "name": "Torvin",
         "role": "armorer",
-        "relationships": [{"target_npc": "marta", "relation": "debtor", "intensity": 0.5}],
+        "relationships": [{"target_npc_id": "marta", "relation_type": "debtor", "intensity": 0.5}],
     }
     worker = client.post(
         f"/api/v1/establishments/{est_id}/workers", json=worker_payload, headers=h
@@ -50,7 +50,7 @@ async def test_blackbox_social_graph_edges_and_redstring_serialization(
     assert_stream_events(mock_bus, "NPCRelationshipFormed")
 
     # Form secondary mentor tie
-    mentor_payload = {"target_npc": "leo", "relation": "mentor", "intensity": 0.8}
+    mentor_payload = {"target_npc_id": "leo", "relation_type": "mentor", "intensity": 0.8}
     rel_res = client.post(f"/api/v1/npcs/{npc_id}/relationships", json=mentor_payload, headers=h)
     assert rel_res.status_code == 201 and len(rel_res.json()["relationships"]) == 2
 
@@ -94,7 +94,7 @@ async def test_blackbox_rival_friction_and_friendship_synergy(
     # Form rival relationship between peer coworkers -> friction increases tension
     client.post(
         f"/api/v1/npcs/{w1['npc_id']}/relationships",
-        json={"target_npc": w2["npc_id"], "relation": "rival", "intensity": 0.9},
+        json={"target_npc_id": w2["npc_id"], "relation_type": "rival", "intensity": 0.9},
         headers=h,
     )
     rival_roster = client.get(f"/api/v1/establishments/{est_id}/roster", headers=h).json()
@@ -103,7 +103,7 @@ async def test_blackbox_rival_friction_and_friendship_synergy(
     # Reconcile relationship to friend / ally -> friendship synergy reduces tension
     client.post(
         f"/api/v1/npcs/{w1['npc_id']}/relationships",
-        json={"target_npc": w2["npc_id"], "relation": "friend", "intensity": 0.9},
+        json={"target_npc_id": w2["npc_id"], "relation_type": "friend", "intensity": 0.9},
         headers=h,
     )
     friend_roster = client.get(f"/api/v1/establishments/{est_id}/roster", headers=h).json()

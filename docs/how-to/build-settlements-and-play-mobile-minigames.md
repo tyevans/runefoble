@@ -67,14 +67,14 @@ curl -X POST http://localhost:8000/api/v1/establishments/est-ember-01/workers \
     "patience": 4,
     "vices": ["ale", "pride"],
     "shelf_inventory": [
-      {"item_id": "longsword_standard", "price_gp": 15, "stock": 4},
-      {"item_id": "shield_steel", "price_gp": 10, "stock": 2}
+      {"item_id": "longsword_standard", "unit_price": 15, "quantity": 4},
+      {"item_id": "shield_steel", "unit_price": 10, "quantity": 2}
     ],
     "vault_inventory": [
-      {"item_id": "blade_folded_adamantine", "price_gp": 350, "stock": 1}
+      {"item_id": "blade_folded_adamantine", "unit_price": 350, "quantity": 1}
     ],
     "relationships": [
-      {"target_npc": "npc_baker_marta", "relation": "debtor", "intensity": 0.6}
+      {"target_npc_id": "npc_baker_marta", "relation_type": "debtor", "intensity": 0.6}
     ]
   }'
 ```

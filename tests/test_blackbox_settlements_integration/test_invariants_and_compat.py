@@ -1,4 +1,4 @@
-"""Line invariant verifications, backwards compatibility, and modular worker endpoints."""
+"""Line invariant verifications and modular worker endpoints."""
 
 from __future__ import annotations
 
@@ -39,11 +39,11 @@ async def test_frontdoor_worker_modular_endpoints(
         "name": "Alchemist Sarah",
         "role": "apothecary",
         "wage": 5,
-        "shelf_inventory": [{"item_id": "healing_pot", "stock": 5, "price_gp": 25}],
-        "relationships": [{"target_npc": "pip", "relation": "rival", "notes": "Disputed"}],
+        "shelf_inventory": [{"item_id": "healing_pot", "quantity": 5, "unit_price": 25}],
+        "relationships": [{"target_npc_id": "pip", "relation_type": "rival", "notes": "Disputed"}],
         "metadata": {"grievance": "overdue"},
         "vault_inventory": [
-            {"item_id": "lotus", "stock": 1, "price_gp": 200, "is_contraband": True}
+            {"item_id": "lotus", "quantity": 1, "unit_price": 200, "is_contraband": True}
         ],
     }
     nid = session_client.post(
@@ -56,7 +56,7 @@ async def test_frontdoor_worker_modular_endpoints(
     assert len(session_client.get(f"/api/v1/npcs/{nid}/inventory/vault", headers=h).json()) == 1
 
     item = session_client.get(f"/api/v1/npcs/{nid}/inventory/healing_pot", headers=h).json()
-    assert item.get("price_gp") == 25 or item.get("unit_price") == 25
+    assert item["unit_price"] == 25
 
     restock = session_client.post(
         f"/api/v1/npcs/{nid}/inventory/restock?destination=shelf",
@@ -64,12 +64,10 @@ async def test_frontdoor_worker_modular_endpoints(
         headers=h,
     )
     assert restock.status_code == 200
-    assert restock.json().get("stock") == 3 or restock.json().get("quantity") == 3
+    assert restock.json()["quantity"] == 3
 
     rel = session_client.get(f"/api/v1/npcs/{nid}/relationships", headers=h).json()
-    assert len(rel) == 1 and (
-        rel[0].get("target_npc_id") == "pip" or rel[0].get("target_npc") == "pip"
-    )
+    assert len(rel) == 1 and rel[0]["target_npc_id"] == "pip"
     rumors = session_client.get(f"/api/v1/npcs/{nid}/rumors", headers=h).json()
     assert any(r["topic"] == "rival" for r in rumors) and any(
         r["topic"] == "grievance" for r in rumors

@@ -49,7 +49,7 @@ async def test_blackbox_worker_assignment_and_role_compatibility(
             "role": "armorer",
             "wage": 8,
             "trade_proficiencies": ["blacksmithing", "armorer"],
-            "shelf_inventory": [{"item_id": "plate", "stock": 2, "price_gp": 150}],
+            "shelf_inventory": [{"item_id": "plate", "quantity": 2, "unit_price": 150}],
         },
         headers=h,
     )

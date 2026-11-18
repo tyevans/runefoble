@@ -48,10 +48,9 @@ async def form_npc_relationship(
 ) -> NPCWorkerState:
     """Record an interpersonal social or supply tie between two NPCs."""
     agg = await load_worker(npc_id, "manage", caller_id)
-    target = req.target_npc_id or req.target_npc or ""
-    relation = req.relation_type or req.relation or "ally"
-
-    agg.form_relationship(target, relation, req.intensity, req.notes, req.metadata)
+    agg.form_relationship(
+        req.target_npc_id, req.relation_type, req.intensity, req.notes, req.metadata
+    )
     await save_and_publish(get_worker_repository(), get_event_bus(), agg)
     if agg.state.establishment_id:
         await sync_establishment_operations(agg.state.establishment_id)
