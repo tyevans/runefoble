@@ -51,3 +51,7 @@ A dynamic tool handler runs synchronously inside the async event loop with no ti
 ## Audit Provenance
 - Severity: medium
 - Source audits: `gateway-mcp.md (F10)`
+
+## Orchestrator Addenda (2026-11-17, round 3)
+
+- TASK-0766 removed user code (declarative handlers, ADR-0020). A handler time limit for user code is moot. Re-scope to a time limit for declarative steps that call upstream services, or close this task with that reason.

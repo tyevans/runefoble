@@ -1,7 +1,7 @@
 ---
 id: '0728'
 title: Merchant Haggle Flow Moves to an Application Service and Merchants Are Created by Command
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0561
@@ -19,7 +19,7 @@ target_release: 0.9.0
 # TASK-0728: Merchant Haggle Flow Moves to an Application Service and Merchants Are Created by Command
 
 ## Status
-Refined. Found by the refactor audit round refactor-r1 and checked against the code on 2026-11-17.
+Complete
 
 ## Summary
 The tavern router loads, creates, mutates, and saves merchants itself. It writes aggregate state outside `@handles` methods and returns a canned merchant on any error. This breaks Hard Invariant 2 and hides storage outages.

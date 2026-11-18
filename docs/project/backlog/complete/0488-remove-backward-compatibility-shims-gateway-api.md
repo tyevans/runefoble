@@ -1,7 +1,7 @@
 ---
 id: '0488'
 title: Remove Backward Compatibility Shims & Re-exports in gateway_api
-status: Refined
+status: Complete
 created: 2026-09-29
 dependencies:
 - TASK-0045
@@ -23,7 +23,7 @@ target_release: 0.9.0
 # TASK-0488: Remove Backward Compatibility Shims & Re-exports in gateway_api
 
 ## Status
-Refined
+Complete
 
 Audit 2026-11-17: scope adds the double mount of `mcp_tools_router` (`main.py:88-89`) and the import cycle in which `assets.py` (lines 182 and 262) and `websocket_endpoint.py` (line 40) import `gateway_api.main`. Coordinate with TASK-0521 and TASK-0523 on `routers/auth/profile.py` and `tests/test_blackbox_webrtc_auth.py`.
 

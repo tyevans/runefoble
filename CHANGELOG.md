@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Security
+- Rules compendium homebrew list and campaign search return a homebrew rule only when the caller passes `homebrew_rule.view`. Strangers see SRD results only. (TASK-0555)
+- The gateway session WebSocket now sends messages only to clients of the same session. It requires `session.observe` and closes with 4403 otherwise. (TASK-0770)
+- The shared service client sends the service credential (`X-Runefoble-Service-Credential`) on every upstream call (ADR-0015 e). The gateway API refuses to start without `RUNEFOBLE_SERVICE_CREDENTIAL`. (TASK-0744)
 - Session lifecycle routes now act for the verified caller. `start` requires `session.control`. `join`, `leave`, lobby readiness and lobby character require `session.participate`. The request body no longer carries `player_id` (Removed). (TASK-0767)
 - Character routes check one SpiceDB permission on every call: `view` for reads, `edit` for mutations. Anonymous calls get 401. (TASK-0551)
 - Tavern, bounty, caravan, West Marches, campfire, stronghold, and haggling routes fail closed. Each route checks a schema permission for the verified caller. (TASK-0550)
@@ -21,6 +24,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Gateway WebSocket routes admit a connection only with a verified `runefoble.bearer.<jwt>` subprotocol, checked before accept. Refused handshakes close with 1008. Removed the `?user_id=`, `?token=`, `x-user-id`, and `guest_user` identity paths on WebSocket and voice/companion signaling routes. (TASK-0522)
 
 ### Removed
+- Gateway API facade modules `webrtc_signaling.py`, `websocket.py` and `mobile_companion.py`. Import from `gateway_api.signaling`, `gateway_api.websocket_endpoint` and `gateway_api.companion` instead. (TASK-0488)
 - Dynamic MCP tools no longer accept Python `handler_code` or `sandbox_policy`; the gateway no longer runs `exec` on caller code. (TASK-0766)
 - Unused rules compendium events `MonsterIndexed`, `SpellIndexed` and `ConditionIndexed`. No code produced or consumed them. SRD data loads directly into the retrieval engine. (TASK-0705)
 - Removed backward-compatibility event alias modules and `X = XEvent` aliases from `runefoble_events`. The package root exports only `BaseRunefobleEvent`, `DomainEvent` and `register_event`. Import domain events from `runefoble_events.events`. Wire event types are unchanged. (TASK-0487)
@@ -34,6 +38,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Campaign analytics worker `process_event` alias, tracking property wrappers, and package root re-exports. Callers use `handle_event`. (TASK-0500)
 
 ### Added
+- The MCP transport requires a verified bearer token on every request. A request without one gets `401` before any tool runs (ADR-0015 c). (TASK-0532)
+- Merchants are recorded by a `MerchantCreated` event before their first negotiation. (TASK-0728)
 - `runefoble_auth.factory.get_spicedb_client()`: one cached SpiceDB client for the gateway and libraries. (TASK-0542)
 - Campaign atlas pin creation. The atlas opens a title form on a canvas click. The App Shell posts the pin through the gateway. (TASK-0695)
 - `event_publish_failures` on `/healthz` for voice_agent, gateway_mcp, campaign_lore, campaign_analytics, rules_compendium and inference_worker. (TASK-0693)
@@ -78,6 +84,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
 
 ### Changed
+- Asset forge routes need a `campaign_id` and the `campaign.play` permission. A request without a campaign returns 400. A caller without the permission returns 403. (TASK-0556)
+- Combining reagents is a typed service. A missing character answers 404. A store failure answers 503 and saves nothing. Crafting history answers 503 on store failure, not an empty state. (TASK-0729)
 - Load errors in Campaign Lore (West Marches, handouts, relics), The Watcher (faction resources, turf war unrest) and the character roster no longer create empty aggregates or answer 404. Only an absent stream creates or 404s. A store outage answers 503. (TASK-0699)
 - Tests: one shared service test harness (`tests/helpers/service_harness.py`) sets the SpiceDB, event bus and verifier seams for every service. Per-directory fixtures for these seams are removed. (TASK-0697)
 - The Watcher selects its speech, stand-in, and narration engines through ports. `RUNEFOBLE_WATCHER_ENGINE` chooses `inference_worker` (default) or `heuristic`. An unavailable engine returns HTTP 503. The Watcher no longer falls back to the local rule engine when the worker URL is unset. (TASK-0741)

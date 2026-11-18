@@ -1,7 +1,7 @@
 ---
 id: '0729'
 title: Crafting Combine Is a Typed Service That Fails Loudly and Publishes Health Events
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0561
@@ -19,7 +19,7 @@ target_release: 0.9.0
 # TASK-0729: Crafting Combine Is a Typed Service That Fails Loudly and Publishes Health Events
 
 ## Status
-Refined. Found by the refactor audit round refactor-r1 and checked against the code on 2026-11-17.
+Complete
 
 ## Summary
 `combine_reagents` hides load failures and returns success without deducting reagents. It saves two aggregates in a fixed order with no guarantee, and mishap damage skips the health events.

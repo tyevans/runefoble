@@ -89,3 +89,7 @@ The gateway MCP registry lets anonymous callers register, overwrite, delete, and
 ## Orchestrator Addenda (2026-11-17, refactor-r1)
 
 - TASK-0545 (MCP and asset authorization): append "No task owns removal of the sandbox `exec` at `gateway/mcp/src/gateway_mcp/sandbox.py:155`. File one (not in this range). TASK-0737 follows its decision."
+
+## Orchestrator Addenda (2026-11-17, round 3)
+
+- Tool-to-tool calls in declarative dynamic-tool handlers (ADR-0020, TASK-0766) are not built. This task defines their authorization rule: a step that calls another tool checks `mcp_tool.execute` for the caller on that tool. Build the call step here or in a follow-up.

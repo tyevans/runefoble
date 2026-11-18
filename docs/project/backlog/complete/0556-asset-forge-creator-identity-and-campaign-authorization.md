@@ -1,7 +1,7 @@
 ---
 id: '0556'
 title: Asset Forge Creator Identity and Campaign Authorization
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0520
@@ -26,7 +26,7 @@ target_release: 0.9.0
 # TASK-0556: Asset Forge Creator Identity and Campaign Authorization
 
 ## Status
-Refined
+Complete
 
 ## Summary
 The asset forge checks campaign permission only when a campaign is given, and it takes identity from an unchecked header. Creator relations are written inside `contextlib.suppress`, so a failed grant still returns success, and the creator id falls back to `anonymous_creator`. This task applies the forge permission to every forge route, uses the verified principal for the creator, and stops silent grant failures.

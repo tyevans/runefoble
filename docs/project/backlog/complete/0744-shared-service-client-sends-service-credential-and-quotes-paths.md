@@ -1,7 +1,7 @@
 ---
 id: '0744'
 title: Shared Service Client Sends the Service Credential and Quotes Path Segments
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies: []
 governing_adrs:
@@ -16,7 +16,7 @@ target_release: 0.9.0
 # TASK-0744: Shared Service Client Sends the Service Credential and Quotes Path Segments
 
 ## Status
-Refined. Found by the refactor audit round refactor-r1 and checked against the code on 2026-11-17.
+Complete
 
 ## Summary
 The shared service client sends only `Authorization` and `traceparent`. It does not send the service credential (ADR-0015 e), so gateway proxies on the shared client are not identified as services. It also gives callers no helper for safe path segments. This task prepares the MCP migration.

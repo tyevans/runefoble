@@ -1,7 +1,7 @@
 ---
 id: '0770'
 title: Gateway Session WebSocket Broadcast Is Scoped to Its Session
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies: []
 governing_adrs:
@@ -16,7 +16,7 @@ target_release: 0.9.0
 # TASK-0770: Gateway Session WebSocket Broadcast Is Scoped to Its Session
 
 ## Status
-Refined. Found by the fixmain16b repair (`.audit/work/fixmain16b.md`) and checked by the orchestrator.
+Complete
 
 ## Summary
 The gateway session WebSocket keeps one flat list of sockets and sends every message to all of

@@ -1,7 +1,7 @@
 ---
 id: '0555'
 title: Rules Compendium Homebrew Read, Write, and Identity Authorization
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0520
@@ -25,7 +25,7 @@ target_release: 0.9.0
 # TASK-0555: Rules Compendium Homebrew Read, Write, and Identity Authorization
 
 ## Status
-Refined
+Complete
 
 ## Summary
 The rules compendium returns homebrew from a private campaign to anonymous callers, through both the list route and the search route. It writes homebrew rules for any identity from a raw header with no token check. Its helper returns success when identity is missing. This task makes homebrew reads and writes depend on a schema permission, uses the verified principal, and returns only SRD content to callers with no campaign grant.

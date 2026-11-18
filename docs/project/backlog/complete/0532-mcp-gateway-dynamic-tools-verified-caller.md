@@ -1,7 +1,7 @@
 ---
 id: '0532'
 title: MCP Gateway Dynamic Tools Take Caller Identity from the Verified Principal
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0520
@@ -21,7 +21,7 @@ target_release: 0.9.0
 # TASK-0532: MCP Gateway Dynamic Tools Take Caller Identity from the Verified Principal
 
 ## Status
-Refined
+Complete
 
 ## Summary
 The MCP gateway's dynamic tool routes take the author and caller from the request body and an optional header. Anonymous calls pass. Make every tool route and every tool call use the verified principal. Record the author from the token, never from the body.
