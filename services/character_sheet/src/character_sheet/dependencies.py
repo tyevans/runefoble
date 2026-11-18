@@ -12,6 +12,7 @@ from character_sheet.authz import (
     replace_character_campaign,
 )
 from character_sheet.crafting import CraftingAggregate
+from character_sheet.health_events import health_change_events
 from character_sheet.models import CharacterState
 from character_sheet.schemas import CreateCharacterRequest, UpdateGuardrailsRequest
 from fastapi import Depends, HTTPException
@@ -21,10 +22,7 @@ from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
 from runefoble_auth.zitadel import ZitadelAuthService
 from runefoble_events.events import (
     CharacterAssignedToCampaign,
-    CharacterDamaged,
-    CharacterHealthChanged,
     StandInPolicyUpdated,
-    StandInStabilized,
 )
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.event_bus import EventBusProvider
@@ -225,37 +223,15 @@ async def modify_character_health(
         delta=delta, source=source, is_stand_in=is_stand_in, session_id=session_id or None
     )
     await repo.save(char)
-    if not was_stabilized and char.state.is_stabilized:
-        await publish_character_event(
-            StandInStabilized(
-                aggregate_id=character_id,
-                character_id=str(character_id),
-                current_hp=0,
-                condition="unconscious_stabilized",
-            )
-        )
-    await publish_character_event(
-        CharacterHealthChanged(
-            aggregate_id=character_id,
-            session_id=session_id or None,
-            campaign_id=char.state.campaign_id or None,
-            delta=delta,
-            current_hp=char.state.current_hp,
-            max_hp=char.state.max_hp,
-            source=source,
-        )
-    )
-    if delta < 0:
-        await publish_character_event(
-            CharacterDamaged(
-                aggregate_id=character_id,
-                character_id=str(character_id),
-                delta=delta,
-                current_hp=char.state.current_hp,
-                max_hp=char.state.max_hp,
-                source=source,
-            )
-        )
+    for event in health_change_events(
+        character_id,
+        char,
+        delta=delta,
+        source=source,
+        session_id=session_id,
+        was_stabilized=was_stabilized,
+    ):
+        await publish_character_event(event)
     return char.state
 
 
