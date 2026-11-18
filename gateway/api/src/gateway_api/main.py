@@ -31,6 +31,7 @@ from gateway_api.routers import (
 from gateway_api.routers.assets_proxy import router as assets_router
 from gateway_api.routers.forge_proxy import router as forge_router
 from gateway_api.routers.settlements_proxy import router as settlements_router
+from gateway_api.routers.watcher_speech_proxy import router as watcher_speech_router
 from gateway_api.session_websocket import session_websocket_endpoint
 from gateway_api.upstream_errors import register_upstream_error_handlers
 from gateway_api.upstreams import UpstreamRegistry
@@ -94,6 +95,7 @@ app.include_router(assets_router)
 app.include_router(forge_router)
 app.include_router(auth_sync_router, prefix="/api/v1/auth/sync", tags=["Auth Sync"])
 app.include_router(voice_proxy_router)
+app.include_router(watcher_speech_router)
 
 
 init_telemetry("gateway-api", settings=platform_settings, app=app)

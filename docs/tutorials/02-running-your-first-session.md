@@ -18,7 +18,7 @@ The target design is in [The Watcher as an Autonomous DM](../explanation/the-wat
 | 2b | Open the live table with a board and tokens | Not yet available: no App Shell route creates a board |
 | 2c | Read the session feed | Endpoint available. The App Shell shows it only after step 2b. |
 | 2d | Apply a penalty to a character | Available |
-| 3 | Speak a command to the board | Not yet available: TASK-0583 |
+| 3 | Speak a command to the board | Not yet available: no App Shell caller, and `board_state` does not apply a spoken move |
 | 4 | Run a stand-in turn for an absent player | Not yet available: no App Shell control or automatic trigger |
 
 ## Step 1: Start the Gateway and the Frontend
@@ -97,7 +97,7 @@ The table character card (`runefoble-character-card`) does not show conditions. 
 
 ## Step 3: Speak a Command to the Board
 
-Status: `Not yet available`. Blockers: TASK-0583, and an App Shell task that is not yet filed.
+Status: `Not yet available`. Blockers: an App Shell task that is not yet filed, and no board path that applies a spoken move.
 
 What works today:
 
@@ -106,7 +106,7 @@ What works today:
 
 What does not work today:
 
-- `POST /api/v1/watcher/speak-and-act` returns fixed text. It does not parse the transcript. TASK-0583 replaces it with a proxy to The Watcher intent route.
+- `POST /api/v1/watcher/speak-and-act` proxies to The Watcher intent route. The Watcher parses the transcript. Nothing moves the token on the board yet.
 - No App Shell code calls `POST /api/v1/voice/transcribe`, `POST /api/v1/watcher/intent`, or `POST /api/v1/watcher/speak-and-act`.
 - Nothing moves a token from a spoken command.
 
@@ -130,7 +130,7 @@ Each limit below has no App Shell path yet. Fix the blocker, then update the sta
 | Limit | Affects | Blocker |
 |---|---|---|
 | No App Shell route creates a board or places tokens | Steps 2b, 2c | No backlog task yet |
-| `POST /api/v1/watcher/speak-and-act` returns fixed text | Step 3 | TASK-0583 |
+| The board does not apply a spoken move (`board_state` does not consume `token_moved`) | Step 3 | No backlog task yet |
 | The App Shell does not call any speech route | Step 3 | No backlog task yet |
 | The App Shell does not call the leave or auto-pilot routes | Step 4 | No backlog task yet |
 | No automatic stand-in trigger runs at a turn start | Step 4 | No backlog task yet |

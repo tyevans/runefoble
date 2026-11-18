@@ -6,20 +6,44 @@ Hard Invariant 7. Setup runs through public frontdoors only. TASK-0770 covers `/
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import TimeoutError as FutureTimeout
 from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
+from gateway_api.main import app as gateway_app
 from starlette.testclient import WebSocketTestSession
 from starlette.websockets import WebSocketDisconnect
+from the_watcher.main import app as watcher_app
 
+from tests.helpers.live_services import serve
 from tests.helpers.ws_identity import ws_subprotocols
 from tests.realtime_session import bearer, open_table
 
 FORBIDDEN = 4403
 SILENCE_SECONDS = 1.0
+
+
+@pytest.fixture
+def watcher_url(monkeypatch: pytest.MonkeyPatch) -> Iterator[str]:
+    """Serve the real The Watcher app for speak-and-act (TASK-0583)."""
+    with serve(watcher_app) as url:
+        monkeypatch.setenv("RUNEFOBLE_WATCHER_URL", url)
+        yield url
+
+
+@pytest.fixture
+def gateway(
+    watcher_url: str,
+    game_session_upstream: str,
+    character_sheet_upstream: str,
+    voice_agent_upstream: str,
+) -> Iterator[TestClient]:
+    """The gateway, started after `watcher_url` is set, so its registry holds the Watcher URL."""
+    with TestClient(gateway_app) as client:
+        yield client
 
 
 @pytest.fixture
@@ -110,13 +134,19 @@ def test_player_cannot_dispatch_dm_whisper_or_turn_alert(gateway, table) -> None
 
 
 def test_speak_and_act_needs_session_participate(gateway, table) -> None:
-    _, session_id = table
-    params = {"transcript": "I advance", "speaker_name": "Pip", "session_id": session_id}
+    campaign_id, session_id = table
+    body = {
+        "speaker_id": "player_pip",
+        "speaker_name": "Pip",
+        "transcript": "I advance",
+        "session_id": session_id,
+        "campaign_id": campaign_id,
+    }
     url = "/api/v1/watcher/speak-and-act"
 
-    assert gateway.post(url, params=params, headers=bearer("spectator_sol")).status_code == 403
-    assert gateway.post(url, params=params, headers=bearer("stranger_eve")).status_code == 403
-    assert gateway.post(url, params=params, headers=bearer("player_pip")).status_code == 200
+    assert gateway.post(url, json=body, headers=bearer("spectator_sol")).status_code == 403
+    assert gateway.post(url, json=body, headers=bearer("stranger_eve")).status_code == 403
+    assert gateway.post(url, json=body, headers=bearer("player_pip")).status_code == 200
 
 
 def test_campaign_socket_rejects_an_action_name_the_server_does_not_define(gateway, table) -> None:
