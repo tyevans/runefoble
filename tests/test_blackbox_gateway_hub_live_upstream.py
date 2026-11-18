@@ -56,7 +56,7 @@ def _recording_upstream(received: list[dict[str, Any]], verifier: ZitadelAuthSer
 
 
 @pytest.fixture
-def upstream_received(monkeypatch, signing_issuer) -> Iterator[dict[str, list[dict[str, Any]]]]:
+def upstream_received(monkeypatch, trusted_ws_issuer) -> Iterator[dict[str, list[dict[str, Any]]]]:
     """Serve recording stand-ins for campaign_lore and campaign_analytics, and set their URLs.
 
     Both stand-ins verify bearer tokens with the test issuer that the gateway trusts.
@@ -64,8 +64,8 @@ def upstream_received(monkeypatch, signing_issuer) -> Iterator[dict[str, list[di
     lore_seen: list[dict[str, Any]] = []
     analytics_seen: list[dict[str, Any]] = []
     with (
-        serve(_recording_upstream(lore_seen, signing_issuer.verifier())) as lore_url,
-        serve(_recording_upstream(analytics_seen, signing_issuer.verifier())) as analytics_url,
+        serve(_recording_upstream(lore_seen, trusted_ws_issuer.verifier())) as lore_url,
+        serve(_recording_upstream(analytics_seen, trusted_ws_issuer.verifier())) as analytics_url,
     ):
         monkeypatch.setenv("CAMPAIGN_LORE_URL", lore_url)
         monkeypatch.setenv("CAMPAIGN_ANALYTICS_URL", analytics_url)
