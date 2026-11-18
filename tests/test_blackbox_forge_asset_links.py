@@ -134,6 +134,18 @@ def test_binary_print_pdf_reply_has_no_unsigned_silo_url(client: TestClient, cam
     assert "expires=" not in str(dict(response.headers))
 
 
+@pytest.mark.parametrize("kind", ["battlemap", "token"])
+def test_forge_preview_url_is_the_authorized_asset_read_path(
+    client: TestClient, campaign: str, kind: str
+):
+    """The preview URL names the gateway read path for the forged asset, so the App Shell can fetch it with a bearer."""
+    response = _forge(client, kind, campaign, DM)
+    assert response.status_code == 200, response.text
+
+    body = response.json()
+    assert body["image_url"] == f"/api/v1/assets/{body['asset_id']}?stream=true"
+
+
 @pytest.mark.parametrize("kind", list(FORGE_ROUTES))
 def test_no_forge_reply_holds_an_unsigned_silo_url(client: TestClient, campaign: str, kind: str):
     """No forge response body or header names the Silo endpoint or an `expires` query."""

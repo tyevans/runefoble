@@ -103,6 +103,7 @@ export class RunefobleAssetForge extends LitElement {
           detail: {
             prompt: this.mapPrompt,
             campaignId: this.campaignId,
+            asset_id: map.asset_id,
             width_cells: 20,
             height_cells: 20,
             asset: map,
@@ -133,6 +134,7 @@ export class RunefobleAssetForge extends LitElement {
             token_name: this.tokenName,
             token_type: this.tokenType,
             campaignId: this.campaignId,
+            asset_id: token.asset_id,
             asset: token,
           },
           bubbles: true,
@@ -226,6 +228,9 @@ export class RunefobleAssetForge extends LitElement {
         ? html`
             <div class="preview-card">
               <div style="font-weight: 700; font-size: 0.85rem;">Forged Battlemap Ready</div>
+              <div class="asset-id" data-testid="forged-asset-id" style="font-size: 0.75rem;">
+                Asset ID: <code>${this.lastForgedMap.asset_id}</code>
+              </div>
               <img
                 class="preview-image"
                 src=${this.mapPreviewUrl}
@@ -293,6 +298,9 @@ export class RunefobleAssetForge extends LitElement {
         ? html`
             <div class="preview-card" style="align-items: center; text-align: center;">
               <div style="font-weight: 700; font-size: 0.85rem;">${this.lastForgedToken.token_name}</div>
+              <div class="asset-id" data-testid="forged-asset-id" style="font-size: 0.75rem;">
+                Asset ID: <code>${this.lastForgedToken.asset_id}</code>
+              </div>
               <img
                 src=${this.tokenPreviewUrl}
                 alt="Forged Token Preview"
