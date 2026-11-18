@@ -24,6 +24,7 @@ import type {
 import type { CampaignSessionItem } from './components/runefoble-session-list.ts';
 import type { DataFailure } from './services/data-result.ts';
 import type { CampaignAnalyticsView, CampaignAtlasView } from './services/campaign-hub-client.ts';
+import type { CampaignCapabilities } from './services/campaign-capabilities.ts';
 import { loadRouteData } from './app/data-loader.ts';
 import { applyRouteState } from './app/route-state.ts';
 import { renderAppShell } from './app/shell-template.ts';
@@ -63,6 +64,7 @@ export class RunefobleApp extends LitElement {
   @state() public userRole = 'Player';
   @state() public campaigns: CampaignItem[] = [];
   @state() public currentCampaign: CampaignItem | null = null;
+  @state() public campaignCapabilities: CampaignCapabilities | null = null;
   @state() public campaignMembers: CampaignMember[] = [];
   @state() public campaignSessions: CampaignSessionItem[] = [];
   @state() public campaignCodexView: 'atlas' | 'codex' = 'atlas';

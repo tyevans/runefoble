@@ -31,9 +31,9 @@ describe('targetFromMoveDispatch', () => {
 });
 
 describe('resolveBoardDmAccess', () => {
-  it('allows the board DM controls only when the campaign reports permissions.manage', () => {
-    assert.equal(resolveBoardDmAccess({ manage: true }), 'allowed');
-    assert.equal(resolveBoardDmAccess({ manage: false }), 'denied');
+  it('allows the board DM controls only when the caller holds run_session', () => {
+    assert.equal(resolveBoardDmAccess({ run_session: true }), 'allowed');
+    assert.equal(resolveBoardDmAccess({ run_session: false }), 'denied');
     assert.equal(resolveBoardDmAccess(undefined), 'denied');
   });
 });

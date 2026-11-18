@@ -10,10 +10,10 @@ import { recordBoardMoveTarget, resolveBoardDmAccess } from '../app/board-dm-con
 
 /**
  * The DM trap controls and the map switcher for the board. The session id is the board id.
- * Only a campaign manager sees them. A map switch reloads the board from the server.
+ * Only a caller with the `run_session` capability sees them. A map switch reloads the board from the server.
  */
 function renderBoardDmControls(app: RunefobleApp) {
-  if (resolveBoardDmAccess(app.currentCampaign?.permissions) !== 'allowed') return '';
+  if (resolveBoardDmAccess(app.campaignCapabilities) !== 'allowed') return '';
   return html`<div class="dm-board-controls" role="region" aria-label="DM Board Controls">
     <runefoble-dm-trap-controls .boardId=${app.sessionId} .targetX=${app.boardTarget?.targetX ?? null} .targetY=${app.boardTarget?.targetY ?? null} @open-map-switcher=${() => { app.isMapSwitcherOpen = true; }}></runefoble-dm-trap-controls>
     <runefoble-map-switcher .boardId=${app.sessionId} .open=${app.isMapSwitcherOpen} @switcher-closed=${() => { app.isMapSwitcherOpen = false; }} @map-switched=${() => { app.isMapSwitcherOpen = false; app.reloadRouteData(); }}></runefoble-map-switcher>
@@ -23,7 +23,7 @@ function renderBoardDmControls(app: RunefobleApp) {
 /** Renders the live tabletop (party mode) or the spectator view for an active session. */
 export function renderSessionActive(app: RunefobleApp) {
   const char = app.activeCharacter ?? app.resolveActiveCharacter(app.campaignId);
-  const isOwnerOrDm = Boolean(app.currentCampaign?.permissions.launch_session);
+  const canRunSession = Boolean(app.campaignCapabilities?.run_session);
   if (app.viewMode === 'spectator') {
     return html`<runefoble-spectator-view .sessionId=${app.sessionId} .cols=${app.boardCols} .rows=${app.boardRows} .tokens=${app.tokens} .atmosphere=${app.atmosphere} .chronicle=${app.events}></runefoble-spectator-view>`;
   }
@@ -34,7 +34,7 @@ export function renderSessionActive(app: RunefobleApp) {
       ${renderBoardDmControls(app)}
     </div>
     <div class="character-column">
-      ${isOwnerOrDm ? html`<div class="dm-party-inspector" role="region" aria-label="DM Party Inspector"><span class="dm-badge">DM Party Inspector</span><select class="dm-character-switcher" aria-label="Switch inspected character" @change=${(e: Event) => switchDmCharacter(app, (e.target as HTMLSelectElement).value)}>${app.characters.map((c) => html`<option value="${c.id}" ?selected=${c.id === char?.id}>${c.name} (${c.characterClass} Lv ${c.level})</option>`)}</select></div>` : ''}
+      ${canRunSession ? html`<div class="dm-party-inspector" role="region" aria-label="DM Party Inspector"><span class="dm-badge">DM Party Inspector</span><select class="dm-character-switcher" aria-label="Switch inspected character" @change=${(e: Event) => switchDmCharacter(app, (e.target as HTMLSelectElement).value)}>${app.characters.map((c) => html`<option value="${c.id}" ?selected=${c.id === char?.id}>${c.name} (${c.characterClass} Lv ${c.level})</option>`)}</select></div>` : ''}
       ${char ? html`<runefoble-character-card .characterName=${char.name} .characterClass=${`${char.characterClass}${char.level ? ` Lvl ${char.level}` : ''}`} .level=${char.level} .currentHp=${char.currentHp} .maxHp=${char.maxHp} .armorClass=${char.armorClass} .portraitUrl=${char.portraitUrl || ''} .isAiStandIn=${Boolean(char.isAiStandIn)}></runefoble-character-card>
       <button class="btn-toggle-directive" @click=${() => { app.isAbsenteeDirectiveOpen = true; }}>📋 Stance Directives</button>` : html`<div class="empty-state" data-testid="active-character-empty"><p>No character is bound to this session. Choose a character in the session lobby.</p></div>`}
       <runefoble-plugin-slot slot-id="sidebar-tool" .showFallback=${false}></runefoble-plugin-slot>

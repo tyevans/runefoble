@@ -50,9 +50,9 @@ async def test_websocket_action_validator_direct_evaluation():
     assert await validator.validate_connect(campaign_id, player_id) is True
     assert await validator.validate_connect(campaign_id, "stranger") is False
 
-    # is_dungeon_master
-    assert await validator.is_dungeon_master(campaign_id, dm_id) is True
-    assert await validator.is_dungeon_master(campaign_id, player_id) is False
+    # can_run_session
+    assert await validator.can_run_session(campaign_id, dm_id) is True
+    assert await validator.can_run_session(campaign_id, player_id) is False
 
     # DM passes any action
     assert (

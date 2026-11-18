@@ -53,6 +53,16 @@ Rules:
 - Map a domain action to its `(type, permission)` pair in `ACTION_PERMISSIONS` (`libs/runefoble_auth/src/runefoble_auth/contract.py`). Do not write the names inline.
 - The Game Master relation is `game_master`. `gm` is not a relation.
 
+### Name Contract Gate
+
+`libs/runefoble_auth/tests/test_production_name_contract.py` parses every production module under `services/`, `gateway/`, and `libs/` with `ast`. It reads the literal type, permission, and relation names that the code passes to `check_permission`, `write_relationship`, `touch_relationship`, `delete_relationship`, and `require_zanzibar_permission`, and the `(type, permission)` pairs in `ACTION_PERMISSIONS`. It asserts that each name exists in `runefoble.zed` with the right kind. A write also checks that the relation accepts the subject type. The gate has no allowlist. A variable name is not checked. Add a new SpiceDB call with a literal name, and the gate checks it on the next run.
+
+Run it with `uv run pytest -q libs/runefoble_auth/tests/test_production_name_contract.py`.
+
+### Retired Definitions
+
+`game_session#campaign` is kept. `campaign.tuples.link_session` writes it, and ADR-0015 (a) names it the authoritative link between a session and its campaign. A definition stays only while a check or a write uses it.
+
 `runefoble_auth.contract` parses the schema once. `require_permission`, `require_relation`, and `require_subject_type` raise `SchemaContractError` for a name that the schema does not define. `SchemaContractError` is an `AuthzSchemaError`. The live client raises `AuthzSchemaError` for the same call.
 
 ### Validating Schema Changes

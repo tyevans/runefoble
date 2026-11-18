@@ -91,7 +91,8 @@ export class PluginRegistry {
 
 export const pluginRegistry = new PluginRegistry();
 
-export function registerDefaultPlugins(reg: PluginRegistry = pluginRegistry, canManage = false): void {
+/** Registers the DM-only plugins when `canRunSession` is true (the `run_session` capability). */
+export function registerDefaultPlugins(reg: PluginRegistry = pluginRegistry, canRunSession = false): void {
   const base: PluginDefinition[] = [
     { id: 'default-initiative-tracker', name: 'Initiative Tracker', slot: 'hud-widget', tag: 'runefoble-initiative-tracker', order: 10 },
     { id: 'default-soundscape-controls', name: 'Soundscape Controls', slot: 'hud-widget', tag: 'runefoble-soundscape-controls', order: 20 },
@@ -104,7 +105,7 @@ export function registerDefaultPlugins(reg: PluginRegistry = pluginRegistry, can
     { id: 'default-dm-whisper-bar', name: 'DM Whisper Bar', slot: 'sidebar-tool', tag: 'runefoble-dm-whisper-bar', order: 20 },
   ];
   for (const p of dm) {
-    if (canManage) { if (!reg.getPlugin(p.id)) reg.register(p); }
+    if (canRunSession) { if (!reg.getPlugin(p.id)) reg.register(p); }
     else if (reg.getPlugin(p.id)) reg.unregister(p.id);
   }
 }
