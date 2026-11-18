@@ -9,10 +9,11 @@ Failure contract (see `upstream_errors.py`):
 - Connect failure, timeout, or no configured URL returns 503.
 - Upstream 5xx returns 502.
 - Upstream 4xx passes through with its status and body.
-- A 2xx answer that is not JSON returns 502 (`forward_json` and `forward_raw`).
+- A 2xx answer that is not JSON returns 502 (`forward_json` only).
 
-`forward_bytes` relays the request body and the reply payload unchanged. It serves binary
-routes such as PDF, PNG and STL exports, and multipart uploads.
+`forward_bytes` is the one raw-body path. It relays the request body unchanged, and the owner
+validates it. It also relays the reply payload unchanged. It serves JSON routes that take a raw
+body, binary routes such as PDF, PNG and STL exports, and multipart uploads.
 """
 
 from __future__ import annotations
@@ -49,33 +50,6 @@ async def forward_json(
         path,
         authorization=request.headers.get("authorization"),
         json=json_body,
-        params=dict(params) if params else None,
-        timeout_s=timeout,
-    )
-    return _decode_reply(service, method, path, reply)
-
-
-async def forward_raw(
-    request: Request,
-    *,
-    service: str,
-    method: str,
-    path: str,
-    params: Mapping[str, str] | None = None,
-    timeout: float = 5.0,
-) -> Any:
-    """Forward the caller's raw body unchanged. The owning service validates it.
-
-    The gateway never parses the body, so a malformed body reaches the owner, and the
-    owner's own 422 passes through.
-    """
-    client = get_upstreams(request).client(service)
-    reply = await client.send(
-        method,
-        path,
-        authorization=request.headers.get("authorization"),
-        content=await request.body(),
-        content_type=request.headers.get("content-type", "application/json"),
         params=dict(params) if params else None,
         timeout_s=timeout,
     )

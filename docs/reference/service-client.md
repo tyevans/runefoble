@@ -2,7 +2,7 @@
 
 The shared typed HTTP client for calls from a gateway to an owning bounded context. It lives in `libs/runefoble_platform/src/runefoble_platform/service_client/`.
 
-The gateway uses this client for every proxy call. Each proxy call goes through `gateway_api.proxy.forward_json`, `forward_raw` when the owner validates a raw body, or `forward_bytes` when the reply is binary (PDF, PNG, STL) or the body is an upload (TASK-0595). All use the registry in `gateway_api.upstreams`. The MCP gateway uses it through the route helpers in `gateway_mcp.owning_services.OwningServices`. Those helpers map the errors to MCP tool errors. They keep one client for each event loop, service, and base URL.
+The gateway uses this client for every proxy call. Each proxy call goes through `gateway_api.proxy.forward_json` for a JSON body that the gateway builds, or `forward_bytes` for a raw body that the owner validates, a binary reply (PDF, PNG, STL), or an upload (TASK-0595). `forward_bytes` is the only raw-body path. All use the registry in `gateway_api.upstreams`. The MCP gateway uses it through the route helpers in `gateway_mcp.owning_services.OwningServices`. Those helpers map the errors to MCP tool errors. They keep one client for each event loop, service, and base URL.
 
 ## Modules
 
@@ -117,9 +117,9 @@ The gateway registers the handlers in `gateway_api/upstream_errors.py`. Every fa
 
 | Upstream result | Gateway response | Body |
 |---|---|---|
-| 2xx with JSON body | Same status, decoded JSON | Upstream JSON |
-| 2xx with non-JSON body | `502` | `{"detail": "Upstream service returned an invalid response"}` |
-| 2xx binary (`forward_bytes`) | Same status, same `content-type`, same body bytes, relayed headers | Upstream bytes |
+| 2xx with JSON body (`forward_json`) | Same status, decoded JSON | Upstream JSON |
+| 2xx with non-JSON body (`forward_json`) | `502` | `{"detail": "Upstream service returned an invalid response"}` |
+| 2xx from `forward_bytes` (raw body or binary) | Same status, same `content-type`, same body bytes, relayed headers | Upstream bytes |
 | 4xx | Same status | Upstream body, unchanged, with its `content-type` and its `WWW-Authenticate` challenge |
 | 5xx | `502` | `{"detail": "Upstream service is unavailable", "upstream": "<service>"}` |
 | Connect failure or timeout | `503` | `{"detail": "Upstream service is unavailable", "upstream": "<service>"}` |

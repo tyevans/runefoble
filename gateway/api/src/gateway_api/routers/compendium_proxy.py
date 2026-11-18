@@ -12,7 +12,7 @@ from typing import Any
 
 from fastapi import APIRouter, Request
 from gateway_api.auth import CurrentPrincipal
-from gateway_api.proxy import forward_json, forward_raw
+from gateway_api.proxy import forward_bytes, forward_json
 from runefoble_platform.service_client import path
 
 COMPENDIUM_SERVICE = "rules_compendium"
@@ -69,7 +69,7 @@ async def get_condition(name: str, request: Request, user: CurrentPrincipal) -> 
 @router.post("/api/v1/compendium/encounters/balance")
 async def balance_encounter(request: Request, user: CurrentPrincipal) -> Any:
     """Balance an encounter for a party roster. A campaign-scoped call needs `campaign.play`."""
-    return await forward_raw(
+    return await forward_bytes(
         request,
         service=COMPENDIUM_SERVICE,
         method="POST",
@@ -80,7 +80,7 @@ async def balance_encounter(request: Request, user: CurrentPrincipal) -> Any:
 @router.post("/api/v1/compendium/homebrew")
 async def register_homebrew(request: Request, user: CurrentPrincipal) -> Any:
     """Register a campaign homebrew rule. The owner checks `manage` or `run_session`."""
-    return await forward_raw(
+    return await forward_bytes(
         request,
         service=COMPENDIUM_SERVICE,
         method="POST",
