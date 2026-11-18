@@ -2,64 +2,47 @@
 
 ## Overview
 
-Runefoble validates complete user flows and UI journeys spanning decoupled Lit Web Component microfrontends, SPA routing, Shadow DOM custom events, and backend microservices using **Playwright** (`@playwright/test`) and **Behavior-Driven Development (BDD)** via `playwright-bdd`.
+Use this guide to write a Gherkin user flow and its step definitions. Each scenario runs in a real browser through Playwright (`@playwright/test`) and `playwright-bdd`.
 
-Governed by **ADR-0014** and **Hard Invariant 7 (Blackbox TDD & BDD with Frontdoor Setup)**, every user-facing capability must have executable Gherkin feature files and automated browser tests that execute exclusively through public frontdoors with **zero backdoor state or database manipulation**.
+Governed by **ADR-0014** and **Hard Invariant 7 (Blackbox TDD & BDD with Frontdoor Setup)**. Every scenario sets up its data through public frontdoors. No step writes to a database or to internal service state.
+
+For the harness itself (fixtures, persona table, Makefile targets and CI job), read [E2E Harness reference](../reference/e2e-harness.md).
 
 ---
 
-## 1. Authoring Gherkin Features from User Stories
+## 1. Author Gherkin Features from User Stories
 
-User stories in `docs/project/user_stories/accepted/` serve as the single source of truth for platform behavior. Translate user story acceptance criteria into Gherkin feature files under `e2e/features/`:
+User stories in `docs/project/user_stories/accepted/` define the acceptance criteria. Write each scenario under `e2e/features/`:
 
 ```gherkin
-# e2e/features/campaign_management.feature
-Feature: Campaign Creation and DM Dashboard
-  As a Dungeon Master (DM)
-  I want to create and manage campaigns through the public UI
-  So that I can organize game sessions for my adventuring party
+# e2e/features/campaign_hub.feature
+Feature: Campaign Hub
 
-  Scenario: DM creates a new campaign through the creation modal
+  Scenario: DM opens the campaign hub
     Given I am logged in as a "DM"
     When I navigate to "#/campaigns"
-    And I click the "New Campaign" button
-    And I fill the campaign title with "The Sunless Citadel"
-    And I click the "Create Campaign" button
-    Then I should see the heading "The Sunless Citadel"
+    Then I should see the heading "Campaigns"
     And the URL hash should be "#/campaigns"
 ```
 
 ### Golden Rules for Scenarios
-1. **Persona Grounding**: Start scenarios with explicit persona roles (`DM`, `Player`, `Spectator`).
-2. **Declarative Intent**: Focus on what the user does and observes, not internal DOM classnames.
-3. **Frontdoor Preconditions**: Every `Given` must describe a state achievable via public HTTP APIs, UI actions, or OIDC tokens.
+1. **Persona Grounding**: Start each scenario with an explicit persona (`DM`, `Player`, `Spectator`, or a named persona from the [persona table](../reference/e2e-harness.md#persona-resolution)).
+2. **Declarative Intent**: Describe what the user does and sees. Do not describe CSS classes or DOM structure.
+3. **Frontdoor Preconditions**: Every `Given` must reach its state through UI actions, public REST routes or an OIDC session.
 
 ---
 
-## 2. Managing Frontdoor Test Setup and Authenticated Sessions
+## 2. Set Up Preconditions Through Frontdoors
 
-Hard Invariant 7 prohibits inserting rows directly into Postgres or manipulating internal aggregate stores. Setup must use public frontdoors:
+### Log In a Persona
+The step `I am logged in as a {string}` injects a session for the persona. It is defined in `e2e/steps/common_steps.ts`:
 
-### Authenticated Sessions via OIDC Injection
-The authentication fixture (`e2e/support/auth_fixtures.ts`) synthesizes valid Zitadel JWTs and injects them into browser `localStorage` before page load:
-
-```typescript
-// e2e/steps/auth_steps.ts
-import { Given } from '../support/fixtures';
-
-Given('I am logged in as a {string}', async ({ auth, world }, roleOrName: string) => {
-  const user = await auth.injectUser(roleOrName);
-  world.currentUser = user;
-});
+```gherkin
+Given I am logged in as a "DM"
 ```
 
-Supported personas:
-- `"DM"`: Dungeon Master credentials (`user-dm-eldrin`, roles `['dm', 'player']`).
-- `"Player"`: Standard player credentials (`user-valeros`, role `['player']`).
-- `"Spectator"`: Passive audience credentials (`user-spectator-zephyr`, role `['spectator']`).
-
-### Entity Preconditions via Frontdoor API
-To prepare prerequisites (e.g. existing campaigns, characters, or invites), use `frontdoorApi` (`e2e/support/frontdoor_api.ts`), which calls public REST endpoints:
+### Create Entities Through the Frontdoor API
+The step `campaign {string} exists` creates a campaign through `POST /api/v1/campaigns`. It is defined in `e2e/steps/common_steps.ts`:
 
 ```typescript
 Given('campaign {string} exists', async ({ frontdoorApi, world }, campaignTitle: string) => {
@@ -70,95 +53,84 @@ Given('campaign {string} exists', async ({ frontdoorApi, world }, campaignTitle:
 });
 ```
 
+```gherkin
+Given I am logged in as a "DM"
+And campaign "The Sunless Citadel" exists
+```
+
+### Setup Rules
+- A setup step must throw when its request fails.
+- A setup step must not fall back to a fixed id.
+- A step must not call a database, a private store or a test-only route.
+
 ---
 
-## 3. Implementing Step Definitions with Shadow-Piercing Locators
+## 3. Write Step Definitions with Shadow-Piercing Locators
 
-Runefoble components are Lit Web Components with Shadow DOM encapsulation. Playwright's locator engine automatically pierces open Shadow DOM roots without custom XPath hacks:
+Runefoble components are Lit Web Components with Shadow DOM. Playwright locators pierce open shadow roots, so a step does not need custom XPath.
+
+The step `I click the {string} button` resolves a button by role, text or `aria-label`. It is defined in `e2e/steps/common_steps.ts`:
 
 ```typescript
-// e2e/steps/campaign_steps.ts
-import { expect } from '@playwright/test';
-import { When, Then } from '../support/fixtures';
-
-When('I fill the campaign title with {string}', async ({ page }, title: string) => {
-  // Pierces Shadow DOM of runefoble-campaign-modal to locate the input
-  const input = page.locator('runefoble-campaign-modal input[name="title"]');
-  await input.fill(title);
-});
-
 When('I click the {string} button', async ({ page }, buttonName: string) => {
-  // Resolves across Shadow DOM via accessible role or text match
   const button = page
     .getByRole('button', { name: buttonName })
     .or(page.locator(`button:has-text("${buttonName}")`))
+    .or(page.locator(`[aria-label="${buttonName}"]`))
     .first();
   await button.click();
-});
-
-Then('I should see the heading {string}', async ({ page }, headingText: string) => {
-  const heading = page
-    .getByRole('heading', { name: headingText })
-    .or(page.locator('h1, h2, h3, h4').filter({ hasText: headingText }))
-    .first();
-  await expect(heading).toBeVisible({ timeout: 10_000 });
 });
 ```
 
 ### Best Practices for Step Definitions
-- **Use Web-First Assertions**: Always use `await expect(locator).toBeVisible()` or `expect.poll()` so Playwright auto-waits for async rendering and animations.
-- **Query Composed Events**: When testing custom element events, assert observable DOM changes or public hash route updates rather than spying on private component methods.
-- **Read the Base URL From Config**: Never write a host such as `http://localhost:5173` in a step. Read `test.info().project.use.baseURL`, which follows `PLAYWRIGHT_BASE_URL` in `playwright.config.ts`. For example, `browser.newContext({ baseURL: test.info().project.use.baseURL })`.
-- **Fail on Missing Setup**: A setup step that cannot create its data must throw. Do not fall back to a fixed id.
+- **Use Web-First Assertions**: Use `await expect(locator).toBeVisible()` or `expect.poll()`. Playwright then waits for async rendering.
+- **Assert Observable Output**: Check the DOM, the URL hash or a public projection. Do not spy on private component methods.
+- **Read the Base URL From Config**: Never write a host such as `http://localhost:5173` in a step. Use `test.info().project.use.baseURL`.
+- **Fail on Missing Setup**: A setup step that cannot create its data must throw.
 
 ---
 
-## 4. Running and Debugging Tests Locally
+## 4. Run Multi-Browser Scenarios
 
-The repository provides Makefile targets to execute and debug Playwright BDD suites:
+Use one browser context for each persona that acts at the same time. Create the context from the project base URL:
 
-### Validate Gherkin Syntax and Steps (Dry-Run)
-`make test-bdd` runs three gates without launching browsers:
-1. **Typecheck**: `pnpm run e2e:typecheck` runs `tsc -p e2e/tsconfig.json` (strict mode) over `e2e/`. Playwright does not check types, so this gate catches type errors in step files.
-2. **Unused steps**: `uv run python scripts/check_e2e_unused_steps.py` fails when a step definition matches no line in `e2e/features/`. Delete the definition or add the scenario that uses it.
-3. **Gherkin mapping**: `pnpm exec bddgen` generates the test files and fails on a missing or mismatched step.
-
-```bash
-make test-bdd
+```typescript
+const context = await browser.newContext({ baseURL: test.info().project.use.baseURL });
+world.extraContexts.push(context);
+const page = await context.newPage();
+await auth.injectUserIntoPage(page, 'valeros');
+world.setPage('valeros', page);
 ```
 
-### Run Headless E2E Test Suite
-Run tests across Chromium, Firefox, and WebKit in headless mode:
+`World` closes every context in `world.extraContexts` after the scenario. The steps in `e2e/steps/vtt_steps.ts` show the pattern for a session lobby. The step `Evelyn is hosting session {string} for campaign {string}` opens the first page. The step `Valeros joins {string} in a separate browser` opens a second context.
+
+---
+
+## 5. Run and Debug
+
+Use these commands from the repository root. The reference page lists what each command runs.
+
 ```bash
-make test-e2e
+make test-bdd      # Typecheck, unused-step check and Gherkin mapping. No browsers.
+make test-e2e      # Full suite in Chromium, Firefox and WebKit.
+make test-e2e-ui   # Playwright UI mode for debugging.
 ```
 
-To run a specific browser or filter by scenario name:
+To run one browser or one scenario, pass `ARGS`:
+
 ```bash
 make test-e2e ARGS="--project=chromium -g 'Dungeon Master'"
 ```
 
-### Interactive UI Mode for Debugging
-Launch the interactive Playwright UI mode with time-travel DOM inspection, step-by-step playback, and network logs:
-```bash
-make test-e2e-ui
-```
-
-### Local CI Runner Simulation
-Simulate the GitHub Actions CI environment locally with background service orchestration and readiness polling:
-```bash
-./scripts/test_ci_e2e.sh
-```
-
 ---
 
-## 5. BDD Governance Checklist for Engineers
+## 6. BDD Governance Checklist
 
-Before submitting pull requests or considering a user-facing task "Done", verify:
+Before you submit a pull request or mark a user-facing task Done, verify:
 
-- [ ] **DoR Met**: Governing user story in `docs/project/user_stories/accepted/` contains Gherkin scenarios with frontdoor-only setup.
-- [ ] **Feature File Committed**: Feature file placed in `e2e/features/` with no private backdoors.
-- [ ] **Step Definitions Implemented**: Step definitions in `e2e/steps/` use shadow-piercing locators and web-first assertions.
-- [ ] **Cross-Browser Verification**: `make test-e2e` passes across Chromium, Firefox, and WebKit.
-- [ ] **CI Simulation Verified**: `./scripts/test_ci_e2e.sh` passes locally before PR submission.
-- [ ] **Zero Backdoor Manipulation**: Preconditions created solely through public REST APIs or OIDC session injection.
+- [ ] **DoR Met**: The governing user story in `docs/project/user_stories/accepted/` has Gherkin scenarios with frontdoor-only setup.
+- [ ] **Feature File Committed**: The feature file is in `e2e/features/`.
+- [ ] **Steps Implemented**: Every step is defined in `e2e/steps/`. Locators pierce shadow roots. Assertions are web-first.
+- [ ] **Unused Steps Removed**: `make test-bdd` passes.
+- [ ] **Cross-Browser Verification**: `make test-e2e` passes in Chromium, Firefox and WebKit.
+- [ ] **Zero Backdoor Manipulation**: Preconditions use only public REST routes or OIDC session injection.

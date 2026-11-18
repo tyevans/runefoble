@@ -131,7 +131,6 @@ All system documentation outside project records lives in `docs/` and strictly f
 - [`mount-community-plugin-ui-extension-slots.md`](docs/how-to/mount-community-plugin-ui-extension-slots.md): How to mount community Lit Web Components into designated extension slots (hud-widget, dice-panel, sidebar-tool) with Bauhaus token inheritance and Shadow DOM event isolation.
 - [`test-email-signups-with-mailpit.md`](docs/how-to/test-email-signups-with-mailpit.md): How to capture Zitadel sign-up and account email in Mailpit and read messages from the Mailpit API.
 - [`build-settlements-and-play-mobile-minigames.md`](docs/how-to/build-settlements-and-play-mobile-minigames.md): How to design and scale settlement havens, customize establishments with living NPC workers, haggle with merchants under DM controls, and play mobile-first tavern and casino minigames.
-- [`validate-e2e-journeys-with-playwright-bdd.md`](docs/how-to/validate-e2e-journeys-with-playwright-bdd.md): How to validate end-to-end user journeys with Playwright BDD, frontdoor authentication fixtures, and multi-browser execution.
 - [`test-user-flows-with-playwright-bdd.md`](docs/how-to/test-user-flows-with-playwright-bdd.md): How to author Gherkin user flow scenarios, implement TypeScript step definitions with Playwright shadow-piercing locators, and execute E2E test suites.
 - [`test-cross-service-calls-with-live-upstreams.md`](docs/how-to/test-cross-service-calls-with-live-upstreams.md): How to test cross-service HTTP calls with live loopback upstreams, simulate 503 and unreachable upstreams, and avoid monkeypatching clients.
 - [`add-an-engine-port-adapter.md`](docs/how-to/add-an-engine-port-adapter.md): How to add a settings-selected engine port adapter. An unavailable engine returns `503`. It never returns substitute output.
@@ -153,11 +152,22 @@ All system documentation outside project records lives in `docs/` and strictly f
 - [`design-tokens-and-themes.md`](docs/reference/design-tokens-and-themes.md): Bauhaus geometric tokens, typography, CSS custom properties, and UI themes.
 - [`fastmcp-gateway.md`](docs/reference/fastmcp-gateway.md): Model Context Protocol gateway architecture, tool inventory, resources, and prompt templates.
 - [`cli-interfaces.md`](docs/reference/cli-interfaces.md): Developer tooling: `Makefile` targets and automation runner scripts.
+- [`e2e-harness.md`](docs/reference/e2e-harness.md): Playwright BDD harness: fixtures, persona table, Makefile gates, and the CI job.
 - [`embedding-providers.md`](docs/reference/embedding-providers.md): Embedding provider port, factory, selection settings, and failure rules.
 - [`inference-worker-response-contract.md`](docs/reference/inference-worker-response-contract.md): HTTP response contract of the inference worker: endpoints, provenance fields, and backend failure.
 - [`microfrontend-architecture.md`](docs/reference/microfrontend-architecture.md): Microfrontend layout, service component catalog, `/ui/manifest` discovery, and Storybook aggregation.
 - [`service-client.md`](docs/reference/service-client.md): Typed HTTP client that gateways use to call owning bounded contexts, with errors and gateway status mapping.
 - [`spicedb-zitadel-identity-sync.md`](docs/reference/spicedb-zitadel-identity-sync.md): Zitadel-to-SpiceDB relationship synchronization: tuple mapping, public sync endpoints, and retry policy.
+- [`audience-studio-api.md`](docs/reference/audience-studio-api.md): HTTP and WebSocket API of the `audience_studio` service: live spectator polls and the DM approval queue.
+- [`browser-asset-reads.md`](docs/reference/browser-asset-reads.md): Rule for browser reads of protected media assets, and the `@runefoble/ui-core` helper.
+- [`event-identifiers.md`](docs/reference/event-identifiers.md): Generated list of event identifiers, from `scripts/generate_event_catalogue.py`.
+- [`events-catalog-characters-watcher.md`](docs/reference/events-catalog-characters-watcher.md): Event catalogue for characters and The Watcher, part of the events schema.
+- [`events-catalog-gameplay.md`](docs/reference/events-catalog-gameplay.md): Event catalogue for gameplay, part of the events schema.
+- [`events-catalog-platform.md`](docs/reference/events-catalog-platform.md): Event catalogue for the platform and campaign services, part of the events schema.
+- [`events-catalog-world-media.md`](docs/reference/events-catalog-world-media.md): Event catalogue for world, voice and media, part of the events schema.
+- [`game-session-child-indexes.md`](docs/reference/game-session-child-indexes.md): How the game session service lists child aggregates under a parent, from event-sourced links.
+- [`identity-and-token-contract.md`](docs/reference/identity-and-token-contract.md): Identity contract for every platform surface, with the code that enforces each claim.
+- [`speculative-feature-inventory.md`](docs/reference/speculative-feature-inventory.md): Roadmap matrix of planned capabilities by release tier. It does not describe the code.
 
 ### 4. Architecture Explanation (`docs/explanation/`) — Design Rationale & Background
 - [`project-management-system.md`](docs/explanation/project-management-system.md): Rationale behind Project Management as Code, lean JIT refinement, thin vertical slicing, and automated git traceability.
@@ -174,6 +184,7 @@ All system documentation outside project records lives in `docs/` and strictly f
 | `libs/runefoble_auth/` | Zitadel JWT decoding, SpiceDB Zanzibar client, `runefoble.zed` schema |
 | `libs/runefoble_events/` | CloudEvents-compliant domain event definitions |
 | `libs/runefoble_embeddings/` | Embedding provider factory that builds `redstring` providers from Runefoble settings |
+| `libs/runefoble_ui/` | Lit UI core (`@runefoble/ui-core`): shared asset controllers and tokens |
 | `services/the_watcher/` | The Watcher AI gameplay engine (speech-to-intent, DM, AI stand-ins) & microfrontend |
 | `services/game_session/` | Active session lifecycle, turns, player presence, dice & microfrontends |
 | `services/board_state/` | Tactical grid, token coordinates, spatial movement rules & board microfrontend |

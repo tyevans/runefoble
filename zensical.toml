@@ -35,7 +35,7 @@ nav = [
     { "Orchestrate Audience Chaos Polls" = "how-to/orchestrate-audience-chaos-polls.md" },
     { "Project Campaign Analytics & Chronicle Timeline" = "how-to/project-campaign-analytics-and-chronicle-timeline.md" },
     { "Navigate Client SPA Routes & Breadcrumbs" = "how-to/navigate-client-spa-routes-and-breadcrumbs.md" },
-    { "Validate E2E Journeys with Playwright BDD" = "how-to/validate-e2e-journeys-with-playwright-bdd.md" },
+    { "Test User Flows with Playwright BDD" = "how-to/test-user-flows-with-playwright-bdd.md" },
   ]},
   { "Technical Reference" = [
     { "Architecture Overview" = "reference/architecture-overview.md" },
@@ -55,6 +55,7 @@ nav = [
     { "FastMCP Tabletop Gateway" = "reference/fastmcp-gateway.md" },
     { "SpiceDB & Zitadel Identity Sync" = "reference/spicedb-zitadel-identity-sync.md" },
     { "CLI Interfaces" = "reference/cli-interfaces.md" },
+    { "E2E Harness (Playwright BDD)" = "reference/e2e-harness.md" },
   ]},
   { "Architecture Explanation" = [
     { "Project Management as Code" = "explanation/project-management-system.md" },
