@@ -32,6 +32,7 @@ const VIEW_COMPONENT_MANIFEST: Record<AppActiveView, string[]> = {
   'session-lobby': ['runefoble-session-lobby'],
   'session-active': ['runefoble-board', 'runefoble-character-card', 'runefoble-watcher-feed', 'runefoble-voice-controls'],
   'profile': ['runefoble-user-profile'],
+  'caravan-board': ['runefoble-caravan-board'],
 };
 
 interface RouteMatrixCase {
@@ -53,6 +54,7 @@ const ROUTE_MATRIX: RouteMatrixCase[] = [
   { name: '8. Global Roster', path: '#/characters', expectedPattern: '#/characters', expectedView: 'characters', expectedParams: {} },
   { name: '9. User Profile', path: '#/profile', expectedPattern: '#/profile', expectedView: 'profile', expectedParams: {} },
   { name: '10. Character Sheet Inspector', path: '#/characters/char-valeros-01', expectedPattern: '#/characters/:characterId', expectedView: 'character-sheet', expectedParams: { characterId: 'char-valeros-01' } },
+  { name: '11. Caravan Board', path: '#/caravans/frontier-1', expectedPattern: '#/caravans/:sharedWorldId', expectedView: 'caravan-board', expectedParams: { sharedWorldId: 'frontier-1' } },
 ];
 
 describe('App Shell Views Route Enumeration & Component Wiring Audit (TASK-0251)', () => {

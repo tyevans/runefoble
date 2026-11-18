@@ -34,6 +34,7 @@ describe('view controllers render', () => {
     ['characters', '<runefoble-character-roster'],
     ['session-lobby', '<runefoble-session-lobby'],
     ['profile', '<runefoble-user-profile'],
+    ['caravan-board', '<runefoble-caravan-board'],
   ];
   for (const [view, marker] of cases) {
     it(`${view} renders its element`, () => {
@@ -41,6 +42,16 @@ describe('view controllers render', () => {
       assert.ok(templateText(out).includes(marker));
     });
   }
+
+  it('the caravan board mounts with the shared-world id from the route', () => {
+    const route = new Router().match('#/caravans/frontier-7?campaign=c-amber-1')!;
+    const out = VIEW_CONTROLLERS['caravan-board'].render(
+      host('caravan-board', { currentRoute: route, routeParams: route.params }),
+      'caravan-board'
+    ) as any;
+    assert.ok(out.values.includes('frontier-7'));
+    assert.ok(out.values.includes('c-amber-1'));
+  });
 
   it('the character sheet view renders an empty state without a record', () => {
     const out = VIEW_CONTROLLERS['character-sheet'].render(host('character-sheet'), 'character-sheet') as any;
@@ -65,6 +76,31 @@ describe('view controllers load', () => {
     const h = host('characters', { failures: [] });
     await loadRouteData(h, new Router().match('#/characters')!);
     assert.ok(h.loadError);
+  });
+});
+
+describe('caravan board load', () => {
+  let gateway: FakeGateway;
+  afterEach(() => gateway.restore());
+
+  it('the caravan board loads the notice board of its shared world', async () => {
+    gateway = installFakeGateway({
+      'GET /api/v1/shared-worlds/frontier-7/caravans/contracts': {
+        body: { shared_world_id: 'frontier-7', contracts: [{ contract_id: 'k1', status: 'open' }] },
+      },
+    });
+    const h = host('caravan-board', { caravanContracts: [] });
+    await VIEW_CONTROLLERS['caravan-board'].load!(h, new Router().match('#/caravans/frontier-7')!);
+    assert.equal(h.caravanContracts.length, 1);
+    assert.equal(h.loadError, null);
+  });
+
+  it('a failed notice board read sets the load error and keeps no contracts', async () => {
+    gateway = installFakeGateway({ 'GET /api/v1/shared-worlds/frontier-7/caravans/contracts': { status: 503, body: { detail: 'down' } } });
+    const h = host('caravan-board', { caravanContracts: [] });
+    await VIEW_CONTROLLERS['caravan-board'].load!(h, new Router().match('#/caravans/frontier-7')!);
+    assert.ok(h.loadError);
+    assert.deepEqual(h.caravanContracts, []);
   });
 });
 

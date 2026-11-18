@@ -46,6 +46,7 @@ export const VIEW_BUNDLES: Record<AppActiveView, BundleName[]> = {
   'session-lobby': SESSION_BUNDLES,
   'session-active': SESSION_BUNDLES,
   'profile': [],
+  'caravan-board': ['gameSession'],
 };
 
 /** Loads the bundles for a view. A failed import rejects so that the caller reports it. */

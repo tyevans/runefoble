@@ -1,6 +1,7 @@
 import type { CampaignItem, CampaignMember, CreateCampaignPayload, UpdateCampaignPayload, LobbyParticipant, LobbyCharacterOption } from '@runefoble/game-session-ui';
 import type { CharacterItem, RosterCampaignOption, CreateCharacterPayload } from '@runefoble/character-sheet-ui';
 import type { BoardToken } from '@runefoble/board-state-ui';
+import type { CaravanContractItem } from '@runefoble/game-session-ui';
 import type { WatcherFeedEvent } from '@runefoble/the-watcher-ui';
 import type { CampaignSessionItem } from '../components/runefoble-session-list.ts';
 import { authService, type UserClaims } from '../auth/auth-service.ts';
@@ -99,6 +100,13 @@ export class AppDataService {
     const res = await this.request<any[]>(`${this.apiBase}/campaigns/${campaignId}/sessions`);
     if (!res.ok) return res;
     return dataOk(res.data.map((item) => this.toSessionItem(item)));
+  }
+
+  /** Reads the caravan notice board of a shared world through the gateway (TASK-0807). */
+  async fetchCaravanContracts(sharedWorldId: string): Promise<DataResult<CaravanContractItem[]>> {
+    const res = await this.request<{ contracts?: CaravanContractItem[] }>(`${this.apiBase}/shared-worlds/${sharedWorldId}/caravans/contracts`);
+    if (!res.ok) return res;
+    return dataOk(res.data.contracts ?? []);
   }
 
   async fetchSession(sessionId: string): Promise<DataResult<CampaignSessionItem>> {

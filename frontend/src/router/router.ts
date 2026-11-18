@@ -30,6 +30,7 @@ export const STANDARD_ROUTES = [
   '#/campaigns/:campaignId/characters', '#/campaigns/:campaignId/codex',
   '#/campaigns/:campaignId/analytics', '#/campaigns/:campaignId/forge', '#/campaigns/:campaignId/lobby/:sessionId',
   '#/campaigns/:campaignId/sessions/:sessionId', '#/characters', '#/characters/:characterId', '#/profile',
+  '#/caravans/:sharedWorldId',
 ] as const;
 
 export class Router {
@@ -165,6 +166,9 @@ export class Router {
     }
     if (pattern === '#/profile') {
       return [{ label: 'Home', path: '#/campaigns' }, { label: 'Account Settings', path: '#/profile', active: true }];
+    }
+    if (pattern === '#/caravans/:sharedWorldId') {
+      return [{ label: 'Home', path: '#/campaigns' }, { label: 'Caravan Board', path, active: true }];
     }
     if (pattern === '#/login') return [{ label: 'Login', path: '#/login', active: true }];
     if (pattern === '#/register') return [{ label: 'Register', path: '#/register', active: true }];

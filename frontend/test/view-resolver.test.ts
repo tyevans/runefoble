@@ -25,6 +25,7 @@ const MATRIX: Array<[string, string]> = [
   ['#/characters', 'characters'],
   ['#/characters/ch1', 'character-sheet'],
   ['#/profile', 'profile'],
+  ['#/caravans/frontier-1', 'caravan-board'],
 ];
 
 describe('resolveActiveView', () => {
