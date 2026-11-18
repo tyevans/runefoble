@@ -1,7 +1,7 @@
 ---
 id: '0797'
 title: Lit Elements Have a DOM Unit Test Harness
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies: []
 governing_adrs:
@@ -16,7 +16,7 @@ target_release: 0.9.0
 # TASK-0797: Lit Elements Have a DOM Unit Test Harness
 
 ## Status
-Refined. Found during batch 23 integration, 2026-11-17.
+Complete
 
 ## Summary
 No package can unit test a Lit element. Node strip-only mode rejects decorators and no DOM is available, so element behaviour (asset image loading, placeholders, permission states) has no unit test. The character card shows no placeholder when a portrait is empty.

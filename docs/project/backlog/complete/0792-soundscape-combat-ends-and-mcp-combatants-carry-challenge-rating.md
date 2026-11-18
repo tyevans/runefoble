@@ -1,7 +1,7 @@
 ---
 id: '0792'
 title: Soundscape Leaves Combat When an Encounter Ends and MCP Combatants Carry Challenge Rating
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies: []
 governing_adrs:
@@ -15,7 +15,7 @@ target_release: 0.9.0
 # TASK-0792: Soundscape Leaves Combat When an Encounter Ends and MCP Combatants Carry Challenge Rating
 
 ## Status
-Refined. Found during batch 23 integration, 2026-11-17.
+Complete
 
 ## Summary
 Soundscape never handles the encounter end event, so combat stays active and later health changes still score as combat. The MCP gateway starts combatants with no challenge rating, so the new tension input from TASK-0618 is always zero in production.

@@ -33,6 +33,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Gateway WebSocket routes admit a connection only with a verified `runefoble.bearer.<jwt>` subprotocol, checked before accept. Refused handshakes close with 1008. Removed the `?user_id=`, `?token=`, `x-user-id`, and `guest_user` identity paths on WebSocket and voice/companion signaling routes. (TASK-0522)
 
 ### Removed
+- In-process platform event bus (`runefoble_platform.bus`). Every publish now goes to Redis Streams. (TASK-0710)
+- Soundscape alias route `POST /api/v1/soundscape/override`. Use `POST /api/v1/soundscape/stems/override`. (TASK-0793)
 - Gateway API facade modules `webrtc_signaling.py`, `websocket.py` and `mobile_companion.py`. Import from `gateway_api.signaling`, `gateway_api.websocket_endpoint` and `gateway_api.companion` instead. (TASK-0488)
 - Dynamic MCP tools no longer accept Python `handler_code` or `sandbox_policy`; the gateway no longer runs `exec` on caller code. (TASK-0766)
 - Unused rules compendium events `MonsterIndexed`, `SpellIndexed` and `ConditionIndexed`. No code produced or consumed them. SRD data loads directly into the retrieval engine. (TASK-0705)
@@ -47,6 +49,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Campaign analytics worker `process_event` alias, tracking property wrappers, and package root re-exports. Callers use `handle_event`. (TASK-0500)
 
 ### Added
+- Lit element tests run in headless Chromium through `pnpm test`. The shared harness is Vitest browser mode with Playwright. (TASK-0797)
+- West Marches outposts can be funded. `POST /api/v1/campaigns/{campaign_id}/west-marches/stronghold/contribute` moves gold from the stronghold treasury into an outpost store. The debit needs `stronghold.manage` in game_session. A shortfall answers 409 and records no event. (TASK-0795)
 - Soundscape party health: `runefoble.events.soundscape.party_health_recorded` records each character's HP ratio in a session. (TASK-0618)
 - Gateway route `POST /api/v1/soundscape/duck` proxies WebAudio ducking to the soundscape service. A down service returns 503. (TASK-0589)
 - `pnpm run lint` in `frontend/` fails when source names an `/assets/` path that no package serves. (TASK-0788)
@@ -109,6 +113,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
 
 ### Changed
+- The Asset Forge battlemap and token previews show the generated asset id. The `forge-battlemap` and `forge-token` events carry `asset_id` at the top level (TASK-0787).
 - Tutorial 02 now describes only the results that the running platform returns. Each step shows Available or Not yet available with its blocker. (TASK-0658)
 - The gateway `/healthz` route probes `the_watcher`, `game_session`, `board_state`, `character_sheet`, and `voice_agent` on each request. Each reports `operational`, `degraded`, `unreachable`, or `not_configured`. The top-level status stays `healthy`. The probe timeout is `RUNEFOBLE_GATEWAY_HEALTH_PROBE_TIMEOUT_S`. (TASK-0674)
 - The gateway forwards stand-in guardrail writes raw. character_sheet validates them, so an unknown `risk_threshold` returns 422 from the owner. The gateway's camelCase guardrail model is removed. (TASK-0791)
@@ -1168,6 +1173,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **Documentation & Build Navigation**: Featured the Platform Showcase and Changelog in `zensical.toml` and root documentation landing page (`docs/index.md`), and enhanced `scripts/build_docs.py` to synchronize `CHANGELOG.md` to `docs/changelog.md` during documentation compilation.
 
 ### Fixed
+- The auth sync health probe reports `unhealthy` with the cause only for SpiceDB failures. Other errors are no longer hidden. (TASK-0796)
+- Soundscape leaves combat when a combat encounter ends. Tension re-scores as ambient, so later health changes no longer raise combat tension. (TASK-0792)
 - Voice room: a peer that rejoins with the same peer id keeps its mute state and vocal preset. (TASK-0789)
 - Storybook stories for character roster, character builder modal and session lobby no longer request missing portrait SVGs, which removes the console 404 errors. Portraits are now inline Bauhaus placeholders in `@runefoble/ui-core`. (TASK-0647)
 - Character Sheet write routes answer 503 when the event store is unreachable. Before, they answered 400. No event is published and the character does not change. (TASK-0781)

@@ -1,7 +1,7 @@
 ---
 id: '0795'
 title: West Marches Outposts Can Be Funded and the First Upgrade Works
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies: []
 governing_adrs:
@@ -16,7 +16,7 @@ target_release: 0.9.0
 # TASK-0795: West Marches Outposts Can Be Funded and the First Upgrade Works
 
 ## Status
-Refined. Found during batch 23 integration, 2026-11-17.
+Complete
 
 ## Summary
 An outpost upgrade in a frontier with no outposts raises `KeyError`, because the default outpost id is not in the map. Outposts have no funding route, so their stored resources only drain.

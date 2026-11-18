@@ -1,7 +1,7 @@
 ---
 id: '0710'
 title: Platform In-Process Event Bus Is Deleted
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies: []
 governing_adrs:
@@ -15,16 +15,16 @@ target_release: 0.9.0
 # TASK-0710: Platform In-Process Event Bus Is Deleted
 
 ## Status
-Refined. Found by the refactor audit round r1 and checked against the code by the orchestrator.
+Complete
 
 ## Summary
 `runefoble_platform.bus` is a process-local event bus. Most publishes through it reach no subscriber, and the one subscriber also reads the same events from Redis. The module is a hidden second delivery path.
 
 ## Problem Statement
-- `libs/runefoble_platform/src/runefoble_platform/bus.py:1-37` defines `EventBus` and a global `bus`. `publish` uses `return_exceptions=True`, so it records no failure.
-- Publish sites: `services/asset_forge/src/asset_forge/dependencies.py:145-147`, `services/soundscape/src/soundscape/dependencies.py:149-151`, `gateway/api/src/gateway_api/assets.py:170-173` and `:266-269`.
+- `libs/runefoble_platform/src/runefoble_platform/bus.py` (removed) defines `EventBus` and a global `bus`. `publish` uses `return_exceptions=True`, so it records no failure.
+- Publish sites: `services/asset_forge/src/asset_forge/dependencies.py:145-147`, `services/soundscape/src/soundscape/dependencies.py:149-151`, `gateway/api/src/gateway_api/assets.py` (removed) and `:266-269`.
 - The only subscriber is `services/soundscape/src/soundscape/event_handlers.py:160-168`. asset_forge and the gateway have none.
-- `gateway/api/src/gateway_api/assets.py:162` and `:259` import `get_event_bus` from `gateway_api.main` inside the publish function.
+- `gateway/api/src/gateway_api/assets.py` (removed) and `:259` import `get_event_bus` from `gateway_api.main` inside the publish function.
 - Soundscape also runs a Redis consumer. A handler may run twice. Not verified.
 
 ## Documentation & Architecture Review

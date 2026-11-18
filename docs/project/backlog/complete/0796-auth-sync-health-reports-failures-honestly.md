@@ -1,7 +1,7 @@
 ---
 id: '0796'
 title: Auth Sync Health Reports Failures Honestly
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies: []
 governing_adrs:
@@ -16,7 +16,7 @@ target_release: 0.9.0
 # TASK-0796: Auth Sync Health Reports Failures Honestly
 
 ## Status
-Refined. Found during batch 23 integration, 2026-11-17.
+Complete
 
 ## Summary
 The identity sync health check catches every exception and returns a dict, and the gateway fills missing keys with `healthy` and `mock`. A broken sync can report healthy.

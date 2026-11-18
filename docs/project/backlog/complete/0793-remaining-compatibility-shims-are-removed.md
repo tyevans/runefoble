@@ -1,7 +1,7 @@
 ---
 id: '0793'
 title: Remaining Compatibility Shims and Stale Duplicates Are Removed
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies: []
 governing_adrs:
@@ -15,15 +15,15 @@ target_release: 0.9.0
 # TASK-0793: Remaining Compatibility Shims and Stale Duplicates Are Removed
 
 ## Status
-Refined. Found during batch 23 integration, 2026-11-17.
+Complete
 
 ## Summary
 Three DoR 9 violations remain: a soundscape route alias, a settlement facade module, and a stale duplicate settlement state model.
 
 ## Problem Statement
 - `services/soundscape/src/soundscape/routers/stems.py:106`: alias `POST /api/v1/soundscape/override`. `docs/reference/ports-and-endpoints.md:264` lists it.
-- `services/game_session/src/game_session/settlements/aggregate.py:1`: facade that re-exports `SettlementAggregate`.
-- `services/game_session/src/game_session/settlements/models.py:33`: duplicate `SettlementState` without `gold_treasury`.
+- `services/game_session/src/game_session/settlements/aggregate.py` (removed): facade that re-exports `SettlementAggregate`.
+- `services/game_session/src/game_session/settlements/models.py` (removed): duplicate `SettlementState` without `gold_treasury`.
 
 ## Documentation & Architecture Review
 - AGENTS.md hard invariants and DoR 9 (no compatibility shims).

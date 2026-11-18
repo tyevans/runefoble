@@ -1,7 +1,7 @@
 ---
 id: '0787'
 title: Asset Forge Page Shows Generated Asset IDs and the Forge Docs Match the Components
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies: []
 governing_adrs:
@@ -16,7 +16,7 @@ target_release: 0.9.0
 # TASK-0787: Asset Forge Page Shows Generated Asset IDs and the Forge Docs Match the Components
 
 ## Status
-Refined. Found during batch 23 integration, 2026-11-17.
+Complete
 
 ## Summary
 The App Shell forge page (TASK-0645) shows no asset id after generation, and the preview URL form is not done. One e2e feature still uses the removed `#/forge` path. A how-to names the wrong uploader input.
