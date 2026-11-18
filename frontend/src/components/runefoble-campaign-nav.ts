@@ -5,16 +5,14 @@ export interface CampaignOption { id: string; title: string; }
 
 @customElement('runefoble-campaign-nav')
 export class RunefobleCampaignNav extends LitElement {
-  @property({ type: String }) campaignId = '4';
-  @property({ type: String }) campaignTitle = 'Campaign #4';
-  @property({ type: String }) sessionId = '14';
+  @property({ type: String }) campaignId = '';
+  @property({ type: String }) campaignTitle = '';
+  @property({ type: String }) sessionTitle = '';
   @property({ type: String }) dmName = 'The Watcher';
   @property({ type: String }) userRole = 'Player';
   @property({ type: Boolean }) socketConnected = false;
-  @property({ type: Array }) availableCampaigns: CampaignOption[] = [
-    { id: '4', title: 'Tomb of the Star-Eater' },
-    { id: '5', title: 'Whispering Depths' },
-  ];
+  /** Campaigns from the API. The caller supplies them. The switcher holds no list of its own. */
+  @property({ type: Array }) availableCampaigns: CampaignOption[] = [];
 
   @state() private isSelectorOpen = false;
 
@@ -65,19 +63,20 @@ export class RunefobleCampaignNav extends LitElement {
     return html`
       <div class="session-info">
         <button class="badge-live" aria-haspopup="dialog" aria-expanded="${this.isSelectorOpen}"
-          @click=${() => { this.isSelectorOpen = !this.isSelectorOpen; }}>● Campaign #${this.campaignId} ▾</button>
+          @click=${() => { this.isSelectorOpen = !this.isSelectorOpen; }}>● ${this.campaignTitle || 'Select a campaign'} ▾</button>
         <span class="badge-role">${this.userRole}</span>
         <span class="badge-socket ${this.socketConnected ? 'connected' : 'disconnected'}">
           ${this.socketConnected ? '⚡ WebSocket Live' : '○ Standalone'}
         </span>
-        <span>Session ${this.sessionId}</span>
+        ${this.sessionTitle ? html`<span>${this.sessionTitle}</span>` : ''}
         <span>DM: ${this.dmName}</span>
       </div>
       ${this.isSelectorOpen ? html`
         <div class="selector-modal" role="dialog" aria-label="Campaign Selector">
+          ${this.availableCampaigns.length === 0 ? html`<p class="campaign-empty">No campaigns yet.</p>` : ''}
           ${this.availableCampaigns.map((c) => html`
             <button class="campaign-item" @click=${() => this.selectCampaign(c)}>
-              ${c.title} (#${c.id})
+              ${c.title}
             </button>
           `)}
         </div>
