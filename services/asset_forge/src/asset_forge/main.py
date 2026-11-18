@@ -15,7 +15,7 @@ from runefoble_platform.aggregate_loading import register_store_unavailable_hand
 from runefoble_platform.engine_ports import EngineUnavailableError, engine_unavailable_handler
 from runefoble_platform.event_publish import event_publish_failures
 
-from asset_forge.dependencies import get_wardrobe_generator
+from asset_forge.dependencies import event_bus_provider, get_wardrobe_generator
 from asset_forge.map_generation_engine import get_map_generator
 from asset_forge.routers.battlemap import router as battlemap_router
 from asset_forge.routers.print_forge import router as print_forge_router
@@ -24,11 +24,12 @@ from asset_forge.routers.wardrobe import router as wardrobe_router
 
 
 @asynccontextmanager
-async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Build the configured generators at start-up. A bad generator setting stops the service."""
     get_map_generator()
     get_wardrobe_generator()
-    yield
+    async with event_bus_provider.lifespan(app):
+        yield
 
 
 app = FastAPI(

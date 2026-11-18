@@ -14,12 +14,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from runefoble_platform.aggregate_loading import register_store_unavailable_handlers
 from runefoble_platform.event_publish import event_publish_failures
-from runefoble_platform.redis_bus import RedisStreamsEventBus
 from runefoble_platform.stream_consumer import consumer_statuses
 from runefoble_platform.ui_manifest import load_ui_manifest
 
 from soundscape.consumer import start_soundscape_consumers
-from soundscape.dependencies import settings
+from soundscape.dependencies import event_bus_provider
 from soundscape.event_handlers import register_soundscape_event_handlers
 from soundscape.routers.cue import router as cue_router
 from soundscape.routers.leitmotif import router as leitmotif_router
@@ -36,14 +35,14 @@ UI_MANIFEST = load_ui_manifest(
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Bootstrap service lifecycle, event handlers, and the Redis Streams consumer."""
     register_soundscape_event_handlers()
-    bus = RedisStreamsEventBus(redis_url=settings.redis_url)
+    bus = await event_bus_provider.connect()
     consumers = await start_soundscape_consumers(bus)
     app.state.consumers = {"soundscape": consumers}
     try:
         yield
     finally:
         await consumers.stop()
-        await bus.close()
+        await event_bus_provider.close()
         app.state.consumers = {}
 
 

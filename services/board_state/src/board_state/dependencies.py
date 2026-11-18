@@ -14,16 +14,15 @@ from runefoble_auth.principal import VerifiedPrincipal, require_principal
 from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
 from runefoble_auth.zitadel import ZitadelAuthService
 from runefoble_platform.config import PlatformSettings
+from runefoble_platform.event_bus import EventBusProvider
 from runefoble_platform.event_sourcing import (
     AggregateRepository,
     create_aggregate_repository,
 )
-from runefoble_platform.redis_bus import RedisStreamsEventBus
 from runefoble_platform.service_credential import expected_service_credential
 
 logger = logging.getLogger("runefoble.board_state")
 platform_settings = PlatformSettings()
-_event_bus: RedisStreamsEventBus | None = None
 _spicedb_client: SpiceDBClient | MockSpiceDBClient | None = None
 _zitadel_auth_service: ZitadelAuthService | None = None
 
@@ -46,20 +45,9 @@ class BoardNotFoundError(LookupError):
         super().__init__(f"Board not found: {session_id}")
 
 
-def get_event_bus() -> RedisStreamsEventBus | None:
-    """Return the Redis Streams bus, creating it on first use.
-
-    Initialization errors propagate. They are never hidden behind a silent None.
-    """
-    global _event_bus
-    if _event_bus is None and platform_settings.redis_url:
-        _event_bus = RedisStreamsEventBus(redis_url=platform_settings.redis_url)
-    return _event_bus
-
-
-def set_event_bus(bus: RedisStreamsEventBus | None) -> None:
-    global _event_bus
-    _event_bus = bus
+event_bus_provider = EventBusProvider(platform_settings)
+get_event_bus = event_bus_provider.get
+set_event_bus = event_bus_provider.set
 
 
 def get_spicedb_client() -> SpiceDBClient | MockSpiceDBClient:

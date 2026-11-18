@@ -24,19 +24,18 @@ from runefoble_events.events import (
     StandInStabilized,
 )
 from runefoble_platform.config import PlatformSettings
+from runefoble_platform.event_bus import EventBusProvider
 from runefoble_platform.event_publish import publish_best_effort
 from runefoble_platform.event_sourcing import (
     AggregateRepository,
     create_aggregate_repository,
 )
-from runefoble_platform.redis_bus import RedisStreamsEventBus
 from runefoble_platform.service_credential import expected_service_credential
 
 STREAM_CHARACTER = "runefoble.events.character"
 STREAM_CRAFTING = "runefoble.events.crafting"
 platform_settings = PlatformSettings()
 
-_event_bus: RedisStreamsEventBus | None = None
 _spicedb_client: SpiceDBClient | MockSpiceDBClient | None = None
 _zitadel_auth_service: ZitadelAuthService | None = None
 
@@ -55,17 +54,9 @@ def get_crafting_repository() -> AggregateRepository[CraftingAggregate]:
     return crafting_repo
 
 
-def get_event_bus() -> RedisStreamsEventBus | None:
-    global _event_bus
-    if _event_bus is None and platform_settings.redis_url:
-        with contextlib.suppress(Exception):
-            _event_bus = RedisStreamsEventBus(redis_url=platform_settings.redis_url)
-    return _event_bus
-
-
-def set_event_bus(bus: RedisStreamsEventBus | None) -> None:
-    global _event_bus
-    _event_bus = bus
+event_bus_provider = EventBusProvider(platform_settings)
+get_event_bus = event_bus_provider.get
+set_event_bus = event_bus_provider.set
 
 
 def get_spicedb_client() -> SpiceDBClient | MockSpiceDBClient:

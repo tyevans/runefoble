@@ -21,7 +21,7 @@ We adopt **Redis Streams** as the foundational asynchronous event broker connect
 3. **Consumer Groups**:
    Services register dedicated consumer groups (e.g. `board-animator-group`, `watcher-intelligence-group`, `gateway-websocket-fanout`) utilizing `XREADGROUP` to guarantee load-balanced, at-least-once delivery with explicit acknowledgment.
 4. **Fallback Interface**:
-   `libs/runefoble_platform` provides an abstract `EventBus` protocol with two concrete implementations: `RedisStreamsEventBus` for production/cluster deployment, and `InMemoryEventBus` for isolated unit tests.
+   `libs/runefoble_platform` provides an abstract `EventBus` protocol with one production implementation, `RedisStreamsEventBus`. Services get it through `EventBusProvider` (`runefoble_platform.event_bus`) and fail start-up when Redis is unreachable. Tests use `RedisStreamsEventBus` over a Redis test double.
 
 ## Consequences
 

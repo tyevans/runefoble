@@ -14,7 +14,6 @@ from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from runefoble_platform.aggregate_loading import register_store_unavailable_handlers
 from runefoble_platform.engine_ports import EngineUnavailableError, engine_unavailable_handler
-from runefoble_platform.redis_bus import RedisStreamsEventBus
 from voice_agent.dependencies import (
     STREAM_SESSION,
     STREAM_VOICE,
@@ -25,14 +24,9 @@ from voice_agent.dependencies import (
     to_uuid,
 )
 from voice_agent.dependencies import (
-    get_event_bus as _dep_get_event_bus,
-)
-from voice_agent.dependencies import (
-    set_event_bus as _dep_set_event_bus,
-)
-from voice_agent.dependencies import (
     set_watcher_client as _dep_set_watcher_client,
 )
+from voice_agent.event_bus import event_bus_provider, get_event_bus, set_event_bus
 from voice_agent.models import (
     AVAILABLE_PERSONAS,
     DSPApplyRequest,
@@ -63,10 +57,11 @@ from voice_agent.synthesis_engine import get_speech_synthesizer
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
-    """Build the configured speech engines at start-up. A bad engine setting stops the service."""
+    """Build the configured speech engines and connect Redis at start-up. A bad engine setting stops the service."""
     get_streaming_pipeline()
     get_speech_synthesizer()
-    yield
+    async with event_bus_provider.lifespan(_app):
+        yield
 
 
 app = FastAPI(
@@ -88,21 +83,6 @@ app.include_router(dsp_condition_router)
 app.include_router(stream_diagnostics_router)
 app.include_router(audio_filters_router)
 app.include_router(aec_diagnostics_router)
-
-_event_bus: RedisStreamsEventBus | None = None
-
-
-def get_event_bus() -> RedisStreamsEventBus:
-    global _event_bus
-    if _event_bus is None:
-        _event_bus = _dep_get_event_bus()
-    return _event_bus
-
-
-def set_event_bus(bus: RedisStreamsEventBus | None) -> None:
-    global _event_bus
-    _event_bus = bus
-    _dep_set_event_bus(bus)
 
 
 def set_watcher_client(client: httpx.AsyncClient | None) -> None:
@@ -189,7 +169,6 @@ __all__ = [
     "VoicePersona",
     "WATCHER_URL",
     "_dispatch_voice_audio_conditioned",
-    "_event_bus",
     "app",
     "dsp_pipeline",
     "get_event_bus",
