@@ -6,6 +6,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from runefoble_auth.authz_http import install_authz_error_handlers
 from runefoble_platform.aggregate_loading import register_store_unavailable_handlers
 from runefoble_platform.engine_ports import EngineUnavailableError, engine_unavailable_handler
 from runefoble_platform.event_publish import (
@@ -14,7 +15,6 @@ from runefoble_platform.event_publish import (
 )
 from runefoble_platform.event_sourcing import get_event_store
 from runefoble_platform.stand_in_action import StandInAction
-from the_watcher.authz_errors import install_authz_error_handlers
 from the_watcher.copilot_state import install_copilot_state_error_handlers
 from the_watcher.dependencies import (
     STREAM_BOARD,
