@@ -8,7 +8,7 @@ real-time WebSockets for the tactical board and voice chronicle.
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from game_session.settlement.router import router as settlement_haven_router
 from gateway_api.assets import router as assets_router
@@ -16,12 +16,10 @@ from gateway_api.auth import get_zitadel_auth_service
 from gateway_api.auth_sync import router as auth_sync_router
 from gateway_api.companion import companion_router, mobile_companion_websocket_endpoint
 from gateway_api.dependencies import (
-    WebSocketConnectionManager,
     event_bus_provider,
     get_event_bus,
     platform_settings,
     set_event_bus,
-    ws_manager,
 )
 from gateway_api.routers import (
     auth_router,
@@ -36,10 +34,10 @@ from gateway_api.routers import (
     soundscape_router,
     spectator_router,
 )
+from gateway_api.session_websocket import session_websocket_endpoint
 from gateway_api.signaling import voice_signaling_websocket_endpoint
 from gateway_api.upstream_errors import register_upstream_error_handlers
 from gateway_api.upstreams import UpstreamRegistry
-from gateway_api.websocket_auth import admit_gateway_websocket
 from gateway_api.websocket_endpoint import campaign_websocket_endpoint
 from gateway_mcp.dynamic import set_event_bus as set_dynamic_tool_event_bus
 from gateway_mcp.routers import tools_registry_router
@@ -134,23 +132,7 @@ async def campaign_websocket(websocket: WebSocket, campaign_id: str) -> None:
 @app.websocket("/ws/session/{session_id}")
 async def session_websocket(websocket: WebSocket, session_id: str) -> None:
     """Realtime stream connecting board, voice, and Watcher chronicle."""
-    if await admit_gateway_websocket(websocket) is None:
-        return
-    ws_manager.register(websocket)
-    try:
-        await websocket.send_json(
-            {
-                "type": "connected",
-                "session_id": session_id,
-                "message": "Connected to Runefoble real-time stream. The Watcher is listening.",
-            }
-        )
-        while True:
-            data = await websocket.receive_json()
-            # Broadcast incoming updates to all connected party members
-            await ws_manager.broadcast(data)
-    except WebSocketDisconnect:
-        ws_manager.disconnect(websocket)
+    await session_websocket_endpoint(websocket, session_id)
 
 
 @app.websocket("/ws/voice/{session_id}")
@@ -202,11 +184,9 @@ if __name__ == "__main__":
     main()
 
 __all__ = [
-    "WebSocketConnectionManager",
     "app",
     "configure_dynamic_tool_event_bus",
     "get_event_bus",
     "platform_settings",
     "set_event_bus",
-    "ws_manager",
 ]

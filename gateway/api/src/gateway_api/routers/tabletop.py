@@ -51,5 +51,5 @@ async def speak_and_act(
         "action_taken": "Valeros stepped forward 2 squares.",
         "watcher_commentary": "The Watcher observes your advance into the crypt.",
     }
-    await ws_manager.broadcast(event)
+    await ws_manager.broadcast(session_id, event)
     return event

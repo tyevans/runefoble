@@ -58,3 +58,23 @@ def client_sess(game_session_upstream) -> Iterator[TestClient]:
 def client_char(game_session_upstream) -> Iterator[TestClient]:
     with TestClient(character_app, headers=auth_headers("character-owner")) as character_client:
         yield character_client
+
+
+@pytest.fixture
+def open_session(client_gw: TestClient, client_sess: TestClient):
+    """Return a function that creates a campaign and a lobby session for an owner, over HTTP."""
+
+    def _open(owner: str) -> str:
+        campaign = client_gw.post(
+            "/api/v1/campaigns", json={"title": f"{owner} table"}, headers=auth_headers(owner)
+        )
+        assert campaign.status_code == 201, campaign.text
+        session = client_sess.post(
+            "/api/v1/sessions/create",
+            json={"campaign_id": campaign.json()["id"], "title": "Night", "dm_id": owner},
+            headers=auth_headers(owner),
+        )
+        assert session.status_code == 200, session.text
+        return session.json()["session_id"]
+
+    return _open

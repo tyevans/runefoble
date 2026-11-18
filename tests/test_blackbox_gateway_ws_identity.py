@@ -50,6 +50,11 @@ ROUTE_GROUPS = [
 ]
 
 
+# The session route also needs `session.observe`. Its accepted path is covered in
+# tests/test_blackbox_campaign_and_lobby/test_session_ws_scope.py with a real session.
+ACCEPTING_ROUTES = [route for route in ROUTE_GROUPS if route.id != "session"]
+
+
 @pytest.fixture
 def issuer() -> SigningTestIssuer:
     return SigningTestIssuer()
@@ -121,7 +126,7 @@ def test_x_user_id_header_denies_handshake(client: TestClient, path: str) -> Non
         pass
 
 
-@pytest.mark.parametrize("path", ROUTE_GROUPS)
+@pytest.mark.parametrize("path", ACCEPTING_ROUTES)
 def test_valid_bearer_subprotocol_accepts_handshake(
     client: TestClient, issuer: SigningTestIssuer, path: str
 ) -> None:

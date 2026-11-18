@@ -107,7 +107,7 @@ def test_session_lobby_launch_transition_and_events(
     assert joined.status_code == 200, joined.text
 
     with client_gw.websocket_connect(
-        f"/ws/session/{session_id}", subprotocols=ws_subprotocols("lobby-tester")
+        f"/ws/session/{session_id}", subprotocols=ws_subprotocols("dm_evelyn")
     ) as ws:
         assert ws.receive_json()["type"] == "connected"
         gw_launch = client_gw.post(f"/api/v1/sessions/{session_id}/start", headers=headers_dm)

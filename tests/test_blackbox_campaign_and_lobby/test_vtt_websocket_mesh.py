@@ -11,34 +11,19 @@ Governed by:
 
 from __future__ import annotations
 
-from uuid import uuid4
-
 import pytest
 from fastapi.testclient import TestClient
-from gateway_api.dependencies import ws_manager
-from gateway_api.main import app as gateway_app
 
 from tests.helpers.ws_identity import ws_subprotocols
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
-@pytest.fixture
-def client_gw() -> TestClient:
-    return TestClient(gateway_app)
-
-
-@pytest.fixture(autouse=True)
-def clean_ws_manager():
-    """Ensure WebSocket connection manager active connections are clean."""
-    ws_manager.active_connections.clear()
-    yield
-    ws_manager.active_connections.clear()
-
-
-def test_vtt_websocket_mesh_multi_client_readiness_and_stand_in(client_gw: TestClient) -> None:
+def test_vtt_websocket_mesh_multi_client_readiness_and_stand_in(
+    client_gw: TestClient, open_session
+) -> None:
     """Verify multi-client WebSocket synchronization for session lobby readiness and stand-in toggles."""
-    session_id = f"session-mesh-{uuid4()}"
+    session_id = open_session("mesh-tester")
 
     with client_gw.websocket_connect(
         f"/ws/session/{session_id}", subprotocols=ws_subprotocols("mesh-tester")
@@ -85,9 +70,11 @@ def test_vtt_websocket_mesh_multi_client_readiness_and_stand_in(client_gw: TestC
             assert msg_a_stand_in["isAbsent"] is True
 
 
-def test_vtt_websocket_mesh_dice_rolls_and_turn_advancement(client_gw: TestClient) -> None:
+def test_vtt_websocket_mesh_dice_rolls_and_turn_advancement(
+    client_gw: TestClient, open_session
+) -> None:
     """Verify live dice rolls (updating 3D tray) and turn advancements stream across party members."""
-    session_id = f"session-combat-{uuid4()}"
+    session_id = open_session("mesh-tester")
 
     with client_gw.websocket_connect(
         f"/ws/session/{session_id}", subprotocols=ws_subprotocols("mesh-tester")
@@ -136,9 +123,11 @@ def test_vtt_websocket_mesh_dice_rolls_and_turn_advancement(client_gw: TestClien
             assert recv_player["roundNumber"] == 2
 
 
-def test_vtt_websocket_mesh_aoe_templates_vfx_and_token_actions(client_gw: TestClient) -> None:
+def test_vtt_websocket_mesh_aoe_templates_vfx_and_token_actions(
+    client_gw: TestClient, open_session
+) -> None:
     """Verify AoE spell placements, WebGL particle VFX triggers, and radial menu token actions."""
-    session_id = f"session-tactical-{uuid4()}"
+    session_id = open_session("mesh-tester")
 
     with client_gw.websocket_connect(
         f"/ws/session/{session_id}", subprotocols=ws_subprotocols("mesh-tester")

@@ -59,6 +59,7 @@ export function getActiveView(route: MatchedRoute | null): AppActiveView {
 To prevent lingering connections, excessive memory usage, and background traffic, WebSocket connections are strictly scoped to session routes (`session-lobby` and `session-active`):
 
 1. **Connection**: When entering a session route, `manageWebSocketLifecycle(route)` establishes a connection to `/ws/session/:sessionId`.
+   The gateway refuses a user who lacks `session.observe` on that session. It closes the socket with code 4403. A message reaches only the sockets of its own session. One gateway replica holds these groups. With several replicas, a client sees only the messages that its own replica handled.
 2. **Teardown**: When navigating to a non-session route (such as `#/campaigns` or `#/characters`), `disconnectWebSocket()` immediately closes the socket, removes event handlers, and cancels reconnect timers.
 3. **Router Teardown**: The App Shell registers a router teardown hook via `router.registerTeardown()`, ensuring that any route transition out of a session cleanly shuts down the active socket.
 
