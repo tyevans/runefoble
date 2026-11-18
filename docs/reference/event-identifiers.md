@@ -82,6 +82,7 @@ add the `runefoble.` prefix when the identifier lacks it.
 | `PlayerJoinedSession` | `PlayerJoinedSession` | `runefoble_events.session` |
 | `PlayerLeftSession` | `PlayerLeftSession` | `runefoble_events.session` |
 | `PlayerSpokeEvent` | `PlayerSpokeEvent` | `runefoble_events.watcher_events.narrative` |
+| `ProfileUpdated` | `ProfileUpdated` | `runefoble_events.user_profile` |
 | `ReadinessToggled` | `ReadinessToggled` | `runefoble_events.session` |
 | `RegionalMerchantStockUpdated` | `RegionalMerchantStockUpdated` | `runefoble_events.west_marches` |
 | `RelicForged` | `RelicForged` | `runefoble_events.lore` |

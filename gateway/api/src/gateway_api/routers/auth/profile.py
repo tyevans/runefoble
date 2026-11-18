@@ -1,18 +1,23 @@
-"""User profile management and claims persistence router."""
+"""User profile routes. The gateway verifies the token and forwards to game_session.
+
+game_session owns the profile as event-sourced state (TASK-0742, ADR-0015 a and b). The
+gateway holds no profile data. A failed upstream call returns the mapping in
+`upstream_errors.py`: no substitute profile is returned.
+"""
 
 from __future__ import annotations
 
-from typing import Annotated, Any
+from typing import Any
 
-from fastapi import APIRouter, Depends
-from gateway_api.auth import get_current_user
+from fastapi import APIRouter, Request
+from gateway_api.auth import CurrentPrincipal
+from gateway_api.proxy import forward_json
 from pydantic import BaseModel, ConfigDict, Field
-from runefoble_auth.principal import VerifiedPrincipal
+
+SERVICE = "game_session"
+PROFILE = "/api/v1/profile"
 
 router = APIRouter(tags=["User Profile"])
-
-# In-memory storage for persistent user profile attributes across sessions
-USER_PROFILES: dict[str, dict[str, Any]] = {}
 
 
 class UpdateProfileRequest(BaseModel):
@@ -24,60 +29,21 @@ class UpdateProfileRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
 
-def get_stored_profile(user: VerifiedPrincipal) -> dict[str, Any]:
-    stored = USER_PROFILES.setdefault(
-        user.user_id,
-        {
-            "user_id": user.user_id,
-            "username": user.username,
-            "email": user.email,
-            "display_name": user.username,
-            "avatar_url": None,
-            "bio": "",
-        },
-    )
-    return {
-        "user_id": user.user_id,
-        "username": user.username,
-        "email": stored.get("email", user.email),
-        "display_name": stored.get("display_name", user.username),
-        "avatar_url": stored.get("avatar_url", None),
-        "bio": stored.get("bio", ""),
-    }
-
-
 @router.get("/api/v1/profile")
-async def get_profile(
-    user: Annotated[VerifiedPrincipal, Depends(get_current_user)],
-) -> dict[str, Any]:
-    """Retrieve authenticated Zitadel user profile claims and customized settings."""
-    return get_stored_profile(user)
+async def get_profile(request: Request, user: CurrentPrincipal) -> Any:
+    """Read the caller's profile from game_session."""
+    return await forward_json(request, service=SERVICE, method="GET", path=PROFILE)
 
 
 @router.patch("/api/v1/profile")
 async def update_profile(
-    req: UpdateProfileRequest,
-    user: Annotated[VerifiedPrincipal, Depends(get_current_user)],
-) -> dict[str, Any]:
-    """Update user profile claims (display name, avatar URL, bio)."""
-    stored = USER_PROFILES.setdefault(
-        user.user_id,
-        {
-            "user_id": user.user_id,
-            "username": user.username,
-            "email": user.email,
-            "display_name": user.username,
-            "avatar_url": None,
-            "bio": "",
-        },
+    req: UpdateProfileRequest, request: Request, user: CurrentPrincipal
+) -> Any:
+    """Edit the caller's profile in game_session. Only the fields sent are changed."""
+    return await forward_json(
+        request,
+        service=SERVICE,
+        method="PATCH",
+        path=PROFILE,
+        json_body=req.model_dump(exclude_none=True),
     )
-    if req.display_name is not None:
-        stored["display_name"] = req.display_name
-    if req.avatar_url is not None:
-        stored["avatar_url"] = req.avatar_url
-    if req.bio is not None:
-        stored["bio"] = req.bio
-    if req.email is not None:
-        stored["email"] = req.email
-
-    return get_stored_profile(user)

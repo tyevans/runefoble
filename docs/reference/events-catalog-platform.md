@@ -44,6 +44,12 @@ Owned by `game_session` (ADR-0015 decision a). Defined in `libs/runefoble_events
 - **`CampaignInviteRedeemed`**: Emitted when a user redeems an invite. Fields: `campaign_id`, `user_id`.
 - **`CampaignSessionCreated`**: Emitted when a session or staging lobby is added to a campaign. Fields: `campaign_id`, `session_id`, `title`, `status`, `scheduled_at`, `description`.
 
+### User Profile Events (`aggregate_type: UserProfile`)
+
+Owned by `game_session` (ADR-0015 decision a, TASK-0742). Defined in `libs/runefoble_events/src/runefoble_events/user_profile.py`. The stream ID is a UUID derived from the Zitadel subject, so one user has one profile stream.
+
+- **`ProfileUpdated`**: Emitted when a user edits profile attributes. Carries only the changed fields. Fields: `subject`, `changes` (any of `display_name`, `avatar_url`, `bio`, `email`).
+
 ### Cross-Campaign Settlement & Haven Events (`aggregate_type: Settlement`)
 
 - **`SettlementFoundedEvent`** (`runefoble.events.game_session.settlement_founded` / `SettlementFounded`): Emitted when a new settlement haven is founded with scale (hamlet, village, market town, city, metropolis), biome, coordinates, and initial district zoning. Fields: `settlement_id`, `campaign_id`, `name`, `scale`, `biome`, `coordinates`, `tier`, `prosperity`, `unlocked_districts`, `founded_by`, `metadata`.
