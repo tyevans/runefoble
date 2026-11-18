@@ -40,3 +40,22 @@ test('an unreachable SpiceDB surfaces as DependencyUnavailableError, not a denia
     DependencyUnavailableError
   );
 });
+
+test('a bulk check with no items makes no call and returns no answers', async () => {
+  const client = createSpiceDbClient({ endpoint: '127.0.0.1:9', presharedKey: 'test-only', deadlineMs: 1000 });
+  assert.deepEqual(await client.checkPermissions([]), []);
+});
+
+test('an unreachable SpiceDB fails a bulk check as DependencyUnavailableError', async () => {
+  const client = createSpiceDbClient({ endpoint: '127.0.0.1:9', presharedKey: 'test-only', deadlineMs: 1000 });
+  await assert.rejects(
+    client.checkPermissions([
+      {
+        resource: { objectType: 'audience_poll', objectId: 'poll-down' },
+        permission: 'view',
+        subject: { objectType: 'user', objectId: 'someone' },
+      },
+    ]),
+    DependencyUnavailableError
+  );
+});

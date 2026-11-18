@@ -26,6 +26,11 @@ export interface RelationshipWrite {
 export interface SpiceDbPort {
   /** True only when SpiceDB reports HAS_PERMISSION at full consistency. */
   checkPermission(query: PermissionQuery): Promise<boolean>;
+  /**
+   * Answers many checks in one SpiceDB call. Answers keep the order of `queries`. An empty list makes no call.
+   * Each answer is true only for HAS_PERMISSION at full consistency.
+   */
+  checkPermissions(queries: PermissionQuery[]): Promise<boolean[]>;
   /** Creates or refreshes one relationship (OPERATION_TOUCH). */
   writeRelationship(write: RelationshipWrite): Promise<void>;
 }

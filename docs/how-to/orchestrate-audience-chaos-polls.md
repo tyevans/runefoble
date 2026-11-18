@@ -12,6 +12,7 @@ Audience polls and chaos modifier approvals are guarded by SpiceDB Zanzibar perm
 - **Spectator / Viewer**: A user with the `spectator`, `player`, `game_master`, `dungeon_master`, or `owner` relation on `campaign:<campaign_id>` has the `view` permission. That user can read polls and vote (`audience_poll.vote`). The voter is the token subject.
 - **Dungeon Master / Moderation**: Creating a poll needs `campaign#run_session`. Closing a poll needs `audience_poll#moderate`. Approving or vetoing a proposal needs `audience_poll#approve` or `audience_poll#veto`. These permissions resolve to the `dungeon_master`, `game_master`, or `owner` relation.
 - The service asks SpiceDB for every check. It holds no local role or grant table.
+- A list request (`GET /polls`, `GET /proposals`) checks every item in one bulk call (`CheckBulkPermissions`). It does not make one call per item.
 - An unauthorized caller gets HTTP `403 Forbidden`. A caller with no token gets `401 Unauthorized`. A SpiceDB outage gets `503 Service Unavailable`.
 - Grant campaign relations in SpiceDB through its write API, not through Audience Studio. Audience Studio has no grant route. `POST /api/v1/audience/auth/tuples` was removed in TASK-0533 and returns `404 Not Found`.
 - Proposal parameters appear only for callers with `audience_poll.approve`. Other callers see the title and status.

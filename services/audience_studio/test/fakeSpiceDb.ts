@@ -33,6 +33,8 @@ export class FakeSpiceDb implements SpiceDbPort {
   private readonly campaignRoles = new Set<string>();
   private readonly pollCampaign = new Map<string, string>();
   private unavailable = false;
+  /** Calls the service made, by kind. A listing must use `bulk` and never `single`. */
+  readonly calls = { single: 0, bulk: 0 };
 
   /** Grants a campaign relation to a user, as a test would write it into SpiceDB. */
   grant(campaignId: string, relation: (typeof CAMPAIGN_RELATIONS)[number], userId: string): void {
@@ -48,10 +50,19 @@ export class FakeSpiceDb implements SpiceDbPort {
   }
 
   async checkPermission(query: PermissionQuery): Promise<boolean> {
+    this.calls.single += 1;
     if (this.unavailable) {
       throw new DependencyUnavailableError('SpiceDB is unavailable (fake outage)');
     }
     return this.evaluate(query.resource, query.permission, query.subject);
+  }
+
+  async checkPermissions(queries: PermissionQuery[]): Promise<boolean[]> {
+    this.calls.bulk += 1;
+    if (this.unavailable) {
+      throw new DependencyUnavailableError('SpiceDB is unavailable (fake outage)');
+    }
+    return queries.map((q) => this.evaluate(q.resource, q.permission, q.subject));
   }
 
   async writeRelationship(write: RelationshipWrite): Promise<void> {

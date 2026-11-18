@@ -90,6 +90,40 @@ export function createSpiceDbClient(settings: SpiceDbClientSettings): SpiceDbPor
       }
     },
 
+    async checkPermissions(queries: PermissionQuery[]): Promise<boolean[]> {
+      if (queries.length === 0) return [];
+      try {
+        const response = await client.promises.checkBulkPermissions({
+          consistency: v1.Consistency.create({ requirement: { oneofKind: 'fullyConsistent', fullyConsistent: true } }),
+          items: queries.map((query) => ({
+            resource: query.resource,
+            permission: query.permission,
+            subject: { object: query.subject, optionalRelation: '' },
+            context: undefined,
+          })),
+          withTracing: false,
+        });
+        if (response.pairs.length !== queries.length) {
+          throw new Error(`SpiceDB answered ${response.pairs.length} bulk checks for ${queries.length} requests`);
+        }
+        return response.pairs.map((pair) => {
+          if (pair.response.oneofKind === 'error') {
+            const status = pair.response.error;
+            if (status.code === UNAVAILABLE || status.code === DEADLINE_EXCEEDED) {
+              throw new DependencyUnavailableError('SpiceDB is unavailable');
+            }
+            throw new Error(`SpiceDB bulk check failed: ${status.message}`);
+          }
+          if (pair.response.oneofKind !== 'item') {
+            throw new Error('SpiceDB bulk check returned no answer for an item');
+          }
+          return pair.response.item.permissionship === v1.CheckPermissionResponse_Permissionship.HAS_PERMISSION;
+        });
+      } catch (err: unknown) {
+        throw asDependencyError(err);
+      }
+    },
+
     async writeRelationship(write: RelationshipWrite): Promise<void> {
       try {
         await client.promises.writeRelationships(
