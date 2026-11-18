@@ -176,7 +176,7 @@ These fixtures read the table. Every test gets the autouse fixtures. Each one se
 |---|---|
 | `default_spicedb_client` (autouse) | Sets one strict `MockSpiceDBClient` in every service and in the shared factory. It does nothing for live SpiceDB tests. |
 | `spicedb` | Returns that mock. Write tuples to it only to test SpiceDB itself. |
-| `default_redis_event_bus` (autouse) | Sets one in-memory event bus in every service. |
+| `default_redis_event_bus` (autouse) | Sets one Redis Streams bus over the `mock_bus` double in every service. |
 | `mock_bus` | Returns the Redis double behind that bus. Read published events from `mock_bus.streams`. |
 | `default_service_verifiers`, `shared_issuer_in_session_verifiers` (autouse) | Trust the shared signing issuer in token-verifying services. |
 | `trusted_ws_issuer` | Trusts the shared issuer in the gateway, game_session and the_watcher for one test. |
