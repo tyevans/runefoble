@@ -96,3 +96,14 @@ Source: `.audit/synth/discovered-round2.md`.
 
 - Severity: critical
 - Source audits: `w1-board-state.md`, `w3-authz-coverage.md`
+
+## Orchestrator Addenda (2026-11-17, round 3)
+- `board_token` relations are written only by the TokenPlaced identity-sync consumer, and no deployment
+  wires that consumer (found by TASK-0545). Until it runs, every token move is denied. This task wires
+  the consumer in the board_state lifespan (supervised, see
+  docs/how-to/run-supervised-redis-stream-consumers.md) and in Helm, or writes the tuple in the
+  token-placement command path. Choose one, record it, and add a frontdoor test: place a token through
+  the public route, then move it as its owner (200) and as another player (403).
+- TASK-0546 already covers board creation, traps, secret layer, map switch, terrain and fog. Do not
+  redo those. The UI still sends an unused `campaign_id` query on board reads; remove it here if you
+  touch that client.
