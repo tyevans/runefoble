@@ -19,11 +19,11 @@ from inference_worker.config import WorkerSettings
 from inference_worker.llm_factory import build_llm_port
 from runefoble_platform.service_credential import SERVICE_CREDENTIAL_HEADER
 from the_watcher.main import app as watcher_app
-from the_watcher.routers.intent import speech
 
 from tests.helpers.inference_worker_port import install_worker_port
 from tests.helpers.live_services import closed_port_url, serve
 from tests.helpers.spicedb_factory import make_table_runner
+from tests.helpers.watcher_engine import error_fields, select_worker_engine
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 WORKER_AUTH = {SERVICE_CREDENTIAL_HEADER: os.environ["RUNEFOBLE_SERVICE_CREDENTIAL"]}
@@ -252,22 +252,25 @@ async def test_watcher_speech_surfaces_worker_503(use_worker_backend, monkeypatc
     }
 
     with serve(api.app) as worker_url, serve(_empty_board_app()) as board_url:
-        monkeypatch.setattr(speech, "INFERENCE_URL", worker_url)
-        monkeypatch.setattr(speech, "BOARD_STATE_URL", board_url)
+        select_worker_engine(monkeypatch, worker_url)
+        monkeypatch.setenv("RUNEFOBLE_BOARD_STATE_URL", board_url)
         async with AsyncClient(
             transport=ASGITransport(app=watcher_app), base_url="http://test", headers=WATCHER_AUTH
         ) as ac:
             resp = await ac.post("/api/v1/watcher/intent", json=speech_payload)
 
     assert resp.status_code == 503
-    assert resp.json()["detail"] == {"error": "backend_unavailable", "backend": "openai_compatible"}
+    assert error_fields(resp.json()["detail"]) == {
+        "error": "backend_unavailable",
+        "backend": "openai_compatible",
+    }
 
 
 @pytest.mark.asyncio
 async def test_watcher_speech_unreachable_worker_is_503_not_template(monkeypatch):
     """With the worker unreachable, The Watcher does not return a template reply."""
     await make_table_runner("user-1", "sess-1", "camp-1")
-    monkeypatch.setattr(speech, "INFERENCE_URL", closed_port_url())
+    select_worker_engine(monkeypatch, closed_port_url())
     speech_payload = {
         "speaker_id": "user-1",
         "speaker_name": "Valeros",
@@ -277,14 +280,17 @@ async def test_watcher_speech_unreachable_worker_is_503_not_template(monkeypatch
     }
 
     with serve(_empty_board_app()) as board_url:
-        monkeypatch.setattr(speech, "BOARD_STATE_URL", board_url)
+        monkeypatch.setenv("RUNEFOBLE_BOARD_STATE_URL", board_url)
         async with AsyncClient(
             transport=ASGITransport(app=watcher_app), base_url="http://test", headers=WATCHER_AUTH
         ) as ac:
             resp = await ac.post("/api/v1/watcher/intent", json=speech_payload)
 
     assert resp.status_code == 503
-    assert resp.json()["detail"] == {"error": "backend_unavailable", "backend": "inference_worker"}
+    assert error_fields(resp.json()["detail"]) == {
+        "error": "backend_unavailable",
+        "backend": "inference_worker",
+    }
 
 
 def _empty_board_app() -> FastAPI:

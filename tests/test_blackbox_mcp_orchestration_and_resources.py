@@ -22,11 +22,11 @@ from mcp.types import CallToolResult
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 from the_watcher.main import app as watcher_app
 from the_watcher.main import set_event_bus as watcher_set_event_bus
-from the_watcher.routers import autonomous_dm
 
 from tests.helpers.live_services import closed_port_url, serve, unavailable_app
 from tests.helpers.mcp_http import call_tool_over_http, read_resource_over_http, serve_mcp
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.watcher_engine import select_worker_engine
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
@@ -176,7 +176,7 @@ async def test_blackbox_narration_comes_from_the_watcher_and_follows_session(
     first = _create_session(services["session"], "Gate of Ash")
     second = _create_session(services["session"], "Drowned Vault")
     with serve(_fake_worker()) as worker_url:
-        monkeypatch.setattr(autonomous_dm, "INFERENCE_URL", worker_url)
+        select_worker_engine(monkeypatch, worker_url)
         narrated_first = tool_payload(
             await call_tool("narrate_with_the_watcher", narrate_arguments(first, "Gate"))
         )
@@ -199,7 +199,7 @@ async def test_blackbox_narration_worker_unavailable_returns_tool_error(
     """Verify a failed inference worker gives an MCP error, not a template narration."""
     session_id = _create_session(services["session"], "Silent Hall")
     with serve(unavailable_app(503)) as worker_url:
-        monkeypatch.setattr(autonomous_dm, "INFERENCE_URL", worker_url)
+        select_worker_engine(monkeypatch, worker_url)
         result = await call_tool("narrate_with_the_watcher", narrate_arguments(session_id, "Hall"))
 
     assert result.isError

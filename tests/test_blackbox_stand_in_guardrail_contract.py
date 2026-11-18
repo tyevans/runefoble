@@ -21,11 +21,11 @@ from inference_worker.llm_factory import build_llm_port
 from runefoble_platform.service_credential import SERVICE_CREDENTIAL_HEADER
 from runefoble_platform.stand_in_guardrails import StandInGuardrailPolicy
 from the_watcher.main import app as watcher_app
-from the_watcher.routers import stand_in as stand_in_router
 
 from tests.helpers.inference_worker_port import install_worker_port
 from tests.helpers.live_services import serve
 from tests.helpers.spicedb_factory import make_table_runner
+from tests.helpers.watcher_engine import select_worker_engine
 from tests.helpers.ws_identity import SIGNING_ISSUER
 from tests.test_inference_worker_failure_contract import _FakeLLMHandler, _llm_settings
 
@@ -100,7 +100,7 @@ async def test_watcher_returns_guardrails_the_worker_applied(worker_backend, mon
     worker_backend(WorkerSettings(backend="mock"))
 
     with serve(api.app) as worker_url:
-        monkeypatch.setattr(stand_in_router, "INFERENCE_URL", worker_url)
+        select_worker_engine(monkeypatch, worker_url)
         async with AsyncClient(
             transport=ASGITransport(app=watcher_app),
             base_url="http://test",
@@ -124,7 +124,7 @@ async def test_watcher_reports_no_guardrail_when_none_was_enforced(worker_backen
     )
 
     with serve(api.app) as worker_url:
-        monkeypatch.setattr(stand_in_router, "INFERENCE_URL", worker_url)
+        select_worker_engine(monkeypatch, worker_url)
         async with AsyncClient(
             transport=ASGITransport(app=watcher_app),
             base_url="http://test",

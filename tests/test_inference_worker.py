@@ -219,15 +219,15 @@ async def test_stand_in_graph_with_penalties(mock_port):
 
 
 @pytest.mark.asyncio
-async def test_watcher_service_fallback():
+async def test_watcher_heuristic_engine_is_explicit_and_reported():
     await make_table_runner("user-1", "sess-1", "camp-1")
-    # Test that the_watcher still functions cleanly when no inference worker url is set
+    # The local rule engine runs only when the setting selects it. The health route reports it.
     async with AsyncClient(
         transport=ASGITransport(app=watcher_app), base_url="http://test", headers=WATCHER_AUTH
     ) as ac:
         resp = await ac.get("/healthz")
         assert resp.status_code == 200
-        assert "inference_worker_url" in resp.json()
+        assert resp.json()["watcher_engine"] == "heuristic"
 
         act_resp = await ac.post(
             "/api/v1/watcher/transcribe-and-act",

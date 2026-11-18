@@ -23,6 +23,9 @@ os.environ.setdefault("RUNEFOBLE_SERVICE_CREDENTIAL", "test-only-service-credent
 # Tests select the in-memory event store explicitly. The platform default is PostgreSQL, and a
 # deployed environment refuses memory (TASK-0707). Tests that need PostgreSQL pass settings.
 os.environ["RUNEFOBLE_EVENT_STORE_BACKEND"] = "memory"
+# The Watcher defaults to its inference worker (TASK-0741). Tests that need the local rule engine
+# select it here. Tests that need the worker set the worker URL themselves with monkeypatch.
+os.environ.setdefault("RUNEFOBLE_WATCHER_ENGINE", "heuristic")
 # ruff: noqa: E402  (imports below construct settings, so the key must be set first)
 
 import pytest

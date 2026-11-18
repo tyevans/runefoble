@@ -129,6 +129,8 @@ The chart stores every credential in one Kubernetes Secret and reads it with `se
 
 ## Cross-Service URLs (TASK-0624)
 
+`RUNEFOBLE_WATCHER_ENGINE` is not a URL. It selects The Watcher's engine adapters: `inference_worker` (default) or `heuristic`. The chart sets it on `the-watcher` through `services.theWatcher.env`. With `inference_worker`, The Watcher needs `RUNEFOBLE_INFERENCE_URL` and fails at start-up without it.
+
 The chart sets each service-to-service URL. The URL uses the in-cluster service name and the port from `services.<name>.port`. The chart renders each key only on the containers listed below. Each service reads its URL from the environment. No code default uses `localhost`.
 
 | Environment variable | Value in cluster | Rendered on | Read by |

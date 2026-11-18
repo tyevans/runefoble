@@ -2,15 +2,18 @@
 
 from __future__ import annotations
 
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from runefoble_platform.aggregate_loading import register_store_unavailable_handlers
+from runefoble_platform.engine_ports import EngineUnavailableError, engine_unavailable_handler
 from runefoble_platform.event_publish import (
     event_publish_failures,
     install_publish_failure_handler,
 )
 from the_watcher.authz_errors import install_authz_error_handlers
 from the_watcher.dependencies import (
-    INFERENCE_URL,
     STREAM_BOARD,
     STREAM_WATCHER,
     autonomous_dm_engine,
@@ -23,6 +26,7 @@ from the_watcher.dependencies import (
     set_event_bus,
     to_uuid,
 )
+from the_watcher.engine_selection import WatcherEngineSettings, load_watcher_ports
 from the_watcher.models import (
     CandidateTarget,
     CompoundActionNode,
@@ -57,14 +61,24 @@ from the_watcher.routers import (
     ui_manifest_router,
 )
 
+
+@asynccontextmanager
+async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
+    """Select the engine ports first. A missing worker URL or a bad setting stops start-up."""
+    load_watcher_ports(engine)
+    async with event_bus_provider.lifespan(app):
+        yield
+
+
 app = FastAPI(
     title="Runefoble - The Watcher Service",
     version="0.1.0",
     description="AI Gameplay System: Speech-to-Intent, Board Animator, Autonomous DM & Missing Player Stand-in.",
-    lifespan=event_bus_provider.lifespan,
+    lifespan=_lifespan,
 )
 
 register_store_unavailable_handlers(app)
+app.add_exception_handler(EngineUnavailableError, engine_unavailable_handler)
 app.include_router(intent_router)
 app.include_router(autonomous_dm_router)
 app.include_router(stand_in_router)
@@ -83,7 +97,7 @@ async def health_check():
     return {
         "status": "ok",
         "service": "the_watcher",
-        "inference_worker_url": INFERENCE_URL or "none (using local heuristic engine)",
+        "watcher_engine": WatcherEngineSettings().watcher_engine,
         "event_publish_failures": event_publish_failures(),
     }
 
@@ -103,7 +117,6 @@ __all__ = [
     "DMGuidanceRequest",
     "EncounterSpawnRequest",
     "EntityTarget",
-    "INFERENCE_URL",
     "IntentExecuteRequest",
     "IntentExecuteResponse",
     "IntentParseRequest",
