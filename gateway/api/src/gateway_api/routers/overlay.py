@@ -26,10 +26,11 @@ from gateway_api.overlay_templates import (
     render_obs_overlay_html,
     render_overlay_html,
 )
-from gateway_api.session_access import has_session_permission, socket_may
+from gateway_api.session_access import has_session_permission
 from gateway_api.spectator import get_raw_session_state
 from gateway_api.websocket_auth import admit_gateway_websocket
 from runefoble_auth.errors import AuthzUnavailableError
+from runefoble_auth.websocket import action_authorizer, send_socket_error
 
 router = APIRouter(tags=["OBS Overlay"])
 
@@ -90,10 +91,17 @@ async def _may_publish(websocket: WebSocket, session_id: str, user_id: str, acti
     try:
         allowed = await has_session_permission(session_id, user_id, "participate")
     except AuthzUnavailableError:
-        await websocket.send_json({"type": "error", "code": "AUTHZ_UNAVAILABLE", "action": action})
+        await send_socket_error(
+            websocket, "AUTHZ_UNAVAILABLE", "Authorization unavailable", action=action
+        )
         return False
     if not allowed:
-        await websocket.send_json({"type": "error", "code": "PERMISSION_DENIED", "action": action})
+        await send_socket_error(
+            websocket,
+            "PERMISSION_DENIED",
+            f"Action '{action}' needs session.participate",
+            action=action,
+        )
     return allowed
 
 
@@ -101,10 +109,10 @@ async def _may_publish(websocket: WebSocket, session_id: str, user_id: str, acti
 @router.websocket("/ws/overlay/{session_id}")
 async def overlay_websocket_endpoint(websocket: WebSocket, session_id: str) -> None:
     """Real-time spectator WebSocket feed delivering sanitized updates."""
-    principal = await admit_gateway_websocket(websocket)
+    principal = await admit_gateway_websocket(
+        websocket, action_authorizer("session.observe", session_id)
+    )
     if principal is None:
-        return
-    if not await socket_may(websocket, session_id, principal.user_id, "observe"):
         return
     ws_overlay_manager.register(session_id, websocket)
     raw = get_raw_session_state(session_id)

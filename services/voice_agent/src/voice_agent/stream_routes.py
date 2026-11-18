@@ -9,11 +9,15 @@ from typing import Annotated, Any
 
 from fastapi import APIRouter, Header, HTTPException, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
-from runefoble_auth.websocket import WS_POLICY_VIOLATION, bearer_token_from_subprotocols
+from runefoble_auth.websocket import (
+    WS_AUTHORIZATION_REFUSED,
+    admit_websocket,
+    bearer_token_from_subprotocols,
+)
 from runefoble_platform.engine_ports import EngineUnavailableError
 from runefoble_platform.event_publish import DomainEventPublishError
 from voice_agent.auth import VoicePrincipal, get_voice_verifier
-from voice_agent.authz import admit_speaker_websocket, require_speaker, speaker_allowed
+from voice_agent.authz import require_speaker, speaker_allowed, speaker_authorizer
 from voice_agent.stt import get_streaming_pipeline
 
 logger = logging.getLogger("runefoble.voice_agent.stream_routes")
@@ -98,7 +102,9 @@ async def audio_stream_websocket(
     spk_id = qp.get("speaker_id") or speaker_id
     spk_name = qp.get("speaker_name") or "Player"
     camp_id = qp.get("campaign_id") or sess_id
-    principal = await admit_speaker_websocket(websocket, get_voice_verifier(), sess_id, spk_id)
+    principal = await admit_websocket(
+        websocket, get_voice_verifier(), speaker_authorizer(sess_id, spk_id)
+    )
     if principal is None:
         return
     pipeline = get_streaming_pipeline()
@@ -139,7 +145,7 @@ async def audio_stream_websocket(
                     logger.warning(
                         "Voice stream frame names a speaker the principal may not act for"
                     )
-                    await websocket.close(code=WS_POLICY_VIOLATION)
+                    await websocket.close(code=WS_AUTHORIZATION_REFUSED)
                     break
                 verified_pairs.add((sess_id, spk_id))
 

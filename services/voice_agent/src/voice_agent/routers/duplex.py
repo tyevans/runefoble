@@ -10,9 +10,10 @@ import json
 import logging
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from runefoble_auth.websocket import admit_websocket
 from runefoble_platform.event_publish import publish_best_effort
 from voice_agent.auth import VoicePrincipal, get_voice_verifier
-from voice_agent.authz import admit_speaker_websocket, require_action
+from voice_agent.authz import require_action, speaker_authorizer
 from voice_agent.barge_in import BargeInDetector
 from voice_agent.coordinator import VoiceRoomCoordinator, get_voice_room_coordinator
 from voice_agent.dependencies import STREAM_SESSION, STREAM_VOICE, get_event_bus
@@ -87,7 +88,10 @@ async def duplex_websocket(
     sess_id = qp.get("session_id") or session_id
     spk_id = qp.get("speaker_id") or speaker_id
     spk_name = qp.get("speaker_name") or "Player"
-    if await admit_speaker_websocket(websocket, get_voice_verifier(), sess_id, spk_id) is None:
+    if (
+        await admit_websocket(websocket, get_voice_verifier(), speaker_authorizer(sess_id, spk_id))
+        is None
+    ):
         return
 
     barge_in, aec = BargeInDetector(), AcousticEchoCanceller()

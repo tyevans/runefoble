@@ -6,6 +6,7 @@ import logging
 from datetime import UTC, datetime
 
 from fastapi import WebSocket, WebSocketDisconnect
+from runefoble_auth.websocket import action_authorizer, admit_websocket
 from runefoble_events.voice import (
     MobileAudioProfileAdapted,
     MobileCompanionConnected,
@@ -24,7 +25,6 @@ from voice_agent.mobile import (
     create_haptic_payload,
 )
 from voice_agent.signaling.auth import extract_peer_and_role
-from voice_agent.socket_access import admit_session_socket
 
 logger = logging.getLogger("runefoble.voice_agent.companion_socket")
 
@@ -35,8 +35,8 @@ async def mobile_companion_websocket_endpoint(
     manager: MobileCompanionManager | None = None,
 ) -> None:
     """Handle low-bandwidth mobile companion WebSockets at /ws/mobile-companion/{session_id}."""
-    principal = await admit_session_socket(
-        websocket, get_voice_verifier(), session_id, "session.observe"
+    principal = await admit_websocket(
+        websocket, get_voice_verifier(), action_authorizer("session.observe", session_id)
     )
     if principal is None:
         return

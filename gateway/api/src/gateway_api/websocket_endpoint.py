@@ -16,6 +16,7 @@ from gateway_api.websocket_validator import (
     WebSocketActionValidator,
     default_action_validator,
 )
+from runefoble_auth.websocket import send_socket_error
 from runefoble_auth.zitadel import ZitadelAuthService
 from runefoble_platform.event_publish import publish_best_effort
 
@@ -46,12 +47,6 @@ async def _publish_event(
         await publish_best_effort(bus, _resolve_stream(action), payload)
 
 
-async def _send_denied(websocket: WebSocket, action: str, msg: str) -> None:
-    await websocket.send_json(
-        {"type": "error", "code": "PERMISSION_DENIED", "message": msg, "action": action}
-    )
-
-
 async def campaign_websocket_endpoint(
     websocket: WebSocket,
     campaign_id: str,
@@ -60,22 +55,20 @@ async def campaign_websocket_endpoint(
 ) -> None:
     """Handle Zanzibar-protected WebSocket connections at /ws/campaigns/{campaign_id}."""
     action_validator = validator or default_action_validator
-    principal = await admit_gateway_websocket(websocket, auth_service)
+
+    async def may_connect(subject_id: str) -> bool:
+        return await action_validator.validate_connect(campaign_id, subject_id)
+
+    # 1. On connect: verify viewer/subject has campaign:view or campaign:read permission
+    denied_msg = (
+        f"Zanzibar authorization denied: insufficient permissions to view campaign '{campaign_id}'"
+    )
+    principal = await admit_gateway_websocket(
+        websocket, may_connect, verifier=auth_service, denial_message=denied_msg
+    )
     if principal is None:
         return
     subject_id = principal.user_id
-
-    # 1. On connect: verify viewer/subject has campaign:view or campaign:read permission
-    if not await action_validator.validate_connect(campaign_id, subject_id):
-        logger.warning(
-            "WebSocket connect rejected: subject '%s' lacks view on campaign '%s'",
-            subject_id,
-            campaign_id,
-        )
-        denied_msg = f"Zanzibar authorization denied: insufficient permissions to view campaign '{campaign_id}'"
-        await _send_denied(websocket, "connect", denied_msg)
-        await websocket.close(code=4403, reason="Forbidden: insufficient permissions for campaign")
-        return
 
     await ws_campaign_manager.connect(campaign_id, websocket, subject_id)
 
@@ -94,13 +87,8 @@ async def campaign_websocket_endpoint(
             action = data.get("action") or data.get("type") or "unknown"
 
             if action not in KNOWN_ACTIONS:
-                await websocket.send_json(
-                    {
-                        "type": "error",
-                        "code": "UNKNOWN_ACTION",
-                        "message": f"Unknown action '{action}'",
-                        "action": action,
-                    }
+                await send_socket_error(
+                    websocket, "UNKNOWN_ACTION", f"Unknown action '{action}'", action=action
                 )
                 continue
 
@@ -115,7 +103,7 @@ async def campaign_websocket_endpoint(
                 msg = (
                     f"Zanzibar authorization denied: insufficient permissions for action '{action}'"
                 )
-                await _send_denied(websocket, action, msg)
+                await send_socket_error(websocket, "PERMISSION_DENIED", msg, action=action)
                 continue
 
             # 3. Publish authorized event to Redis stream

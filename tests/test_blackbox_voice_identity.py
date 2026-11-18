@@ -227,6 +227,7 @@ def test_duplex_websocket_accepts_valid_bearer_subprotocol():
 
 
 def test_stream_websocket_accepts_valid_bearer_subprotocol():
+    asyncio.run(grant_voice_session(SESSION_ID, dm="user-dm", players=["spk-1"]))
     client = TestClient(voice_app)
     token = VOICE_SIGNING_ISSUER.mint("user-dm")
 

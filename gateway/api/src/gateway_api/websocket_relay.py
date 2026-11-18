@@ -22,7 +22,7 @@ from typing import Literal
 from fastapi import WebSocket, WebSocketDisconnect
 from gateway_api.auth import get_zitadel_auth_service
 from gateway_api.dependencies import get_upstreams
-from runefoble_auth.websocket import WS_POLICY_VIOLATION, WebSocketAuthError, authenticate_websocket
+from runefoble_auth.websocket import WS_POLICY_VIOLATION, verify_websocket
 from runefoble_platform.service_client import UpstreamUnavailableError, path
 from websockets.asyncio.client import ClientConnection, connect
 from websockets.exceptions import ConnectionClosed, InvalidHandshake, InvalidStatus
@@ -45,11 +45,7 @@ Side = Literal["client", "owner"]
 
 async def relay_websocket(websocket: WebSocket, *, service: str, segments: tuple[str, ...]) -> None:
     """Authenticate the caller, open the owner socket at `segments`, and relay frames both ways."""
-    try:
-        authenticate_websocket(websocket, get_zitadel_auth_service())
-    except WebSocketAuthError as exc:
-        logger.warning("WebSocket handshake denied on %s: %s", websocket.url.path, exc)
-        await websocket.close(code=WS_POLICY_VIOLATION)
+    if await verify_websocket(websocket, get_zitadel_auth_service()) is None:
         return
 
     try:
