@@ -351,6 +351,7 @@ The Campaign Lore service publishes every event that its aggregates commit. The 
 | `CampaignRegisteredToSharedWorld` | `runefoble.events.lore.campaign_registered_to_shared_world` |
 | `CrossCampaignDiscoveryShared` | `runefoble.events.lore.cross_campaign_discovery_shared` |
 | `OutpostEstablished` | `runefoble.events.lore.outpost_established` |
+| `OutpostResourcesContributed` | `runefoble.events.lore.outpost_resources_contributed` |
 | `SharedStrongholdUpgraded` | `runefoble.events.lore.shared_stronghold_upgraded` |
 | `CommunalNoticePosted` | `runefoble.events.lore.communal_notice_posted` |
 

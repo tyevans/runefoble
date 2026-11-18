@@ -91,6 +91,16 @@ These events publish after the character and the crafting history are saved. A m
 
 Replay note: The handler subtracts gold and materials. A `StrongholdUpgraded` event stored before TASK-0774 therefore replays with the corrected arithmetic. Dev campsites that were upgraded before the fix can show a negative treasury. Reset dev data to clear them.
 
+### 8. `StrongholdTreasuryContributed`
+- **Topic**: `runefoble.events.stronghold`
+- **Aggregate Type**: `Stronghold`
+- **Payload Fields**:
+  - `campaign_id`: Optional[UUID] — Campaign identifier.
+  - `gold`: int — Gold debited from the treasury for a frontier outpost (TASK-0795).
+  - `destination_outpost_id`: str — Receiving outpost id, recorded for the audit trail. `game_session` does not read it.
+
+The credit to the outpost store is the `OutpostResourcesContributed` event in `campaign_lore` (see [Events Catalog: Platform](events-catalog-platform.md)).
+
 ---
 
 ## Public REST Endpoints
@@ -107,6 +117,7 @@ Replay note: The handler subtracts gold and materials. A `StrongholdUpgraded` ev
 | `/api/v1/campaigns/{id}/stronghold/deposit` | `POST` | `game_session` (gateway proxy) | `stronghold.manage` (DM and managers) | Adds gold and materials to the treasury and the store. Answers `400` for a negative value or an empty deposit. Answers `403` to players. |
 | `/api/v1/campaigns/{id}/stronghold/upgrade` | `POST` | `game_session` (gateway proxy) | `stronghold.upgrade` (players and managers) | Upgrades a facility by one tier. Body: `facility_id` only. The tier table sets the cost. Spends gold and materials from the stores. Answers `409` on any shortfall and `422` when the body names a cost. Records no event on either refusal. |
 | `/api/v1/campaigns/{id}/stronghold/boons` | `GET` | `game_session` | `campaign:view` | Queries currently active team resting boons. |
+| `/api/v1/campaigns/{id}/stronghold/treasury/contribute` | `POST` | `game_session` (called by `campaign_lore`) | `stronghold.manage` | Debits the treasury for a frontier outpost. Body: `gold` (> 0), `destination_outpost_id`. Answers `409` on shortfall and records no event. Answers `403` without the manage permission. |
 
 ---
 
