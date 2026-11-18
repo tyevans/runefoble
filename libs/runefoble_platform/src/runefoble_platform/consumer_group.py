@@ -163,10 +163,7 @@ class RedisConsumerGroup:
             self._client = None
 
 
-RedisConsumerGroupWorker = RedisConsumerGroup
-
 __all__ = [
     "deserialize_event",
     "RedisConsumerGroup",
-    "RedisConsumerGroupWorker",
 ]

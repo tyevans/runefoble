@@ -1,4 +1,4 @@
-"""Tests verifying modular decomposition and backward compatibility of runefoble_platform.email."""
+"""Tests verifying the runefoble_platform.email package through its public imports."""
 
 from __future__ import annotations
 

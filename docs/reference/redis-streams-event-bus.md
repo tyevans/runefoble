@@ -35,7 +35,7 @@ Runefoble uses Redis Streams as a high-throughput, distributed event bus for cro
    - `publish_event(stream, event)` is the only publish method. No `publish` method exists.
 
 2. **`RedisConsumerGroup` & `deserialize_event` (`libs/runefoble_platform/src/runefoble_platform/consumer_group.py`, `event_deserializer.py`)**:
-   - `RedisConsumerGroup` (aliased as `RedisConsumerGroupWorker`) manages consumer group lifecycles (`create_group`, `read_group`, `ack`, `auto_claim_pending`, `route_to_dead_letter`).
+   - `RedisConsumerGroup` manages consumer group lifecycles (`create_group`, `read_group`, `ack`, `auto_claim_pending`, `route_to_dead_letter`).
    - `deserialize_event` (`event_deserializer.py`) provides isolated deserialization and CloudEvents/DomainEvent registry resolution with W3C trace context preservation (`traceparent`, `tracestate`).
    - `MockAsyncRedis` is a test double in `tests/helpers/mock_redis.py`. Production code must not import it.
    - Implements competing consumer distribution across horizontally scaled service replicas.
