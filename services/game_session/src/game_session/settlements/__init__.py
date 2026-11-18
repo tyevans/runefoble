@@ -7,6 +7,7 @@ from game_session.settlements.models import (
     FACILITY_TIER_NAMES,
     CharterSettlementRequest,
     ClaimRestBoonRequest,
+    DepositSettlementRequest,
     SettlementState,
     UpgradeFacilityRequest,
 )
@@ -17,6 +18,7 @@ __all__ = [
     "FACILITY_TIER_NAMES",
     "CharterSettlementRequest",
     "ClaimRestBoonRequest",
+    "DepositSettlementRequest",
     "SettlementAggregate",
     "SettlementState",
     "UpgradeFacilityRequest",

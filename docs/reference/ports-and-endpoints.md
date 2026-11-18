@@ -105,7 +105,8 @@ Campaign Lore routes require a verified bearer token, except `/health`, `/health
 | `game-session` | GET | `/sessions/{session_id}/reactions/active` | Retrieves current reaction pause state and registered ready actions (alias: `/api/v1/sessions/{session_id}/reactions/active`). Requires `session.observe` |
 | `game-session` | POST | `/settlements` | Charters a new communal haven or outpost in a shared world (alias: `/api/v1/settlements`, Zanzibar enforced) |
 | `game-session` | GET | `/settlements/{settlement_id}` | Retrieves haven state, fortification ratings, and facility tiers (alias: `/api/v1/settlements/{settlement_id}`, Zanzibar enforced) |
-| `game-session` | POST | `/settlements/{settlement_id}/upgrade` | Upgrades haven workshop, sanctum, or fortifications tier (alias: `/api/v1/settlements/{settlement_id}/upgrade`, Zanzibar enforced) |
+| `game-session` | POST | `/settlements/{settlement_id}/deposit` | Adds gold and materials to the haven treasury. Requires `manage`. Answers `400` on a negative or empty deposit (alias: `/api/v1/settlements/{settlement_id}/deposit`, Zanzibar enforced) |
+| `game-session` | POST | `/settlements/{settlement_id}/upgrade` | Upgrades haven workshop, sanctum, watchtower, trading post, or fortifications tier. The price table sets the cost. Answers `409` on a treasury shortfall and records no event (alias: `/api/v1/settlements/{settlement_id}/upgrade`, Zanzibar enforced) |
 | `game-session` | POST | `/settlements/{settlement_id}/claim-boon` | Claims haven sanctum resting boons or workshop buffs (alias: `/api/v1/settlements/{settlement_id}/claim-boon`, Zanzibar enforced) |
 | `gateway-api` | POST | `/api/v1/campaigns/{campaign_id}/settlements` | Proxies to `game_session`: founds a settlement haven. Returns `201`. The owner checks campaign write (TASK-0592) |
 | `gateway-api` | GET | `/api/v1/campaigns/{campaign_id}/settlements` | Proxies to `game_session`: lists the settlements of a campaign (TASK-0592) |

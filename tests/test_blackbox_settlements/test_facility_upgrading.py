@@ -51,7 +51,15 @@ async def test_blackbox_upgrade_settlement_facilities(
     )
     sid = charter_res.json()["settlement_id"]
 
-    # Upgrade workshop
+    # The founder funds the haven treasury
+    funded = client.post(
+        f"/settlements/{sid}/deposit",
+        json={"gold": 1000, "materials": {"timber": 100, "stone": 100}},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(user_id)}"},
+    )
+    assert funded.status_code == 200, funded.text
+
+    # Upgrade workshop: the table cost (100 gold, 20 timber) leaves the treasury
     up_res = client.post(
         f"/settlements/{sid}/upgrade",
         json={
@@ -63,8 +71,9 @@ async def test_blackbox_upgrade_settlement_facilities(
     assert up_res.status_code == 200
     up_data = up_res.json()
     assert up_data["facilities"]["workshop"] == 2
-    assert up_data["gold_invested"] == 0
-    assert up_data["materials_treasury"] == {}
+    assert up_data["gold_invested"] == 100
+    assert up_data["gold_treasury"] == 900
+    assert up_data["materials_treasury"] == {"timber": 80, "stone": 100}
 
     # A client-set cost is refused. The facility does not change.
     refused = client.post(
@@ -86,6 +95,8 @@ async def test_blackbox_upgrade_settlement_facilities(
     assert fort_res.status_code == 200
     assert fort_res.json()["facilities"]["fortifications"] == 2
     assert fort_res.json()["defense_rating"] >= 20
+    assert fort_res.json()["gold_treasury"] == 750
+    assert fort_res.json()["materials_treasury"] == {"timber": 80, "stone": 70}
 
     # Verify event publication
     assert_stream_events(mock_bus, "SettlementUpgraded")

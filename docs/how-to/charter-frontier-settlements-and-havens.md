@@ -95,7 +95,50 @@ curl -X POST http://localhost:8004/settlements/8d3e1a90-410a-49bf-9dfb-12d4a2503
   }'
 ```
 
-The client cannot set a cost. A request that names `gold_spent` or `materials_spent` answers `422`. Settlement upgrades record a zero cost. No settlement price table exists yet (TASK-0778 follow-up).
+The client cannot set a cost. A request that names `gold_spent` or `materials_spent` answers `422`.
+
+Each upgrade spends the tier price from the haven treasury. The treasury holds gold (`gold_treasury`) and materials (`materials_treasury`). A shortfall answers `409` and records no event. The facility tier does not change.
+
+### Fund the Treasury
+
+A new haven starts with an empty treasury. A manager (`manage` permission: founder, guild officer, or shared-world manager) adds gold and materials:
+
+```bash
+curl -X POST http://localhost:8004/settlements/8d3e1a90-410a-49bf-9dfb-12d4a2503289/deposit \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ${TOKEN_PALADIN_GAWAIN}" \
+  -d '{"gold": 500, "materials": {"timber": 100, "stone": 100}}'
+```
+
+A deposit emits `SettlementResourcesDepositedEvent`. A deposit must add gold or materials. Negative amounts answer `400`.
+
+### Settlement Facility Prices
+
+Each cell gives the price to reach that tier. Tier 1 applies only when a facility starts below tier 1. The other facilities already start at tier 1.
+
+| Facility | Tier 1 | Tier 2 | Tier 3 |
+|---|---|---|---|
+| `workshop` | 50 gold, 10 timber | 100 gold, 20 timber | 250 gold, 30 timber, 40 stone |
+| `sanctum` | 60 gold, 10 timber | 120 gold, 20 timber | 280 gold, 30 timber, 40 stone |
+| `fortifications` | 60 gold, 15 stone | 150 gold, 30 stone | 350 gold, 60 stone, 20 iron |
+| `watchtower` | 40 gold, 10 timber | 90 gold, 20 timber | 220 gold, 25 timber, 30 stone |
+| `trading_post` | 75 gold, 15 timber | 150 gold, 25 timber, 10 stone | 320 gold, 40 timber, 40 stone |
+
+The prices live in `services/game_session/src/game_session/settlement/facility_prices.py`. Tier 4 is not available. A request for a tier above 3 answers `400`.
+
+### West Marches Outpost Prices
+
+A West Marches outpost upgrade uses `POST /api/v1/campaigns/{campaign_id}/west-marches/stronghold/upgrade`. It spends from the outpost stored resources. The `gold` key holds the stored gold. A new outpost starts with 100 gold, 20 timber, and 15 stone. The outpost has no deposit route yet. The stored resources fund the first upgrades.
+
+| Facility | Tier 1 | Tier 2 | Tier 3 |
+|---|---|---|---|
+| `alchemical_workshop` | 20 gold, 3 timber | 40 gold, 8 timber | 100 gold, 20 timber, 10 stone |
+| `watchtower` | 20 gold, 3 timber | 40 gold, 8 timber | 100 gold, 20 timber, 10 stone |
+| `trading_post` | 25 gold, 4 timber | 50 gold, 8 timber, 4 stone | 120 gold, 20 timber, 10 stone |
+| `arcane_forge` | 30 gold, 4 stone | 60 gold, 8 stone | 150 gold, 15 stone, 15 timber |
+| `herbal_rack` | 20 gold, 3 timber | 40 gold, 8 timber | 100 gold, 15 timber, 8 stone |
+
+The prices live in `services/campaign_lore/src/campaign_lore/west_marches_prices.py`. A new outpost can afford two tier-2 upgrades. A shortfall answers `409` and changes nothing.
 
 Key facility tiers:
 - **`workshop`**: Tier 1 (Field Forge) -> Tier 2 (Master Guildhall) -> Tier 3 (Arcane Crucible).
@@ -103,7 +146,7 @@ Key facility tiers:
 - **`fortifications`**: Tier 1 (Wooden Palisades) -> Tier 2 (Stone Ramparts) -> Tier 3 (Adamantine Citadel). Upgrading fortifications permanently increases settlement defense rating (+5 per tier).
 - **`watchtower`**: Tier 1 (Scout Perch) -> Tier 2 (Signal Spire) -> Tier 3 (Celestial Beacon).
 
-Emits `SettlementUpgradedEvent` and automatically records the contributing party's discovery relationship in SpiceDB Zanzibar.
+Emits `SettlementUpgradedEvent` and automatically records the contributing party's discovery relationship in SpiceDB Zanzibar. The event carries the table cost in `gold_spent` and `materials_spent`.
 
 ---
 

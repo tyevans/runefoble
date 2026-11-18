@@ -52,6 +52,21 @@ class SettlementUpgradedEvent(BaseRunefobleEvent):
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 
+@register_event("runefoble.events.game_session.settlement_resources_deposited")
+class SettlementResourcesDepositedEvent(BaseRunefobleEvent):
+    """Fired when a DM or haven manager adds gold and materials to the haven treasury."""
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    aggregate_type: str = "Settlement"
+    aggregate_id: UUID = Field(default_factory=uuid4)
+    event_type: str = "runefoble.events.game_session.settlement_resources_deposited"
+    settlement_id: str
+    shared_world_id: str = ""
+    gold: int = 0
+    materials: dict[str, int] = Field(default_factory=dict)
+    deposited_by: str = ""
+
+
 @register_event("runefoble.events.game_session.settlement_rest_boon_claimed")
 class SettlementRestBoonClaimedEvent(BaseRunefobleEvent):
     """Fired when an adventuring party claims a rest or crafting boon from a haven facility."""
@@ -228,6 +243,7 @@ __all__ = [
     "SettlementCharteredEvent",
     "SettlementFoundedEvent",
     "SettlementRestBoonClaimedEvent",
+    "SettlementResourcesDepositedEvent",
     "SettlementTierUpgradedEvent",
     "SettlementUpgradedEvent",
 ]

@@ -21,6 +21,7 @@ from game_session.settlement.models import (
     SettlementScale,
     SettlementState,
 )
+from game_session.settlement.treasury_handlers import TreasuryHandlersMixin
 from runefoble_events.settlements import (
     SettlementFoundedEvent,
     SettlementTierUpgradedEvent,
@@ -35,7 +36,10 @@ def _to_uuid(val: Any) -> UUID:
 
 
 class SettlementAggregate(
-    BulletinHandlersMixin, CharterHandlersMixin, DeclarativeAggregate[SettlementState]
+    BulletinHandlersMixin,
+    CharterHandlersMixin,
+    TreasuryHandlersMixin,
+    DeclarativeAggregate[SettlementState],
 ):
     """Event-sourced aggregate managing settlement layout, scaling, and havens."""
 
