@@ -104,8 +104,8 @@ async def test_blackbox_create_encounter_round_trips_to_query_encounter_state(wi
     created = await call_create_encounter(
         session_id,
         [
-            {"name": "Goblin Archer", "x": 3, "y": 4, "hp": 7},
-            {"name": "Orc", "x": 6, "y": 2, "hp": 15},
+            {"name": "Goblin Archer", "x": 3, "y": 4, "hp": 7, "cr": 0.25},
+            {"name": "Orc", "x": 6, "y": 2, "hp": 15, "cr": 2.0},
         ],
     )
     assert not created.isError, tool_text(created)
@@ -142,7 +142,9 @@ async def test_blackbox_create_encounter_reuses_existing_board_of_session(wired)
         )
         assert existing.status_code == 200, existing.text
 
-    created = await call_create_encounter(session_id, [{"name": "Bandit", "x": 1, "y": 1}])
+    created = await call_create_encounter(
+        session_id, [{"name": "Bandit", "x": 1, "y": 1, "cr": 0.125}]
+    )
 
     assert not created.isError, tool_text(created)
     payload: dict[str, Any] = json.loads(tool_text(created))
@@ -155,7 +157,9 @@ async def test_blackbox_create_encounter_unknown_session_is_error_and_creates_no
     """Verify an unknown session id yields a tool error and no board is created for it."""
     unknown_session = str(uuid4())
 
-    result = await call_create_encounter(unknown_session, [{"name": "Imp", "x": 0, "y": 0}])
+    result = await call_create_encounter(
+        unknown_session, [{"name": "Imp", "x": 0, "y": 0, "cr": 1.0}]
+    )
 
     assert result.isError is True
     assert board_status(wired["board"], unknown_session) == 404
@@ -169,7 +173,9 @@ async def test_blackbox_create_encounter_game_session_503_is_error_not_board_id(
     session_id = start_session_with_player(wired["session"])
     with serve(unavailable_app(503)) as down_url:
         monkeypatch.setenv("GAME_SESSION_URL", down_url)
-        result = await call_create_encounter(session_id, [{"name": "Imp", "x": 0, "y": 0}])
+        result = await call_create_encounter(
+            session_id, [{"name": "Imp", "x": 0, "y": 0, "cr": 1.0}]
+        )
 
     assert result.isError is True
     assert "game_session" in tool_text(result)

@@ -15,6 +15,7 @@ from runefoble_events.character import (
     DeathSaveStarted,
 )
 from runefoble_events.session import (
+    CombatEncounterEnded,
     CombatEncounterStarted,
     CombatRoundAdvanced,
     InitiativeTurnAdvanced,
@@ -37,12 +38,17 @@ SPEECH_DUCK_MS = 2500
 
 
 def _score_encounter(
-    agg: SoundscapeAggregate, session_id: str, *, combat_round: int, enemy_cr_balance: float
+    agg: SoundscapeAggregate,
+    session_id: str,
+    *,
+    combat_round: int,
+    enemy_cr_balance: float,
+    combat_active: bool = True,
 ) -> tuple[int, str]:
     """Score tension from the encounter inputs and the stored party health, then record it."""
     party_health = agg.state.lowest_party_health_ratio
     tension = calculate_encounter_tension(
-        combat_active=True,
+        combat_active=combat_active,
         combat_round=combat_round,
         enemy_cr_balance=enemy_cr_balance,
         lowest_party_health_ratio=party_health,
@@ -55,7 +61,7 @@ def _score_encounter(
         combat_round=combat_round,
         enemy_cr_balance=enemy_cr_balance,
         lowest_health_ratio=party_health,
-        combat_active=True,
+        combat_active=combat_active,
     )
     return tension, profile
 
@@ -86,6 +92,20 @@ async def _handle_combat_start(session_id: str, combatants: list[dict[str, Any]]
     agg.record_track_change(
         session_id, "track-combat-01", profile, tension, 1500, active_stems=[profile]
     )
+    await save_session_aggregate(agg)
+
+
+async def _handle_combat_end(session_id: str) -> None:
+    """Leave combat. Clear the encounter inputs and re-score the ambient tension once."""
+    agg = await load_session_aggregate(session_id)
+    old_profile = agg.state.stem_profile
+    tension, profile = _score_encounter(
+        agg, session_id, combat_round=0, enemy_cr_balance=0.0, combat_active=False
+    )
+    if profile != old_profile:
+        agg.record_track_change(
+            session_id, f"track-{profile}-01", profile, tension, 1500, active_stems=[profile]
+        )
     await save_session_aggregate(agg)
 
 
@@ -151,6 +171,8 @@ async def handle_incoming_domain_event(event: Any) -> None:
 
     if isinstance(event, (CombatEncounterStarted,)):
         await _handle_combat_start(session_id, list(event.combatants))
+    elif isinstance(event, CombatEncounterEnded):
+        await _handle_combat_end(session_id)
     elif isinstance(event, (CombatRoundAdvanced, InitiativeTurnAdvanced)):
         await _handle_combat_advance(session_id, getattr(event, "round_number", 1))
     elif isinstance(event, PlayerSpokeEvent):

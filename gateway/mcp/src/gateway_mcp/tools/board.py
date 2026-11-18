@@ -21,12 +21,16 @@ ENCOUNTER_ROWS = 8
 
 
 class EnemyPlacement(BaseModel):
-    """An enemy token to place when an encounter starts."""
+    """An enemy token to place when an encounter starts.
+
+    `cr` is the challenge rating. When it is absent, rules_compendium supplies it by `name`.
+    """
 
     name: str
     x: int
     y: int
     hp: int | None = None
+    cr: float | None = None
 
 
 def _board_summary(board: dict[str, Any]) -> dict[str, Any]:
@@ -64,6 +68,28 @@ async def _fetch_or_create_board(
     return await client.create_board(
         session_id=session_id, campaign_id=campaign_id, cols=ENCOUNTER_COLS, rows=ENCOUNTER_ROWS
     )
+
+
+async def _challenge_rating(client: OwningServices, enemy: EnemyPlacement) -> float:
+    """Return the enemy's challenge rating from the request, else from its compendium stat block.
+
+    An enemy with no rating in either place is a validation error. It is never scored as zero.
+    """
+    if enemy.cr is not None:
+        return enemy.cr
+    try:
+        monster = await client.get_monster(enemy.name.strip())
+    except ServiceRejectedError as exc:
+        if exc.status_code != 404:
+            raise
+        monster = {}
+    rating = monster.get("challenge_rating")
+    if rating is None:
+        raise ValueError(
+            f"Enemy '{enemy.name}' has no challenge rating. Give cr in the request "
+            "or use a monster name from the compendium."
+        )
+    return float(rating)
 
 
 async def inspect_tactical_board(session_id: str, ctx: Context | None = None) -> dict[str, Any]:
@@ -127,11 +153,19 @@ async def create_encounter(
     await authorize_tool_call(ctx, session_control(session_id))
     client = OwningServices(bearer=caller_bearer(ctx))
     enemy_list = enemies or []
+    # Resolve every rating before combat starts, so a refused enemy leaves no combat behind.
+    ratings = [await _challenge_rating(client, enemy) for enemy in enemy_list]
     combat = await client.start_combat(
         session_id,
         combatants=[
-            {"combatant_id": f"enemy-{index}", "name": enemy.name, "hp": enemy.hp, "is_npc": True}
-            for index, enemy in enumerate(enemy_list, start=1)
+            {
+                "combatant_id": f"enemy-{index}",
+                "name": enemy.name,
+                "hp": enemy.hp,
+                "is_npc": True,
+                "cr": rating,
+            }
+            for index, (enemy, rating) in enumerate(zip(enemy_list, ratings, strict=True), start=1)
         ],
     )
     board = await _fetch_or_create_board(client, session_id, campaign_id)
