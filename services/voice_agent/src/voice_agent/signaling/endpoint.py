@@ -88,8 +88,8 @@ async def voice_signaling_websocket_endpoint(
             should_continue = await dispatch_signaling_message(websocket, state, data, sig_manager)
             if not should_continue:
                 return
-    except WebSocketDisconnect:
-        await handle_peer_disconnect(websocket, sig_manager)
+    except WebSocketDisconnect as exc:
+        await handle_peer_disconnect(websocket, sig_manager, exc.code)
 
 
 __all__ = ["voice_signaling_websocket_endpoint"]

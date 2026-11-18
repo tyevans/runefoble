@@ -10,6 +10,8 @@ from fastapi import WebSocket
 if TYPE_CHECKING:
     from voice_agent.signaling.manager import WebRTCSignalingManager
 
+WS_SERVICE_RESTART = 1012
+
 
 @dataclass
 class SignalingPeerState:
@@ -155,10 +157,18 @@ async def handle_leave(
     await websocket.close(code=1000, reason="Graceful audio leave")
 
 
-async def handle_peer_disconnect(websocket: WebSocket, manager: WebRTCSignalingManager) -> None:
-    """Clean up state on abrupt peer WebSocket disconnection."""
+async def handle_peer_disconnect(
+    websocket: WebSocket,
+    manager: WebRTCSignalingManager,
+    close_code: int | None = None,
+) -> None:
+    """Clean up state on abrupt peer WebSocket disconnection.
+
+    A close with 1012 (service restart) is the server's graceful shutdown. The peer keeps its
+    seat in the room, so the restarted service still lists it. Browsers cannot send 1012.
+    """
     info = manager.disconnect_peer(websocket)
-    if info:
+    if info and close_code != WS_SERVICE_RESTART:
         s_id, p_id = info
         await manager.coordinator.peer_left(s_id, p_id, reason="disconnected")
         await manager.broadcast_to_room(
