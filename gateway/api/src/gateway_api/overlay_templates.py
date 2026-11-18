@@ -10,27 +10,17 @@ from gateway_api.overlay_models import PartyVitalsData
 
 
 def render_overlay_html(
-    session_id_or_data: str | PartyVitalsData,
+    data: PartyVitalsData,
     transparent: bool = True,
     theme: str = "dark",
     easing: str = DEFAULT_EASING,
     duration_ms: int = DEFAULT_DURATION_MS,
     position: str = "bottom",
 ) -> str:
-    """Generate alpha-transparent HTML output for OBS browser sources."""
-    if isinstance(session_id_or_data, str):
-        from gateway_api.cinematic_director import get_cinematic_director
-        from gateway_api.routers.overlay import sanitize_party_vitals
-        from gateway_api.spectator import get_raw_session_state
-
-        raw = get_raw_session_state(session_id_or_data)
-        director = get_cinematic_director(session_id_or_data)
-        data = sanitize_party_vitals(raw, director.current_target, position=position)
-    else:
-        data = session_id_or_data
-        transparent = data.transparent
-        if position == "bottom" and data.position != "bottom":
-            position = data.position
+    """Generate alpha-transparent HTML output for OBS browser sources from projected vitals."""
+    transparent = data.transparent
+    if position == "bottom" and data.position != "bottom":
+        position = data.position
 
     safe_party = json.dumps([m.model_dump() for m in data.party])
     safe_cam = json.dumps(data.camera.model_dump() if data.camera else CameraTarget().model_dump())
@@ -162,7 +152,7 @@ def render_obs_overlay_html(
 ) -> str:
     """Generate alpha-transparent HTML output for OBS browser sources."""
     return render_overlay_html(
-        session_id_or_data=data,
+        data,
         transparent=data.transparent,
         easing=easing,
         duration_ms=duration_ms,

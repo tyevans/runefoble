@@ -6,11 +6,13 @@ This guide explains how content creators and broadcast streamers (Devon) embed t
 
 ## 1. Embedding the OBS Transparent Party HUD
 
-The gateway provides a dedicated browser source endpoint serving an alpha-transparent canvas (`rgba(0, 0, 0, 0)`):
+The gateway provides a browser source endpoint that serves an alpha-transparent canvas (`rgba(0, 0, 0, 0)`):
 
 ```
 http://localhost:8000/overlay/party-vitals/{session_id}
 ```
+
+The endpoint needs a verified `Authorization: Bearer <jwt>` header and the `session.observe` permission. The gateway reads the party from `board_state`. A monster is never shown. A browser source that cannot send request headers cannot use this endpoint. The WebSocket feed below has the same rule and takes the token in its subprotocol.
 
 ### OBS Studio Configuration
 1. In OBS Studio, add a new **Browser Source** to your tabletop scene.

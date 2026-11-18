@@ -1,7 +1,7 @@
 """Read routes for the session chronicle feed and the absentee recap (TASK-0641).
 
-Both routes verify the caller's token through `get_caller_or_service`, as the session read does.
-The gateway applies the `observe` check before it proxies here. An unknown session returns 404.
+Both routes verify the caller's token and require `session.observe` for a user caller (ADR-0001),
+as the session read does. An unknown session returns 404 after the permission check.
 """
 
 from __future__ import annotations
@@ -18,9 +18,16 @@ from game_session.chronicle import (
     read_session_chronicle,
 )
 from game_session.dependencies import repo
-from game_session.settlement.auth.tokens import get_caller_or_service
+from game_session.routers.session_auth import session_reader
+from game_session.settlement.auth.tokens import CallerOrService
 
 router = APIRouter(tags=["session"])
+
+
+async def _observer_of_existing_session(session_id: UUID, caller: CallerOrService) -> None:
+    """Return 404 for an unknown session, then require `session.observe` for a user caller."""
+    await _require_session(session_id)
+    await session_reader(session_id, caller)
 
 
 async def _require_session(session_id: UUID) -> GameSessionAggregate:
@@ -33,7 +40,7 @@ async def _require_session(session_id: UUID) -> GameSessionAggregate:
 
 @router.get(
     "/api/v1/sessions/{session_id}/events",
-    dependencies=[Depends(get_caller_or_service)],
+    dependencies=[Depends(_observer_of_existing_session)],
     response_model=list[ChronicleEntry],
 )
 async def list_session_events(session_id: UUID) -> list[ChronicleEntry]:
@@ -44,7 +51,7 @@ async def list_session_events(session_id: UUID) -> list[ChronicleEntry]:
 
 @router.get(
     "/api/v1/sessions/{session_id}/absentee-recap",
-    dependencies=[Depends(get_caller_or_service)],
+    dependencies=[Depends(_observer_of_existing_session)],
     response_model=AbsenteeRecap,
 )
 async def get_absentee_recap(session_id: UUID) -> AbsenteeRecap:

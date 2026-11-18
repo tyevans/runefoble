@@ -1,66 +1,48 @@
-"""Spectator stream overlay proxy router for Runefoble Gateway API."""
+"""Spectator stream overlay proxy router for Runefoble Gateway API.
 
-from datetime import UTC, datetime
+Both HTTP routes need a verified bearer token and `session.observe` on the session. The
+state comes from the owning services. The GET has no side effect. The spectator connection
+event is published when the WebSocket is admitted (see `routers/overlay.py`).
+"""
 
-from fastapi import APIRouter, Header, Query, WebSocket
-from gateway_api.auth import get_zitadel_auth_service
-from gateway_api.dependencies import get_event_bus
+from fastapi import APIRouter, Depends, Request, WebSocket
+from gateway_api.auth import require_zanzibar_permission
+from gateway_api.dependencies import get_upstreams
 from gateway_api.spectator import (
     SpectatorStateResponse,
     SpectatorViewerInfo,
-    get_raw_session_state,
     sanitize_spectator_state,
 )
-from runefoble_auth.principal import authenticate_authorization
-from runefoble_events.events import SpectatorSessionConnected
-from runefoble_platform.event_publish import publish_best_effort
+from gateway_api.spectator_source import read_session_source
 
 router = APIRouter(tags=["Spectator"])
 
 
-@router.get("/api/v1/spectate/{session_id}", response_model=SpectatorStateResponse)
+_OBSERVE = Depends(require_zanzibar_permission("observe", "session", "session_id"))
+
+
+@router.get(
+    "/api/v1/spectate/{session_id}",
+    response_model=SpectatorStateResponse,
+    dependencies=[_OBSERVE],
+)
 @router.get(
     "/api/v1/spectator/sessions/{session_id}",
     response_model=SpectatorStateResponse,
+    dependencies=[_OBSERVE],
 )
-async def get_spectator_state(
-    session_id: str,
-    token: str | None = Query(None, description="Optional spectator access token"),
-    authorization: str | None = Header(None, alias="Authorization"),
-) -> dict:
+async def get_spectator_state(request: Request, session_id: str) -> dict:
     """Retrieve audience-safe spectator view of the session, board, and chronicle.
 
-    A spectator access token identifies an anonymous audience viewer. A Bearer token
-    identifies a signed-in viewer and must verify. Otherwise the viewer is a guest.
-    Redacts hidden tokens, monster stat blocks, and private DM notes.
-    Dispatches SpectatorSessionConnected event to the Redis event bus.
+    The caller needs a verified bearer token and `session.observe`. The owners verify the same
+    token again. Hidden tokens, monsters, and private DM notes are not in the response.
     """
-    if token:
-        viewer_id = f"spectator_{token}"
-        viewer_name = f"Spectator ({token})"
-    elif authorization:
-        principal = authenticate_authorization(get_zitadel_auth_service(), authorization)
-        viewer_id = principal.user_id
-        viewer_name = principal.username
-    else:
-        viewer_id = "spectator_guest"
-        viewer_name = "Guest Spectator"
-
-    viewer_info = SpectatorViewerInfo(viewer_id=viewer_id, viewer_name=viewer_name)
-
-    # Dispatch SpectatorSessionConnected event to Redis bus
-    event = SpectatorSessionConnected(
-        session_id=session_id,
-        viewer_id=viewer_id,
-        viewer_name=viewer_name,
-        connected_at=datetime.now(UTC).isoformat(),
+    principal = request.state.principal
+    source = await read_session_source(
+        get_upstreams(request), session_id, request.headers.get("authorization")
     )
-    bus = get_event_bus()
-    if bus is not None:
-        await publish_best_effort(bus, "runefoble.events.spectator", event)
-
-    raw_state = get_raw_session_state(session_id)
-    return sanitize_spectator_state(raw_state, viewer_info=viewer_info)
+    viewer = SpectatorViewerInfo(viewer_id=principal.user_id, viewer_name=principal.username)
+    return sanitize_spectator_state(source, viewer_info=viewer)
 
 
 @router.websocket("/ws/spectator/{session_id}")

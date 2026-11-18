@@ -103,16 +103,7 @@ Only the routes in this section take no identity check. Every other route verifi
 | `GET /health`, `GET /healthz`, `GET /api/v1/health`, `GET /readyz` | None | `gateway/api/src/gateway_api/routers/health.py` |
 | `GET /openapi.json`, `GET /docs`, `GET /redoc` | None | `gateway/api/src/gateway_api/main.py` |
 | `GET /api/v1/auth/sync/health` | None | `gateway/api/src/gateway_api/auth_sync.py` |
-| `GET /api/v1/spectate/{session_id}`, `GET /api/v1/spectator/sessions/{session_id}` | Optional. See below. | `gateway/api/src/gateway_api/routers/spectator.py` |
-| `GET /overlay/party-vitals/{session_id}` | None | `gateway/api/src/gateway_api/routers/overlay.py` |
-
-Spectator routes:
-
-- With no `Authorization` header, the viewer is an anonymous guest.
-- With a `token` query parameter, the viewer is an anonymous spectator named by that value. The gateway does not verify this token.
-- With an `Authorization: Bearer` header, the token must verify. A failed token returns `401`.
-
-The spectator and overlay reads return sanitized state. For a session with no stored state, they return default state (`gateway/api/src/gateway_api/spectator.py`, `get_raw_session_state`).
+The spectator and overlay reads are not public. `GET /api/v1/spectate/{session_id}`, its alias `GET /api/v1/spectator/sessions/{session_id}`, and `GET /overlay/party-vitals/{session_id}` need a verified `Authorization: Bearer` token and `session.observe` on the session (`gateway/api/src/gateway_api/routers/spectator.py`, `gateway/api/src/gateway_api/routers/overlay.py`). A missing or failed token returns `401`. A viewer without the permission gets `403`. The state comes from `game_session` and `board_state`. An owner `404` passes on unchanged. The `token` query parameter is not read.
 
 Proxy routes:
 
