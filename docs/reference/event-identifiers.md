@@ -46,7 +46,6 @@ add the `runefoble.` prefix when the identifier lacks it.
 | `CombatRoundAdvanced` | `CombatRoundAdvanced` | `runefoble_events.session` |
 | `CommunalNoticePosted` | `CommunalNoticePosted` | `runefoble_events.west_marches` |
 | `ConditionApplied` | `ConditionApplied` | `runefoble_events.character` |
-| `ConditionIndexed` | `ConditionIndexed` | `runefoble_events.compendium` |
 | `ConditionRemoved` | `ConditionRemoved` | `runefoble_events.character` |
 | `CraftingAttempted` | `CraftingAttempted` | `runefoble_events.downtime` |
 | `CraftingMishapOccurred` | `CraftingMishapOccurred` | `runefoble_events.downtime` |
@@ -77,7 +76,6 @@ add the `runefoble.` prefix when the identifier lacks it.
 | `MinigameEnded` | `MinigameEnded` | `runefoble_events.tavern` |
 | `MinigameStarted` | `MinigameStarted` | `runefoble_events.tavern` |
 | `MinigameTurnTaken` | `MinigameTurnTaken` | `runefoble_events.tavern` |
-| `MonsterIndexed` | `MonsterIndexed` | `runefoble_events.compendium` |
 | `OutpostEstablished` | `OutpostEstablished` | `runefoble_events.west_marches` |
 | `ParticipantJoined` | `ParticipantJoined` | `runefoble_events.session` |
 | `PlayerJoinedSession` | `PlayerJoinedSession` | `runefoble_events.session` |
@@ -95,7 +93,6 @@ add the `runefoble.` prefix when the identifier lacks it.
 | `SharedStrongholdUpgraded` | `SharedStrongholdUpgraded` | `runefoble_events.west_marches` |
 | `SharedWorldCreated` | `SharedWorldCreated` | `runefoble_events.west_marches` |
 | `SpeechIntentParsed` | `SpeechIntentParsed` | `runefoble_events.watcher_events.narrative` |
-| `SpellIndexed` | `SpellIndexed` | `runefoble_events.compendium` |
 | `StandInActionDecided` | `StandInActionDecided` | `runefoble_events.watcher_events.narrative` |
 | `StrongholdCreated` | `StrongholdCreated` | `runefoble_events.downtime` |
 | `StrongholdUpgraded` | `StrongholdUpgraded` | `runefoble_events.downtime` |

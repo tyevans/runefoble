@@ -7,109 +7,26 @@ from eventsource.domain.aggregate import DeclarativeAggregate
 from eventsource.domain.decorators import handles
 from pydantic import BaseModel, Field
 from runefoble_events.compendium import (
-    ConditionIndexed,
     EncounterBalanced,
     HomebrewRuleRegistered,
-    MonsterIndexed,
-    SpellIndexed,
 )
 
 
 class CompendiumState(BaseModel):
-    """Internal state representation for rules compendium index."""
+    """Internal state representation for campaign homebrew rules."""
 
     compendium_id: UUID
-    monsters: dict[str, dict[str, Any]] = Field(default_factory=dict)
-    spells: dict[str, dict[str, Any]] = Field(default_factory=dict)
-    conditions: dict[str, dict[str, Any]] = Field(default_factory=dict)
     homebrew_rules: dict[str, dict[str, Any]] = Field(default_factory=dict)
 
 
 class CompendiumAggregate(DeclarativeAggregate[CompendiumState]):
-    """Event-sourced aggregate managing canonical rules and homebrew registration."""
+    """Event-sourced aggregate managing campaign homebrew rule registration."""
 
     aggregate_type = "Compendium"
     requires_creation_event = False
 
     def init_state(self) -> CompendiumState:
         return CompendiumState(compendium_id=self.aggregate_id)
-
-    def index_monster(
-        self,
-        monster_id: UUID,
-        name: str,
-        challenge_rating: float,
-        creature_type: str,
-        armor_class: int,
-        hit_points: int,
-        xp: int,
-        role: str = "brute",
-        size: str = "Medium",
-        metadata: dict[str, Any] | None = None,
-    ) -> None:
-        """Index a monster stat block."""
-        self.create_event(
-            MonsterIndexed,
-            aggregate_id=self.aggregate_id,
-            monster_id=monster_id,
-            name=name,
-            challenge_rating=challenge_rating,
-            creature_type=creature_type,
-            size=size,
-            armor_class=armor_class,
-            hit_points=hit_points,
-            xp=xp,
-            role=role,
-            metadata=metadata or {},
-        )
-
-    def index_spell(
-        self,
-        spell_id: UUID,
-        name: str,
-        level: int,
-        school: str,
-        casting_time: str,
-        range_: str,
-        components: str,
-        duration: str,
-        description: str,
-        metadata: dict[str, Any] | None = None,
-    ) -> None:
-        """Index a spell definition."""
-        self.create_event(
-            SpellIndexed,
-            aggregate_id=self.aggregate_id,
-            spell_id=spell_id,
-            name=name,
-            level=level,
-            school=school,
-            casting_time=casting_time,
-            range=range_,
-            components=components,
-            duration=duration,
-            description=description,
-            metadata=metadata or {},
-        )
-
-    def index_condition(
-        self,
-        condition_id: UUID,
-        name: str,
-        description: str,
-        effects: list[str],
-        metadata: dict[str, Any] | None = None,
-    ) -> None:
-        """Index a condition rule."""
-        self.create_event(
-            ConditionIndexed,
-            aggregate_id=self.aggregate_id,
-            condition_id=condition_id,
-            name=name,
-            description=description,
-            effects=effects,
-            metadata=metadata or {},
-        )
 
     def register_homebrew(
         self,
@@ -137,52 +54,6 @@ class CompendiumAggregate(DeclarativeAggregate[CompendiumState]):
     # -----------------------------------------------------------------------
     # Event Handlers (@handles)
     # -----------------------------------------------------------------------
-
-    @handles(MonsterIndexed)
-    def _on_monster_indexed(self, event: MonsterIndexed) -> None:
-        if self._state is None:
-            self._state = self.init_state()
-        self.state.monsters[event.name.lower()] = {
-            "monster_id": str(event.monster_id),
-            "name": event.name,
-            "challenge_rating": event.challenge_rating,
-            "creature_type": event.creature_type,
-            "size": event.size,
-            "armor_class": event.armor_class,
-            "hit_points": event.hit_points,
-            "xp": event.xp,
-            "role": event.role,
-            "metadata": event.metadata,
-        }
-
-    @handles(SpellIndexed)
-    def _on_spell_indexed(self, event: SpellIndexed) -> None:
-        if self._state is None:
-            self._state = self.init_state()
-        self.state.spells[event.name.lower()] = {
-            "spell_id": str(event.spell_id),
-            "name": event.name,
-            "level": event.level,
-            "school": event.school,
-            "casting_time": event.casting_time,
-            "range": event.range,
-            "components": event.components,
-            "duration": event.duration,
-            "description": event.description,
-            "metadata": event.metadata,
-        }
-
-    @handles(ConditionIndexed)
-    def _on_condition_indexed(self, event: ConditionIndexed) -> None:
-        if self._state is None:
-            self._state = self.init_state()
-        self.state.conditions[event.name.lower()] = {
-            "condition_id": str(event.condition_id),
-            "name": event.name,
-            "description": event.description,
-            "effects": event.effects,
-            "metadata": event.metadata,
-        }
 
     @handles(HomebrewRuleRegistered)
     def _on_homebrew_registered(self, event: HomebrewRuleRegistered) -> None:

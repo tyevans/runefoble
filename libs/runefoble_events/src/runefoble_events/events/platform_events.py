@@ -11,11 +11,8 @@ from runefoble_events.analytics import (
 )
 from runefoble_events.base import BaseRunefobleEvent, register_event
 from runefoble_events.compendium import (
-    ConditionIndexed,
     EncounterBalanced,
     HomebrewRuleRegistered,
-    MonsterIndexed,
-    SpellIndexed,
 )
 from runefoble_events.contracts import (
     MercenaryBountyClaimed,
@@ -33,7 +30,6 @@ __all__ = [
     "BaseRunefobleEvent",
     "ChronicleMilestoneRecorded",
     "CombatTelemetrySnapshotCreated",
-    "ConditionIndexed",
     "DynamicToolInvokedEvent",
     "DynamicToolRegisteredEvent",
     "DynamicToolUnregisteredEvent",
@@ -44,7 +40,5 @@ __all__ = [
     "MercenaryBountyClaimed",
     "MercenaryBountyFulfilled",
     "MercenaryBountyPosted",
-    "MonsterIndexed",
-    "SpellIndexed",
     "register_event",
 ]
