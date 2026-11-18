@@ -10,19 +10,13 @@ import { describe, it, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { Router, type MatchedRoute } from '../../src/router/router.ts';
 import { AppDataService } from '../../src/services/app-data-service.ts';
-import type { AppActiveView } from '../../src/runefoble-app.ts';
+import { resolveActiveView, type AppActiveView } from '../../src/router/view-resolver.ts';
 import type { CharacterItem, InspectCharacterEventDetail } from '../../../services/character_sheet/ui/src/roster/types.ts';
 import type { LobbyParticipant } from '../../../services/game_session/ui/src/campaigns/types.ts';
 import { installFakeGateway } from '../support/fake-gateway.ts';
 import { readAppShellSource } from '../support/app-shell-source.ts';
 import { FALLBACK_CHARACTERS, FALLBACK_PARTICIPANTS } from '../../src/fixtures/app-data-service.fixtures.ts';
 
-
-function resolveActiveView(route: MatchedRoute | null): AppActiveView {
-  const pat = route?.pattern || '';
-  if (pat.startsWith('#/characters/') && pat !== '#/characters') return 'character-sheet';
-  return pat === '#/characters' ? 'characters' : 'campaigns';
-}
 
 describe('Character Roster & Deep Route Navigation (US-0064, US-0069, TASK-0288)', () => {
   let router: Router;

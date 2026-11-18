@@ -10,7 +10,7 @@
 import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { Router, type MatchedRoute } from '../../src/router/router.ts';
-import { loadRouteData } from '../../src/app/route-data-loader.ts';
+import { loadRouteData } from '../../src/app/data-loader.ts';
 import { selectCharacterFromEvent } from '../../src/app/character-actions.ts';
 import { pickActiveCharacter } from '../../src/app/active-character.ts';
 import { installFakeGateway, type FakeGateway } from '../support/fake-gateway.ts';

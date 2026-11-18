@@ -10,7 +10,7 @@ import type { RunefobleApp } from '../runefoble-app.ts';
 import { appDataService } from '../services/app-data-service.ts';
 import type { CreateCampaignPayload, UpdateCampaignPayload } from '@runefoble/game-session-ui';
 import { failLoad } from './load-error.ts';
-import { loadRouteData } from './route-data-loader.ts';
+import { loadRouteData } from './data-loader.ts';
 
 export async function updateCampaignFromEvent(host: RunefobleApp, e: CustomEvent<UpdateCampaignPayload>): Promise<void> {
   const p = e.detail;

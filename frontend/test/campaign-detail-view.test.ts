@@ -8,23 +8,10 @@ import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { Router, type MatchedRoute } from '../src/router/router.ts';
 import { AppDataService } from '../src/services/app-data-service.ts';
-import type { AppActiveView } from '../src/runefoble-app.ts';
+import { resolveActiveView, type AppActiveView } from '../src/router/view-resolver.ts';
 import type { UpdateCampaignPayload } from '@runefoble/game-session-ui';
 import { installFakeGateway, type FakeGateway } from './support/fake-gateway.ts';
 import { FALLBACK_CAMPAIGNS, FALLBACK_CHARACTERS, FALLBACK_MEMBERS } from '../src/fixtures/app-data-service.fixtures.ts';
-
-function resolveAppActiveView(route: MatchedRoute | null): AppActiveView {
-  const pat = route?.pattern || '';
-  if (pat === '#/login' || pat === '#/register') return 'login';
-  if (pat.startsWith('#/campaigns/:campaignId/lobby/')) return 'session-lobby';
-  if (pat.startsWith('#/campaigns/:campaignId/sessions/')) return 'session-active';
-  if (pat === '#/campaigns/:campaignId/characters') return 'campaign-characters';
-  if (pat === '#/campaigns/:campaignId/codex') return 'campaign-codex';
-  if (pat === '#/campaigns/:campaignId/analytics') return 'campaign-analytics';
-  if (pat.startsWith('#/campaigns/:campaignId')) return 'campaign-detail';
-  if (pat === '#/characters') return 'characters';
-  return pat === '#/profile' ? 'profile' : 'campaigns';
-}
 
 describe('Campaign Detail Sub-View Disambiguation (TASK-0250)', () => {
   let router: Router;
@@ -40,27 +27,27 @@ describe('Campaign Detail Sub-View Disambiguation (TASK-0250)', () => {
 
   it('disambiguates #/campaigns/:id as campaign-detail and #/campaigns/:id/characters as campaign-characters', () => {
     const detailRoute = router.match('#/campaigns/4');
-    assert.equal(resolveAppActiveView(detailRoute), 'campaign-detail');
+    assert.equal(resolveActiveView(detailRoute), 'campaign-detail');
     assert.equal(detailRoute?.params.campaignId, '4');
 
     const partyRoute = router.match('#/campaigns/4/characters');
-    assert.equal(resolveAppActiveView(partyRoute), 'campaign-characters');
+    assert.equal(resolveActiveView(partyRoute), 'campaign-characters');
     assert.equal(partyRoute?.params.campaignId, '4');
   });
 
   it('disambiguates #/campaigns/:id/codex as campaign-codex and #/campaigns/:id/analytics as campaign-analytics (TASK-0355)', () => {
     const codexRoute = router.match('#/campaigns/4/codex');
-    assert.equal(resolveAppActiveView(codexRoute), 'campaign-codex');
+    assert.equal(resolveActiveView(codexRoute), 'campaign-codex');
     assert.equal(codexRoute?.params.campaignId, '4');
 
     const analyticsRoute = router.match('#/campaigns/4/analytics');
-    assert.equal(resolveAppActiveView(analyticsRoute), 'campaign-analytics');
+    assert.equal(resolveActiveView(analyticsRoute), 'campaign-analytics');
     assert.equal(analyticsRoute?.params.campaignId, '4');
   });
 
   it('disambiguates #/profile as profile view', () => {
     const profileRoute = router.match('#/profile');
-    assert.equal(resolveAppActiveView(profileRoute), 'profile');
+    assert.equal(resolveActiveView(profileRoute), 'profile');
   });
 
   it('generates accurate breadcrumbs across campaign detail tabs', () => {
@@ -99,19 +86,19 @@ describe('Campaign Detail Sub-View Disambiguation (TASK-0250)', () => {
     });
 
     await router.navigate('#/campaigns/4');
-    assert.equal(resolveAppActiveView(router.getCurrentRoute()), 'campaign-detail');
+    assert.equal(resolveActiveView(router.getCurrentRoute()), 'campaign-detail');
 
     await router.navigate('#/campaigns/4/characters');
-    assert.equal(resolveAppActiveView(router.getCurrentRoute()), 'campaign-characters');
+    assert.equal(resolveActiveView(router.getCurrentRoute()), 'campaign-characters');
 
     await router.navigate('#/campaigns/4/codex');
-    assert.equal(resolveAppActiveView(router.getCurrentRoute()), 'campaign-codex');
+    assert.equal(resolveActiveView(router.getCurrentRoute()), 'campaign-codex');
 
     await router.navigate('#/campaigns/4/analytics');
-    assert.equal(resolveAppActiveView(router.getCurrentRoute()), 'campaign-analytics');
+    assert.equal(resolveActiveView(router.getCurrentRoute()), 'campaign-analytics');
 
     await router.navigate('#/campaigns/4');
-    assert.equal(resolveAppActiveView(router.getCurrentRoute()), 'campaign-detail');
+    assert.equal(resolveActiveView(router.getCurrentRoute()), 'campaign-detail');
 
     assert.deepEqual(routeChanges, [
       '#/campaigns/4',

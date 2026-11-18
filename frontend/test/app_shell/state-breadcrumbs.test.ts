@@ -11,19 +11,7 @@
 import { describe, it, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { Router, type MatchedRoute } from '../../src/router/router.ts';
-import type { AppActiveView } from '../../src/runefoble-app.ts';
-
-function resolveActiveView(route: MatchedRoute | null): AppActiveView {
-  const pat = route?.pattern || '';
-  if (pat === '#/login' || pat === '#/register') return 'login';
-  if (pat.startsWith('#/campaigns/:campaignId/lobby/')) return 'session-lobby';
-  if (pat.startsWith('#/campaigns/:campaignId/sessions/')) return 'session-active';
-  if (pat === '#/campaigns/:campaignId/characters') return 'campaign-characters';
-  if (pat.startsWith('#/campaigns/:campaignId')) return 'campaign-detail';
-  if (pat.startsWith('#/characters/') && pat !== '#/characters') return 'character-sheet';
-  if (pat === '#/characters') return 'characters';
-  return pat === '#/profile' ? 'profile' : 'campaigns';
-}
+import { resolveActiveView, type AppActiveView } from '../../src/router/view-resolver.ts';
 
 describe('App Shell State & Breadcrumbs Orchestration', () => {
   let router: Router;

@@ -64,8 +64,10 @@ export class SessionSocket {
           this.reconnectTimer = setTimeout(() => this.connectWebSocket(this.host.sessionId), RECONNECT_DELAY_MS);
         }
       };
-    } catch {
+    } catch (error) {
+      console.error('Session socket failed to open.', error);
       this.host.socketConnected = false;
+      this.host.showToast('The live session connection failed. Reload the page to retry.');
     }
   }
 
@@ -91,6 +93,9 @@ export class SessionSocket {
       } else {
         handleSessionMessage(this.host, msg);
       }
-    } catch { /* ignore */ }
+    } catch (error) {
+      console.error('Session message failed.', error);
+      this.host.showToast('A live session message could not be applied. The board may be out of date.');
+    }
   }
 }
