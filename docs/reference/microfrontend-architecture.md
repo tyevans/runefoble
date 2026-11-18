@@ -44,7 +44,6 @@ runefoble/
 │   │       ├── runefoble-character-sheet.core.styles.ts
 │   │       ├── runefoble-character-sheet.inventory.styles.ts
 │   │       ├── runefoble-character-sheet.conditions.styles.ts
-│   │       ├── runefoble-character-sheet.templates.ts
 │   │       ├── templates/
 │   │       │   ├── stats.template.ts
 │   │       │   ├── inventory.template.ts
