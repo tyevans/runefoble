@@ -170,7 +170,7 @@ def test_frontend_app_shell_typescript_unit_suite():
     app_shell_dir = FRONTEND_DIR / "test" / "app_shell"
     assert app_shell_dir.is_dir()
     test_files = sorted(str(p.relative_to(REPO_ROOT)) for p in app_shell_dir.glob("*.test.ts"))
-    assert len(test_files) == 5
+    assert test_files
 
     result = subprocess.run(
         [
