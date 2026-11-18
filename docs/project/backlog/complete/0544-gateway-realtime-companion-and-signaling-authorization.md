@@ -1,7 +1,7 @@
 ---
 id: '0544'
 title: Gateway Realtime, Companion, and Signaling Authorization
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0520
@@ -28,7 +28,7 @@ target_release: 0.9.0
 # TASK-0544: Gateway Realtime, Companion, and Signaling Authorization
 
 ## Status
-Refined
+Complete
 
 ## Summary
 The gateway accepts WebSocket connections with no check. One session's broadcast reaches every session (`/ws/session/{id}`). Overlay and spectator sockets have no check. The companion router trusts a default identity header. The signaling layer takes identity from a query string or a raw bearer value. Per-message checks use names the schema does not define, and one fallback accepts a client-chosen action name. This task makes each socket subscribe through a schema permission, scopes broadcasts to that subscription, and removes client-chosen permission names.

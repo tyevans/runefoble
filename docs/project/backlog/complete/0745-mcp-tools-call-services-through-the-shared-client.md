@@ -1,7 +1,7 @@
 ---
 id: '0745'
 title: MCP Tools Call Owning Services Through the Shared Service Client
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0744
@@ -17,7 +17,7 @@ target_release: 0.9.0
 # TASK-0745: MCP Tools Call Owning Services Through the Shared Service Client
 
 ## Status
-Refined. Found by the refactor audit round refactor-r1 and checked against the code on 2026-11-17.
+Complete
 
 ## Summary
 The MCP gateway keeps a second service client. It opens a new HTTP client per request, drops trace context, and builds some URL paths from unquoted agent input.

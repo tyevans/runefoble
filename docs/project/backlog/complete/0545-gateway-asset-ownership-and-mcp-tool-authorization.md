@@ -1,7 +1,7 @@
 ---
 id: '0545'
 title: Gateway Asset Ownership and MCP Tool Authorization
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0520
@@ -25,7 +25,7 @@ target_release: 0.9.0
 # TASK-0545: Gateway Asset Ownership and MCP Tool Authorization
 
 ## Status
-Refined
+Complete
 
 ## Summary
 The gateway MCP registry lets anonymous callers register, overwrite, delete, and run dynamic tools. The author comes from the request body. The static MCP tools that change penalties, hit points, or board tokens have no caller check. The asset upload and delete routes on the gateway have no check, and delete takes the raw bearer value as a user id. This task makes each mutating MCP and asset route require a verified principal and a schema permission.

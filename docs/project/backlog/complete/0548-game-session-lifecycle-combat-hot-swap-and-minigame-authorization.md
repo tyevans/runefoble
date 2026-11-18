@@ -1,7 +1,7 @@
 ---
 id: '0548'
 title: Game Session Lifecycle, Combat, Hot-Swap, and Minigame Socket Authorization
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0520
@@ -29,7 +29,7 @@ target_release: 0.9.0
 # TASK-0548: Game Session Lifecycle, Combat, Hot-Swap, and Minigame Socket Authorization
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Session creation, start, join, leave, turn advance, dice rolls, combat, reactions, and autopilot have no object check. No session tuple is written, so no check could pass for a game session. Hot-swap runs its check only when a header is present, and it checks the `game_session` type that nothing writes. The minigame sockets take the player id from the message and skip checks for the default establishment. This task binds each lifecycle route to the `session` object, writes the session tuples in one place, and makes every check fail closed.

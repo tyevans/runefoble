@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Security
+- MCP tools that change characters, boards, or encounters check a schema permission for the verified caller. Agent action plan steps and dynamic tool calls over MCP check the same rules (`mcp_tool.execute`). (TASK-0545)
+- Board State: secret traps, secret doors, and secret portals no longer reach callers without `board.view_secret_layer`. Trap disarm, map switch, terrain, and fog routes now enforce SpiceDB `board` permissions. Board creation needs `campaign.run_session` and writes the board tuple. The `is_dm` query parameter is removed. (TASK-0546)
+- Voice signaling, mobile companion, overlay and spectator sockets now need `session.observe` (close code 4403). Overlay frames need `session.participate`. Companion whisper and turn-alert need `session.control`. `speak-and-act` needs `session.participate`. The campaign socket rejects action names it does not define. (TASK-0544)
+- Combat, turn, autopilot and reaction routes check `session.control`, `session.participate` or `session.observe`. Dice rolls record the verified caller. (TASK-0548)
 - Rules compendium homebrew list and campaign search return a homebrew rule only when the caller passes `homebrew_rule.view`. Strangers see SRD results only. (TASK-0555)
 - The gateway session WebSocket now sends messages only to clients of the same session. It requires `session.observe` and closes with 4403 otherwise. (TASK-0770)
 - The shared service client sends the service credential (`X-Runefoble-Service-Credential`) on every upstream call (ADR-0015 e). The gateway API refuses to start without `RUNEFOBLE_SERVICE_CREDENTIAL`. (TASK-0744)
@@ -38,6 +42,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Campaign analytics worker `process_event` alias, tracking property wrappers, and package root re-exports. Callers use `handle_event`. (TASK-0500)
 
 ### Added
+- `ProfileUpdated` domain event. game_session owns each user's profile as event-sourced state. (TASK-0742)
+- Gateway routes `GET /api/v1/sessions/{session_id}/events` (session chronicle feed) and `GET /api/v1/sessions/{session_id}/absentee-recap` (stand-in turns and penalties). Both require `session.observe`. (TASK-0641)
 - The MCP transport requires a verified bearer token on every request. A request without one gets `401` before any tool runs (ADR-0015 c). (TASK-0532)
 - Merchants are recorded by a `MerchantCreated` event before their first negotiation. (TASK-0728)
 - `runefoble_auth.factory.get_spicedb_client()`: one cached SpiceDB client for the gateway and libraries. (TASK-0542)
@@ -84,6 +90,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
 
 ### Changed
+- MCP tools call the owning services through the shared service client. Each upstream call sends the service credential and the W3C trace context. The MCP gateway starts telemetry as `gateway-mcp`. Agent-supplied path segments are percent-encoded. (TASK-0745)
 - Helm: the Grafana container listens on the chart port (3001), so `kubectl port-forward svc/grafana 3001:3001` reaches it. (TASK-0657)
 - Campaign Analytics refuses to start when PostgreSQL or Redis is unreachable. A PostgreSQL failure raises `CampaignStoreStartupError`. A Redis failure raises `EventBusUnavailableError`. The service serves no requests in either case. (TASK-0688)
 - Tests: the remaining conftests and test modules use the shared service harness. One helper replaces the per-directory event-stream assertions and the `_trust_signing_issuer` copies. `soundscape.dependencies.reset_dependencies` no longer resets the event bus. (TASK-0769)

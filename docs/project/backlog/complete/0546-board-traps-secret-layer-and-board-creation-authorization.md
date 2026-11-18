@@ -1,7 +1,7 @@
 ---
 id: '0546'
 title: Board Traps, Secret Layer, and Board Creation Authorization
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0520
@@ -25,7 +25,7 @@ target_release: 0.9.0
 # TASK-0546: Board Traps, Secret Layer, and Board Creation Authorization
 
 ## Status
-Refined
+Complete
 
 ## Summary
 The board service returns secret traps to anonymous callers. Anonymous callers can disarm traps and switch maps. The trap permission helper uses names that are not in the schema, and it hides every error in `except Exception: pass`. No code writes board tuples, so the board branch of the check never matches. This task makes the secret layer a schema permission, redacts secret data for callers who do not hold it, fixes the trap and map-switch checks, and writes the board tuples at creation.

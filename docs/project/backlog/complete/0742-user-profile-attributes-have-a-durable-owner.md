@@ -1,7 +1,7 @@
 ---
 id: '0742'
 title: User Profile Attributes Have a Durable Owner Behind the Gateway
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0488
@@ -19,7 +19,7 @@ target_release: 0.9.0
 # TASK-0742: User Profile Attributes Have a Durable Owner Behind the Gateway
 
 ## Status
-Refined. Found by the refactor audit round refactor-r1 and checked against the code on 2026-11-17.
+Complete
 
 ## Summary
 `GET` and `PATCH /api/v1/profile` serve from a dict in the gateway process. Profile edits are lost on every gateway restart, and a second replica has other data. ADR-0015 (a) and (b) say the gateway holds no domain state.

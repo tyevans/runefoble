@@ -1,7 +1,7 @@
 ---
 id: '0641'
 title: Session Chronicle Feed and Absentee Recap Read API Replace Canned App Shell Data
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0640
@@ -24,7 +24,7 @@ target_release: 0.9.0
 # TASK-0641: Session Chronicle Feed and Absentee Recap Read API Replace Canned App Shell Data
 
 ## Status
-Refined
+Complete
 
 ## Summary
 The session chronicle feed and the absentee recap are hard-coded. `fetchSessionEvents()` returns `FALLBACK_SESSION_EVENTS`, and `triggerAbsenteeRecap()` writes the story of "Valeros of Korvosa". No gateway route exists for either. Add two public read routes that the `game_session` service backs with its own event data. The App Shell calls them and shows an empty state when no data exists.
