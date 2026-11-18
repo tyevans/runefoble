@@ -208,7 +208,6 @@ Under TASK-0153 (ADR-0003, ADR-0007, ADR-0011), the crafting engine is organized
 - **`mishaps.py`**: Volatile mishap d100 tables, risk calculation (`calculate_volatile_risk`), and `MishapResolver` consequence generator.
 - **`engine.py`**: `CraftingEngine` (proficiency application and recipe evaluation) and `CraftingAggregate` event-sourced state transitions.
 - **`__init__.py`**: Re-exports all core domain types (`CraftingEngine`, `Recipe`, `MishapResolver`, `CraftingAggregate`).
-- **`crafting.py`**: Defect (DoR 9): facade preserving top-level module imports. Removal: TASK-0493.
 
 ---
 

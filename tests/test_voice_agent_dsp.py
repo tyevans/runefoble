@@ -22,7 +22,6 @@ from voice_agent.main import app
 from voice_agent.phonetics import (
     apply_slurred_speech,
     apply_text_transforms,
-    slur_phonemes,
 )
 from voice_agent.room_aggregate import VoiceRoomAggregate, VoiceRoomState
 
@@ -120,7 +119,6 @@ def test_modular_phonetics_and_filters():
     text = "The castle guards approach."
     slurred = apply_slurred_speech(text)
     assert "*hic!*" in slurred
-    assert slur_phonemes(text) == slurred
 
     transformed = apply_text_transforms("Hello", ["underwater", "whisper"])
     assert "*blub*" in transformed

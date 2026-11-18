@@ -34,10 +34,3 @@ def to_samples_array(
             return array.array("h", [max(-32767, min(32767, int(s * 32767))) for s in samples])
         return array.array("h", [max(-32767, min(32767, int(s))) for s in samples])
     return array.array("h")
-
-
-def _to_samples_array(
-    samples: array.array | bytes | bytearray | list[float | int],
-) -> array.array:
-    """Backward-compatible private alias for to_samples_array."""
-    return to_samples_array(samples)

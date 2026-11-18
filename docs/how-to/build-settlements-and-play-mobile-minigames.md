@@ -338,7 +338,7 @@ Per ADR-0003, ADR-0006, ADR-0007, and ADR-0013, the merchant negotiation engine 
 - **`state.py`**: `NegotiationAggregate` session state machine, managing session initialization, offer ranges, and event persistence.
 - **`rhetoric.py`**: `RhetoricMovesMixin` managing tactical bargaining gambits, roll evaluation, and patience decay.
 - **`dm_controls.py`**: `DMControlsMixin` managing live GM arbitration, price overrides, and veto/accept actions.
-- **`haggling.py` / `__init__.py`**: Defect (DoR 9): aggregator facades (< 40 lines) re-export symbols for existing imports. Removal: TASK-0491.
+- **`haggling/` / `__init__.py`**: Haggling package. The former `haggling.py` facade is removed (TASK-0793).
 
 ---
 

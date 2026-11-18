@@ -66,7 +66,6 @@ def test_dsn_normalization_and_platform_settings():
         event_store_table_name="runefoble_events",
     )
     assert settings.database_url == "postgresql://db_user:db_pass@db_host:5432/test_db"
-    assert settings.postgres_dsn == settings.database_url
     assert settings.event_store_backend == "postgresql"
     assert settings.postgres_pool_size == 8
     assert settings.postgres_max_overflow == 15

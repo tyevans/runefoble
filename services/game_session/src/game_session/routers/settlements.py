@@ -19,13 +19,13 @@ from game_session.settlement.auth import (
 )
 from game_session.settlement.auth.tokens import CallerId, get_caller_principal
 from game_session.settlement.facility_prices import InsufficientSettlementResources
-from game_session.settlements import (
+from game_session.settlement.models import (
     CharterSettlementRequest,
     ClaimRestBoonRequest,
     DepositSettlementRequest,
-    SettlementAggregate,
     UpgradeFacilityRequest,
 )
+from game_session.settlement.settlement_aggregate import SettlementAggregate
 from runefoble_platform.event_publish import publish_or_fail
 
 router = APIRouter(

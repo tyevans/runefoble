@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from voice_agent.audio_utils import (
-    _to_samples_array,
     to_samples_array,
 )
 from voice_agent.dsp.barge_in_filter import BargeInOnsetFilter, BargeInOnsetResult
@@ -44,7 +43,6 @@ from voice_agent.filters import (
 from voice_agent.phonetics import (
     apply_slurred_speech,
     apply_text_transforms,
-    slur_phonemes,
 )
 
 __all__ = [
@@ -63,7 +61,6 @@ __all__ = [
     "ROBOTIC_CONSTRUCT",
     "StreamPipelineFilter",
     "VoiceDSPPipeline",
-    "_to_samples_array",
     "apply_audio_filters",
     "apply_cosine_crossfade",
     "apply_slurred_speech",
@@ -75,7 +72,6 @@ __all__ = [
     "list_presets",
     "pitch_shift",
     "shift_pitch_and_formants",
-    "slur_phonemes",
     "to_samples_array",
     "underwater_filter",
     "whisper_filter",
