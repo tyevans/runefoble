@@ -23,7 +23,6 @@ from runefoble_events.events import (
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 from soundscape.dependencies import (
     handle_incoming_domain_event,
-    reset_dependencies,
     set_event_bus,
 )
 from soundscape.main import app
@@ -55,14 +54,6 @@ def tomb_session_id(trusted_ws_issuer, game_session_upstream) -> str:
 def auth_headers(sub: str) -> dict[str, str]:
     """Return Bearer headers for a token that the service verifier accepts."""
     return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
-
-
-@pytest.fixture(autouse=True)
-def clean_environment():
-    """Ensure clean aggregate, mixer, and bus states before and after each test."""
-    reset_dependencies()
-    yield
-    reset_dependencies()
 
 
 @pytest.fixture

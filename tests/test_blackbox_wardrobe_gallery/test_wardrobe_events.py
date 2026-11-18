@@ -14,10 +14,6 @@ from uuid import uuid4
 
 import pytest
 from asset_forge.dependencies import get_storage as get_asset_storage
-from asset_forge.dependencies import set_event_bus as set_forge_bus
-from character_sheet.dependencies import (
-    set_event_bus as set_char_bus,
-)
 from fastapi.testclient import TestClient
 from runefoble_events.events import (
     BaseRunefobleEvent,
@@ -25,7 +21,6 @@ from runefoble_events.events import (
     CharacterPortraitUpdated,
     PortraitVariantGenerated,
 )
-from runefoble_platform.redis_bus import RedisStreamsEventBus
 
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.ws_identity import SIGNING_ISSUER
@@ -139,13 +134,13 @@ def test_blackbox_generative_wardrobe_synthesis_and_storage(
 
 @pytest.mark.asyncio
 async def test_blackbox_event_dispatch(
-    char_client: TestClient, forge_client: TestClient, forge_campaign: str
+    char_client: TestClient,
+    forge_client: TestClient,
+    forge_campaign: str,
+    mock_bus: MockAsyncRedis,
 ):
     """Verify CharacterDamaged, PortraitVariantGenerated, and CharacterPortraitUpdated stream events."""
-    mock_redis = MockAsyncRedis()
-    bus = RedisStreamsEventBus(client=mock_redis)
-    set_char_bus(bus)
-    set_forge_bus(bus)
+    mock_redis = mock_bus
 
     # a) Create character
     create_res = char_client.post(

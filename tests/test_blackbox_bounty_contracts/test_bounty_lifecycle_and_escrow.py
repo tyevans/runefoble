@@ -9,13 +9,14 @@ from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
+from game_session.events import STREAM_SESSION
 from runefoble_auth.spicedb import MockSpiceDBClient
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.stream_events import assert_stream_events
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 from .conftest import (
-    assert_session_stream_events,
     create_campaign_session,
     join_campaign,
 )
@@ -112,9 +113,10 @@ async def test_bounty_lifecycle_claim_and_complete_with_escrow(
     assert final_bounty["disbursed_to"] == claimant_id
 
     # Verify event stream
-    assert_session_stream_events(
+    assert_stream_events(
         mock_bus,
         "MercenaryBountyPosted",
         "MercenaryBountyClaimed",
         "MercenaryBountyFulfilled",
+        stream=STREAM_SESSION,
     )

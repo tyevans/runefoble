@@ -9,13 +9,14 @@ from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
+from game_session.events import STREAM_SESSION
 from runefoble_auth.spicedb import MockSpiceDBClient
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.stream_events import assert_stream_events
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 from .conftest import (
-    assert_session_stream_events,
     create_campaign_session,
 )
 
@@ -61,7 +62,7 @@ async def test_post_bounty_and_query_board(
     assert bounty["poster_user_id"] == creator_id
 
     # Verify event published to Redis Streams
-    assert_session_stream_events(mock_bus, "MercenaryBountyPosted")
+    assert_stream_events(mock_bus, "MercenaryBountyPosted", stream=STREAM_SESSION)
 
     # 2. Query open notice board
     res_list = client.get(

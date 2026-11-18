@@ -19,12 +19,3 @@ pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 @pytest.fixture
 def client(spicedb: MockSpiceDBClient, mock_bus: MockAsyncRedis) -> TestClient:
     return TestClient(app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"})
-
-
-def assert_event_emitted(mock_bus: MockAsyncRedis, event_name: str) -> None:
-    """Verify that an event matching the given name was published to Redis streams."""
-    entries = mock_bus.streams.get("runefoble.events.west_marches", [])
-    ev_norm = event_name.lower().replace("_", "")
-    assert any(ev_norm in str(entry[1]).lower().replace("_", "") for entry in entries), (
-        f"Expected event '{event_name}' in stream, but found: {entries}"
-    )

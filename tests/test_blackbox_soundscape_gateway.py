@@ -20,7 +20,6 @@ import httpx
 import pytest
 from fastapi.testclient import TestClient
 from gateway_api.main import app as gateway_app
-from soundscape.dependencies import reset_dependencies
 from soundscape.leitmotif import CharacterLeitmotifProfile
 from soundscape.main import app as soundscape_app
 
@@ -28,13 +27,6 @@ from tests.helpers.live_services import closed_port_url, serve
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-
-
-@pytest.fixture(autouse=True)
-def clean_state():
-    reset_dependencies()
-    yield
-    reset_dependencies()
 
 
 @pytest.fixture(autouse=True)

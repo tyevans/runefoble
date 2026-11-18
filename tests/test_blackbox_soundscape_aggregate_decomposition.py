@@ -31,7 +31,6 @@ from soundscape.aggregate import (
     SoundscapeAggregate,
     SoundscapeState,
 )
-from soundscape.dependencies import reset_dependencies
 from soundscape.handlers import (
     FoleyHandlersMixin,
     LeitmotifHandlersMixin,
@@ -65,14 +64,6 @@ def tomb_session_id(trusted_ws_issuer, game_session_upstream) -> str:
 def auth_headers(sub: str) -> dict[str, str]:
     """Return Bearer headers for a token that the service verifier accepts."""
     return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
-
-
-@pytest.fixture(autouse=True)
-def clean_environment():
-    """Ensure clean dependencies and aggregate states before and after each test."""
-    reset_dependencies()
-    yield
-    reset_dependencies()
 
 
 @pytest.fixture

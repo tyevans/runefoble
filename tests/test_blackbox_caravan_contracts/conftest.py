@@ -9,11 +9,9 @@ from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
-from game_session.events import STREAM_WEST_MARCHES
 from game_session.main import app as session_app
 from runefoble_auth.spicedb import MockSpiceDBClient
 
-from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
@@ -24,13 +22,6 @@ def client(spicedb: MockSpiceDBClient) -> TestClient:
     return TestClient(
         session_app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"}
     )
-
-
-def assert_stream_events(mock_bus: MockAsyncRedis, *event_names: str) -> None:
-    """Verify published CloudEvents on the West Marches Redis stream."""
-    entries = mock_bus.streams.get(STREAM_WEST_MARCHES, [])
-    for event in event_names:
-        assert any(event in str(entry[1]) for entry in entries)
 
 
 def auth_headers(sub: str) -> dict[str, str]:

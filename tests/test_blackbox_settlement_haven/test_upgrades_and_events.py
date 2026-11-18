@@ -18,8 +18,8 @@ from runefoble_events.settlements import (
 )
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.stream_events import assert_stream_events
 from tests.helpers.ws_identity import SIGNING_ISSUER
-from tests.test_blackbox_settlement_haven.conftest import assert_event_emitted
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
@@ -37,7 +37,7 @@ async def test_settlement_tier_upgrade_and_events(
     res = client.post(f"/api/v1/campaigns/{cid}/settlements", json=b, headers=h)
     assert res.status_code == 201
     sid = res.json()["settlement_id"]
-    assert_event_emitted(mock_bus, "SettlementFounded")
+    assert_stream_events(mock_bus, "SettlementFounded")
 
     found_ce = SettlementFoundedEvent(
         settlement_id=sid, campaign_id=cid, name="Pine", scale="hamlet", biome="forest"
@@ -55,7 +55,7 @@ async def test_settlement_tier_upgrade_and_events(
     assert upg_res.status_code == 200
     upg_data = upg_res.json()
     assert upg_data["tier"] == 2 and upg_data["scale"] == "village"
-    assert_event_emitted(mock_bus, "SettlementTierUpgraded")
+    assert_stream_events(mock_bus, "SettlementTierUpgraded")
 
     tier_ce = SettlementTierUpgradedEvent(
         settlement_id=sid, old_tier=1, new_tier=2
@@ -83,7 +83,7 @@ async def test_establishment_upgrade_and_events(
     )
     assert est_res.status_code == 201
     eid = est_res.json()["establishment_id"]
-    assert_event_emitted(mock_bus, "EstablishmentConstructed")
+    assert_stream_events(mock_bus, "EstablishmentConstructed")
 
     est_ce = EstablishmentConstructedEvent(
         establishment_id=eid,
@@ -101,7 +101,7 @@ async def test_establishment_upgrade_and_events(
     )
     assert upg_res.status_code == 200
     assert upg_res.json()["tier"] == 2 and "billiards_table" in upg_res.json()["amenities"]
-    assert_event_emitted(mock_bus, "EstablishmentUpgraded")
+    assert_stream_events(mock_bus, "EstablishmentUpgraded")
 
     upg_ce = EstablishmentUpgradedEvent(
         establishment_id=eid, settlement_id=sid, tier=2

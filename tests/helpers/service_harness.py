@@ -71,6 +71,11 @@ SERVICE_SEAMS: tuple[ServiceSeams, ...] = (
         verifier_scope="session",
     ),
     ServiceSeams(
+        "campaign_lore",
+        verifier="campaign_lore.identity",
+        verifier_scope="test",
+    ),
+    ServiceSeams(
         "character_sheet",
         spicedb="character_sheet.dependencies",
         bus="character_sheet.dependencies",
@@ -183,6 +188,16 @@ def default_spicedb_client(request: pytest.FixtureRequest) -> Iterator[MockSpice
     finally:
         factory_swap.stop()
         _restore(previous, "set_spicedb_client")
+
+
+@pytest.fixture(autouse=True)
+def clean_soundscape_registries() -> Iterator[None]:
+    """Clear the soundscape session registries (mixers, aggregates, engines) around each test."""
+    from soundscape.dependencies import reset_dependencies
+
+    reset_dependencies()
+    yield
+    reset_dependencies()
 
 
 @pytest.fixture

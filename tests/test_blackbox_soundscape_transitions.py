@@ -22,7 +22,6 @@ from runefoble_events.events import (
 from soundscape.dependencies import (
     get_or_create_mixer,
     handle_incoming_domain_event,
-    reset_dependencies,
 )
 from soundscape.main import app
 from soundscape.mixer import DUCKING_ATTENUATION_DB, DUCKING_LINEAR_MULTIPLIER, AudioStemMixer
@@ -52,14 +51,6 @@ def tomb_session_id(trusted_ws_issuer, game_session_upstream) -> str:
 def auth_headers(sub: str) -> dict[str, str]:
     """Return Bearer headers for a token that the service verifier accepts."""
     return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
-
-
-@pytest.fixture(autouse=True)
-def clean_environment():
-    """Ensure clean aggregate, mixer, and bus states before and after each test."""
-    reset_dependencies()
-    yield
-    reset_dependencies()
 
 
 @pytest.fixture

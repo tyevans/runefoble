@@ -15,15 +15,10 @@ from runefoble_platform.event_sourcing import (
     AggregateRepository,
     InMemoryEventStore,
 )
-from runefoble_platform.redis_bus import RedisStreamsEventBus
-from the_watcher.dependencies import (
-    set_event_bus,
-    set_faction_resource_repo,
-)
+from the_watcher.dependencies import set_faction_resource_repo
 from the_watcher.factions.resources.aggregate import FactionResourceAggregate
 from the_watcher.main import app
 
-from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
@@ -31,8 +26,7 @@ pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 @pytest.fixture(autouse=True)
 def clean_resource_environment():
-    """Configure mock SpiceDB, event store, bus, and repo before each test."""
-    set_event_bus(RedisStreamsEventBus(client=MockAsyncRedis()))
+    """Give each test a fresh faction resource repo. The harness sets the bus and SpiceDB."""
     test_store = InMemoryEventStore()
     test_bus = InMemoryEventBus()
     repo = AggregateRepository(
@@ -42,7 +36,6 @@ def clean_resource_environment():
     )
     set_faction_resource_repo(repo)
     yield
-    set_event_bus(None)
     set_faction_resource_repo(None)
 
 

@@ -13,7 +13,6 @@ from __future__ import annotations
 from uuid import uuid4
 
 import pytest
-from campaign_lore.identity import set_zitadel_auth_service
 from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import MockSpiceDBClient
 
@@ -27,24 +26,16 @@ def _bearer(user_id: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(user_id)}"}
 
 
-@pytest.fixture(autouse=True)
-def _trust_signing_issuer():
-    """Campaign Lore verifies bearer tokens with the test issuer for each test in this module."""
-    set_zitadel_auth_service(SIGNING_ISSUER.verifier())
-    yield
-    set_zitadel_auth_service(None)
-
-
 @pytest.mark.asyncio
 async def test_blackbox_communal_stronghold_upgrade_and_boons(
     client: TestClient,
-    spicedb_client: MockSpiceDBClient,
+    spicedb: MockSpiceDBClient,
 ) -> None:
     """Verify upgrading communal stronghold facility recalculates shared boons and defense buffers."""
     campaign_id = str(uuid4())
     player_id = "alchemist_bryan"
 
-    await spicedb_client.write_relationship(
+    await spicedb.write_relationship(
         resource_type="campaign",
         resource_id=campaign_id,
         relation="player",
@@ -84,13 +75,13 @@ async def test_blackbox_communal_stronghold_upgrade_and_boons(
 @pytest.mark.asyncio
 async def test_blackbox_tavern_notice_board(
     client: TestClient,
-    spicedb_client: MockSpiceDBClient,
+    spicedb: MockSpiceDBClient,
 ) -> None:
     """Verify posting and reading communal tavern notice board bounties and rumors."""
     campaign_id = str(uuid4())
     player_id = "ranger_laura"
 
-    await spicedb_client.write_relationship(
+    await spicedb.write_relationship(
         resource_type="campaign",
         resource_id=campaign_id,
         relation="player",

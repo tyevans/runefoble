@@ -19,7 +19,6 @@ from uuid import uuid4
 
 import asyncpg
 import pytest
-from campaign_lore.identity import set_zitadel_auth_service
 from campaign_lore.main import create_app
 from fastapi.testclient import TestClient
 from runefoble_auth.factory import get_spicedb_client
@@ -46,14 +45,6 @@ async def _seed_dm(campaign_id: str, user_id: str = VISITOR_SUBJECT) -> None:
 def _bearer(user_id: str) -> dict[str, str]:
     """Return headers carrying a signed bearer token for `user_id`."""
     return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(user_id)}"}
-
-
-@pytest.fixture(autouse=True)
-def _trust_signing_issuer():
-    """Campaign Lore verifies bearer tokens with the test issuer for each test in this module."""
-    set_zitadel_auth_service(SIGNING_ISSUER.verifier())
-    yield
-    set_zitadel_auth_service(None)
 
 
 def _use_postgres_event_store(dsn: str):

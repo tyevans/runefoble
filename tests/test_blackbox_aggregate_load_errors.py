@@ -11,7 +11,7 @@ sits at the store boundary. The code under test is not mocked.
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Awaitable, Iterator
+from collections.abc import Awaitable
 from uuid import uuid4
 
 import pytest
@@ -21,7 +21,6 @@ from gateway_api.main import app as gateway_app
 from runefoble_platform.aggregate_loading import load_if_exists, load_or_create
 from runefoble_platform.event_sourcing import create_aggregate_repository
 from soundscape.aggregate import SoundscapeAggregate
-from soundscape.dependencies import reset_dependencies, set_event_bus
 from soundscape.main import app
 
 from tests.helpers.ws_identity import SIGNING_ISSUER
@@ -36,14 +35,6 @@ def _auth_headers(sub: str) -> dict[str, str]:
 
 def _connection_refused(*_args: object, **_kwargs: object) -> None:
     raise ConnectionError("event store unreachable")
-
-
-@pytest.fixture(autouse=True)
-def clean_soundscape_environment(default_redis_event_bus) -> Iterator[None]:
-    reset_dependencies()
-    set_event_bus(default_redis_event_bus)
-    yield
-    reset_dependencies()
 
 
 @pytest.fixture

@@ -70,11 +70,10 @@ def get_or_create_leitmotif_engine(session_id: str) -> LeitmotifEngine:
 
 
 def reset_dependencies() -> None:
-    """Clear in-memory session registries and reset mocks."""
+    """Clear the in-memory session registries. The event bus seam is not touched."""
     _session_to_aggregate.clear()
     _session_mixers.clear()
     _session_leitmotif_engines.clear()
-    event_bus_provider.set(None)
 
 
 def get_zitadel_auth_service() -> ZitadelAuthService:

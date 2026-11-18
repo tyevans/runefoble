@@ -71,13 +71,6 @@ def clean_gateway_ws() -> Generator[None]:
     ws_campaign_manager.active_connections.clear()
 
 
-def assert_stream_event(mock_bus: MockAsyncRedis, stream: str, event_name: str) -> None:
-    ev_norm = event_name.lower().replace("_", "")
-    assert any(
-        ev_norm in str(e[1]).lower().replace("_", "") for e in mock_bus.streams.get(stream, [])
-    )
-
-
 def setup_campaign_settlement(
     tc: TestClient,
     db: MockSpiceDBClient,

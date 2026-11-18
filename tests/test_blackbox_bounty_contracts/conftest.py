@@ -9,11 +9,9 @@ from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
-from game_session.events import STREAM_SESSION
 from game_session.main import app as session_app
 from runefoble_auth.spicedb import MockSpiceDBClient
 
-from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
@@ -61,12 +59,3 @@ def join_campaign(client: TestClient, campaign_id: str, owner_id: str, member_id
         headers=auth_headers(member_id),
     )
     assert joined.status_code == 200, joined.text
-
-
-def assert_session_stream_events(mock_bus: MockAsyncRedis, *event_names: str) -> None:
-    """Verify published CloudEvents on the session Redis stream."""
-    entries = mock_bus.streams.get(STREAM_SESSION, [])
-    for event in event_names:
-        assert any(event in str(entry[1]) for entry in entries), (
-            f"Event '{event}' not found in {STREAM_SESSION}"
-        )

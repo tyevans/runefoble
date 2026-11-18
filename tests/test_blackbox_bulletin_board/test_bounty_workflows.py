@@ -12,9 +12,8 @@ from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import MockSpiceDBClient
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.stream_events import assert_stream_events
 from tests.helpers.ws_identity import SIGNING_ISSUER
-
-from .conftest import assert_event_emitted
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
@@ -50,7 +49,7 @@ async def test_blackbox_bounty_posting_and_fulfillment(
     assert bounty_res.status_code == 201
     nid = bounty_res.json()["notice_id"]
     assert bounty_res.json()["metadata"]["reward_gp"] == 250
-    assert_event_emitted(mock_bus, "BulletinNoticePinned")
+    assert_stream_events(mock_bus, "BulletinNoticePinned")
 
     # Fulfill / remove bounty notice
     del_res = client.delete(
@@ -58,7 +57,7 @@ async def test_blackbox_bounty_posting_and_fulfillment(
         headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(officer)}"},
     )
     assert del_res.status_code == 200 and del_res.json()["status"] == "removed"
-    assert_event_emitted(mock_bus, "BulletinNoticeRemoved")
+    assert_stream_events(mock_bus, "BulletinNoticeRemoved")
 
     # Active notices should now be empty
     active = client.get(

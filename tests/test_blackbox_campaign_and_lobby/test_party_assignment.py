@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pytest
 from fastapi.testclient import TestClient
-from gateway_api.auth import get_spicedb_client
+from runefoble_auth.factory import get_spicedb_client
 
 
 def _auth(issuer, sub: str) -> dict[str, str]:

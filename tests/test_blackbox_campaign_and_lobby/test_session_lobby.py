@@ -72,10 +72,10 @@ def test_session_lobby_readiness_and_ai_stand_in(client_sess: TestClient) -> Non
 
 
 def test_session_lobby_launch_transition_and_events(
-    reset_stores, client_gw: TestClient, client_sess: TestClient, trusted_ws_issuer
+    mock_bus, client_gw: TestClient, client_sess: TestClient, trusted_ws_issuer
 ) -> None:
     """Verify DM triggering Launch Session transitions state and emits events."""
-    mock_redis = reset_stores
+    mock_redis = mock_bus
     headers_dm = {"Authorization": f"Bearer {trusted_ws_issuer.mint('dm_evelyn')}"}
     headers_stranger = {"Authorization": f"Bearer {trusted_ws_issuer.mint('stranger_bob')}"}
 

@@ -12,9 +12,8 @@ from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import MockSpiceDBClient
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.stream_events import assert_stream_events
 from tests.helpers.ws_identity import SIGNING_ISSUER
-
-from .conftest import assert_event_emitted
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
@@ -57,7 +56,7 @@ async def test_blackbox_worker_assignment_and_role_compatibility(
     assert armorer_res.status_code == 201
     torvin = armorer_res.json()
     assert torvin["service_quality_contribution"] > 1.2
-    assert_event_emitted(mock_bus, "NPCWorkerAssigned")
+    assert_stream_events(mock_bus, "NPCWorkerAssigned")
 
     # Verify roster listing
     roster_res = client.get(f"/api/v1/establishments/{est_id}/workers", headers=h)
@@ -70,7 +69,7 @@ async def test_blackbox_worker_assignment_and_role_compatibility(
         headers=h,
     )
     assert relieve_res.status_code == 200 and relieve_res.json()["status"] == "relieved"
-    assert_event_emitted(mock_bus, "NPCWorkerRelieved")
+    assert_stream_events(mock_bus, "NPCWorkerRelieved")
 
     # Active roster is now empty
     active_roster = client.get(f"/api/v1/establishments/{est_id}/workers", headers=h)

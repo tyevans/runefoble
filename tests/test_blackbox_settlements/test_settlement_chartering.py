@@ -12,9 +12,8 @@ from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import MockSpiceDBClient
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.stream_events import assert_stream_events
 from tests.helpers.ws_identity import SIGNING_ISSUER
-
-from .conftest import assert_stream_events
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 

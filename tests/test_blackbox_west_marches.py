@@ -17,7 +17,6 @@ from uuid import uuid4
 
 import pytest
 from campaign_lore.dependencies import set_west_marches_repo
-from campaign_lore.identity import set_zitadel_auth_service
 from campaign_lore.main import app as lore_app
 from campaign_lore.models import WestMarchesState
 from campaign_lore.west_marches_aggregate import WestMarchesAtlasAggregate
@@ -40,14 +39,6 @@ VISITOR_SUBJECT = "lore-test-visitor"
 def _bearer(user_id: str) -> dict[str, str]:
     """Return headers carrying a signed bearer token for `user_id`."""
     return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(user_id)}"}
-
-
-@pytest.fixture(autouse=True)
-def _trust_signing_issuer():
-    """Campaign Lore verifies bearer tokens with the test issuer for each test in this module."""
-    set_zitadel_auth_service(SIGNING_ISSUER.verifier())
-    yield
-    set_zitadel_auth_service(None)
 
 
 @pytest.fixture

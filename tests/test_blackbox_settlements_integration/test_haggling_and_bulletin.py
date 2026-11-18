@@ -8,8 +8,9 @@ from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.stream_events import assert_stream_events
 
-from .conftest import assert_stream_event, setup_campaign_settlement, ws_subprotocols
+from .conftest import setup_campaign_settlement, ws_subprotocols
 
 
 def test_merchant_haggling_gambits_and_dm_override(
@@ -40,7 +41,7 @@ def test_merchant_haggling_gambits_and_dm_override(
     ).json()
     neg_id = haggle["negotiation_id"]
     assert haggle["status"] == "active" and haggle["counter_price"] < 350
-    assert_stream_event(mock_bus, STREAM_TAVERN, "GambitExecuted")
+    assert_stream_events(mock_bus, "GambitExecuted", stream=STREAM_TAVERN)
 
     flatt = session_client.post(
         f"/api/v1/haggling/{neg_id}/gambit",
@@ -62,8 +63,8 @@ def test_merchant_haggling_gambits_and_dm_override(
     )
     assert accept.status_code == 200 and accept.json()["status"] == "completed"
     assert accept.json()["counter_price"] == 275
-    assert_stream_event(mock_bus, STREAM_TAVERN, "NegotiationConcluded")
-    assert_stream_event(mock_bus, STREAM_TAVERN, "CurrencyDeducted")
+    assert_stream_events(mock_bus, "NegotiationConcluded", stream=STREAM_TAVERN)
+    assert_stream_events(mock_bus, "CurrencyDeducted", stream=STREAM_TAVERN)
 
 
 def test_bulletin_board_pin_and_cipher_decrypt(
@@ -87,7 +88,7 @@ def test_bulletin_board_pin_and_cipher_decrypt(
     }
     bounty = session_client.post(bulletin, json=b_data, headers=dm_h)
     assert bounty.status_code == 201 and bounty.json()["wax_sealed"] is True
-    assert_stream_event(mock_bus, STREAM_WEST_MARCHES, "BulletinNoticePinned")
+    assert_stream_events(mock_bus, "BulletinNoticePinned", stream=STREAM_WEST_MARCHES)
 
     secret_text = "Midnight meeting behind the apothecary."
     c_data = {"board_type": "tavern", "title": "Meeting", "category": "rumor"} | {
@@ -107,7 +108,7 @@ def test_bulletin_board_pin_and_cipher_decrypt(
         f"{bulletin}/{nid}/decrypt", json={"solution": "gilded night"}, headers=p_h
     )
     assert dec.status_code == 200 and dec.json()["decrypted_content"] == secret_text
-    assert_stream_event(mock_bus, STREAM_WEST_MARCHES, "CipherNoticeDecrypted")
+    assert_stream_events(mock_bus, "CipherNoticeDecrypted", stream=STREAM_WEST_MARCHES)
 
     ws_url = f"/ws/campaigns/{cid}"
     with (

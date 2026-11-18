@@ -27,7 +27,6 @@ from soundscape.dependencies import (
     get_or_create_leitmotif_engine,
     get_or_create_mixer,
     get_soundscape_repo,
-    reset_dependencies,
 )
 from soundscape.dependencies import (
     handle_incoming_domain_event as deps_handle_event,
@@ -36,14 +35,6 @@ from soundscape.event_handlers import (
     handle_incoming_domain_event,
     register_soundscape_event_handlers,
 )
-
-
-@pytest.fixture(autouse=True)
-def clean_environment():
-    """Ensure clean aggregate, mixer, and bus states before and after each test."""
-    reset_dependencies()
-    yield
-    reset_dependencies()
 
 
 def test_handler_backward_compatibility_reexport():
