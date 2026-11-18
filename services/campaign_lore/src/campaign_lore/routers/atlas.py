@@ -20,7 +20,7 @@ from campaign_lore.atlas_aggregate import AtlasAggregate, AtlasState
 from campaign_lore.dependencies import (
     get_atlas_repo,
 )
-from campaign_lore.identity import CallerId, get_campaign_principal
+from campaign_lore.identity import CallerId, get_principal
 from campaign_lore.permissions import (
     check_user_can_edit_atlas,
     check_user_can_play_campaign,
@@ -30,7 +30,7 @@ from campaign_lore.permissions import (
 router = APIRouter(
     prefix="/api/v1/campaigns/{campaign_id}/atlas",
     tags=["Campaign Atlas"],
-    dependencies=[Depends(get_campaign_principal)],
+    dependencies=[Depends(get_principal)],
 )
 
 

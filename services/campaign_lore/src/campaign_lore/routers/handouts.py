@@ -15,7 +15,7 @@ from campaign_lore.dependencies import (
 )
 from campaign_lore.handouts import HandoutSynthesizer
 from campaign_lore.handouts_aggregate import DiegeticHandoutAggregate
-from campaign_lore.identity import CallerId, get_campaign_principal
+from campaign_lore.identity import CallerId, get_principal
 from campaign_lore.permissions import (
     check_user_can_interact_handout,
     check_user_can_run_session,
@@ -25,7 +25,7 @@ from campaign_lore.permissions import (
 router = APIRouter(
     prefix="/api/v1/lore/handouts",
     tags=["Diegetic Handouts"],
-    dependencies=[Depends(get_campaign_principal)],
+    dependencies=[Depends(get_principal)],
 )
 
 

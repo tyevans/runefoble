@@ -12,13 +12,13 @@ from runefoble_auth.spicedb import SpiceDBClient
 from campaign_lore.dependencies import (
     get_retrieval_engine,
 )
-from campaign_lore.identity import CallerId, get_campaign_principal
+from campaign_lore.identity import CallerId, get_principal
 from campaign_lore.permissions import (
     check_user_can_read_secrets,
 )
 from campaign_lore.retrieval import LoreRetrievalEngine
 
-router = APIRouter(tags=["Lore Search & RAG"], dependencies=[Depends(get_campaign_principal)])
+router = APIRouter(tags=["Lore Search & RAG"], dependencies=[Depends(get_principal)])
 
 
 class LoreSearchRequest(BaseModel):

@@ -7,42 +7,16 @@ Roles are not authority: permission checks run through SpiceDB (Hard Invariant 1
 
 from __future__ import annotations
 
-from typing import Annotated
-
-from fastapi import Depends
-from runefoble_auth.principal import VerifiedPrincipal, require_principal
-from runefoble_auth.zitadel import ZitadelAuthService
+from runefoble_auth.wiring import (
+    build_identity_dependencies,
+    make_verifier_holder,
+    verifier_from_settings,
+)
 from runefoble_platform.config import PlatformSettings
 
-_auth_service: ZitadelAuthService | None = None
-
-
-def get_zitadel_auth_service() -> ZitadelAuthService:
-    """Retrieve the singleton ZitadelAuthService configured from platform settings."""
-    global _auth_service
-    if _auth_service is None:
-        settings = PlatformSettings()
-        _auth_service = ZitadelAuthService(
-            issuer=settings.zitadel_issuer,
-            audience=settings.zitadel_audience,
-            internal_url=settings.zitadel_internal_url,
-        )
-    return _auth_service
-
-
-def set_zitadel_auth_service(service: ZitadelAuthService | None) -> None:
-    """Override the singleton ZitadelAuthService for tests."""
-    global _auth_service
-    _auth_service = service
-
-
-get_campaign_principal = require_principal(get_zitadel_auth_service)
-CampaignPrincipal = Annotated[VerifiedPrincipal, Depends(get_campaign_principal)]
-
-
-def get_verified_subject(principal: CampaignPrincipal) -> str:
-    """Return the verified subject of the request. Never a client-supplied value."""
-    return principal.user_id
-
-
-CallerId = Annotated[str, Depends(get_verified_subject)]
+get_zitadel_auth_service, set_zitadel_auth_service = make_verifier_holder(
+    lambda: verifier_from_settings(PlatformSettings())
+)
+get_principal, CallerPrincipal, CallerId, get_caller_or_service, CallerOrService = (
+    build_identity_dependencies(get_zitadel_auth_service, None)
+)
