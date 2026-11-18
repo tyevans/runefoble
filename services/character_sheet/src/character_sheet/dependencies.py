@@ -20,6 +20,7 @@ from runefoble_auth.zitadel import ZitadelAuthService
 from runefoble_events.events import (
     CharacterAssignedToCampaign,
     CharacterDamaged,
+    CharacterHealthChanged,
     StandInPolicyUpdated,
     StandInStabilized,
 )
@@ -178,10 +179,13 @@ async def modify_character_health(
     delta: int,
     source: str,
     is_stand_in: bool | None,
+    session_id: str | None = None,
 ) -> CharacterState:
     char = await repo.load(character_id)
     was_stabilized = char.state.is_stabilized
-    char.modify_health(delta=delta, source=source, is_stand_in=is_stand_in)
+    char.modify_health(
+        delta=delta, source=source, is_stand_in=is_stand_in, session_id=session_id or None
+    )
     await repo.save(char)
     if not was_stabilized and char.state.is_stabilized:
         await publish_character_event(
@@ -192,6 +196,17 @@ async def modify_character_health(
                 condition="unconscious_stabilized",
             )
         )
+    await publish_character_event(
+        CharacterHealthChanged(
+            aggregate_id=character_id,
+            session_id=session_id or None,
+            campaign_id=char.state.campaign_id or None,
+            delta=delta,
+            current_hp=char.state.current_hp,
+            max_hp=char.state.max_hp,
+            source=source,
+        )
+    )
     if delta < 0:
         await publish_character_event(
             CharacterDamaged(
