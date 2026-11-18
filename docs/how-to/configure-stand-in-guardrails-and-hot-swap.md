@@ -13,16 +13,16 @@ Every route in this service needs a bearer token. Set `TOKEN` to a Zitadel acces
 Players who anticipate missing a session can configure personal tactical guardrails and playstyle boundaries on their character sheet. These rules ensure that when The Watcher or an autonomous autopilot executes a turn, the AI stand-in respects the player's tactical preferences.
 
 ### Guardrail Parameters
-These names are the fields of `StandInGuardrails` (character sheet) and `StandInGuardrailPolicy` (`libs/runefoble_platform`). The contract test checks that both models declare the same fields.
+These names are the fields of `StandInGuardrailPolicy` (`libs/runefoble_platform`). It is the only policy model. The character sheet stores it, and the Watcher and worker validate it. Each omitted field takes the default shown below.
 - `preserve_spell_slots` (object, default `{}`): Spell level to number of slots held in reserve, for example `{"3": 1}`.
 - `protect_allies` (list of strings, default `[]`): Ally names the stand-in protects when they are in the scene.
 - `protect_ally_hp_threshold` (float 0.0 to 1.0, default `0.3`): HP fraction below which an ally counts as wounded.
 - `risk_threshold` (string, default `"cautious"`): Risk appetite profile (`"cautious"`, `"balanced"`, `"reckless"`).
-- `avoid_melee` (bool, default `false` in the Watcher and worker, `true` on the character sheet): Forces ranged positioning when enemies enter close proximity.
-- `permadeath_safeguard` (bool, default `true` on the character sheet): Stabilizes the character at 0 HP. See section 2.
+- `avoid_melee` (bool, default `true`): Forces ranged positioning when enemies enter close proximity.
+- `permadeath_safeguard` (bool, default `true`): Stabilizes the character at 0 HP. See section 2.
 - `custom_priorities` (list of strings, default `[]`): Ordered target names. The stand-in engines pick the first priority that names a visible or scene target. They also pass the list to the model as prompt text.
 
-An unknown name fails. The Watcher, the inference worker, and the auto-pilot route return HTTP 422 with the field name. A field that a request omits has no effect in the Watcher and worker.
+An unknown name fails. The Watcher, the inference worker, and the character sheet write route return HTTP 422 with the field name. A field that a request omits takes its default.
 
 ### Enforced Guardrails
 The stand-in engines enforce four guardrails. They report each one by name in `guardrails_applied`:
@@ -34,7 +34,9 @@ The stand-in engines enforce four guardrails. They report each one by name in `g
 The other fields are stored but not enforced by the stand-in engines yet. The engines do not report them.
 
 ### Auto-Pilot Requests
-The auto-pilot route (`POST /api/v1/sessions/{session_id}/turns/auto-pilot`) takes the policy in its `guardrails` field. It validates the policy with the same model. A rejected policy returns HTTP 422 with the field name, and no action is recorded. The route does not read the policy stored on the character sheet yet.
+The auto-pilot route (`POST /api/v1/sessions/{session_id}/turns/auto-pilot`) does not accept a policy. The stand-in obeys only the policy stored on the absent character. For each turn, `game_session` reads `GET /api/v1/characters/{character_id}/guardrails` from `character_sheet` with the service credential, then sends that policy to The Watcher. A body that carries any other field, such as `guardrails`, returns HTTP 422, and no action is recorded.
+
+If `character_sheet` is unreachable, returns a status other than `200`, or returns an invalid policy, the route returns `503`. No action is recorded, and the turn does not advance. A default policy never takes the place of the stored one.
 
 ### Updating Guardrails via REST API
 
@@ -181,6 +183,8 @@ Auto-pilot turns (`POST /api/v1/sessions/{id}/turns/auto-pilot` or `/autopilot`)
 - If the URL is unset, the route returns `503` with a detail that names `RUNEFOBLE_WATCHER_URL`.
 - If The Watcher is unreachable, returns a status other than `200`, or returns an invalid body, the route returns `503`.
 - In each failure case, no stand-in action is recorded and the turn does not advance. `game_session` never runs a local engine instead.
+
+The stored policy is read before The Watcher is called, so a turn with an unreachable `character_sheet` returns `503` before The Watcher is reached. `game_session` uses `RUNEFOBLE_CHARACTER_SHEET_URL` for this read.
 
 In `staging` and `production`, `game_session` does not start without `RUNEFOBLE_WATCHER_URL`. See [Platform Services](../reference/platform-services.md#deployed-mode-and-start-up-failures-adr-0015-4).
 

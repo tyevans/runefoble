@@ -7,12 +7,12 @@ raises `EngineUnavailableError` (HTTP 503) instead of returning text.
 from __future__ import annotations
 
 from runefoble_platform.engine_ports import EngineUnavailableError
+from runefoble_platform.stand_in_action import StandInAction
 from the_watcher.models import (
     DMGuidanceRequest,
     DMNarrationResult,
     IntentResult,
     SpeechInputRequest,
-    StandInAction,
     StandInRequest,
 )
 from the_watcher.ports import IntentParser, SceneNarrator, StandInDecider

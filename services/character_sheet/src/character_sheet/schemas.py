@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, Field
 
 
 class CreateCharacterRequest(BaseModel):
@@ -38,20 +38,6 @@ class HealthChangeRequest(BaseModel):
     source: str = "damage"
     is_stand_in: bool | None = None
     session_id: str | None = None
-
-
-class UpdateGuardrailsRequest(BaseModel):
-    """Stand-in policy. Unknown fields are refused so that a misspelled guardrail never stores."""
-
-    model_config = ConfigDict(extra="forbid")
-
-    preserve_spell_slots: dict[int, int] = Field(default_factory=dict)
-    protect_allies: list[str] = Field(default_factory=list)
-    protect_ally_hp_threshold: float = 0.3
-    risk_threshold: Literal["cautious", "balanced", "reckless"] = "cautious"
-    avoid_melee: bool = True
-    permadeath_safeguard: bool = True
-    custom_priorities: list[str] = Field(default_factory=list)
 
 
 class PenaltyRequest(BaseModel):

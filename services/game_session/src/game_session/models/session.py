@@ -6,9 +6,8 @@ from typing import Any
 from uuid import UUID
 
 from game_session.models.transitions import GameSessionTransitionsMixin
-from pydantic import BaseModel, Field
-from runefoble_platform.stand_in_guardrails import StandInGuardrailPolicy
-from the_watcher.watcher_ai import StandInAction
+from pydantic import BaseModel, ConfigDict, Field
+from runefoble_platform.stand_in_action import StandInAction
 
 
 class ParticipantState(BaseModel):
@@ -75,11 +74,15 @@ class LeaveSessionResponse(GameSessionState):
 
 
 class AutoPilotRequest(BaseModel):
+    """Auto-pilot turn request. The stand-in policy is not part of it: game_session reads the
+    policy stored on the character. A body that carries any other field answers 422."""
+
+    model_config = ConfigDict(extra="forbid")
+
     active_character_id: UUID | None = None
     penalties: list[str] = Field(default_factory=list)
     scene_context: str = "In active encounter"
     personality_traits: list[str] = Field(default_factory=list)
-    guardrails: StandInGuardrailPolicy | None = None
 
 
 class AutoPilotResponse(BaseModel):

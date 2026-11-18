@@ -37,6 +37,7 @@ pytest_plugins = [
     "tests.helpers.service_harness",
     "tests.helpers.silo_fixtures",
     "tests.helpers.spicedb",
+    "tests.helpers.stand_in_policy",
     "tests.helpers.voice_identity",
     "tests.helpers.zitadel_auth",
 ]

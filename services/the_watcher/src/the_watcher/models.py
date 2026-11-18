@@ -3,7 +3,7 @@
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field
-from runefoble_platform.stand_in_guardrails import GuardrailName, StandInGuardrailPolicy
+from runefoble_platform.stand_in_guardrails import StandInGuardrailPolicy
 
 
 class IntentResult(BaseModel):
@@ -13,20 +13,6 @@ class IntentResult(BaseModel):
     watcher_reply: str
     target: str | None = None
     details: str | None = None
-    source: str = "watcher_rules"  # "llm" | "heuristic" | "mock" from the worker
-    degraded: bool = False
-
-
-class StandInAction(BaseModel):
-    character_name: str
-    action_type: str = "attack"
-    action_description: str
-    dialogue: str
-    penalty_influence: str | None = None
-    dice_roll_required: str | None = None
-    penalties_applied: list[str] = Field(default_factory=list)
-    guardrails_applied: list[GuardrailName] = Field(default_factory=list)
-    flavor_text: str = ""
     source: str = "watcher_rules"  # "llm" | "heuristic" | "mock" from the worker
     degraded: bool = False
 

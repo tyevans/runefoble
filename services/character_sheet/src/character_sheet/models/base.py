@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
-from typing import Any, Literal
+from typing import Any
 
 from character_sheet.portrait import compute_condition_badges, resolve_active_portrait_url
 from pydantic import BaseModel, Field
+from runefoble_platform.stand_in_guardrails import StandInGuardrailPolicy
 
 DEFAULT_SCORES: dict[str, int] = dict.fromkeys(["str", "dex", "con", "int", "wis", "cha"], 10)
 
@@ -35,16 +36,6 @@ class WardrobeVariant(BaseModel):
     image_url: str
     prompt: str = ""
     created_at: str = ""
-
-
-class StandInGuardrails(BaseModel):
-    preserve_spell_slots: dict[int, int] = Field(default_factory=dict)
-    protect_allies: list[str] = Field(default_factory=list)
-    protect_ally_hp_threshold: float = 0.3
-    risk_threshold: Literal["cautious", "balanced", "reckless"] = "cautious"
-    avoid_melee: bool = True
-    permadeath_safeguard: bool = True
-    custom_priorities: list[str] = Field(default_factory=list)
 
 
 class VitalsTransitionsMixin:
@@ -106,9 +97,11 @@ class VitalsTransitionsMixin:
             }
         )
 
-    def with_stand_in_guardrails(self: Any, guardrails: StandInGuardrails | dict[str, Any]) -> Any:
+    def with_stand_in_guardrails(
+        self: Any, guardrails: StandInGuardrailPolicy | dict[str, Any]
+    ) -> Any:
         gr = (
-            StandInGuardrails.model_validate(guardrails)
+            StandInGuardrailPolicy.model_validate(guardrails)
             if isinstance(guardrails, dict)
             else guardrails
         )

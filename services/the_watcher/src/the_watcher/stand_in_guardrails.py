@@ -4,8 +4,8 @@ Rules run in a fixed order: ally protection, spell slot reserve, custom priority
 The first rule that applies returns the action. Each reported name is a GuardrailName.
 """
 
+from runefoble_platform.stand_in_action import StandInAction
 from runefoble_platform.stand_in_guardrails import GuardrailName, StandInGuardrailPolicy
-from the_watcher.models import StandInAction
 
 
 def evaluate_tactical_guardrails(

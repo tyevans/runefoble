@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from character_sheet.models.base import StandInGuardrails, VitalsTransitionsMixin, WardrobeVariant
+from character_sheet.models.base import VitalsTransitionsMixin, WardrobeVariant
 from character_sheet.models.character import (
     AttributeScores,
     CharacterCore,
@@ -40,7 +40,6 @@ from character_sheet.schemas import (
     PrepareSpellRequest,
     RemoveInventoryItemRequest,
     SetActivePortraitRequest,
-    UpdateGuardrailsRequest,
 )
 
 __all__ = [
@@ -72,8 +71,6 @@ __all__ = [
     "RemoveInventoryItemRequest",
     "SetActivePortraitRequest",
     "SpellProgression",
-    "StandInGuardrails",
-    "UpdateGuardrailsRequest",
     "VitalsTransitionsMixin",
     "WardrobeVariant",
 ]

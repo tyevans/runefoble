@@ -1,6 +1,6 @@
 """Persona and penalty simulator for missing player AI stand-ins."""
 
-from the_watcher.models import StandInAction
+from runefoble_platform.stand_in_action import StandInAction
 
 _INFLUENCE = {
     "drunk": "Drunk: Disadvantage on finesse, precision, and perception checks (-2 penalty).",

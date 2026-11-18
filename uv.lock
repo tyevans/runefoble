@@ -871,7 +871,6 @@ dependencies = [
     { name = "runefoble-auth" },
     { name = "runefoble-events" },
     { name = "runefoble-platform" },
-    { name = "the-watcher" },
     { name = "uvicorn" },
 ]
 
@@ -884,7 +883,6 @@ requires-dist = [
     { name = "runefoble-auth", editable = "libs/runefoble_auth" },
     { name = "runefoble-events", editable = "libs/runefoble_events" },
     { name = "runefoble-platform", editable = "libs/runefoble_platform" },
-    { name = "the-watcher", editable = "services/the_watcher" },
     { name = "uvicorn", specifier = ">=0.54.0" },
 ]
 

@@ -14,7 +14,7 @@ from character_sheet.authz import (
 from character_sheet.crafting import CraftingAggregate
 from character_sheet.health_events import health_change_events
 from character_sheet.models import CharacterState
-from character_sheet.schemas import CreateCharacterRequest, UpdateGuardrailsRequest
+from character_sheet.schemas import CreateCharacterRequest
 from eventsource.domain.exceptions import AggregateNotFoundError
 from fastapi import Depends, HTTPException
 from runefoble_auth.caller import CallerIdentity, require_user_or_service_credential
@@ -33,6 +33,7 @@ from runefoble_platform.event_sourcing import (
     create_aggregate_repository,
 )
 from runefoble_platform.service_credential import expected_service_credential
+from runefoble_platform.stand_in_guardrails import StandInGuardrailPolicy
 
 STREAM_CHARACTER = "runefoble.events.character"
 STREAM_CRAFTING = "runefoble.events.crafting"
@@ -240,7 +241,7 @@ async def modify_character_health(
 async def update_character_guardrails(
     repo: AggregateRepository[CharacterAggregate],
     character_id: UUID,
-    req: UpdateGuardrailsRequest,
+    req: StandInGuardrailPolicy,
 ) -> CharacterState:
     char = await repo.load(character_id)
     char.update_stand_in_guardrails(req)

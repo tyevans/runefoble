@@ -2,8 +2,8 @@
 
 from typing import Any
 
+from runefoble_platform.stand_in_action import StandInAction
 from runefoble_platform.stand_in_guardrails import StandInGuardrailPolicy
-from the_watcher.models import StandInAction
 from the_watcher.stand_in_guardrails import evaluate_tactical_guardrails
 from the_watcher.stand_in_persona import apply_penalty_modifiers
 from the_watcher.stand_in_recap import generate_absentee_recap

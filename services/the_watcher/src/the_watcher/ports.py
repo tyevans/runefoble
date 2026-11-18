@@ -9,12 +9,12 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import ClassVar
 
+from runefoble_platform.stand_in_action import StandInAction
 from the_watcher.models import (
     DMGuidanceRequest,
     DMNarrationResult,
     IntentResult,
     SpeechInputRequest,
-    StandInAction,
     StandInRequest,
 )
 

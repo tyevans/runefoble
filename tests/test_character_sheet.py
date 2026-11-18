@@ -14,7 +14,6 @@ from character_sheet.aggregate import (
     InventoryHandlerMixin,
     InventoryItem,
     SpellsHandlerMixin,
-    StandInGuardrails,
     VitalsHandlerMixin,
     get_hit_die_for_class,
     get_known_spell_level,
@@ -38,7 +37,6 @@ def test_character_aggregate_exports_backward_compatibility():
     assert CharacterSheetState is not None
     assert ConditionState is not None
     assert InventoryItem is not None
-    assert StandInGuardrails is not None
     assert isinstance(CLASS_HIT_DIE, dict)
     assert isinstance(KNOWN_SPELL_LEVELS, dict)
     assert isinstance(SPELL_SLOTS_TABLE, dict)
