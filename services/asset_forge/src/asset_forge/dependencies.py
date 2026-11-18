@@ -3,13 +3,15 @@
 from __future__ import annotations
 
 import logging
-from typing import Annotated
 from uuid import UUID
 
-from fastapi import Depends, HTTPException
-from runefoble_auth.principal import VerifiedPrincipal, require_principal
+from fastapi import HTTPException
 from runefoble_auth.spicedb import SpiceDBClient
-from runefoble_auth.zitadel import ZitadelAuthService
+from runefoble_auth.wiring import (
+    build_identity_dependencies,
+    make_verifier_holder,
+    verifier_from_settings,
+)
 from runefoble_events.base import BaseRunefobleEvent
 from runefoble_platform.config import PlatformSettings, WardrobeGeneratorSettings
 from runefoble_platform.event_bus import EventBusProvider
@@ -31,7 +33,6 @@ _forge_repo: AggregateRepository[AssetForgeAggregate] = create_aggregate_reposit
     AssetForgeAggregate
 )
 _wardrobe_generator: WardrobeGenerator | None = None
-_zitadel_auth_service: ZitadelAuthService | None = None
 
 
 def get_forge_repo() -> AggregateRepository[AssetForgeAggregate]:
@@ -57,33 +58,12 @@ get_event_bus = event_bus_provider.get
 set_event_bus = event_bus_provider.set
 
 
-def get_zitadel_auth_service() -> ZitadelAuthService:
-    """Provide the Zitadel verifier built from platform settings (ADR-0015 (c))."""
-    global _zitadel_auth_service
-    if _zitadel_auth_service is None:
-        _zitadel_auth_service = ZitadelAuthService(
-            issuer=settings.zitadel_issuer,
-            audience=settings.zitadel_audience,
-            internal_url=settings.zitadel_internal_url,
-        )
-    return _zitadel_auth_service
-
-
-def set_zitadel_auth_service(service: ZitadelAuthService | None) -> None:
-    """Override the Zitadel verifier for tests."""
-    global _zitadel_auth_service
-    _zitadel_auth_service = service
-
-
-get_principal = require_principal(get_zitadel_auth_service)
-
-
-def verified_user_id(principal: Annotated[VerifiedPrincipal, Depends(get_principal)]) -> str:
-    """Project the verified token subject. Every route in this service requires it."""
-    return principal.user_id
-
-
-VerifiedUserId = Annotated[str, Depends(verified_user_id)]
+get_zitadel_auth_service, set_zitadel_auth_service = make_verifier_holder(
+    lambda: verifier_from_settings(settings)
+)
+get_principal, CallerPrincipal, CallerId, get_caller_or_service, CallerOrService = (
+    build_identity_dependencies(get_zitadel_auth_service, None)
+)
 
 
 async def require_forge_permission(
