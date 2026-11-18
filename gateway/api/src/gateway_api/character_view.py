@@ -21,6 +21,30 @@ CHARACTER_SERVICE = "character_sheet"
 CHARACTERS_PATH = "/api/v1/characters"
 
 
+def character_path(character_id: str, suffix: str) -> str:
+    """Return the character_sheet path for one character and a route suffix."""
+    return f"{CHARACTERS_PATH}/{character_id}{suffix}"
+
+
+async def forward_character_state(
+    request: Request,
+    method: str,
+    path: str,
+    body: dict[str, Any] | None = None,
+    params: dict[str, str] | None = None,
+) -> CharacterResponse:
+    """Forward one character mutation and return the character state the owner answered with."""
+    view = await forward_json(
+        request,
+        service=CHARACTER_SERVICE,
+        method=method,
+        path=path,
+        json_body=body,
+        params=params,
+    )
+    return to_character_response(view, None)
+
+
 def unsupported_create_fields(req: CreateCharacterRequest) -> list[str]:
     """Name each supplied field that character_sheet cannot store at creation."""
     rejected: list[str] = []
