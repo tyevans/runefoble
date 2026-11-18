@@ -80,3 +80,11 @@ In addition, `frontend/test/app-data-service-decomposition.test.ts` actively tes
 3. Obsolete legacy fallback re-export assertions removed from frontend tests.
 4. Frontend typecheck (`pnpm exec tsc --noEmit`) and build (`pnpm run build`) pass cleanly.
 5. Storybook stories build with zero missing module errors.
+
+## Orchestrator Addenda (2026-11-17, refactor-r1)
+
+- TASK-0502 (Evidence, append): "27 files in `frontend/src/components/` carry the text 'forwarding export for App Shell backwards compatibility'. Remove all of them and update importers."
+
+## Orchestrator Addenda (2026-11-17, refactor-r1, ADR record)
+
+- When this task lands, amend ADR-0013 point 4: remove "backward-compatible forwarding re-exports" from `frontend/src/components/`. That text conflicts with DoR 9.

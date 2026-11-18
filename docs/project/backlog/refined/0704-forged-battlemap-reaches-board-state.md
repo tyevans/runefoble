@@ -45,3 +45,7 @@ None. Platform quality work.
 ## Audit Provenance
 - Severity: medium
 - Source audits: `work/0579.md`
+
+## Orchestrator Addenda (2026-11-17, refactor-r1)
+
+- TASK-0704 (forged battlemap reaches board_state): append "board_state owns the single obstacle rule and the hazard damage table (see TASK-0734). asset_forge must not return `obstacle_tokens` or `damage_dice`: `asset_forge/geometry.py:21-47` makes obstacles from pillar walls only (`Obstacle Wall (x,y)`), while `board_state` `import_uvtt_map` and `rules.extract_wall_obstacles` use every wall endpoint (`wall-obs-N`). The forge returns layout only (wall segments, hazard types, doors, grid). Add a payload assertion to `tests/test_blackbox_asset_forge_generation.py`."

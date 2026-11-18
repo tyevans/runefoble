@@ -69,3 +69,7 @@ During past modular refactorings of the platform foundation (such as email clien
 4. All workspace call sites migrated to authoritative imports.
 5. All backward-compatibility shim tests removed and updated.
 6. `uv run pytest` passes and `make lint` reports zero issues.
+
+## Orchestrator Addenda (2026-11-17, refactor-r1)
+
+- TASK-0485: append "Delete `UserPrincipal` (`libs/runefoble_platform/src/runefoble_platform/models.py:30`, exports at `__init__.py:54,97`). Nothing uses it." (0722 also lists it; whichever runs first does it.)

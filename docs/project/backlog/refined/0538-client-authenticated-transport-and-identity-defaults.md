@@ -68,3 +68,8 @@ Playwright BDD through the App Shell (TASK-0525 runner).
 
 - Severity: high
 - Source audits: `w2-app-shell.md`, `w3-authz-coverage.md`, `w2-voice-agent.md`
+
+## Orchestrator Addenda (2026-11-17, refactor-r1)
+
+- TASK-0538 (Problem Statement, append): "The microfrontends `character_sheet`, `rules_compendium` (rules lookup, homebrew creator) read `localStorage['runefoble-access-token']`, which the shell never writes (`frontend/src/auth/auth-service.ts:259` uses `rf_auth_session`). TASK-0757 replaces these reads with the shell auth context contract. Do not add a shared storage key here."
+- TASK-0538 (Plan, append): "Caravan calls (`services/game_session/ui/src/caravan/caravan_api.ts:24,53`) send `x-user-id` and no token. TASK-0759 moves them to the shared transport. Remove the `x-user-id` header there, not here."

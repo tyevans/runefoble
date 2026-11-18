@@ -64,3 +64,7 @@ Tutorial verification is a script, not prose review:
 
 - Severity: high
 - Source audits: `w3-docs-integrity.md`
+
+## Orchestrator Correction (2026-11-17, refactor-r1)
+
+- The cited `Makefile:73-76` lines no longer hide errors. Do not change them in this task.

@@ -75,3 +75,7 @@ The SpiceDB client in `libs/runefoble_auth` turns errors into silent results. A 
 
 - Severity: high
 - Source audits: `w3-authz-coverage.md`, `w3-ddd-architecture.md`, `w1-libs.md`, `w2-rules-compendium.md`, `w2-voice-agent.md`
+
+## Orchestrator Addenda (2026-11-17, refactor-r1)
+
+- TASK-0541: append "Also remove `contextlib.suppress(Exception)` around SpiceDB setters in `tests/conftest.py:170-183`; task 0714 owns the test side." (cross-reference only)

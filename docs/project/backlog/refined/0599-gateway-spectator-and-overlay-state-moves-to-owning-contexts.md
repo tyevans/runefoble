@@ -77,3 +77,7 @@ Test file: `tests/test_blackbox_spectator_overlay_owner.py`. `game_session` and 
 
 - Severity: medium
 - Source audits: `w3-ddd-architecture.md`, `w1-gateway-api.md`
+
+## Orchestrator Addenda (2026-11-17, refactor-r1)
+
+- TASK-0599 (gateway spectator and overlay state): append "Remove `set_raw_session_state` and `clear_raw_session_state` and the `_RAW_SESSION_STORE` dict (`gateway/api/src/gateway_api/spectator.py:69-71`). Three tests write to it directly: `tests/test_blackbox_cinematic_director/test_obs_overlay_routes.py:63`, `tests/test_spectator_stream_overlay.py:144`, `tests/test_overlay_modular_decomposition.py:126`. Seed session state through game_session public routes and read it back through the OBS overlay route." (tests F1)

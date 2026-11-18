@@ -66,3 +66,7 @@ Excise legacy poll option wrappers, deprecated voting payload shims, and transit
 2. Index re-exports pruned of legacy aliases.
 3. Microfrontend and backend synchronized on canonical schemas.
 4. All audience studio tests and typechecks pass.
+
+## Orchestrator Addenda (2026-11-17, refactor-r1)
+
+- TASK-0499 (audience shim excision): note that 0708, 0713, 0723 and 0724 edit the same files and run after it.

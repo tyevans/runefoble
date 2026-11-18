@@ -66,3 +66,7 @@ Decompose `gateway/api/src/gateway_api/routers/character_subresources.py` (357 l
 - Extracted sub-routers under `routers/characters/` strictly < 120 lines each.
 - All character sheet mutation tests pass with 100% assertions.
 - Code passes `uv run ruff check .` and `uv run ruff format --check .`.
+
+## Orchestrator Addenda (2026-11-17, refactor-r1)
+
+- TASK-0586 and TASK-0435 (gateway character subresources): append "`character_subresources.py:25-39` (`_forward`) is a pure pass-through of `forward_json` with a fixed service. Drop it when the module is rewritten. Same for `sessions_proxy.py` `SERVICE`." (The shared forwarder factory is not filed as a task, see deferred.)

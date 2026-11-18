@@ -48,3 +48,7 @@ Decompose `services/soundscape/src/soundscape/leitmotif.py` (315 lines, 63.0% of
 - Extracted submodules under `leitmotif/` strictly < 130 lines each.
 - Passes `uv run pytest services/soundscape/`.
 - Code passes `uv run ruff check .` and `uv run ruff format --check .`.
+
+## Orchestrator Addenda (2026-11-17, refactor-r1)
+
+- TASK-0233 (leitmotif decomposition, proposed): append "`soundscape/leitmotif.py:217-283` (`trigger_leitmotif`, about 67 lines): extract the playback decision."

@@ -80,3 +80,7 @@ Source: `.audit/synth/discovered-round2.md`.
 
 - Severity: high
 - Source audits: `w1-gateway-api.md`, `w1-character-sheet.md`, `w3-ddd-architecture.md`
+
+## Orchestrator Addenda (2026-11-17, refactor-r1)
+
+- TASK-0586 and TASK-0435 (gateway character subresources): append "`character_subresources.py:25-39` (`_forward`) is a pure pass-through of `forward_json` with a fixed service. Drop it when the module is rewritten. Same for `sessions_proxy.py` `SERVICE`." (The shared forwarder factory is not filed as a task, see deferred.)

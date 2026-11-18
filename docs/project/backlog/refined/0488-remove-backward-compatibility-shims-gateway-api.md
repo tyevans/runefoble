@@ -76,3 +76,7 @@ During past refactorings in `gateway/api`, several facade modules were retained 
 3. Call sites across Gateway and tests migrated to authoritative submodules.
 4. Obsolete facade parity tests removed.
 5. All Gateway tests pass cleanly and `make lint` succeeds.
+
+## Orchestrator Addenda (2026-11-17, refactor-r1)
+
+- TASK-0488 (gateway shims): append "Current code sites for the bus cycle: `assets.py:162` and `:259` (`from gateway_api.main import get_event_bus`), `websocket_endpoint.py:35` (`import gateway_api.main as gw_main`), and `companion/manager.py:25` (`import gateway_api.main as gw_main`; this site was missing). All four import `get_event_bus` from `gateway_api.dependencies` (`dependencies.py:17`). The double mount of `tools_registry_router` is at `main.py:110-111`; TASK-0727 decides whether the router leaves the API gateway, so remove the mount there, not here. Tests that patch `gateway_api.main.get_event_bus` patch `gateway_api.dependencies` instead."

@@ -52,3 +52,11 @@ None. Platform quality work.
 ## Audit Provenance
 - Severity: medium
 - Source audits: `work/0561.md`, `work/0566.md`
+
+## Orchestrator Addenda (2026-11-17, refactor-r1)
+
+- TASK-0561 (aggregate load helpers): append "Add `services/game_session/src/game_session/routers/tavern.py:193-194`, `:246-247`, `:266-275`, and `:313-322` (load errors become 404, a new merchant, or a canned merchant). Not found gives 404, a store error gives 503. The canned `Local Merchant` payload is deleted. TASK-0728 owns the structural change. `crafting_router.py:104` and `:193` belong to TASK-0729, not to this task."
+
+## Orchestrator Addenda (2026-11-17, refactor-r1)
+
+- TASK-0699 (broad-except sweep): append "Out of scope for this task, owned elsewhere: game_session router sites (TASK-0751), board_state and character_sheet mutation routes (TASK-0752), crafting router (TASK-0729), tavern router (TASK-0561 and TASK-0728)."

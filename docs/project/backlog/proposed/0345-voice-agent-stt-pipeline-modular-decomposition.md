@@ -54,3 +54,7 @@ Decompose `services/voice_agent/src/voice_agent/stt.py` (279 lines, 55.8% of lim
 - Root `stt.py` reduced to a backwards-compatible re-export module (< 40 lines).
 - Passes all tests via `uv run pytest`.
 - Code passes `uv run ruff check .` and `uv run ruff format --check .`.
+
+## Orchestrator Addenda (2026-11-17, refactor-r1)
+
+- TASK-0345 (STT decomposition): append "TASK-0732 adds `WatcherIntentPort` and `watcher_error` first. Do not split `stt.py` before 0732 lands, or do both in one pass."

@@ -80,3 +80,7 @@ All of these artifacts preserve legacy paths for non-existent external consumers
 3. All callers across backend and UI migrated to modular paths.
 4. Obsolete backward-compatibility tests removed.
 5. All character sheet tests pass cleanly.
+
+## Orchestrator Addenda (2026-11-17, refactor-r1)
+
+- TASK-0493 (character_sheet shims): append "Delete the alias routes `router.py:29` (`/characters/create`), `:171` (`/inventory/add`), and `:177` (`/inventory/{id}/remove`). Update `tests/test_blackbox_character_inventory.py` and other tests to the canonical routes."

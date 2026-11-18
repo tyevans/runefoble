@@ -71,3 +71,7 @@ Playwright BDD (`e2e/features/rules_compendium_route.feature`):
 
 - Severity: medium
 - Source audits: `w2-app-shell.md`, `w2-rules-compendium.md`
+
+## Orchestrator Addenda (2026-11-17, refactor-r1)
+
+- TASK-0648 (Evidence, append): "Six forwarding files have no importer: `runefoble-absentee-vote-card.ts`, `runefoble-faction-espionage.ts`, `runefoble-faction-radar.ts`, `runefoble-mobile-companion.ts`, `runefoble-vocal-modulator.ts`, `runefoble-voice-duplex-controls.ts` in `frontend/src/components/`. Delete them."

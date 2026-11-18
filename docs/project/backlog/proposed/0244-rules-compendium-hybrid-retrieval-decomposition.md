@@ -39,12 +39,16 @@ Decompose `services/rules_compendium/src/rules_compendium/retrieval.py` (306 lin
 3. **Reciprocal Rank Fusion Submodule (`services/rules_compendium/src/rules_compendium/retrieval/fusion.py`)**:
    - Extract rank fusion scoring, deduplication, and score thresholding routines (< 90 lines).
 4. **Retrieval Engine Facade (`services/rules_compendium/src/rules_compendium/retrieval/engine.py` / `__init__.py`)**:
-   - Maintain `CompendiumRetrievalEngine` wiring together lexical and semantic pipelines with backward-compatible exports (< 80 lines).
+   - Maintain `CompendiumRetrievalEngine` wiring together lexical and semantic pipelines with direct call-site updates (no re-exports, DoR 9) (< 80 lines).
 5. **Verification**:
    - Verify blackbox tests in `tests/test_blackbox_rules_compendium.py`.
 
 ## Definition of Done
 - `services/rules_compendium/src/rules_compendium/retrieval/` created with all submodules strictly < 120 lines each.
-- `services/rules_compendium/src/rules_compendium/retrieval.py` replaced by the modular package with full backward compatibility.
+- `services/rules_compendium/src/rules_compendium/retrieval.py` replaced by the modular package with full direct call-site updates (no re-exports, DoR 9).
 - All rules compendium tests pass via `uv run pytest tests/test_blackbox_rules_compendium.py`.
 - Formatted and linted cleanly via `uv run ruff check .` and `uv run ruff format --check .`.
+
+## Orchestrator Addenda (2026-11-17, refactor-r1)
+
+- TASK-0244 (compendium decomposition): append "`initialize_srd_data` (`retrieval.py:68-126`, about 59 lines) mixes three text builders with the index write. Extract one text builder per SRD category." Also see the correction below.

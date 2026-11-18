@@ -103,3 +103,7 @@ These artifacts contradict the DoR zero backward compatibility mandate and must 
 Source: `.audit/synth/discovered-round2.md`.
 
 - tests/test_blackbox_settlements_integration/test_invariants_and_compat.py::test_workers_backwards_compatibility_exports checks re-exports. Delete the test with the re-exports it checks.
+
+## Orchestrator Addenda (2026-11-17, refactor-r1)
+
+- TASK-0491 (game_session shims): append "Also delete `game_session/models.py` (lines 1-10, shadowed by `models/`), and merge `game_session/settlements/auth.py` into `settlement/auth/permissions.py`. Delete `settlements/aggregate.py` and `settlements/models.py` after TASK-0750 picks one `SettlementState`. Repoint `dependencies.py:19`, `routers/settlements.py:15`, and `models/settlement.py:5` to `game_session.settlement.*`."

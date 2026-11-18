@@ -70,3 +70,7 @@ These aggregator facades exist solely for transitional backward compatibility, c
 2. UI template aggregator `ui/src/board-templates.ts` deleted and call sites migrated.
 3. Obsolete facade parity tests removed.
 4. Python and frontend typechecks/tests pass cleanly.
+
+## Orchestrator Addenda (2026-11-17, refactor-r1)
+
+- TASK-0492 (board_state shims): append "Delete `rules.py:179-183` (`calc_chebyshev`, `calc_move_cost`, `calc_move_path`, `calc_party_vis`) and update the callers `handlers/fog.py:8-11`, `handlers/tokens.py:10-12`, `spells.py:9-10` to the `rules` names. Delete the uncalled `rules.py:186-203` (`validate_and_compute_move`) and the duplicate `handlers/fog.py:28-30` (`calculate_chebyshev_cells`)."

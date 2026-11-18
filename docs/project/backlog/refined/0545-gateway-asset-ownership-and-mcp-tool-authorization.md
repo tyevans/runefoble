@@ -85,3 +85,7 @@ The gateway MCP registry lets anonymous callers register, overwrite, delete, and
 
 - Severity: critical
 - Source audits: `w3-authz-coverage.md`, `w1-gateway-mcp.md`, `w1-gateway-api.md`
+
+## Orchestrator Addenda (2026-11-17, refactor-r1)
+
+- TASK-0545 (MCP and asset authorization): append "No task owns removal of the sandbox `exec` at `gateway/mcp/src/gateway_mcp/sandbox.py:155`. File one (not in this range). TASK-0737 follows its decision."

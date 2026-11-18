@@ -51,3 +51,7 @@ None. Platform quality work.
 ## Audit Provenance
 - Severity: medium
 - Source audits: `work/batch13.gates.log`, `work/fixmain13.md`, `work/0684.md`, `reports/refactor-r1/tests.md`
+
+## Orchestrator Addenda (2026-11-17, refactor-r1)
+
+- TASK-0697 (shared harness): append "Inventory for the registries: `SPICEDB_SERVICE_MODULES`, `SERVICE_VERIFIER_MODULES`, `REDIS_BUS_MODULES`, `SERVICE_IDENTITY_MODULES` (`tests/conftest.py:53-119`) and three verifier fixtures (`122-198`) become one table. Also the 17 `_trust_signing_issuer` copies, 20 `clean_environment` copies and 8 `assert_*_event` copies. Tasks 0714, 0715, 0716 and 0717 depend on this table."
