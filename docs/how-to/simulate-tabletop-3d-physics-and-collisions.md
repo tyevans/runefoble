@@ -10,7 +10,7 @@ Per **US-0061** and **PRD-0013**, Runefoble supports 3D rigid-body simulation on
 - **Collision Shapes**: Axis-aligned 3D bounding boxes for table perimeters (`BoundingBox3D`), upright cylindrical collision meshes for miniature token bases (`BoundingCylinder`), and elevation step grids (`HeightfieldTerrain`).
 - **Tumbling Dice Ballistics**: Simulates parabolic trajectories, air resistance, restitution bounces on floor/walls, and surface friction damping until resting face values settle.
 - **Token Knockback & Impulse Slide**: Applies directional impulses to miniature tokens, calculating drag and halting upon collision with high-elevation walls or obstacles.
-- **Domain Event Streaming**: Emits `runefoble.events.board.physics.collision` and `runefoble.events.board.dice.settled` over Redis Streams and updates `BoardStateAggregate`.
+- **Domain Event Streaming**: Emits `runefoble.events.board.physics_collision` and `runefoble.events.dice.settled` over Redis Streams and updates `BoardStateAggregate`.
 
 ---
 

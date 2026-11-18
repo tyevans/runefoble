@@ -253,7 +253,7 @@ Part of the [Events Schema](events-schema.md). Each event identifier in this pag
   - `session_id`: String
   - `board_id`: String
   - `rounds`: Integer (default 1)
-- **`PhysicsCollisionOccurred`**: Emitted when a physical rigid-body collision occurs on the board (`runefoble.events.board.physics.collision`).
+- **`PhysicsCollisionOccurred`**: Emitted when a physical rigid-body collision occurs on the board (`runefoble.events.board.physics_collision`).
   - `session_id`: String
   - `board_id`: String
   - `entity_id`: String
@@ -264,7 +264,7 @@ Part of the [Events Schema](events-schema.md). Each event identifier in this pag
   - `impact_energy`: Float
   - `normal_x`: Float, `normal_y`: Float, `normal_z`: Float
   - `details`: Dict[str, Any]
-- **`DiceSettled`**: Emitted when physical tumbling dice come to rest on the tactical board (`runefoble.events.board.dice.settled`).
+- **`DiceSettled`**: Emitted when physical tumbling dice come to rest on the tactical board (`runefoble.events.dice.settled`).
   - `session_id`: String
   - `board_id`: String
   - `dice_id`: String

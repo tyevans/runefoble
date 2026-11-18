@@ -241,8 +241,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
     - `POST /api/v1/boards/{board_id}/physics/simulate-throw`: Simulates tumbling 3D physical dice rolls across terrain, reporting bounces, trajectory, and final settled face.
     - `POST /api/v1/boards/{board_id}/physics/knockback`: Applies physical impulse to miniature tokens, calculating drag and halting on high walls with impact energy.
   - Registered and dispatched CloudEvents-compliant domain events in `libs/runefoble_events`:
-    - `PhysicsCollisionOccurred` (`runefoble.events.board.physics.collision`): Dispatched on rigid-body collisions with wall, obstacle, boundary, or floor.
-    - `DiceSettled` (`runefoble.events.board.dice.settled`): Dispatched when tumbling dice come to rest on the board.
+    - `PhysicsCollisionOccurred` (`runefoble.events.board.physics_collision`): Dispatched on rigid-body collisions with wall, obstacle, boundary, or floor.
+    - `DiceSettled` (`runefoble.events.dice.settled`): Dispatched when tumbling dice come to rest on the board.
   - Added `PhysicsHandlerMixin` in `services/board_state/src/board_state/handlers/physics.py` handling collision impulses and dice settling in `BoardAggregate`.
   - Added frontdoor blackbox test suite `tests/test_blackbox_tabletop_physics.py` verifying dice toss calculation, final face settling, high-elevation wall knockback halting, and `board.physics.collision` domain event emission with impact energy.
   - Authored Diataxis guide `docs/how-to/simulate-tabletop-3d-physics-and-collisions.md` and updated `docs/reference/events-schema.md` and `docs/reference/ports-and-endpoints.md`.
