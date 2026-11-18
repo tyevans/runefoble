@@ -25,27 +25,23 @@ class WorkerInventoryItem(BaseModel):
 
     item_id: str
     name: str = ""
-    quantity: int = Field(default=1, alias="stock")
-    unit_price: int = Field(default=10, alias="price_gp")
+    quantity: int = 1
+    unit_price: int = 10
     category: str = "general"
     is_contraband: bool = False
     is_vault_secret: bool = False
     metadata: dict[str, Any] = Field(default_factory=dict)
-
-    model_config = {"populate_by_name": True}
 
 
 class WorkerRelationship(BaseModel):
     """Interpersonal or mercantile relationship edge in social adjacency graph."""
 
     source_npc_id: str = ""
-    target_npc_id: str = Field(default="", alias="target_npc")
-    relation_type: str = Field(default="ally", alias="relation")
+    target_npc_id: str = ""
+    relation_type: str = "ally"
     intensity: float = Field(default=1.0, ge=-1.0, le=1.0)
     notes: str = ""
     metadata: dict[str, Any] = Field(default_factory=dict)
-
-    model_config = {"populate_by_name": True}
 
 
 class NPCWorkerState(BaseModel):
@@ -107,13 +103,11 @@ class UpdateWorkerMoodRequest(BaseModel):
 class FormRelationshipRequest(BaseModel):
     """Payload to record an interpersonal tie between two NPCs."""
 
-    target_npc_id: str = Field(default="", alias="target_npc")
-    relation_type: str = Field(default="ally", alias="relation")
+    target_npc_id: str = ""
+    relation_type: str = "ally"
     intensity: float = 1.0
     notes: str = ""
     metadata: dict[str, Any] = Field(default_factory=dict)
-
-    model_config = {"populate_by_name": True}
 
 
 class RelieveWorkerRequest(BaseModel):

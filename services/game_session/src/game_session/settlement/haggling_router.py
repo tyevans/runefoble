@@ -31,8 +31,8 @@ from game_session.settlement.auth import (
 from game_session.settlement.auth.tokens import CallerId, get_principal
 from game_session.settlement.haggling import NegotiationAggregate
 from game_session.settlement.haggling_models import (
-    DMOverrideRequest,
     ExecuteGambitRequest,
+    HaggleDmOverrideRequest,
     NegotiationSessionState,
     StartNegotiationRequest,
 )
@@ -231,7 +231,7 @@ async def execute_gambit_route(
 async def dm_negotiation_override(
     caller_id: CallerId,
     negotiation_id: str,
-    req: DMOverrideRequest,
+    req: HaggleDmOverrideRequest,
 ) -> NegotiationSessionState:
     """Game Master arbitration control: nudge mood, inject dialogue barks, or override price."""
     await check_negotiation_arbitrate_permission(get_spicedb_client(), negotiation_id, caller_id)
@@ -241,7 +241,7 @@ async def dm_negotiation_override(
         neg_agg.dm_override(
             dm_user_id=caller_id,
             action=req.action,
-            override_price_gp=req.override_price_gp or req.override_price,
+            override_price_gp=req.override_price_gp,
             narrative_bark=req.narrative_bark,
             patience_delta=req.patience_delta,
             mood_delta=req.mood_delta,

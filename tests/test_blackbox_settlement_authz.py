@@ -193,7 +193,7 @@ def test_stranger_cannot_record_worker_relationship(
     _, npc_id, _ = establishment_with_worker
     res = tc.post(
         f"/api/v1/npcs/{npc_id}/relationships",
-        json={"target_npc": "npc-other", "relation": "rival"},
+        json={"target_npc_id": "npc-other", "relation_type": "rival"},
         headers=_headers(f"stranger-{uuid4().hex[:8]}"),
     )
     assert res.status_code == 403

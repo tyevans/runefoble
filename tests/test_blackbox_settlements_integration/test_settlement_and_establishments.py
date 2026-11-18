@@ -80,7 +80,7 @@ def test_establishment_creation_and_worker_assignment(
     assert_stream_events(mock_bus, "EstablishmentConstructed", stream=STREAM_WEST_MARCHES)
 
     def _inv(i: str, s: int, p: int) -> dict:
-        return {"item_id": i, "stock": s, "price_gp": p}
+        return {"item_id": i, "quantity": s, "unit_price": p}
 
     worker_payload = {
         "name": "Korgan Deepforge",
