@@ -11,6 +11,7 @@ other wardrobe suites use, and the repository docs.
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 from collections.abc import Iterator
 from pathlib import Path
@@ -84,10 +85,27 @@ def recording_generator() -> Iterator[RecordingFaceGenerator]:
     app.dependency_overrides.pop(get_wardrobe_generator, None)
 
 
-def _forge(client: TestClient, prompt: str | None) -> dict:
+@pytest.fixture
+def forge_campaign(spicedb) -> str:
+    """A campaign with one player. Asset forge takes a UUID campaign id, so no gateway flow supplies one."""
+    campaign_id = str(uuid4())
+    asyncio.run(
+        spicedb.write_relationship(
+            resource_type="campaign",
+            resource_id=campaign_id,
+            relation="player",
+            subject_type="user",
+            subject_id="player-nadia",
+        )
+    )
+    return campaign_id
+
+
+def _forge(client: TestClient, prompt: str | None, campaign_id: str) -> dict:
     response = client.post(
         "/api/v1/forge/wardrobe",
         json={
+            "campaign_id": campaign_id,
             "character_id": str(uuid4()),
             "character_name": "Nadia the Bard",
             "attire_type": "ballroom_masquerade",
@@ -108,9 +126,11 @@ def _stored_bytes(variant_id: str) -> bytes:
     return data
 
 
-def test_blackbox_default_placeholder_reports_no_face_preservation(client: TestClient):
+def test_blackbox_default_placeholder_reports_no_face_preservation(
+    client: TestClient, forge_campaign: str
+):
     """The default generator is the placeholder. The response says it preserves no face."""
-    data = _forge(client, prompt="Gilded Venetian mask")
+    data = _forge(client, "Gilded Venetian mask", forge_campaign)
 
     assert data["generator"] == "placeholder"
     assert data["preserves_face"] is False
@@ -120,11 +140,11 @@ def test_blackbox_default_placeholder_reports_no_face_preservation(client: TestC
 
 
 def test_blackbox_attire_prompt_reaches_configured_generator(
-    client: TestClient, recording_generator: RecordingFaceGenerator
+    client: TestClient, recording_generator: RecordingFaceGenerator, forge_campaign: str
 ):
     """The attire prompt is passed to the configured generator. Its output follows the prompt."""
-    first = _forge(client, prompt="Violet velvet gown")
-    second = _forge(client, prompt="Snow leopard cloak")
+    first = _forge(client, "Violet velvet gown", forge_campaign)
+    second = _forge(client, "Snow leopard cloak", forge_campaign)
 
     prompts = [call["attire_prompt"] for call in recording_generator.calls]
     assert any("Violet velvet gown" in p for p in prompts)

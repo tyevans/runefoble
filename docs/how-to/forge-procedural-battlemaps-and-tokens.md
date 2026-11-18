@@ -135,7 +135,7 @@ The payload is layout only. It holds hazard types, wall segments, and doors. It 
 
 ## 4. SpiceDB Zanzibar Campaign Access Control
 
-When `campaign_id` is supplied in the request body, the service validates that the authenticated caller holds `play` or `run_session` permissions on the campaign object in SpiceDB. Non-members receive a `403 Forbidden` rejection.
+Every forge request names a campaign. Send `campaign_id` in the body. Without it the service returns `400`. The caller needs the `campaign.play` permission on that campaign (players and DMs). Spectators get `403`. The service writes the `creator` and `campaign` relations of each new asset before it stores the asset. If SpiceDB cannot write them, the service returns `503` and stores nothing. Reads of a forged asset need `forged_asset.view`: the creator, or a campaign member with view rights. The check uses `campaign.play` on the campaign object in SpiceDB (`play` includes `run_session`).
 
 ---
 

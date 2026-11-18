@@ -13,6 +13,9 @@ Verifies:
 
 from __future__ import annotations
 
+import asyncio
+from uuid import uuid4
+
 import pytest
 from asset_forge.dependencies import set_event_bus as set_forge_event_bus
 from asset_forge.main import app as asset_forge_app
@@ -99,15 +102,29 @@ def test_public_routes_stay_public(service: str) -> None:
     assert client.get("/openapi.json").status_code == 200
 
 
-def test_forged_user_header_does_not_set_asset_creator() -> None:
+def test_forged_user_header_does_not_set_asset_creator(spicedb) -> None:
     """A forged x-user-id is ignored. The forged asset's creator is the token subject."""
     mock_redis = MockAsyncRedis()
     set_forge_event_bus(RedisStreamsEventBus(client=mock_redis))
+    campaign_id = str(uuid4())
+    asyncio.run(
+        spicedb.write_relationship(
+            resource_type="campaign",
+            resource_id=campaign_id,
+            relation="player",
+            subject_type="user",
+            subject_id="forger-valeros",
+        )
+    )
     try:
         client = TestClient(asset_forge_app)
         response = client.post(
             "/api/v1/forge/token",
-            json={"token_name": "Ghoul", "prompt": "Gaunt ghoul with rusted claws"},
+            json={
+                "token_name": "Ghoul",
+                "prompt": "Gaunt ghoul with rusted claws",
+                "campaign_id": campaign_id,
+            },
             headers={
                 "Authorization": f"Bearer {SIGNING_ISSUER.mint('forger-valeros')}",
                 "x-user-id": "attacker-mallory",

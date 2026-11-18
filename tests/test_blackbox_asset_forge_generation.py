@@ -9,7 +9,9 @@ All assertions and setup operate strictly through public frontdoors:
 
 from __future__ import annotations
 
+import asyncio
 import struct
+from uuid import uuid4
 
 import pytest
 from asset_forge.dependencies import get_storage, set_event_bus
@@ -40,11 +42,29 @@ def client() -> TestClient:
     return TestClient(app)
 
 
-def test_blackbox_forge_battlemap_generation_and_storage(client: TestClient):
+@pytest.fixture
+def campaign_id(spicedb) -> str:
+    """A campaign with the DM and a player. Asset forge takes a UUID campaign id."""
+    campaign = str(uuid4())
+    for relation, user in (("dungeon_master", "dm-evelyn"), ("player", "player-marcus")):
+        asyncio.run(
+            spicedb.write_relationship(
+                resource_type="campaign",
+                resource_id=campaign,
+                relation=relation,
+                subject_type="user",
+                subject_id=user,
+            )
+        )
+    return campaign
+
+
+def test_blackbox_forge_battlemap_generation_and_storage(client: TestClient, campaign_id: str):
     """Verify POST /api/v1/forge/battlemap generates map, extracts geometry, and stores in Silo S3."""
     response = client.post(
         "/api/v1/forge/battlemap",
         json={
+            "campaign_id": campaign_id,
             "prompt": "Subterranean dwarven forge with lava canals and broken anvil statues",
             "width_cells": 16,
             "height_cells": 16,
@@ -100,11 +120,12 @@ def test_blackbox_forge_battlemap_generation_and_storage(client: TestClient):
     assert h == 16 * 64
 
 
-def test_blackbox_forge_token_portrait_and_transparency(client: TestClient):
+def test_blackbox_forge_token_portrait_and_transparency(client: TestClient, campaign_id: str):
     """Verify POST /api/v1/forge/token creates circular transparent token portrait in Silo S3."""
     response = client.post(
         "/api/v1/forge/token",
         json={
+            "campaign_id": campaign_id,
             "token_name": "Thorin Ironbreaker",
             "prompt": "Dwarven paladin with glowing runic warhammer",
             "token_type": "pc",

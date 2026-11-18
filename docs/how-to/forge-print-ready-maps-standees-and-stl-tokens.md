@@ -13,6 +13,8 @@ Runefoble bridges digital virtual tabletop play with in-person physical gaming s
 
 Every route in this service needs a bearer token. Set `TOKEN` to a Zitadel access token for the caller. The service verifies the token itself. It ignores `X-User-Id` and similar headers.
 
+Every forge request names a campaign. Send `campaign_id` in the body. Without it the service returns `400`. The caller needs the `campaign.play` permission on that campaign (players and DMs). Spectators get `403`. The service writes the `creator` and `campaign` relations of each new asset before it stores the asset. If SpiceDB cannot write them, the service returns `503` and stores nothing. Reads of a forged asset need `forged_asset.view`: the creator, or a campaign member with view rights.
+
 ---
 
 ## 1. Exporting Multi-Page 1-Inch Grid Battlemaps
@@ -20,7 +22,7 @@ Every route in this service needs a bearer token. Set `TOKEN` to a Zitadel acces
 To export a tactical battlemap as a multi-page PDF calibrated to 1-inch physical squares:
 
 ### Endpoint
-`POST /assets/print-pdf` (or `POST /api/v1/forge/print-pdf`)
+`POST /api/v1/forge/print-pdf`
 
 ### Request Payload (`PrintPdfRequest`)
 ```json
@@ -58,7 +60,7 @@ Each printed sheet includes:
 To generate a printable sheet of foldable paper miniatures:
 
 ### Endpoint
-`POST /assets/standees` (or `POST /api/v1/forge/standees`)
+`POST /api/v1/forge/standees`
 
 ### Request Payload (`StandeesRequest`)
 ```json
@@ -86,7 +88,7 @@ To generate a printable sheet of foldable paper miniatures:
 To generate watertight STL meshes for physical 3D printers and slicers:
 
 ### Endpoint
-`POST /assets/stl-token` (or `POST /api/v1/forge/stl-token`)
+`POST /api/v1/forge/stl-token`
 
 ### Request Payload (`StlTokenRequest`)
 ```json

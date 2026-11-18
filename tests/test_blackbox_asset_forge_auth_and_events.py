@@ -10,14 +10,16 @@ All assertions and setup operate strictly through public frontdoors:
 
 from __future__ import annotations
 
+import asyncio
 from typing import Any
 from uuid import uuid4
 
 import pytest
-from asset_forge.dependencies import get_forge_repo, get_spicedb_client, set_event_bus
+from asset_forge.dependencies import get_forge_repo, set_event_bus
 from asset_forge.main import app
 from eventsource.domain.event_registry import get_event_class_or_none
 from fastapi.testclient import TestClient
+from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_events.events import BattlemapForged, TokenAssetForged
 from runefoble_platform.bus import bus as platform_bus
@@ -178,10 +180,24 @@ async def test_blackbox_spicedb_zanzibar_authorization(client: TestClient):
     assert "Forbidden" in res_unauth.json()["detail"]
 
 
-def test_blackbox_get_metadata_and_not_found(client: TestClient):
+def test_blackbox_get_metadata_and_not_found(client: TestClient, spicedb):
     """Verify retrieving asset metadata and 404 behavior for non-existent IDs."""
+    campaign_id = str(uuid4())
+    asyncio.run(
+        spicedb.write_relationship(
+            resource_type="campaign",
+            resource_id=campaign_id,
+            relation="player",
+            subject_type="user",
+            subject_id="dm-evelyn",
+        )
+    )
     res = client.post(
-        "/api/v1/forge/battlemap", json={"prompt": "Underdark mushroom cavern with spores"}
+        "/api/v1/forge/battlemap",
+        json={
+            "prompt": "Underdark mushroom cavern with spores",
+            "campaign_id": campaign_id,
+        },
     )
     assert res.status_code == 200
     asset_id = res.json()["asset_id"]

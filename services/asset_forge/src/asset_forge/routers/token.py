@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-import contextlib
 from typing import Annotated
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException
+from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_events.asset import TokenAssetForged
 from runefoble_platform.aggregate_loading import load_or_create
@@ -17,12 +17,13 @@ from runefoble_platform.storage import AssetNotFoundError, SiloStorageService
 from asset_forge.aggregate import AssetForgeAggregate
 from asset_forge.dependencies import (
     VerifiedUserId,
-    check_user_can_forge,
     get_forge_repo,
     get_principal,
-    get_spicedb_client,
     get_storage,
     publish_forge_event,
+    record_asset_relations,
+    require_asset_view,
+    require_forge_permission,
 )
 from asset_forge.models import (
     TokenForgeRequest,
@@ -46,15 +47,7 @@ async def forge_token(
 ) -> TokenForgeResponse:
     """Synthesize cropped circular token portrait with transparency and store in Silo S3."""
     creator_id = user_id
-
-    # Zanzibar campaign authorization check
-    if request.campaign_id:
-        can_forge = await check_user_can_forge(user_id, request.campaign_id, spicedb)
-        if not can_forge:
-            raise HTTPException(
-                status_code=403,
-                detail=f"Forbidden: User '{user_id}' does not have permission to forge tokens for campaign '{request.campaign_id}'",
-            )
+    campaign_id = await require_forge_permission(user_id, request.campaign_id, spicedb)
 
     # 1. Synthesize circular token portrait PNG with alpha transparency
     png_bytes = generate_token_portrait_png(
@@ -71,6 +64,8 @@ async def forge_token(
     # 2. Upload to Silo S3 object storage
     asset_id = f"tok-{uuid4().hex[:12]}"
     object_key = f"tokens/{asset_id}.png"
+    # Authorization relations first. A failed write raises AuthzError (HTTP 503) before storage.
+    await record_asset_relations(spicedb, asset_id, creator_id, campaign_id)
     upload_meta = await store_forged_asset(
         storage,
         object_key=object_key,
@@ -111,24 +106,6 @@ async def forge_token(
     )
     await publish_forge_event(event)
 
-    # 5. Write Zanzibar relationships to SpiceDB
-    with contextlib.suppress(Exception):
-        await spicedb.write_relationship(
-            resource_type="forged_asset",
-            resource_id=asset_id,
-            relation="creator",
-            subject_type="user",
-            subject_id=user_id,
-        )
-        if request.campaign_id:
-            await spicedb.write_relationship(
-                resource_type="forged_asset",
-                resource_id=asset_id,
-                relation="campaign",
-                subject_type="campaign",
-                subject_id=str(request.campaign_id),
-            )
-
     return TokenForgeResponse(
         asset_id=asset_id,
         image_url=upload_meta["url"],
@@ -145,10 +122,13 @@ async def forge_token(
 @router.get("/{asset_id}", response_model=dict)
 async def get_forged_token(
     asset_id: str,
-    storage: Annotated[SiloStorageService, Depends(get_storage)],
+    user_id: VerifiedUserId,
+    spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
 ) -> dict:
-    """Retrieve metadata for a previously forged token portrait."""
+    """Retrieve metadata for a previously forged token portrait. Requires `forged_asset.view`."""
     try:
-        return await get_stored_asset(asset_id)
+        meta = await get_stored_asset(asset_id)
     except AssetNotFoundError as exc:
         raise HTTPException(status_code=404, detail=f"Token asset '{asset_id}' not found.") from exc
+    await require_asset_view(spicedb, asset_id, user_id)
+    return meta

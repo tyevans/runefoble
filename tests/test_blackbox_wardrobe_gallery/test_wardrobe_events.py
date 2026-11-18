@@ -8,7 +8,9 @@ Governed by:
 
 from __future__ import annotations
 
+import asyncio
 import struct
+from uuid import uuid4
 
 import pytest
 from asset_forge.dependencies import get_storage as get_asset_storage
@@ -31,13 +33,30 @@ from tests.helpers.ws_identity import SIGNING_ISSUER
 from .conftest import PNG_SIGNATURE
 
 
+@pytest.fixture
+def forge_campaign(spicedb) -> str:
+    """A campaign with the DM and the player that forge in it. Asset forge takes a UUID campaign id."""
+    campaign_id = str(uuid4())
+    for user in ("dm-nadia", "character-owner"):
+        asyncio.run(
+            spicedb.write_relationship(
+                resource_type="campaign",
+                resource_id=campaign_id,
+                relation="player",
+                subject_type="user",
+                subject_id=user,
+            )
+        )
+    return campaign_id
+
+
 def auth_headers(sub: str) -> dict[str, str]:
     """Return Bearer headers for a token that the service verifier accepts."""
     return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
 
 
 def test_blackbox_generative_wardrobe_synthesis_and_storage(
-    forge_client: TestClient, char_client: TestClient
+    forge_client: TestClient, char_client: TestClient, forge_campaign: str
 ):
     """Verify generative wardrobe variant synthesis, Silo S3 storage, and character assignment."""
     # 1. Create character
@@ -51,6 +70,7 @@ def test_blackbox_generative_wardrobe_synthesis_and_storage(
     forge_res = forge_client.post(
         "/api/v1/forge/wardrobe",
         json={
+            "campaign_id": forge_campaign,
             "character_id": char_id,
             "character_name": "Nadia the Bard",
             "attire_type": "ballroom_masquerade",
@@ -118,7 +138,9 @@ def test_blackbox_generative_wardrobe_synthesis_and_storage(
 
 
 @pytest.mark.asyncio
-async def test_blackbox_event_dispatch(char_client: TestClient, forge_client: TestClient):
+async def test_blackbox_event_dispatch(
+    char_client: TestClient, forge_client: TestClient, forge_campaign: str
+):
     """Verify CharacterDamaged, PortraitVariantGenerated, and CharacterPortraitUpdated stream events."""
     mock_redis = MockAsyncRedis()
     bus = RedisStreamsEventBus(client=mock_redis)
@@ -142,6 +164,7 @@ async def test_blackbox_event_dispatch(char_client: TestClient, forge_client: Te
     forge_client.post(
         "/api/v1/forge/wardrobe",
         json={
+            "campaign_id": forge_campaign,
             "character_id": char_id,
             "character_name": "Nadia",
             "attire_type": "arctic_tundra",

@@ -227,9 +227,9 @@ Campaign Lore routes require a verified bearer token, except `/health`, `/health
 | `asset-forge` | POST | `/api/v1/forge/token` | Synthesizes circular transparent character/monster token portrait and stores in Silo S3 |
 | `asset-forge` | POST | `/api/v1/forge/wardrobe` | Synthesizes a character wardrobe variant with the configured wardrobe generator (default `placeholder`, which preserves no face) and stores it in Silo S3. The response names the `generator` and states `preserves_face` |
 | `asset-forge` | GET | `/api/v1/forge/wardrobe/{id}` | Retrieves status and image URL of character wardrobe synthesis job |
-| `asset-forge` | POST | `/assets/print-pdf` | Slices battlemaps into multi-page print-ready PDFs calibrated to 1-inch grid with crosshairs (alias: `/api/v1/forge/print-pdf`) |
-| `asset-forge` | POST | `/assets/standees` | Generates folding papercraft miniature sheets with mirrored artwork, nameplates, and base tabs (alias: `/api/v1/forge/standees`) |
-| `asset-forge` | POST | `/assets/stl-token` | Procedurally generates watertight 3D printable STL miniature bases with condition clips (alias: `/api/v1/forge/stl-token`) |
+| `asset-forge` | POST | `/api/v1/forge/print-pdf` | Slices battlemaps into multi-page print-ready PDFs calibrated to 1-inch grid with crosshairs. Requires `campaign_id` and `campaign.play` |
+| `asset-forge` | POST | `/api/v1/forge/standees` | Generates folding papercraft miniature sheets with mirrored artwork, nameplates, and base tabs. Requires `campaign_id` and `campaign.play` |
+| `asset-forge` | POST | `/api/v1/forge/stl-token` | Procedurally generates watertight 3D printable STL miniature bases with condition clips. Requires `campaign_id` and `campaign.play` |
 | `asset-forge` | GET | `/ui/manifest` | Discovers vendored microfrontends (`runefoble-asset-forge`, `runefoble-print-forge`) |
 | `soundscape` | POST | `/api/v1/soundscape/cue` | Triggers tactical foley sound effects or acoustic stingers (fireball, sword slash, etc.) |
 | `soundscape` | GET | `/api/v1/soundscape/tension` | Retrieves current session encounter tension score (0-100) and active stem weights |

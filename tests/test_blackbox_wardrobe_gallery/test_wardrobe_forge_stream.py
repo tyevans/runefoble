@@ -7,6 +7,8 @@ Redis Streams entries that the route publishes.
 
 from __future__ import annotations
 
+from uuid import uuid4
+
 import pytest
 from asset_forge.dependencies import set_event_bus as set_forge_bus
 from fastapi.testclient import TestClient
@@ -16,14 +18,25 @@ from tests.helpers.mock_redis import MockAsyncRedis
 
 
 @pytest.mark.asyncio
-async def test_forged_wardrobe_variant_publishes_to_character_stream(forge_client: TestClient):
+async def test_forged_wardrobe_variant_publishes_to_character_stream(
+    forge_client: TestClient, spicedb
+):
     """A wardrobe variant forged through the public route lands on runefoble.events.character."""
     mock_redis = MockAsyncRedis()
     set_forge_bus(RedisStreamsEventBus(client=mock_redis))
+    campaign_id = str(uuid4())
+    await spicedb.write_relationship(
+        resource_type="campaign",
+        resource_id=campaign_id,
+        relation="player",
+        subject_type="user",
+        subject_id="character-owner",
+    )
 
     response = forge_client.post(
         "/api/v1/forge/wardrobe",
         json={
+            "campaign_id": campaign_id,
             "character_id": "00000000-0000-0000-0000-000000000042",
             "character_name": "Nadia",
             "attire_type": "arctic_tundra",

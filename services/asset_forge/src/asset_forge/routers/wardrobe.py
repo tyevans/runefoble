@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-import contextlib
 from typing import Annotated
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException
+from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_events.character import PortraitVariantGenerated
 from runefoble_platform.asset_index import get_stored_asset
@@ -15,12 +15,13 @@ from runefoble_platform.storage import AssetNotFoundError, SiloStorageService
 from asset_forge.dependencies import (
     STREAM_CHARACTER,
     VerifiedUserId,
-    check_user_can_forge,
     get_principal,
-    get_spicedb_client,
     get_storage,
     get_wardrobe_generator,
     publish_forge_event,
+    record_asset_relations,
+    require_asset_view,
+    require_forge_permission,
 )
 from asset_forge.models import WardrobeForgeRequest, WardrobeForgeResponse
 from asset_forge.raster.wardrobe_raster import build_attire_prompt
@@ -33,7 +34,6 @@ router = APIRouter(
 
 
 @router.post("", response_model=WardrobeForgeResponse)
-@router.post("/generate", response_model=WardrobeForgeResponse)
 async def forge_wardrobe_variant(
     request: WardrobeForgeRequest,
     user_id: VerifiedUserId,
@@ -47,15 +47,7 @@ async def forge_wardrobe_variant(
     The default placeholder preserves no face.
     """
     creator_id = user_id
-
-    # Zanzibar campaign authorization check
-    if request.campaign_id:
-        can_forge = await check_user_can_forge(user_id, request.campaign_id, spicedb)
-        if not can_forge:
-            raise HTTPException(
-                status_code=403,
-                detail=f"Forbidden: User '{user_id}' does not have permission to forge wardrobe for campaign '{request.campaign_id}'",
-            )
+    campaign_id = await require_forge_permission(user_id, request.campaign_id, spicedb)
 
     # 1. Synthesize the image through the configured generator port
     final_prompt = build_attire_prompt(request.attire_type, request.prompt)
@@ -73,6 +65,8 @@ async def forge_wardrobe_variant(
     # 2. Upload to Silo S3 object storage
     variant_id = f"var-{uuid4().hex[:10]}"
     object_key = f"wardrobe/{variant_id}.png"
+    # Authorization relations first. A failed write raises AuthzError (HTTP 503) before storage.
+    await record_asset_relations(spicedb, variant_id, creator_id, campaign_id)
     upload_meta = await store_forged_asset(
         storage,
         object_key=object_key,
@@ -94,24 +88,6 @@ async def forge_wardrobe_variant(
     )
     await publish_forge_event(event, stream=STREAM_CHARACTER)
 
-    # 4. Write Zanzibar relationships to SpiceDB
-    with contextlib.suppress(Exception):
-        await spicedb.write_relationship(
-            resource_type="forged_asset",
-            resource_id=variant_id,
-            relation="creator",
-            subject_type="user",
-            subject_id=user_id,
-        )
-        if request.campaign_id:
-            await spicedb.write_relationship(
-                resource_type="forged_asset",
-                resource_id=variant_id,
-                relation="campaign",
-                subject_type="campaign",
-                subject_id=str(request.campaign_id),
-            )
-
     return WardrobeForgeResponse(
         variant_id=variant_id,
         character_id=str(request.character_id),
@@ -129,12 +105,15 @@ async def forge_wardrobe_variant(
 @router.get("/{variant_id}", response_model=dict)
 async def get_forged_wardrobe_variant(
     variant_id: str,
-    storage: Annotated[SiloStorageService, Depends(get_storage)],
+    user_id: VerifiedUserId,
+    spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
 ) -> dict:
-    """Retrieve metadata for a previously forged wardrobe attire variant."""
+    """Retrieve metadata for a forged wardrobe attire variant. Requires `forged_asset.view`."""
     try:
-        return await get_stored_asset(variant_id)
+        meta = await get_stored_asset(variant_id)
     except AssetNotFoundError as exc:
         raise HTTPException(
             status_code=404, detail=f"Wardrobe variant '{variant_id}' not found."
         ) from exc
+    await require_asset_view(spicedb, variant_id, user_id)
+    return meta

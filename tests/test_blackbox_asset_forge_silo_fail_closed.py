@@ -7,6 +7,9 @@ and published CloudEvents on the Redis Streams bus. No test writes private state
 
 from __future__ import annotations
 
+import asyncio
+from uuid import uuid4
+
 import pytest
 from asset_forge.dependencies import set_event_bus
 from asset_forge.main import app as asset_forge_app
@@ -34,6 +37,22 @@ ASSET_STREAM = "runefoble.events.asset"
 
 
 @pytest.fixture
+def forge_campaign(spicedb) -> str:
+    """A campaign with one player. Asset forge takes a UUID campaign id, so no gateway flow supplies one."""
+    campaign_id = str(uuid4())
+    asyncio.run(
+        spicedb.write_relationship(
+            resource_type="campaign",
+            resource_id=campaign_id,
+            relation="player",
+            subject_type="user",
+            subject_id="forge-tester",
+        )
+    )
+    return campaign_id
+
+
+@pytest.fixture
 def forge_client() -> TestClient:
     return TestClient(asset_forge_app, headers=auth_headers("forge-tester"))
 
@@ -47,12 +66,17 @@ def redis_stream() -> MockAsyncRedis:
 
 
 def test_battlemap_forge_fails_closed_when_silo_unreachable(
-    forge_client: TestClient, silo_double: FakeSilo, redis_stream: MockAsyncRedis
+    forge_client: TestClient,
+    silo_double: FakeSilo,
+    redis_stream: MockAsyncRedis,
+    forge_campaign: str,
 ):
     """POST battlemap with Silo down returns 503, creates no asset id and publishes nothing."""
     silo_double.outage = True
 
-    response = forge_client.post("/api/v1/forge/battlemap", json=BATTLEMAP_BODY)
+    response = forge_client.post(
+        "/api/v1/forge/battlemap", json={**BATTLEMAP_BODY, "campaign_id": forge_campaign}
+    )
 
     assert response.status_code == 503, response.text
     assert "asset_id" not in response.json()
@@ -61,14 +85,21 @@ def test_battlemap_forge_fails_closed_when_silo_unreachable(
 
 
 def test_token_forge_fails_closed_when_silo_returns_server_error(
-    forge_client: TestClient, silo_double: FakeSilo, redis_stream: MockAsyncRedis
+    forge_client: TestClient,
+    silo_double: FakeSilo,
+    redis_stream: MockAsyncRedis,
+    forge_campaign: str,
 ):
     """POST token with Silo answering 500 returns 503 and records no forged asset."""
     silo_double.forced_status = 500
 
     response = forge_client.post(
         "/api/v1/forge/token",
-        json={"token_name": "Ghoul", "prompt": "Gaunt ghoul with rusted claws"},
+        json={
+            "token_name": "Ghoul",
+            "prompt": "Gaunt ghoul with rusted claws",
+            "campaign_id": forge_campaign,
+        },
     )
 
     assert response.status_code == 503, response.text
@@ -95,10 +126,14 @@ def test_gateway_upload_fails_closed_when_silo_unreachable(silo_double: FakeSilo
     assert silo_double.objects == {}
 
 
-def test_forged_battlemap_is_retrievable_after_service_restart(silo_double: FakeSilo):
+def test_forged_battlemap_is_retrievable_after_service_restart(
+    silo_double: FakeSilo, forge_campaign: str
+):
     """A battlemap confirmed by Silo stays retrievable by a fresh app and storage client."""
     first_client = TestClient(asset_forge_app, headers=auth_headers("forge-tester"))
-    created = first_client.post("/api/v1/forge/battlemap", json=BATTLEMAP_BODY)
+    created = first_client.post(
+        "/api/v1/forge/battlemap", json={**BATTLEMAP_BODY, "campaign_id": forge_campaign}
+    )
     assert created.status_code == 200, created.text
     asset_id = created.json()["asset_id"]
 

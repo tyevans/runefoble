@@ -54,7 +54,6 @@ class ServiceSeams:
 SERVICE_SEAMS: tuple[ServiceSeams, ...] = (
     ServiceSeams(
         "asset_forge",
-        spicedb="asset_forge.dependencies",
         bus="asset_forge.dependencies",
         verifier="asset_forge.dependencies",
         verifier_scope="test",
