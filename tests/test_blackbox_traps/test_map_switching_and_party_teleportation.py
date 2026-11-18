@@ -49,10 +49,12 @@ async def test_battlemap_switch_and_party_teleportation(spicedb: MockSpiceDBClie
     client.post(
         f"/api/v1/boards/{board_id}/tokens",
         json={"token_id": "valeros", "name": "Valeros", "x": 1, "y": 1, "is_friendly": True},
+        headers=bearer(dm_user),
     )
     client.post(
         f"/api/v1/boards/{board_id}/tokens",
         json={"token_id": "kyra", "name": "Kyra", "x": 1, "y": 2, "is_friendly": True},
+        headers=bearer(dm_user),
     )
 
     # 3. Player attempts to switch map -> 403 Forbidden

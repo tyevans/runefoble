@@ -11,7 +11,7 @@ import pytest
 from board_state.main import app as board_app
 from fastapi.testclient import TestClient
 
-from tests.helpers.ws_identity import SIGNING_ISSUER
+from tests.helpers.ws_identity import SIGNING_ISSUER, ws_subprotocols
 
 
 def bearer(sub: str) -> dict[str, str]:
@@ -160,7 +160,9 @@ def test_board_state_previews_modular_frontdoors(board_client):
     assert prev_move_res.json()["total_distance_ft"] == 5
 
     # 3. Test previews WebSocket frontdoor: connection, ghost preview, confirm move, cancel preview
-    with board_client.websocket_connect(f"/ws/boards/{board_id}") as ws:
+    with board_client.websocket_connect(
+        f"/ws/boards/{board_id}", subprotocols=ws_subprotocols("user-test")
+    ) as ws:
         connected = ws.receive_json()
         assert connected["type"] == "connected"
 

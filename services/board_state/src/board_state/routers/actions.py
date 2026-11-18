@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import logging
+from typing import Annotated
 
+from board_state.authz import require_token_move
 from board_state.dependencies import get_board, get_current_user_id, get_event_bus, repo
 from board_state.events import publish_board_events
 from board_state.models import TokenActionRequest, TokenActionResponse
@@ -20,9 +22,15 @@ router = APIRouter(tags=["actions"], dependencies=[Depends(get_current_user_id)]
     "/api/v1/boards/{session_id}/tokens/{token_id}/action",
     response_model=TokenActionResponse,
 )
-async def execute_token_action(session_id: str, token_id: str, req: TokenActionRequest):
+async def execute_token_action(
+    session_id: str,
+    token_id: str,
+    req: TokenActionRequest,
+    user_id: Annotated[str, Depends(get_current_user_id)],
+):
     """Execute a contextual tactical action for a token (Dodge, Dash, Melee, Disengage, Cast)."""
     board = await get_board(session_id)
+    await require_token_move(user_id, session_id, token_id)
     try:
         board.execute_token_action(
             token_id=token_id,
@@ -77,8 +85,10 @@ async def execute_token_action(session_id: str, token_id: str, req: TokenActionR
 
 
 @router.post("/api/v1/boards/{session_id}/actions", response_model=TokenActionResponse)
-async def execute_action_root(session_id: str, req: TokenActionRequest):
+async def execute_action_root(
+    session_id: str, req: TokenActionRequest, user_id: Annotated[str, Depends(get_current_user_id)]
+):
     """Execute action with token_id provided in request body."""
     if not req.token_id:
         raise HTTPException(status_code=400, detail="token_id is required in request body")
-    return await execute_token_action(session_id, req.token_id, req)
+    return await execute_token_action(session_id, req.token_id, req, user_id)

@@ -9,6 +9,8 @@ from board_state.aggregate import BoardAggregate
 from board_state.dependencies import repo, to_board_uuid
 from fastapi.testclient import TestClient
 
+from tests.helpers.ws_identity import ws_subprotocols
+
 
 def test_websocket_realtime_speech_spell_trigger_sub_150ms(client: TestClient) -> None:
     """Verify WebSocket real-time stream handles spoken spellcast and broadcasts VFX in <150ms."""
@@ -23,7 +25,9 @@ def test_websocket_realtime_speech_spell_trigger_sub_150ms(client: TestClient) -
         json={"token_id": "nadia", "name": "Nadia", "x": 1, "y": 2, "is_friendly": True},
     )
 
-    with client.websocket_connect(f"/ws/boards/{board_id}") as ws:
+    with client.websocket_connect(
+        f"/ws/boards/{board_id}", subprotocols=ws_subprotocols("user-test")
+    ) as ws:
         connected = ws.receive_json()
         assert connected["type"] == "connected"
 

@@ -14,7 +14,7 @@ import pytest
 from board_state.main import app as board_app
 from fastapi.testclient import TestClient
 
-from tests.helpers.ws_identity import SIGNING_ISSUER
+from tests.helpers.ws_identity import SIGNING_ISSUER, ws_subprotocols
 
 
 def bearer(sub: str) -> dict[str, str]:
@@ -274,7 +274,9 @@ def test_websocket_radial_action_and_aoe_streaming(client):
         json={"token_id": "kyra", "name": "Kyra", "x": 4, "y": 4, "is_friendly": True},
     )
 
-    with client.websocket_connect(f"/ws/boards/{board_id}") as ws:
+    with client.websocket_connect(
+        f"/ws/boards/{board_id}", subprotocols=ws_subprotocols("user-test")
+    ) as ws:
         handshake = ws.receive_json()
         assert handshake["type"] == "connected"
 

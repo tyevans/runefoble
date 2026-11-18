@@ -11,7 +11,7 @@ import pytest
 from board_state.main import app
 from fastapi.testclient import TestClient
 
-from tests.helpers.ws_identity import SIGNING_ISSUER
+from tests.helpers.ws_identity import SIGNING_ISSUER, ws_subprotocols
 
 
 def bearer(sub: str) -> dict[str, str]:
@@ -86,7 +86,9 @@ def test_tactile_kinematics_websocket_flow():
         json={"token_id": "merisiel", "name": "Merisiel", "x": 2, "y": 2, "is_friendly": True},
     )
 
-    with client.websocket_connect(f"/ws/boards/{board_id}") as ws:
+    with client.websocket_connect(
+        f"/ws/boards/{board_id}", subprotocols=ws_subprotocols("user-test")
+    ) as ws:
         handshake = ws.receive_json()
         assert handshake["type"] == "connected"
 

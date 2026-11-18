@@ -20,7 +20,7 @@ from board_state.main import app
 from fastapi.testclient import TestClient
 from runefoble_auth.errors import AuthzSchemaError, AuthzUnavailableError, AuthzWriteError
 
-from tests.helpers.ws_identity import SIGNING_ISSUER
+from tests.helpers.ws_identity import SIGNING_ISSUER, ws_subprotocols
 
 DM = "dm-evelyn"
 PLAYER = "player-marcus"
@@ -61,6 +61,26 @@ def campaign(spicedb) -> str:
     _grant(spicedb, campaign_id, "player", PLAYER)
     _grant(spicedb, campaign_id, "spectator", SPECTATOR)
     return campaign_id
+
+
+@pytest.fixture
+def player_character(spicedb, campaign: str) -> str:
+    """A character that the player owns in the campaign. Character creation lives in another service."""
+    character_id = str(uuid4())
+    for relation, subject_type, subject_id in (
+        ("campaign", "campaign", campaign),
+        ("owner", "user", PLAYER),
+    ):
+        asyncio.run(
+            spicedb.write_relationship(
+                resource_type="character",
+                resource_id=character_id,
+                relation=relation,
+                subject_type=subject_type,
+                subject_id=subject_id,
+            )
+        )
+    return character_id
 
 
 @pytest.fixture
@@ -213,13 +233,20 @@ def test_trap_list_hides_the_secret_trap_from_a_player(
 
 
 def test_a_sprung_secret_trap_reaches_a_player_without_its_dm_notes(
-    client: TestClient, board: str, secret_trap: str
+    client: TestClient, board: str, secret_trap: str, player_character: str
 ):
     """A sprung trap is revealed. Its place stays. Its description, payload and DC do not."""
     placed = client.post(
         f"/api/v1/boards/{board}/tokens",
-        json={"token_id": "valeros", "name": "Valeros", "x": 2, "y": 3, "is_friendly": True},
-        headers=bearer(DM),
+        json={
+            "token_id": "valeros",
+            "name": "Valeros",
+            "x": 2,
+            "y": 3,
+            "is_friendly": True,
+            "character_id": player_character,
+        },
+        headers=bearer(PLAYER),
     )
     assert placed.status_code == 200, placed.text
     moved = client.post(
@@ -383,18 +410,27 @@ def test_secret_doors_and_portals_reach_only_the_dm(client: TestClient, board: s
 
 
 def test_board_websocket_broadcasts_never_carry_the_secret_layer(
-    client: TestClient, board: str, secret_trap: str
+    client: TestClient, board: str, secret_trap: str, player_character: str
 ):
     """A player socket that sees a trap spring receives no secret trap data in any frame."""
     placed = client.post(
         f"/api/v1/boards/{board}/tokens",
-        json={"token_id": "valeros", "name": "Valeros", "x": 2, "y": 3, "is_friendly": True},
-        headers=bearer(DM),
+        json={
+            "token_id": "valeros",
+            "name": "Valeros",
+            "x": 2,
+            "y": 3,
+            "is_friendly": True,
+            "character_id": player_character,
+        },
+        headers=bearer(PLAYER),
     )
     assert placed.status_code == 200, placed.text
 
     frames: list[dict] = []
-    with client.websocket_connect(f"/ws/boards/{board}") as player_socket:
+    with client.websocket_connect(
+        f"/ws/boards/{board}", subprotocols=ws_subprotocols(PLAYER)
+    ) as player_socket:
         frames.append(player_socket.receive_json())
         player_socket.send_json(
             {"action": "confirm_move", "token_id": "valeros", "to_x": 6, "to_y": 3}

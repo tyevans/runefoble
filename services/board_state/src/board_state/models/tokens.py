@@ -44,6 +44,7 @@ class PlaceTokenRequest(BaseModel):
     hp: int | None = None
     is_friendly: bool = True
     vision_radius: int = 2
+    character_id: str | None = None
 
 
 class MoveTokenRequest(BaseModel):

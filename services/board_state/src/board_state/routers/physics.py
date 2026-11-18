@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import logging
+from typing import Annotated
 
+from board_state.authz import PLAY, require_campaign_permission, require_token_move
 from board_state.dependencies import get_board, get_current_user_id, get_event_bus, repo
 from board_state.events import publish_board_events
 from board_state.models import (
@@ -25,10 +27,11 @@ router = APIRouter(tags=["physics"], dependencies=[Depends(get_current_user_id)]
     "/api/v1/boards/{board_id}/physics/simulate-throw", response_model=SimulateThrowResponse
 )
 async def simulate_throw_endpoint(
-    board_id: str, req: SimulateThrowRequest
+    board_id: str, req: SimulateThrowRequest, user_id: Annotated[str, Depends(get_current_user_id)]
 ) -> SimulateThrowResponse:
     """Simulate a 3D physical tumbling dice throw with gravity, floor/wall bounces, and resting face."""
     board = await get_board(board_id)
+    await require_campaign_permission(user_id, board_id, PLAY)
     try:
         resp = apply_dice_throw(
             board,
@@ -71,9 +74,12 @@ async def simulate_throw_endpoint(
 
 
 @router.post("/api/v1/boards/{board_id}/physics/knockback", response_model=KnockbackResponse)
-async def knockback_endpoint(board_id: str, req: KnockbackRequest) -> KnockbackResponse:
+async def knockback_endpoint(
+    board_id: str, req: KnockbackRequest, user_id: Annotated[str, Depends(get_current_user_id)]
+) -> KnockbackResponse:
     """Apply physical knockback impulse to a miniature token, halting upon wall or elevation collisions."""
     board = await get_board(board_id)
+    await require_token_move(user_id, board_id, req.token_id)
     try:
         resp = apply_token_knockback(
             board,

@@ -14,8 +14,8 @@ class BoardWebSocketManager:
     def __init__(self) -> None:
         self.active_rooms: dict[str, list[WebSocket]] = {}
 
-    async def connect(self, session_id: str, websocket: WebSocket) -> None:
-        await websocket.accept()
+    def register(self, session_id: str, websocket: WebSocket) -> None:
+        """Add an already accepted socket to the room of a board."""
         if session_id not in self.active_rooms:
             self.active_rooms[session_id] = []
         self.active_rooms[session_id].append(websocket)

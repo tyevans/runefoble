@@ -2,20 +2,40 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 
-from board_state.dependencies import BoardNotFoundError, get_board, repo
+from board_state.authz import VIEW, can_on_board
+from board_state.dependencies import (
+    BoardNotFoundError,
+    get_board,
+    get_zitadel_auth_service,
+    repo,
+)
 from board_state.preview import compute_kinematic_route_preview
 from board_state.realtime import board_ws_manager
 from board_state.routers.previews_ws_actions import handle_ws_action
+from board_state.routers.previews_ws_authz import BoardActionDenied, authorize_message
 from board_state.routers.previews_ws_spells import handle_ws_spell
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from runefoble_auth.websocket import (
+    RUNEFOBLE_SUBPROTOCOL,
+    WS_POLICY_VIOLATION,
+    WebSocketAuthError,
+    authenticate_websocket,
+)
+
+logger = logging.getLogger("runefoble.board_state.routers.previews_ws")
 
 router = APIRouter(tags=["previews"])
 
 GHOST_ACTIONS = ("preview_move", "ghost_preview", "speech_intent", "SpeechIntentParsed")
 CONFIRM_ACTIONS = ("confirm_move", "confirm_ghost", "confirm_intent")
 CANCEL_ACTIONS = ("cancel_preview", "cancel_ghost")
+
+
+class UnknownBoardAction(ValueError):
+    """Raised for a message type that the board does not define."""
 
 
 def _find_token_id(board: Any, token_id: str | None, speaker_name: str | None) -> str | None:
@@ -106,13 +126,46 @@ async def _dispatch_action(session_id: str, action: str, is_cast: bool, data: di
             session_id, action, data, board
         )
         if not handled:
-            await board_ws_manager.broadcast(session_id, data)
+            raise UnknownBoardAction(action)
+
+
+async def _send_error(
+    websocket: WebSocket, session_id: str, status: int, message: str, code: str
+) -> None:
+    await websocket.send_json(
+        {
+            "type": "error",
+            "code": code,
+            "status": status,
+            "session_id": session_id,
+            "message": message,
+        }
+    )
+
+
+async def _admit(websocket: WebSocket, session_id: str) -> str | None:
+    """Verify the bearer and `board.view`. Close with 1008 before accept on a refusal."""
+    try:
+        principal = authenticate_websocket(websocket, get_zitadel_auth_service())
+    except WebSocketAuthError as exc:
+        logger.warning("Board socket denied on %s: %s", websocket.url.path, exc)
+        await websocket.close(code=WS_POLICY_VIOLATION)
+        return None
+    if not await can_on_board(principal.user_id, session_id, VIEW):
+        logger.warning("Board socket denied on %s: board.view is required", websocket.url.path)
+        await websocket.close(code=WS_POLICY_VIOLATION)
+        return None
+    await websocket.accept(subprotocol=RUNEFOBLE_SUBPROTOCOL)
+    return principal.user_id
 
 
 @router.websocket("/ws/boards/{session_id}")
 async def board_websocket(websocket: WebSocket, session_id: str):
-    """Real-time tactical board WebSocket stream for kinematic dragging and ghost previews."""
-    await board_ws_manager.connect(session_id, websocket)
+    """Real-time tactical board WebSocket stream. It needs a bearer and `board.view`."""
+    user_id = await _admit(websocket, session_id)
+    if user_id is None:
+        return
+    board_ws_manager.register(session_id, websocket)
     try:
         await websocket.send_json(
             {
@@ -130,17 +183,24 @@ async def board_websocket(websocket: WebSocket, session_id: str):
             )
 
             try:
+                await authorize_message(user_id, session_id, action, is_cast, data)
                 await _dispatch_action(session_id, action, is_cast, data)
+            except BoardActionDenied as exc:
+                await _send_error(websocket, session_id, 403, str(exc), "FORBIDDEN")
             except BoardNotFoundError as exc:
-                await websocket.send_json(
-                    {"type": "error", "status": 404, "session_id": session_id, "message": str(exc)}
+                await _send_error(websocket, session_id, 404, str(exc), "NOT_FOUND")
+            except UnknownBoardAction as exc:
+                await _send_error(
+                    websocket, session_id, 422, f"Unknown board action: {exc}", "UNKNOWN_ACTION"
                 )
             except ValueError as exc:
-                await websocket.send_json(
-                    {"type": "error", "status": 422, "session_id": session_id, "message": str(exc)}
-                )
-
+                await _send_error(websocket, session_id, 422, str(exc), "INVALID")
     except WebSocketDisconnect:
+        pass
+    except Exception:
+        logger.exception("Board socket failed on %s", session_id)
+        await websocket.close(code=1011)
+    finally:
         board_ws_manager.disconnect(session_id, websocket)
 
 
