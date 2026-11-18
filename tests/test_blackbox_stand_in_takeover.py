@@ -1,6 +1,5 @@
 """Blackbox TDD tests for Mid-Session Hot-Swap Handoff and Session Takeover (TASK-0096, TASK-0055)."""
 
-import os
 from collections.abc import Iterator
 from uuid import uuid4
 
@@ -14,7 +13,6 @@ from httpx import ASGITransport, AsyncClient
 from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_events.events import CharacterControlTransferred
 from runefoble_platform.redis_bus import deserialize_event
-from runefoble_platform.service_credential import SERVICE_CREDENTIAL_HEADER
 
 from tests.helpers.live_services import serve
 from tests.helpers.mock_redis import MockAsyncRedis
@@ -139,10 +137,7 @@ async def test_mid_session_hot_swap_takeover_and_turn_continuity(
 
     # 5. The character sheet no longer reports the stand-in as active
     with httpx.Client(base_url=character_service) as http:
-        sheet = http.get(
-            f"/api/v1/characters/{char_id}",
-            headers={SERVICE_CREDENTIAL_HEADER: os.environ["RUNEFOBLE_SERVICE_CREDENTIAL"]},
-        )
+        sheet = http.get(f"/api/v1/characters/{char_id}", headers=auth_headers(player_id))
         assert sheet.status_code == 200, sheet.text
         assert sheet.json()["is_stand_in_active"] is False
 

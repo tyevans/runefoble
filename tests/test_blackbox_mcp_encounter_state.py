@@ -185,6 +185,31 @@ async def test_blackbox_query_encounter_state_upstream_unavailable_returns_error
     assert "game_session" in tool_text(result)
 
 
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("tool", "argument"),
+    [("query_encounter_state", "encounter_id"), ("inspect_tactical_board", "session_id")],
+)
+async def test_encounter_reads_refuse_a_caller_with_no_session_access(
+    encounter: str, tool: str, argument: str
+):
+    """A caller with no access to the session gets an error and no board or combat data.
+
+    The gateway forwards the caller bearer, so board_state and game_session check the caller.
+    """
+    result = await call_tool_over_http(
+        _MCP["url"],
+        tool,
+        {argument: encounter},
+        SIGNING_ISSUER.mint("stranger-mallory"),
+    )
+
+    assert result.isError is True
+    assert "403" in tool_text(result)
+    assert "Goblin Archer" not in tool_text(result)
+    assert "Valeros" not in tool_text(result)
+
+
 def _owned_campaign(client) -> str:
     """Create a campaign as the calling user, so that the caller can run sessions in it."""
     res = client.post("/api/v1/campaigns", json={"title": "Owned Campaign"})

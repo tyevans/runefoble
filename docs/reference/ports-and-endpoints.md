@@ -202,7 +202,7 @@ Campaign Lore routes require a verified bearer token, except `/health`, `/health
 | `board-state` | GET | `/ui/manifest` | Discovers vendored microfrontends (`runefoble-board`, `runefoble-tactical-board`, `runefoble-map-uploader`, `runefoble-radial-menu`, `runefoble-aoe-template`) |
 | `character-sheet` | GET | `/api/v1/characters` | Lists the characters the verified caller may `view`. Optional `campaignId` query filters one campaign's party |
 | `character-sheet` | POST | `/api/v1/characters` | Creates a new character. The verified caller becomes its SpiceDB `owner`. Returns the roster view with `owner_id` |
-| `character-sheet` | GET | `/api/v1/characters/{id}` | Retrieves character sheet details, stats, equipment, and active conditions (requires `view`) |
+| `character-sheet` | GET | `/api/v1/characters/{id}` | Retrieves character sheet details, stats, equipment, and active conditions. Needs a user bearer with `view`. The service credential alone gets `401` |
 | `character-sheet` | PATCH | `/api/v1/characters/{id}/campaign` | Assigns or unassigns the campaign and writes or removes the `character#campaign` tuple (requires `edit`) |
 | `character-sheet` | POST | `/api/v1/characters/{id}/level-up` | Levels up character, increasing HP and unlocking class spell slots |
 | `character-sheet` | POST | `/api/v1/characters/{id}/spells/prepare` | Prepares a spell in the character's active spellbook. With `is_prepared: false`, unprepares it and emits `SpellUnprepared` |

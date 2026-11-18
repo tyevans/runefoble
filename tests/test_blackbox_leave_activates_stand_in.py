@@ -5,7 +5,6 @@ stand-in. game_session sends the command to character_sheet. character_sheet own
 All setup and assertions use public HTTP routes only.
 """
 
-import os
 from collections.abc import Iterator
 
 import httpx
@@ -16,7 +15,6 @@ from game_session.main import app as session_app
 from game_session.main import set_spicedb_client as session_set_spicedb
 from httpx import ASGITransport, AsyncClient
 from runefoble_auth.spicedb import MockSpiceDBClient
-from runefoble_platform.service_credential import SERVICE_CREDENTIAL_HEADER
 
 from tests.helpers.live_services import serve
 from tests.helpers.mock_redis import MockAsyncRedis
@@ -64,12 +62,9 @@ def _create_character(character_url: str) -> str:
 
 
 def _read_stand_in_flag(character_url: str, char_id: str) -> bool:
-    """Read the character sheet flag through the service credential (no user needed)."""
+    """Read the character sheet flag as its owner, the player who created the character."""
     with httpx.Client(base_url=character_url) as http:
-        sheet = http.get(
-            f"/api/v1/characters/{char_id}",
-            headers={SERVICE_CREDENTIAL_HEADER: os.environ["RUNEFOBLE_SERVICE_CREDENTIAL"]},
-        )
+        sheet = http.get(f"/api/v1/characters/{char_id}", headers=_bearer(PLAYER_ID))
         assert sheet.status_code == 200, sheet.text
         return sheet.json()["is_stand_in_active"]
 

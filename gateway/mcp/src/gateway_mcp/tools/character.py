@@ -11,15 +11,21 @@ from mcp.server.fastmcp import Context
 
 from gateway_mcp.caller import caller_bearer
 from gateway_mcp.owning_services import OwningServices
-from gateway_mcp.tool_authz import authorize_tool_call, character_edit, dm_action_on_character
+from gateway_mcp.tool_authz import (
+    authorize_tool_call,
+    character_edit,
+    character_view,
+    dm_action_on_character,
+)
 
 if TYPE_CHECKING:
     from mcp.server.fastmcp import FastMCP
 
 
-async def inspect_inventory(character_id: str) -> dict[str, Any]:
+async def inspect_inventory(character_id: str, ctx: Context | None = None) -> dict[str, Any]:
     """Inspect a character's equipped items and carried inventory."""
-    sheet = await OwningServices().get_character(character_id)
+    await authorize_tool_call(ctx, character_view(character_id))
+    sheet = await OwningServices(bearer=caller_bearer(ctx)).get_character(character_id)
     return {
         "character_id": sheet["character_id"],
         "equipped": sheet["equipment"],
@@ -27,9 +33,10 @@ async def inspect_inventory(character_id: str) -> dict[str, Any]:
     }
 
 
-async def get_character_sheet(character_id: str) -> dict[str, Any]:
+async def get_character_sheet(character_id: str, ctx: Context | None = None) -> dict[str, Any]:
     """Retrieve complete character sheet details including stats, hit points, equipment, and conditions."""
-    sheet = await OwningServices().get_character(character_id)
+    await authorize_tool_call(ctx, character_view(character_id))
+    sheet = await OwningServices(bearer=caller_bearer(ctx)).get_character(character_id)
     return {
         "character_id": sheet["character_id"],
         "name": sheet["name"],
