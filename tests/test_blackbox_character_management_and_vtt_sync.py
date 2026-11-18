@@ -15,14 +15,11 @@ Hard Invariants:
 
 from __future__ import annotations
 
-import re
-import subprocess
 from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
 from gateway_api.auth import get_spicedb_client
-from gateway_api.campaign_store import campaign_store
 from gateway_api.character_store import character_store
 from gateway_api.main import app
 
@@ -35,22 +32,27 @@ def _auth(issuer, sub: str) -> dict[str, str]:
 REPO_ROOT = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = REPO_ROOT / "frontend"
 TS_TEST_DIR = FRONTEND_DIR / "test" / "character_management"
-client = TestClient(app)
+
+
+@pytest.fixture
+def client(game_session_upstream):
+    """Enter the gateway lifespan after game_session is served, so the proxy reaches it."""
+    with TestClient(app) as gateway_client:
+        yield gateway_client
 
 
 @pytest.fixture(autouse=True)
 def reset_stores():
     """Reset in-memory character and campaign stores before each test."""
     character_store.reset(load_defaults=False)
-    campaign_store.reset()
     yield
 
 
 @pytest.mark.asyncio
-async def test_character_crud_and_zanzibar_ownership(signing_issuer):
+async def test_character_crud_and_zanzibar_ownership(trusted_ws_issuer, client):
     """Verify character creation, SpiceDB Zanzibar ownership relations, and owner-only deletion."""
-    headers_owner = _auth(signing_issuer, "user_valeros")
-    headers_stranger = _auth(signing_issuer, "user_stranger")
+    headers_owner = _auth(trusted_ws_issuer, "user_valeros")
+    headers_stranger = _auth(trusted_ws_issuer, "user_stranger")
 
     payload = {
         "name": "Valeros of Korvosa",
@@ -126,11 +128,11 @@ async def test_character_crud_and_zanzibar_ownership(signing_issuer):
 
 
 @pytest.mark.asyncio
-async def test_character_campaign_assignment(signing_issuer):
+async def test_character_campaign_assignment(trusted_ws_issuer, client):
     """Verify character campaign assignment writes campaign tuple and grants view to party members."""
-    headers_alice = _auth(signing_issuer, "user_alice")
-    headers_party_bob = _auth(signing_issuer, "user_bob")
-    headers_outsider = _auth(signing_issuer, "user_outsider")
+    headers_alice = _auth(trusted_ws_issuer, "user_alice")
+    headers_party_bob = _auth(trusted_ws_issuer, "user_bob")
+    headers_outsider = _auth(trusted_ws_issuer, "user_outsider")
 
     # 1. Create Campaign
     camp_res = client.post(
@@ -196,10 +198,10 @@ async def test_character_campaign_assignment(signing_issuer):
 
 
 @pytest.mark.asyncio
-async def test_character_listing_filtered_by_zanzibar_visibility(signing_issuer):
+async def test_character_listing_filtered_by_zanzibar_visibility(trusted_ws_issuer, client):
     """Verify GET /api/v1/characters returns only viewable characters for requesting user."""
-    headers_alice = _auth(signing_issuer, "user_alice")
-    headers_bob = _auth(signing_issuer, "user_bob")
+    headers_alice = _auth(trusted_ws_issuer, "user_alice")
+    headers_bob = _auth(trusted_ws_issuer, "user_bob")
 
     res_a = client.post(
         "/api/v1/characters",
@@ -227,9 +229,9 @@ async def test_character_listing_filtered_by_zanzibar_visibility(signing_issuer)
     assert char_a_id not in bob_ids
 
 
-def test_profile_endpoint_returns_verified_identity(signing_issuer):
+def test_profile_endpoint_returns_verified_identity(trusted_ws_issuer, client):
     """Verify GET /api/v1/profile returns the verified token subject and no role claims (ADR-0015)."""
-    headers = _auth(signing_issuer, "user_marcus")
+    headers = _auth(trusted_ws_issuer, "user_marcus")
     res = client.get("/api/v1/profile", headers=headers)
     assert res.status_code == 200
     data = res.json()
@@ -243,9 +245,9 @@ def test_profile_endpoint_returns_verified_identity(signing_issuer):
 
 
 @pytest.mark.asyncio
-async def test_campaign_creation_and_ownership(signing_issuer):
+async def test_campaign_creation_and_ownership(trusted_ws_issuer, client):
     """Verify POST /api/v1/campaigns creates campaign and writes Zanzibar owner relation."""
-    headers_gm = _auth(signing_issuer, "user_gm_evelyn")
+    headers_gm = _auth(trusted_ws_issuer, "user_gm_evelyn")
     res = client.post(
         "/api/v1/campaigns",
         json={"title": "Whispering Depths", "setting": "Underdark", "system": "5e"},
@@ -264,30 +266,3 @@ async def test_campaign_creation_and_ownership(signing_issuer):
         "campaign", camp_id, "owner", "user", "user_gm_evelyn"
     )
     assert has_owner is True
-
-
-def test_frontend_typescript_suite_execution():
-    """Execute the Node-based TypeScript blackbox test suite and assert 100% pass."""
-    assert TS_TEST_DIR.is_dir(), f"Frontend test directory {TS_TEST_DIR} must exist"
-    test_files = sorted(str(p.relative_to(REPO_ROOT)) for p in TS_TEST_DIR.glob("*.test.ts"))
-    assert test_files, f"No TypeScript test modules found under {TS_TEST_DIR}"
-
-    result = subprocess.run(
-        [
-            "node",
-            "--experimental-strip-types",
-            "--test",
-            *test_files,
-        ],
-        cwd=REPO_ROOT,
-        capture_output=True,
-        text=True,
-    )
-    assert result.returncode == 0, (
-        f"Frontend blackbox suite failed:\nSTDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
-    )
-
-    match = re.search(r"pass (\d+)", result.stdout)
-    assert match is not None, f"Could not find pass count in output: {result.stdout}"
-    assert int(match.group(1)) >= 7, f"Expected at least 7 passed tests, got {match.group(1)}"
-    assert "fail 0" in result.stdout

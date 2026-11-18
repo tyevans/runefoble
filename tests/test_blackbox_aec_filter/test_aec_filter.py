@@ -26,6 +26,9 @@ from voice_agent.main import app, set_event_bus
 
 from tests.helpers.audio_synth import generate_pcm_silence, generate_pcm_sine
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.voice_identity import voice_auth_headers
+
+pytestmark = pytest.mark.usefixtures("trusted_voice_issuer")
 
 
 @pytest.fixture
@@ -43,7 +46,7 @@ def mock_event_bus(mock_redis: MockAsyncRedis):
 
 @pytest.fixture
 def client(mock_event_bus: RedisStreamsEventBus) -> TestClient:
-    return TestClient(app)
+    return TestClient(app, headers=voice_auth_headers())
 
 
 def _simulate_room_acoustic_echo(

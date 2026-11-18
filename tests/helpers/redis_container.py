@@ -22,7 +22,17 @@ def redis_container(port: int) -> Generator[str]:
     name = f"runefoble-redis-test-{port}"
     subprocess.run([docker_bin, "rm", "-f", name], capture_output=True)
     subprocess.run(
-        [docker_bin, "run", "--name", name, "-d", "-p", f"127.0.0.1:{port}:6379", REDIS_IMAGE],
+        [
+            docker_bin,
+            "run",
+            "--rm",
+            "--name",
+            name,
+            "-d",
+            "-p",
+            f"127.0.0.1:{port}:6379",
+            REDIS_IMAGE,
+        ],
         check=True,
         capture_output=True,
     )

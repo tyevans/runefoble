@@ -83,3 +83,9 @@ Documentation checks.
 3. `CHANGELOG.md` has the entry.
 4. Links check passes (existing docs link checker or manual check).
 5. No file exceeds 500 lines.
+
+## Orchestrator Addenda (2026-11-17, round 2)
+
+Source: `.audit/synth/discovered-round2.md`.
+
+- docs/how-to/verify-identity-in-fastapi-and-websockets.md:23 uses issuer http://zitadel:8080. Use the browser-facing issuer from the chart, as the authentication guide does.

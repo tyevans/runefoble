@@ -16,8 +16,11 @@ from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import MockSpiceDBClient
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.ws_identity import SIGNING_ISSUER
 
 from .conftest import assert_stream_events
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
 @pytest.mark.asyncio
@@ -38,7 +41,7 @@ async def test_blackbox_caravan_contract_posting_and_board_queries(
             "frontier_region": "The Shadowed Wilds",
             "description": "Frontier trading and exploration ledger.",
         },
-        headers={"x-user-id": officer_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(officer_id)}"},
     )
     assert world_res.status_code == 201, world_res.text
     world_id = world_res.json()["shared_world_id"]
@@ -48,7 +51,7 @@ async def test_blackbox_caravan_contract_posting_and_board_queries(
     reg_res = client.post(
         f"/api/v1/shared-worlds/{world_id}/campaigns",
         json={"campaign_id": campaign_a, "party_name": "The Amber Vanguard"},
-        headers={"x-user-id": officer_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(officer_id)}"},
     )
     assert reg_res.status_code == 201
 
@@ -68,7 +71,7 @@ async def test_blackbox_caravan_contract_posting_and_board_queries(
             "posted_by_campaign_id": campaign_a,
             "expires_in_turns": 12,
         },
-        headers={"x-user-id": officer_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(officer_id)}"},
     )
     assert post_res.status_code == 201, post_res.text
     contract_data = post_res.json()["contract"]
@@ -84,7 +87,7 @@ async def test_blackbox_caravan_contract_posting_and_board_queries(
     # 3. Query notice board with filters
     board_res = client.get(
         f"/api/v1/shared-worlds/{world_id}/caravans/contracts?destination=Ironford",
-        headers={"x-user-id": officer_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(officer_id)}"},
     )
     assert board_res.status_code == 200
     contracts = board_res.json()["contracts"]
@@ -94,7 +97,7 @@ async def test_blackbox_caravan_contract_posting_and_board_queries(
     # Filter by destination non-matching
     board_empty = client.get(
         f"/api/v1/shared-worlds/{world_id}/caravans/contracts?destination=HighlandKeep",
-        headers={"x-user-id": officer_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(officer_id)}"},
     )
     assert board_empty.status_code == 200
     assert len(board_empty.json()["contracts"]) == 0
@@ -102,7 +105,7 @@ async def test_blackbox_caravan_contract_posting_and_board_queries(
     # Filter by risk level
     board_risk = client.get(
         f"/api/v1/shared-worlds/{world_id}/caravans/contracts?risk_level=medium",
-        headers={"x-user-id": officer_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(officer_id)}"},
     )
     assert board_risk.status_code == 200
     assert len(board_risk.json()["contracts"]) == 1
@@ -110,7 +113,7 @@ async def test_blackbox_caravan_contract_posting_and_board_queries(
     # Filter by status
     board_status = client.get(
         f"/api/v1/shared-worlds/{world_id}/caravans/contracts?status=open",
-        headers={"x-user-id": officer_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(officer_id)}"},
     )
     assert board_status.status_code == 200
     assert len(board_status.json()["contracts"]) == 1
@@ -118,7 +121,7 @@ async def test_blackbox_caravan_contract_posting_and_board_queries(
     # Fetch individual contract
     get_res = client.get(
         f"/api/v1/shared-worlds/{world_id}/caravans/contracts/{contract_id}",
-        headers={"x-user-id": officer_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(officer_id)}"},
     )
     assert get_res.status_code == 200
     assert get_res.json()["contract"]["contract_id"] == contract_id

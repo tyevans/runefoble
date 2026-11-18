@@ -28,6 +28,9 @@ from voice_agent.main import app, set_event_bus
 from voice_agent.routers.stream_diagnostics import reset_diagnostics
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.voice_identity import voice_auth_headers
+
+pytestmark = pytest.mark.usefixtures("trusted_voice_issuer")
 
 
 @pytest.fixture(autouse=True)
@@ -44,7 +47,7 @@ def clean_environment():
 
 @pytest.fixture
 def client() -> TestClient:
-    return TestClient(app)
+    return TestClient(app, headers=voice_auth_headers())
 
 
 def test_initial_stream_quality_query(client: TestClient):

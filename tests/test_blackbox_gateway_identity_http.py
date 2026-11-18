@@ -6,6 +6,8 @@ service verifies Zitadel JWTs itself). Hard Invariant 7: tests use public HTTP r
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+
 import pytest
 from fastapi.testclient import TestClient
 from gateway_api.main import app as gateway_app
@@ -18,8 +20,9 @@ FOREIGN_ORIGIN = "https://attacker.example"
 
 
 @pytest.fixture
-def client() -> TestClient:
-    return TestClient(gateway_app)
+def client(game_session_upstream) -> Iterator[TestClient]:
+    with TestClient(gateway_app) as gateway_client:
+        yield gateway_client
 
 
 def _bearer(issuer, sub: str) -> dict[str, str]:
@@ -49,13 +52,13 @@ def test_identity_routes_refuse_missing_bearer(client, method, path, body):
 
 
 @pytest.mark.parametrize("header", ["Bearer not-a-real-jwt", "Basic dXNlcjpwYXNz", "Bearer "])
-def test_profile_refuses_forged_or_malformed_authorization(client, header, signing_issuer):
+def test_profile_refuses_forged_or_malformed_authorization(client, header, trusted_ws_issuer):
     response = client.get("/api/v1/profile", headers={"Authorization": header})
     assert response.status_code == 401, response.text
 
 
-def test_profile_refuses_token_signed_by_untrusted_key(client, signing_issuer):
-    forged = SigningTestIssuer(issuer=signing_issuer.issuer, kid=signing_issuer.kid)
+def test_profile_refuses_token_signed_by_untrusted_key(client, trusted_ws_issuer):
+    forged = SigningTestIssuer(issuer=trusted_ws_issuer.issuer, kid=trusted_ws_issuer.kid)
     response = client.get(
         "/api/v1/profile",
         headers={"Authorization": f"Bearer {forged.mint('user-admin')}"},
@@ -83,28 +86,28 @@ def test_asset_upload_refuses_x_user_id_without_bearer(client):
 # --- 2. A verified token is the only identity source ---
 
 
-def test_profile_subject_comes_from_token_not_header(client, signing_issuer):
+def test_profile_subject_comes_from_token_not_header(client, trusted_ws_issuer):
     response = client.get(
         "/api/v1/profile",
-        headers=_bearer(signing_issuer, "user-alice") | {"X-User-Id": "someone-else"},
+        headers=_bearer(trusted_ws_issuer, "user-alice") | {"X-User-Id": "someone-else"},
     )
     assert response.status_code == 200, response.text
     assert response.json()["user_id"] == "user-alice"
 
 
-def test_profile_has_no_admin_or_role_claims(client, signing_issuer):
-    response = client.get("/api/v1/profile", headers=_bearer(signing_issuer, "user-alice"))
+def test_profile_has_no_admin_or_role_claims(client, trusted_ws_issuer):
+    response = client.get("/api/v1/profile", headers=_bearer(trusted_ws_issuer, "user-alice"))
     assert response.status_code == 200, response.text
     assert "is_admin" not in response.json()
     assert "roles" not in response.json()
 
 
-def test_asset_upload_owner_is_token_subject(client, signing_issuer):
+def test_asset_upload_owner_is_token_subject(client, trusted_ws_issuer):
     response = client.post(
         "/api/v1/assets/upload",
         files={"file": ("alice.png", PNG_SAMPLE_BYTES, "image/png")},
         data={"owner_id": "user-bob", "asset_type": "avatar"},
-        headers=_bearer(signing_issuer, "user-alice") | {"X-User-Id": "user-bob"},
+        headers=_bearer(trusted_ws_issuer, "user-alice") | {"X-User-Id": "user-bob"},
     )
     assert response.status_code == 200, response.text
     assert response.json()["owner_id"] == "user-alice"

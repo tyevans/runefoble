@@ -12,8 +12,11 @@ from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import MockSpiceDBClient
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.ws_identity import SIGNING_ISSUER
 
 from .conftest import assert_event_emitted
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
 @pytest.mark.asyncio
@@ -24,7 +27,7 @@ async def test_blackbox_worker_assignment_and_role_compatibility(
     camp_id, dm_id = str(uuid4()), f"dm_{uuid4().hex[:8]}"
     await spicedb.write_relationship("campaign", camp_id, "dungeon_master", "user", dm_id)
     await spicedb.write_relationship("campaign", camp_id, "player", "user", dm_id)
-    h = {"x-user-id": dm_id}
+    h = {"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_id)}"}
 
     s_res = client.post(
         f"/api/v1/campaigns/{camp_id}/settlements",
@@ -86,19 +89,19 @@ async def test_blackbox_worker_assignment_authorization(
     s_id = client.post(
         f"/api/v1/campaigns/{camp_id}/settlements",
         json={"name": "Oasis Haven", "districts": ["commons"]},
-        headers={"x-user-id": owner_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(owner_id)}"},
     ).json()["settlement_id"]
 
     est_id = client.post(
         f"/api/v1/settlements/{s_id}/establishments",
         json={"district_id": "commons", "category": "hospitality", "name": "The Dune Flagon"},
-        headers={"x-user-id": owner_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(owner_id)}"},
     ).json()["establishment_id"]
 
     # Unauthorized user assignment fails with 403
     unauth_assign = client.post(
         f"/api/v1/establishments/{est_id}/workers",
         json={"name": "Boris Bouncer", "role": "bouncer"},
-        headers={"x-user-id": intruder_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(intruder_id)}"},
     )
     assert unauth_assign.status_code == 403

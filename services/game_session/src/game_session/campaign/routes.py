@@ -11,6 +11,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, status
 from game_session.campaign import service_campaigns as campaigns
 from game_session.campaign import service_membership as membership
+from game_session.campaign import service_roles as roles
 from game_session.campaign.permissions import (
     CampaignPrincipal,
     ManageCampaign,
@@ -19,6 +20,8 @@ from game_session.campaign.permissions import (
 )
 from game_session.campaign.repositories import CampaignRepositories, get_campaign_repositories
 from game_session.campaign.schemas import (
+    AssignRoleRequest,
+    CampaignCapabilitiesResponse,
     CampaignMemberResponse,
     CampaignSessionResponse,
     CampaignSummaryResponse,
@@ -29,12 +32,18 @@ from game_session.campaign.schemas import (
     JoinCampaignRequest,
     JoinCampaignResponse,
     MemberRemovedResponse,
+    RoleAssignedResponse,
     UpdateCampaignRequest,
 )
 from game_session.campaign.tuples import SpiceDB
 from game_session.dependencies import get_spicedb_client
+from game_session.settlement.auth.tokens import get_caller_principal
 
-router = APIRouter(prefix="/api/v1/campaigns", tags=["Campaigns & Sessions"])
+router = APIRouter(
+    dependencies=[Depends(get_caller_principal)],
+    prefix="/api/v1/campaigns",
+    tags=["Campaigns & Sessions"],
+)
 
 Repos = Annotated[CampaignRepositories, Depends(get_campaign_repositories)]
 Spicedb = Annotated[SpiceDB, Depends(get_spicedb_client)]
@@ -154,3 +163,28 @@ async def create_session(
 ) -> CampaignSessionResponse:
     """Create a session or staging lobby. Requires `run_session`."""
     return await campaigns.create_session(repos, spicedb, campaign_id, req)
+
+
+@router.post(
+    "/{campaign_id}/roles",
+    response_model=RoleAssignedResponse,
+)
+async def assign_role(
+    campaign_id: str,
+    req: AssignRoleRequest,
+    principal: ManageCampaign,
+    repos: Repos,
+    spicedb: Spicedb,
+) -> RoleAssignedResponse:
+    """Grant a campaign role (dungeon_master, game_master, player, spectator). Requires `manage`."""
+    return await roles.assign_role(repos, spicedb, campaign_id, req)
+
+
+@router.get("/{campaign_id}/capabilities", response_model=CampaignCapabilitiesResponse)
+async def get_capabilities(
+    campaign_id: str,
+    principal: CampaignPrincipal,
+    spicedb: Spicedb,
+) -> CampaignCapabilitiesResponse:
+    """Report which campaign actions the caller holds. Non-members receive all false."""
+    return await roles.capabilities(spicedb, campaign_id, principal.user_id)

@@ -1,4 +1,3 @@
-@serial
 Feature: Campaign Hub Lifecycle and Navigation
   As a Dungeon Master and tabletop gaming group
   We want to manage the complete Campaign Hub lifecycle

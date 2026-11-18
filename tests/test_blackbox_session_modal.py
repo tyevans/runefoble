@@ -7,11 +7,11 @@ ADR-0007 (Gateway API), ADR-0012 (Design System Theming and Bauhaus Modernism).
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
-from gateway_api.campaign_store import campaign_store
 from gateway_api.main import app as gateway_app
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -27,14 +27,9 @@ def _auth(issuer, sub: str) -> dict[str, str]:
 
 
 @pytest.fixture
-def client() -> TestClient:
-    return TestClient(gateway_app)
-
-
-@pytest.fixture(autouse=True)
-def reset_store():
-    campaign_store.reset()
-    yield
+def client(game_session_upstream) -> Iterator[TestClient]:
+    with TestClient(gateway_app) as gateway_client:
+        yield gateway_client
 
 
 # ---------------------------------------------------------------------------
@@ -63,9 +58,9 @@ def reset_store():
 
 
 @pytest.mark.asyncio
-async def test_gateway_session_creation_and_listing_contract(client: TestClient, signing_issuer):
+async def test_gateway_session_creation_and_listing_contract(client: TestClient, trusted_ws_issuer):
     """Verify full frontdoor lifecycle for creating sessions (lobby and upcoming)."""
-    headers_dm = _auth(signing_issuer, "dm_evelyn")
+    headers_dm = _auth(trusted_ws_issuer, "dm_evelyn")
 
     # 1. DM creates campaign
     res_camp = client.post(
@@ -125,10 +120,10 @@ async def test_gateway_session_creation_and_listing_contract(client: TestClient,
 
 
 @pytest.mark.asyncio
-async def test_unauthorized_user_cannot_create_session(client: TestClient, signing_issuer):
+async def test_unauthorized_user_cannot_create_session(client: TestClient, trusted_ws_issuer):
     """Verify unauthorized users without run_session permission cannot create sessions."""
-    headers_owner = _auth(signing_issuer, "dm_evelyn")
-    headers_stranger = _auth(signing_issuer, "stranger_bob")
+    headers_owner = _auth(trusted_ws_issuer, "dm_evelyn")
+    headers_stranger = _auth(trusted_ws_issuer, "stranger_bob")
 
     res_camp = client.post(
         "/api/v1/campaigns",

@@ -6,17 +6,22 @@ Governed by ADR-0004, ADR-0007, ADR-0012, ADR-0013, and Hard Invariants 6 & 7.
 
 from __future__ import annotations
 
-from uuid import uuid4
-
 from fastapi.testclient import TestClient
 from game_session.events import STREAM_SESSION, STREAM_STRONGHOLD
+
+
+def _owned_campaign(client: TestClient) -> str:
+    """Create a campaign through the public route. The caller becomes its owner."""
+    created = client.post("/api/v1/campaigns", json={"title": "Campfire Campaign"})
+    assert created.status_code == 201, created.text
+    return created.json()["id"]
 
 
 def test_blackbox_campfire_crafting_frontdoor_integration(
     session_client: TestClient, char_client: TestClient, mock_bus
 ) -> None:
     """Verify campfire rest and alchemical crafting workflows via public frontdoors."""
-    camp_id = uuid4()
+    camp_id = _owned_campaign(session_client)
     session_res = session_client.post(
         "/api/v1/sessions/create",
         json={"campaign_id": str(camp_id), "title": "Campfire Haven Session", "dm_id": "dm_bram"},

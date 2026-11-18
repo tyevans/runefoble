@@ -2,6 +2,10 @@
 
 This guide explains how to use the interactive digital character sheet microfrontend (`<runefoble-character-sheet>`) to equip gear, manage inventory encumbrance, inspect active conditions and absence penalties, and track spell slots.
 
+## Authentication
+
+Every route in this service needs a bearer token. Set `TOKEN` to a Zitadel access token for the caller. The service verifies the token itself. It ignores `X-User-Id` and similar headers.
+
 ---
 
 ## 1. Visual Paper Doll & Click-to-Equip Interaction
@@ -168,13 +172,14 @@ To attach or detach an adventurer to an active campaign party, issue a `PATCH` r
 ```http
 PATCH /api/v1/characters/{character_id}/campaign
 Content-Type: application/json
-x-user-id: usr-dm-01
+Authorization: Bearer {TOKEN}
 
 {
-  "campaign_id": "camp-9812-frontier",
-  "assigned_by": "usr-dm-01"
+  "campaign_id": "camp-9812-frontier"
 }
 ```
+
+The service records the verified caller from the bearer token as `assigned_by`. The request body does not set it.
 
 To unassign an adventurer back to free agent status in the player roster:
 ```json
@@ -226,7 +231,7 @@ Per ADR-0003 and ADR-0007, the domain models for the Character Sheet bounded con
 - **Inventory & Encumbrance** (`models/inventory.py`): Defines `InventoryItem`, `EquipmentSlot`, `Encumbrance` (with `.calculate(...)` determining load tier thresholds per Strength score), and `InventoryTransitionsMixin`.
 - **Conditions & Absence Modifiers** (`models/conditions.py`): Defines `ConditionState`, `ConditionModifier`, and `ConditionsTransitionsMixin` managing tactical conditions and DM absence penalties.
 - **Progression & Spells** (`models/progression.py`): Encapsulates `SpellProgression`, `LevelProgression`, and `ProgressionTransitionsMixin` managing level ups and spell slot expending.
-- **Aggregator Facade** (`models.py`): Minimal backward-compatibility facade re-exporting all domain models, mixins, and request schemas.
+- **Aggregator Facade** (`models.py`): Defect (DoR 9): facade re-exporting all domain models, mixins, and request schemas. Removal: TASK-0493.
 
 ---
 

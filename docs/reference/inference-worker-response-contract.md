@@ -10,6 +10,22 @@ This page defines the HTTP response contract of the inference worker (`services/
 | POST | `/inference/v1/dm-narration` | `DMNarrationResponse` |
 | POST | `/inference/v1/stand-in-action` | `StandInActionResponse` |
 
+## Authentication
+
+Every `/inference/v1/*` route requires a service credential. The caller sends:
+
+```http
+Authorization: Bearer <RUNEFOBLE_INFERENCE_SERVICE_TOKEN>
+```
+
+| Case | Response |
+|---|---|
+| No header, a non-Bearer scheme, or a wrong token | `401` with body `{"error": "unauthorized", "message": ...}` and `WWW-Authenticate: Bearer` |
+| The Zitadel user token of a player | `401`. A user token is not a service credential. |
+| The configured token | The route runs. |
+
+The worker refuses to start when `RUNEFOBLE_INFERENCE_SERVICE_TOKEN` is unset or blank. The worker sends no CORS headers. The `/healthz` and `/health` routes stay open for probes.
+
 ## Provenance Fields
 
 Each successful response includes these fields.

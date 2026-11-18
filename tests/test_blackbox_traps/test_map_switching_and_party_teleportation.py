@@ -24,6 +24,12 @@ from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+
+def bearer(sub: str) -> dict[str, str]:
+    """Return the Authorization header for a token that the shared test issuer signs for `sub`."""
+    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
 
 
 @pytest.fixture(autouse=True)
@@ -42,7 +48,7 @@ def setup_auth_and_bus():
 async def test_battlemap_switch_and_party_teleportation():
     """Verify switching active battlemap teleports all party tokens atomically."""
     spicedb: MockSpiceDBClient = get_spicedb_client()
-    client = TestClient(board_app)
+    client = TestClient(board_app, headers=bearer("user-test"))
 
     board_id = f"board-{uuid4().hex[:8]}"
     campaign_id = f"camp-{uuid4().hex[:8]}"
@@ -70,7 +76,7 @@ async def test_battlemap_switch_and_party_teleportation():
     unauth_res = client.post(
         f"/api/v1/boards/{board_id}/switch-map?campaign_id={campaign_id}",
         json={"new_map_id": "dungeon_level_2"},
-        headers={"X-User-Id": player_user},
+        headers=bearer(player_user),
     )
     assert unauth_res.status_code == 403
 
@@ -87,7 +93,7 @@ async def test_battlemap_switch_and_party_teleportation():
                 "kyra": [10, 16],
             },
         },
-        headers={"X-User-Id": dm_user},
+        headers=bearer(dm_user),
     )
     assert switch_res.status_code == 200
     switch_data = switch_res.json()

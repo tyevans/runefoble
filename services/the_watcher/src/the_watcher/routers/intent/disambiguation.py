@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import time
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from runefoble_events.events import (
     CandidateGhostPreviewEmitted,
     CompoundActionResolved,
@@ -19,6 +19,7 @@ from the_watcher.dependencies import (
     get_event_bus,
     to_uuid,
 )
+from the_watcher.identity import get_caller_principal
 from the_watcher.models import (
     CandidateTarget,
     CompoundActionNode,
@@ -28,7 +29,7 @@ from the_watcher.models import (
     IntentResolveResponse,
 )
 
-router = APIRouter(tags=["intent"])
+router = APIRouter(dependencies=[Depends(get_caller_principal)], tags=["intent"])
 
 
 async def _safe_publish(bus, stream: str, event) -> None:

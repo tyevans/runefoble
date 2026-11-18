@@ -25,6 +25,9 @@ from the_watcher.main import app as watcher_app
 from the_watcher.main import set_event_bus as watcher_set_event_bus
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
 def _entity(id_: str, name: str, tag: str, desc: str, x: int, y: int, hp: int) -> dict:
@@ -90,7 +93,9 @@ async def test_target_disambiguation_multi_candidate_detection_and_prompt(sample
     """Verify ambiguous target query returns requires_disambiguation=True with prompt and candidates."""
     s_id, c_id = str(uuid4()), str(uuid4())
     async with AsyncClient(
-        transport=ASGITransport(app=watcher_app), base_url="http://test"
+        transport=ASGITransport(app=watcher_app),
+        base_url="http://test",
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"},
     ) as client:
         resp = await _parse(
             client, "I shoot the goblin", s_id, c_id, sample_board_entities, from_x=1, from_y=1
@@ -110,7 +115,9 @@ async def test_target_disambiguation_multi_candidate_detection_and_prompt(sample
 async def test_unambiguous_target_with_distinguishing_descriptor(sample_board_entities):
     """Verify that specific distinguishing tags bypass disambiguation."""
     async with AsyncClient(
-        transport=ASGITransport(app=watcher_app), base_url="http://test"
+        transport=ASGITransport(app=watcher_app),
+        base_url="http://test",
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"},
     ) as client:
         resp = await _parse(
             client, "I shoot the goblin archer", str(uuid4()), entities=sample_board_entities
@@ -128,7 +135,9 @@ async def test_redis_streams_events_on_disambiguation_request(
     """Verify IntentDisambiguationRequested and CandidateGhostPreviewEmitted events are emitted."""
     s_id, c_id = str(uuid4()), str(uuid4())
     async with AsyncClient(
-        transport=ASGITransport(app=watcher_app), base_url="http://test"
+        transport=ASGITransport(app=watcher_app),
+        base_url="http://test",
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"},
     ) as client:
         resp = await _parse(
             client, "I attack the goblin", s_id, c_id, sample_board_entities, from_x=0, from_y=0
@@ -163,7 +172,9 @@ async def test_resolve_intent_disambiguation_flow(
     """Verify player disambiguation selection updates action target and emits CompoundActionResolved."""
     s_id, c_id = str(uuid4()), str(uuid4())
     async with AsyncClient(
-        transport=ASGITransport(app=watcher_app), base_url="http://test"
+        transport=ASGITransport(app=watcher_app),
+        base_url="http://test",
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"},
     ) as client:
         parse_resp = await _parse(client, "I shoot the goblin", s_id, c_id, sample_board_entities)
         d_id = parse_resp.json()["disambiguation_id"]
@@ -197,7 +208,9 @@ async def test_timing_budget_sub_400ms_compliance(sample_board_entities):
     """Verify disambiguation candidate evaluation executes in < 400ms SLA."""
     s_id = str(uuid4())
     async with AsyncClient(
-        transport=ASGITransport(app=watcher_app), base_url="http://test"
+        transport=ASGITransport(app=watcher_app),
+        base_url="http://test",
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"},
     ) as client:
         latencies = []
         for _ in range(20):
@@ -214,7 +227,9 @@ async def test_timing_budget_sub_400ms_compliance(sample_board_entities):
 async def test_resolve_invalid_disambiguation_id_returns_404():
     """Verify resolving unknown or expired disambiguation ID returns 404."""
     async with AsyncClient(
-        transport=ASGITransport(app=watcher_app), base_url="http://test"
+        transport=ASGITransport(app=watcher_app),
+        base_url="http://test",
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"},
     ) as client:
         resp = await client.post(
             "/api/v1/watcher/intent/resolve",

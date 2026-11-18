@@ -4,6 +4,8 @@ This guide explains how to navigate the interactive multi-layered world atlas en
 
 ---
 
+> **Routing.** Clients call the gateway on port `8000`, not `campaign_lore`. The gateway routes `GET` for the atlas and the codex today. It does not yet route the `POST` and `PATCH` calls in sections 2 to 4 (atlas territories, atlas pins, codex entries). Those calls fail through the gateway until the routes are added. Defect: the gateway route gap is not yet tasked.
+
 ## 1. Deep-Zoom Atlas Navigation & Layer Projections
 
 The world atlas engine supports three primary hierarchical zoom scales:
@@ -13,7 +15,7 @@ The world atlas engine supports three primary hierarchical zoom scales:
 
 ### Querying the Atlas
 ```bash
-curl -X GET "http://localhost:8006/api/v1/campaigns/{campaign_id}/atlas?layer=continental&era=Session%2012" \
+curl -X GET "http://localhost:8000/api/v1/campaigns/{campaign_id}/atlas?layer=continental&era=Session%2012" \
   -H "Authorization: Bearer $RUNEFOBLE_TOKEN"
 ```
 
@@ -32,7 +34,7 @@ The response includes:
 Define territory polygons and assign faction ownership:
 
 ```bash
-curl -X POST "http://localhost:8006/api/v1/campaigns/{campaign_id}/atlas/territories" \
+curl -X POST "http://localhost:8000/api/v1/campaigns/{campaign_id}/atlas/territories" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $RUNEFOBLE_TOKEN" \
   -d '{
@@ -55,7 +57,7 @@ When `is_contested` is `true`, the atlas engine automatically flags the borderla
 Place a geotagged campaign milestone pin:
 
 ```bash
-curl -X POST "http://localhost:8006/api/v1/campaigns/{campaign_id}/atlas/pins" \
+curl -X POST "http://localhost:8000/api/v1/campaigns/{campaign_id}/atlas/pins" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $RUNEFOBLE_TOKEN" \
   -d '{
@@ -79,7 +81,7 @@ The Living Party Codex stores markdown lore notes and chronicles with automated 
 
 ### Publishing a Codex Entry
 ```bash
-curl -X POST "http://localhost:8006/api/v1/campaigns/{campaign_id}/codex/entries" \
+curl -X POST "http://localhost:8000/api/v1/campaigns/{campaign_id}/codex/entries" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $RUNEFOBLE_TOKEN" \
   -d '{
@@ -102,7 +104,7 @@ curl -X POST "http://localhost:8006/api/v1/campaigns/{campaign_id}/codex/entries
 ### Sharing with Party
 To reveal a private theory to the party:
 ```bash
-curl -X PATCH "http://localhost:8006/api/v1/campaigns/{campaign_id}/codex/entries/{entry_id}" \
+curl -X PATCH "http://localhost:8000/api/v1/campaigns/{campaign_id}/codex/entries/{entry_id}" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $RUNEFOBLE_TOKEN" \
   -d '{"privacy": "party_shared"}'

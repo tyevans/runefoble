@@ -37,8 +37,15 @@ async def grant_owner(spicedb: SpiceDB, campaign_id: str, owner_id: str) -> None
     )
 
 
+def relation_for_role(role: str) -> str:
+    """Return the runefoble.zed relation that carries a member role. Unknown roles are players."""
+    if role in ("spectator", "dungeon_master", "game_master"):
+        return role
+    return "player"
+
+
 async def grant_member(spicedb: SpiceDB, campaign_id: str, role: str, user_id: str) -> None:
-    relation = "spectator" if role == "spectator" else "player"
+    relation = relation_for_role(role)
     await _guarded(
         "member write",
         lambda: spicedb.write_relationship("campaign", campaign_id, relation, "user", user_id),

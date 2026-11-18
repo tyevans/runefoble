@@ -3,6 +3,11 @@ import { html } from 'lit';
 import '../styles/themes.css';
 import '../components/runefoble-header.ts';
 
+const STORY_CAMPAIGNS = [
+  { id: '4', title: 'Tomb of the Star-Eater' },
+  { id: '5', title: 'Whispering Depths' },
+];
+
 const meta: Meta = {
   title: 'Shell/RunefobleHeader',
   component: 'runefoble-header',
@@ -18,7 +23,9 @@ export const DefaultPartyMode: Story = {
       <runefoble-header
         viewMode="party"
         campaignId="4"
-        sessionId="14"
+        campaignTitle="Tomb of the Star-Eater"
+        sessionTitle="Session #14"
+        .campaigns=${STORY_CAMPAIGNS}
         dmName="The Watcher"
         userRole="Player"
         .socketConnected=${true}
@@ -33,7 +40,9 @@ export const SpectatorMode: Story = {
       <runefoble-header
         viewMode="spectator"
         campaignId="4"
-        sessionId="14"
+        campaignTitle="Tomb of the Star-Eater"
+        sessionTitle="Session #14"
+        .campaigns=${STORY_CAMPAIGNS}
         dmName="The Watcher"
         userRole="Spectator"
         .socketConnected=${true}
@@ -48,7 +57,9 @@ export const DisconnectedStandalone: Story = {
       <runefoble-header
         viewMode="party"
         campaignId="4"
-        sessionId="14"
+        campaignTitle="Tomb of the Star-Eater"
+        sessionTitle="Session #14"
+        .campaigns=${STORY_CAMPAIGNS}
         dmName="The Watcher"
         userRole="Dungeon Master"
         .socketConnected=${false}

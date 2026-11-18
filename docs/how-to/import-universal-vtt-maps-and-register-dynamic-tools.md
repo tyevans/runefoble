@@ -140,7 +140,7 @@ Once registered, the tool is immediately visible to FastMCP clients:
 from gateway_mcp.server import mcp
 
 # Discovered immediately without server restart
-tool = mcp.get_tool("calculate_spell_falloff")
+tool = mcp._tool_manager.get_tool("calculate_spell_falloff")
 assert tool is not None
 
 # Executable directly by LLM agent action plans

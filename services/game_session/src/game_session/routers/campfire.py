@@ -9,14 +9,15 @@ import random
 from typing import Any, Literal
 from uuid import UUID
 
-from fastapi import APIRouter, Header, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from game_session.dependencies import get_event_bus, get_spicedb_client, repo, stronghold_repo
 from game_session.events import STREAM_SESSION
+from game_session.settlement.auth.tokens import CallerId, get_caller_principal
 from pydantic import BaseModel, Field
 from runefoble_events.events import CampfireRestCompleted
 from runefoble_platform.event_publish import publish_or_fail
 
-router = APIRouter(tags=["campfire"])
+router = APIRouter(dependencies=[Depends(get_caller_principal)], tags=["campfire"])
 
 COLLABORATIVE_PROMPTS: list[str] = [
     "The crackling embers cast flickering warmth across tired faces. Tell a tale of the first monster that truly frightened your character.",
@@ -51,9 +52,9 @@ async def get_storytelling_prompts(session_id: UUID) -> dict[str, Any]:
 
 @router.post("/api/v1/sessions/{session_id}/rest/campfire", response_model=CampfireRestResponse)
 async def campfire_rest(
+    caller_id: CallerId,
     session_id: UUID,
     req: CampfireRestRequest,
-    x_user_id: str | None = Header(default=None),
 ) -> CampfireRestResponse:
     """Initiate interactive campfire rest sequence, applying rest boons and stronghold bonuses."""
     try:
@@ -63,9 +64,7 @@ async def campfire_rest(
 
     spicedb = get_spicedb_client()
     camp_id_str = str(session.state.campaign_id) if session.state.campaign_id else str(session_id)
-    if x_user_id and not await spicedb.check_permission(
-        "campaign", camp_id_str, "play", "user", x_user_id
-    ):
+    if not await spicedb.check_permission("campaign", camp_id_str, "play", "user", caller_id):
         raise HTTPException(
             status_code=403, detail="Player or DM permission required for campfire rest"
         )

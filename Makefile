@@ -93,7 +93,8 @@ PYTHON_IMAGE_ROWS = \
 	'asset-forge|asset-forge|asset_forge.main:app|8008|' \
 	'soundscape|soundscape|soundscape.main:app|8009|' \
 	'campaign-analytics|campaign-analytics|campaign_analytics.main:app|8011|' \
-	'inference-worker|inference-worker|inference_worker.api:app|8100|'
+	'inference-worker|inference-worker|inference_worker.api:app|8100|' \
+	'gateway-mcp|gateway-mcp|gateway_mcp.asgi:app|8012|'
 
 # Speech model pre-fetch for voice-agent (TASK-0676). The model downloads on the host,
 # then the files are copied into the running voice-agent pod's model cache volume.
@@ -154,6 +155,10 @@ dev-storybook: ## Run Storybook component studio with watcher protection
 	@echo "==> Starting Storybook on port 6006..."
 	cd frontend && WATCHPACK_POLLING=true CHOKIDAR_USEPOLLING=true pnpm run storybook
 
+dev-audience-studio: ## Run Audience Studio from TypeScript source with reload (needs the RUNEFOBLE_* settings)
+	@echo "==> Starting Audience Studio dev server (port 8010)..."
+	cd services/audience_studio && pnpm run dev
+
 dev-api: ## Run API Gateway locally
 	@echo "==> Starting Runefoble API Gateway..."
 	uv run python gateway/api/src/gateway_api/main.py
@@ -192,7 +197,11 @@ test-mutation: ## Run mutation testing with mutmut on core domain modules
 	uv run mutmut run || true
 	uv run mutmut results || true
 
-test-bdd: ## Validate Gherkin feature syntax and step definition coverage
+test-bdd: ## Typecheck e2e steps, reject unused steps, validate Gherkin syntax
+	@echo "==> Typechecking e2e suite..."
+	@pnpm run e2e:typecheck
+	@echo "==> Checking for unused e2e step definitions..."
+	@uv run python scripts/check_e2e_unused_steps.py
 	@echo "==> Validating Gherkin feature syntax and step definitions..."
 	@pnpm exec bddgen
 
@@ -215,6 +224,8 @@ lint: ## Check types, Ruff lint, format, and Helm
 	uv run mypy services/inference_worker/src
 	@echo "==> Typechecking frontend..."
 	cd frontend && pnpm exec tsc --noEmit
+	@echo "==> Typechecking e2e suite..."
+	pnpm run e2e:typecheck
 	@echo "==> Linting Helm charts..."
 	helm lint $(HELM_CHART)
 

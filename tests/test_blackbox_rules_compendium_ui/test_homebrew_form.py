@@ -12,6 +12,13 @@ import pytest
 from fastapi.testclient import TestClient
 from rules_compendium.dependencies import get_spicedb_client
 
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+
+def bearer(sub: str) -> dict[str, str]:
+    """Return the Authorization header for a token that the shared test issuer signs for `sub`."""
+    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
+
 
 @pytest.mark.asyncio
 async def test_spicedb_zanzibar_authorization_on_homebrew(
@@ -32,16 +39,12 @@ async def test_spicedb_zanzibar_authorization_on_homebrew(
     payload = dict(sample_homebrew_payload, campaign_id=campaign_id)
 
     # 1. Unauthorized user receives 403 Forbidden
-    resp_unauth = client.post(
-        "/api/v1/compendium/homebrew", json=payload, headers={"x-user-id": stranger}
-    )
+    resp_unauth = client.post("/api/v1/compendium/homebrew", json=payload, headers=bearer(stranger))
     assert resp_unauth.status_code == 403
     assert "Forbidden" in resp_unauth.json()["detail"]
 
     # 2. DM registers homebrew successfully
-    resp_dm = client.post(
-        "/api/v1/compendium/homebrew", json=payload, headers={"x-user-id": dm_user}
-    )
+    resp_dm = client.post("/api/v1/compendium/homebrew", json=payload, headers=bearer(dm_user))
     assert resp_dm.status_code == 200
     assert resp_dm.json()["title"] == "Abyssal Shadowstalker"
     assert resp_dm.json()["author_id"] == dm_user
@@ -49,7 +52,7 @@ async def test_spicedb_zanzibar_authorization_on_homebrew(
     # 3. Campaign player can search and see the homebrew rule
     resp_player = client.get(
         f"/api/v1/compendium/rules/search?query=Shadowstalker&campaign_id={campaign_id}",
-        headers={"x-user-id": player_user},
+        headers=bearer(player_user),
     )
     assert resp_player.status_code == 200
     assert any(
@@ -60,7 +63,7 @@ async def test_spicedb_zanzibar_authorization_on_homebrew(
     # 4. Stranger cannot see the campaign homebrew rule
     resp_stranger = client.get(
         f"/api/v1/compendium/rules/search?query=Shadowstalker&campaign_id={campaign_id}",
-        headers={"x-user-id": stranger},
+        headers=bearer(stranger),
     )
     assert resp_stranger.status_code == 200
     assert not any(r["name"] == "Abyssal Shadowstalker" for r in resp_stranger.json()["results"])

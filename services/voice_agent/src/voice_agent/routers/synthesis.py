@@ -7,7 +7,8 @@ import hashlib
 import logging
 from typing import Any
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from voice_agent.auth import get_voice_principal
 from voice_agent.dependencies import (
     _dispatch_voice_audio_conditioned,
     dsp_pipeline,
@@ -24,7 +25,9 @@ from voice_agent.synthesizer import AudioClip
 from voice_agent.wav import encode_wav
 
 logger = logging.getLogger("runefoble.voice_agent.synthesis")
-router = APIRouter(tags=["Speech Synthesis & Transcription"])
+router = APIRouter(
+    dependencies=[Depends(get_voice_principal)], tags=["Speech Synthesis & Transcription"]
+)
 
 DEFAULT_TTS_VOICE = "en-us"
 

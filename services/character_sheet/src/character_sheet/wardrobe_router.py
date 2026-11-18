@@ -7,8 +7,9 @@ from uuid import UUID
 from character_sheet.dependencies import (
     RepoDep,
     SpiceDep,
-    UserHeader,
+    VerifiedUserId,
     authorize_character_edit,
+    get_principal,
     load_character,
     publish_character_event,
 )
@@ -19,10 +20,10 @@ from character_sheet.schemas import (
     PortraitResponse,
     SetActivePortraitRequest,
 )
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from runefoble_events.events import CharacterPortraitUpdated, PortraitVariantGenerated
 
-router = APIRouter(tags=["character_wardrobe"])
+router = APIRouter(tags=["character_wardrobe"], dependencies=[Depends(get_principal)])
 
 
 @router.get("/api/v1/characters/{character_id}/portrait", response_model=PortraitResponse)
@@ -51,10 +52,10 @@ async def set_active_portrait(
     req: SetActivePortraitRequest,
     repo: RepoDep,
     spicedb: SpiceDep,
-    x_user_id: UserHeader = None,
+    user_id: VerifiedUserId,
 ) -> CharacterState:
     """Assign active portrait avatar from an unlocked wardrobe variant or custom image URL."""
-    await authorize_character_edit(spicedb, character_id, x_user_id)
+    await authorize_character_edit(spicedb, character_id, user_id)
     char = await load_character(repo, character_id)
     char.set_active_portrait(req.variant_id, req.image_url)
     await repo.save(char)
@@ -81,10 +82,10 @@ async def add_wardrobe_variant(
     req: AddWardrobeVariantRequest,
     repo: RepoDep,
     spicedb: SpiceDep,
-    x_user_id: UserHeader = None,
+    user_id: VerifiedUserId,
 ) -> CharacterState:
     """Add a synthesized or unlocked wardrobe variant and optionally set active."""
-    await authorize_character_edit(spicedb, character_id, x_user_id)
+    await authorize_character_edit(spicedb, character_id, user_id)
     char = await load_character(repo, character_id)
     vid = char.add_wardrobe_variant(
         variant_name=req.variant_name,

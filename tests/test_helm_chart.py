@@ -112,17 +112,31 @@ def test_zitadel_deployment_postgres_credentials_and_ssl_mode():
         for item in container.get("env", [])
         if "name" in item and "value" in item
     }
+    secret_refs = {
+        item["name"]: item["valueFrom"]["secretKeyRef"]
+        for item in container.get("env", [])
+        if "secretKeyRef" in item.get("valueFrom", {})
+    }
     assert env_map.get("ZITADEL_DATABASE_POSTGRES_HOST") == "postgres"
     assert env_map.get("ZITADEL_DATABASE_POSTGRES_DATABASE") == "zitadel"
     assert "ZITADEL_DATABASE_POSTGRES_ADMIN_USERNAME" in env_map
-    assert "ZITADEL_DATABASE_POSTGRES_ADMIN_PASSWORD" in env_map
+    assert secret_refs.get("ZITADEL_DATABASE_POSTGRES_ADMIN_PASSWORD") == {
+        "name": "runefoble-credentials",
+        "key": "postgres-password",
+    }
     assert env_map.get("ZITADEL_DATABASE_POSTGRES_ADMIN_SSL_MODE") == "disable"
     assert "ZITADEL_DATABASE_POSTGRES_USER_USERNAME" in env_map
-    assert "ZITADEL_DATABASE_POSTGRES_USER_PASSWORD" in env_map
+    assert secret_refs.get("ZITADEL_DATABASE_POSTGRES_USER_PASSWORD") == {
+        "name": "runefoble-credentials",
+        "key": "postgres-password",
+    }
     assert env_map.get("ZITADEL_DATABASE_POSTGRES_USER_SSL_MODE") == "disable"
     assert env_map.get("ZITADEL_FIRSTINSTANCE_ORG_HUMAN_USERNAME") == "admin"
     assert env_map.get("ZITADEL_FIRSTINSTANCE_ORG_HUMAN_EMAIL") == "admin@runefoble.local"
-    assert "ZITADEL_FIRSTINSTANCE_ORG_HUMAN_PASSWORD" in env_map
+    assert secret_refs.get("ZITADEL_FIRSTINSTANCE_ORG_HUMAN_PASSWORD") == {
+        "name": "runefoble-credentials",
+        "key": "zitadel-admin-password",
+    }
 
 
 def test_mailpit_deployment_and_service():
@@ -177,7 +191,7 @@ def test_zitadel_deployment_mailpit_smtp_configuration():
     assert zitadel_deploy is not None
 
     container = zitadel_deploy["spec"]["template"]["spec"]["containers"][0]
-    env_map = {item["name"]: item["value"] for item in container.get("env", [])}
+    env_map = {item["name"]: item.get("value") for item in container.get("env", [])}
 
     assert env_map.get("ZITADEL_DEFAULTINSTANCE_SMTPCONFIGURATION_SMTP_HOST") == "mailpit:1025"
     assert env_map.get("ZITADEL_DEFAULTINSTANCE_SMTPCONFIGURATION_SMTP_TLS") == "false"

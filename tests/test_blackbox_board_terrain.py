@@ -2,16 +2,23 @@
 
 Governed by Hard Invariant 7 (Blackbox TDD with Frontdoor Setup).
 All setup and verification are performed strictly through public HTTP API endpoints
-using TestClient(app) from board_state.main.
+using TestClient(app, headers=bearer("user-test")) from board_state.main.
 """
 
 from board_state.main import app
 from fastapi.testclient import TestClient
 
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+
+def bearer(sub: str) -> dict[str, str]:
+    """Return the Authorization header for a token that the shared test issuer signs for `sub`."""
+    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
+
 
 def test_board_terrain_elevation_difficult_movement_and_hazard_flow():
     """Verify end-to-end tactical board terrain, elevation, difficult terrain movement, and hazards."""
-    client = TestClient(app)
+    client = TestClient(app, headers=bearer("user-test"))
 
     # a) Create a tactical board via POST /api/v1/boards (specifying grid dimensions 10x10)
     create_resp = client.post(
@@ -151,7 +158,7 @@ def test_board_terrain_elevation_difficult_movement_and_hazard_flow():
 
 def test_board_terrain_multi_cell_path_cost():
     """Verify multi-cell movement traversing normal and difficult terrain calculates correct cost."""
-    client = TestClient(app)
+    client = TestClient(app, headers=bearer("user-test"))
 
     # Create board
     res = client.post("/api/v1/boards", json={"cols": 10, "rows": 10})
@@ -195,7 +202,7 @@ def test_board_terrain_multi_cell_path_cost():
 
 def test_board_token_leaves_hazard_clears_hazard_status():
     """Verify token moving off hazard cell clears active hazard status."""
-    client = TestClient(app)
+    client = TestClient(app, headers=bearer("user-test"))
 
     res = client.post("/api/v1/boards", json={"cols": 10, "rows": 10})
     board_id = res.json()["board_id"]

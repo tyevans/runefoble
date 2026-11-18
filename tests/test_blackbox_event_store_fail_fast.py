@@ -35,6 +35,13 @@ from runefoble_platform.event_sourcing import (
 )
 
 from tests.helpers.postgres import get_free_port
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+
+def bearer(sub: str) -> dict[str, str]:
+    """Return the Authorization header for a token that the shared test issuer signs for `sub`."""
+    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
+
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CHART_DIR = REPO_ROOT / "deployments" / "helm" / "runefoble"
@@ -91,7 +98,7 @@ def test_service_process_exits_when_postgres_event_store_is_unreachable():
 
 def test_healthz_reports_memory_store_when_flag_is_unset():
     """/healthz reports the store kind in use, not the Python class name."""
-    client = TestClient(board_state_app)
+    client = TestClient(board_state_app, headers=bearer("user-test"))
 
     response = client.get("/healthz")
 

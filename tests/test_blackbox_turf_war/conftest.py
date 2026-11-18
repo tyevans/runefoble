@@ -26,6 +26,9 @@ from the_watcher.main import app
 from the_watcher.turf_war.aggregate import RegionalUnrestAggregate
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
 @pytest.fixture
@@ -53,7 +56,7 @@ def clean_turf_war_environment(mock_redis: MockAsyncRedis):
 
 @pytest.fixture
 def client() -> TestClient:
-    return TestClient(app)
+    return TestClient(app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"})
 
 
 async def setup_campaign_roles(

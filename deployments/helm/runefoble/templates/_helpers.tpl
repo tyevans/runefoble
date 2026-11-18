@@ -21,3 +21,23 @@ host is not resolvable from a pod.
 {{- define "runefoble.zitadelJwksUrl" -}}
 {{- printf "http://zitadel:%d/oauth/v2/keys" (int .Values.zitadel.port) -}}
 {{- end -}}
+
+{{/*
+Name of the Secret that holds chart credentials. credentials.existingSecret replaces the
+Secret that this chart renders.
+*/}}
+{{- define "runefoble.credentialsSecret" -}}
+{{- .Values.credentials.existingSecret | default "runefoble-credentials" -}}
+{{- end -}}
+
+{{/*
+One container env entry that reads a key from the credentials Secret.
+Call with (dict "root" $ "name" "ENV_NAME" "key" "secret-key") and pipe to nindent.
+*/}}
+{{- define "runefoble.secretEnv" -}}
+- name: {{ .name }}
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "runefoble.credentialsSecret" .root }}
+      key: {{ .key }}
+{{- end -}}

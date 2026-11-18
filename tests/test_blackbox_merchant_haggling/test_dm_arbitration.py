@@ -14,6 +14,9 @@ from game_session.events import STREAM_TAVERN
 from runefoble_auth.spicedb import MockSpiceDBClient
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
 @pytest.mark.asyncio
@@ -38,7 +41,7 @@ async def test_blackbox_dm_arbitration_controls_and_override(
             "initial_offer_gp": 140,
             "campaign_id": campaign_id,
         },
-        headers={"x-user-id": player_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(player_id)}"},
     )
     assert start_res.status_code == 200
     neg_id = start_res.json()["negotiation_id"]
@@ -48,7 +51,7 @@ async def test_blackbox_dm_arbitration_controls_and_override(
     soothe_res = client.patch(
         f"/api/v1/haggling/{neg_id}/dm-override",
         json={"action": "soothe_merchant", "narrative_bark": soothe_bark},
-        headers={"x-user-id": dm_user_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_user_id)}"},
     )
     assert soothe_res.status_code == 200
     assert soothe_res.json()["merchant_mood_score"] > 0
@@ -59,7 +62,7 @@ async def test_blackbox_dm_arbitration_controls_and_override(
     dm_accept_res = client.patch(
         f"/api/v1/haggling/{neg_id}/dm-override",
         json={"action": "force_accept", "override_price_gp": 150, "narrative_bark": bark},
-        headers={"x-user-id": dm_user_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_user_id)}"},
     )
     assert dm_accept_res.status_code == 200
     closed_data = dm_accept_res.json()
@@ -76,7 +79,7 @@ async def test_blackbox_dm_arbitration_controls_and_override(
     stale_gambit = client.post(
         f"/api/v1/haggling/{neg_id}/gambit",
         json={"character_id": "char_nicole", "gambit": "flattery", "roll_value": 15},
-        headers={"x-user-id": player_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(player_id)}"},
     )
     assert stale_gambit.status_code == 400
 
@@ -100,7 +103,7 @@ async def test_blackbox_spicedb_zanzibar_arbitration_permission(
             "base_price": 50,
             "campaign_id": campaign_id,
         },
-        headers={"x-user-id": player_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(player_id)}"},
     )
     assert start_res.status_code == 200
     neg_id = start_res.json()["negotiation_id"]
@@ -109,6 +112,6 @@ async def test_blackbox_spicedb_zanzibar_arbitration_permission(
     denied_res = client.patch(
         f"/api/v1/haggling/{neg_id}/dm-override",
         json={"action": "force_accept", "override_price_gp": 10},
-        headers={"x-user-id": stranger_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(stranger_id)}"},
     )
     assert denied_res.status_code == 403, "Stranger must be rejected by Zanzibar authorization"

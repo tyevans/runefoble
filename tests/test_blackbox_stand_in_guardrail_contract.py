@@ -6,6 +6,7 @@ mocked. Guardrail policy is set through the public Watcher route only.
 """
 
 import json
+import os
 import threading
 from collections.abc import Iterator
 from http.server import ThreadingHTTPServer
@@ -22,7 +23,14 @@ from the_watcher.main import app as watcher_app
 from the_watcher.routers import stand_in as stand_in_router
 
 from tests.helpers.live_services import serve
+from tests.helpers.ws_identity import SIGNING_ISSUER
 from tests.test_inference_worker_failure_contract import _FakeLLMHandler, _llm_settings
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
+
+
+WORKER_AUTH = {"Authorization": f"Bearer {os.environ['RUNEFOBLE_INFERENCE_SERVICE_TOKEN']}"}
+
 
 ACT_PATH = "/api/v1/watcher/stand-in/act"
 WORKER_PATH = "/inference/v1/stand-in-action"
@@ -93,7 +101,9 @@ async def test_watcher_returns_guardrails_the_worker_applied(worker_backend, mon
     with serve(api.app) as worker_url:
         monkeypatch.setattr(stand_in_router, "INFERENCE_URL", worker_url)
         async with AsyncClient(
-            transport=ASGITransport(app=watcher_app), base_url="http://test"
+            transport=ASGITransport(app=watcher_app),
+            base_url="http://test",
+            headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"},
         ) as ac:
             resp = await ac.post(ACT_PATH, json=_watcher_act_payload())
 
@@ -114,7 +124,9 @@ async def test_watcher_reports_no_guardrail_when_none_was_enforced(worker_backen
     with serve(api.app) as worker_url:
         monkeypatch.setattr(stand_in_router, "INFERENCE_URL", worker_url)
         async with AsyncClient(
-            transport=ASGITransport(app=watcher_app), base_url="http://test"
+            transport=ASGITransport(app=watcher_app),
+            base_url="http://test",
+            headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"},
         ) as ac:
             resp = await ac.post(ACT_PATH, json=payload)
 
@@ -127,7 +139,11 @@ async def test_watcher_rejects_unknown_guardrail_name_with_422():
     """An unknown guardrail name is a client error, not a silently ignored key."""
     payload = _watcher_act_payload(guardrails={"protect_allys": ["Marcus"]})
 
-    async with AsyncClient(transport=ASGITransport(app=watcher_app), base_url="http://test") as ac:
+    async with AsyncClient(
+        transport=ASGITransport(app=watcher_app),
+        base_url="http://test",
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"},
+    ) as ac:
         resp = await ac.post(ACT_PATH, json=payload)
 
     assert resp.status_code == 422
@@ -138,7 +154,9 @@ async def test_worker_rejects_unknown_guardrail_name_with_422(worker_backend):
     worker_backend(WorkerSettings(backend="mock"))
     payload = _worker_payload(guardrails={"protect_allys": ["Marcus"]})
 
-    async with AsyncClient(transport=ASGITransport(app=api.app), base_url="http://test") as ac:
+    async with AsyncClient(
+        transport=ASGITransport(app=api.app), base_url="http://test", headers=WORKER_AUTH
+    ) as ac:
         resp = await ac.post(WORKER_PATH, json=payload)
 
     assert resp.status_code == 422
@@ -164,7 +182,9 @@ async def test_llm_reported_guardrails_are_filtered_to_active_policy(
     }
     worker_backend(_llm_settings(fake_llm_server))
 
-    async with AsyncClient(transport=ASGITransport(app=api.app), base_url="http://test") as ac:
+    async with AsyncClient(
+        transport=ASGITransport(app=api.app), base_url="http://test", headers=WORKER_AUTH
+    ) as ac:
         resp = await ac.post(WORKER_PATH, json=_worker_payload())
 
     assert resp.status_code == 200
@@ -178,7 +198,9 @@ async def test_worker_without_guardrails_reports_none(worker_backend):
     worker_backend(WorkerSettings(backend="mock"))
     payload = _worker_payload(guardrails=None)
 
-    async with AsyncClient(transport=ASGITransport(app=api.app), base_url="http://test") as ac:
+    async with AsyncClient(
+        transport=ASGITransport(app=api.app), base_url="http://test", headers=WORKER_AUTH
+    ) as ac:
         resp = await ac.post(WORKER_PATH, json=payload)
 
     assert resp.status_code == 200

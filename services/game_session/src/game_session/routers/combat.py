@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from game_session.aggregate import GameSessionAggregate
 from game_session.dependencies import repo as default_repo
 from game_session.models import (
@@ -13,9 +13,10 @@ from game_session.models import (
     NextTurnRequest,
     StartCombatRequest,
 )
+from game_session.settlement.auth.tokens import get_caller_principal
 from runefoble_platform.event_sourcing import AggregateRepository
 
-router = APIRouter(tags=["combat"])
+router = APIRouter(dependencies=[Depends(get_caller_principal)], tags=["combat"])
 
 _repo: AggregateRepository[GameSessionAggregate] = default_repo
 

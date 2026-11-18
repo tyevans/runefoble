@@ -13,7 +13,8 @@ from uuid import uuid4
 import pytest
 from eventsource.domain.event_registry import get_event_class_or_none
 from fastapi.testclient import TestClient
-from runefoble_events import (
+from gateway_api.main import app as gateway_app
+from runefoble_events.events import (
     CombatEncounterStarted,
     CombatRoundAdvanced,
     CombatStarted,
@@ -30,6 +31,31 @@ from soundscape.main import app
 from soundscape.scoring import calculate_encounter_tension, derive_stem_profile
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+
+@pytest.fixture
+def tomb_session_id(trusted_ws_issuer, game_session_upstream) -> str:
+    """Create a campaign and a session through the gateway frontdoor. The default test subject owns both."""
+    with TestClient(gateway_app) as gateway:
+        campaign = gateway.post(
+            "/api/v1/campaigns",
+            json={"title": "Tomb of Echoes", "setting": "Underdark"},
+            headers=auth_headers("soundscape-tester"),
+        )
+        assert campaign.status_code == 201, campaign.text
+        session = gateway.post(
+            f"/api/v1/campaigns/{campaign.json()['id']}/sessions",
+            json={"title": "Echoing Depths"},
+            headers=auth_headers("soundscape-tester"),
+        )
+        assert session.status_code == 201, session.text
+        return session.json()["id"]
+
+
+def auth_headers(sub: str) -> dict[str, str]:
+    """Return Bearer headers for a token that the service verifier accepts."""
+    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
 
 
 @pytest.fixture(autouse=True)
@@ -42,7 +68,7 @@ def clean_environment():
 
 @pytest.fixture
 def client() -> TestClient:
-    return TestClient(app)
+    return TestClient(app, headers=auth_headers("soundscape-tester"))
 
 
 def test_soundscape_combat_cloudevents_registration():
@@ -109,10 +135,10 @@ def test_tension_scoring_exploration_and_combat():
     assert derive_stem_profile(critical_combat) == "boss"
 
 
-def test_trigger_tactical_foley_cue_frontdoor(client: TestClient):
+def test_trigger_tactical_foley_cue_frontdoor(client: TestClient, tomb_session_id: str):
     """Verify POST /api/v1/soundscape/cue triggers sound FX and records event."""
     payload = {
-        "session_id": "session-tomb-14",
+        "session_id": tomb_session_id,
         "cue_name": "fireball",
         "cue_type": "spell",
         "volume_gain": 1.0,
@@ -199,7 +225,7 @@ async def test_soundscape_zanzibar_authorization(client: TestClient):
     resp = client.post(
         "/api/v1/soundscape/override",
         json={"session_id": "session-tomb-14", "mood": "boss"},
-        headers={"x-user-id": "unauthorized-intruder"},
+        headers=auth_headers("unauthorized-intruder"),
     )
     assert resp.status_code == 403
     assert "Forbidden" in resp.json()["detail"]

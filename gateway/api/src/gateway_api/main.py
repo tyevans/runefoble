@@ -44,7 +44,7 @@ from gateway_api.webrtc_signaling import voice_signaling_websocket_endpoint
 from gateway_api.websocket import campaign_websocket_endpoint
 from gateway_api.websocket_auth import admit_gateway_websocket
 from gateway_mcp.dynamic import set_event_bus as set_dynamic_tool_event_bus
-from gateway_mcp.dynamic_registry import router as mcp_tools_router
+from gateway_mcp.routers import tools_registry_router
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 from runefoble_platform.telemetry import init_telemetry
@@ -100,8 +100,8 @@ app.include_router(auth_sync_router, prefix="/api/v1/auth/sync", tags=["Auth Syn
 app.include_router(voice_rooms_router)
 app.include_router(companion_router)
 app.include_router(stream_diagnostics_router)
-app.include_router(mcp_tools_router)
-app.include_router(mcp_tools_router, prefix="/api/v1")
+app.include_router(tools_registry_router)
+app.include_router(tools_registry_router, prefix="/api/v1")
 
 
 init_telemetry("gateway-api", settings=platform_settings, app=app)

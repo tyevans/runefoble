@@ -32,6 +32,11 @@ spec:
             # The Redis Streams consumer stays off until a producer exists (ADR-0006).
             - name: RUNEFOBLE_WORKER_REDIS_ENABLED
               value: "false"
+            - name: RUNEFOBLE_INFERENCE_SERVICE_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $.Values.inferenceServiceToken.secretName | quote }}
+                  key: {{ $.Values.inferenceServiceToken.key | quote }}
           readinessProbe:
             httpGet:
               path: /healthz

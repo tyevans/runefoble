@@ -8,9 +8,10 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, Header, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from game_session.dependencies import get_event_bus, get_settlement_repository, get_spicedb_client
 from game_session.events import STREAM_WEST_MARCHES
+from game_session.settlement.auth.tokens import CallerId, get_caller_principal
 from game_session.settlements import (
     CharterSettlementRequest,
     ClaimRestBoonRequest,
@@ -23,7 +24,9 @@ from game_session.settlements import (
 )
 from runefoble_platform.event_publish import publish_or_fail
 
-router = APIRouter(prefix="/settlements", tags=["settlements"])
+router = APIRouter(
+    dependencies=[Depends(get_caller_principal)], prefix="/settlements", tags=["settlements"]
+)
 
 
 def _to_uuid(val: Any) -> UUID:
@@ -52,12 +55,12 @@ async def _load_haven(sid: str, perm: str, uid: str | None) -> SettlementAggrega
 
 @router.post("", status_code=201)
 async def charter_settlement(
+    caller_id: CallerId,
     req: CharterSettlementRequest,
-    x_user_id: str | None = Header(default=None),
 ) -> dict[str, Any]:
     """Charter a new persistent communal haven or outpost in a shared world."""
     spicedb, repo, bus = get_spicedb_client(), get_settlement_repository(), get_event_bus()
-    await check_world_charter_permission(spicedb, req.shared_world_id, x_user_id)
+    await check_world_charter_permission(spicedb, req.shared_world_id, caller_id)
     sid = uuid4()
     agg = SettlementAggregate(sid)
     agg.charter(
@@ -67,36 +70,36 @@ async def charter_settlement(
         region=req.region,
         coordinates=req.coordinates,
         founded_by_campaign_id=req.founded_by_campaign_id,
-        chartered_by=x_user_id or "system",
+        chartered_by=caller_id,
         facilities=req.facilities,
         defense_rating=req.defense_rating,
         metadata=req.metadata,
     )
     await _save_and_publish(repo, bus, agg)
     await write_settlement_relationships(
-        spicedb, str(sid), req.shared_world_id, x_user_id, req.founded_by_campaign_id
+        spicedb, str(sid), req.shared_world_id, caller_id, req.founded_by_campaign_id
     )
     return {"settlement_id": str(sid), **agg.state.model_dump()}
 
 
 @router.get("/{settlement_id}")
 async def get_settlement(
+    caller_id: CallerId,
     settlement_id: str,
-    x_user_id: str | None = Header(default=None),
 ) -> dict[str, Any]:
     """Query settlement state, fortification ratings, and facility tiers."""
-    agg = await _load_haven(settlement_id, "view", x_user_id)
+    agg = await _load_haven(settlement_id, "view", caller_id)
     return {"settlement_id": str(settlement_id), **agg.state.model_dump()}
 
 
 @router.post("/{settlement_id}/upgrade")
 async def upgrade_settlement(
+    caller_id: CallerId,
     settlement_id: str,
     req: UpgradeFacilityRequest,
-    x_user_id: str | None = Header(default=None),
 ) -> dict[str, Any]:
     """Upgrade workshop, resting sanctum, or fortifications tier."""
-    agg = await _load_haven(settlement_id, "upgrade", x_user_id)
+    agg = await _load_haven(settlement_id, "upgrade", caller_id)
     tier = agg.upgrade_facility(
         req.facility_id, req.contributing_campaign_id, req.gold_spent, req.materials_spent
     )
@@ -115,13 +118,13 @@ async def upgrade_settlement(
 
 @router.post("/{settlement_id}/claim-boon")
 async def claim_haven_rest_boon(
+    caller_id: CallerId,
     settlement_id: str,
     req: ClaimRestBoonRequest,
-    x_user_id: str | None = Header(default=None),
 ) -> dict[str, Any]:
     """Claim sanctum resting boons or workshop buffs for an adventuring party."""
-    agg = await _load_haven(settlement_id, "use", x_user_id)
-    boon = agg.claim_rest_boon(req.campaign_id, req.character_id, x_user_id or "", req.facility_id)
+    agg = await _load_haven(settlement_id, "use", caller_id)
+    boon = agg.claim_rest_boon(req.campaign_id, req.character_id, caller_id, req.facility_id)
     await _save_and_publish(get_settlement_repository(), get_event_bus(), agg)
     return {"settlement_id": str(settlement_id), "boon": boon, **agg.state.model_dump()}
 

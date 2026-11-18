@@ -11,10 +11,14 @@ Verifies:
 
 import pytest
 from fastapi.testclient import TestClient
-from gateway_api.campaign_store import campaign_store
 from gateway_api.main import app
 
-client = TestClient(app)
+
+@pytest.fixture
+def client(game_session_upstream):
+    """Enter the gateway lifespan after game_session is served, so the proxy reaches it."""
+    with TestClient(app) as gateway_client:
+        yield gateway_client
 
 
 def _auth(issuer, sub: str) -> dict[str, str]:
@@ -22,17 +26,10 @@ def _auth(issuer, sub: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {issuer.mint(sub)}"}
 
 
-@pytest.fixture(autouse=True)
-def reset_store():
-    """Reset campaign and invite memory store before each test."""
-    campaign_store.reset()
-    yield
-
-
 @pytest.mark.asyncio
-async def test_campaign_creation_and_ownership(signing_issuer):
+async def test_campaign_creation_and_ownership(trusted_ws_issuer, client):
     """Verify POST /api/v1/campaigns registers campaign and assigns owner role in SpiceDB."""
-    headers_evelyn = _auth(signing_issuer, "dm_evelyn")
+    headers_evelyn = _auth(trusted_ws_issuer, "dm_evelyn")
 
     create_payload = {
         "title": "Shadows of Drakkenheim",
@@ -61,17 +58,17 @@ async def test_campaign_creation_and_ownership(signing_issuer):
     assert res_get.json()["title"] == "Shadows of Drakkenheim"
 
     # Unrelated user without Zanzibar permissions is denied access
-    headers_stranger = _auth(signing_issuer, "stranger_bob")
+    headers_stranger = _auth(trusted_ws_issuer, "stranger_bob")
     res_denied = client.get(f"/api/v1/campaigns/{campaign_id}", headers=headers_stranger)
     assert res_denied.status_code == 403
     assert res_denied.json()["detail"]["error"] == "permission_denied"
 
 
 @pytest.mark.asyncio
-async def test_campaign_listing_isolation(signing_issuer):
+async def test_campaign_listing_isolation(trusted_ws_issuer, client):
     """Verify GET /api/v1/campaigns lists only campaigns where the user has Zanzibar view permission."""
-    headers_evelyn = _auth(signing_issuer, "dm_evelyn")
-    headers_marcus = _auth(signing_issuer, "player_marcus")
+    headers_evelyn = _auth(trusted_ws_issuer, "dm_evelyn")
+    headers_marcus = _auth(trusted_ws_issuer, "player_marcus")
 
     # Evelyn creates Campaign A
     res_a = client.post(
@@ -105,10 +102,10 @@ async def test_campaign_listing_isolation(signing_issuer):
 
 
 @pytest.mark.asyncio
-async def test_campaign_patch_manage_permission(signing_issuer):
+async def test_campaign_patch_manage_permission(trusted_ws_issuer, client):
     """Verify PATCH /api/v1/campaigns/{id} requires Zanzibar manage permission."""
-    headers_evelyn = _auth(signing_issuer, "dm_evelyn")
-    headers_marcus = _auth(signing_issuer, "player_marcus")
+    headers_evelyn = _auth(trusted_ws_issuer, "dm_evelyn")
+    headers_marcus = _auth(trusted_ws_issuer, "player_marcus")
 
     res_create = client.post(
         "/api/v1/campaigns",
@@ -138,10 +135,10 @@ async def test_campaign_patch_manage_permission(signing_issuer):
 
 
 @pytest.mark.asyncio
-async def test_invite_generation_and_joining_workflow(signing_issuer):
+async def test_invite_generation_and_joining_workflow(trusted_ws_issuer, client):
     """Verify invite creation, redemption, and membership registration in SpiceDB."""
-    headers_evelyn = _auth(signing_issuer, "dm_evelyn")
-    headers_marcus = _auth(signing_issuer, "player_marcus")
+    headers_evelyn = _auth(trusted_ws_issuer, "dm_evelyn")
+    headers_marcus = _auth(trusted_ws_issuer, "player_marcus")
 
     # 1. Evelyn creates campaign
     res_create = client.post(
@@ -152,7 +149,7 @@ async def test_invite_generation_and_joining_workflow(signing_issuer):
     camp_id = res_create.json()["id"]
 
     # 2. Stranger cannot create invite -> 403 Forbidden
-    headers_stranger = _auth(signing_issuer, "random_stranger")
+    headers_stranger = _auth(trusted_ws_issuer, "random_stranger")
     res_unauth_invite = client.post(
         f"/api/v1/campaigns/{camp_id}/invites",
         json={"role": "player"},
@@ -207,11 +204,11 @@ async def test_invite_generation_and_joining_workflow(signing_issuer):
 
 
 @pytest.mark.asyncio
-async def test_spectator_invite_and_usage_limit(signing_issuer):
+async def test_spectator_invite_and_usage_limit(trusted_ws_issuer, client):
     """Verify spectator role invitation and max_uses exhaustion."""
-    headers_dm = _auth(signing_issuer, "dm_sarah")
-    headers_viewer1 = _auth(signing_issuer, "viewer_devon")
-    headers_viewer2 = _auth(signing_issuer, "viewer_clara")
+    headers_dm = _auth(trusted_ws_issuer, "dm_sarah")
+    headers_viewer1 = _auth(trusted_ws_issuer, "viewer_devon")
+    headers_viewer2 = _auth(trusted_ws_issuer, "viewer_clara")
 
     # DM creates campaign
     res_create = client.post(
@@ -239,14 +236,14 @@ async def test_spectator_invite_and_usage_limit(signing_issuer):
     assert res_join1.status_code == 200
     assert res_join1.json()["role"] == "spectator"
 
-    # Viewer 2 attempts to use exhausted token -> 400 Bad Request
+    # Viewer 2 attempts to use exhausted token -> 409 Conflict
     res_join2 = client.post(
         "/api/v1/campaigns/join",
         json={"invite_token": token},
         headers=headers_viewer2,
     )
-    assert res_join2.status_code == 400
-    assert "limit reached" in res_join2.json()["detail"]["message"].lower()
+    assert res_join2.status_code == 409
+    assert res_join2.json()["detail"]["error"] == "invite_exhausted"
 
     # Viewer 1 has spectator access: can view session, cannot advance turns
     res_sess = client.get(f"/api/v1/sessions/{camp_id}", headers=headers_viewer1)

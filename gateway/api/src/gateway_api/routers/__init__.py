@@ -1,7 +1,7 @@
 """Modular APIRouter packages for Gateway API."""
 
 from gateway_api.routers.auth import router as auth_router
-from gateway_api.routers.campaigns import router as campaigns_router
+from gateway_api.routers.campaigns_proxy import router as campaigns_router
 from gateway_api.routers.characters import router as characters_router
 from gateway_api.routers.downtime import router as downtime_router
 from gateway_api.routers.health import router as health_router

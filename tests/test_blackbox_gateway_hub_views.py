@@ -20,7 +20,6 @@ from typing import Any
 import pytest
 from fastapi import FastAPI, Request
 from fastapi.testclient import TestClient
-from gateway_api.campaign_store import campaign_store
 from gateway_api.main import app as gateway_app
 
 from tests.helpers.live_services import serve
@@ -63,20 +62,14 @@ def hub_upstreams(monkeypatch) -> Iterator[None]:
 
 
 @pytest.fixture
-def client(hub_upstreams) -> Iterator[TestClient]:
+def client(hub_upstreams, game_session_upstream) -> Iterator[TestClient]:
     """Run the gateway lifespan after the upstream URLs are set, so clients see them."""
     with TestClient(gateway_app) as gateway_client:
         yield gateway_client
 
 
-@pytest.fixture(autouse=True)
-def reset_store():
-    campaign_store.reset()
-    yield
-
-
 @pytest.fixture
-def created_campaign_id(client: TestClient, signing_issuer) -> str:
+def created_campaign_id(client: TestClient, trusted_ws_issuer) -> str:
     """Create a campaign through the public frontdoor where dm_valeros is the Zanzibar owner."""
     res = client.post(
         "/api/v1/campaigns",
@@ -86,7 +79,7 @@ def created_campaign_id(client: TestClient, signing_issuer) -> str:
             "system": "5e",
             "description": "Exploration of the ancient stellar tomb.",
         },
-        headers=_auth(signing_issuer, "dm_valeros"),
+        headers=_auth(trusted_ws_issuer, "dm_valeros"),
     )
     assert res.status_code == 201
     return res.json()["id"]
@@ -103,10 +96,10 @@ def created_campaign_id(client: TestClient, signing_issuer) -> str:
 
 
 def test_gateway_campaign_atlas_frontdoor(
-    client: TestClient, created_campaign_id: str, signing_issuer
+    client: TestClient, created_campaign_id: str, trusted_ws_issuer
 ) -> None:
     """Verify the atlas route forwards the caller's bearer token to campaign_lore."""
-    headers = _auth(signing_issuer, "dm_valeros")
+    headers = _auth(trusted_ws_issuer, "dm_valeros")
     response = client.get(f"/api/v1/campaigns/{created_campaign_id}/atlas", headers=headers)
     assert response.status_code == 200
     data = response.json()
@@ -117,16 +110,16 @@ def test_gateway_campaign_atlas_frontdoor(
     # Unauthorized access check (Hard Invariant 1)
     unauthorized_res = client.get(
         f"/api/v1/campaigns/{created_campaign_id}/atlas",
-        headers=_auth(signing_issuer, "stranger_bob"),
+        headers=_auth(trusted_ws_issuer, "stranger_bob"),
     )
     assert unauthorized_res.status_code == 403
 
 
 def test_gateway_campaign_codex_frontdoors(
-    client: TestClient, created_campaign_id: str, signing_issuer
+    client: TestClient, created_campaign_id: str, trusted_ws_issuer
 ) -> None:
     """Verify both codex routes forward the bearer token to campaign_lore entries."""
-    headers = _auth(signing_issuer, "dm_valeros")
+    headers = _auth(trusted_ws_issuer, "dm_valeros")
 
     for route in ("codex", "codex/entries"):
         res = client.get(f"/api/v1/campaigns/{created_campaign_id}/{route}", headers=headers)
@@ -139,16 +132,16 @@ def test_gateway_campaign_codex_frontdoors(
     # Unauthorized access check (Hard Invariant 1)
     unauthorized_res = client.get(
         f"/api/v1/campaigns/{created_campaign_id}/codex",
-        headers=_auth(signing_issuer, "stranger_bob"),
+        headers=_auth(trusted_ws_issuer, "stranger_bob"),
     )
     assert unauthorized_res.status_code == 403
 
 
 def test_gateway_campaign_analytics_frontdoors(
-    client: TestClient, created_campaign_id: str, signing_issuer
+    client: TestClient, created_campaign_id: str, trusted_ws_issuer
 ) -> None:
     """Verify analytics routes forward the bearer token and query parameters to campaign_analytics."""
-    headers = _auth(signing_issuer, "dm_valeros")
+    headers = _auth(trusted_ws_issuer, "dm_valeros")
 
     # Summary is served by the gateway itself.
     summary_res = client.get(f"/api/v1/analytics/campaigns/{created_campaign_id}", headers=headers)
@@ -174,7 +167,7 @@ def test_gateway_campaign_analytics_frontdoors(
     # Unauthorized access check (Hard Invariant 1)
     unauthorized_res = client.get(
         f"/api/v1/analytics/campaigns/{created_campaign_id}/heatmap",
-        headers=_auth(signing_issuer, "stranger_bob"),
+        headers=_auth(trusted_ws_issuer, "stranger_bob"),
     )
     assert unauthorized_res.status_code == 403
 

@@ -89,3 +89,9 @@ Test file: `tests/test_blackbox_gateway_campaigns_proxy.py` (replaces `tests/tes
 Source: `.audit/synth/discovered-round1.md`.
 
 - `GET /api/v1/campaigns/{campaign_id}` returns HTTP 200 with a fabricated campaign for an unknown id (`gateway/api/src/gateway_api/routers/campaigns.py:61-72`). Return 404. This also unblocks the `@blocked` scenario in `e2e/features/app_shell_data_errors.feature`.
+
+## Orchestrator Addenda (2026-11-17, round 2)
+
+Source: `.audit/synth/discovered-round2.md`.
+
+- frontend/src/fixtures/app-data-service.fixtures.ts uses camp- ids. Replace them with the ids that the proxied game_session routes return.

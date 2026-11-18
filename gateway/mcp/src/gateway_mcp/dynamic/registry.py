@@ -43,7 +43,7 @@ class DynamicToolRegistry:
         with self._lock:
             self._tools[definition.name] = definition
             if self.mcp is not None:
-                if self.mcp.get_tool(definition.name):
+                if self.mcp._tool_manager.get_tool(definition.name):
                     self.mcp._tool_manager.remove_tool(definition.name)
                 runner = make_dynamic_tool_callable(definition, self)
                 self.mcp._tool_manager.add_tool(
@@ -75,7 +75,7 @@ class DynamicToolRegistry:
             if name not in self._tools:
                 return False
             tool_def = self._tools.pop(name)
-            if self.mcp is not None and self.mcp.get_tool(name):
+            if self.mcp is not None and self.mcp._tool_manager.get_tool(name):
                 self.mcp._tool_manager.remove_tool(name)
         safe_dispatch_event(
             DynamicToolUnregisteredEvent(

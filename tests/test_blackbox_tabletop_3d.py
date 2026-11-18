@@ -12,10 +12,17 @@ from board_state.main import app
 from fastapi.testclient import TestClient
 from runefoble_events.events import DiceSettled, PhysicsCollisionOccurred
 
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+
+def bearer(sub: str) -> dict[str, str]:
+    """Return the Authorization header for a token that the shared test issuer signs for `sub`."""
+    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
+
 
 def test_board_state_microfrontend_manifest_3d_components():
     """Verify board_state microfrontend manifest advertises 3D tabletop capabilities."""
-    client = TestClient(app)
+    client = TestClient(app, headers=bearer("user-test"))
     response = client.get("/ui/manifest")
     assert response.status_code == 200, response.text
     manifest = response.json()
@@ -28,7 +35,7 @@ def test_board_state_microfrontend_manifest_3d_components():
 
 def test_3d_tabletop_physical_dice_simulation_and_settlement():
     """Verify 3D polyhedral dice toss resolves with physical bounces and settles reliably."""
-    client = TestClient(app)
+    client = TestClient(app, headers=bearer("user-test"))
 
     # 1. Create a board via public HTTP frontdoor
     create_resp = client.post(
@@ -83,7 +90,7 @@ def test_3d_tabletop_physical_dice_simulation_and_settlement():
 
 def test_3d_miniature_knockback_impulse_and_wall_collision():
     """Verify miniature knockback momentum halts before high-elevation cliff walls."""
-    client = TestClient(app)
+    client = TestClient(app, headers=bearer("user-test"))
 
     # 1. Create tactical board
     board_resp = client.post(

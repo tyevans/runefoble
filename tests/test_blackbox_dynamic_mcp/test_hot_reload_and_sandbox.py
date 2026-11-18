@@ -26,7 +26,7 @@ async def test_blackbox_hot_reload_tool_logic_without_restart(client: TestClient
     res1 = client.post("/mcp/tools/register", json=v1_payload)
     assert res1.status_code == 200
 
-    tool_v1 = mcp.get_tool(tool_name)
+    tool_v1 = mcp._tool_manager.get_tool(tool_name)
     assert tool_v1 is not None
     out1 = await tool_v1.run({"dex_mod": 3})
     assert out1["total"] == 13
@@ -54,7 +54,7 @@ async def test_blackbox_hot_reload_tool_logic_without_restart(client: TestClient
     assert res2.json()["status"] == "updated"
 
     # 3. Assert FastMCP immediately runs updated logic without server restart
-    tool_v2 = mcp.get_tool(tool_name)
+    tool_v2 = mcp._tool_manager.get_tool(tool_name)
     assert "prof_bonus" in tool_v2.parameters["properties"]
     out2 = await tool_v2.run({"dex_mod": 3, "prof_bonus": 4})
     assert out2["total"] == 17
@@ -81,7 +81,7 @@ def test_blackbox_sandbox_security_rejection(client: TestClient):
         res = client.post("/mcp/tools/register", json=payload)
         assert res.status_code == 400, f"Expected 400 Bad Request for {name}"
         assert "Sandbox policy violation" in res.json()["detail"]
-        assert mcp.get_tool(name) is None, f"{name} must not be registered in FastMCP"
+        assert mcp._tool_manager.get_tool(name) is None, f"{name} must not be registered in FastMCP"
 
 
 def test_blackbox_invalid_parameter_schema_rejection(client: TestClient):

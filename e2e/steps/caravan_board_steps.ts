@@ -27,14 +27,14 @@ Given('the caravan route {string} responds with status {int}', async ({ page }, 
   );
 });
 
-Given('an accepted caravan contract {string} is on the board', async () => {
+Given('an accepted caravan contract {string} is on the board', async ({}, _contractTitle: string) => {
   throw new Error(
     'Caravan contract setup through public shared-world routes is not implemented. ' +
       'Blocked until the App Shell mounts the board (TASK-0677 follow-up).'
   );
 });
 
-Given('a caravan contract {string} is in transit on the board', async () => {
+Given('a caravan contract {string} is in transit on the board', async ({}, _contractTitle: string) => {
   throw new Error(
     'Caravan contract setup through public shared-world routes is not implemented. ' +
       'Blocked until the App Shell mounts the board (TASK-0677 follow-up).'

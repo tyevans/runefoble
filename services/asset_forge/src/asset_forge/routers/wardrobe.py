@@ -13,8 +13,9 @@ from runefoble_platform.asset_index import get_stored_asset
 from runefoble_platform.storage import AssetNotFoundError, SiloStorageService
 
 from asset_forge.dependencies import (
+    VerifiedUserId,
     check_user_can_forge,
-    get_current_user_id,
+    get_principal,
     get_spicedb_client,
     get_storage,
     get_wardrobe_generator,
@@ -25,14 +26,16 @@ from asset_forge.raster.wardrobe_raster import build_attire_prompt
 from asset_forge.silo_upload import store_forged_asset
 from asset_forge.wardrobe_generator import WardrobeGenerator, WardrobePortrait
 
-router = APIRouter(prefix="/api/v1/forge/wardrobe", tags=["Wardrobe Forge"])
+router = APIRouter(
+    prefix="/api/v1/forge/wardrobe", tags=["Wardrobe Forge"], dependencies=[Depends(get_principal)]
+)
 
 
 @router.post("", response_model=WardrobeForgeResponse)
 @router.post("/generate", response_model=WardrobeForgeResponse)
 async def forge_wardrobe_variant(
     request: WardrobeForgeRequest,
-    user_id: Annotated[str | None, Depends(get_current_user_id)],
+    user_id: VerifiedUserId,
     storage: Annotated[SiloStorageService, Depends(get_storage)],
     spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
     generator: Annotated[WardrobeGenerator, Depends(get_wardrobe_generator)],
@@ -42,7 +45,7 @@ async def forge_wardrobe_variant(
     The response names the generator and states whether it preserves the face.
     The default placeholder preserves no face.
     """
-    creator_id = user_id or "anonymous_creator"
+    creator_id = user_id
 
     # Zanzibar campaign authorization check
     if request.campaign_id:
@@ -91,23 +94,22 @@ async def forge_wardrobe_variant(
     await publish_forge_event(event)
 
     # 4. Write Zanzibar relationships to SpiceDB
-    if user_id:
-        with contextlib.suppress(Exception):
+    with contextlib.suppress(Exception):
+        await spicedb.write_relationship(
+            resource_type="forged_asset",
+            resource_id=variant_id,
+            relation="creator",
+            subject_type="user",
+            subject_id=user_id,
+        )
+        if request.campaign_id:
             await spicedb.write_relationship(
                 resource_type="forged_asset",
                 resource_id=variant_id,
-                relation="creator",
-                subject_type="user",
-                subject_id=user_id,
+                relation="campaign",
+                subject_type="campaign",
+                subject_id=str(request.campaign_id),
             )
-            if request.campaign_id:
-                await spicedb.write_relationship(
-                    resource_type="forged_asset",
-                    resource_id=variant_id,
-                    relation="campaign",
-                    subject_type="campaign",
-                    subject_id=str(request.campaign_id),
-                )
 
     return WardrobeForgeResponse(
         variant_id=variant_id,

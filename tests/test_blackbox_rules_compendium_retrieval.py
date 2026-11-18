@@ -16,6 +16,13 @@ from fastapi.testclient import TestClient
 from rules_compendium.main import create_app
 
 from tests.helpers.live_services import serve
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+
+def bearer(sub: str) -> dict[str, str]:
+    """Return the Authorization header for a token that the shared test issuer signs for `sub`."""
+    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
+
 
 SEARCH_PATH = "/api/v1/compendium/rules/search"
 
@@ -69,7 +76,7 @@ def test_search_reports_lexical_mode_when_no_provider_is_configured(
 ) -> None:
     monkeypatch.delenv("RUNEFOBLE_RULES_EMBEDDING", raising=False)
 
-    with TestClient(create_app()) as client:
+    with TestClient(create_app(), headers=bearer("user-test")) as client:
         resp = client.get(SEARCH_PATH, params={"query": "Fireball"})
 
     assert resp.status_code == 200, resp.text
@@ -81,7 +88,7 @@ def test_search_reports_lexical_mode_when_no_provider_is_configured(
 def test_lexical_mode_does_not_match_a_paraphrase(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("RUNEFOBLE_RULES_EMBEDDING", raising=False)
 
-    with TestClient(create_app()) as client:
+    with TestClient(create_app(), headers=bearer("user-test")) as client:
         resp = client.get(SEARCH_PATH, params={"query": PARAPHRASE_QUERY})
 
     assert resp.status_code == 200, resp.text
@@ -97,7 +104,7 @@ def test_configured_provider_finds_a_paraphrase(monkeypatch: pytest.MonkeyPatch)
         monkeypatch.setenv("RUNEFOBLE_EMBEDDING_MODEL", "test/concept-embed")
         monkeypatch.setenv("RUNEFOBLE_EMBEDDING_DIMENSION", str(TEST_EMBEDDING_DIMENSION))
 
-        with TestClient(create_app()) as client:
+        with TestClient(create_app(), headers=bearer("user-test")) as client:
             resp = client.get(SEARCH_PATH, params={"query": PARAPHRASE_QUERY})
 
     assert resp.status_code == 200, resp.text
@@ -114,5 +121,8 @@ def test_openai_compatible_mode_refuses_to_start_without_an_endpoint(
     monkeypatch.setenv("RUNEFOBLE_EMBEDDING_MODEL", "test/concept-embed")
     monkeypatch.setenv("RUNEFOBLE_EMBEDDING_DIMENSION", str(TEST_EMBEDDING_DIMENSION))
 
-    with pytest.raises(ValueError, match="RUNEFOBLE_EMBEDDING_BASE_URL"), TestClient(create_app()):
+    with (
+        pytest.raises(ValueError, match="RUNEFOBLE_EMBEDDING_BASE_URL"),
+        TestClient(create_app(), headers=bearer("user-test")),
+    ):
         pass
