@@ -5,6 +5,15 @@ and AI DM controls to MCP-compliant agents and LLMs.
 """
 
 import uvicorn
+from mcp.server.fastmcp import FastMCP
+from runefoble_auth.principal import require_principal
+from runefoble_platform.config import PlatformSettings
+from runefoble_platform.event_bus import create_event_bus
+from runefoble_platform.event_publish import event_publish_failures
+from runefoble_platform.telemetry import init_telemetry
+from starlette.requests import Request
+from starlette.responses import JSONResponse
+
 from gateway_mcp.dynamic import dynamic_registry
 from gateway_mcp.dynamic import set_event_bus as set_dynamic_event_bus
 from gateway_mcp.identity import BearerTransportAuth, get_verifier
@@ -39,14 +48,6 @@ from gateway_mcp.tools import (
     register_tools,
     roll_dice,
 )
-from mcp.server.fastmcp import FastMCP
-from runefoble_auth.principal import require_principal
-from runefoble_platform.config import PlatformSettings
-from runefoble_platform.event_bus import create_event_bus
-from runefoble_platform.event_publish import event_publish_failures
-from runefoble_platform.telemetry import init_telemetry
-from starlette.requests import Request
-from starlette.responses import JSONResponse
 
 mcp = FastMCP("Runefoble MCP Gateway")
 

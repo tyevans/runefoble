@@ -6,11 +6,12 @@ routes and return what it stores. They hold no board data of their own.
 
 from typing import TYPE_CHECKING, Any
 
+from mcp.server.fastmcp import Context
+from pydantic import BaseModel
+
 from gateway_mcp.caller import caller_bearer
 from gateway_mcp.owning_services import OwningServices, ServiceRejectedError
 from gateway_mcp.tool_authz import authorize_tool_call, session_control, token_move
-from mcp.server.fastmcp import Context
-from pydantic import BaseModel
 
 if TYPE_CHECKING:
     from mcp.server.fastmcp import FastMCP

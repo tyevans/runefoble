@@ -7,6 +7,8 @@ the_watcher public routes and return its answer unchanged.
 import time
 from typing import TYPE_CHECKING, Any, Literal
 
+from mcp.server.fastmcp import Context
+
 from gateway_mcp.caller import caller_bearer
 from gateway_mcp.owning_services import OwningServices, ServiceError
 from gateway_mcp.tool_authz import (
@@ -15,7 +17,6 @@ from gateway_mcp.tool_authz import (
     require_caller_id,
     step_requirement,
 )
-from mcp.server.fastmcp import Context
 
 if TYPE_CHECKING:
     from mcp.server.fastmcp import FastMCP

@@ -10,10 +10,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from gateway_mcp.dynamic.auth import get_spicedb_client
-from gateway_mcp.identity import caller_principal
 from mcp.server.fastmcp.exceptions import ToolError
 from runefoble_auth.errors import AuthzError
+
+from gateway_mcp.dynamic.auth import get_spicedb_client
+from gateway_mcp.identity import caller_principal
 
 
 class ToolAuthzError(ToolError):

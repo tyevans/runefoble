@@ -6,9 +6,10 @@ public routes and return what it serves.
 
 from typing import TYPE_CHECKING, Any
 
+from mcp.server.fastmcp import Context
+
 from gateway_mcp.caller import caller_bearer
 from gateway_mcp.owning_services import OwningServices
-from mcp.server.fastmcp import Context
 
 if TYPE_CHECKING:
     from mcp.server.fastmcp import FastMCP

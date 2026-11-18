@@ -13,7 +13,6 @@ import weakref
 from typing import Any, Literal
 from uuid import UUID
 
-from gateway_mcp.settings import GatewayMcpSettings, load_settings
 from opentelemetry import trace
 from opentelemetry.trace import SpanKind
 from runefoble_platform.service_client import (
@@ -23,6 +22,8 @@ from runefoble_platform.service_client import (
     UpstreamUnavailableError,
     path,
 )
+
+from gateway_mcp.settings import GatewayMcpSettings, load_settings
 
 TIMEOUT_SECONDS = 5.0
 

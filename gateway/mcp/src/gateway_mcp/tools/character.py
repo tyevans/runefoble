@@ -7,10 +7,11 @@ own and return no substitute values when the service fails.
 
 from typing import TYPE_CHECKING, Any
 
+from mcp.server.fastmcp import Context
+
 from gateway_mcp.caller import caller_bearer
 from gateway_mcp.owning_services import OwningServices
 from gateway_mcp.tool_authz import authorize_tool_call, character_edit, dm_action_on_character
-from mcp.server.fastmcp import Context
 
 if TYPE_CHECKING:
     from mcp.server.fastmcp import FastMCP

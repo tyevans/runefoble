@@ -7,6 +7,12 @@ import threading
 import time
 from typing import TYPE_CHECKING, Any
 
+from runefoble_events.mcp_tools import (
+    DynamicToolInvokedEvent,
+    DynamicToolRegisteredEvent,
+    DynamicToolUnregisteredEvent,
+)
+
 from gateway_mcp.dynamic.builder import make_dynamic_tool_callable
 from gateway_mcp.dynamic.events import safe_dispatch_event
 from gateway_mcp.dynamic.handlers import evaluate_handler, validate_handler
@@ -14,11 +20,6 @@ from gateway_mcp.dynamic.models import (
     DynamicToolDefinition,
     DynamicToolRecord,
     validate_parameter_schema,
-)
-from runefoble_events.mcp_tools import (
-    DynamicToolInvokedEvent,
-    DynamicToolRegisteredEvent,
-    DynamicToolUnregisteredEvent,
 )
 
 if TYPE_CHECKING:

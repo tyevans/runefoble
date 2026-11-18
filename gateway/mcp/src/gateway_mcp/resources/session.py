@@ -6,10 +6,11 @@ A session that the service does not know gives a resource error.
 
 from typing import TYPE_CHECKING, Any
 
+from mcp.server.fastmcp import Context
+
 from gateway_mcp.caller import caller_bearer
 from gateway_mcp.owning_services import OwningServices
 from gateway_mcp.tools.board import query_encounter_state
-from mcp.server.fastmcp import Context
 
 if TYPE_CHECKING:
     from mcp.server.fastmcp import FastMCP

@@ -9,6 +9,10 @@ from collections.abc import Callable
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException
+from runefoble_auth.principal import VerifiedPrincipal
+from starlette.applications import Starlette
+from starlette.routing import Mount
+
 from gateway_mcp.dynamic.auth import (
     enforce_tool_auth,
     grant_tool_permissions,
@@ -19,9 +23,6 @@ from gateway_mcp.dynamic.models import (
     DynamicToolExecutionRequest,
 )
 from gateway_mcp.dynamic.registry import dynamic_registry
-from runefoble_auth.principal import VerifiedPrincipal
-from starlette.applications import Starlette
-from starlette.routing import Mount
 
 
 def build_tools_registry_router(
