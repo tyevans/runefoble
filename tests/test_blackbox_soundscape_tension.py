@@ -196,7 +196,7 @@ async def test_soundscape_combat_event_bus_reactivity(mock_bus):
 async def test_soundscape_zanzibar_authorization(client: TestClient, tomb_session_id: str):
     """Verify Zanzibar authorization enforces caller permissions for DM mood override."""
     resp = client.post(
-        "/api/v1/soundscape/override",
+        "/api/v1/soundscape/stems/override",
         json={"session_id": tomb_session_id, "mood": "boss"},
         headers=auth_headers("unauthorized-intruder"),
     )

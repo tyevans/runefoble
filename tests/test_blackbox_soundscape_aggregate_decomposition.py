@@ -210,9 +210,9 @@ def test_frontdoor_http_endpoints_with_decomposed_aggregate(
     """Verify public HTTP frontdoors interact seamlessly with the decomposed aggregate."""
     session_id = tomb_session_id
 
-    # 1. POST /api/v1/soundscape/override
+    # 1. POST /api/v1/soundscape/stems/override
     override_resp = client.post(
-        "/api/v1/soundscape/override",
+        "/api/v1/soundscape/stems/override",
         json={
             "session_id": session_id,
             "mood": "combat",
@@ -284,3 +284,19 @@ def test_frontdoor_http_endpoints_with_decomposed_aggregate(
     assert motif_profile_resp.status_code == 200
     motif_data = motif_profile_resp.json()
     assert motif_data["character_id"] == "player-1"
+
+
+def test_legacy_override_alias_is_not_routed(client: TestClient, tomb_session_id: str):
+    """The alias POST /api/v1/soundscape/override is removed. Only /stems/override remains (DoR 9)."""
+    alias_resp = client.post(
+        "/api/v1/soundscape/override",
+        json={"session_id": tomb_session_id, "mood": "combat"},
+    )
+    assert alias_resp.status_code == 404
+
+    canonical_resp = client.post(
+        "/api/v1/soundscape/stems/override",
+        json={"session_id": tomb_session_id, "mood": "combat"},
+    )
+    assert canonical_resp.status_code == 200
+    assert canonical_resp.json()["stem_profile"] == "combat"

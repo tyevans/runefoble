@@ -79,7 +79,7 @@ def test_spicedb_zanzibar_authorization_on_soundscape_controls(
 
     # 1. A player without DM authority attempts a mood override -> 403 Forbidden
     resp_unauth = client.post(
-        "/api/v1/soundscape/override",
+        "/api/v1/soundscape/stems/override",
         headers=auth_headers("player-marcus"),
         json=payload,
     )
@@ -87,7 +87,7 @@ def test_spicedb_zanzibar_authorization_on_soundscape_controls(
     assert "Forbidden" in resp_unauth.json()["detail"]
 
     # 2. The campaign owner (the default client subject) overrides the mood -> 200 OK
-    resp_auth = client.post("/api/v1/soundscape/override", json=payload)
+    resp_auth = client.post("/api/v1/soundscape/stems/override", json=payload)
     assert resp_auth.status_code == 200
     data = resp_auth.json()
     assert data["stem_profile"] == "boss"

@@ -128,7 +128,7 @@ The browser component `<runefoble-soundscape-controls>` sends each duck and rele
 DMs retain final authority over table atmosphere. To lock the soundscape to a specific theme regardless of tension:
 
 ```bash
-curl -X POST http://localhost:8009/api/v1/soundscape/override \
+curl -X POST http://localhost:8009/api/v1/soundscape/stems/override \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $TOKEN" \
   -d '{

@@ -187,10 +187,10 @@ def test_soundscape_mood_override_denies_player_and_allows_dm(
     soundscape: TestClient, campaign: dict[str, str]
 ) -> None:
     body = _mood_body(campaign["sid"])
-    player = soundscape.post("/api/v1/soundscape/override", headers=_bearer(PLAYER), json=body)
+    player = soundscape.post("/api/v1/soundscape/stems/override", headers=_bearer(PLAYER), json=body)
     assert player.status_code == 403
 
-    dm = soundscape.post("/api/v1/soundscape/override", headers=_bearer(DM), json=body)
+    dm = soundscape.post("/api/v1/soundscape/stems/override", headers=_bearer(DM), json=body)
     assert dm.status_code == 200
     assert dm.json()["manual_override"] is True
 
@@ -198,7 +198,7 @@ def test_soundscape_mood_override_denies_player_and_allows_dm(
 def test_soundscape_mood_override_without_principal_is_unauthorized(
     soundscape: TestClient, campaign: dict[str, str]
 ) -> None:
-    res = soundscape.post("/api/v1/soundscape/override", json=_mood_body(campaign["sid"]))
+    res = soundscape.post("/api/v1/soundscape/stems/override", json=_mood_body(campaign["sid"]))
     assert res.status_code == 401
 
 

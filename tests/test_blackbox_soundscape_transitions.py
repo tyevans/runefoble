@@ -137,7 +137,7 @@ def test_dm_mood_override_and_ducking_frontdoor(client: TestClient, tomb_session
         "mood": "boss",
         "master_volume": 0.9,
     }
-    resp = client.post("/api/v1/soundscape/override", json=override_payload)
+    resp = client.post("/api/v1/soundscape/stems/override", json=override_payload)
     assert resp.status_code == 200
     data = resp.json()
     assert data["stem_profile"] == "boss"
