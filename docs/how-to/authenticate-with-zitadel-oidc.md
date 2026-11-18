@@ -119,7 +119,7 @@ async def campaign_websocket_endpoint(websocket: WebSocket, verifier) -> None:
 
 Every gateway WebSocket route calls `admit_websocket` before accept (TASK-0522). Tokens in the query string are refused.
 
-After admission, each session socket checks a permission that `runefoble.zed` defines on the `session` object. `/ws/session/{id}`, `/ws/voice/{id}`, `/ws/mobile-companion/{id}`, `/ws/overlay/{id}`, and `/ws/spectator/{id}` need `session.observe`. The gateway closes a refused socket with code `4403`. It closes with `1011` when SpiceDB is unavailable. Use `gateway_api.session_access.socket_may` for these checks.
+After admission, each session socket checks a permission that `runefoble.zed` defines on the `session` object. `/ws/session/{id}`, `/ws/voice/{id}`, `/ws/mobile-companion/{id}`, `/ws/overlay/{id}`, and `/ws/spectator/{id}` need `session.observe`. The gateway closes a refused socket with code `4403`. It closes with `1011` when SpiceDB is unavailable. These checks use `runefoble_auth.websocket.action_authorizer("session.observe", session_id)` with `admit_websocket`.
 
 On `/ws/campaigns/{id}`, an action name that the server does not define returns an `UNKNOWN_ACTION` error frame. The client never chooses a permission name.
 

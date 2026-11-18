@@ -399,7 +399,7 @@ After the bearer token passes, each voice route checks one permission in `libs/r
 | `WS /api/v1/voice/duplex/ws/...` | Speaker rule at connect | `speaker_id` |
 | `WS /api/v1/voice/stream/ws/...` | Speaker rule for each new session and speaker pair | `speaker_id` |
 
-The speaker rule has two parts. The named speaker must hold `session.participate`. The token subject may act for another speaker only when the token subject holds `session.control`. A WebSocket frame that names another speaker closes the socket with `1008`.
+The speaker rule has two parts. The named speaker must hold `session.participate`. The token subject may act for another speaker only when the token subject holds `session.control`. A WebSocket handshake or frame that names a speaker the token subject may not act for closes the socket with `4403` (authorization refusal). A missing or invalid token still closes with `1008`.
 
 `session.control` resolves to `campaign->run_session` through the session's campaign relation. A DM holds it. A player and a spectator do not.
 

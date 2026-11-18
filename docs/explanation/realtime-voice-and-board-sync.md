@@ -75,8 +75,8 @@ Bidirectional voice streams and audio mesh coordination are negotiated via the W
 
 - **Signaling Connection Manager (`voice_agent.signaling.manager`)**:
   `WebRTCSignalingManager` tracks active room WebSockets, peer lookups, disconnect cleanup, and directed or broadcast JSON frame transmission.
-- **Session Socket Gate (`voice_agent.socket_access`)**:
-  `admit_session_socket` verifies the bearer, then checks `session.observe` on the room. A refusal closes the socket with `4403`.
+- **Session Socket Gate (`runefoble_auth.websocket`)**:
+  `admit_websocket` with `action_authorizer("session.observe", session_id)` verifies the bearer, then checks `session.observe` on the room. A refusal closes the socket with `4403`. The voice routes use this same helper.
 - **Signaling Peer Metadata (`voice_agent.signaling.auth`)**:
   `extract_peer_and_role` reads the presentation fields `peer_id` and `role` from the query string. Identity comes only from the verified bearer.
 - **Signaling Message Handlers (`voice_agent.signaling.handlers`)**:
@@ -106,7 +106,7 @@ Real-time campaign mutations, token movement broadcasts, health modifications, a
 - **Connection Hub Manager (`gateway_api.websocket_manager`)**:
   `CampaignConnectionManager` tracks active client connections per campaign and handles JSON broadcast dispatching across connected party members.
 - **Credential & Handshake Auth (`gateway_api.websocket_auth`)**:
-  `admit_gateway_websocket` binds the gateway verifier to the shared `runefoble_auth.websocket.admit_websocket` check. Every gateway socket route calls it before accept. The token comes only from the `runefoble.bearer.<jwt>` subprotocol. Query strings and headers carry no identity.
+  `admit_gateway_websocket` binds the gateway verifier to the shared `runefoble_auth.websocket.admit_websocket` check. Every gateway socket route calls it before accept, and no route keeps its own admission code. The token comes only from the `runefoble.bearer.<jwt>` subprotocol. Query strings and headers carry no identity.
 - **WebSocket Routing Endpoint (`gateway_api.websocket_endpoint`)**:
   `campaign_websocket_endpoint` manages the WebSocket handshake lifecycle, validates viewer connection permissions, dispatches incoming actions to Redis Streams (`runefoble.events.board`, `runefoble.events.session`, `runefoble.events.watcher`), and coordinates disconnect cleanup.
 
