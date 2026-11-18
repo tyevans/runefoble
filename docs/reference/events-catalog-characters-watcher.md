@@ -27,7 +27,7 @@ Part of the [Events Schema](events-schema.md). Each event identifier in this pag
   - `delta`: Integer
   - `current_hp`: Integer, `max_hp`: Integer
   - `source`: String
-- **`AbsencePenaltyApplied`** (alias (`runefoble.events.character.absence_penalty_applied`): `PlayerAbsenteePenalized`): Emitted when an absent player's character is inflicted with a session miss penalty.
+- **`AbsencePenaltyApplied`** (`runefoble.events.character.absence_penalty_applied`): Emitted when an absent player's character is inflicted with a session miss penalty.
   - `penalty_type`: "drunk" | "foolishness" | "cowardice" | "greed" | "curse"
   - `description`: String
   - `imposed_by`: "human_dm" | "the_watcher"
@@ -79,7 +79,7 @@ Part of the [Events Schema](events-schema.md). Each event identifier in this pag
   - `character_name`: String
   - `current_hp`: Integer (0)
   - `stabilized_by`: String (default "permadeath_safeguard")
-- **`CriticalHitScored`** (alias: `CriticalHitRolled`): Emitted when a character rolls a natural 20 or scores a clutch critical hit (`runefoble.events.character.critical_hit_scored`).
+- **`CriticalHitScored`** : Emitted when a character rolls a natural 20 or scores a clutch critical hit (`runefoble.events.character.critical_hit_scored`).
   - `session_id`: String
   - `character_id`: String
   - `character_name`: String
@@ -105,7 +105,7 @@ Part of the [Events Schema](events-schema.md). Each event identifier in this pag
   - `image_url`: String
   - `prompt`: String
   - `is_active`: Boolean
-- **`CharacterPortraitUpdated`** (alias: `PortraitAssigned`): Emitted when a character's active portrait or board token avatar is assigned (`runefoble.events.character.portrait_updated`).
+- **`CharacterPortraitUpdated`** : Emitted when a character's active portrait or board token avatar is assigned (`runefoble.events.character.portrait_updated`).
   - `character_id`: UUID | str
   - `active_portrait_url`: Optional[String] (null when the character has no portrait)
   - `variant_id`: Optional[String]
@@ -148,7 +148,7 @@ Part of the [Events Schema](events-schema.md). Each event identifier in this pag
   - `tone`: String
   - `sensory_details`: List[String]
   - `suggested_prompts`: List[String]
-- **`StandInActionDecided`** (alias (`runefoble.events.watcher.stand_in_action_decided`): `StandInTurnExecuted`): Emitted when the AI stand-in acts on behalf of an absent player.
+- **`StandInActionDecided`** (`runefoble.events.watcher.stand_in_action_decided`): Emitted when the AI stand-in acts on behalf of an absent player.
   - `character_name`: String
   - `action_type`: String
   - `dialogue`: String
