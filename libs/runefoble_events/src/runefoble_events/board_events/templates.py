@@ -43,7 +43,3 @@ class AoETemplateRemoved(BaseRunefobleEvent):
     session_id: str = ""
     board_id: str = ""
     template_id: str
-
-
-register_event(AoETemplatePlaced, event_type="AoETemplatePlaced")
-register_event(AoETemplateRemoved, event_type="AoETemplateRemoved")

@@ -6,24 +6,24 @@ Part of the [Events Schema](events-schema.md). Each event identifier in this pag
 
 ### GameSession Events (`aggregate_type: GameSession`)
 
-- **`SessionCreated`**: Emitted when a new session aggregate is initialized.
+- **`SessionCreated`** (`runefoble.events.session.created`): Emitted when a new session aggregate is initialized.
   - `title`: String
   - `dm_id`: String
   - `created_by`: String
-- **`SessionStarted`** (alias: `GameSessionStarted`): Emitted when the session transitions from lobby to active combat/exploration.
+- **`SessionStarted`** (alias (`runefoble.events.session.started`): `GameSessionStarted`): Emitted when the session transitions from lobby to active combat/exploration.
   - `started_at_turn`: Integer (default 1)
-- **`ParticipantJoined`**: Emitted when a user joins the session in a specific role (player, spectator, gm).
+- **`ParticipantJoined`** (`runefoble.events.session.participant_joined`): Emitted when a user joins the session in a specific role (player, spectator, gm).
   - `session_id`: UUID | str
   - `campaign_id`: UUID | str
   - `user_id`: String
   - `role`: String (default "player")
   - `character_id`: Optional[UUID | str]
-- **`PlayerJoinedSession`**: Emitted when a participant connects with an assigned character.
+- **`PlayerJoinedSession`** (`runefoble.events.session.player_joined_session`): Emitted when a participant connects with an assigned character.
   - `player_id`: String
   - `character_id`: UUID
   - `character_name`: String
   - `character_class`: String
-- **`PlayerLeftSession`**: Emitted when a participant disconnects or misses game night.
+- **`PlayerLeftSession`** (`runefoble.events.session.player_left_session`): Emitted when a participant disconnects or misses game night.
   - `player_id`: String
   - `reason`: String
 - **`ReadinessToggled`**: Emitted when a player sets lobby readiness (`POST /api/v1/sessions/{session_id}/lobby/readiness`). Stream: `runefoble.events.session`.
@@ -32,11 +32,11 @@ Part of the [Events Schema](events-schema.md). Each event identifier in this pag
 - **`CharacterSelectedForLobby`**: Emitted when a player selects the character brought to the lobby (`POST /api/v1/sessions/{session_id}/lobby/character`). Stream: `runefoble.events.session`.
   - `player_id`: String
   - `character_id`: UUID
-- **`TurnAdvanced`**: Emitted when the initiative turn counter advances.
+- **`TurnAdvanced`** (`runefoble.events.session.turn_advanced`): Emitted when the initiative turn counter advances.
   - `previous_turn`: Integer
   - `new_turn`: Integer
   - `active_character_id`: Optional[UUID]
-- **`TurnStarted`**: Emitted when a combatant begins their turn, triggering autonomous camera focus.
+- **`TurnStarted`** (`runefoble.events.session.turn_started`): Emitted when a combatant begins their turn, triggering autonomous camera focus.
   - `session_id`: UUID | str
   - `turn_number`: Integer
   - `character_id`: UUID | str
@@ -51,25 +51,25 @@ Part of the [Events Schema](events-schema.md). Each event identifier in this pag
   - `easing`: String (cubic-bezier)
   - `active_token_id`: Optional[String]
   - `reason`: String ("turn_started", "token_moved")
-- **`CombatEncounterStarted`**: Emitted when a combat encounter is initiated.
+- **`CombatEncounterStarted`** (`runefoble.events.session.combat_encounter_started`): Emitted when a combat encounter is initiated.
   - `session_id`: Optional[UUID | str]
   - `round_number`: Integer (default 1)
   - `combatants`: List[Dict[str, Any]]
-- **`InitiativeRolled`**: Emitted when a participant or NPC submits an initiative score.
+- **`InitiativeRolled`** (`runefoble.events.session.initiative_rolled`): Emitted when a participant or NPC submits an initiative score.
   - `session_id`: Optional[UUID | str]
   - `combatant_id`: String
   - `combatant_name`: String
   - `initiative_score`: Float / Integer
   - `is_npc`: Boolean (default False)
-- **`InitiativeTurnAdvanced`**: Emitted when the combat turn cycles to the next combatant.
+- **`InitiativeTurnAdvanced`** (`runefoble.events.session.initiative_turn_advanced`): Emitted when the combat turn cycles to the next combatant.
   - `session_id`: Optional[UUID | str]
   - `round_number`: Integer
   - `active_combatant_id`: String
   - `turn_seconds_remaining`: Integer (default 60)
-- **`CombatEncounterEnded`**: Emitted when combat concludes.
+- **`CombatEncounterEnded`** (`runefoble.events.session.combat_encounter_ended`): Emitted when combat concludes.
   - `session_id`: Optional[UUID | str]
   - `total_rounds`: Integer
-- **`CombatTurnPausedForReactionEvent`** (alias: `CombatTurnPausedForReaction`): Emitted when active combat turn is halted within 500ms for a spoken reaction interrupt (`combat.turn.paused_for_reaction`).
+- **`CombatTurnPausedForReactionEvent`** (alias: `CombatTurnPausedForReaction`): Emitted when active combat turn is halted within 500ms for a spoken reaction interrupt (`runefoble.events.combat.turn_paused_for_reaction`).
   - `session_id`: UUID | str
   - `reaction_id`: String
   - `reacting_combatant_id`: String
@@ -78,13 +78,13 @@ Part of the [Events Schema](events-schema.md). Each event identifier in this pag
   - `reaction_type`: String ("shield", "counterspell", "opportunity_attack", etc.)
   - `paused_turn_combatant_id`: String
   - `timeout_seconds`: Float (default 15.0)
-- **`ReactionResolvedEvent`** (alias: `ReactionResolved`): Emitted when a declared combat reaction interrupt is resolved or dismissed, resuming the active combat turn (`combat.reaction.resolved`).
+- **`ReactionResolvedEvent`** (alias: `ReactionResolved`): Emitted when a declared combat reaction interrupt is resolved or dismissed, resuming the active combat turn (`runefoble.events.combat.reaction_resolved`).
   - `session_id`: UUID | str
   - `reaction_id`: String
   - `reacting_combatant_id`: String
   - `action_taken`: String ("executed", "dismissed", "timeout")
   - `resumed`: Boolean (default True)
-- **`ReadyActionRegisteredEvent`** (alias: `ReadyActionRegistered`): Emitted when a combatant registers a conditional ready-action trigger evaluated against incoming combat events (`combat.ready_action.registered`).
+- **`ReadyActionRegisteredEvent`** (alias: `ReadyActionRegistered`): Emitted when a combatant registers a conditional ready-action trigger evaluated against incoming combat events (`runefoble.events.combat.ready_action_registered`).
   - `session_id`: UUID | str
   - `ready_action_id`: String
   - `combatant_id`: String
@@ -94,7 +94,7 @@ Part of the [Events Schema](events-schema.md). Each event identifier in this pag
   - `readied_action`: String
   - `target_id`: Optional[String]
   - `range_cells`: Optional[Integer]
-- **`ReadyActionTriggeredEvent`** (alias: `ReadyActionTriggered`): Emitted when an incoming combat or board event fulfills a ready-action trigger condition (`combat.ready_action.triggered`).
+- **`ReadyActionTriggeredEvent`** (alias: `ReadyActionTriggered`): Emitted when an incoming combat or board event fulfills a ready-action trigger condition (`runefoble.events.combat.ready_action_triggered`).
   - `session_id`: UUID | str
   - `ready_action_id`: String
   - `combatant_id`: String
@@ -112,30 +112,30 @@ Part of the [Events Schema](events-schema.md). Each event identifier in this pag
   - `transferred_to_player`: Boolean (default True)
   - `active_turn`: Optional[Integer]
   - `round_number`: Optional[Integer]
-- **`SessionEnded`**: Emitted when the session concludes.
+- **`SessionEnded`** (`runefoble.events.session.ended`): Emitted when the session concludes.
   - `summary`: String
 
 ### BoardState Events (`aggregate_type: BoardState`)
 
-- **`BoardGridInitialized`**: Emitted when grid dimensions and cell sizes are established.
+- **`BoardGridInitialized`** (`runefoble.events.board.grid_initialized`): Emitted when grid dimensions and cell sizes are established.
   - `width`: Integer
   - `height`: Integer
   - `cell_size_px`: Integer
   - `grid_type`: "square" | "hex"
-- **`TokenPlaced`**: Emitted when a token is added to the grid.
+- **`TokenPlaced`** (`runefoble.events.board.token_placed`): Emitted when a token is added to the grid.
   - `token_id`: String / UUID
   - `name`: String
   - `token_type`: "pc" | "monster" | "npc" | "obstacle"
   - `x`: Integer, `y`: Integer
   - `hp`: Optional[Integer]
   - `is_friendly`: Boolean
-- **`TokenMoved`**: Emitted when a token traverses grid coordinates.
+- **`TokenMoved`** (`runefoble.events.board.token_moved`): Emitted when a token traverses grid coordinates.
   - `token_id`: String
   - `name`: String
   - `from_x`: Integer, `from_y`: Integer
   - `to_x`: Integer, `to_y`: Integer
   - `initiated_by`: "player" | "the_watcher" | "stand_in"
-- **`TokenRemoved`**: Emitted when a token leaves the board.
+- **`TokenRemoved`** (`runefoble.events.board.token_removed`): Emitted when a token leaves the board.
   - `token_id`: String
   - `reason`: String ("defeated", "retreated", "teleported")
 - **`TokenKnockbackApplied`**: Emitted when a directional knockback impulse is applied to a token (`runefoble.events.board.token_knockback_applied`).
@@ -150,7 +150,7 @@ Part of the [Events Schema](events-schema.md). Each event identifier in this pag
   - `previous_elevation`: Integer
   - `new_elevation`: Integer
   - `x`: Integer, `y`: Integer
-- **`FogOfWarRevealed`** (alias: `FogRevealed`): Emitted when a token's vision reveals uncharted grid cells.
+- **`FogOfWarRevealed`** (alias (`runefoble.events.board.fog_of_war_revealed`): `FogRevealed`): Emitted when a token's vision reveals uncharted grid cells.
   - `revealed_cells`: List[List[Integer]]
   - `revealed_by_token_id`: Optional[String]
 - **`FogOfWarShrouded`** (alias: `ShroudReset`): Emitted when fog-of-war shrouds previously revealed cells (`runefoble.events.board.fog_of_war_shrouded`).

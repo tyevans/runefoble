@@ -127,7 +127,11 @@ async def grant_token_to_campaign(session_url: str, session_id: str, token_id: s
         campaign_id = http.get(f"/api/v1/sessions/{session_id}").json()["campaign_id"]
     await handle_domain_event(
         ZitadelSpiceDBSyncService(spicedb_client=get_spicedb_client()),
-        {"event_type": "TokenPlaced", "token_id": token_id, "campaign_id": campaign_id},
+        {
+            "event_type": "runefoble.events.board.token_placed",
+            "token_id": token_id,
+            "campaign_id": campaign_id,
+        },
     )
 
 

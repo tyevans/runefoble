@@ -158,7 +158,7 @@ The balancing engine:
 1. Calculates aggregate party XP thresholds for Easy, Medium, Hard, and Deadly tiers based on 5e rules.
 2. Applies action economy multipliers scaled for monster count and adjusted for small (<3) or large (>=6) party sizes.
 3. Selects synergistic combinations balancing frontline brutes, ranged artillery, and controllers.
-4. Emits `EncounterBalanced` event on `EncounterAggregate`.
+4. Emits `runefoble.events.compendium.encounter_balanced` event on `EncounterAggregate`.
 
 ---
 

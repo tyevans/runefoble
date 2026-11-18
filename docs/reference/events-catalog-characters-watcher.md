@@ -6,7 +6,7 @@ Part of the [Events Schema](events-schema.md). Each event identifier in this pag
 
 ### CharacterSheet Events (`aggregate_type: CharacterSheet`)
 
-- **`CharacterCreated`**: Emitted when a new character is forged.
+- **`CharacterCreated`** (`runefoble.events.character.created`): Emitted when a new character is forged.
   - `name`: String
   - `character_class`: String
   - `max_hp`: Integer, `current_hp`: Integer
@@ -17,7 +17,7 @@ Part of the [Events Schema](events-schema.md). Each event identifier in this pag
   - `armor_class`: Integer (default 10)
   - `speed_ft`: Integer (default 30)
   - `ability_scores`: Dict[String, Integer]
-- **`CharacterAssignedToCampaign`**: Emitted when a character is assigned to or unassigned from a campaign party (`character.assigned_to_campaign`).
+- **`CharacterAssignedToCampaign`**: Emitted when a character is assigned to or unassigned from a campaign party (`runefoble.events.character.assigned_to_campaign`).
   - `character_id`: String
   - `campaign_id`: Optional[String]
   - `assigned_by`: String
@@ -27,11 +27,11 @@ Part of the [Events Schema](events-schema.md). Each event identifier in this pag
   - `delta`: Integer
   - `current_hp`: Integer, `max_hp`: Integer
   - `source`: String
-- **`AbsencePenaltyApplied`** (alias: `PlayerAbsenteePenalized`): Emitted when an absent player's character is inflicted with a session miss penalty.
+- **`AbsencePenaltyApplied`** (alias (`runefoble.events.character.absence_penalty_applied`): `PlayerAbsenteePenalized`): Emitted when an absent player's character is inflicted with a session miss penalty.
   - `penalty_type`: "drunk" | "foolishness" | "cowardice" | "greed" | "curse"
   - `description`: String
   - `imposed_by`: "human_dm" | "the_watcher"
-- **`AbsencePenaltyCleared`**: Emitted when an absence penalty is redeemed.
+- **`AbsencePenaltyCleared`** (`runefoble.events.character.absence_penalty_cleared`): Emitted when an absence penalty is redeemed.
   - `penalty_type`: String
 - **`CharacterLeveledUp`**: Emitted when a character advances in level, gaining hit points and spell slots (`runefoble.events.character.leveled_up`).
   - `session_id`: String
@@ -112,12 +112,12 @@ Part of the [Events Schema](events-schema.md). Each event identifier in this pag
 
 ### The Watcher & Gameplay Stream Events
 
-- **`PlayerSpokeEvent`**: Emitted when natural player speech is captured and transcribed. The transcript comes from the speaker's audio (STT port) or from text the client typed. The service never publishes a substitute transcript. No event is published for empty audio or for a request with no input (TASK-0602).
+- **`PlayerSpokeEvent`** (`runefoble.events.watcher.player_spoke`): Emitted when natural player speech is captured and transcribed. The transcript comes from the speaker's audio (STT port) or from text the client typed. The service never publishes a substitute transcript. No event is published for empty audio or for a request with no input (TASK-0602).
   - `speaker_id`: String
   - `speaker_name`: String
   - `transcript`: String
   - `is_whisper`: Boolean
-- **`SpeechIntentParsed`**: Emitted by The Watcher speech parsing pipeline.
+- **`SpeechIntentParsed`** (`runefoble.events.watcher.speech_intent_parsed`): Emitted by The Watcher speech parsing pipeline.
   - `speaker_name`: String
   - `action_type`: String ("attack", "cast_spell", "move", "dialogue")
   - `target`: Optional[String]
@@ -143,12 +143,12 @@ Part of the [Events Schema](events-schema.md). Each event identifier in this pag
   - `actions`: List[Dict[String, Any]]
   - `status`: String ("ready", "executing", "completed", "partial_failure", "rolled_back")
   - `narrative_summary`: String
-- **`WatcherNarrationGenerated`**: Emitted when The Watcher provides scene description.
+- **`WatcherNarrationGenerated`** (`runefoble.events.watcher.narration_generated`): Emitted when The Watcher provides scene description.
   - `narrative_text`: String
   - `tone`: String
   - `sensory_details`: List[String]
   - `suggested_prompts`: List[String]
-- **`StandInActionDecided`** (alias: `StandInTurnExecuted`): Emitted when the AI stand-in acts on behalf of an absent player.
+- **`StandInActionDecided`** (alias (`runefoble.events.watcher.stand_in_action_decided`): `StandInTurnExecuted`): Emitted when the AI stand-in acts on behalf of an absent player.
   - `character_name`: String
   - `action_type`: String
   - `dialogue`: String

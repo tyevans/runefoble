@@ -34,7 +34,7 @@ async def _health_events(bus: Any, character_id: str) -> list[dict[str, Any]]:
     entries = client.streams.get(CHARACTER_STREAM, [])
     payloads = []
     for _entry_id, fields in entries:
-        if fields.get("event_type") != "CharacterHealthChanged":
+        if fields.get("event_type") != "runefoble.events.character.health_changed":
             continue
         payload = json.loads(fields["payload"])
         if str(payload.get("aggregate_id")) == character_id:

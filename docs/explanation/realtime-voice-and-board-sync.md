@@ -64,9 +64,9 @@ Each active voice participant maintains an isolated, bounded circular ring buffe
 - **Utterance Completion Detection**: When continuous silence exceeds 200ms (strictly within the < 250ms silence detection budget), the VAD marks the utterance boundary as completed, extracts the accumulated speech window, and hands off to acoustic inference.
 
 ### 3. Whisper Acoustic Inference & Event Dispatch
-- **Acoustic Transcription**: The completed audio segment is transcribed via `FasterWhisperTranscriber` (CTranslate2 INT8 tiny.en/base.en model), the production default. The speech engine sits behind the `BaseTranscriber` port. There is no canned transcript in production. When the engine cannot load or infer, the chunk fails with `speech_engine_unavailable` and no `PlayerSpokeEvent` is published. Tests inject a deterministic fixture engine at the composition root.
-- **CloudEvent Publication**: An immutable `PlayerSpokeEvent` is dispatched onto Redis Streams (`runefoble.events.session`).
-- **Watcher Orchestration**: The transcript is concurrently delivered to `the_watcher` for spatial intent extraction and board action execution (`SpeechIntentParsed`, `WatcherNarrationGenerated`, and `TokenMoved`).
+- **Acoustic Transcription**: The completed audio segment is transcribed via `FasterWhisperTranscriber` (CTranslate2 INT8 tiny.en/base.en model), the production default. The speech engine sits behind the `BaseTranscriber` port. There is no canned transcript in production. When the engine cannot load or infer, the chunk fails with `speech_engine_unavailable` and no `runefoble.events.watcher.player_spoke` is published. Tests inject a deterministic fixture engine at the composition root.
+- **CloudEvent Publication**: An immutable `runefoble.events.watcher.player_spoke` is dispatched onto Redis Streams (`runefoble.events.session`).
+- **Watcher Orchestration**: The transcript is concurrently delivered to `the_watcher` for spatial intent extraction and board action execution (`runefoble.events.watcher.speech_intent_parsed`, `runefoble.events.watcher.narration_generated`, and `runefoble.events.board.token_moved`).
 
 
 ## WebRTC Voice Room Signaling Gateway Architecture

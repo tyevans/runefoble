@@ -80,7 +80,7 @@ async def test_blackbox_caravan_contract_posting_and_board_queries(
     assert contract_data["reward_gold"] == 220
 
     # Verify event published to Redis Stream
-    assert_stream_events(mock_bus, "CaravanContractPosted")
+    assert_stream_events(mock_bus, "runefoble.events.west_marches.caravan_contract_posted")
 
     # 3. Query notice board with filters
     board_res = client.get(

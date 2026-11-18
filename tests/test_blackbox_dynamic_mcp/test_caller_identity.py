@@ -104,6 +104,6 @@ def test_execute_body_user_id_is_ignored(client: TestClient, mock_redis: MockAsy
     invoked = [
         json.loads(fields["payload"])
         for _, fields in mock_redis.streams.get("runefoble.events.system", [])
-        if fields.get("event_type") == "DynamicToolInvoked"
+        if fields.get("event_type") == "runefoble.events.mcp_tools.dynamic_tool_invoked"
     ]
     assert invoked and invoked[-1]["user_id"] == "alex"

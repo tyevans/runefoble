@@ -11,7 +11,6 @@ from pydantic import Field
 from runefoble_events.base import BaseRunefobleEvent, register_event
 
 
-@register_event("voice.echo_suppression_engaged")
 @register_event("runefoble.events.voice.echo_suppression_engaged")
 class EchoSuppressionEngagedEvent(BaseRunefobleEvent):
     """Emitted when acoustic echo suppression is engaged on microphone stream."""
@@ -28,7 +27,6 @@ class EchoSuppressionEngagedEvent(BaseRunefobleEvent):
     is_double_talk: bool = False
 
 
-@register_event("voice.aec_benchmark_completed")
 @register_event("runefoble.events.voice.aec_benchmark_completed")
 class AECBenchmarkCompletedEvent(BaseRunefobleEvent):
     """Emitted when hardware AEC benchmark finishes validating ERLE > 35dB."""

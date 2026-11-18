@@ -98,4 +98,4 @@ async def test_blackbox_cross_campaign_acceptance_and_zanzibar_authorization(
     assert auth_accept.json()["contract"]["contractor_party_name"] == "Iron Claws"
 
     # Verify event published to Redis Stream
-    assert_stream_events(mock_bus, "CaravanContractAccepted")
+    assert_stream_events(mock_bus, "runefoble.events.west_marches.caravan_contract_accepted")

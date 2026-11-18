@@ -147,7 +147,7 @@ def test_ready_action_card_frontdoor_registration(client: TestClient) -> None:
     eval_res = client.post(
         f"/api/v1/sessions/{session_id}/reactions/evaluate-triggers",
         json={
-            "event_type": "TokenMoved",
+            "event_type": "runefoble.events.board.token_moved",
             "event_data": {"token_id": "token-goblin-1", "range_cells": 4},
         },
     )

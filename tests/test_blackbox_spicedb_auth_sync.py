@@ -97,7 +97,7 @@ async def test_auth_sync_domain_event_orchestration() -> None:
     # 4. Token placed
     await service.handle_domain_event(
         {
-            "type": "TokenPlaced",
+            "type": "runefoble.events.board.token_placed",
             "data": {"token_id": token_id, "character_id": str(char_id), "campaign_id": camp_id},
         }
     )

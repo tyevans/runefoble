@@ -8,8 +8,11 @@ from pydantic import Field
 from runefoble_events.base import BaseRunefobleEvent, register_event
 
 
-@register_event
+@register_event("runefoble.events.session.created")
 class SessionCreated(BaseRunefobleEvent):
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.session.created"
+
     aggregate_type: str = "GameSession"
     title: str = "Untitled Session"
     dm_id: str = "the_watcher"
@@ -18,8 +21,11 @@ class SessionCreated(BaseRunefobleEvent):
     created_by: str = "system"
 
 
-@register_event
+@register_event("runefoble.events.session.participant_joined")
 class ParticipantJoined(BaseRunefobleEvent):
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.session.participant_joined"
+
     aggregate_type: str = "GameSession"
     session_id: UUID | str = ""
     campaign_id: UUID | str = ""
@@ -28,8 +34,11 @@ class ParticipantJoined(BaseRunefobleEvent):
     character_id: UUID | str | None = None
 
 
-@register_event
+@register_event("runefoble.events.session.started")
 class SessionStarted(BaseRunefobleEvent):
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.session.started"
+
     aggregate_type: str = "GameSession"
     started_at_turn: int = 1
 
@@ -37,8 +46,11 @@ class SessionStarted(BaseRunefobleEvent):
 GameSessionStarted = SessionStarted
 
 
-@register_event
+@register_event("runefoble.events.session.player_joined_session")
 class PlayerJoinedSession(BaseRunefobleEvent):
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.session.player_joined_session"
+
     aggregate_type: str = "GameSession"
     player_id: str
     character_id: UUID
@@ -46,23 +58,32 @@ class PlayerJoinedSession(BaseRunefobleEvent):
     character_class: str
 
 
-@register_event
+@register_event("runefoble.events.session.player_left_session")
 class PlayerLeftSession(BaseRunefobleEvent):
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.session.player_left_session"
+
     aggregate_type: str = "GameSession"
     player_id: str
     reason: str = "disconnected"
 
 
-@register_event
+@register_event("runefoble.events.session.turn_advanced")
 class TurnAdvanced(BaseRunefobleEvent):
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.session.turn_advanced"
+
     aggregate_type: str = "GameSession"
     previous_turn: int
     new_turn: int
     active_character_id: UUID | None = None
 
 
-@register_event
+@register_event("runefoble.events.session.turn_started")
 class TurnStarted(BaseRunefobleEvent):
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.session.turn_started"
+
     aggregate_type: str = "GameSession"
     aggregate_id: UUID = Field(default_factory=uuid4)
     session_id: UUID | str = ""
@@ -88,8 +109,11 @@ class CameraTargetUpdated(BaseRunefobleEvent):
     reason: str = "turn_started"
 
 
-@register_event
+@register_event("runefoble.events.session.ended")
 class SessionEnded(BaseRunefobleEvent):
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.session.ended"
+
     aggregate_type: str = "GameSession"
     summary: str = "Session completed"
 
@@ -106,8 +130,11 @@ class SpectatorSessionConnected(BaseRunefobleEvent):
     connected_at: str
 
 
-@register_event
+@register_event("runefoble.events.session.combat_encounter_started")
 class CombatEncounterStarted(BaseRunefobleEvent):
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.session.combat_encounter_started"
+
     aggregate_type: str = "GameSession"
     session_id: UUID | str | None = None
     round_number: int = 1
@@ -117,8 +144,11 @@ class CombatEncounterStarted(BaseRunefobleEvent):
 CombatStarted = CombatEncounterStarted
 
 
-@register_event
+@register_event("runefoble.events.session.initiative_rolled")
 class InitiativeRolled(BaseRunefobleEvent):
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.session.initiative_rolled"
+
     aggregate_type: str = "GameSession"
     session_id: UUID | str | None = None
     combatant_id: str
@@ -127,8 +157,11 @@ class InitiativeRolled(BaseRunefobleEvent):
     is_npc: bool = False
 
 
-@register_event
+@register_event("runefoble.events.session.initiative_turn_advanced")
 class InitiativeTurnAdvanced(BaseRunefobleEvent):
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.session.initiative_turn_advanced"
+
     aggregate_type: str = "GameSession"
     session_id: UUID | str | None = None
     round_number: int
@@ -136,31 +169,43 @@ class InitiativeTurnAdvanced(BaseRunefobleEvent):
     turn_seconds_remaining: int = 60
 
 
-@register_event
+@register_event("runefoble.events.session.combat_round_advanced")
 class CombatRoundAdvanced(BaseRunefobleEvent):
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.session.combat_round_advanced"
+
     aggregate_type: str = "GameSession"
     session_id: UUID | str | None = None
     round_number: int
     active_combatant_id: str = ""
 
 
-@register_event
+@register_event("runefoble.events.session.combat_encounter_ended")
 class CombatEncounterEnded(BaseRunefobleEvent):
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.session.combat_encounter_ended"
+
     aggregate_type: str = "GameSession"
     session_id: UUID | str | None = None
     total_rounds: int
 
 
-@register_event
+@register_event("runefoble.events.session.readiness_toggled")
 class ReadinessToggled(BaseRunefobleEvent):
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.session.readiness_toggled"
+
     aggregate_type: str = "GameSession"
     session_id: UUID | str = ""
     player_id: str
     is_ready: bool
 
 
-@register_event
+@register_event("runefoble.events.session.character_selected_for_lobby")
 class CharacterSelectedForLobby(BaseRunefobleEvent):
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.session.character_selected_for_lobby"
+
     aggregate_type: str = "GameSession"
     session_id: UUID | str = ""
     player_id: str

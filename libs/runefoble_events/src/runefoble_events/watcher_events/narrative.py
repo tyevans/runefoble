@@ -10,8 +10,11 @@ from pydantic import Field
 from runefoble_events.base import BaseRunefobleEvent, register_event
 
 
-@register_event
+@register_event("runefoble.events.watcher.player_spoke")
 class PlayerSpokeEvent(BaseRunefobleEvent):
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.watcher.player_spoke"
+
     aggregate_type: str = "GameSession"
     speaker_id: str
     speaker_name: str
@@ -20,8 +23,11 @@ class PlayerSpokeEvent(BaseRunefobleEvent):
     target_character_id: str | None = None
 
 
-@register_event
+@register_event("runefoble.events.watcher.speech_intent_parsed")
 class SpeechIntentParsed(BaseRunefobleEvent):
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.watcher.speech_intent_parsed"
+
     aggregate_type: str = "GameSession"
     speaker_name: str
     action_type: str
@@ -31,8 +37,11 @@ class SpeechIntentParsed(BaseRunefobleEvent):
     raw_transcript: str = ""
 
 
-@register_event
+@register_event("runefoble.events.watcher.narration_generated")
 class WatcherNarrationGenerated(BaseRunefobleEvent):
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.watcher.narration_generated"
+
     aggregate_type: str = "GameSession"
     narrative_text: str
     tone: str = "dark_fantasy"
@@ -41,8 +50,11 @@ class WatcherNarrationGenerated(BaseRunefobleEvent):
     tension_level: Literal["calm", "rising", "climax", "aftermath"] = "rising"
 
 
-@register_event
+@register_event("runefoble.events.watcher.stand_in_action_decided")
 class StandInActionDecided(BaseRunefobleEvent):
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.watcher.stand_in_action_decided"
+
     aggregate_type: str = "GameSession"
     character_name: str
     action_type: str

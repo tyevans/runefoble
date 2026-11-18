@@ -8,7 +8,6 @@ from pydantic import Field
 from runefoble_events.base import BaseRunefobleEvent, register_event
 
 
-@register_event("BoardDoorToggledEvent")
 @register_event("runefoble.events.board.door_toggled")
 class BoardDoorToggledEvent(BaseRunefobleEvent):
     """Emitted when an interactive door or portal changes state (open/closed/locked)."""
@@ -26,7 +25,6 @@ class BoardDoorToggledEvent(BaseRunefobleEvent):
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 
-@register_event("BoardLightSourcePlacedEvent")
 @register_event("runefoble.events.board.light_source_placed")
 class BoardLightSourcePlacedEvent(BaseRunefobleEvent):
     """Emitted when a point light source or radiance emitter is placed on the board."""

@@ -172,4 +172,7 @@ async def test_blackbox_caravan_contract_accept_and_stream_events(
 
     # 5. Verify domain event published to Redis Streams
     entries = mock_bus.streams.get(STREAM_WEST_MARCHES, [])
-    assert any("CaravanContractAccepted" in str(entry[1]) for entry in entries)
+    assert any(
+        "runefoble.events.west_marches.caravan_contract_accepted" in str(entry[1])
+        for entry in entries
+    )

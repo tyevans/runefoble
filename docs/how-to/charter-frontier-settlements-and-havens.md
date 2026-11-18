@@ -147,8 +147,8 @@ A contributing campaign moves gold from its stronghold treasury into an outpost 
 The contribution has two steps:
 
 1. `campaign_lore` checks that the caller can play the frontier. It resolves the outpost. An unknown `outpost_id` answers `404` before any debit.
-2. `campaign_lore` calls `game_session` at `POST /api/v1/campaigns/{campaign_id}/stronghold/treasury/contribute`. It sends the caller's bearer and the service credential. `game_session` checks `stronghold.manage` and debits the treasury. It emits `StrongholdTreasuryContributed`.
-3. `campaign_lore` credits the outpost gold and emits `OutpostResourcesContributed`.
+2. `campaign_lore` calls `game_session` at `POST /api/v1/campaigns/{campaign_id}/stronghold/treasury/contribute`. It sends the caller's bearer and the service credential. `game_session` checks `stronghold.manage` and debits the treasury. It emits `runefoble.events.downtime.stronghold_treasury_contributed`.
+3. `campaign_lore` credits the outpost gold and emits `runefoble.events.west_marches.outpost_resources_contributed`.
 
 A missing `stronghold.manage` permission answers `403`. A treasury that cannot pay answers `409`. Both refusals change no store and emit no event. An unreachable `game_session` answers `503` and credits nothing.
 

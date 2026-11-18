@@ -9,9 +9,9 @@ This guide explains how to project combat telemetry, query tactical damage heatm
 The Campaign Analytics microservice operates as a CQRS projection engine and chronicle archive:
 
 1. **Redis Streams Ingestion**: The `campaign_analytics_worker` runs one consumer per stream:
-   - `runefoble.events.session`: Session lifecycle and encounter progression (`SessionCreated`, `CombatEncounterStarted`, `InitiativeTurnAdvanced`, `SessionEnded`). Each `InitiativeTurnAdvanced` counts a turn for its active combatant. A round milestone is recorded when the round number changes.
-   - `runefoble.events.board`: Token placement and movement (`TokenPlaced`, `TokenMoved`).
-   - `runefoble.events.character`: Damage and healing deltas (`CharacterHealthChanged`). The event carries `session_id` and `campaign_id`. A health change with a null `session_id` is skipped. The character id never stands in for a session.
+   - `runefoble.events.session`: Session lifecycle and encounter progression (`runefoble.events.session.created`, `runefoble.events.session.combat_encounter_started`, `runefoble.events.session.initiative_turn_advanced`, `runefoble.events.session.ended`). Each `runefoble.events.session.initiative_turn_advanced` counts a turn for its active combatant. A round milestone is recorded when the round number changes.
+   - `runefoble.events.board`: Token placement and movement (`runefoble.events.board.token_placed`, `runefoble.events.board.token_moved`).
+   - `runefoble.events.character`: Damage and healing deltas (`runefoble.events.character.health_changed`). The event carries `session_id` and `campaign_id`. A health change with a null `session_id` is skipped. The character id never stands in for a session.
    - `runefoble.events.watcher`: Dice rolls (`DiceRolled`) and absentee recaps (`AbsenteeRecapGenerated`).
 2. **PostgreSQL Read Models**: Every query reads these tables. The service does not keep read models in memory.
    - `campaign_spatial_telemetry`: Heatmap points.

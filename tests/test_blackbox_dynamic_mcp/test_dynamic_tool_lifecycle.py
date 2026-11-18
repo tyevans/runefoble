@@ -134,15 +134,15 @@ async def test_blackbox_tool_lifecycle_cloudevents(client: TestClient, mock_redi
     assert len(stream_messages) >= 3
 
     event_types = [fields.get("event_type") for _, fields in stream_messages]
-    assert "DynamicToolRegistered" in event_types
-    assert "DynamicToolInvoked" in event_types
-    assert "DynamicToolUnregistered" in event_types
+    assert "runefoble.events.mcp_tools.dynamic_tool_registered" in event_types
+    assert "runefoble.events.mcp_tools.dynamic_tool_invoked" in event_types
+    assert "runefoble.events.mcp_tools.dynamic_tool_unregistered" in event_types
 
     # Verify payload details for registration
     reg_fields = next(
         fields
         for _, fields in stream_messages
-        if fields.get("event_type") == "DynamicToolRegistered"
+        if fields.get("event_type") == "runefoble.events.mcp_tools.dynamic_tool_registered"
     )
     reg_payload = json.loads(reg_fields["payload"])
     assert reg_payload["tool_name"] == tool_name

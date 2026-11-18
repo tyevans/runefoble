@@ -11,7 +11,6 @@ from pydantic import Field
 from runefoble_events.base import BaseRunefobleEvent, register_event
 
 
-@register_event("voice.modulator_preset_applied")
 @register_event("runefoble.events.voice.modulator_preset_applied")
 class VocalModulatorPresetAppliedEvent(BaseRunefobleEvent):
     """Emitted when a DM vocal modulator preset is applied to an outgoing audio stream."""
@@ -33,7 +32,6 @@ class VocalModulatorPresetAppliedEvent(BaseRunefobleEvent):
     applied_at: float = Field(default_factory=time.time)
 
 
-@register_event("voice.filter_toggled")
 @register_event("runefoble.events.voice.filter_toggled")
 class VoiceFilterToggledEvent(BaseRunefobleEvent):
     """Emitted when a live voice filter parameter or node is toggled on/off."""

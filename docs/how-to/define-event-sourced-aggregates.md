@@ -4,22 +4,28 @@ This guide explains how to define new domain events, state models, and `Declarat
 
 ## 1. Define Domain Events
 
-All domain events inherit from `BaseRunefobleEvent` and are registered with the `@register_event` decorator:
+All domain events inherit from `BaseRunefobleEvent` and are registered with the `@register_event` decorator from `runefoble_events.base`. Each event has one wire identifier in the form `runefoble.events.<bc>.<snake_case>`. The identifier never uses the class name.
+
+A class sets its identifier in two places. The decorator registers the identifier. The class field `event_type` sets the value that the event carries. Set `suppress_event_type_warning` to `True` because the class name differs from the identifier:
 
 ```python
-from uuid import UUID
-from eventsource.domain.event_registry import register_event
-from runefoble_events.events import BaseRunefobleEvent
+from typing import ClassVar
+
+from runefoble_events.base import BaseRunefobleEvent, register_event
 
 
-@register_event
+@register_event("runefoble.events.character.loot_item_acquired")
 class LootItemAcquired(BaseRunefobleEvent):
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.character.loot_item_acquired"
     aggregate_type: str = "CharacterSheet"
     item_id: str
     item_name: str
     quantity: int = 1
     rarity: str = "common"
 ```
+
+Run `uv run python scripts/generate_event_catalogue.py` after you add an event. The script fails when an identifier breaks the rule. The catalogue is `docs/reference/event-identifiers.md`.
 
 ## 2. Define State Model
 

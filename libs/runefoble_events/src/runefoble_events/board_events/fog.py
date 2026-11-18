@@ -8,15 +8,17 @@ from pydantic import Field
 from runefoble_events.base import BaseRunefobleEvent, register_event
 
 
-@register_event
+@register_event("runefoble.events.board.fog_of_war_revealed")
 class FogOfWarRevealed(BaseRunefobleEvent):
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.board.fog_of_war_revealed"
+
     aggregate_type: str = "BoardState"
     revealed_cells: list[list[int]] = Field(default_factory=list)
     revealed_by_token_id: str | None = None
 
 
 FogRevealed = FogOfWarRevealed
-register_event(FogOfWarRevealed, event_type="FogRevealed")
 
 
 @register_event("runefoble.events.board.fog_of_war_shrouded")
@@ -30,8 +32,6 @@ class FogOfWarShrouded(BaseRunefobleEvent):
 
 
 ShroudReset = FogOfWarShrouded
-register_event(FogOfWarShrouded, event_type="ShroudReset")
-register_event(FogOfWarShrouded, event_type="FogOfWarShrouded")
 
 
 @register_event("runefoble.events.board.visibility_mask_updated")
@@ -47,6 +47,3 @@ class VisibilityMaskUpdated(BaseRunefobleEvent):
     token_id: str | None = None
     revealed_count: int = 0
     total_cells: int = 0
-
-
-register_event(VisibilityMaskUpdated, event_type="VisibilityMaskUpdated")

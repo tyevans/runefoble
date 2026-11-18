@@ -66,7 +66,7 @@ def test_dart_throw_publishes_dart_thrown_on_tavern_stream(
         assert ws.receive_json()["type"] == "dart_thrown"
 
     event_types = [fields.get("event_type", "") for _, fields in mock_bus.streams[STREAM_TAVERN]]
-    assert any("DartThrown" in event_type for event_type in event_types)
+    assert any("runefoble.events.tavern.dart_thrown" in event_type for event_type in event_types)
 
 
 def test_socket_connect_does_not_create_an_unopened_table(session_client: TestClient) -> None:
@@ -99,7 +99,7 @@ def test_action_from_unseated_player_is_rejected_without_state_change(
         assert msg["type"] == "error" and msg["code"] == "ACTION_REJECTED"
 
     assert not any(
-        "DartThrown" in fields.get("event_type", "")
+        "runefoble.events.tavern.dart_thrown" in fields.get("event_type", "")
         for _, fields in mock_bus.streams.get(STREAM_TAVERN, [])
     )
     res = session_client.get(f"/api/v1/tavern/tables/{table_id}", headers=_auth())

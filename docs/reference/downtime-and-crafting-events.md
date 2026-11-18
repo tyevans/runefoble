@@ -6,7 +6,7 @@ This reference details the domain events, aggregates, and REST interfaces introd
 
 All downtime events subclass `BaseRunefobleEvent` and are CloudEvents 1.0-compliant.
 
-### 1. `CraftingAttempted`
+### 1. `runefoble.events.downtime.crafting_attempted`
 - **Topic**: `runefoble.events.crafting`
 - **Aggregate Type**: `Crafting`
 - **Payload Fields**:
@@ -18,7 +18,7 @@ All downtime events subclass `BaseRunefobleEvent` and are CloudEvents 1.0-compli
   - `catalyst`: Optional[str] — Stabilizing or amplifying catalyst used (e.g. `purified_water`, `dragon_bile`).
   - `risk_score`: Float — Volatility probability (0.0 to 1.0) computed by the risk matrix.
 
-### 2. `CraftingSucceeded`
+### 2. `runefoble.events.downtime.crafting_succeeded`
 - **Topic**: `runefoble.events.crafting`
 - **Aggregate Type**: `Crafting`
 - **Payload Fields**:
@@ -31,7 +31,7 @@ All downtime events subclass `BaseRunefobleEvent` and are CloudEvents 1.0-compli
   - `catalyst_consumed`: Optional[str] — Catalyst consumed in the reaction.
   - `properties`: Dict[str, Any] — Mechanical parameters (radius, duration, damage dice).
 
-### 3. `CraftingMishapOccurred`
+### 3. `runefoble.events.downtime.crafting_mishap_occurred`
 - **Topic**: `runefoble.events.crafting`
 - **Aggregate Type**: `Crafting`
 - **Payload Fields**:
@@ -45,13 +45,13 @@ All downtime events subclass `BaseRunefobleEvent` and are CloudEvents 1.0-compli
 
 ### 3a. Mishap Health Events
 A mishap that deals damage publishes the standard health events on the character stream (`runefoble.events.character`). The events match those of the health route.
-- **`CharacterHealthChanged`**: `delta` is the negative damage. `source` is `crafting_mishap`. `current_hp` and `max_hp` are the saved values. `session_id` is the combine request session, or null.
+- **`CharacterHealthChanged`** (`runefoble.events.character.health_changed`): `delta` is the negative damage. `source` is `crafting_mishap`. `current_hp` and `max_hp` are the saved values. `session_id` is the combine request session, or null.
 - **`CharacterDamaged`** (event type `runefoble.events.character.damaged`): same `delta`, `current_hp`, `max_hp`, and `source`.
 - **`StandInStabilized`**: published only when the damage stabilizes a stand-in at 0 HP.
 
 These events publish after the character and the crafting history are saved. A mishap with no damage publishes no health event.
 
-### 4. `CampfireRestCompleted`
+### 4. `runefoble.events.downtime.campfire_rest_completed`
 - **Topic**: `runefoble.events.session`
 - **Aggregate Type**: `GameSession`
 - **Payload Fields**:
@@ -62,7 +62,7 @@ These events publish after the character and the crafting history are saved. A m
   - `boons_applied`: List[str] — All rest boons granted (including active stronghold buffs).
   - `participants_healed`: List[str] — Character names or IDs recovering HP and spell slots.
 
-### 5. `StrongholdCreated`
+### 5. `runefoble.events.downtime.stronghold_created`
 - **Topic**: `runefoble.events.stronghold`
 - **Aggregate Type**: `Stronghold`
 - **Payload Fields**:
@@ -70,7 +70,7 @@ These events publish after the character and the crafting history are saved. A m
   - `name`: str — Campsite/stronghold name (default `Party Campsite`).
   - `location`: str — Geographic terrain descriptor (e.g. `Wilderness`, `Highland Woods`).
 
-### 6. `StrongholdDeposited`
+### 6. `runefoble.events.downtime.stronghold_deposited`
 - **Topic**: `runefoble.events.stronghold`
 - **Aggregate Type**: `Stronghold`
 - **Payload Fields**:
@@ -78,7 +78,7 @@ These events publish after the character and the crafting history are saved. A m
   - `gold`: int — Gold added to the treasury.
   - `materials`: Dict[str, int] — Materials added to the store.
 
-### 7. `StrongholdUpgraded`
+### 7. `runefoble.events.downtime.stronghold_upgraded`
 - **Topic**: `runefoble.events.stronghold`
 - **Aggregate Type**: `Stronghold`
 - **Payload Fields**:
@@ -89,9 +89,9 @@ These events publish after the character and the crafting history are saved. A m
   - `materials_spent`: Dict[str, int] — Resource materials taken from the store (wood, stone, flora, iron). Equals the tier table cost (TASK-0778).
   - `unlocked_boons`: List[str] — Mechanical resting bonuses unlocked for the adventuring party.
 
-Replay note: The handler subtracts gold and materials. A `StrongholdUpgraded` event stored before TASK-0774 therefore replays with the corrected arithmetic. Dev campsites that were upgraded before the fix can show a negative treasury. Reset dev data to clear them.
+Replay note: The handler subtracts gold and materials. A `runefoble.events.downtime.stronghold_upgraded` event stored before TASK-0774 therefore replays with the corrected arithmetic. Dev campsites that were upgraded before the fix can show a negative treasury. Reset dev data to clear them.
 
-### 8. `StrongholdTreasuryContributed`
+### 8. `runefoble.events.downtime.stronghold_treasury_contributed`
 - **Topic**: `runefoble.events.stronghold`
 - **Aggregate Type**: `Stronghold`
 - **Payload Fields**:
@@ -99,7 +99,7 @@ Replay note: The handler subtracts gold and materials. A `StrongholdUpgraded` ev
   - `gold`: int — Gold debited from the treasury for a frontier outpost (TASK-0795).
   - `destination_outpost_id`: str — Receiving outpost id, recorded for the audit trail. `game_session` does not read it.
 
-The credit to the outpost store is the `OutpostResourcesContributed` event in `campaign_lore` (see [Events Catalog: Platform](events-catalog-platform.md)).
+The credit to the outpost store is the `runefoble.events.west_marches.outpost_resources_contributed` event in `campaign_lore` (see [Events Catalog: Platform](events-catalog-platform.md)).
 
 ---
 

@@ -60,7 +60,7 @@ def test_mishap_damage_publishes_the_standard_health_events(
     damage = 16 - body["character_current_hp"]
     assert damage > 0
 
-    changed = _events(mock_bus, STREAM_CHARACTER, "CharacterHealthChanged")
+    changed = _events(mock_bus, STREAM_CHARACTER, "runefoble.events.character.health_changed")
     mine = [e for e in changed if e.get("aggregate_id") == char_id]
     assert len(mine) == 1
     assert mine[0]["delta"] == -damage
@@ -92,7 +92,7 @@ def test_unknown_character_answers_404_and_writes_nothing(
     )
     assert res.status_code == 404, res.text
 
-    crafted = _events(mock_bus, STREAM_CRAFTING, "CraftingAttempted")
+    crafted = _events(mock_bus, STREAM_CRAFTING, "runefoble.events.downtime.crafting_attempted")
     assert all(e.get("character_id") != missing_id for e in crafted)
 
     history = char_client.get(f"/api/v1/crafting/{missing_id}/history")
@@ -114,9 +114,12 @@ def test_character_load_failure_answers_503_and_publishes_nothing(
     assert res.status_code == 503, res.text
     assert res.json()["detail"] == OUTAGE_DETAIL
 
-    assert _events(mock_bus, STREAM_CRAFTING, "CraftingAttempted") == []
-    assert _events(mock_bus, STREAM_CRAFTING, "CraftingMishapOccurred") == []
-    assert _events(mock_bus, STREAM_CHARACTER, "CharacterHealthChanged") == []
+    assert _events(mock_bus, STREAM_CRAFTING, "runefoble.events.downtime.crafting_attempted") == []
+    assert (
+        _events(mock_bus, STREAM_CRAFTING, "runefoble.events.downtime.crafting_mishap_occurred")
+        == []
+    )
+    assert _events(mock_bus, STREAM_CHARACTER, "runefoble.events.character.health_changed") == []
 
     history = char_client.get(f"/api/v1/crafting/{char_id}/history")
     assert history.status_code == 200, history.text

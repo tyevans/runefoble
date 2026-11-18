@@ -140,9 +140,9 @@ async def test_blackbox_caravan_lifecycle_ambush_and_settlement_economy_fulfillm
     # Verify CloudEvents emission over Redis Streams
     assert_stream_events(
         mock_bus,
-        "CaravanContractPosted",
-        "CaravanContractAccepted",
-        "CaravanDispatched",
-        "CaravanAmbushed",
-        "CaravanTradeFulfilled",
+        "runefoble.events.west_marches.caravan_contract_posted",
+        "runefoble.events.west_marches.caravan_contract_accepted",
+        "runefoble.events.west_marches.caravan_dispatched",
+        "runefoble.events.west_marches.caravan_ambushed",
+        "runefoble.events.west_marches.caravan_trade_fulfilled",
     )

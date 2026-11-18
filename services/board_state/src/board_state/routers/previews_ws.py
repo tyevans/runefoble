@@ -24,7 +24,12 @@ logger = logging.getLogger("runefoble.board_state.routers.previews_ws")
 
 router = APIRouter(tags=["previews"])
 
-GHOST_ACTIONS = ("preview_move", "ghost_preview", "speech_intent", "SpeechIntentParsed")
+GHOST_ACTIONS = (
+    "preview_move",
+    "ghost_preview",
+    "speech_intent",
+    "runefoble.events.watcher.speech_intent_parsed",
+)
 CONFIRM_ACTIONS = ("confirm_move", "confirm_ghost", "confirm_intent")
 CANCEL_ACTIONS = ("cancel_preview", "cancel_ghost")
 
@@ -154,7 +159,7 @@ async def board_websocket(websocket: WebSocket, session_id: str):
         while True:
             data = await websocket.receive_json()
             action = data.get("action") or data.get("type") or "unknown"
-            is_cast = action == "SpeechIntentParsed" and (
+            is_cast = action == "runefoble.events.watcher.speech_intent_parsed" and (
                 data.get("action_type") == "cast_spell"
                 or data.get("parameters", {}).get("action") == "cast_spell"
             )

@@ -8,8 +8,11 @@ from pydantic import Field
 from runefoble_events.base import BaseRunefobleEvent, register_event
 
 
-@register_event
+@register_event("runefoble.events.board.token_placed")
 class TokenPlaced(BaseRunefobleEvent):
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.board.token_placed"
+
     aggregate_type: str = "BoardState"
     token_id: str = Field(default_factory=lambda: str(uuid4()))
     name: str
@@ -20,8 +23,11 @@ class TokenPlaced(BaseRunefobleEvent):
     is_friendly: bool = False
 
 
-@register_event
+@register_event("runefoble.events.board.token_moved")
 class TokenMoved(BaseRunefobleEvent):
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.board.token_moved"
+
     aggregate_type: str = "BoardState"
     token_id: str
     name: str
@@ -32,8 +38,11 @@ class TokenMoved(BaseRunefobleEvent):
     initiated_by: Literal["player", "the_watcher", "stand_in"] = "player"
 
 
-@register_event
+@register_event("runefoble.events.board.token_removed")
 class TokenRemoved(BaseRunefobleEvent):
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.board.token_removed"
+
     aggregate_type: str = "BoardState"
     token_id: str
     reason: str = "defeated"
@@ -90,7 +99,3 @@ class ElevationChanged(BaseRunefobleEvent):
 
 
 BoardMoveEvent = TokenMoved
-register_event(TokenMoved, event_type="BoardMoveEvent")
-register_event(TokenActionExecuted, event_type="TokenActionExecuted")
-register_event(TokenKnockbackApplied, event_type="TokenKnockbackApplied")
-register_event(ElevationChanged, event_type="ElevationChanged")

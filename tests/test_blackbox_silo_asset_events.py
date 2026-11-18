@@ -32,9 +32,9 @@ def test_asset_events_registration_and_cloudevents():
     assert deleted_cls is not None
     assert deleted_cls is AssetDeleted
 
-    # Verify lookup by class name
-    assert get_event_class_or_none("AssetUploaded") is AssetUploaded
-    assert get_event_class_or_none("AssetDeleted") is AssetDeleted
+    # Class names are not identifiers: a retired short name resolves to no event
+    assert get_event_class_or_none("AssetUploaded") is None
+    assert get_event_class_or_none("AssetDeleted") is None
 
     # Verify CloudEvents 1.0 serialization
     upload_event = AssetUploaded(

@@ -80,7 +80,7 @@ class ReadyActionRegistry:
                 k in el for k in ("attack", "strike", "action_executed")
             ) and ent_id != act.get("combatant_id")
         cond = act.get("trigger_condition", "").lower()
-        return bool(cond and any(w in cond for w in el.split(".")))
+        return bool(cond and el.rsplit(".", 1)[-1] in cond)
 
     async def evaluate_triggers(
         self, session_id: UUID, event_type: str, event_data: dict[str, Any]

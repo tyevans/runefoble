@@ -10,7 +10,6 @@ from pydantic import Field
 from runefoble_events.base import BaseRunefobleEvent, register_event
 
 
-@register_event("TrapPlacedEvent")
 @register_event("runefoble.events.board.trap_placed")
 class TrapPlacedEvent(BaseRunefobleEvent):
     """Emitted when a secret DM spatial trap or trigger is placed on the board."""
@@ -35,7 +34,6 @@ class TrapPlacedEvent(BaseRunefobleEvent):
     created_by: str | None = None
 
 
-@register_event("TrapSprungEvent")
 @register_event("runefoble.events.board.trap_sprung")
 class TrapSprungEvent(BaseRunefobleEvent):
     """Emitted when a moving token breaches an armed trap cell or proximity zone."""
@@ -55,7 +53,6 @@ class TrapSprungEvent(BaseRunefobleEvent):
     movement_paused: bool = True
 
 
-@register_event("TrapDisarmedEvent")
 @register_event("runefoble.events.board.trap_disarmed")
 class TrapDisarmedEvent(BaseRunefobleEvent):
     """Emitted when a secret trap is disarmed or disabled."""
@@ -69,7 +66,6 @@ class TrapDisarmedEvent(BaseRunefobleEvent):
     disarmed_by: str | None = None
 
 
-@register_event("BattlemapSwitchedEvent")
 @register_event("runefoble.events.board.battlemap_switched")
 class BattlemapSwitchedEvent(BaseRunefobleEvent):
     """Emitted when the DM transitions the stage to a new battlemap and teleports tokens."""

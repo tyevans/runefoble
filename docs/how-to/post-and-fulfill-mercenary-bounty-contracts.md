@@ -116,4 +116,4 @@ Response:
 }
 ```
 
-Escrow is unlocked, payout is disbursed to the claimant, and `MercenaryBountyFulfilled` is published to `runefoble.events.session`.
+Escrow is unlocked, payout is disbursed to the claimant, and `runefoble.events.west_marches.mercenary_bounty_fulfilled` is published to `runefoble.events.session`.

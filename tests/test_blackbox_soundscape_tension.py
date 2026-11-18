@@ -67,7 +67,10 @@ def test_soundscape_combat_cloudevents_registration():
     assert tension_cls is SoundscapeTensionUpdated
 
     assert CombatStarted is CombatEncounterStarted
-    assert get_event_class_or_none("CombatRoundAdvanced") is CombatRoundAdvanced
+    assert (
+        get_event_class_or_none("runefoble.events.session.combat_round_advanced")
+        is CombatRoundAdvanced
+    )
 
     event = SoundscapeCueTriggered(
         session_id="session-tomb-14",

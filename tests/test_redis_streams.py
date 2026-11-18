@@ -96,7 +96,7 @@ async def test_publish_domain_event(
 
     stored_id, fields = mock_redis.streams["runefoble.events.session"][0]
     assert stored_id == entry_id
-    assert fields["event_type"] == "SessionCreated"
+    assert fields["event_type"] == "runefoble.events.session.created"
     assert str(event.event_id) == fields["event_id"]
     assert "Test Campaign Kickoff" in fields["payload"]
 
@@ -213,7 +213,7 @@ def test_deserialize_event_helper() -> None:
 
     # 1. From Redis stream fields dict with payload JSON string
     fields = {
-        "event_type": "SessionCreated",
+        "event_type": "runefoble.events.session.created",
         "payload": event.model_dump_json(),
     }
     deserialized = deserialize_event(fields)
@@ -227,13 +227,12 @@ def test_deserialize_event_helper() -> None:
     assert isinstance(deserialized_unpacked, SessionCreated)
     assert deserialized_unpacked.aggregate_id == session_id
 
-    # 3. From CloudEvents namespaced type
-    ce_fields = {
+    # 3. A retired class-name identifier does not resolve to an event
+    retired_fields = {
         "event_type": "runefoble.SessionCreated",
         "payload": event.model_dump_json(),
     }
-    deserialized_ce = deserialize_event(ce_fields)
-    assert isinstance(deserialized_ce, SessionCreated)
+    assert not isinstance(deserialize_event(retired_fields), SessionCreated)
 
     # 4. Unregistered event type returns dictionary
     unregistered_fields = {

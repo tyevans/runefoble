@@ -133,7 +133,7 @@ def test_token_events_instantiation_and_cloudevents() -> None:
     assert move_ev.token_id == "tok-alpha"
     assert BoardMoveEvent is TokenMoved
     ce_move = move_ev.to_cloudevent_dict()
-    assert ce_move["type"] == "runefoble.tokenmoved"
+    assert ce_move["type"] == "runefoble.events.board.token_moved"
     assert ce_move["data"]["to_x"] == 4
 
     # TokenRemoved
@@ -367,21 +367,24 @@ def test_terrain_spells_and_physics_events_instantiation() -> None:
 
 def test_event_registry_resolution() -> None:
     """Verify that domain event types resolve correctly from the global event registry."""
-    assert get_event_class_or_none("TokenMoved") is TokenMoved
-    assert get_event_class_or_none("BoardMoveEvent") is TokenMoved
+    assert get_event_class_or_none("runefoble.events.board.token_moved") is TokenMoved
     assert (
         get_event_class_or_none("runefoble.events.board.token_knockback_applied")
         is TokenKnockbackApplied
     )
-    assert get_event_class_or_none("TokenKnockbackApplied") is TokenKnockbackApplied
+    assert get_event_class_or_none("TokenKnockbackApplied") is None
     assert get_event_class_or_none("runefoble.events.board.elevation_changed") is ElevationChanged
-    assert get_event_class_or_none("ElevationChanged") is ElevationChanged
+    assert get_event_class_or_none("ElevationChanged") is None
     assert (
         get_event_class_or_none("runefoble.events.board.visibility_mask_updated")
         is VisibilityMaskUpdated
     )
-    assert get_event_class_or_none("VisibilityMaskUpdated") is VisibilityMaskUpdated
-    assert get_event_class_or_none("FogRevealed") is FogOfWarRevealed
-    assert get_event_class_or_none("ShroudReset") is FogOfWarShrouded
-    assert get_event_class_or_none("BoardLightSourcePlacedEvent") is BoardLightSourcePlacedEvent
-    assert get_event_class_or_none("BoardDoorToggledEvent") is BoardDoorToggledEvent
+    assert (
+        get_event_class_or_none("runefoble.events.board.visibility_mask_updated")
+        is VisibilityMaskUpdated
+    )
+    # Retired short names and Python alias names resolve to no event.
+    assert get_event_class_or_none("FogRevealed") is None
+    assert get_event_class_or_none("ShroudReset") is None
+    assert get_event_class_or_none("BoardLightSourcePlacedEvent") is None
+    assert get_event_class_or_none("BoardDoorToggledEvent") is None

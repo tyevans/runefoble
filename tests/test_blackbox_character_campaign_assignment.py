@@ -35,7 +35,7 @@ def client(spicedb):
 def test_character_assigned_to_campaign_event_registry_and_schema():
     """Verify CharacterAssignedToCampaign event is registered, versioned, and CloudEvents compatible."""
     # Check registry resolution
-    cls1 = default_registry.get("character.assigned_to_campaign")
+    cls1 = default_registry.get("runefoble.events.character.assigned_to_campaign")
     cls2 = default_registry.get("runefoble.events.character.assigned_to_campaign")
     assert cls1 is CharacterAssignedToCampaign
     assert cls2 is CharacterAssignedToCampaign
@@ -49,7 +49,7 @@ def test_character_assigned_to_campaign_event_registry_and_schema():
         assigned_by="dm-vance",
     )
     assert event.aggregate_type == "CharacterSheet"
-    assert event.event_type == "character.assigned_to_campaign"
+    assert event.event_type == "runefoble.events.character.assigned_to_campaign"
     assert getattr(event, "schema_version", None) == 1
     assert event.campaign_id == "camp-underdark-101"
     assert event.assigned_by == "dm-vance"
@@ -67,7 +67,7 @@ def test_character_assigned_to_campaign_event_registry_and_schema():
     # CloudEvents export
     ce = event.to_cloudevent_dict()
     assert ce["specversion"] == "1.0"
-    assert ce["type"] == "runefoble.character.assigned_to_campaign"
+    assert ce["type"] == "runefoble.events.character.assigned_to_campaign"
     assert ce["source"] == f"/runefoble/charactersheet/{char_id}"
     assert ce["data"]["campaign_id"] == "camp-underdark-101"
 

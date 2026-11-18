@@ -6,7 +6,7 @@ This reference details the domain events, aggregates, and REST interfaces introd
 
 All events subclass `BaseRunefobleEvent` and are CloudEvents 1.0-compliant.
 
-### 1. `MinigameStarted`
+### 1. `runefoble.events.tavern.minigame_started`
 - **Topic**: `runefoble.events.tavern`
 - **Aggregate Type**: `TavernGame`
 - **Payload Fields**:
@@ -19,7 +19,7 @@ All events subclass `BaseRunefobleEvent` and are CloudEvents 1.0-compliant.
   - `challenger_id`: str — Opposing participant or NPC.
   - `state_summary`: Dict[str, Any] — Initial rolls, hands, and intoxication meters.
 
-### 2. `MinigameTurnTaken`
+### 2. `runefoble.events.tavern.minigame_turn_taken`
 - **Topic**: `runefoble.events.tavern`
 - **Aggregate Type**: `TavernGame`
 - **Payload Fields**:
@@ -32,7 +32,7 @@ All events subclass `BaseRunefobleEvent` and are CloudEvents 1.0-compliant.
   - `resulting_state`: Dict[str, Any] — Match state snapshot.
   - `voice_bark`: Optional[str] — In-character reactive voice bark.
 
-### 3. `MinigameEnded`
+### 3. `runefoble.events.tavern.minigame_ended`
 - **Topic**: `runefoble.events.tavern`
 - **Aggregate Type**: `TavernGame`
 - **Payload Fields**:
@@ -44,7 +44,7 @@ All events subclass `BaseRunefobleEvent` and are CloudEvents 1.0-compliant.
   - `voice_bark`: Optional[str] — Victory voice bark.
   - `summary`: str — Summary narration.
 
-### 4. `IntoxicationLevelChanged`
+### 4. `runefoble.events.tavern.intoxication_level_changed`
 - **Topic**: `runefoble.events.tavern`
 - **Aggregate Type**: `TavernGame`
 - **Payload Fields**:
@@ -55,16 +55,16 @@ All events subclass `BaseRunefobleEvent` and are CloudEvents 1.0-compliant.
   - `consecutive_drinks`: int — Total drinks consumed.
   - `dsp_filters`: List[str] — Active DSP affliction filters (e.g. `["drunk"]`).
 
-### 5. `MerchantCreated`
+### 5. `runefoble.events.tavern.merchant_created`
 - **Topic**: `runefoble.events.tavern`
 - **Aggregate Type**: `Merchant`
-- **Emitted**: Once, when a merchant id is first recorded. It precedes the first `HagglingNegotiated` for that merchant.
+- **Emitted**: Once, when a merchant id is first recorded. It precedes the first `runefoble.events.tavern.haggling_negotiated` for that merchant.
 - **Payload Fields**:
   - `merchant_id`: str — NPC merchant identifier, as given in the haggle route.
   - `name`: str — Display name. A known temperament sets its default name.
   - `temperament`: str — `stubborn_greedy`, `shrewd`, `generous`, `hostile`, or `gullible`.
 
-### 6. `HagglingNegotiated`
+### 6. `runefoble.events.tavern.haggling_negotiated`
 - **Topic**: `runefoble.events.tavern`
 - **Aggregate Type**: `Merchant`
 - **Payload Fields**:
@@ -110,16 +110,16 @@ Table state is event-sourced on the `TavernGame` aggregate, where `game_id` is t
 
 | Event | Payload Fields |
 |---|---|
-| `TableOpened` | `game_id`, `establishment_id`, `game_type` |
-| `TablePlayerSeated` | `game_id`, `player_id`, `name`, `chips`, `score`, `dice` |
-| `TableBetPlaced` | `game_id`, `player_id`, `amount`, `bet_type`, `target` |
-| `DartThrown` | `game_id`, `player_id`, `hit`, `score_remaining`, `is_bust`, `is_won`, `next_turn_index`, `payout` |
-| `TableBidPlaced` | `game_id`, `player_id`, `quantity`, `face`, `next_turn_index` |
-| `TableChallengeResolved` | `game_id`, `challenger_id`, `bidder_id`, `loser_id`, `winner_id`, `loser_dice_after`, `next_hands`, `champion_id`, `payout` |
-| `RouletteSpun` | `game_id`, `winning_number`, `color`, `payouts` |
-| `CrapsRolled` | `game_id`, `dice`, `point`, `payouts`, `remaining_bets`, `narrative` |
+| `runefoble.events.tavern.table_opened` | `game_id`, `establishment_id`, `game_type` |
+| `runefoble.events.tavern.table_player_seated` | `game_id`, `player_id`, `name`, `chips`, `score`, `dice` |
+| `runefoble.events.tavern.table_bet_placed` | `game_id`, `player_id`, `amount`, `bet_type`, `target` |
+| `runefoble.events.tavern.dart_thrown` | `game_id`, `player_id`, `hit`, `score_remaining`, `is_bust`, `is_won`, `next_turn_index`, `payout` |
+| `runefoble.events.tavern.table_bid_placed` | `game_id`, `player_id`, `quantity`, `face`, `next_turn_index` |
+| `runefoble.events.tavern.table_challenge_resolved` | `game_id`, `challenger_id`, `bidder_id`, `loser_id`, `winner_id`, `loser_dice_after`, `next_hands`, `champion_id`, `payout` |
+| `runefoble.events.tavern.roulette_spun` | `game_id`, `winning_number`, `color`, `payouts` |
+| `runefoble.events.tavern.craps_rolled` | `game_id`, `dice`, `point`, `payouts`, `remaining_bets`, `narrative` |
 
-A table ends with `MinigameEnded` when a darts winner or a Liar's Dice champion is set.
+A table ends with `runefoble.events.tavern.minigame_ended` when a darts winner or a Liar's Dice champion is set.
 
 ---
 

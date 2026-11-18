@@ -46,7 +46,7 @@ curl -X POST http://localhost:8006/api/v1/lore/handouts/generate \
 }
 ```
 
-This persists an event-sourced `DiegeticHandoutAggregate` emitting the `HandoutGenerated` CloudEvent.
+This persists an event-sourced `DiegeticHandoutAggregate` emitting the `runefoble.events.lore.handout_generated` CloudEvent.
 
 ---
 
@@ -76,7 +76,7 @@ curl -X POST http://localhost:8006/api/v1/lore/handouts/9e47d139-b1b5-4377-bdc1-
 }
 ```
 
-This emits `WaxSealBroken`. Once broken, subsequent break attempts return HTTP 409 Conflict.
+This emits `runefoble.events.lore.wax_seal_broken`. Once broken, subsequent break attempts return HTTP 409 Conflict.
 
 ---
 
@@ -148,7 +148,7 @@ curl -X POST http://localhost:8006/api/v1/lore/relics/<relic_id>/inspect \
   }'
 ```
 
-This records an inspection event and publishes `RelicInspected`.
+This records an inspection event and publishes `runefoble.events.lore.relic_inspected`.
 
 ---
 

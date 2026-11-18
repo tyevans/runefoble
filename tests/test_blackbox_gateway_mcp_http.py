@@ -242,7 +242,7 @@ def test_dynamic_tool_call_over_http_records_the_verified_caller(authenticated_e
         invoked = [
             json.loads(fields["payload"])
             for _, fields in bus_client.streams.get("runefoble.events.system", [])
-            if fields.get("event_type") == "DynamicToolInvoked"
+            if fields.get("event_type") == "runefoble.events.mcp_tools.dynamic_tool_invoked"
         ]
         assert invoked and invoked[-1]["user_id"] == "mallory"
     finally:

@@ -29,7 +29,10 @@ def _deposit(client: TestClient, campaign_id: str, gold: int, materials: dict[st
 
 def _upgraded_event_count(mock_bus) -> int:
     entries = mock_bus.streams.get(STREAM_STRONGHOLD, [])
-    return sum("StrongholdUpgraded" in entry[1].get("event_type", "") for entry in entries)
+    return sum(
+        "runefoble.events.downtime.stronghold_upgraded" in entry[1].get("event_type", "")
+        for entry in entries
+    )
 
 
 def test_deposit_adds_gold_and_materials_to_the_treasury(session_client: TestClient, mock_bus):
@@ -45,7 +48,10 @@ def test_deposit_adds_gold_and_materials_to_the_treasury(session_client: TestCli
     assert res.json()["treasury_gold"] == 500
     assert res.json()["stored_materials"] == {"wood": 40}
     entries = mock_bus.streams.get(STREAM_STRONGHOLD, [])
-    assert any("StrongholdDeposited" in entry[1].get("event_type", "") for entry in entries)
+    assert any(
+        "runefoble.events.downtime.stronghold_deposited" in entry[1].get("event_type", "")
+        for entry in entries
+    )
 
 
 def test_upgrade_charges_exact_tier_cost_from_the_table(session_client: TestClient, mock_bus):
@@ -169,7 +175,10 @@ def test_empty_deposit_is_refused_and_records_nothing(session_client: TestClient
 
     assert res.status_code == 400, res.text
     entries = mock_bus.streams.get(STREAM_STRONGHOLD, [])
-    assert not any("StrongholdDeposited" in entry[1].get("event_type", "") for entry in entries)
+    assert not any(
+        "runefoble.events.downtime.stronghold_deposited" in entry[1].get("event_type", "")
+        for entry in entries
+    )
     state = session_client.get(f"/api/v1/campaigns/{camp_id}/stronghold").json()
     assert state["treasury_gold"] == 0
 
@@ -210,4 +219,7 @@ def test_player_cannot_deposit_resources(session_client: TestClient, mock_bus):
 
     assert res.status_code == 403, res.text
     entries = mock_bus.streams.get(STREAM_STRONGHOLD, [])
-    assert not any("StrongholdDeposited" in entry[1].get("event_type", "") for entry in entries)
+    assert not any(
+        "runefoble.events.downtime.stronghold_deposited" in entry[1].get("event_type", "")
+        for entry in entries
+    )

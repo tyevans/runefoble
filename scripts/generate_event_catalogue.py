@@ -9,11 +9,13 @@ with status 1 when the committed catalogue differs from the code.
 import argparse
 import importlib
 import pkgutil
+import re
 import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 CATALOGUE_PATH = REPO_ROOT / "docs" / "reference" / "event-identifiers.md"
+IDENTIFIER_RULE = re.compile(r"^runefoble\.events\.[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$")
 
 PREAMBLE = """# Reference: Event Identifiers
 
@@ -21,11 +23,24 @@ PREAMBLE = """# Reference: Event Identifiers
 
 This table lists every registered domain event. The identifier column is the
 `event_type` that each event carries on the wire. The value comes from
-`event_type_name()` in `eventsource-py`. A class that sets no explicit
-`event_type` uses its class name as the identifier.
+`event_type_name()` in `eventsource-py`.
 
-CloudEvents exports (`to_cloudevent_dict()`) lower-case the identifier. They
-add the `runefoble.` prefix when the identifier lacks it.
+## Identifier rule
+
+Every identifier has this form:
+
+`runefoble.events.<bc>.<snake_case>`
+
+- `<bc>` names the owning bounded context or domain.
+- `<snake_case>` names the event in lower case. Words are separated by underscores.
+- An identifier never uses a class name. A retired identifier resolves to no event.
+  The platform keeps no alias for a retired identifier.
+
+A class sets its identifier in two places. The `@register_event("...")` decorator
+registers the identifier. The class field `event_type` sets the value that the
+event carries. Both must hold the same value.
+
+CloudEvents exports (`to_cloudevent_dict()`) lower-case the identifier.
 """
 
 
@@ -48,6 +63,11 @@ def catalogue_rows(classes: list[type]) -> list[tuple[str, str, str]]:
     seen: dict[str, str] = {}
     for cls in classes:
         identifier = cls.event_type_name()
+        if not IDENTIFIER_RULE.match(identifier):
+            raise ValueError(
+                f"Event identifier {identifier!r} of {cls.__name__} breaks the rule "
+                "runefoble.events.<bc>.<snake_case>"
+            )
         if identifier in seen:
             raise ValueError(
                 f"Event identifier {identifier!r} is used by both {seen[identifier]} and {cls.__name__}"

@@ -99,7 +99,7 @@ def test_ready_action_registration_and_triggering(client: TestClient, mock_bus: 
     eval_res = client.post(
         f"/sessions/{session_id}/reactions/evaluate-triggers",
         json={
-            "event_type": "TokenMoved",
+            "event_type": "runefoble.events.board.token_moved",
             "event_data": {
                 "token_id": goblin_id,
                 "name": "Goblin",

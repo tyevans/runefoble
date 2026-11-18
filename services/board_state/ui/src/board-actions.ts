@@ -121,7 +121,7 @@ export function handleBoardSocketMessage(
   data: any
 ): void {
   const action = data.action || data.type;
-  if (action === 'ghost_preview' || action === 'preview_move' || action === 'SpeechIntentParsed') {
+  if (action === 'ghost_preview' || action === 'preview_move' || action === 'runefoble.events.watcher.speech_intent_parsed') {
     const parsed = parseIncomingGhostPreview(data, host.tokens, host.terrainCells);
     if (parsed) host.ghostEngine?.stage(parsed);
   } else if (action === 'token_moved' || action === 'preview_cancelled') {

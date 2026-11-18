@@ -55,8 +55,6 @@ def deserialize_event(fields: dict[str, Any] | str) -> Any:
 
     if event_type and isinstance(event_dict, dict):
         event_cls = get_event_class_or_none(str(event_type))
-        if event_cls is None and "." in str(event_type):
-            event_cls = get_event_class_or_none(str(event_type).split(".")[-1])
 
         if event_cls is not None:
             try:

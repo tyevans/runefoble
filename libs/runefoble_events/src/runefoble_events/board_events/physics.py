@@ -8,14 +8,15 @@ from pydantic import Field
 from runefoble_events.base import BaseRunefobleEvent, register_event
 
 
-@register_event("runefoble.events.board.physics.collision")
+@register_event("runefoble.events.board.physics_collision")
 class PhysicsCollisionOccurred(BaseRunefobleEvent):
     """Emitted when a physical rigid-body collision occurs on the tactical board."""
+
+    event_type: str = "runefoble.events.board.physics_collision"
 
     suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "BoardState"
     aggregate_id: UUID = Field(default_factory=uuid4)
-    event_type: str = "runefoble.events.board.physics.collision"
     session_id: str = ""
     board_id: str = ""
     entity_id: str
@@ -32,14 +33,15 @@ class PhysicsCollisionOccurred(BaseRunefobleEvent):
     details: dict[str, Any] = Field(default_factory=dict)
 
 
-@register_event("runefoble.events.board.dice.settled")
+@register_event("runefoble.events.dice.settled")
 class DiceSettled(BaseRunefobleEvent):
     """Emitted when physical tumbling dice come to rest on the tactical board."""
+
+    event_type: str = "runefoble.events.dice.settled"
 
     suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "BoardState"
     aggregate_id: UUID = Field(default_factory=uuid4)
-    event_type: str = "runefoble.events.board.dice.settled"
     session_id: str = ""
     board_id: str = ""
     dice_id: str
@@ -51,9 +53,3 @@ class DiceSettled(BaseRunefobleEvent):
     rotation: list[float] = Field(default_factory=lambda: [0.0, 0.0, 0.0])
     bounces: int = 0
     trajectory: list[dict[str, float]] = Field(default_factory=list)
-
-
-register_event(PhysicsCollisionOccurred, event_type="board.physics.collision")
-register_event(PhysicsCollisionOccurred, event_type="PhysicsCollisionOccurred")
-register_event(DiceSettled, event_type="board.dice.settled")
-register_event(DiceSettled, event_type="DiceSettled")

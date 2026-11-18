@@ -66,7 +66,7 @@ def test_health_change_reaches_a_real_redis_stream_with_session_and_campaign(
     health = [
         json.loads(fields["payload"])
         for _id, fields in raw.xrange(CHARACTER_STREAM)
-        if fields.get("event_type") == "CharacterHealthChanged"
+        if fields.get("event_type") == "runefoble.events.character.health_changed"
         and json.loads(fields["payload"]).get("aggregate_id") == char_id
     ]
     assert len(health) == 1

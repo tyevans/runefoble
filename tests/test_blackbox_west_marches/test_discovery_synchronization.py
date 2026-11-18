@@ -78,7 +78,10 @@ async def test_blackbox_west_marches_shared_frontier_and_cross_party_discoveries
     assert "timestamp" in disc_data
 
     entries = mock_bus.streams.get(STREAM_WEST_MARCHES, [])
-    assert any("CrossCampaignDiscoveryShared" in str(entry[1]) for entry in entries)
+    assert any(
+        "runefoble.events.west_marches.cross_campaign_discovery_shared" in str(entry[1])
+        for entry in entries
+    )
 
     gold_query = client.get(
         f"/api/v1/shared-worlds/{world_id}/discoveries",
