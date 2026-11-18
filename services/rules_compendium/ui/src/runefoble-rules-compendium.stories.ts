@@ -1,5 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/web-components';
 import { html } from 'lit';
+import '@runefoble/ui-core/story-auth-provider';
+import { installTokenCheckingFetch } from '@runefoble/ui-core/story-fetch';
 import './runefoble-rules-compendium.ts';
 import './runefoble-rules-lookup.ts';
 import './runefoble-encounter-builder.ts';
@@ -158,3 +160,41 @@ export const DedicatedHomebrewCreator: Story = {
   `,
 };
 
+
+const AUTH_SEARCH_RESPONSE = { results: SAMPLE_SEARCH_RESULTS, took_ms: 12.5 };
+
+export const RulesLookupWithShellAuth: Story = {
+  render: () => {
+    installTokenCheckingFetch('story-token', AUTH_SEARCH_RESPONSE);
+    return html`
+      <runefoble-story-auth-provider token="story-token">
+        <runefoble-rules-lookup apiBaseUrl="http://story.invalid"></runefoble-rules-lookup>
+      </runefoble-story-auth-provider>
+    `;
+  },
+};
+
+export const RulesLookupNoAuthProviderShowsError: Story = {
+  render: () => {
+    installTokenCheckingFetch('story-token', AUTH_SEARCH_RESPONSE);
+    return html`<runefoble-rules-lookup apiBaseUrl="http://story.invalid"></runefoble-rules-lookup>`;
+  },
+};
+
+export const HomebrewCreatorWithShellAuth: Story = {
+  render: () => {
+    installTokenCheckingFetch('story-token', { rule_id: 'hb-1', title: 'Story Rule', status: 'registered' });
+    return html`
+      <runefoble-story-auth-provider token="story-token">
+        <runefoble-homebrew-creator apiBaseUrl="http://story.invalid" .campaignId=${'campaign-homebrew-lab'}></runefoble-homebrew-creator>
+      </runefoble-story-auth-provider>
+    `;
+  },
+};
+
+export const HomebrewCreatorNoAuthProviderShowsError: Story = {
+  render: () => {
+    installTokenCheckingFetch('story-token', { rule_id: 'hb-1', title: 'Story Rule', status: 'registered' });
+    return html`<runefoble-homebrew-creator apiBaseUrl="http://story.invalid" .campaignId=${'campaign-homebrew-lab'}></runefoble-homebrew-creator>`;
+  },
+};

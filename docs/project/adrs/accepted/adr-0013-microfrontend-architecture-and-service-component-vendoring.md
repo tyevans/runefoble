@@ -36,6 +36,7 @@ We adopt a **Microfrontend Architecture** across the platform with **Service Com
    - The repository root defines a unified `pnpm-workspace.yaml` including `frontend` and `services/*/ui`.
    - Each service UI package is named `@runefoble/<bc>-ui` and defines its own `package.json` and `tsconfig.json`.
    - `frontend/package.json` depends on these packages via the `workspace:*` protocol.
+   - `libs/runefoble_ui` is the shared package `@runefoble/ui-core`. It holds the `runefoble-auth` context contract (`authContext`, `AuthConsumerController`) and Storybook auth helpers. Service UI packages and `frontend` depend on it via `workspace:*`.
    - `frontend/src/components/` provides backward-compatible forwarding re-exports so that legacy imports continue to resolve without breaking changes.
 
 5. **Component-Driven Storybook Aggregation**:

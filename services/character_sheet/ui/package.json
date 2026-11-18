@@ -24,6 +24,7 @@
     "./conditions.styles": "./src/conditions.styles.ts",
     "./runefoble-character-sheet.types": "./src/runefoble-character-sheet.types.ts",
     "./runefoble-character-sheet.actions": "./src/runefoble-character-sheet.actions.ts",
+    "./runefoble-character-sheet.loader": "./src/runefoble-character-sheet.loader.ts",
     "./runefoble-character-sheet.templates": "./src/runefoble-character-sheet.templates.ts",
     "./templates": "./src/templates/index.ts",
     "./templates/stats.template": "./src/templates/stats.template.ts",
@@ -48,6 +49,7 @@
     "build": "tsc --noEmit"
   },
   "dependencies": {
+    "@runefoble/ui-core": "workspace:*",
     "lit": "^3.3.3"
   },
   "devDependencies": {

@@ -1,0 +1,28 @@
+{
+  "name": "@runefoble/ui-core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "module": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./auth-context": "./src/auth-context.ts",
+    "./auth-consumer-controller": "./src/auth-consumer-controller.ts",
+    "./story-auth-provider": "./src/story-auth-provider.ts",
+    "./story-fetch": "./src/story-fetch.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "tsc --noEmit",
+    "test": "node --experimental-strip-types --test test/*.test.ts"
+  },
+  "dependencies": {
+    "@lit/context": "^1.1.6",
+    "lit": "^3.3.3"
+  },
+  "devDependencies": {
+    "typescript": "~7.0.2"
+  }
+}

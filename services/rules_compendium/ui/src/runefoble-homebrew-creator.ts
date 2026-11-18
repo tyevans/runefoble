@@ -6,6 +6,7 @@
 
 import { LitElement, html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
+import { AuthConsumerController } from '@runefoble/ui-core';
 import { compendiumStyles } from './runefoble-rules-compendium.styles.ts';
 import type { HomebrewCreateRequest, HomebrewResponse } from './types.ts';
 
@@ -17,6 +18,8 @@ export class RunefobleHomebrewCreator extends LitElement {
   @property({ type: String }) campaignId: string | null = null;
   @property({ type: String }) userId: string | null = null;
   @property({ type: Boolean }) isDM = false;
+
+  private readonly auth = new AuthConsumerController(this);
 
   @state() private hbRuleType: 'monster' | 'spell' | 'condition' = 'monster';
   @state() private hbTitle = '';
@@ -59,9 +62,7 @@ export class RunefobleHomebrewCreator extends LitElement {
 
     try {
       if (this.apiBaseUrl) {
-        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-        const token = window?.localStorage?.getItem('runefoble-access-token');
-        if (token) headers.Authorization = `Bearer ${token}`;
+        const headers: Record<string, string> = { 'Content-Type': 'application/json', ...(await this.auth.authHeaders()) };
 
         const res = await fetch(`${this.apiBaseUrl}/api/v1/compendium/homebrew`, {
           method: 'POST',

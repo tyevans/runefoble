@@ -1,5 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/web-components';
 import { html } from 'lit';
+import '@runefoble/ui-core/story-auth-provider';
+import { installTokenCheckingFetch } from '@runefoble/ui-core/story-fetch';
 import './runefoble-character-sheet.ts';
 
 const meta: Meta = {
@@ -163,4 +165,24 @@ export const LeveledUpSpellcaster: Story = {
       ]}
     ></runefoble-character-sheet>
   `,
+};
+
+const AUTH_CHARACTER = { name: 'Seoni the Stormcaller', character_class: 'Sorcerer 3', level: 3, current_hp: 17, max_hp: 22 };
+
+export const LoadedWithShellAuth: Story = {
+  render: () => {
+    installTokenCheckingFetch('story-token', AUTH_CHARACTER);
+    return html`
+      <runefoble-story-auth-provider token="story-token">
+        <runefoble-character-sheet characterId="char-seoni" apiBaseUrl="/api/v1/characters"></runefoble-character-sheet>
+      </runefoble-story-auth-provider>
+    `;
+  },
+};
+
+export const NoAuthProviderShowsError: Story = {
+  render: () => {
+    installTokenCheckingFetch('story-token', AUTH_CHARACTER);
+    return html`<runefoble-character-sheet characterId="char-seoni" apiBaseUrl="/api/v1/characters"></runefoble-character-sheet>`;
+  },
 };

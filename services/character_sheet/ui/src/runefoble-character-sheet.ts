@@ -1,5 +1,6 @@
 import { LitElement, html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
+import { AuthConsumerController } from '@runefoble/ui-core';
 import { characterSheetStyles } from './runefoble-character-sheet.styles.ts';
 import {
   renderConditionsPanel, renderEquipmentAndInventory,
@@ -10,8 +11,9 @@ import { DEFAULT_EQUIPMENT, DEFAULT_INVENTORY } from './runefoble-character-shee
 import {
   addItem, applyConditionToState, calculateEncumbrance, calculateHpDelta,
   castSpellSlot, dispatchActionEvent, equipItem, removeConditionFromState,
-  removeItem, syncCharacterResponse, togglePreparedSpell, toggleSpellSlotPip, unequipItem,
+  removeItem, togglePreparedSpell, toggleSpellSlotPip, unequipItem,
 } from './runefoble-character-sheet.actions.ts';
+import { loadCharacter } from './runefoble-character-sheet.loader.ts';
 
 @customElement('runefoble-character-sheet')
 export class RunefobleCharacterSheet extends LitElement {
@@ -38,6 +40,9 @@ export class RunefobleCharacterSheet extends LitElement {
   @property({ type: Array }) preparedSpells: string[] = ['Magic Missile', 'Shield'];
   @property({ type: Array }) spellbook: string[] = ['Magic Missile', 'Shield', 'Detect Magic', 'Misty Step'];
 
+  private readonly auth = new AuthConsumerController(this);
+
+  @state() loadError: string | null = null;
   @state() activeTooltipCondition: string | null = null;
   @state() newItemName = '';
   @state() newItemWeight = 1.0;
@@ -51,18 +56,12 @@ export class RunefobleCharacterSheet extends LitElement {
 
   connectedCallback() {
     super.connectedCallback();
-    if (this.characterId && typeof window !== 'undefined' && typeof window.fetch === 'function') { this.fetchCharacter().catch(() => {}); }
+    if (this.characterId && typeof window !== 'undefined' && typeof window.fetch === 'function') { void this.fetchCharacter(); }
   }
 
   async fetchCharacter(): Promise<void> {
     if (!this.characterId) return;
-    try {
-      const token = window?.localStorage?.getItem('runefoble-access-token');
-      const res = await fetch(`${this.apiBaseUrl}/${this.characterId}`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-      });
-      if (res.ok) syncCharacterResponse(this, await res.json());
-    } catch {}
+    this.loadError = await loadCharacter(this, `${this.apiBaseUrl}/${this.characterId}`, await this.auth.authHeaders());
   }
 
   get encumbrance(): EncumbranceInfo {
@@ -131,6 +130,7 @@ export class RunefobleCharacterSheet extends LitElement {
 
   render() {
     return html`
+      ${this.loadError ? html`<div class="load-error" role="alert">${this.loadError}</div>` : null}
       ${renderSheetHeader(this)}
       ${renderVitalsGrid(this)}
       <div class="columns-layout">

@@ -5,6 +5,7 @@
 
 import { LitElement, html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
+import { AuthConsumerController } from '@runefoble/ui-core';
 import { compendiumStyles } from './runefoble-rules-compendium.styles.ts';
 import type { RuleCategory, RuleSearchResultItem, RuleSearchResponse } from './types.ts';
 
@@ -20,6 +21,9 @@ export class RunefobleRulesLookup extends LitElement {
   @property({ type: Number }) tookMs = 0;
   @property({ type: Boolean }) enableAddToEncounter = true;
 
+  private readonly auth = new AuthConsumerController(this);
+
+  @state() searchError: string | null = null;
   @state() searchQuery = '';
   @state() loading = false;
   @state() expandedRule: RuleSearchResultItem | null = null;
@@ -54,12 +58,11 @@ export class RunefobleRulesLookup extends LitElement {
       const campParam = this.campaignId ? `&campaign_id=${this.campaignId}` : '';
       const url = `${this.apiBaseUrl}/api/v1/compendium/rules/search?query=${encodeURIComponent(query)}${catParam}${campParam}`;
 
-      const headers: Record<string, string> = {};
-      const token = window?.localStorage?.getItem('runefoble-access-token');
-      if (token) headers.Authorization = `Bearer ${token}`;
-
-      const res = await fetch(url, { headers });
-      if (res.ok) {
+      const res = await fetch(url, { headers: await this.auth.authHeaders() });
+      if (!res.ok) {
+        this.searchError = `Rules search failed (status ${res.status}).`;
+      } else {
+        this.searchError = null;
         const data: RuleSearchResponse = await res.json();
         this.results = data.results;
         this.tookMs = data.took_ms;
@@ -71,8 +74,8 @@ export class RunefobleRulesLookup extends LitElement {
           })
         );
       }
-    } catch {
-      // Local fallback or demo state
+    } catch (err) {
+      this.searchError = `Rules search failed: ${err instanceof Error ? err.message : String(err)}`;
     } finally {
       this.loading = false;
     }
@@ -154,6 +157,8 @@ export class RunefobleRulesLookup extends LitElement {
             ? html`<span class="latency-badge">⚡ ${this.tookMs.toFixed(1)}ms (Sub-50ms SLA)</span>`
             : ''}
         </div>
+
+        ${this.searchError ? html`<div class="search-error" role="alert" style="background: #ffccd5; color: #800f2f; border: 1px solid #121212; padding: 8px; font-weight: 700; font-size: 0.85rem;">${this.searchError}</div>` : ''}
 
         ${this.expandedRule ? this.renderExpandedDetails(this.expandedRule) : ''}
 
