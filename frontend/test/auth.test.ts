@@ -42,7 +42,7 @@ import { createFakeZitadel, signInWithFake, type FakeZitadel } from './support/f
 describe('Zitadel JWT Claims Extraction & Decoding', () => {
   it('parses valid JWT payloads correctly', () => {
     const payloadObj = {
-      sub: 'user-valeros-99',
+      sub: 'user-fixture-99',
       preferred_username: 'Valeros',
       email: 'valeros@runefoble.local',
       'urn:zitadel:iam:org:project:roles': ['player', 'dm'],
@@ -53,26 +53,25 @@ describe('Zitadel JWT Claims Extraction & Decoding', () => {
 
     const parsed = parseJwtPayload(token);
     assert.ok(parsed);
-    assert.equal(parsed.sub, 'user-valeros-99');
+    assert.equal(parsed.sub, 'user-fixture-99');
     assert.equal(parsed.preferred_username, 'Valeros');
 
     const claims = extractClaimsFromPayload(parsed);
-    assert.equal(claims.user_id, 'user-valeros-99');
+    assert.equal(claims.user_id, 'user-fixture-99');
     assert.equal(claims.username, 'Valeros');
     assert.equal(claims.email, 'valeros@runefoble.local');
     assert.deepEqual(claims.roles, ['player', 'dm']);
-    assert.equal(claims.is_admin, false);
   });
 
-  it('detects admin role correctly from Zitadel claims', () => {
+  it('keeps role names as display data and derives no admin flag from them', () => {
     const payloadObj = {
       sub: 'admin-01',
       preferred_username: 'AdminDM',
       'urn:zitadel:iam:org:project:roles': ['admin', 'dm'],
     };
     const claims = extractClaimsFromPayload(payloadObj);
-    assert.equal(claims.is_admin, true);
     assert.deepEqual(claims.roles, ['admin', 'dm']);
+    assert.equal('is_admin' in claims, false);
   });
 
   it('handles malformed JWT token gracefully', () => {

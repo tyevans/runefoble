@@ -20,11 +20,10 @@ export default meta;
 type Story = StoryObj;
 
 const sampleUser: UserClaims = {
-  user_id: 'user-valeros-01',
+  user_id: 'user-fixture-01',
   username: 'Valeros',
   email: 'valeros@runefoble.local',
   roles: ['player', 'dm', 'admin'],
-  is_admin: true,
 };
 
 export const SignedOutSignInGate: Story = {

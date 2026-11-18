@@ -17,11 +17,10 @@ export const DefaultPlayerProfile: Story = {
     <div style="padding: 32px; background: var(--rf-bg-canvas, #f8f9fa); min-height: 100vh;">
       <runefoble-user-profile
         .user=${{
-          user_id: 'user-valeros',
+          user_id: 'user-fixture',
           username: 'Valeros of Korvosa',
           email: 'valeros@runefoble.local',
           roles: ['player'],
-          is_admin: false,
         }}
         currentTheme="bauhaus"
         currentColorMode="light"
@@ -39,7 +38,6 @@ export const AdminDungeonMasterProfile: Story = {
           username: 'The Watcher',
           email: 'admin@runefoble.local',
           roles: ['dm', 'admin', 'owner'],
-          is_admin: true,
         }}
         currentTheme="dark-fantasy"
         currentColorMode="dark"
@@ -57,7 +55,6 @@ export const CyberRuneProfile: Story = {
           username: 'Merisiel Rogue',
           email: 'merisiel@runefoble.local',
           roles: ['player'],
-          is_admin: false,
         }}
         currentTheme="cyber-rune"
         currentColorMode="dark"

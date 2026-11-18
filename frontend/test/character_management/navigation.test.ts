@@ -89,7 +89,7 @@ describe('Character Roster & Deep Route Navigation (US-0064, US-0069, TASK-0288)
     assert.ok(valeros, 'Valeros must exist in character store');
 
     let lobbyParticipants: LobbyParticipant[] = [
-      { userId: 'user-valeros', displayName: 'Marcus', characterId: 'char-placeholder', characterName: 'Unknown', isReady: false },
+      { userId: 'user-fixture', displayName: 'Marcus', characterId: 'char-placeholder', characterName: 'Unknown', isReady: false },
     ];
     let activeCharacter: CharacterItem | null = null;
     const handleSelect = (detail: { userId: string; characterId: string }) => {
@@ -100,7 +100,7 @@ describe('Character Roster & Deep Route Navigation (US-0064, US-0069, TASK-0288)
       );
     };
 
-    handleSelect({ userId: 'user-valeros', characterId: 'char-valeros' });
+    handleSelect({ userId: 'user-fixture', characterId: 'char-valeros' });
     assert.equal(lobbyParticipants[0].characterId, 'char-valeros');
     assert.equal(activeCharacter?.name, 'Valeros of Korvosa');
     assert.equal(activeCharacter?.armorClass, 18);

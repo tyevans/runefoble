@@ -4,6 +4,7 @@ import type { BoardToken } from '@runefoble/board-state-ui';
 import type { WatcherFeedEvent } from '@runefoble/the-watcher-ui';
 import type { CampaignSessionItem } from '../components/runefoble-session-list.ts';
 import { authService, type UserClaims } from '../auth/auth-service.ts';
+import { authHeaders } from '../auth/transport.ts';
 import { toWatcherFeedEvent, type SessionChronicleEntry } from './session-chronicle.ts';
 import { resolveLobbyAvailableCharacters } from './lobby-character-options.ts';
 import {
@@ -31,11 +32,7 @@ export class AppDataService {
   }
 
   private getAuthHeaders(): HeadersInit {
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    const token = authService.getAccessToken(), user = authService.getUser();
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-    if (user?.user_id) headers['X-User-Id'] = user.user_id;
-    return headers;
+    return { 'Content-Type': 'application/json', ...authHeaders() };
   }
 
   /**
