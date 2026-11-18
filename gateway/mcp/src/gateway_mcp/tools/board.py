@@ -70,15 +70,18 @@ async def _fetch_or_create_board(
     )
 
 
-async def _challenge_rating(client: OwningServices, enemy: EnemyPlacement) -> float:
+async def _challenge_rating(
+    client: OwningServices, enemy: EnemyPlacement, campaign_id: str | None
+) -> float:
     """Return the enemy's challenge rating from the request, else from its compendium stat block.
 
+    The stat block lookup names the campaign, so that its homebrew monsters resolve too.
     An enemy with no rating in either place is a validation error. It is never scored as zero.
     """
     if enemy.cr is not None:
         return enemy.cr
     try:
-        monster = await client.get_monster(enemy.name.strip())
+        monster = await client.get_monster(enemy.name.strip(), campaign_id=campaign_id)
     except ServiceRejectedError as exc:
         if exc.status_code != 404:
             raise
@@ -154,7 +157,7 @@ async def create_encounter(
     client = OwningServices(bearer=caller_bearer(ctx))
     enemy_list = enemies or []
     # Resolve every rating before combat starts, so a refused enemy leaves no combat behind.
-    ratings = [await _challenge_rating(client, enemy) for enemy in enemy_list]
+    ratings = [await _challenge_rating(client, enemy, campaign_id) for enemy in enemy_list]
     combat = await client.start_combat(
         session_id,
         combatants=[

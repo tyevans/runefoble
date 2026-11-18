@@ -184,7 +184,7 @@ async def test_blackbox_create_encounter_game_session_503_is_error_not_board_id(
     assert board_status(wired["board"], session_id) == 404
 
 
-BOARD_CAMPAIGN = "camp-board-fixture"
+BOARD_CAMPAIGN = "5f0c7a0e-6b1d-4c8e-9a2b-3d4e5f607182"
 
 
 @pytest.fixture(autouse=True)
