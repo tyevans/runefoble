@@ -23,6 +23,7 @@
   "CHARACTER_SHEET_URL" (dict "url" (printf "http://character-sheet:%v" .Values.services.characterSheet.port) "consumers" (list "gateway-api"))
   "RUNEFOBLE_GAME_SESSION_URL" (dict "url" (printf "http://game-session:%v" .Values.services.gameSession.port) "consumers" (list "gateway-api"))
   "RUNEFOBLE_RULES_COMPENDIUM_URL" (dict "url" (printf "http://rules-compendium:%v" .Values.services.rulesCompendium.port) "consumers" (list "gateway-api"))
+  "RUNEFOBLE_ASSET_FORGE_URL" (dict "url" (printf "http://asset-forge:%v" .Values.services.assetForge.port) "consumers" (list "gateway-api"))
 -}}
 {{- with .Values.services.inferenceWorker }}
 {{- $_ := set $serviceUrls "RUNEFOBLE_INFERENCE_URL" (dict "url" (printf "http://inference-worker:%v" .port) "consumers" (list "the-watcher")) }}

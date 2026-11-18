@@ -63,7 +63,9 @@ def test_asset_events_registration_and_cloudevents():
 
 
 @pytest.mark.asyncio
-async def test_blackbox_event_emission_on_upload_and_delete(signing_issuer, mock_bus):
+async def test_blackbox_event_emission_on_upload_and_delete(
+    trusted_ws_issuer, mock_bus, gateway_for
+):
     """Verify AssetUploaded and AssetDeleted domain events are emitted to event buses."""
     received_in_memory_events: list[Any] = []
 
@@ -72,10 +74,7 @@ async def test_blackbox_event_emission_on_upload_and_delete(signing_issuer, mock
 
     platform_bus.subscribe("runefoble.events.asset.uploaded", in_memory_upload_handler)
 
-    client = TestClient(
-        gateway_app,
-        headers={"Authorization": f"Bearer {signing_issuer.mint('paladin_order')}"},
-    )
+    client = gateway_for(trusted_ws_issuer, "paladin_order")
 
     # 1. Perform upload
     upload_res = client.post(

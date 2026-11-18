@@ -13,7 +13,6 @@ from uuid import uuid4
 import pytest
 from asset_forge.main import app as asset_forge_app
 from fastapi.testclient import TestClient
-from gateway_api.main import app as gateway_app
 from runefoble_platform.storage import SiloStorageService, get_storage_service, set_storage_service
 
 from tests.helpers.mock_redis import MockAsyncRedis
@@ -103,13 +102,13 @@ def test_token_forge_fails_closed_when_silo_returns_server_error(
     assert redis_stream.streams.get(ASSET_STREAM, []) == []
 
 
-def test_gateway_upload_fails_closed_when_silo_unreachable(silo_double: FakeSilo, signing_issuer):
-    """Gateway avatar upload with Silo down returns 503 and stores nothing."""
+def test_gateway_upload_fails_closed_when_silo_unreachable(
+    silo_double: FakeSilo, trusted_ws_issuer, gateway_for
+):
+    """Gateway avatar upload with Silo down stores nothing. asset_forge answers 503, and the
+    gateway maps an owner 5xx to 502 (service client contract, TASK-0595)."""
     silo_double.outage = True
-    gateway_client = TestClient(
-        gateway_app,
-        headers={"Authorization": f"Bearer {signing_issuer.mint('player-valeros')}"},
-    )
+    gateway_client = gateway_for(trusted_ws_issuer, "player-valeros")
 
     response = gateway_client.post(
         "/api/v1/assets/upload",
@@ -117,7 +116,8 @@ def test_gateway_upload_fails_closed_when_silo_unreachable(silo_double: FakeSilo
         data={"asset_type": "avatar"},
     )
 
-    assert response.status_code == 503, response.text
+    assert response.status_code == 502, response.text
+    assert response.json()["upstream"] == "asset_forge"
     assert silo_double.objects == {}
 
 
