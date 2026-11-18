@@ -26,19 +26,6 @@ class CharacterStore(CharacterMutationsMixin):
         for item in DEFAULT_CHARACTERS:
             self.create_character(**item)
 
-    async def ensure_default_tuples(self, client: Any) -> None:
-        for d in DEFAULT_CHARACTERS:
-            try:
-                await client.write_relationship(
-                    "character", d["id"], "owner", "user", d["owner_id"]
-                )
-                if d.get("campaign_id"):
-                    await client.write_relationship(
-                        "character", d["id"], "campaign", "campaign", d["campaign_id"]
-                    )
-            except Exception:
-                pass
-
     def create_character(
         self,
         id: str,
@@ -98,56 +85,6 @@ class CharacterStore(CharacterMutationsMixin):
 
     def list_characters(self) -> list[CharacterRecord]:
         return list(self._characters.values())
-
-    async def list_characters_for_user(
-        self, user_id: str, client: Any = None, owned_only: bool = False
-    ) -> list[CharacterRecord]:
-        if client is None:
-            from gateway_api.auth import get_spicedb_client
-
-            client = get_spicedb_client()
-
-        await self.ensure_default_tuples(client)
-
-        result: list[CharacterRecord] = []
-        seen: set[str] = set()
-
-        for char in list(self._characters.values()):
-            if char.id in seen:
-                continue
-            if char.owner_id == user_id:
-                result.append(char)
-                seen.add(char.id)
-                continue
-            try:
-                if await client.check_permission("character", char.id, "owner", "user", user_id):
-                    result.append(char)
-                    seen.add(char.id)
-                    continue
-                if not owned_only and await client.check_permission(
-                    "character", char.id, "view", "user", user_id
-                ):
-                    result.append(char)
-                    seen.add(char.id)
-            except Exception:
-                pass
-
-        try:
-            rels = await client.read_relationships(resource_type="character", relation="owner")
-            for rel in rels:
-                if rel.subject_id == user_id and rel.resource_id not in seen:
-                    stub = self.create_character(
-                        id=rel.resource_id,
-                        name=f"Character {rel.resource_id}",
-                        character_class="Adventurer",
-                        owner_id=user_id,
-                    )
-                    result.append(stub)
-                    seen.add(rel.resource_id)
-        except Exception:
-            pass
-
-        return result
 
     def assign_campaign(self, character_id: str, campaign_id: str | None) -> CharacterRecord | None:
         char = self.get_character(character_id)

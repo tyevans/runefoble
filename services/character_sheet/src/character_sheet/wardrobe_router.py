@@ -5,10 +5,9 @@ from __future__ import annotations
 from uuid import UUID
 
 from character_sheet.dependencies import (
+    EDIT_CHARACTER,
+    VIEW_CHARACTER,
     RepoDep,
-    SpiceDep,
-    VerifiedUserId,
-    authorize_character_edit,
     get_principal,
     load_character,
     publish_character_event,
@@ -26,7 +25,11 @@ from runefoble_events.events import CharacterPortraitUpdated, PortraitVariantGen
 router = APIRouter(tags=["character_wardrobe"], dependencies=[Depends(get_principal)])
 
 
-@router.get("/api/v1/characters/{character_id}/portrait", response_model=PortraitResponse)
+@router.get(
+    "/api/v1/characters/{character_id}/portrait",
+    response_model=PortraitResponse,
+    dependencies=VIEW_CHARACTER,
+)
 async def get_portrait(character_id: UUID, repo: RepoDep) -> PortraitResponse:
     """Retrieve active and base portrait URLs, condition badges, and composited SVG."""
     char = await load_character(repo, character_id)
@@ -46,16 +49,17 @@ async def get_portrait(character_id: UUID, repo: RepoDep) -> PortraitResponse:
     )
 
 
-@router.post("/api/v1/characters/{character_id}/portrait/active", response_model=CharacterState)
+@router.post(
+    "/api/v1/characters/{character_id}/portrait/active",
+    response_model=CharacterState,
+    dependencies=EDIT_CHARACTER,
+)
 async def set_active_portrait(
     character_id: UUID,
     req: SetActivePortraitRequest,
     repo: RepoDep,
-    spicedb: SpiceDep,
-    user_id: VerifiedUserId,
 ) -> CharacterState:
     """Assign active portrait avatar from an unlocked wardrobe variant or custom image URL."""
-    await authorize_character_edit(spicedb, character_id, user_id)
     char = await load_character(repo, character_id)
     char.set_active_portrait(req.variant_id, req.image_url)
     await repo.save(char)
@@ -70,22 +74,27 @@ async def set_active_portrait(
     return char.state
 
 
-@router.get("/api/v1/characters/{character_id}/wardrobe", response_model=dict[str, WardrobeVariant])
+@router.get(
+    "/api/v1/characters/{character_id}/wardrobe",
+    response_model=dict[str, WardrobeVariant],
+    dependencies=VIEW_CHARACTER,
+)
 async def get_wardrobe(character_id: UUID, repo: RepoDep) -> dict[str, WardrobeVariant]:
     """Retrieve all unlocked wardrobe attire variants for a character."""
     return (await load_character(repo, character_id)).state.wardrobe_variants
 
 
-@router.post("/api/v1/characters/{character_id}/wardrobe", response_model=CharacterState)
+@router.post(
+    "/api/v1/characters/{character_id}/wardrobe",
+    response_model=CharacterState,
+    dependencies=EDIT_CHARACTER,
+)
 async def add_wardrobe_variant(
     character_id: UUID,
     req: AddWardrobeVariantRequest,
     repo: RepoDep,
-    spicedb: SpiceDep,
-    user_id: VerifiedUserId,
 ) -> CharacterState:
     """Add a synthesized or unlocked wardrobe variant and optionally set active."""
-    await authorize_character_edit(spicedb, character_id, user_id)
     char = await load_character(repo, character_id)
     vid = char.add_wardrobe_variant(
         variant_name=req.variant_name,

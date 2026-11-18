@@ -29,6 +29,20 @@ def _auth(issuer, sub: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {issuer.mint(sub)}"}
 
 
+def _add_member(issuer, campaign_id: str, owner_headers, role: str, sub: str) -> None:
+    """Add a member through public frontdoors: the owner creates an invite, `sub` redeems it."""
+    inv = client.post(
+        f"/api/v1/campaigns/{campaign_id}/invites", json={"role": role}, headers=owner_headers
+    )
+    assert inv.status_code == 201, inv.text
+    join = client.post(
+        "/api/v1/campaigns/join",
+        json={"invite_token": inv.json()["token"]},
+        headers=_auth(issuer, sub),
+    )
+    assert join.status_code == 200, join.text
+
+
 @pytest.fixture(autouse=True)
 def reset_stores():
     """Reset character and campaign memory stores before each test."""
@@ -75,8 +89,9 @@ async def test_character_creation_and_ownership(trusted_ws_issuer, client):
 
     # Verify SpiceDB has the owner relationship tuple
     spicedb = get_spicedb_client()
+    # Only the owner holds 'delete' (the schema permission that stands for ownership)
     has_owner = await spicedb.check_permission(
-        "character", char_id, "owner", "user", "user_valeros"
+        "character", char_id, "delete", "user", "user_valeros"
     )
     assert has_owner is True
 
@@ -162,17 +177,8 @@ def test_character_campaign_assignment_and_view_propagation(trusted_ws_issuer, c
     )
     campaign_id = camp_res.json()["id"]
 
-    # Add Grognak as a player in the campaign
-    invite = client.post(
-        f"/api/v1/campaigns/{campaign_id}/invites", json={"role": "player"}, headers=headers_dm
-    )
-    assert invite.status_code == 201, invite.text
-    joined = client.post(
-        "/api/v1/campaigns/join",
-        json={"invite_token": invite.json()["token"]},
-        headers=headers_party_member,
-    )
-    assert joined.status_code == 200, joined.text
+    # Grognak joins the campaign as a player through the invite frontdoor
+    _add_member(signing_issuer, campaign_id, headers_dm, "player", "user_grognak")
 
     # Alice creates an unassigned character
     res = client.post(

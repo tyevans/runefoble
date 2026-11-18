@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-import contextlib
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from character_sheet import dependencies as deps
 from character_sheet import schemas
+from character_sheet.authz import write_character_ownership
 from character_sheet.models import CharacterState, StandInGuardrails
 from fastapi import APIRouter, Depends, HTTPException
 
@@ -21,20 +21,17 @@ async def create_character(
     spicedb: deps.SpiceDep,
     user_id: deps.VerifiedUserId,
 ):
-    state = await deps.create_new_character(repo, req)
-    with contextlib.suppress(Exception):
-        await spicedb.write_relationship(
-            "character", str(state.character_id), "owner", "user", user_id
-        )
-    if req.campaign_id:
-        with contextlib.suppress(Exception):
-            await spicedb.write_relationship(
-                "character", str(state.character_id), "campaign", "campaign", req.campaign_id
-            )
-    return state
+    """Create a character. The ownership tuples are written first, so a failed write creates nothing."""
+    character_id = uuid4()
+    await write_character_ownership(spicedb, character_id, user_id, req.campaign_id)
+    return await deps.create_new_character(repo, req, character_id)
 
 
-@router.post("/api/v1/characters/{character_id}/level-up", response_model=CharacterState)
+@router.post(
+    "/api/v1/characters/{character_id}/level-up",
+    response_model=CharacterState,
+    dependencies=deps.EDIT_CHARACTER,
+)
 async def level_up(
     character_id: UUID, repo: deps.RepoDep, req: schemas.LevelUpRequest | None = None
 ):
@@ -44,7 +41,11 @@ async def level_up(
     )
 
 
-@router.post("/api/v1/characters/{character_id}/spells/prepare", response_model=CharacterState)
+@router.post(
+    "/api/v1/characters/{character_id}/spells/prepare",
+    response_model=CharacterState,
+    dependencies=deps.EDIT_CHARACTER,
+)
 async def prepare_spell(character_id: UUID, req: schemas.PrepareSpellRequest, repo: deps.RepoDep):
     if not req.is_prepared:
         return await deps.execute_character_mutation(
@@ -59,14 +60,22 @@ async def prepare_spell(character_id: UUID, req: schemas.PrepareSpellRequest, re
     )
 
 
-@router.post("/api/v1/characters/{character_id}/spells/cast", response_model=CharacterState)
+@router.post(
+    "/api/v1/characters/{character_id}/spells/cast",
+    response_model=CharacterState,
+    dependencies=deps.EDIT_CHARACTER,
+)
 async def cast_spell(character_id: UUID, req: schemas.CastSpellRequest, repo: deps.RepoDep):
     return await deps.execute_character_mutation(
         repo, character_id, lambda c: c.cast_spell(req.spell_name, req.slot_level, req.session_id)
     )
 
 
-@router.post("/api/v1/characters/{character_id}/spells/restore", response_model=CharacterState)
+@router.post(
+    "/api/v1/characters/{character_id}/spells/restore",
+    response_model=CharacterState,
+    dependencies=deps.EDIT_CHARACTER,
+)
 async def restore_spell_slots(
     character_id: UUID,
     repo: deps.RepoDep,
@@ -78,12 +87,20 @@ async def restore_spell_slots(
     )
 
 
-@router.get("/api/v1/characters/{character_id}", response_model=CharacterState)
+@router.get(
+    "/api/v1/characters/{character_id}",
+    response_model=CharacterState,
+    dependencies=deps.VIEW_CHARACTER,
+)
 async def get_character(character_id: UUID, repo: deps.RepoDep):
     return (await deps.load_character(repo, character_id)).state
 
 
-@router.post("/api/v1/characters/{character_id}/stand-in", response_model=CharacterState)
+@router.post(
+    "/api/v1/characters/{character_id}/stand-in",
+    response_model=CharacterState,
+    dependencies=deps.EDIT_CHARACTER,
+)
 async def set_stand_in_active(
     character_id: UUID, req: schemas.StandInActivationRequest, repo: deps.RepoDep
 ):
@@ -92,7 +109,11 @@ async def set_stand_in_active(
     )
 
 
-@router.post("/api/v1/characters/{character_id}/health", response_model=CharacterState)
+@router.post(
+    "/api/v1/characters/{character_id}/health",
+    response_model=CharacterState,
+    dependencies=deps.EDIT_CHARACTER,
+)
 async def modify_health(character_id: UUID, req: schemas.HealthChangeRequest, repo: deps.RepoDep):
     try:
         return await deps.modify_character_health(
@@ -102,7 +123,11 @@ async def modify_health(character_id: UUID, req: schemas.HealthChangeRequest, re
         raise HTTPException(status_code=400, detail=str(e)) from e
 
 
-@router.post("/api/v1/characters/{character_id}/penalties", response_model=CharacterState)
+@router.post(
+    "/api/v1/characters/{character_id}/penalties",
+    response_model=CharacterState,
+    dependencies=deps.EDIT_CHARACTER,
+)
 async def apply_penalty(character_id: UUID, req: schemas.PenaltyRequest, repo: deps.RepoDep):
     return await deps.execute_character_mutation(
         repo,
@@ -112,66 +137,75 @@ async def apply_penalty(character_id: UUID, req: schemas.PenaltyRequest, repo: d
 
 
 # fmt: off
-@router.delete("/api/v1/characters/{character_id}/penalties/{penalty_type}", response_model=CharacterState)
+@router.delete("/api/v1/characters/{character_id}/penalties/{penalty_type}", response_model=CharacterState, dependencies=deps.EDIT_CHARACTER)
 async def clear_penalty(character_id: UUID, penalty_type: str, repo: deps.RepoDep):
     return await deps.execute_character_mutation(repo, character_id, lambda c: c.clear_penalty(penalty_type))
 
 
-@router.post("/api/v1/characters/{character_id}/inventory", response_model=CharacterState)
-@router.post("/api/v1/characters/{character_id}/inventory/add", response_model=CharacterState)
+@router.post("/api/v1/characters/{character_id}/inventory", response_model=CharacterState, dependencies=deps.EDIT_CHARACTER)
+@router.post("/api/v1/characters/{character_id}/inventory/add", response_model=CharacterState, dependencies=deps.EDIT_CHARACTER)
 async def add_inventory_item(character_id: UUID, req: schemas.AddInventoryItemRequest, repo: deps.RepoDep):
     return await deps.execute_character_mutation(repo, character_id, lambda c: c.add_inventory_item(req.item_id, req.name, req.quantity, req.weight_lbs))
 
 
-@router.delete("/api/v1/characters/{character_id}/inventory/{item_id}", response_model=CharacterState)
-@router.post("/api/v1/characters/{character_id}/inventory/{item_id}/remove", response_model=CharacterState)
+@router.delete("/api/v1/characters/{character_id}/inventory/{item_id}", response_model=CharacterState, dependencies=deps.EDIT_CHARACTER)
+@router.post("/api/v1/characters/{character_id}/inventory/{item_id}/remove", response_model=CharacterState, dependencies=deps.EDIT_CHARACTER)
 async def remove_inventory_item(character_id: UUID, item_id: str, repo: deps.RepoDep, req: schemas.RemoveInventoryItemRequest | None = None, quantity: int = 1):
     qty = req.quantity if req else quantity
     return await deps.execute_character_mutation(repo, character_id, lambda c: c.remove_inventory_item(item_id, qty))
 
 
-@router.post("/api/v1/characters/{character_id}/equipment", response_model=CharacterState)
+@router.post("/api/v1/characters/{character_id}/equipment", response_model=CharacterState, dependencies=deps.EDIT_CHARACTER)
 async def equip_item(character_id: UUID, req: schemas.EquipItemRequest, repo: deps.RepoDep):
     return await deps.execute_character_mutation(repo, character_id, lambda c: c.equip_item(req.slot, req.item_name))
 
 
-@router.delete("/api/v1/characters/{character_id}/equipment/{slot}", response_model=CharacterState)
+@router.delete("/api/v1/characters/{character_id}/equipment/{slot}", response_model=CharacterState, dependencies=deps.EDIT_CHARACTER)
 async def unequip_item(character_id: UUID, slot: str, repo: deps.RepoDep):
     return await deps.execute_character_mutation(repo, character_id, lambda c: c.equip_item(slot, None))
 
 
-@router.post("/api/v1/characters/{character_id}/conditions", response_model=CharacterState)
+@router.post("/api/v1/characters/{character_id}/conditions", response_model=CharacterState, dependencies=deps.EDIT_CHARACTER)
 async def apply_condition(character_id: UUID, req: schemas.ApplyConditionRequest, repo: deps.RepoDep):
     return await deps.execute_character_mutation(repo, character_id, lambda c: c.apply_condition(req.condition, req.duration_rounds, req.source))
 
 
-@router.delete("/api/v1/characters/{character_id}/conditions/{condition}", response_model=CharacterState)
+@router.delete("/api/v1/characters/{character_id}/conditions/{condition}", response_model=CharacterState, dependencies=deps.EDIT_CHARACTER)
 async def remove_condition(character_id: UUID, condition: str, repo: deps.RepoDep):
     return await deps.execute_character_mutation(repo, character_id, lambda c: c.remove_condition(condition))
 # fmt: on
 
 
-@router.put("/api/v1/characters/{character_id}/guardrails", response_model=CharacterState)
+@router.put(
+    "/api/v1/characters/{character_id}/guardrails",
+    response_model=CharacterState,
+    dependencies=deps.EDIT_CHARACTER,
+)
 async def update_guardrails(
     character_id: UUID,
     req: schemas.UpdateGuardrailsRequest,
     repo: deps.RepoDep,
-    spicedb: deps.SpiceDep,
-    user_id: deps.VerifiedUserId,
 ):
-    await deps.authorize_character_edit(spicedb, character_id, user_id)
     try:
         return await deps.update_character_guardrails(repo, character_id, req)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
 
 
-@router.get("/api/v1/characters/{character_id}/guardrails", response_model=StandInGuardrails)
+@router.get(
+    "/api/v1/characters/{character_id}/guardrails",
+    response_model=StandInGuardrails,
+    dependencies=deps.VIEW_CHARACTER,
+)
 async def get_guardrails(character_id: UUID, repo: deps.RepoDep):
     return (await deps.load_character(repo, character_id)).state.stand_in_guardrails
 
 
-@router.patch("/api/v1/characters/{character_id}/campaign", response_model=CharacterState)
+@router.patch(
+    "/api/v1/characters/{character_id}/campaign",
+    response_model=CharacterState,
+    dependencies=deps.EDIT_CHARACTER,
+)
 async def assign_campaign(
     character_id: UUID,
     req: schemas.AssignCampaignRequest,
@@ -179,7 +213,6 @@ async def assign_campaign(
     spicedb: deps.SpiceDep,
     user_id: deps.VerifiedUserId,
 ):
-    await deps.authorize_character_edit(spicedb, character_id, user_id)
     return await deps.assign_character_campaign(
         repo, spicedb, character_id, req.campaign_id, user_id
     )

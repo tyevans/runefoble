@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from collections.abc import Iterator
+from contextlib import contextmanager
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
@@ -12,6 +14,7 @@ from gateway_api.character_models import (
 )
 from gateway_api.character_store import character_store
 from gateway_api.routers.character_subresources import router as subresources_router
+from runefoble_auth.errors import AuthzError
 from runefoble_auth.principal import VerifiedPrincipal
 
 router = APIRouter(tags=["Characters"])
@@ -22,6 +25,19 @@ async def _title_of(request: Request, campaign_id: str | None) -> str | None:
     if not campaign_id:
         return None
     return (await campaign_titles(request, {campaign_id}))[campaign_id]
+@contextmanager
+def _authz_write() -> Iterator[None]:
+    """Turn a failed SpiceDB write into a 503. A failed write never reports success."""
+    try:
+        yield
+    except AuthzError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={
+                "error": "authorization_unavailable",
+                "message": "Authorization service did not apply the change.",
+            },
+        ) from exc
 
 
 @router.get("/api/v1/characters", response_model=list[CharacterResponse])
@@ -61,16 +77,23 @@ async def create_character(
     request: Request,
     user: Annotated[VerifiedPrincipal, Depends(get_current_user)],
 ) -> CharacterResponse:
-    """Create a new character and assign ownership to caller in SpiceDB."""
+    """Create a new character and assign ownership to caller in SpiceDB.
+
+    The owner tuple is written before the character is stored. A failed write (503)
+    leaves no character behind.
+    """
     char = character_store.create_from_request(req, owner_id=user.user_id)
-
     client = get_spicedb_client()
-    await client.write_relationship("character", char.id, "owner", "user", user.user_id)
-
-    if char.campaign_id:
-        await client.write_relationship(
-            "character", char.id, "campaign", "campaign", char.campaign_id
-        )
+    try:
+        with _authz_write():
+            await client.write_relationship("character", char.id, "owner", "user", user.user_id)
+            if char.campaign_id:
+                await client.write_relationship(
+                    "character", char.id, "campaign", "campaign", char.campaign_id
+                )
+    except Exception:
+        character_store.delete_character(char.id)
+        raise
 
     return char.to_response(campaign_title=await _title_of(request, char.campaign_id))
 
@@ -109,15 +132,16 @@ async def assign_campaign(
     client = get_spicedb_client()
     old_campaign = char.campaign_id
 
-    if old_campaign and old_campaign != req.campaign_id:
-        await client.delete_relationship(
-            "character", character_id, "campaign", "campaign", old_campaign
-        )
+    with _authz_write():
+        if old_campaign and old_campaign != req.campaign_id:
+            await client.delete_relationship(
+                "character", character_id, "campaign", "campaign", old_campaign
+            )
 
-    if req.campaign_id:
-        await client.write_relationship(
-            "character", character_id, "campaign", "campaign", req.campaign_id
-        )
+        if req.campaign_id:
+            await client.write_relationship(
+                "character", character_id, "campaign", "campaign", req.campaign_id
+            )
 
     updated = character_store.assign_campaign(character_id, req.campaign_id)
     final = updated or char
@@ -126,23 +150,24 @@ async def assign_campaign(
 
 @router.delete(
     "/api/v1/characters/{character_id}",
-    dependencies=[Depends(require_zanzibar_permission("owner", "character", "character_id"))],
+    dependencies=[Depends(require_zanzibar_permission("delete", "character", "character_id"))],
 )
 async def delete_character(
     character_id: str,
     user: Annotated[VerifiedPrincipal, Depends(get_current_user)],
 ) -> dict[str, Any]:
-    """Delete owned character and remove SpiceDB relationships (requires 'owner')."""
+    """Delete a character and remove its SpiceDB relationships (requires 'delete', owner only)."""
     char = character_store.get_character(character_id)
     if not char:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Character not found")
 
     client = get_spicedb_client()
-    await client.delete_relationship("character", character_id, "owner", "user", user.user_id)
-    if char.campaign_id:
-        await client.delete_relationship(
-            "character", character_id, "campaign", "campaign", char.campaign_id
-        )
+    with _authz_write():
+        await client.delete_relationship("character", character_id, "owner", "user", user.user_id)
+        if char.campaign_id:
+            await client.delete_relationship(
+                "character", character_id, "campaign", "campaign", char.campaign_id
+            )
 
     character_store.delete_character(character_id)
     return {"status": "deleted", "character_id": character_id}

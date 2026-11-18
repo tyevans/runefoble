@@ -29,6 +29,20 @@ def _auth(issuer, sub: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {issuer.mint(sub)}"}
 
 
+def _add_member(issuer, campaign_id: str, owner_headers, role: str, sub: str) -> None:
+    """Add a member through public frontdoors: the owner creates an invite, `sub` redeems it."""
+    inv = client.post(
+        f"/api/v1/campaigns/{campaign_id}/invites", json={"role": role}, headers=owner_headers
+    )
+    assert inv.status_code == 201, inv.text
+    join = client.post(
+        "/api/v1/campaigns/join",
+        json={"invite_token": inv.json()["token"]},
+        headers=_auth(issuer, sub),
+    )
+    assert join.status_code == 200, join.text
+
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = REPO_ROOT / "frontend"
 TS_TEST_DIR = FRONTEND_DIR / "test" / "character_management"
@@ -80,10 +94,10 @@ async def test_character_crud_and_zanzibar_ownership(trusted_ws_issuer, client):
     assert char_data["armor_class"] == 18
     assert char_data["owner_id"] == "user_valeros"
 
-    # 2. Assert SpiceDB owner and permission tuples written
+    # 2. Assert SpiceDB owner and permission tuples written ('delete' is owner-only)
     spicedb = get_spicedb_client()
     assert (
-        await spicedb.check_permission("character", char_id, "owner", "user", "user_valeros")
+        await spicedb.check_permission("character", char_id, "delete", "user", "user_valeros")
         is True
     )
     assert (
@@ -122,7 +136,7 @@ async def test_character_crud_and_zanzibar_ownership(trusted_ws_issuer, client):
 
     # 8. Assert SpiceDB owner relation is cleaned up
     assert (
-        await spicedb.check_permission("character", char_id, "owner", "user", "user_valeros")
+        await spicedb.check_permission("character", char_id, "delete", "user", "user_valeros")
         is False
     )
 
@@ -143,9 +157,9 @@ async def test_character_campaign_assignment(trusted_ws_issuer, client):
     assert camp_res.status_code == 201
     campaign_id = camp_res.json()["id"]
 
-    # 2. Add Bob as a party member in SpiceDB
+    # 2. Bob joins the campaign as a player through the invite frontdoor
+    _add_member(signing_issuer, campaign_id, headers_alice, "player", "user_bob")
     spicedb = get_spicedb_client()
-    await spicedb.write_relationship("campaign", campaign_id, "player", "user", "user_bob")
 
     # 3. Alice creates an unassigned character
     char_res = client.post(
@@ -261,8 +275,9 @@ async def test_campaign_creation_and_ownership(trusted_ws_issuer, client):
     assert camp["role"] == "owner"
     assert camp["member_count"] == 1
 
+    # 'manage' is owner-only at campaign level in runefoble.zed
     spicedb = get_spicedb_client()
     has_owner = await spicedb.check_permission(
-        "campaign", camp_id, "owner", "user", "user_gm_evelyn"
+        "campaign", camp_id, "manage", "user", "user_gm_evelyn"
     )
     assert has_owner is True
