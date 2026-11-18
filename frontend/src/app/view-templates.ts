@@ -8,7 +8,6 @@
 import { html } from 'lit';
 import { router } from '../router/index.ts';
 import type { RunefobleApp, AppActiveView } from '../runefoble-app.ts';
-import { authService } from '../auth/auth-service.ts';
 import type { DataFailure } from '../services/data-result.ts';
 import { createCampaignFromEvent } from './campaign-actions.ts';
 import { renderCharacterSheet, renderSessionActive } from './session-view-templates.ts';
@@ -41,7 +40,7 @@ function renderRoster(app: RunefobleApp) {
 }
 
 function renderProfile(app: RunefobleApp) {
-  return html`<runefoble-user-profile .user=${authService.getUser()} .currentTheme=${app.currentTheme} .currentColorMode=${app.currentColorMode} @theme-changed=${(e: CustomEvent) => { if (e.detail?.theme) app.currentTheme = e.detail.theme; }} @color-mode-changed=${(e: CustomEvent) => { if (e.detail?.mode) app.currentColorMode = e.detail.mode; }} @auth-logout=${() => router.navigate('#/login')}></runefoble-user-profile>`;
+  return html`<runefoble-user-profile .currentTheme=${app.currentTheme} .currentColorMode=${app.currentColorMode} @theme-changed=${(e: CustomEvent) => { if (e.detail?.theme) app.currentTheme = e.detail.theme; }} @color-mode-changed=${(e: CustomEvent) => { if (e.detail?.mode) app.currentColorMode = e.detail.mode; }} @auth-logout=${() => router.navigate('#/login')}></runefoble-user-profile>`;
 }
 
 function renderLobby(app: RunefobleApp) {

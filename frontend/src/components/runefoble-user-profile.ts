@@ -22,6 +22,7 @@ export class RunefobleUserProfile extends LitElement {
   @property({ type: String }) currentColorMode: 'light' | 'dark' | 'system' = 'system';
 
   @state() private profileData: UserClaims | null = null; @state() private isLoading = false;
+  @state() private profileError = '';
   @state() public isEditing = false; @state() public editDisplayName = ''; @state() public editAvatarUrl = '';
   @state() public editBio = ''; @state() public isSaving = false; @state() public saveMessage = '';
   @state() private providerName = '';
@@ -33,12 +34,7 @@ export class RunefobleUserProfile extends LitElement {
     this.initPreferences();
     this.loadProvider();
     this.loadProfile();
-    this.unlistenAuth = authService.onAuthChanged((st) => {
-      if (st.user) {
-        this.profileData = st.user;
-        this.requestUpdate();
-      }
-    });
+    this.unlistenAuth = authService.onAuthChanged(() => { void this.loadProfile(); });
   }
 
   disconnectedCallback() {
@@ -76,35 +72,26 @@ export class RunefobleUserProfile extends LitElement {
     } catch { /* storage restricted */ }
   }
 
+  /** Reads the profile from GET /api/v1/profile. A failed read shows the error. No local profile is used. */
   public async loadProfile(): Promise<void> {
     if (this.user) {
       this.profileData = this.user;
       return;
     }
-    const current = authService.getUser();
-    this.profileData = current;
-    try {
-      this.isLoading = true;
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      const token = authService.getAccessToken();
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-      if (current?.user_id) headers['X-User-Id'] = current.user_id;
-
-      const res = await fetch('/api/v1/profile', { headers });
-      if (res.ok) {
-        this.profileData = await res.json();
-      } else {
-        console.error(`Profile request failed (${res.status})`);
-      }
-    } catch (err) {
-      console.error('Profile request failed', err);
-    } finally {
-      this.isLoading = false;
+    this.isLoading = true;
+    this.profileError = '';
+    const res = await appDataService.fetchProfile();
+    this.isLoading = false;
+    if (res.ok) {
+      this.profileData = res.data;
+    } else {
+      this.profileData = null;
+      this.profileError = res.message;
     }
   }
 
   private getEffectiveUser(): UserClaims | null {
-    return this.user || this.profileData || authService.getUser();
+    return this.user || this.profileData;
   }
 
   private getInitials(name: string): string {
@@ -198,7 +185,10 @@ export class RunefobleUserProfile extends LitElement {
   render() {
     const user = this.getEffectiveUser();
     if (!user) {
-      return html`<div class="profile-card" data-testid="profile-settings-card">Sign in to view your profile.</div>`;
+      const message = this.profileError
+        ? html`<p role="alert">Profile not loaded. ${this.profileError}</p>`
+        : this.isLoading ? html`<p role="status">Loading adventurer profile...</p>` : html`<p>Sign in to view your profile.</p>`;
+      return html`<div class="profile-card" data-testid="profile-settings-card">${message}</div>`;
     }
     const roles = user.roles || [];
     const isAdmin = Boolean(user.is_admin || roles.includes('admin'));
