@@ -1,6 +1,6 @@
 # How-To: Trigger Multi-Modal Kinetic Spell VFX & WebGL Particle Magic
 
-This guide explains how to use the high-performance WebGL particle visual effects engine, archetype shaders, voice-to-VFX pipeline, and ephemeral grid decals on the Runefoble tactical board (`<runefoble-tactical-board>` / `<runefoble-board>`).
+This guide explains how to use the high-performance WebGL particle visual effects engine, archetype shaders, voice-to-VFX pipeline, and ephemeral grid decals on the Runefoble tactical board (`<runefoble-board>`).
 
 ---
 
@@ -77,12 +77,12 @@ boardElement.setThemeMode('light');
 ## 6. Programmatic Component Usage
 
 ```html
-<runefoble-tactical-board
+<runefoble-board
   .cols="${10}"
   .rows="${10}"
   .tokens="${activeTokens}"
   id="tacticalBoard"
-></runefoble-tactical-board>
+></runefoble-board>
 
 <script>
   const board = document.getElementById('tacticalBoard');
