@@ -1,7 +1,7 @@
 ---
 id: '0551'
 title: Character Sheet Ownership and Gateway Character Proxy Authorization
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0520
@@ -27,7 +27,7 @@ target_release: 0.9.0
 # TASK-0551: Character Sheet Ownership and Gateway Character Proxy Authorization
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Most mutating character routes have no check. The few that have one run it only when an identity header is present. Character creation writes the `owner` tuple inside `contextlib.suppress`, so a failed write still returns success. The gateway character sub-resource proxy forwards no identity and falls back to an in-memory store. This task applies one permission rule to every character route, makes ownership writes fail loudly, and removes the gateway fallback. Persistence of character state is owned by TASK-0444, and this task does not change it.

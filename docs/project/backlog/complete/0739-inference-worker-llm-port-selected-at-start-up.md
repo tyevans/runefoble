@@ -1,7 +1,7 @@
 ---
 id: '0739'
 title: Inference Worker Uses an LLM Port Selected at Start-Up
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies: []
 governing_adrs:
@@ -16,7 +16,7 @@ target_release: 0.9.0
 # TASK-0739: Inference Worker Uses an LLM Port Selected at Start-Up
 
 ## Status
-Refined. Found by the refactor audit round refactor-r1 and checked against the code on 2026-11-17.
+Complete
 
 ## Summary
 Backend selection, probing, model factory, and calls are one class. The backend probe runs on every request, every error becomes a backend error, and the graphs type-hint the concrete class.

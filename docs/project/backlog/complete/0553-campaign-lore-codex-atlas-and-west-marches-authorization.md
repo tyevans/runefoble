@@ -1,7 +1,7 @@
 ---
 id: '0553'
 title: Campaign Lore Codex, Search, Atlas, Handout, Relic, and West Marches Authorization
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0520
@@ -29,7 +29,7 @@ target_release: 0.9.0
 # TASK-0553: Campaign Lore Codex, Search, Atlas, Handout, Relic, and West Marches Authorization
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Campaign lore has the most authorization defects of any service in the platform. A codex entry is readable and editable through another campaign's path. The search route trusts a body field that names the caller, so a player reads DM-only secrets. Atlas layer and territory writes have no check. Handout, relic, and West Marches writes pass for anonymous callers and for spectators. Codex publish is open to anonymous callers and accepts any privacy string. This task fixes each of these, binds each route to a schema permission, and makes the gateway forward the caller identity.

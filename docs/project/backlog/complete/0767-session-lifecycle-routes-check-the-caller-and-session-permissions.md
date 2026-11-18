@@ -1,7 +1,7 @@
 ---
 id: '0767'
 title: Session Lifecycle Routes Check the Caller and Session Permissions
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0541
@@ -17,7 +17,7 @@ target_release: 0.9.0
 # TASK-0767: Session Lifecycle Routes Check the Caller and Session Permissions
 
 ## Status
-Refined. Found during the authz-int integration (`.audit/work/authz-int.md`, Discovered). Merge after
+Complete
 the authz stack (task/authz-int) is on main.
 
 ## Summary

@@ -1,7 +1,7 @@
 ---
 id: '0708'
 title: Audience Studio Appends Events Before It Publishes and Maps Version Conflicts
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies: []
 governing_adrs:
@@ -16,7 +16,7 @@ target_release: 0.9.0
 # TASK-0708: Audience Studio Appends Events Before It Publishes and Maps Version Conflicts
 
 ## Status
-Refined. Found by the refactor audit round r1 and checked against the code by the orchestrator.
+Complete
 
 ## Summary
 The audience commit path publishes events to Redis Streams before it appends them to the store. A failed append leaves published events for a rejected command. A concurrent write hits a PostgreSQL primary-key error that the service returns as a raw 500.

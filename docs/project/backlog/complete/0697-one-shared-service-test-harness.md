@@ -1,7 +1,7 @@
 ---
 id: '0697'
 title: One Shared Service Test Harness Replaces Per-Directory Service Fixtures
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0684
@@ -16,7 +16,7 @@ target_release: 0.9.0
 # TASK-0697: One Shared Service Test Harness Replaces Per-Directory Service Fixtures
 
 ## Status
-Refined. Agreed at the refactor pause on 2026-11-17 (candidate 1). The refactor-r1 tests report gives the inventory.
+Complete
 
 ## Summary
 Many `tests/**/conftest.py` files start services, set auth verifiers, set SpiceDB clients and set the event bus, each in its own way. This causes order-dependent failures and missing test buses (batches 11 to 13).

@@ -1,7 +1,7 @@
 ---
 id: '0707'
 title: Deployed Services Refuse the In-Memory Event Store
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies: []
 governing_adrs:
@@ -15,7 +15,7 @@ target_release: 0.9.0
 # TASK-0707: Deployed Services Refuse the In-Memory Event Store
 
 ## Status
-Refined. Found by the refactor audit round r1 and checked against the code by the orchestrator.
+Complete
 
 ## Summary
 `use_postgres_event_store` defaults to `False`. Any service that does not set it runs on `InMemoryEventStore` in production and loses all events on restart. The default must follow the environment, and a deployed service must never select memory.

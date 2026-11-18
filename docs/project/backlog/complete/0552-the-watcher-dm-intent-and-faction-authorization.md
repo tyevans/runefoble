@@ -1,7 +1,7 @@
 ---
 id: '0552'
 title: The Watcher DM, Intent, Stand-In, and Faction Authorization
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0520
@@ -32,7 +32,7 @@ target_release: 0.9.0
 # TASK-0552: The Watcher DM, Intent, Stand-In, and Faction Authorization
 
 ## Status
-Refined
+Complete
 
 ## Summary
 The Watcher service uses permission names that the schema does not define. The DM helper therefore errors or denies by accident, and some faction routes return success for an anonymous caller. Many DM-only routes (scene generation, encounter spawn, NPC turn, narration, world tick, skirmish, factions) and player-facing intent routes have no check. This task moves every Watcher check to a schema permission, makes each DM-only route require `campaign.run_session` or `session.control`, and makes each player route require `session.participate`.

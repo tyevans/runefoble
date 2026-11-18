@@ -1,7 +1,7 @@
 ---
 id: '0557'
 title: Campaign Analytics and Soundscape Service Fail-Closed Authorization
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0520
@@ -29,7 +29,7 @@ target_release: 0.9.0
 # TASK-0557: Campaign Analytics and Soundscape Service Fail-Closed Authorization
 
 ## Status
-Refined
+Complete
 
 ## Summary
 The analytics service and the soundscape service each have a permission helper that returns success when no user header is present. The gateway proxies do not forward a subject, so every gateway call is allowed by the service. The soundscape service also has four mutating routes with no check at all, and its gateway routing (TASK-0436) misses two of them. This task makes both services require a verified subject from the gateway, and it binds each route to its schema permission.

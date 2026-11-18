@@ -1,7 +1,7 @@
 ---
 id: '0733'
 title: Square-Grid AoE Origin Sits on the Cell Centre and AoE and Spell Bloom Share One Sphere Rule
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies: []
 governing_adrs:
@@ -16,7 +16,7 @@ target_release: 0.9.0
 # TASK-0733: Square-Grid AoE Origin Sits on the Cell Centre and AoE and Spell Bloom Share One Sphere Rule
 
 ## Status
-Refined. Found by the refactor audit round refactor-r1 and checked against the code on 2026-11-17.
+Complete
 
 ## Summary
 On square grids the AoE origin sits on the cell corner, not the cell centre. The spell bloom uses a second sphere rule. The two disagree on which cells are hit.

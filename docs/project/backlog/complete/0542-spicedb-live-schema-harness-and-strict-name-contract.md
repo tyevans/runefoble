@@ -1,7 +1,7 @@
 ---
 id: '0542'
 title: SpiceDB Live Schema Harness and Strict Name Contract
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0540
@@ -18,7 +18,7 @@ target_release: 0.9.0
 # TASK-0542: SpiceDB Live Schema Harness and Strict Name Contract
 
 ## Status
-Refined
+Complete
 
 ## Summary
 The test suite passes while production calls fail. `MockSpiceDBClient` accepts undefined relations and permissions. It maps `play`, `read`, and `control` to other names. It treats role names such as `dungeon_master` and `gm` as grants. Some authorization tests run only against this mock. This task makes the mock reject any name that the schema does not define, the way SpiceDB does. It removes the role-name fallbacks. It adds a live SpiceDB test path that loads the real schema, and it adds one name-contract module that every other task uses.

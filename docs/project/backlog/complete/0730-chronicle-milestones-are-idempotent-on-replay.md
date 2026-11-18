@@ -1,7 +1,7 @@
 ---
 id: '0730'
 title: Chronicle Milestones Are Idempotent When a Projection Commit Is Replayed
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0579
@@ -17,7 +17,7 @@ target_release: 0.9.0
 # TASK-0730: Chronicle Milestones Are Idempotent When a Projection Commit Is Replayed
 
 ## Status
-Refined. Found by the refactor audit round refactor-r1 and checked against the code on 2026-11-17.
+Complete
 
 ## Summary
 The chronicle milestone is saved through the aggregate repository and then written to the read model in a different transaction. A failure between the two writes makes the replay add a second milestone row.

@@ -1,7 +1,7 @@
 ---
 id: '0757'
 title: The App Shell Provides Auth to Microfrontends Through a Documented Context Contract
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies: []
 governing_adrs:
@@ -19,7 +19,7 @@ target_release: 0.9.0
 # TASK-0757: The App Shell Provides Auth to Microfrontends Through a Documented Context Contract
 
 ## Status
-Refined. Top finding of the frontend-ui refactor audit. Confirmed by the orchestrator.
+Complete
 
 ## Summary
 Three microfrontends read the token from `localStorage['runefoble-access-token']`. The App Shell never writes that key. It stores the session under `rf_auth_session`. So these components send no token, and two of them hide the failure. Define one auth context contract. The shell answers it. The three components use it. No shared storage key remains.

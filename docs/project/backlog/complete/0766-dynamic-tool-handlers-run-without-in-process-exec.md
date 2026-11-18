@@ -1,7 +1,7 @@
 ---
 id: '0766'
 title: Dynamic Tool Handlers Run Without In-Process Exec
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0545
@@ -18,7 +18,7 @@ target_release: 0.9.0
 # TASK-0766: Dynamic Tool Handlers Run Without In-Process Exec
 
 ## Status
-Refined. Spike first, then implement. Found by TASK-0545 and the refactor-r1 gateway-mcp audit.
+Complete
 
 ## Summary
 Registered dynamic tools carry Python `handler_code`. The MCP gateway runs it with `exec` in its

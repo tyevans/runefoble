@@ -1,7 +1,7 @@
 ---
 id: '0699'
 title: Broad Exception Handlers Use the Shared Load and Authorization Error Helpers
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0561
@@ -17,7 +17,7 @@ target_release: 0.9.0
 # TASK-0699: Broad Exception Handlers Use the Shared Load and Authorization Error Helpers
 
 ## Status
-Refined. Agreed at the refactor pause on 2026-11-17 (candidate 4).
+Complete
 
 ## Summary
 Broad `except Exception` blocks remain around aggregate loads and SpiceDB checks outside the TASK-0561 file list. They hide store and SpiceDB outages.

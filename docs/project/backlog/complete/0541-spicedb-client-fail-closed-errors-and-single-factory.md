@@ -1,7 +1,7 @@
 ---
 id: '0541'
 title: SpiceDB Client Fail-Closed Errors and Single Factory
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0520
@@ -19,7 +19,7 @@ target_release: 0.9.0
 # TASK-0541: SpiceDB Client Fail-Closed Errors and Single Factory
 
 ## Status
-Refined
+Complete
 
 ## Summary
 The SpiceDB client in `libs/runefoble_auth` turns errors into silent results. A transport failure or an undefined name is returned as `False`, or it is swallowed by `contextlib.suppress(Exception)`. Eleven service-local factories copy the client setup, and some of them read a setting that does not exist. This task makes the shared client fail closed. It adds one cached factory in the library, and it leaves the claim sync path to TASK-0534, which removes grants from token claims. Services delete their own factory copies in their owning tasks.

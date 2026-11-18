@@ -1,7 +1,7 @@
 ---
 id: '0734'
 title: Hazard Damage Has One Table and the Move Preview Matches the Move
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies: []
 governing_adrs:
@@ -17,7 +17,7 @@ target_release: 0.9.0
 # TASK-0734: Hazard Damage Has One Table and the Move Preview Matches the Move
 
 ## Status
-Refined. Found by the refactor audit round refactor-r1 and checked against the code on 2026-11-17.
+Complete
 
 ## Summary
 The move preview shows different hazard damage than the move applies. Three places hold hazard damage values, and they differ.

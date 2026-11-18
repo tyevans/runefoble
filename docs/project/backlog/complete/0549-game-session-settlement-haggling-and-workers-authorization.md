@@ -1,7 +1,7 @@
 ---
 id: '0549'
 title: Game Session Settlement, Haggling, Workers, and Bulletin Authorization
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0520
@@ -29,7 +29,7 @@ target_release: 0.9.0
 # TASK-0549: Game Session Settlement, Haggling, Workers, and Bulletin Authorization
 
 ## Status
-Refined
+Complete
 
 ## Summary
 The settlement and haven routes in `game_session` have the widest authorization gap in the service. The shared helper runs its check only `if uid:`, so an anonymous caller passes. Haggling trusts an `X-RuneFoble-Role` header to skip arbitration. Establishment and negotiation routes take identity from a header with no check. This task makes every settlement-scoped route check a schema permission on the settlement, establishment, negotiation, NPC, or bulletin object, and removes the role header.

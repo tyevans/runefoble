@@ -1,7 +1,7 @@
 ---
 id: '0558'
 title: Voice Agent Verified Identity, Session Checks, and Diagnostics Authorization
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0520
@@ -28,7 +28,7 @@ target_release: 0.9.0
 # TASK-0558: Voice Agent Verified Identity, Session Checks, and Diagnostics Authorization
 
 ## Status
-Refined
+Complete
 
 ## Summary
 The voice agent takes identity from `X-User-Id`, from a raw bearer value, from a query string, or from a default. The kick route and the vocal modulation route then pass that identity to SpiceDB, so a caller who names another user passes the check for that user. Public audio, synthesis, transcription, and diagnostics routes have no check. SpiceDB transport errors escape as unhandled exceptions. This task makes every voice route use the verified principal, binds each route to a schema permission, and maps SpiceDB failures to 503.

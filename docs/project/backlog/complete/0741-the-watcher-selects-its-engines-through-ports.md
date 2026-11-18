@@ -1,7 +1,7 @@
 ---
 id: '0741'
 title: The Watcher Selects Its Intent, Stand-In, and Narration Engines Through Ports
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies: []
 governing_adrs:
@@ -18,7 +18,7 @@ target_release: 0.9.0
 # TASK-0741: The Watcher Selects Its Intent, Stand-In, and Narration Engines Through Ports
 
 ## Status
-Refined. Found by the refactor audit round refactor-r1 and checked against the code on 2026-11-17.
+Complete
 
 ## Summary
 Three routers choose between the inference worker and a local regex or template engine with `if INFERENCE_URL`. An unset URL silently serves heuristic output. ADR-0015 decision 4 forbids substitute output.

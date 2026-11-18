@@ -1,7 +1,7 @@
 ---
 id: '0550'
 title: Game Session Tavern, Bounty, Caravan, West Marches, Campfire, and Stronghold Authorization
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0520
@@ -27,7 +27,7 @@ target_release: 0.9.0
 # TASK-0550: Game Session Tavern, Bounty, Caravan, West Marches, Campfire, and Stronghold Authorization
 
 ## Status
-Refined
+Complete
 
 ## Summary
 These routes in `game_session` share one defect. The check runs only when an identity header is present, or the helper returns success when the identity is missing. Caravan and West Marches creation takes identity from an unchecked header. Bounty posting, claiming, and completion fail open. This task applies the same fail-closed rule to each route group, and it binds each group to its schema permission.
