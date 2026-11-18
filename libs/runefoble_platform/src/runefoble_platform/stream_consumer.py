@@ -18,7 +18,11 @@ from runefoble_platform.consumer_group import RedisConsumerGroup
 
 logger = logging.getLogger("runefoble.platform.stream_consumer")
 
-EventHandler = Callable[[Any], Awaitable[None]]
+EventHandler = Callable[[str, Any], Awaitable[None]]
+"""Handler for one stream message. It receives the stream message id and the decoded payload."""
+
+ResumePosition = Callable[[], Awaitable[str | None]]
+"""Return the stream id to resume from, or None to keep the group position."""
 
 RUNNING = "running"
 FAILED = "failed"
@@ -37,6 +41,7 @@ class StreamConsumer:
         consumer_name: str,
         handler: EventHandler,
         poll_interval_s: float = 0.1,
+        resume_position: ResumePosition | None = None,
     ) -> None:
         self.consumer_group = consumer_group
         self.stream = stream
@@ -44,19 +49,28 @@ class StreamConsumer:
         self.consumer_name = consumer_name
         self.handler = handler
         self.poll_interval_s = poll_interval_s
+        self.resume_position = resume_position
         self.processed_count = 0
         self.dead_letter_count = 0
         self.last_error: str | None = None
         self._task: asyncio.Task[None] | None = None
 
     async def ensure_group(self) -> None:
-        """Create the consumer group. Errors other than BUSYGROUP propagate."""
+        """Create the consumer group, then move it to the resume position when one is known.
+
+        Errors other than BUSYGROUP propagate.
+        """
         await self.consumer_group.create_group(
             stream=self.stream,
             group_name=self.group_name,
             start_id="0",
             make_stream=True,
         )
+        if self.resume_position is None:
+            return
+        position = await self.resume_position()
+        if position is not None:
+            await self.consumer_group.set_group_position(self.stream, self.group_name, position)
 
     async def poll_once(self, count: int = 10, block_ms: int = 100) -> int:
         """Read one batch, run the handler on each message, and acknowledge the results."""
@@ -70,7 +84,7 @@ class StreamConsumer:
         handled = 0
         for msg_id, payload in entries:
             try:
-                await self.handler(payload)
+                await self.handler(msg_id, payload)
             except Exception as exc:
                 reason = f"{type(exc).__name__}: {exc}"
                 logger.error("Handler failed for %s on %s: %s", msg_id, self.stream, reason)

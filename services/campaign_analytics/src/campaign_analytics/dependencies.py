@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import contextlib
 from typing import Annotated
 
 from fastapi import Depends
@@ -10,27 +9,27 @@ from runefoble_auth.principal import VerifiedPrincipal, require_principal
 from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
 from runefoble_auth.zitadel import ZitadelAuthService
 from runefoble_platform.config import PlatformSettings
-from runefoble_platform.redis_bus import RedisStreamsEventBus
 
-from campaign_analytics.storage import CampaignAnalyticsStorage
+from campaign_analytics.storage import CampaignAnalyticsStorage, StorageUnavailableError
 from campaign_analytics.worker import CampaignAnalyticsWorker
 
 platform_settings = PlatformSettings()
 
-_storage: CampaignAnalyticsStorage = CampaignAnalyticsStorage()
+_storage: CampaignAnalyticsStorage | None = None
 _worker: CampaignAnalyticsWorker | None = None
 _spicedb_client: SpiceDBClient | MockSpiceDBClient | None = None
-_event_bus: RedisStreamsEventBus | None = None
 _zitadel_auth_service: ZitadelAuthService | None = None
 
 
 def get_storage() -> CampaignAnalyticsStorage:
-    """Provide initialized CampaignAnalyticsStorage."""
+    """Provide the PostgreSQL-backed storage. Raise while the service has not started it."""
+    if _storage is None:
+        raise StorageUnavailableError("Campaign analytics storage has not been started")
     return _storage
 
 
-def set_storage(storage: CampaignAnalyticsStorage) -> None:
-    """Override CampaignAnalyticsStorage instance (e.g. for testing)."""
+def set_storage(storage: CampaignAnalyticsStorage | None) -> None:
+    """Set or clear the storage that the process-wide container serves."""
     global _storage
     _storage = storage
 
@@ -58,21 +57,6 @@ def set_spicedb_client(client: SpiceDBClient | MockSpiceDBClient | None) -> None
     """Override SpiceDB Zanzibar client."""
     global _spicedb_client
     _spicedb_client = client
-
-
-def get_event_bus() -> RedisStreamsEventBus | None:
-    """Provide RedisStreamsEventBus instance."""
-    global _event_bus
-    if _event_bus is None and platform_settings.redis_url:
-        with contextlib.suppress(Exception):
-            _event_bus = RedisStreamsEventBus(redis_url=platform_settings.redis_url)
-    return _event_bus
-
-
-def set_event_bus(bus: RedisStreamsEventBus | None) -> None:
-    """Override event bus instance."""
-    global _event_bus
-    _event_bus = bus
 
 
 def get_zitadel_auth_service() -> ZitadelAuthService:
