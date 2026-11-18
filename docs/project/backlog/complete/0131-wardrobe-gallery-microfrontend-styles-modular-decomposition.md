@@ -20,7 +20,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/136
 # TASK-0131: Wardrobe Gallery Microfrontend Styles and Sub-Components Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `services/character_sheet/ui/src/runefoble-wardrobe-gallery.ts` (401 lines, 80.2% of limit) by extracting its extensive CSS stylesheet block into a dedicated styles module `services/character_sheet/ui/src/runefoble-wardrobe-gallery.styles.ts` and isolating condition badge sub-renderers, reducing the main component to ~200 lines and maintaining strict compliance with Hard Invariant 6 (< 500 lines).

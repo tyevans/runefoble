@@ -35,7 +35,7 @@ The MCP gateway's dynamic tool routes take the author and caller from the reques
 
 ## Documentation & Architecture Review
 - Permission names on register and execute (`mcp_tool` manage and execute) belong to the authorization theme. This task changes identity only.
-- Sandboxed `exec` in `gateway/mcp/src/gateway_mcp/sandbox.py:155` is an authorization and security defect outside this task. Note it in the PR and in the index.
+- Sandboxed `exec` in `gateway/mcp/src/gateway_mcp/sandbox.py:155` (removed) is an authorization and security defect outside this task. Note it in the PR and in the index.
 - The MCP protocol transport must carry the token. TASK-0623 (streamable HTTP) has no auth rule yet. Add the bearer rule to TASK-0623 before this task starts. See the index report.
 
 ## Product & User Story References

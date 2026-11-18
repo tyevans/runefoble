@@ -15,10 +15,10 @@ pr_url: https://github.com/tyevans/runefoble/pull/303
 # TASK-0271: Frontend App Data Service Fixtures and Client Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
-Decompose `frontend/src/services/app-data-service.ts` (400 lines, 80.0% of limit) by extracting static fallback fixtures (`FALLBACK_CAMPAIGNS`, `FALLBACK_CHARACTERS`, `FALLBACK_MEMBERS`, `FALLBACK_PARTICIPANTS`, `FALLBACK_SESSIONS`) into a dedicated fixture module `frontend/src/services/app-data-service.fixtures.ts`, keeping `AppDataService` focused strictly on HTTP API client calls and state orchestration (< 220 lines).
+Decompose `frontend/src/services/app-data-service.ts` (400 lines, 80.0% of limit) by extracting static fallback fixtures (`FALLBACK_CAMPAIGNS`, `FALLBACK_CHARACTERS`, `FALLBACK_MEMBERS`, `FALLBACK_PARTICIPANTS`, `FALLBACK_SESSIONS`) into a dedicated fixture module `frontend/src/fixtures/app-data-service.fixtures.ts`, keeping `AppDataService` focused strictly on HTTP API client calls and state orchestration (< 220 lines).
 
 ## Problem Statement
 `frontend/src/services/app-data-service.ts` currently reaches 400 lines, mixing heavy static fixture definitions (campaigns, character stats, party members, session lists) with live Gateway API network client logic. As additional character attributes, inventory items, and settlement endpoints are added in upcoming milestones, this file will rapidly exceed the 500-line invariant limit unless decoupled.
@@ -38,7 +38,7 @@ Decompose `frontend/src/services/app-data-service.ts` (400 lines, 80.0% of limit
   - [`us-0064-character-roster-management-and-party-assignment.md`](../../user_stories/accepted/us-0064-character-roster-management-and-party-assignment.md)
 
 ## Detailed Specification & Implementation Plan
-1. **Fixture Extraction (`frontend/src/services/app-data-service.fixtures.ts`)**:
+1. **Fixture Extraction (`frontend/src/fixtures/app-data-service.fixtures.ts`)**:
    - Extract `FALLBACK_CAMPAIGNS`, `FALLBACK_CHARACTERS`, `FALLBACK_MEMBERS`, `FALLBACK_PARTICIPANTS`, and `FALLBACK_SESSIONS` (< 150 lines).
 2. **Service Modularization (`frontend/src/services/app-data-service.ts`)**:
    - Import fallback constants from `.fixtures.ts`.
@@ -56,6 +56,6 @@ Decompose `frontend/src/services/app-data-service.ts` (400 lines, 80.0% of limit
 
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
 1. `frontend/src/services/app-data-service.ts` reduced to < 220 lines.
-2. Extracted `frontend/src/services/app-data-service.fixtures.ts` strictly < 160 lines.
+2. Extracted `frontend/src/fixtures/app-data-service.fixtures.ts` strictly < 160 lines.
 3. All frontend tests (`pnpm test`) and Storybook stories pass without regression.
 4. Code passes lint and typecheck (`pnpm run lint` and `pnpm run build`).

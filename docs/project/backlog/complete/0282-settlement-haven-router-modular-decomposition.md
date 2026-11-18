@@ -20,7 +20,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/374
 # TASK-0282: Settlement Haven Router Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `services/game_session/src/game_session/settlement/router.py` (351 lines, 70.2% of limit) into modular APIRouter submodules under `services/game_session/src/game_session/settlement/haven/` (`routes_havens.py`, `routes_establishments.py`, `routes_upgrades.py`), ensuring all route modules remain strictly < 130 lines per Hard Invariant 6.
@@ -61,7 +61,7 @@ Decompose `services/game_session/src/game_session/settlement/router.py` (351 lin
 - **Valuable (V)**: Protects haven router from breaching the 500-line invariant limit.
 - **Estimable (E)**: Pure extraction of route handlers into modular APIRouters.
 - **Small (S)**: Each extracted router module strictly < 130 lines.
-- **Testable (T)**: Frontdoor API verification in `tests/test_blackbox_settlements_integration.py`.
+- **Testable (T)**: Frontdoor API verification in `tests/test_blackbox_settlements_integration.py` (removed).
 
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
 1. `services/game_session/src/game_session/settlement/router.py` reduced to strictly < 40 lines.

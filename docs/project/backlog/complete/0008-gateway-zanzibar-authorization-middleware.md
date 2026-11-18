@@ -4,6 +4,10 @@ title: Gateway SpiceDB Zanzibar Authorization Middleware
 status: Complete
 created: 2026-09-25
 target_bc: gateway-api
+governing_prds: []
+governing_stories: []
+governing_adrs: []
+dependencies: []
 ---
 # TASK-0008: Gateway SpiceDB Zanzibar Authorization Middleware
 

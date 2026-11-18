@@ -21,7 +21,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/300
 # TASK-0263: Town Bulletin Board, Civic Proclamations, and Rumor Network
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Implement the interactive Town Bulletin Board component and domain projection, allowing players and DMs to pin notices, monster bounties, mercantile job postings, tavern rumors, and secret cipher mini-puzzles to community gathering squares and tavern common rooms with real-time WebSocket broadcast and SpiceDB Zanzibar authorization.
@@ -59,7 +59,7 @@ Settlements lack a tangible, diegetic community communication hub. Rumors and qu
    - Corkboard/wood textured canvas with pinned parchment cards.
    - Interactive modal on tap to expand notice details with acoustic paper rustle.
    - Built-in mini-puzzle overlay for decrypting Thieves' Cant or ancient rune ciphers.
-4. **Frontdoor Blackbox Verification (`tests/test_blackbox_bulletin_board.py`)**:
+4. **Frontdoor Blackbox Verification (`tests/test_blackbox_bulletin_board/`)**:
    - Pin notice via HTTP POST, assert event broadcast and retrieval in GET list.
    - Decrypt cipher notice, verify decrypted content returned to authorized player.
 

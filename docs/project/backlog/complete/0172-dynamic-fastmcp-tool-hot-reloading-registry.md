@@ -22,10 +22,10 @@ pr_url: https://github.com/tyevans/runefoble/pull/213
 # TASK-0172: Dynamic FastMCP Tool Hot-Reloading Registry
 
 ## Status
-Refined
+Complete
 
 ## Summary
-Implement a dynamic runtime tool registry in `services/gateway_mcp/` allowing developers and game masters to register, update, and hot-reload custom FastMCP tools and prompts at runtime with SpiceDB authorization checks, without restarting the MCP server.
+Implement a dynamic runtime tool registry in `services/gateway_mcp/` (removed) allowing developers and game masters to register, update, and hot-reload custom FastMCP tools and prompts at runtime with SpiceDB authorization checks, without restarting the MCP server.
 
 ## Problem Statement
 Adding or updating community-authored MCP tools currently requires restarting the MCP gateway process, terminating active AI agent sessions and interrupting live game turns.

@@ -51,7 +51,7 @@ The `<runefoble-wardrobe-gallery>` component exists in `@runefoble/character-she
 - [`prd-0006-digital-character-sheet-inventory-and-conditions.md`](../../product/accepted/prd-0006-digital-character-sheet-inventory-and-conditions.md)
 - [`prd-0023-unified-frontend-application-shell-and-campaign-hub.md`](../../product/accepted/prd-0023-unified-frontend-application-shell-and-campaign-hub.md)
 - [`us-0055-dynamic-character-wardrobe-and-condition-portraits.md`](../../user_stories/accepted/us-0055-dynamic-character-wardrobe-and-condition-portraits.md)
-- [`us-0069-deep-linkable-client-routing-and-route-guards.md`](../../user_stories/accepted/us-0069-deep-linkable-client-routing-and-route-guards.md)
+- [`us-0069-deep-linkable-client-routing-and-route-guards.md`](../../user_stories/accepted/us-0055-dynamic-character-wardrobe-and-condition-portraits.md)
 
 ## Detailed Specification & Implementation Plan
 1. **App Data Service Extension (`frontend/src/services/app-data-service.ts`)**:

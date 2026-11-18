@@ -22,13 +22,13 @@ pr_url: https://github.com/tyevans/runefoble/pull/309
 # TASK-0272: Settlement Haven Aggregate Blackbox Test Suite Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
-Decompose `tests/test_blackbox_settlement_haven_aggregate.py` (374 lines, 74.8% of limit) into modular test sub-suites under `tests/test_blackbox_settlement_haven/` (`conftest.py`, `test_founding_and_scale.py`, `test_establishment_construction.py`, `test_upgrades_and_events.py`), ensuring all test sub-modules remain strictly < 130 lines per Hard Invariant 6 and Hard Invariant 7.
+Decompose `tests/test_blackbox_settlement_haven/` (374 lines, 74.8% of limit) into modular test sub-suites under `tests/test_blackbox_settlement_haven/` (`conftest.py`, `test_founding_and_scale.py`, `test_establishment_construction.py`, `test_upgrades_and_events.py`), ensuring all test sub-modules remain strictly < 130 lines per Hard Invariant 6 and Hard Invariant 7.
 
 ## Problem Statement
-`tests/test_blackbox_settlement_haven_aggregate.py` has grown to 374 lines in its initial implementation, testing settlement founding, establishment construction, tier upgrades, event publishing over Redis streams, and SpiceDB Zanzibar relationship verification within a single module. As additional district zoning rules and worker assignment assertions are introduced, this suite will approach the 500-line invariant limit unless decoupled into focused submodules.
+`tests/test_blackbox_settlement_haven/` has grown to 374 lines in its initial implementation, testing settlement founding, establishment construction, tier upgrades, event publishing over Redis streams, and SpiceDB Zanzibar relationship verification within a single module. As additional district zoning rules and worker assignment assertions are introduced, this suite will approach the 500-line invariant limit unless decoupled into focused submodules.
 
 ## Documentation & Architecture Review
 - **Documentation Consulted**:
@@ -67,7 +67,7 @@ Decompose `tests/test_blackbox_settlement_haven_aggregate.py` (374 lines, 74.8% 
 - **Testable (T)**: Existing test coverage guarantees zero regression.
 
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
-1. `tests/test_blackbox_settlement_haven_aggregate.py` replaced by modular package `tests/test_blackbox_settlement_haven/`.
+1. `tests/test_blackbox_settlement_haven/` replaced by modular package `tests/test_blackbox_settlement_haven/`.
 2. All test sub-modules strictly < 130 lines each per Hard Invariant 6.
 3. Tests pass via `uv run pytest tests/test_blackbox_settlement_haven/`.
 4. Code passes lint and typecheck (`uv run ruff check .` and `uv run ruff format --check .`).

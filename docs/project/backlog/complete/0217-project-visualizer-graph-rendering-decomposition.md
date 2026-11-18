@@ -15,7 +15,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/277
 # TASK-0217: Project Visualizer Graph Rendering Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `tools/project_visualizer/static/js/graph.js` (371 lines, 74.2% of limit) into focused ES module components under `tools/project_visualizer/static/js/graph/` (`simulation.js`, `nodes.js`, `links.js`, `zoom.js`), keeping all modules strictly < 150 lines per Hard Invariant 6.

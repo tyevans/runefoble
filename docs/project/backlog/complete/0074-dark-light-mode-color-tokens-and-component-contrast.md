@@ -88,7 +88,7 @@ Replace all hardcoded hex literals with CSS tokens across all components:
 ### 4. Verification & Storybook Stories
 - Update `frontend/.storybook/preview.ts` to include interactive Dark / Light mode switching in the Storybook toolbar.
 - Add Storybook test matrix rendering components side-by-side in both Light and Dark modes.
-- Extend `tests/test_theming.py` to verify:
+- Extend `tests/test_theming.py` (removed) to verify:
   - Complete semantic token coverage for all themes under both `[data-color-mode="light"]` and `[data-color-mode="dark"]`.
   - Zero hardcoded hex color literals in Web Component `static styles` blocks (using regex AST inspection).
   - All files satisfy the <500 lines invariant.
@@ -98,5 +98,5 @@ Replace all hardcoded hex literals with CSS tokens across all components:
 2. All 8 core Lit components audited with zero hardcoded hex colors remaining in Shadow DOM style blocks.
 3. Shadows in dark mode remain visually distinct and tactile (avoiding invisible black-on-black).
 4. Storybook toolbar updated with Light / Dark switcher; all stories render legibly without contrast issues.
-5. Automated test suite in `tests/test_theming.py` expanded and passing 100%.
+5. Automated test suite in `tests/test_theming.py` (removed) expanded and passing 100%.
 6. All source files strictly under 500 lines.

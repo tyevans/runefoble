@@ -21,13 +21,13 @@ pr_url: https://github.com/tyevans/runefoble/pull/332
 # TASK-0281: Merchant Haggling Blackbox Test Suite Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
-Decompose `tests/test_blackbox_merchant_haggling.py` (359 lines, 71.8% of limit) into modular test submodules under `tests/test_blackbox_merchant_haggling/` (`conftest.py`, `test_bargain_flow.py`, `test_rhetoric_moves.py`, `test_dm_arbitration.py`), ensuring all test files remain strictly < 130 lines per Hard Invariant 6.
+Decompose `tests/test_blackbox_merchant_haggling/` (359 lines, 71.8% of limit) into modular test submodules under `tests/test_blackbox_merchant_haggling/` (`conftest.py`, `test_bargain_flow.py`, `test_rhetoric_moves.py`, `test_dm_arbitration.py`), ensuring all test files remain strictly < 130 lines per Hard Invariant 6.
 
 ## Problem Statement
-`tests/test_blackbox_merchant_haggling.py` tests haggling session initialization, player rhetoric moves, merchant mood calculations, patience degradation, DM live price overrides, and deal acceptance in a single 359-line test module. As multi-currency exchange and complex trade bundle tests are added, this test file will breach the 500-line limit unless decomposed into focused, single-responsibility submodules.
+`tests/test_blackbox_merchant_haggling/` tests haggling session initialization, player rhetoric moves, merchant mood calculations, patience degradation, DM live price overrides, and deal acceptance in a single 359-line test module. As multi-currency exchange and complex trade bundle tests are added, this test file will breach the 500-line limit unless decomposed into focused, single-responsibility submodules.
 
 ## Documentation & Architecture Review
 - **Documentation Consulted**:

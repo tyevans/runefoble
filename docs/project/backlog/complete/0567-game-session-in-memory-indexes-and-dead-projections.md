@@ -30,7 +30,7 @@ Game session keeps several index dicts at module level that map a parent id to c
 ## Problem Statement
 - `services/game_session/src/game_session/dependencies.py:122-127` defines `_session_bounties_index`, `_world_contracts_index`, `_settlement_establishments_index`, `_campaign_settlements_index`, `_establishment_workers_index`, and `_establishment_negotiations_index` as dicts.
 - `services/game_session/src/game_session/routers/bounties.py:74` writes the index after save. `:90-91` reads it and suppresses load errors (w1-game-session F3).
-- `services/game_session/src/game_session/projections/presence.py:21` and `projections/session.py:29-44` hold in-memory state. Grep finds no construction site (w1-game-session F10).
+- `services/game_session/src/game_session/projections/presence.py:21` (removed) and `projections/session.py:29-44` hold in-memory state. Grep finds no construction site (w1-game-session F10).
 
 ## Documentation & Architecture Review
 - `refined/0491-remove-backward-compatibility-shims-game-session.md` removes facades only. It does not cover these indexes.

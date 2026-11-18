@@ -22,7 +22,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/132
 # TASK-0104: Multi-Modal Kinetic Spell VFX & WebGL Particle Magic
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Add a high-performance WebGL particle visual effects overlay to the tactical board, translating spoken spell incantations and board actions into animated firestorms, lightning arcs, and arcane wards.
@@ -71,7 +71,7 @@ Spellcasting on digital boards lacks the visceral spectacle and dramatic punch o
 3. **Storybook Stories**:
    - Stories showcasing firestorm, lightning, and shield barrier animations with interactive trigger buttons.
 4. **Frontdoor Blackbox Test Suite**:
-   - `tests/test_blackbox_spell_vfx.py` verifying spell trigger events and board animation state via public routes.
+   - `tests/test_blackbox_spell_vfx/` verifying spell trigger events and board animation state via public routes.
 5. **Quality Gates**:
    - Conforms to Hard Invariant 6 (< 500 lines per file).
    - Passes `pnpm run build` and `uv run pytest tests/test_blackbox_spell_vfx.py`.

@@ -7,6 +7,8 @@ governing_prds:
 - PRD-0004
 governing_stories:
 - US-0011
+governing_adrs: []
+dependencies: []
 ---
 
 # TASK-0005: Model Context Protocol (MCP) RPG Tools Expansion

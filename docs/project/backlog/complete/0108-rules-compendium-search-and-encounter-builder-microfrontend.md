@@ -23,7 +23,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/106
 # TASK-0108: Rules Compendium Search & Encounter Builder Microfrontend
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Develop the encapsulated Lit Web Component microfrontend `<runefoble-rules-compendium>` within `services/rules_compendium/ui/` providing sub-50ms hybrid BM25 and vector search across SRD monsters, spells, and conditions, alongside an interactive CR encounter builder interface.
@@ -74,7 +74,7 @@ Develop the encapsulated Lit Web Component microfrontend `<runefoble-rules-compe
 3. **Microfrontend Manifest**:
    - Manifest served at `/ui/manifest` exposing tags, styles, and script entries per ADR-0013.
 4. **Frontdoor Blackbox Test Suite**:
-   - `tests/test_blackbox_rules_compendium_ui.py` validating component registration, manifest endpoint, and REST data binding.
+   - `tests/test_blackbox_rules_compendium_ui/` validating component registration, manifest endpoint, and REST data binding.
 5. **Quality Gates**:
    - Strictly conforms to Hard Invariant 6 (< 500 lines per file).
    - Passes `pnpm run build` and `uv run pytest tests/test_blackbox_rules_compendium_ui.py`.

@@ -20,13 +20,13 @@ pr_url: https://github.com/tyevans/runefoble/pull/242
 # TASK-0183: Faction Resources Blackbox Test Suite Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
-Decompose `tests/test_blackbox_faction_resources/test_blackbox_faction_resources.py` (360 lines, 72.0% of limit) into modular test submodules under `tests/test_blackbox_faction_resources/` (`conftest.py`, `test_resource_operations.py`, `test_mercenary_recruitment.py`, `test_bribery_mechanics.py`), keeping all test files strictly < 150 lines per Hard Invariant 6 and ADR-0003.
+Decompose `tests/test_blackbox_faction_resources/test_blackbox_faction_resources.py` (removed) (360 lines, 72.0% of limit) into modular test submodules under `tests/test_blackbox_faction_resources/` (`conftest.py`, `test_resource_operations.py`, `test_mercenary_recruitment.py`, `test_bribery_mechanics.py`), keeping all test files strictly < 150 lines per Hard Invariant 6 and ADR-0003.
 
 ## Problem Statement
-`tests/test_blackbox_faction_resources/test_blackbox_faction_resources.py` was introduced in TASK-0161 and covers resource transactions, mercenary hiring, bribery checks, and Redis event emissions in a single monolithic test file of 360 lines. As additional faction turf war and regional unrest tests are added, this suite will breach the 500-line limit unless decomposed into focused, single-responsibility test files.
+`tests/test_blackbox_faction_resources/test_blackbox_faction_resources.py` (removed) was introduced in TASK-0161 and covers resource transactions, mercenary hiring, bribery checks, and Redis event emissions in a single monolithic test file of 360 lines. As additional faction turf war and regional unrest tests are added, this suite will breach the 500-line limit unless decomposed into focused, single-responsibility test files.
 
 ## Governing Architecture & ADRs
 - **ADR-0003: UV Monorepo Workspace for Python BCs**: Clean test package structuring.

@@ -22,7 +22,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/129
 # TASK-0102: Personal Character Leitmotifs & Adaptive Musical Signatures
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Incorporate personalized musical leitmotifs into the adaptive audio pipeline, dynamically blending distinct instrument themes and heroic fanfares during character triumphs, clutch criticals, and death save struggles.
@@ -69,7 +69,7 @@ Characters lack individual auditory identity in game sessions (PRD-0016, US-0046
 3. **Microfrontend Element & Storybook**:
    - `<runefoble-leitmotif-config>` built with Shadow DOM and Bauhaus design tokens, verified in Storybook with zero errors.
 4. **Frontdoor Blackbox Test Suite**:
-   - `tests/test_blackbox_character_leitmotifs.py` validating character leitmotif configuration, event triggering, and audio mixer outputs via public REST endpoints.
+   - `tests/test_blackbox_character_leitmotifs.py` (removed) validating character leitmotif configuration, event triggering, and audio mixer outputs via public REST endpoints.
 5. **Quality Gates**:
    - Conforms to Hard Invariant 6 (< 500 lines per file).
    - Passes `uv run pytest tests/test_blackbox_character_leitmotifs.py` and frontend build.

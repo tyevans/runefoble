@@ -49,7 +49,7 @@ The `<runefoble-leitmotif-config>` component exists in `@runefoble/soundscape-co
 - [`prd-0010-adaptive-soundscape-foley-and-tension-scoring.md`](../../product/accepted/prd-0010-adaptive-soundscape-foley-and-tension-scoring.md)
 - [`prd-0023-unified-frontend-application-shell-and-campaign-hub.md`](../../product/accepted/prd-0023-unified-frontend-application-shell-and-campaign-hub.md)
 - [`us-0046-character-musical-leitmotifs-and-dynamic-themes.md`](../../user_stories/accepted/us-0046-character-musical-leitmotifs-and-dynamic-themes.md)
-- [`us-0039-adaptive-tension-and-combat-audio-scoring.md`](../../user_stories/accepted/us-0039-adaptive-tension-and-combat-audio-scoring.md)
+- [`us-0039-adaptive-tension-and-combat-audio-scoring.md`](../../user_stories/accepted/us-0046-character-musical-leitmotifs-and-dynamic-themes.md)
 
 ## Detailed Specification & Implementation Plan
 1. **App Data Service Leitmotif Client (`frontend/src/services/app-data-service.ts`)**:

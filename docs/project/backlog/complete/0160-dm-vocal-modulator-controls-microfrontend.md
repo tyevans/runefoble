@@ -19,7 +19,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/182
 # TASK-0160: DM Vocal Modulator Controls & Preset Selector Microfrontend
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Build `<runefoble-vocal-modulator>` Web Component within `services/voice_agent/ui/src/` providing quick-toggle NPC vocal archetype presets ("Dragon", "Goblin", "Ethereal"), live pitch shift sliders, and outgoing formant visualizers in Storybook and the DM Co-Pilot panel.

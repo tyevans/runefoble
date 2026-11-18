@@ -23,7 +23,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/169
 # TASK-0156: Secret DM Spatial Traps, Map Switching and Stage Triggers
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Implement DM-only hidden trap layers, proximity trigger cells, and multi-map switching with party token teleportation in `services/board_state/`, enforcing SpiceDB Zanzibar authorization so that secret markers remain invisible to players while firing automatic DM alerts upon movement breach.

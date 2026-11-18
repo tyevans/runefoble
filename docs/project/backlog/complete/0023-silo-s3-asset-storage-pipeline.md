@@ -7,6 +7,8 @@ completed: 2026-09-26
 dependencies: [TASK-0008, TASK-0009]
 governing_adrs: [ADR-0001, ADR-0005, ADR-0011]
 target_release: 0.1.0
+governing_prds: []
+governing_stories: []
 ---
 
 # TASK-0023: Silo S3 Media Asset Bucket Storage & Character Avatar / Map Upload Pipeline
@@ -15,7 +17,7 @@ target_release: 0.1.0
 Complete
 
 ## Summary
-Implemented a media asset storage service (`SiloStorageService`) in `libs/runefoble_platform/storage.py` and frontdoor asset endpoints in `gateway/api` allowing players and DMs to upload, store, and stream character avatars, tactical battlemaps, and ambient audio tracks. Integrates with the platform's MinIO-compatible Silo S3 service (`http://silo:9000`), generating signed URLs, verifying MIME types and size limits, and publishing `AssetUploaded` and `AssetDeleted` domain events.
+Implemented a media asset storage service (`SiloStorageService`) in `libs/runefoble_platform/storage.py` (removed) and frontdoor asset endpoints in `gateway/api` allowing players and DMs to upload, store, and stream character avatars, tactical battlemaps, and ambient audio tracks. Integrates with the platform's MinIO-compatible Silo S3 service (`http://silo:9000`), generating signed URLs, verifying MIME types and size limits, and publishing `AssetUploaded` and `AssetDeleted` domain events.
 
 ## Key Changes
 - `libs/runefoble_events/src/runefoble_events/asset.py`:
@@ -36,7 +38,7 @@ Implemented a media asset storage service (`SiloStorageService`) in `libs/runefo
   - Implemented `DELETE /api/v1/assets/{asset_id}` removing asset and dispatching `AssetDeleted`.
 - `gateway/api/src/gateway_api/main.py`:
   - Included asset router at `/api/v1/assets`.
-- `tests/test_blackbox_silo_assets.py`:
+- `tests/test_blackbox_silo_assets.py` (removed):
   - Hard Invariant 7 compliant blackbox test suite validating upload via multipart and JSON base64, metadata retrieval, binary streaming, download headers, invalid MIME rejection, payload size limit enforcement, deletion lifecycle (subsequent 404s), and Redis stream / in-memory event dispatching.
 
 ## Verification

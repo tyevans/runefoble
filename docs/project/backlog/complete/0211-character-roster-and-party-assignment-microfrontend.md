@@ -19,7 +19,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/201
 # TASK-0211: Character Roster and Party Assignment Microfrontend
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Implement the `<runefoble-character-roster>` and `<runefoble-character-builder-modal>` Lit Web Components in `services/character_sheet/ui/src/roster/`, enabling players to manage their library of characters and assign owned characters to campaign parties.

@@ -15,11 +15,13 @@ governing_adrs:
 - ADR-0013
 target_release: 0.2.0
 pr_url: https://github.com/tyevans/runefoble/pull/42
+governing_prds: []
+governing_stories: []
 ---
 # TASK-0045: Gateway API Router and App Shell Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose monolithic orchestration files in `gateway/api/src/gateway_api/main.py` (399 lines) and `frontend/src/runefoble-app.ts` (471 lines, 94.2% of limit) into modular subcomponents and router controllers to strictly adhere to Hard Invariant 6 (File length limit < 500 lines).

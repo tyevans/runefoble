@@ -23,13 +23,13 @@ pr_url: https://github.com/tyevans/runefoble/pull/102
 # TASK-0071: WebSocket Zanzibar Authorization and Mutator Test Suite Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
-Decompose `tests/test_websocket_zanzibar_auth.py` (330 lines, 66.0% of limit) into two specialized test suites (`tests/test_websocket_zanzibar_connect_auth.py` and `tests/test_websocket_zanzibar_mutators.py`) to prevent breaching Hard Invariant 6 (File length limit < 500 lines) as live SpiceDB gRPC clients (TASK-0035) and spectator interactivity (TASK-0051) expand permission boundaries.
+Decompose `tests/test_websocket_zanzibar_auth.py` (removed) (330 lines, 66.0% of limit) into two specialized test suites (`tests/test_websocket_zanzibar_connect_auth.py` and `tests/test_websocket_zanzibar_mutators.py`) to prevent breaching Hard Invariant 6 (File length limit < 500 lines) as live SpiceDB gRPC clients (TASK-0035) and spectator interactivity (TASK-0051) expand permission boundaries.
 
 ## Problem Statement
-`tests/test_websocket_zanzibar_auth.py` currently spans 330 lines and covers two distinct authorization checkpoints:
+`tests/test_websocket_zanzibar_auth.py` (removed) currently spans 330 lines and covers two distinct authorization checkpoints:
 1. WebSocket connection handshake authentication and campaign viewer/reader authorization (`/ws/campaigns/{id}?user_id={user_id}`), including rejection of unauthorized subjects with 4003 codes and `PERMISSION_DENIED` frames.
 2. In-session action mutators, verifying fine-grained Zanzibar object-level permissions on token movement, DM-only monster spawning and scene changes, character sheet mutations, and dynamic relation revocations.
 
@@ -60,11 +60,11 @@ As production SpiceDB gRPC connections and live spectator interaction channels a
 - **Negotiable (N)**: Split boundaries between connection lifecycle and action mutators can be refined.
 - **Valuable (V)**: Protects against Hard Invariant 6 violations (< 500 lines) and speeds up targeted auth test execution.
 - **Estimable (E)**: Clean separation of handshake authorization tests from payload mutator verification.
-- **Small (S)**: Scope strictly isolated to `tests/test_websocket_zanzibar_auth.py`; all resulting files < 200 lines.
+- **Small (S)**: Scope strictly isolated to `tests/test_websocket_zanzibar_auth.py` (removed); all resulting files < 200 lines.
 - **Testable (T)**: Verified with `uv run pytest tests/test_websocket_zanzibar_*.py`.
 
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
-1. `tests/test_websocket_zanzibar_auth.py` decomposed into focused test suites strictly under 200 lines each.
+1. `tests/test_websocket_zanzibar_auth.py` (removed) decomposed into focused test suites strictly under 200 lines each.
 2. 100% test pass rate across all existing connection and mutator authorization tests.
 3. Conforms strictly to Hard Invariant 6 (< 500 lines per file).
 4. Maintains blackbox frontdoor interactions via public WebSocket endpoints and standard domain events.

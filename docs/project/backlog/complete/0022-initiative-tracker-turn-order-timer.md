@@ -7,6 +7,8 @@ completed: 2026-09-26
 dependencies: [TASK-0010, TASK-0016, TASK-0017]
 governing_adrs: [ADR-0004, ADR-0011, ADR-0012]
 target_release: 0.1.0
+governing_prds: []
+governing_stories: []
 ---
 
 # TASK-0022 — Live Multi-User Turn Order, Initiative Tracker & Timer Web Component
@@ -34,7 +36,7 @@ Implemented real-time combat encounter initiative tracking, round advancement, a
    - `GET /api/v1/sessions/{session_id}/combat`: Returns current initiative state, round, current turn timer.
 3. **Frontend Component & Storybook (`frontend/src/components/runefoble-initiative-tracker.ts`)**:
    - Interactive Lit component with Bauhaus typography, progress timer bar, active turn indicator, and skip/next turn controls.
-   - Storybook story (`frontend/src/stories/runefoble-initiative-tracker.stories.ts`).
+   - Storybook story (`services/game_session/ui/src/runefoble-initiative-tracker.stories.ts`).
 4. **Blackbox TDD Suite (`tests/test_blackbox_initiative_tracker.py`)**:
    - Strict frontdoor testing via `TestClient` exercising start combat -> submit initiative rolls -> advance turns across rounds -> end combat.
 5. **File Invariant Check**:

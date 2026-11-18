@@ -17,13 +17,13 @@ pr_url: https://github.com/tyevans/runefoble/pull/155
 # TASK-0139: Wardrobe Gallery Blackbox Test Suite Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
-Decompose the monolithic blackbox test suite `tests/test_blackbox_wardrobe_gallery.py` (415 lines, 83% of limit) into modular frontdoor test suites under `tests/test_blackbox_wardrobe_gallery/` (`test_wardrobe_api.py`, `test_wardrobe_conditions.py`, `test_wardrobe_events.py`), ensuring all test files remain < 200 lines per Hard Invariant 6.
+Decompose the monolithic blackbox test suite `tests/test_blackbox_wardrobe_gallery/` (415 lines, 83% of limit) into modular frontdoor test suites under `tests/test_blackbox_wardrobe_gallery/` (`test_wardrobe_api.py`, `test_wardrobe_conditions.py`, `test_wardrobe_events.py`), ensuring all test files remain < 200 lines per Hard Invariant 6.
 
 ## Problem Statement
-`tests/test_blackbox_wardrobe_gallery.py` has grown to 415 lines as tests were added for dynamic bloodied overlays, condition badges, generative Silo S3 variants, SpiceDB permissions, and CloudEvents dispatching. Splitting it into single-responsibility test modules prevents breaching Hard Invariant 6 (< 500 lines) and improves parallel test performance.
+`tests/test_blackbox_wardrobe_gallery/` has grown to 415 lines as tests were added for dynamic bloodied overlays, condition badges, generative Silo S3 variants, SpiceDB permissions, and CloudEvents dispatching. Splitting it into single-responsibility test modules prevents breaching Hard Invariant 6 (< 500 lines) and improves parallel test performance.
 
 ## Governing Architecture & ADRs
 - **ADR-0013: Microfrontend Architecture and Service Component Vendoring**: Component test separation and frontdoor validation.
@@ -39,7 +39,7 @@ Decompose the monolithic blackbox test suite `tests/test_blackbox_wardrobe_galle
    - Extract tests for HP threshold bloodied vignettes, poisoned auras, and stunned visual markers (< 150 lines).
 3. **Event & Asset Storage Tests (`tests/test_blackbox_wardrobe_gallery/test_wardrobe_events.py`)**:
    - Extract CloudEvents validation (`CharacterDamaged`, `PortraitVariantGenerated`) and Silo S3 asset storage checks (< 150 lines).
-4. **Test Shim (`tests/test_blackbox_wardrobe_gallery.py`)**:
+4. **Test Shim (`tests/test_blackbox_wardrobe_gallery/`)**:
    - Replace old file with a clean deprecation / runner shim or remove upon directory migration.
 
 ## INVEST Criteria Evaluation
@@ -47,7 +47,7 @@ Decompose the monolithic blackbox test suite `tests/test_blackbox_wardrobe_galle
 - **Negotiable (N)**: Split boundaries between test modules can be adjusted.
 - **Valuable (V)**: Protects codebase against Hard Invariant 6 breach and eases maintenance.
 - **Estimable (E)**: Standard pytest test suite refactoring.
-- **Small (S)**: Bounded strictly to `tests/test_blackbox_wardrobe_gallery.py`.
+- **Small (S)**: Bounded strictly to `tests/test_blackbox_wardrobe_gallery/`.
 - **Testable (T)**: Validated by ensuring 100% of existing wardrobe gallery tests continue to pass.
 
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)

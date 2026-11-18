@@ -22,13 +22,13 @@ pr_url: https://github.com/tyevans/runefoble/pull/109
 # TASK-0115: Campaign Analytics Test Suite Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
-Decompose `tests/test_blackbox_campaign_analytics.py` (442 lines, 88.4% of limit) into three focused, single-responsibility blackbox test modules strictly under 250 lines each to prevent violating Hard Invariant 6 (File length limit < 500 lines) and maintain test suite clarity.
+Decompose `tests/test_blackbox_campaign_analytics.py` (removed) (442 lines, 88.4% of limit) into three focused, single-responsibility blackbox test modules strictly under 250 lines each to prevent violating Hard Invariant 6 (File length limit < 500 lines) and maintain test suite clarity.
 
 ## Problem Statement
-`tests/test_blackbox_campaign_analytics.py` currently exercises the full campaign analytics pipeline in a single monolithic test file:
+`tests/test_blackbox_campaign_analytics.py` (removed) currently exercises the full campaign analytics pipeline in a single monolithic test file:
 1. HTTP route tests (`/api/v1/analytics/campaigns/{id}/timeline`, `/heatmaps`, `/mvp`).
 2. Redis Streams event projection worker tests (`TokenPlaced`, `TokenMoved`, `DiceRolled`, `CombatRoundAdvanced`, `CharacterHealthChanged`, `AbsenteeRecapGenerated`).
 3. Database storage queries, spatial aggregations, and MVP ranking calculations.
@@ -63,12 +63,12 @@ As additional battlemap heatmaps, multi-session timeline metrics, and chronicle 
 - **Negotiable (N)**: Split boundaries between worker and storage tests can be tailored.
 - **Valuable (V)**: Protects against Hard Invariant 6 violations (< 500 lines) and improves parallel test clarity.
 - **Estimable (E)**: Straightforward refactoring of pytest fixtures and test cases.
-- **Small (S)**: Scope strictly isolated to `tests/test_blackbox_campaign_analytics.py`.
+- **Small (S)**: Scope strictly isolated to `tests/test_blackbox_campaign_analytics.py` (removed).
 - **Testable (T)**: Passes `uv run pytest tests/test_blackbox_campaign_analytics*.py`.
 
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
 1. **Test Decomposition**:
-   - `tests/test_blackbox_campaign_analytics.py` replaced by `tests/test_blackbox_campaign_analytics_api.py`, `tests/test_blackbox_campaign_analytics_worker.py`, and `tests/test_blackbox_campaign_analytics_storage.py`.
+   - `tests/test_blackbox_campaign_analytics.py` (removed) replaced by `tests/test_blackbox_campaign_analytics_api.py`, `tests/test_blackbox_campaign_analytics_worker.py`, and `tests/test_blackbox_campaign_analytics_storage.py`.
 2. **Strict Line Limit Enforced**:
    - Every decomposed test file is strictly under 250 lines in compliance with Hard Invariant 6.
 3. **Coverage & Parity**:

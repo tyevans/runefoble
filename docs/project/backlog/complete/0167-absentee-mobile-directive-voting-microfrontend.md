@@ -21,7 +21,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/222
 # TASK-0167: Absentee Mobile Directive and Remote Voting Microfrontend
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Build a mobile touch-optimized Lit Web Component in `services/the_watcher/ui/` (`<runefoble-absentee-directive>`) allowing absent players to review their AI stand-in's status, adjust tactical posture directives (Defensive, Cautious, Heroic), and vote on key party decisions with tactile haptic feedback.

@@ -23,7 +23,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/172
 # TASK-0142: 3D Miniature Tokens & WebGL Tabletop Physics
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Introduce 3D WebGL miniature tokens with physical dice rolling and terrain collision physics on the tactical board within `services/board_state/ui/src/`, allowing tokens and tumbling dice to interact with walls, pillars, and elevation changes.

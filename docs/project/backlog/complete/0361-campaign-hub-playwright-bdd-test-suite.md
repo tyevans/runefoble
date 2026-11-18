@@ -26,7 +26,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/375
 # TASK-0361: Campaign Hub Lifecycle and Navigation Playwright BDD Test Suite
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Implement a comprehensive, frontdoor-driven Playwright BDD test suite (`e2e/features/campaign_hub.feature`) verifying the complete Campaign Hub lifecycle per ADR-0014. Automate end-to-end user journeys for campaign creation, SpiceDB Zanzibar member role assignments, invite link generation and copying, session scheduling, and tab transitions across Overview, Party Characters, Codex & Lore, and Chronicle & Stats.

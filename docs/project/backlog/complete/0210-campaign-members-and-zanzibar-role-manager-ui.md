@@ -21,7 +21,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/200
 # TASK-0210: Campaign Members and Zanzibar Role Manager UI
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Implement the `<runefoble-campaign-members>` Lit Web Component in `services/game_session/ui/src/campaigns/`, allowing Game Masters to inspect campaign rosters, generate invite links, and assign SpiceDB Zanzibar roles (`dungeon_master`, `player`, `spectator`) directly from the UI.

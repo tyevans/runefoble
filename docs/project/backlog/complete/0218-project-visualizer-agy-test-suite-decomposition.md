@@ -14,13 +14,13 @@ pr_url: https://github.com/tyevans/runefoble/pull/230
 # TASK-0218: Project Visualizer AGY Test Suite Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
-Decompose `tests/test_project_visualizer_agy.py` (423 lines, 84.6% of limit) into modular test files under `tests/test_project_visualizer_agy/` (`conftest.py`, `test_agy_endpoint.py`, `test_agy_launcher.py`, `test_agy_execution.py`), keeping all test modules strictly < 130 lines per Hard Invariant 6.
+Decompose `tests/test_project_visualizer_agy/` (423 lines, 84.6% of limit) into modular test files under `tests/test_project_visualizer_agy/` (`conftest.py`, `test_agy_endpoint.py`, `test_agy_launcher.py`, `test_agy_execution.py`), keeping all test modules strictly < 130 lines per Hard Invariant 6.
 
 ## Problem Statement
-`tests/test_project_visualizer_agy.py` validates the visualizer's `/api/run-agy` endpoint, mock subprocess execution, CLI launch flags, and error status responses in a monolithic test file of 423 lines. As additional AGY launch modes and slash command integrations are tested, this suite will approach the 500-line invariant ceiling unless decomposed.
+`tests/test_project_visualizer_agy/` validates the visualizer's `/api/run-agy` endpoint, mock subprocess execution, CLI launch flags, and error status responses in a monolithic test file of 423 lines. As additional AGY launch modes and slash command integrations are tested, this suite will approach the 500-line invariant ceiling unless decomposed.
 
 ## Governing Architecture & ADRs
 - **ADR-0003: UV Monorepo Workspace for Python BCs**: Clean modular test suite organization and fixture reuse.
@@ -48,7 +48,7 @@ Decompose `tests/test_project_visualizer_agy.py` (423 lines, 84.6% of limit) int
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
 1. **Test Suite Architecture**:
    - `tests/test_project_visualizer_agy/` package created with all files strictly < 130 lines per Hard Invariant 6.
-   - Original `tests/test_project_visualizer_agy.py` removed.
+   - Original `tests/test_project_visualizer_agy/` removed.
 2. **Frontdoor Test Verification**:
    - All visualizer tests pass via `uv run pytest tests/test_project_visualizer_agy/`.
 3. **Quality Gates**:

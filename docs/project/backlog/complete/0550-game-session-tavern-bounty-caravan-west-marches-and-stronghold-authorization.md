@@ -33,7 +33,7 @@ Complete
 These routes in `game_session` share one defect. The check runs only when an identity header is present, or the helper returns success when the identity is missing. Caravan and West Marches creation takes identity from an unchecked header. Bounty posting, claiming, and completion fail open. This task applies the same fail-closed rule to each route group, and it binds each group to its schema permission.
 
 ## Problem Statement
-- Tavern: `services/game_session/src/game_session/routers/tavern.py:73,96,132,201` (`_check_session_auth`). Anonymous callers pass (`w3-authz-coverage.md` rows 202-204).
+- Tavern: `services/game_session/src/game_session/routers/tavern.py:73,96,132,201` (removed) (`_check_session_auth`). Anonymous callers pass (`w3-authz-coverage.md` rows 202-204).
 - Bounties: `routers/bounties.py:63,114,130` (`check_bounty_post`, `check_bounty_claim`, `check_bounty_disburse`) and `contracts/auth.py:25,33,47,57,67,85,90`. All return success with no identity (`w3-authz-coverage.md` rows 165-167).
 - Caravans: `routers/caravan_contracts/board.py:30`, `lifecycle.py:67,96,115,140`, `auth.py:32,43,56`, `routers/caravan_trade.py:48,86`. `_check_perm` and `_init` pass with no identity (rows 169-175).
 - West Marches: `routers/west_marches.py:51,102` (create shared world, register campaign) take an unchecked header and call no check (rows 205-206). `:137,193,218` (discovery, outpost, notice) pass with no identity (rows 207-209).

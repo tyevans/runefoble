@@ -38,9 +38,9 @@ Excise legacy poll option wrappers, deprecated voting payload shims, and transit
   - **ADR-0014: Behavior-Driven Development and Playwright E2E**: Frontdoor testing.
 
 ## Product & User Story References
-- [`prd-0011-live-audience-chaos-studio-and-spectator-overlay.md`](../../product/accepted/prd-0011-live-audience-chaos-studio-and-spectator-overlay.md)
-- [`us-0014-real-time-spectator-clean-overlay.md`](../../user_stories/accepted/us-0014-real-time-spectator-clean-overlay.md)
-- [`us-0043-audience-chaos-polls-and-voting.md`](../../user_stories/accepted/us-0043-audience-chaos-polls-and-voting.md)
+- [`prd-0011-live-audience-chaos-studio-and-spectator-overlay.md`](../../product/accepted/prd-0011-live-spectator-studio-and-audience-interactivity.md)
+- [`us-0014-real-time-spectator-clean-overlay.md`](../../user_stories/accepted/us-0006-realtime-spectator-stream-and-chronicle.md)
+- [`us-0043-audience-chaos-polls-and-voting.md`](../../user_stories/accepted/us-0031-live-stream-audience-chaos-polls-and-rumors.md)
 
 ## Detailed Specification & Implementation Plan
 1. **Remove Legacy Voting Payload Shims**:

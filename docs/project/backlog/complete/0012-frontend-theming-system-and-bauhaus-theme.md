@@ -36,7 +36,7 @@ Implemented a design token theming architecture across the Runefoble Lit Web Com
 4. **Storybook Stories (`frontend/src/stories/theme-switcher.stories.ts`, `frontend/.storybook/preview.ts`)**:
    - Created interactive stories for Bauhaus, Dark Fantasy, Parchment, and Cyber Rune contexts.
    - Imported `themes.css` into Storybook preview.
-5. **Tests & Quality (`tests/test_theming.py`)**:
+5. **Tests & Quality (`tests/test_theming.py` (removed))**:
    - Added automated tests verifying CSS variable definitions, alternate themes, component properties, element exports, and file line length limits.
 
 ## Verification

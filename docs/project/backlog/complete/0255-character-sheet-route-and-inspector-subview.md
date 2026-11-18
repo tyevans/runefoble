@@ -24,7 +24,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/289
 # TASK-0255: Character Sheet Route and Inspector Subview Orchestration
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Add the deep route `#/characters/:characterId` to the client-side router (`frontend/src/router/router.ts`) and create the `character-sheet` view in `frontend/src/runefoble-app.ts`. Mount the `<runefoble-character-sheet>` Web Component from `@runefoble/character-sheet-ui`, bind real character data loaded from `appDataService.fetchCharacter(characterId)`, and support breadcrumb navigation (`Home > Characters > [Character Name]`).

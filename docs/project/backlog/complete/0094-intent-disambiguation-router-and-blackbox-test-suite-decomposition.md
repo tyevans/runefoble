@@ -12,21 +12,23 @@ governing_adrs:
 - ADR-0009
 target_release: 0.3.0
 pr_url: https://github.com/tyevans/runefoble/pull/83
+governing_prds: []
+governing_stories: []
 ---
 # TASK-0094: Intent Disambiguation Router and Blackbox Test Suite Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
-Decompose `tests/test_blackbox_intent_disambiguation.py` (458 lines, 91.6% of limit) and `services/the_watcher/src/the_watcher/routers/intent.py` (371 lines, 74.2% of limit) into specialized submodules and partitioned test suites before Hard Invariant 6 (File length limit < 500 lines) is breached.
+Decompose `tests/test_blackbox_intent_disambiguation.py` (removed) (458 lines, 91.6% of limit) and `services/the_watcher/src/the_watcher/routers/intent/` (371 lines, 74.2% of limit) into specialized submodules and partitioned test suites before Hard Invariant 6 (File length limit < 500 lines) is breached.
 
 ## Problem Statement
-`tests/test_blackbox_intent_disambiguation.py` spans 458 lines and verifies two complex, distinct capabilities introduced in TASK-0054:
+`tests/test_blackbox_intent_disambiguation.py` (removed) spans 458 lines and verifies two complex, distinct capabilities introduced in TASK-0054:
 1. Conversational intent disambiguation: Multi-target ambiguity detection (e.g., "Attack the goblin" with 3 goblins on the board), candidate token ghost preview emission, and player clarification resolution.
 2. Compound action combo intents: Multi-step atomic action chains ("Move to (5,5) and cast Fireball at the troll"), sequential execution, rollback on failure, and combined audit event publication.
 
-Similarly, `services/the_watcher/src/the_watcher/routers/intent.py` (371 lines) mixes single speech-to-intent parsing, multi-target disambiguation matching, and compound combo action pipeline routing in one module.
+Similarly, `services/the_watcher/src/the_watcher/routers/intent/` (371 lines) mixes single speech-to-intent parsing, multi-target disambiguation matching, and compound combo action pipeline routing in one module.
 
 ## Governing Architecture & ADRs
 - **ADR-0002: The Watcher Autonomous DM**: Governs natural language understanding, disambiguation prompts, and intent extraction.
@@ -48,7 +50,7 @@ Similarly, `services/the_watcher/src/the_watcher/routers/intent.py` (371 lines) 
 - **Negotiable (N)**: Split boundaries between intent helpers can be tailored for performance.
 - **Valuable (V)**: Prevents invariant breaches (currently at 91.6% of limit) and improves test execution parallelism.
 - **Estimable (E)**: Standard sub-router and pytest file extraction pattern.
-- **Small (S)**: Scope strictly isolated to `the_watcher/routers/intent` and `tests/test_blackbox_intent_disambiguation.py`; all files < 240 lines.
+- **Small (S)**: Scope strictly isolated to `the_watcher/routers/intent` and `tests/test_blackbox_intent_disambiguation.py` (removed); all files < 240 lines.
 - **Testable (T)**: Verified with `uv run pytest tests/test_blackbox_intent_*.py`.
 
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)

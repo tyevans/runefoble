@@ -24,7 +24,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/290
 # TASK-0256: Dynamic Character Binding in Pre-Game Lobby and Active VTT
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Replace hardcoded character references in `frontend/src/runefoble-app.ts` with dynamically resolved character state. In `session-active`, bind `<runefoble-character-card>` to the character selected by the authenticated user during `session-lobby` staging (or the character assigned to the current campaign). Dynamically populate `availableCharacters` in `fetchLobbyState()` using the user's real character roster retrieved from `AppDataService`.

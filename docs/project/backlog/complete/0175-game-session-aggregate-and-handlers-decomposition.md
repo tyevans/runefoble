@@ -21,7 +21,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/180
 # TASK-0175: GameSession Aggregate and Reaction Handlers Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `services/game_session/src/game_session/aggregate.py` (453 lines, 90.6% of limit) into modular domain handler modules under `services/game_session/src/game_session/aggregate/` (`session_handlers.py`, `combat_handlers.py`, `reaction_handlers.py`, `aggregate.py`, `__init__.py`), keeping all modules < 160 lines per Hard Invariant 6.

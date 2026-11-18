@@ -19,7 +19,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/162
 # TASK-0145: West Marches Blackbox Test Suite Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `tests/test_blackbox_west_marches.py` (402 lines, approaching limit) into specialized, domain-focused test submodules under `tests/test_blackbox_west_marches/` (`conftest.py`, `test_world_registration.py`, `test_discovery_synchronization.py`, `test_caravan_transit.py`, `test_security_isolation.py`), ensuring all test files remain < 150 lines per Hard Invariant 6.

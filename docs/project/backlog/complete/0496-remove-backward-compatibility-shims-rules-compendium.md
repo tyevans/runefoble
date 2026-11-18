@@ -48,7 +48,7 @@ To comply with the updated DoR, these transitional shims and re-exports must be 
 
 ## Detailed Specification & Implementation Plan
 1. **Delete Re-export Shim**:
-   - Delete `services/rules_compendium/src/rules_compendium/srd_data.py`.
+   - Delete `services/rules_compendium/src/rules_compendium/srd/`.
    - Update all callers to import SRD datasets directly from `rules_compendium.srd.*`.
 2. **Remove Transitional Accessors & Aliases**:
    - In `services/rules_compendium/src/rules_compendium/dependencies.py`, remove legacy accessor functions preserved for old router patterns.

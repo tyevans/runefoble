@@ -65,7 +65,7 @@ Playwright BDD (`e2e/features/app_shell_routing_state.feature`), using only publ
   - Then the character view shows the empty state and no element named "Adventurer" exists.
 - Before the fix these scenarios FAIL. After the fix they PASS.
 
-Unit tests in `frontend/test/route-state.test.ts` cover the route parser.
+Unit tests in `frontend/test/app_shell/route-state.test.ts` cover the route parser.
 
 ## Definition of Done
 1. `grep -rn "Tomb of the Star-Eater\|session-tomb-14\|char-placeholder\|user-valeros\|fighter.svg" frontend/src` returns no production match. Verified by a test.

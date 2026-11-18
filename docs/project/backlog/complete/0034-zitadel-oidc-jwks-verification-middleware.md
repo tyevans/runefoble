@@ -6,6 +6,8 @@ created: 2026-09-25
 dependencies: [TASK-0008, TASK-0016]
 governing_adrs: [ADR-0001, ADR-0005, ADR-0007]
 target_release: 0.1.0
+governing_prds: []
+governing_stories: []
 ---
 
 # TASK-0034: Zitadel Production OIDC/JWKS Token Verification Middleware
@@ -35,8 +37,8 @@ Upgrade `ZitadelAuthService` in `libs/runefoble_auth` from an offline stub into 
    - Preserves offline/dev mock bypass when `verify=False` or `RUNEFOBLE_AUTH_DEV_MODE=true`.
 2. **Gateway HTTP & WebSocket Auth Middleware Integration**:
    - Update `gateway/api/src/gateway_api/auth.py` dependency to decode Zitadel bearer token and set verified user context.
-   - Update `gateway/api/src/gateway_api/websocket.py` to validate query token / Bearer token via `ZitadelAuthService` before accepting or authorizing connection.
-3. **Blackbox TDD Suite (`tests/test_blackbox_zitadel_auth.py`)**:
+   - Update `libs/runefoble_auth/src/runefoble_auth/websocket.py` to validate query token / Bearer token via `ZitadelAuthService` before accepting or authorizing connection.
+3. **Blackbox TDD Suite (`tests/test_blackbox_zitadel_auth.py` (removed))**:
    - Tests public `/api/v1/...` and `/ws/campaigns/...` routes using RSA keypair:
      - Valid signed token succeeds and extracts subject.
      - Forged/tampered signature rejected with 401 Unauthorized.

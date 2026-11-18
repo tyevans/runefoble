@@ -25,7 +25,7 @@ governing_stories:
 # TASK-0050: Dynamic Soundscape & Adaptive Audio Microservice
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Scaffold a new bounded context `services/soundscape` responsible for dynamic background audio stem mixing, tactical foley sound effects, and tension-based music progression synchronized with game session events and voice activity.
@@ -59,7 +59,7 @@ Tabletop audio immersion currently suffers because `voice_agent` only handles sp
    - Implement `<runefoble-soundscape-controls>` Lit Web Component for master volume, stem toggles, and manual DM mood overrides.
    - Vendor bundle and manifest at `GET /ui/manifest`.
 5. **Frontdoor Blackbox Verification**:
-   - Comprehensive test suite in `tests/test_blackbox_soundscape.py`.
+   - Comprehensive test suite in `tests/test_blackbox_soundscape.py` (removed).
 
 ## INVEST Criteria Evaluation
 - **Independent (I)**: Operates as an autonomous microservice communicating via standard HTTP REST endpoints and Redis Streams domain events.
@@ -85,7 +85,7 @@ Tabletop audio immersion currently suffers because `voice_agent` only handles sp
 5. **Helm Integration**:
    - Deployment, Service, and ConfigMap added to umbrella Helm chart.
 6. **Frontdoor Blackbox Test Suite**:
-   - `tests/test_blackbox_soundscape.py` verifying public routes, event bus subscriptions, and manifest discovery.
+   - `tests/test_blackbox_soundscape.py` (removed) verifying public routes, event bus subscriptions, and manifest discovery.
 7. **Quality Gates**:
    - Conforms strictly to Hard Invariant 6 (< 500 lines per file).
    - Passes `uv run ruff check` and `uv run ruff format --check`.

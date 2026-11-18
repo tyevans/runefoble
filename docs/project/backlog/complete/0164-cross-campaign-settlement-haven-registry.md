@@ -22,7 +22,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/194
 # TASK-0164: Cross-Campaign Settlement and Haven Registry
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Implement persistent multi-campaign settlement and outpost storage in `services/game_session/`, exposing REST endpoints for charting communal havens, workshops, and resting sanctums across West Marches campaigns with SpiceDB Zanzibar isolation.
@@ -44,7 +44,7 @@ Outposts founded or liberated by one adventuring party currently remain invisibl
 ## Detailed Specification & Implementation Plan
 1. **Settlement Aggregate & Models (`services/game_session/src/game_session/settlements/aggregate.py`)**:
    - Pydantic models and DeclarativeAggregate for outposts, fortresses, defensive fortifications, and workshop tiers (< 150 lines).
-2. **SpiceDB Haven Permissions (`services/game_session/src/game_session/settlements/auth.py`)**:
+2. **SpiceDB Haven Permissions (`services/game_session/src/game_session/settlements/auth.py` (removed))**:
    - Check and write Zanzibar relations for campaign discovery and settlement access (< 110 lines).
 3. **CloudEvents Registration (`libs/runefoble_events/src/runefoble_events/settlements.py`)**:
    - Define `SettlementCharteredEvent`, `SettlementUpgradedEvent`, and `SettlementRestBoonClaimedEvent` (< 90 lines).

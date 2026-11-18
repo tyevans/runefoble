@@ -22,7 +22,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/108
 # TASK-0100: Downtime Activities, Alchemical Crafting & Party Stronghold Engine
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Implement a downtime activity and crafting engine supporting campfire rest interludes, reagent experimentation with volatile risk tables, and persistent campsite/stronghold base-building.
@@ -72,7 +72,7 @@ Tabletop downtime is frequently reduced to hand-waved bookkeeping (PRD-0014, US-
 3. **Microfrontend Element**:
    - `<runefoble-campfire-crafting>` rendered with Shadow DOM and Bauhaus design tokens in Storybook.
 4. **Frontdoor Blackbox Test Suite**:
-   - `tests/test_blackbox_campfire_crafting.py` verifying crafting combinations, volatile mishaps, rest boons, and stronghold upgrades via public HTTP routes and Redis Streams event broadcasts.
+   - `tests/test_blackbox_campfire_crafting/` verifying crafting combinations, volatile mishaps, rest boons, and stronghold upgrades via public HTTP routes and Redis Streams event broadcasts.
 5. **Quality Gates**:
    - Strictly conforms to Hard Invariant 6 (< 500 lines per file).
    - Passes `uv run pytest`, `pnpm run build`, and `make health-check`.

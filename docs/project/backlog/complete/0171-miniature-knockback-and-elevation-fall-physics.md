@@ -22,7 +22,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/226
 # TASK-0171: Miniature Knockback Impulse and Elevation Physics
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Implement directional impulse knockback, sliding deceleration, and elevation ledge gravity falls with upright balance recovery for 3D miniature tokens in `services/board_state/ui/src/physics_3d/`, snapping final resting positions to board grid coordinates within 50ms of physics settlement.

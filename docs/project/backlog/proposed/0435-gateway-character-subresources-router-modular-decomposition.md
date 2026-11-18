@@ -42,8 +42,8 @@ Decompose `gateway/api/src/gateway_api/routers/character_subresources.py` (357 l
 ## Product & User Story References
 - [`prd-0006-digital-character-sheet-inventory-and-conditions.md`](../../product/accepted/prd-0006-digital-character-sheet-inventory-and-conditions.md)
 - [`prd-0023-unified-frontend-application-shell-and-campaign-hub.md`](../../product/accepted/prd-0023-unified-frontend-application-shell-and-campaign-hub.md)
-- [`us-0015-dynamic-equipment-slots-and-encumbrance.md`](../../user_stories/accepted/us-0015-dynamic-equipment-slots-and-encumbrance.md)
-- [`us-0051-character-sheet-inventory-equipment-and-conditions.md`](../../user_stories/accepted/us-0051-character-sheet-inventory-equipment-and-conditions.md)
+- [`us-0015-dynamic-equipment-slots-and-encumbrance.md`](../../user_stories/accepted/us-0015-character-inventory-equipment-tracking.md)
+- [`us-0051-character-sheet-inventory-equipment-and-conditions.md`](../../user_stories/accepted/us-0055-dynamic-character-wardrobe-and-condition-portraits.md)
 
 ## Scope of Work
 1. **Health Sub-Router (`gateway/api/src/gateway_api/routers/characters/health.py`)**:

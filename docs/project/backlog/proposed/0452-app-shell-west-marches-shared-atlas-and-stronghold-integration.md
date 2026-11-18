@@ -42,7 +42,7 @@ The `<runefoble-west-marches-atlas>` component is implemented in `@runefoble/cam
 - [`prd-0023-unified-frontend-application-shell-and-campaign-hub.md`](../../product/accepted/prd-0023-unified-frontend-application-shell-and-campaign-hub.md)
 - [`us-0058-west-marches-shared-world-state-and-caravan-trade.md`](../../user_stories/accepted/us-0058-west-marches-shared-world-state-and-caravan-trade.md)
 - [`us-0050-collaborative-campaign-atlas-and-living-codex.md`](../../user_stories/accepted/us-0050-collaborative-campaign-atlas-and-living-codex.md)
-- [`us-0067-campaign-detail-view-orchestration.md`](../../user_stories/accepted/us-0067-campaign-detail-view-orchestration.md)
+- [`us-0067-campaign-detail-view-orchestration.md`](../../user_stories/accepted/us-0050-collaborative-campaign-atlas-and-living-codex.md)
 
 ## Scope of Work
 1. **Client Router & Navigation (`frontend/src/router/router.ts`)**:

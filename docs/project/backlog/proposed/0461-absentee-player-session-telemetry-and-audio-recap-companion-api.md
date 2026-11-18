@@ -40,7 +40,7 @@ PRD-0012 Checkable Outcome 3 explicitly requires: "Absent players can query past
 ## Product & User Story References
 - [`prd-0002-missing-player-ai-stand-in-with-penalties.md`](../../product/accepted/prd-0002-missing-player-ai-stand-in-with-penalties.md)
 - [`prd-0012-campaign-telemetry-and-living-chronicle-timeline.md`](../../product/accepted/prd-0012-campaign-telemetry-and-living-chronicle-timeline.md)
-- [`us-0004-missing-player-ai-stand-in.md`](../../user_stories/accepted/us-0004-missing-player-ai-stand-in.md)
+- [`us-0004-missing-player-ai-stand-in.md`](../../user_stories/accepted/us-0005-absentee-session-chronicle-recap.md)
 - [`us-0040-campaign-combat-telemetry-and-living-timeline.md`](../../user_stories/accepted/us-0040-campaign-combat-telemetry-and-living-timeline.md)
 
 ## Scope of Work

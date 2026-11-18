@@ -19,7 +19,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/336
 # TASK-0280: Settlement Workers Router Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `services/game_session/src/game_session/settlement/workers_router.py` (358 lines, 71.6% of limit) into modular APIRouter submodules under `services/game_session/src/game_session/settlement/workers/` (`routes_roster.py`, `routes_relationships.py`, `routes_inventory.py`), ensuring all route modules remain strictly < 130 lines per Hard Invariant 6.
@@ -59,7 +59,7 @@ Decompose `services/game_session/src/game_session/settlement/workers_router.py` 
 - **Valuable (V)**: Protects worker routes file from exceeding the 500-line invariant.
 - **Estimable (E)**: Pure extraction of endpoint handlers and routing decorators.
 - **Small (S)**: Each extracted router module strictly < 130 lines.
-- **Testable (T)**: Frontdoor API tests in `tests/test_blackbox_settlements_integration.py` verify full endpoint functionality.
+- **Testable (T)**: Frontdoor API tests in `tests/test_blackbox_settlements_integration.py` (removed) verify full endpoint functionality.
 
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
 1. `services/game_session/src/game_session/settlement/workers_router.py` reduced to strictly < 40 lines.

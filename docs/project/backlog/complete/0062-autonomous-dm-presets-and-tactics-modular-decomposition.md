@@ -11,11 +11,13 @@ governing_adrs:
 - ADR-0011
 target_release: 0.2.0
 pr_url: https://github.com/tyevans/runefoble/pull/66
+governing_prds: []
+governing_stories: []
 ---
 # TASK-0062: Autonomous DM Presets, Monster Templates, and Combat Tactics Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `services/the_watcher/src/the_watcher/autonomous_dm.py` (387 lines, 77.4% of limit) into modular, single-responsibility domain submodules (`presets.py`, `encounters.py`, `tactics.py`) to prevent breaching Hard Invariant 6 (File length limit < 500 lines) as narrative scene presets, monster archetypes, and combat heuristics expand.

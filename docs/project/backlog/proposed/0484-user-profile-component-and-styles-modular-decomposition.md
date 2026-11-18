@@ -37,7 +37,7 @@ Decompose `frontend/src/components/runefoble-user-profile.ts` (290 lines) into m
 ## Product & User Story References
 - [`prd-0023-unified-frontend-application-shell-and-campaign-hub.md`](../../product/accepted/prd-0023-unified-frontend-application-shell-and-campaign-hub.md)
 - [`us-0063-campaign-creation-dashboard-and-zanzibar-roles.md`](../../user_stories/accepted/us-0063-campaign-creation-dashboard-and-zanzibar-roles.md)
-- [`us-0068-user-profile-and-account-settings.md`](../../user_stories/accepted/us-0068-user-profile-and-account-settings.md)
+- [`us-0068-user-profile-and-account-settings.md`](../../user_stories/accepted/us-0070-user-account-settings-and-profile-management.md)
 
 ## Scope of Work
 1. **Styles Extraction (`frontend/src/components/profile/runefoble-user-profile.styles.ts`)**:

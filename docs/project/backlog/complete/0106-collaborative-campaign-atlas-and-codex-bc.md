@@ -23,7 +23,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/128
 # TASK-0106: Collaborative Campaign World Atlas & Living Party Codex
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Build an interactive multi-layered world atlas engine and collaborative party codex with chronological timeline milestone pins, territory boundaries, player secret notes, and automated cross-referencing against the `campaign_lore` redstring graph.
@@ -73,7 +73,7 @@ Campaign lore and geography are currently disconnected from active session play 
 3. **Microfrontend Element & Storybook**:
    - `<runefoble-campaign-atlas>` rendered with Shadow DOM and Bauhaus design tokens, with interactive Storybook stories.
 4. **Frontdoor Blackbox Test Suite**:
-   - `tests/test_blackbox_campaign_atlas.py` verifying pin creation, timeline filtering, and codex access control via public HTTP routes.
+   - `tests/test_blackbox_campaign_atlas/` verifying pin creation, timeline filtering, and codex access control via public HTTP routes.
 5. **Quality Gates**:
    - Zero files exceeding 500 lines per Hard Invariant 6.
    - Passes `uv run pytest tests/test_blackbox_campaign_atlas.py` and frontend Storybook builds cleanly.

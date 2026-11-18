@@ -8,6 +8,8 @@ governing_prds:
 governing_stories:
 - US-0004
 - US-0016
+governing_adrs: []
+dependencies: []
 ---
 
 # TASK-0006: Voice DSP Audio Conditioning and Slurred Speech Synthesis
@@ -16,10 +18,10 @@ governing_stories:
 Complete
 
 ## Summary
-Implemented digital signal processing (DSP) transforms and phonetic slur engine in `services/voice_agent/src/voice_agent/dsp.py`. Integrated the `VoiceDSPPipeline` into the `/api/v1/voice/tts` and `/api/v1/voice/synthesize` endpoints to modulate pitch, apply sibilant slurring, insert inebriation hiccups, and compute audio filter coefficients for character afflictions (`drunk`, `whisper`, `underwater`, `ghostly`).
+Implemented digital signal processing (DSP) transforms and phonetic slur engine in `services/voice_agent/src/voice_agent/dsp/`. Integrated the `VoiceDSPPipeline` into the `/api/v1/voice/tts` and `/api/v1/voice/synthesize` endpoints to modulate pitch, apply sibilant slurring, insert inebriation hiccups, and compute audio filter coefficients for character afflictions (`drunk`, `whisper`, `underwater`, `ghostly`).
 
 ## Key Changes
-- `services/voice_agent/src/voice_agent/dsp.py`:
+- `services/voice_agent/src/voice_agent/dsp/`:
   - Created `DSPFilterConfig` and `ProcessedSpeechResult` models.
   - Implemented `VoiceDSPPipeline` with phonetic transformations (`slur_phonemes`, `apply_text_transforms`) and audio parameter calculations (`compute_dsp_config`).
   - Kept file clean and concise (137 lines).

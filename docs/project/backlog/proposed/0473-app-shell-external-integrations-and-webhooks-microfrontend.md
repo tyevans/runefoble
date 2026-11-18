@@ -41,7 +41,7 @@ While backend webhook routing and signing will exist via `TASK-0471`, Game Maste
 - [`prd-0022-extensible-modder-platform-and-mcp-registry.md`](../../product/accepted/prd-0022-extensible-modder-platform-and-mcp-registry.md)
 - [`prd-0023-unified-frontend-application-shell-and-campaign-hub.md`](../../product/accepted/prd-0023-unified-frontend-application-shell-and-campaign-hub.md)
 - [`us-0035-runtime-mcp-tool-hot-reloading-and-extension-slots.md`](../../user_stories/accepted/us-0035-runtime-mcp-tool-hot-reloading-and-extension-slots.md)
-- [`us-0067-campaign-detail-dashboard-and-tabbed-navigation.md`](../../user_stories/accepted/us-0067-campaign-detail-dashboard-and-tabbed-navigation.md)
+- [`us-0067-campaign-detail-dashboard-and-tabbed-navigation.md`](../../user_stories/accepted/us-0067-campaign-detail-view-and-session-scheduling.md)
 
 ## Scope of Work
 1. **Integrations Component (`frontend/src/components/campaign/integrations/runefoble-campaign-integrations.ts`)**:

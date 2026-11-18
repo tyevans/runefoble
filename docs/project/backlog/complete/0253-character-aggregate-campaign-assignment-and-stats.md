@@ -21,7 +21,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/285
 # TASK-0253: Character Aggregate Campaign Assignment and Core Attributes Extension
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Extend `CharacterState` and `CharacterAggregate` in `services/character_sheet/src/character_sheet/` to include core 5e character attributes (`subclass: str | None`, `armor_class: int`, `speed_ft: int`, `ability_scores: dict[str, int]`) and campaign assignment (`campaign_id: str | None`). Add the domain event `CharacterAssignedToCampaign` to `libs/runefoble_events/src/runefoble_events/events.py` and register it with `@register_event`.

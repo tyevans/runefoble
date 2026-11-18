@@ -24,7 +24,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/107
 # TASK-0107: Character Sheet UI Inventory Grid and Condition Indicator Microfrontend
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Develop the Lit Web Component microfrontend `<runefoble-character-sheet>` within `services/character_sheet/ui/` to visually display character attributes, equip/unequip gear in interactive slots (`main_hand`, `off_hand`, `armor`), inspect inventory encumbrance, and display active condition pills (both 5e/d20 rules and Runefoble absence penalties).
@@ -74,7 +74,7 @@ While `services/character_sheet` provides full event-sourced backend aggregates 
 3. **Microfrontend Manifest**:
    - Manifest served at `/ui/manifest` exposing tags, styles, and script entries per ADR-0013.
 4. **Frontdoor Blackbox Test Suite**:
-   - `tests/test_blackbox_character_sheet_ui.py` validating component registration, manifest endpoint, and REST data binding.
+   - `tests/test_blackbox_character_sheet_ui/` validating component registration, manifest endpoint, and REST data binding.
 5. **Quality Gates**:
    - Strictly conforms to Hard Invariant 6 (< 500 lines per file).
    - Passes `pnpm run build` and `uv run pytest tests/test_blackbox_character_sheet_ui.py`.

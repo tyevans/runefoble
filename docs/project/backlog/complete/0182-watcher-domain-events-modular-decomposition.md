@@ -25,7 +25,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/241
 # TASK-0182: Watcher Domain Events Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `libs/runefoble_events/src/runefoble_events/watcher.py` (364 lines, 72.8% of limit) by modularizing speech, narration, dice, reaction, and vocal modulation domain events into focused submodules under `libs/runefoble_events/src/runefoble_events/watcher_events/`, keeping all modules strictly < 150 lines per Hard Invariant 6 and ADR-0007.

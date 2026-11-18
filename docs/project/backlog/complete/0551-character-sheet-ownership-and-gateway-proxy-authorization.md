@@ -37,8 +37,8 @@ Most mutating character routes have no check. The few that have one run it only 
 - `services/character_sheet/src/character_sheet/dependencies.py` `authorize_character_edit`: runs the check only `if user_id and ...`. A request with no header passes. Used by `PUT guardrails` (router 136), `PATCH campaign` (156), wardrobe (`wardrobe_router.py:49,79`), and crafting combine (`crafting_router.py:86`). Probe: anonymous `PUT guardrails` returns 200.
 - `router.py:27,32`: ownership tuple writes are inside `contextlib.suppress(Exception)`. A failed `owner` write returns success.
 - `GET /api/v1/characters/{id}`: no `character.view` check.
-- `gateway/api/src/gateway_api/routers/character_subresources.py:26,36-48`: proxies to `CHARACTER_SHEET_URL`, which Helm does not set. On any error it falls back to in-memory state and forwards no identity (`w1-gateway-api.md` F9, `w3-authz-coverage.md` F20).
-- `gateway/api/src/gateway_api/routers/characters.py:118` (`DELETE /api/v1/characters/{id}`) checks `owner`, which is a relation, not a permission (`w3-authz-coverage.md` F16). The schema now has `character.delete` (TASK-0540).
+- `gateway/api/src/gateway_api/routers/character_subresources.py:26,36-48` (removed): proxies to `CHARACTER_SHEET_URL`, which Helm does not set. On any error it falls back to in-memory state and forwards no identity (`w1-gateway-api.md` F9, `w3-authz-coverage.md` F20).
+- `gateway/api/src/gateway_api/routers/characters.py:118` (removed) (`DELETE /api/v1/characters/{id}`) checks `owner`, which is a relation, not a permission (`w3-authz-coverage.md` F16). The schema now has `character.delete` (TASK-0540).
 
 ## Documentation & Architecture Review
 - ADR-0001: `character.edit` for mutations, `character.view` for reads, `character.delete` for deletion. Owner and DM share `edit` through the schema (`owner + campaign->run_session`).
@@ -73,7 +73,7 @@ Setup: a character is created through `POST /api/v1/characters`. The owner is th
 
 ## Definition of Done
 1. Frontdoor tests exist in `tests/test_blackbox_character_authz.py` and pass against the live harness.
-2. No `contextlib.suppress` wraps a permission write in `services/character_sheet/` or in `gateway/api/src/gateway_api/routers/characters.py`.
+2. No `contextlib.suppress` wraps a permission write in `services/character_sheet/` or in `gateway/api/src/gateway_api/routers/characters.py` (removed).
 3. `character_subresources.py` contains no in-memory fallback.
 4. `docs/how-to/interact-with-character-sheet-and-inventory.md` is updated.
 5. `uv run pytest services/character_sheet gateway/api` passes for the changed tests. `uv run ruff check` passes for both packages.

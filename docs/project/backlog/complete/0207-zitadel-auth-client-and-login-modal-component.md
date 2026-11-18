@@ -20,7 +20,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/197
 # TASK-0207: Zitadel Auth Client and Login Modal Component
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Implement a browser-side authentication service and Lit Web Component `<runefoble-auth-modal>` in `frontend/src/auth/`, providing user registration, login, token management (JWT storage/refresh), and user menu controls.

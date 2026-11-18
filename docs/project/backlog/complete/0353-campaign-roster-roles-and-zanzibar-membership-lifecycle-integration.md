@@ -31,7 +31,7 @@ Eradicate stubbed/identical campaign rosters by adding a Zanzibar-backed member 
 ## Problem Statement
 When viewing any campaign (such as `camp-1790649479382`), the "Campaign Roster & Roles" panel displays the exact same static three members (`Valeros`, `Kyra`, `Merisiel`) because `app-data-service.ts` falls back to a global static fixture array (`FALLBACK_MEMBERS`) without campaign scoping. In `frontend/src/runefoble-app.ts`, `<runefoble-campaign-members>` is mounted with zero event listeners, meaning that attempting to change a member's role or remove a member drops the custom events silently. 
 
-Furthermore, `AppDataService` contains no methods to assign roles, generate invites, or remove members. In the backend, `gateway/api/src/gateway_api/routers/campaigns.py` lacks an endpoint to remove a member from a campaign (`DELETE /api/v1/campaigns/{campaign_id}/members/{user_id}`), and `queries.py::get_campaign_members()` only queries raw SpiceDB Zanzibar relation tuples without resolving display names or linked characters.
+Furthermore, `AppDataService` contains no methods to assign roles, generate invites, or remove members. In the backend, `gateway/api/src/gateway_api/routers/campaigns.py` (removed) lacks an endpoint to remove a member from a campaign (`DELETE /api/v1/campaigns/{campaign_id}/members/{user_id}`), and `queries.py::get_campaign_members()` only queries raw SpiceDB Zanzibar relation tuples without resolving display names or linked characters.
 
 ## Documentation & Architecture Review
 - **Documentation Consulted**:
@@ -44,18 +44,18 @@ Furthermore, `AppDataService` contains no methods to assign roles, generate invi
   - **ADR-0013: Frontend Microfrontend Architecture**: Bounded context composition and public frontdoor interfaces.
 
 ## Scope of Work & Implementation Plan
-1. **Backend Gateway Member Removal Route (`gateway/api/src/gateway_api/routers/campaigns.py`)**:
+1. **Backend Gateway Member Removal Route (`gateway/api/src/gateway_api/routers/campaigns.py` (removed))**:
    - Add `DELETE /api/v1/campaigns/{campaign_id}/members/{user_id}`:
      - Protected with Zanzibar dependency `require_zanzibar_permission("manage", "campaign", "campaign_id")`.
      - Read target user's existing relationships on `campaign:{campaign_id}` and invoke `spicedb.delete_relationship("campaign", campaign_id, rel, "user", user_id)`.
      - Return status response: `{"status": "member_removed", "campaign_id": campaign_id, "user_id": user_id}`.
-2. **Backend Member Response Enrichment (`gateway/api/src/gateway_api/campaign_store/queries.py`)**:
+2. **Backend Member Response Enrichment (`gateway/api/src/gateway_api/campaign_store/queries.py` (removed))**:
    - Update `get_campaign_members()` to populate `username` and `character_name` by inspecting characters assigned to `campaign_id` owned by `user_id`.
 3. **App Data Service Enhancements (`frontend/src/services/app-data-service.ts`)**:
    - Implement `assignMemberRole(campaignId: string, userId: string, role: string): Promise<void>`.
    - Implement `createCampaignInvite(campaignId: string, role: string, expiresInHours?: number, maxUses?: number): Promise<InviteResponse>`.
    - Implement `removeCampaignMember(campaignId: string, userId: string): Promise<void>`.
-4. **Campaign-Scoped Fallback Cache (`frontend/src/services/app-data-service.fixtures.ts`)**:
+4. **Campaign-Scoped Fallback Cache (`frontend/src/fixtures/app-data-service.fixtures.ts`)**:
    - Replace static `FALLBACK_MEMBERS` with `getFallbackCampaignMembers(campaignId: string)`.
    - Seed campaign `'4'` with Valeros, Kyra, and Merisiel.
    - Seed new campaigns with the creating user as Owner.

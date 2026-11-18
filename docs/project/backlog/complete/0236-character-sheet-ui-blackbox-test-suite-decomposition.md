@@ -24,13 +24,13 @@ pr_url: https://github.com/tyevans/runefoble/pull/301
 # TASK-0236: Character Sheet UI Blackbox Test Suite Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
-Decompose `tests/test_blackbox_character_sheet_ui.py` (395 lines, 79.0% of limit) into modular test sub-suites under `tests/test_blackbox_character_sheet_ui/` (`conftest.py`, `test_stats_rendering.py`, `test_inventory_grid.py`, `test_conditions_and_spells.py`), keeping all test modules strictly < 130 lines per Hard Invariant 6 and Hard Invariant 7.
+Decompose `tests/test_blackbox_character_sheet_ui/` (395 lines, 79.0% of limit) into modular test sub-suites under `tests/test_blackbox_character_sheet_ui/` (`conftest.py`, `test_stats_rendering.py`, `test_inventory_grid.py`, `test_conditions_and_spells.py`), keeping all test modules strictly < 130 lines per Hard Invariant 6 and Hard Invariant 7.
 
 ## Problem Statement
-`tests/test_blackbox_character_sheet_ui.py` contains 395 lines testing Lit Web Component rendering, ability score cards, drag-and-drop inventory slots, condition overlays, and spell preparation grids in a single test module. Approaching the file size threshold of 400 lines, decomposing it into focused sub-suites improves test maintenance and ensures strict compliance with Hard Invariant 6.
+`tests/test_blackbox_character_sheet_ui/` contains 395 lines testing Lit Web Component rendering, ability score cards, drag-and-drop inventory slots, condition overlays, and spell preparation grids in a single test module. Approaching the file size threshold of 400 lines, decomposing it into focused sub-suites improves test maintenance and ensures strict compliance with Hard Invariant 6.
 
 ## Documentation & Architecture Review
 - **Documentation Consulted**:
@@ -71,7 +71,7 @@ Decompose `tests/test_blackbox_character_sheet_ui.py` (395 lines, 79.0% of limit
 - **Testable (T)**: Existing test cases run and pass identically.
 
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
-1. `tests/test_blackbox_character_sheet_ui.py` replaced by modular sub-suites under `tests/test_blackbox_character_sheet_ui/`.
+1. `tests/test_blackbox_character_sheet_ui/` replaced by modular sub-suites under `tests/test_blackbox_character_sheet_ui/`.
 2. All test files strictly < 130 lines each.
 3. Passes `uv run pytest tests/test_blackbox_character_sheet_ui/`.
 4. Passes `uv run ruff check .` and `uv run ruff format --check .`.

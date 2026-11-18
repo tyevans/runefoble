@@ -26,7 +26,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/358
 # TASK-0363: Character Sheet and Inventory Mutations Playwright BDD Test Suite
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Implement an end-to-end Playwright BDD test suite (`e2e/features/character_sheet.feature`) validating character creation, builder modal inputs, sheet inspection, HP delta adjustments, inventory/equipment operations, spell preparation/casting, stand-in guardrails saving, and state persistence across page navigation and reloads per ADR-0014.

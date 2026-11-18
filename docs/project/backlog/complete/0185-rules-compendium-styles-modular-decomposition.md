@@ -21,7 +21,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/245
 # TASK-0185: Rules Compendium Styles Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `services/rules_compendium/ui/src/runefoble-rules-compendium.styles.ts` (357 lines, 71.4% of limit) by extracting encounter builder styles, homebrew form styles, and search filter styles into modular sub-stylesheets under `services/rules_compendium/ui/src/styles/`, keeping all style modules strictly < 150 lines per Hard Invariant 6 and ADR-0013.

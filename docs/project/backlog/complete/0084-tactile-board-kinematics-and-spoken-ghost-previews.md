@@ -22,7 +22,7 @@ governing_stories:
 # TASK-0084: Tactile Board Kinematics and Spoken Ghost Previews
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Enhance the tactical board microfrontend (`services/board_state/ui/src/runefoble-board.ts`) with tactile token kinematics (subtle inertia, spring dampening, snap-to-grid collision, and interactive route distance measuring in 5-foot increments), paired with sub-200ms real-time semi-transparent "ghost previews" of spoken action intents before committing changes to the persistent game state.
@@ -58,7 +58,7 @@ Per PRD-0013 and US-0043, tabletop players and Dungeon Masters currently experie
    - Render a semi-transparent ghost token (50% opacity, pulsing Bauhaus accent ring) at the target coordinates.
    - Render an animated dashed targeting vector line from source to target.
    - Tap/click ghost or invoke "Confirm" action to commit movement; dismiss or timeout to discard.
-3. **Storybook Verification (`services/board_state/ui/src/stories/runefoble-board.stories.ts`)**:
+3. **Storybook Verification (`services/board_state/ui/src/runefoble-board.stories.ts`)**:
    - Story 1: Token kinematics with path measurement and terrain highlight.
    - Story 2: Spoken ghost preview with interactive confirmation tap.
    - Story 3: Ghost cancellation and timeout rollback.
@@ -70,7 +70,7 @@ Per PRD-0013 and US-0043, tabletop players and Dungeon Masters currently experie
 2. **Storybook Verification**:
    - Interactive stories running cleanly with zero console errors.
 3. **Frontdoor Blackbox Verification**:
-   - Blackbox tests in `tests/test_blackbox_board_sync.py` or `tests/test_blackbox_ghost_previews.py` verify preview message handling and confirmation flow.
+   - Blackbox tests in `tests/test_blackbox_board_sync.py` (removed) or `tests/test_blackbox_ghost_previews.py` verify preview message handling and confirmation flow.
 4. **File Length Compliance**:
    - All touched files strictly < 500 lines per Hard Invariant 6.
 5. **Quality Gates**:

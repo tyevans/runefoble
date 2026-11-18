@@ -21,13 +21,13 @@ pr_url: https://github.com/tyevans/runefoble/pull/305
 # TASK-0275: NPC Worker Engine Blackbox Test Suite Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
-Decompose `tests/test_blackbox_npc_worker_engine.py` (376 lines, 75.2% of limit) into modular test sub-suites under `tests/test_blackbox_npc_worker/` (`conftest.py`, `test_worker_assignment.py`, `test_morale_and_wages.py`, `test_social_graph.py`), ensuring all test sub-modules remain strictly < 130 lines per Hard Invariant 6 and Hard Invariant 7.
+Decompose `tests/test_blackbox_npc_worker/` (376 lines, 75.2% of limit) into modular test sub-suites under `tests/test_blackbox_npc_worker/` (`conftest.py`, `test_worker_assignment.py`, `test_morale_and_wages.py`, `test_social_graph.py`), ensuring all test sub-modules remain strictly < 130 lines per Hard Invariant 6 and Hard Invariant 7.
 
 ## Problem Statement
-`tests/test_blackbox_npc_worker_engine.py` has grown to 376 lines in its initial implementation, testing worker generation, establishment assignments, wage payouts, morale calculation, relationship link mutations, and event publishing over Redis streams within a single module. As additional worker traits, grievance events, and strike states are introduced, this suite will approach the 500-line invariant limit unless decoupled into focused submodules.
+`tests/test_blackbox_npc_worker/` has grown to 376 lines in its initial implementation, testing worker generation, establishment assignments, wage payouts, morale calculation, relationship link mutations, and event publishing over Redis streams within a single module. As additional worker traits, grievance events, and strike states are introduced, this suite will approach the 500-line invariant limit unless decoupled into focused submodules.
 
 ## Documentation & Architecture Review
 - **Documentation Consulted**:
@@ -66,7 +66,7 @@ Decompose `tests/test_blackbox_npc_worker_engine.py` (376 lines, 75.2% of limit)
 - **Testable (T)**: Self-testing; test suite must pass with full coverage.
 
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
-1. `tests/test_blackbox_npc_worker_engine.py` replaced by modular package `tests/test_blackbox_npc_worker/`.
+1. `tests/test_blackbox_npc_worker/` replaced by modular package `tests/test_blackbox_npc_worker/`.
 2. All test sub-modules strictly < 130 lines each per Hard Invariant 6.
 3. Tests pass via `uv run pytest tests/test_blackbox_npc_worker/`.
 4. Code passes lint and typecheck (`uv run ruff check .` and `uv run ruff format --check .`).

@@ -7,6 +7,10 @@ completed: 2026-09-25
 dependencies: [TASK-0008, TASK-0016]
 governing_adrs: [ADR-0001, ADR-0005, ADR-0007]
 target_release: 0.2.0
+governing_prds: []
+governing_stories:
+- US-0008
+- US-0010
 ---
 
 # TASK-0032: SpiceDB Zanzibar Relationship Synchronization with Zitadel OIDC Identities

@@ -19,7 +19,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/179
 # TASK-0158: Reactive Combat Reactions & Interrupt Prompt Microfrontend
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Build `<runefoble-combat-reaction-prompt>` Web Component in `services/game_session/ui/src/` to display interactive reaction interrupt prompts, ready-action confirmation toasts, and countdown resolution bars during paused combat turns.

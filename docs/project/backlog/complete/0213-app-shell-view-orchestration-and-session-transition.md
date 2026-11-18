@@ -25,7 +25,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/204
 # TASK-0213: App Shell View Orchestration and Session Transition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Refactor `frontend/src/runefoble-app.ts` to transition from the monolithic, hardcoded demo sandbox into a dynamic multi-view application shell orchestrated by the client router, dynamically mounting Auth, Campaign Dashboard, Character Roster, Session Lobby, and Active VTT views while managing route-aware WebSocket lifecycles.

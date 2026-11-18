@@ -12,11 +12,13 @@ governing_adrs:
 - ADR-0007
 target_release: 0.2.0
 pr_url: https://github.com/tyevans/runefoble/pull/22
+governing_prds: []
+governing_stories: []
 ---
 # TASK-0039: Sub-500ms Streaming Audio Whisper Transcription & VAD Pipeline
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Connect live audio streams from WebRTC voice rooms into a real-time Voice Activity Detection (VAD) and Whisper acoustic inference pipeline in `services/voice_agent`, streaming incremental transcripts to `services/the_watcher` within a sub-500ms end-to-end latency budget to fulfill the platform design principle: "Speak and the board obeys".
@@ -44,7 +46,7 @@ The Runefoble design principle requires natural speech to be parsed into game ac
 2. **Streaming Whisper Ingestion Endpoint (`POST /api/v1/voice/stream/chunk`)**:
    - Ingests PCM/WAV chunks, processes VAD boundaries, triggers transcription, and dispatches `PlayerSpoke` CloudEvent to Redis Streams.
    - Includes mock transcription provider for deterministic offline and CI test execution.
-3. **Blackbox TDD Suite (`tests/test_blackbox_streaming_whisper.py`)**:
+3. **Blackbox TDD Suite (`tests/test_blackbox_streaming_whisper.py` (removed))**:
    - Stream audio buffers through public HTTP/WebSocket frontdoor and assert event bus receives valid `PlayerSpoke` event with transcribed intent within latency bounds.
 4. **Diataxis Documentation**:
    - Update `docs/explanation/realtime-voice-and-board-sync.md` with streaming VAD pipeline architecture.

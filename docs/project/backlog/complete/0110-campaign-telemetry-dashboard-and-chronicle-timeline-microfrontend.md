@@ -24,7 +24,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/101
 # TASK-0110: Campaign Telemetry Dashboard and Chronicle Timeline Microfrontend
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Develop the Lit Web Component microfrontend `<runefoble-campaign-analytics>` within `services/campaign_analytics/ui/` to render post-session combat telemetry heatmaps, party damage/healing distribution charts, historical milestone badges, and an interactive round-by-round chronicle timeline.
@@ -75,7 +75,7 @@ Develop the Lit Web Component microfrontend `<runefoble-campaign-analytics>` wit
 3. **Microfrontend Manifest**:
    - Manifest served at `/ui/manifest` exposing tags, styles, and script entries per ADR-0013.
 4. **Frontdoor Blackbox Test Suite**:
-   - `tests/test_blackbox_campaign_analytics_ui.py` validating component registration, manifest endpoint, and REST data binding.
+   - `tests/test_blackbox_campaign_analytics_ui/` validating component registration, manifest endpoint, and REST data binding.
 5. **Quality Gates**:
    - Conforms strictly to Hard Invariant 6 (< 500 lines per file).
    - Passes `pnpm run build` and `uv run pytest tests/test_blackbox_campaign_analytics_ui.py`.

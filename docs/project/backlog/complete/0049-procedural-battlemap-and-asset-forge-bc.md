@@ -26,7 +26,7 @@ governing_stories:
 # TASK-0049: Procedural Battlemap & Token Asset Forge Microservice
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Scaffold a new bounded context microservice `services/asset_forge` integrating procedural diffusion prompts, obstacle/wall segmentation, and token portrait generation saved directly to Silo S3 with automated geometry projection into `board_state`.
@@ -54,7 +54,7 @@ Finding, aligning, sizing, and drawing line-of-sight walls on battlemaps consume
 4. **Spatial Geometry Projection**:
    - Extraction of wall segments, doors, and hazardous terrain cells (lava, water) formatted for `board_state` mutators.
 5. **Frontdoor Blackbox Verification**:
-   - Comprehensive test suite in `tests/test_blackbox_asset_forge.py`.
+   - Comprehensive test suite in `tests/test_blackbox_asset_forge.py` (removed).
 
 ## INVEST Criteria Evaluation
 - **Independent (I)**: Operates as an autonomous microservice communicating via standard HTTP REST endpoints and CloudEvents.
@@ -76,6 +76,6 @@ Finding, aligning, sizing, and drawing line-of-sight walls on battlemaps consume
 4. **Helm Integration**:
    - Deployment, Service, and ConfigMap added to umbrella Helm chart.
 5. **Frontdoor Blackbox Test Suite**:
-   - `tests/test_blackbox_asset_forge.py` verifying full generation, storage, and geometry extraction through public routes.
+   - `tests/test_blackbox_asset_forge.py` (removed) verifying full generation, storage, and geometry extraction through public routes.
 6. **Quality Gates**:
    - Passes `uv run ruff check` and `uv run ruff format --check`.

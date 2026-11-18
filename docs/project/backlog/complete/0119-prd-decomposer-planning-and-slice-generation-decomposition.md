@@ -8,11 +8,13 @@ governing_adrs:
 - ADR-0003
 target_release: 0.3.0
 pr_url: https://github.com/tyevans/runefoble/pull/121
+governing_prds: []
+governing_stories: []
 ---
 # TASK-0119: PRD Decomposer Planning and Slice Generation Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `tools/prd_pipeline/decomposer.py` (432 lines, 86.4% of limit) into an orchestrator facade (`decomposer.py`) and specialized planning and templating modules (`planner.py`, `templates.py`) to prevent violating Hard Invariant 6 (File length limit < 500 lines).
@@ -44,7 +46,7 @@ As new microservice bounded contexts, UI slice archetypes, and story personas ar
 - **Valuable (V)**: Protects against Hard Invariant 6 violations (< 500 lines) and improves maintainability of backlog automation.
 - **Estimable (E)**: Straightforward separation of planning heuristics and string templating.
 - **Small (S)**: Scope strictly isolated to `tools/prd_pipeline/`; all resulting files < 150 lines.
-- **Testable (T)**: Verified with `tests/test_prd_pipeline.py`.
+- **Testable (T)**: Verified with `tests/test_prd_pipeline.py` (removed).
 
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
 1. **Decomposition Executed**:

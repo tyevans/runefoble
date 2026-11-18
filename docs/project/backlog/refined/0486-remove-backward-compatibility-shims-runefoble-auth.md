@@ -38,8 +38,8 @@ In `libs/runefoble_auth/src/runefoble_auth/zitadel.py`, `verify_token` (line 153
   - **ADR-0002: Zitadel OIDC Identity Provider**: OIDC token decoding and JWKS validation.
 
 ## Product & User Story References
-- [`prd-0001-runefoble-platform-foundations.md`](../../product/accepted/prd-0001-runefoble-platform-foundations.md)
-- [`us-0010-developer-local-infrastructure-and-test-tooling.md`](../../user_stories/accepted/us-0010-developer-local-infrastructure-and-test-tooling.md)
+- `prd-0001-runefoble-platform-foundations.md`
+- `us-0010-developer-local-infrastructure-and-test-tooling.md`
 
 ## Detailed Specification & Implementation Plan
 1. **Remove Legacy Compatibility Methods in `zitadel.py`**:

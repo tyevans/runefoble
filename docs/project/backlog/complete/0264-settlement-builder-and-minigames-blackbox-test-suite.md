@@ -28,7 +28,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/335
 # TASK-0264: Settlement Builder and Mobile Minigames Blackbox Test Suite
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Author comprehensive blackbox test suites driving settlement founding, establishment configuration, NPC worker assignment, mobile tavern/casino minigame turns, merchant haggling arbitration, and bulletin board notice lifecycle strictly through public HTTP endpoints and WebSocket channels.
@@ -57,7 +57,7 @@ New settlement features, living NPC staff systems, and mobile web minigames must
   - [`us-0076-town-bulletin-board-civic-rumors-and-bounties.md`](../../user_stories/accepted/us-0076-town-bulletin-board-civic-rumors-and-bounties.md)
 
 ## Detailed Specification & Implementation Plan
-1. **API Frontdoor Tests (`tests/test_blackbox_settlements_integration.py`)**:
+1. **API Frontdoor Tests (`tests/test_blackbox_settlements_integration.py` (removed))**:
    - `test_found_settlement_and_upgrade_tier_flow`: Test founding, verifying district slot caps per scale.
    - `test_establishment_creation_and_worker_assignment`: Place weaponsmith, assign NPC armorer, verify dynamic inventory.
    - `test_merchant_haggling_gambits_and_dm_override`: Simulate persuasion rolls against merchant temperament and verify DM mood adjustment endpoint.

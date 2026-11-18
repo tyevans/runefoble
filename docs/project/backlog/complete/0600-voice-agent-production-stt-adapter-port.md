@@ -49,7 +49,7 @@ Source: `.audit/reports/w2-voice-agent.md` F1.
 - `docs/project/user_stories/accepted/us-0060-zero-latency-neural-voice-duplex.md`
 
 ## Detailed Specification & Implementation Plan
-1. Define an `SpeechToText` port (Protocol) in `services/voice_agent/src/voice_agent/stt/port.py` (or the module chosen by TASK-0345). It takes PCM bytes and returns text, confidence, and an engine label.
+1. Define an `SpeechToText` port (Protocol) in `services/voice_agent/src/voice_agent/stt/port.py` (removed) (or the module chosen by TASK-0345). It takes PCM bytes and returns text, confidence, and an engine label.
 2. Add `VoiceAgentSettings.stt_engine` (`faster-whisper` default; `mock` allowed only when a test sets it). Read it in `runefoble_platform.config` or the service settings module.
 3. Build the adapter from settings in the composition root. Remove the module-level `MockWhisperTranscriber()` default.
 4. When the engine fails to load or infer, raise a typed `SpeechEngineUnavailable` error. The chunk handler publishes an error event and sends no `PlayerSpokeEvent`.

@@ -22,13 +22,13 @@ pr_url: https://github.com/tyevans/runefoble/pull/373
 # TASK-0243: Email Signup Mailpit Blackbox Test Suite Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
-Decompose `tests/test_blackbox_email_signup_mailpit.py` (347 lines, 69.4% of limit) into focused test modules under `tests/test_blackbox_email_signup_mailpit/` (`conftest.py`, `test_registration_flow.py`, `test_token_exchange.py`, and `test_dev_mailpit_api.py`), keeping all test files strictly < 150 lines per Hard Invariant 6 and Hard Invariant 7.
+Decompose `tests/test_blackbox_email_signup_mailpit.py` (removed) (347 lines, 69.4% of limit) into focused test modules under `tests/test_blackbox_email_signup_mailpit/` (removed) (`conftest.py`, `test_registration_flow.py`, `test_token_exchange.py`, and `test_dev_mailpit_api.py`), keeping all test files strictly < 150 lines per Hard Invariant 6 and Hard Invariant 7.
 
 ## Problem Statement
-`tests/test_blackbox_email_signup_mailpit.py` exercises end-to-end user registration, email verification token extraction via Mailpit REST API, token exchange grants, rate-limiting, and mock SMTP failure handling in a single 347-line test suite. As additional authentication integration tests (password reset flows, multi-tenant email domains, invite claims) are added, this test suite will approach the 500-line invariant limit unless decoupled into focused sub-suites.
+`tests/test_blackbox_email_signup_mailpit.py` (removed) exercises end-to-end user registration, email verification token extraction via Mailpit REST API, token exchange grants, rate-limiting, and mock SMTP failure handling in a single 347-line test suite. As additional authentication integration tests (password reset flows, multi-tenant email domains, invite claims) are added, this test suite will approach the 500-line invariant limit unless decoupled into focused sub-suites.
 
 ## Documentation & Architecture Review
 - **Documentation Consulted**:
@@ -47,13 +47,13 @@ Decompose `tests/test_blackbox_email_signup_mailpit.py` (347 lines, 69.4% of lim
   - [`us-0062-user-signup-and-zitadel-authentication.md`](../../user_stories/accepted/us-0062-user-signup-and-zitadel-authentication.md)
 
 ## Detailed Specification & Implementation Plan
-1. **Shared Fixtures Submodule (`tests/test_blackbox_email_signup_mailpit/conftest.py`)**:
+1. **Shared Fixtures Submodule (`tests/test_blackbox_email_signup_mailpit/conftest.py` (removed))**:
    - Extract test client setup, Mailpit mock API client, and clean inbox fixtures (< 60 lines).
-2. **Registration & Verification Test Submodule (`tests/test_blackbox_email_signup_mailpit/test_registration_flow.py`)**:
+2. **Registration & Verification Test Submodule (`tests/test_blackbox_email_signup_mailpit/test_registration_flow.py` (removed))**:
    - Test user registration, verification email receipt in Mailpit, code validation, and duplicate registration errors (< 120 lines).
-3. **Token Exchange Test Submodule (`tests/test_blackbox_email_signup_mailpit/test_token_exchange.py`)**:
+3. **Token Exchange Test Submodule (`tests/test_blackbox_email_signup_mailpit/test_token_exchange.py` (removed))**:
    - Test password token grant, refresh token flow, invalid credentials, and unverified account blocking (< 110 lines).
-4. **Dev Mailpit Utilities Test Submodule (`tests/test_blackbox_email_signup_mailpit/test_dev_mailpit_api.py`)**:
+4. **Dev Mailpit Utilities Test Submodule (`tests/test_blackbox_email_signup_mailpit/test_dev_mailpit_api.py` (removed))**:
    - Test development endpoints (`/dev/emails`, `/dev/send-test`, `/dev/stats`) and inbox clearing (< 110 lines).
 5. **Verification**:
    - Run the decomposed test suite via `uv run pytest tests/test_blackbox_email_signup_mailpit/`.
@@ -67,7 +67,7 @@ Decompose `tests/test_blackbox_email_signup_mailpit.py` (347 lines, 69.4% of lim
 - **Testable (T)**: Self-testing; test suite must execute cleanly with 100% pass rate.
 
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
-1. `tests/test_blackbox_email_signup_mailpit/` created and root test file cleanly removed.
+1. `tests/test_blackbox_email_signup_mailpit/` (removed) created and root test file cleanly removed.
 2. All extracted test submodules strictly < 150 lines each per Hard Invariant 6.
 3. All test scenarios pass with zero regressions via `uv run pytest tests/test_blackbox_email_signup_mailpit/`.
 4. Linting and formatting pass via `uv run ruff check .` and `uv run ruff format --check .`.

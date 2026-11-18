@@ -18,7 +18,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/156
 # TASK-0140: Board State AoE Templates Geometry and Rendering Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `services/board_state/ui/src/aoe_templates.ts` (411 lines, 82.2% of limit) into modular TypeScript files (`aoe_geometry.ts`, `aoe_canvas.ts`, `aoe_types.ts`, `aoe_templates.ts`) ensuring all UI modules remain < 200 lines per Hard Invariant 6.

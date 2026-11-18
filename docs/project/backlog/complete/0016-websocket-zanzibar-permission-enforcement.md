@@ -7,6 +7,8 @@ completed: 2026-09-26
 dependencies: [TASK-0008, TASK-0010, TASK-0014]
 governing_adrs: [ADR-0001, ADR-0007]
 target_release: 0.1.0
+governing_prds: []
+governing_stories: []
 ---
 
 # TASK-0016 — Live SpiceDB Zanzibar Permission Enforcement on WebSockets & Game Mutators
@@ -22,7 +24,7 @@ Implemented fine-grained real-time SpiceDB Zanzibar authorization checks (ADR-00
    - Extended `SpiceDBClient` to support live SpiceDB gRPC connections via `authzed` when present, with automatic in-memory mock fallback.
    - Implemented `MockSpiceDBClient` providing offline Zanzibar tuple graph evaluation for campaigns, board tokens, and character ownership hierarchies.
    - Exported `MockSpiceDBClient` in `runefoble_auth.__all__`.
-2. **WebSocket Action Validator & Connection Manager (`gateway/api/src/gateway_api/websocket.py`)**:
+2. **WebSocket Action Validator & Connection Manager (`libs/runefoble_auth/src/runefoble_auth/websocket.py`)**:
    - Created `WebSocketActionValidator` verifying permissions:
      - On connect: ensures subject has `campaign:view` or `campaign:read`. Unassigned subjects are greeted with `PERMISSION_DENIED` and disconnected with WebSocket code `4003`.
      - `move_token`: checks DM permissions, campaign-level `move_token`, individual `board_token:move`, and character ownership.
@@ -37,7 +39,7 @@ Implemented fine-grained real-time SpiceDB Zanzibar authorization checks (ADR-00
 3. **Gateway Integration (`gateway/api/src/gateway_api/main.py`)**:
    - Exposed `@app.websocket("/ws/campaigns/{campaign_id}")` wired to `campaign_websocket_endpoint`.
    - Maintained concise code (~304 lines, satisfying Hard Invariant 6 <500 lines).
-4. **Comprehensive Test Suite (`tests/test_websocket_zanzibar_auth.py`)**:
+4. **Comprehensive Test Suite (`tests/test_websocket_zanzibar_auth.py` (removed))**:
    - Validated connection succeeds for subjects with `view` and `read` permissions.
    - Validated connection rejection with `PERMISSION_DENIED` error frame and WebSocket code `4003` for unassigned subjects.
    - Validated player moving their own token succeeds and dispatches broadcast.

@@ -80,5 +80,5 @@ Currently, `<runefoble-theme-switcher>` is embedded directly in the main applica
 2. Inline theme switcher removed from `runefoble-app.ts` header; replaced with accessible Settings modal trigger button.
 3. Dark, Light, and System modes fully functional, responding to system OS media queries when set to `system`.
 4. Storybook stories running cleanly in `frontend/src/stories/runefoble-settings-modal.stories.ts` with zero console errors.
-5. Unit and blackbox tests added in `tests/test_theming.py` or `tests/test_settings_modal.py` validating modal open/close lifecycle, keyboard escape, local storage sync, and custom event dispatches.
+5. Unit and blackbox tests added in `tests/test_theming.py` (removed) or `tests/test_settings_modal.py` (removed) validating modal open/close lifecycle, keyboard escape, local storage sync, and custom event dispatches.
 6. All touched files strictly under 500 lines.

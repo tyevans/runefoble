@@ -21,13 +21,13 @@ pr_url: https://github.com/tyevans/runefoble/pull/308
 # TASK-0276: Settlement Bulletin Board Blackbox Test Suite Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
-Decompose `tests/test_blackbox_bulletin_board.py` (365 lines, 73.0% of limit) into modular test sub-suites under `tests/test_blackbox_bulletin_board/` (`conftest.py`, `test_bulletin_posting.py`, `test_wax_seals_and_ciphers.py`, `test_bounty_workflows.py`), ensuring all test sub-modules remain strictly < 130 lines per Hard Invariant 6 and Hard Invariant 7.
+Decompose `tests/test_blackbox_bulletin_board/` (365 lines, 73.0% of limit) into modular test sub-suites under `tests/test_blackbox_bulletin_board/` (`conftest.py`, `test_bulletin_posting.py`, `test_wax_seals_and_ciphers.py`, `test_bounty_workflows.py`), ensuring all test sub-modules remain strictly < 130 lines per Hard Invariant 6 and Hard Invariant 7.
 
 ## Problem Statement
-`tests/test_blackbox_bulletin_board.py` has grown to 365 lines in its initial implementation, testing bulletin posting, notice removal, wax seal verification, cipher puzzle decryption, bounty claims, and Redis stream event emission within a single module. As additional notice categories, anonymous rumors, and civic decrees are introduced, this suite will approach the 500-line invariant limit unless decoupled into focused submodules.
+`tests/test_blackbox_bulletin_board/` has grown to 365 lines in its initial implementation, testing bulletin posting, notice removal, wax seal verification, cipher puzzle decryption, bounty claims, and Redis stream event emission within a single module. As additional notice categories, anonymous rumors, and civic decrees are introduced, this suite will approach the 500-line invariant limit unless decoupled into focused submodules.
 
 ## Documentation & Architecture Review
 - **Documentation Consulted**:
@@ -66,7 +66,7 @@ Decompose `tests/test_blackbox_bulletin_board.py` (365 lines, 73.0% of limit) in
 - **Testable (T)**: Self-testing; test suite must pass with full coverage.
 
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
-1. `tests/test_blackbox_bulletin_board.py` replaced by modular package `tests/test_blackbox_bulletin_board/`.
+1. `tests/test_blackbox_bulletin_board/` replaced by modular package `tests/test_blackbox_bulletin_board/`.
 2. All test sub-modules strictly < 130 lines each per Hard Invariant 6.
 3. Tests pass via `uv run pytest tests/test_blackbox_bulletin_board/`.
 4. Code passes lint and typecheck (`uv run ruff check .` and `uv run ruff format --check .`).

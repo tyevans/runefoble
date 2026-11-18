@@ -15,7 +15,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/311
 # TASK-0222: Character Roster Styles Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `services/character_sheet/ui/src/roster/runefoble-character-roster.styles.ts` (343 lines, 68.6% of limit) into modular CSS modules under `services/character_sheet/ui/src/roster/styles/` (`roster_layout.styles.ts`, `character_card.styles.ts`, `assignment_dialog.styles.ts`), ensuring all style modules remain strictly < 130 lines per Hard Invariant 6.

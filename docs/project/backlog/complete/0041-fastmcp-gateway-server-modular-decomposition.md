@@ -22,7 +22,7 @@ governing_stories:
 # TASK-0041: FastMCP Gateway Server Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose the monolithic FastMCP gateway server entrypoint in `gateway/mcp/src/gateway_mcp/server.py` (433 lines, 86.6% of limit) into modular, single-responsibility sub-modules organized into `tools/`, `resources/`, and `prompts/` before it breaches Hard Invariant 6 (File length limit < 500 lines).
@@ -51,9 +51,9 @@ As upcoming Milestone 2 and Milestone 3 features introduce compendium queries, R
 
 ## Proposed Decomposition
 1. **Module Hierarchy (`gateway/mcp/src/gateway_mcp/`)**:
-   - `tools/dice.py`: `roll_dice` tool implementation (< 100 lines).
-   - `tools/board.py`: `inspect_tactical_board`, `move_board_token` tools (< 150 lines).
-   - `tools/character.py`: `get_character_sheet`, `modify_character_hp`, `cast_spell`, `apply_condition` tools (< 180 lines).
+   - `tools/dice.py` (removed): `roll_dice` tool implementation (< 100 lines).
+   - `tools/board.py` (removed): `inspect_tactical_board`, `move_board_token` tools (< 150 lines).
+   - `tools/character.py` (removed): `get_character_sheet`, `modify_character_hp`, `cast_spell`, `apply_condition` tools (< 180 lines).
    - `resources/session.py`: `get_active_session_context`, `get_combat_encounter_state` resource handlers (< 120 lines).
    - `prompts/narrative.py`: `dm_narrative_guidance`, `tactical_action_adviser` prompt templates (< 120 lines).
 2. **Server Orchestration Shell (`gateway/mcp/src/gateway_mcp/server.py`)**:

@@ -11,11 +11,13 @@ governing_adrs:
 - ADR-0009
 target_release: 0.2.0
 pr_url: https://github.com/tyevans/runefoble/pull/58
+governing_prds: []
+governing_stories: []
 ---
 # TASK-0087: PR Conflict Detection and Stale Recovery Test Suite Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `tests/test_pr_conflict_detection.py` (465 lines, 93.0% of limit) into three specialized, single-responsibility test suites (`tests/test_backlog_ci_watcher.py`, `tests/test_backlog_stale_recovery.py`, and `tests/test_backlog_pr_repair.py`) to prevent breaching Hard Invariant 6 (File length limit < 500 lines) and improve CI feedback speed.

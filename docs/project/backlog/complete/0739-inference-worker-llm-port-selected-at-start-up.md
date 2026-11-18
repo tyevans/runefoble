@@ -22,7 +22,7 @@ Complete
 Backend selection, probing, model factory, and calls are one class. The backend probe runs on every request, every error becomes a backend error, and the graphs type-hint the concrete class.
 
 ## Problem Statement
-- `services/inference_worker/src/inference_worker/llm_client.py:45-138`: `MultiBackendLLMClient` probes endpoints (`:52-81`), builds `ChatOpenAI` in an if-chain (`:83-103`), and invokes the model (`:109-138`).
+- `services/inference_worker/src/inference_worker/llm_client.py:45-138` (removed): `MultiBackendLLMClient` probes endpoints (`:52-81`), builds `ChatOpenAI` in an if-chain (`:83-103`), and invokes the model (`:109-138`).
 - `llm_client.py:115`: `generate_completion` calls `detect_available_backend()` on every request.
 - `llm_client.py:129-131`: `except Exception` converts every error into `InferenceBackendError`.
 - Backend names repeat in `config.py:29`, `main.py:17`, and the if-chain. The graphs `graphs/intent_graph.py:82`, `stand_in_graph.py:50`, `narration_graph.py:74` type-hint the concrete class. `api.py:25-26` builds the client at import time.

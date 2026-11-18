@@ -21,17 +21,17 @@ Complete
 Several reference and how-to pages cite module paths that do not exist, describe backward-compatibility layers (forbidden by DoR 9), state line counts that are wrong, and link to absolute paths on one developer's machine. Correct each one to the real path, delete the compatibility wording, and make the links repository-relative. Where the code still has the shim, the wording names it as a defect and points to the shim-removal task instead of calling it intended behaviour.
 
 ## Problem Statement
-- R1 (medium, `docs/reference/redis-streams-event-bus.md`): line 32 `libs/runefoble_platform/redis_bus.py` (actual `libs/runefoble_platform/src/runefoble_platform/redis_bus.py`). Line 36 `libs/runefoble_platform/consumer_group.py` (actual path has `src/runefoble_platform/`). Line 44 `services/game_session/projections/` (actual `services/game_session/src/game_session/projections/`). Line 50 calls the projections "Re-exported ... for backward compatibility".
+- R1 (medium, `docs/reference/redis-streams-event-bus.md`): line 32 `libs/runefoble_platform/src/runefoble_platform/redis_bus.py` (actual `libs/runefoble_platform/src/runefoble_platform/redis_bus.py`). Line 36 `libs/runefoble_platform/src/runefoble_platform/consumer_group.py` (actual path has `src/runefoble_platform/`). Line 44 `services/game_session/projections/` (removed) (actual `services/game_session/src/game_session/projections/` (removed)). Line 50 calls the projections "Re-exported ... for backward compatibility".
 - R3 (low): the diagram (line 14) says `events.session`. Line 59 says `runefoble.events.session`. Use one name.
 - PS1 (medium, `docs/reference/platform-services.md`): line 42 and the table present the `InMemoryEventStore`, `InMemoryEventBus`, and "In-Memory Object Store Mock" fallbacks as design. Name them as test-only or state that production falls back on error.
 - PS2 (medium): the Zitadel section does not state that `RUNEFOBLE_AUTH_DEV_MODE` defaults to `True` (`libs/runefoble_platform/src/runefoble_platform/config.py:69-72`). State the default and require `false` outside local development.
-- PS3 (low): the SpiceDB sync path accepts `MockSpiceDBClient` (`libs/runefoble_auth/src/runefoble_auth/sync.py:9,38,141`). Note the exception.
+- PS3 (low): the SpiceDB sync path accepts `MockSpiceDBClient` (`libs/runefoble_auth/src/runefoble_auth/sync.py:9,38,141` (removed)). Note the exception.
 - M1 (medium, `docs/reference/fastmcp-gateway.md`): line 11 calls `dynamic_registry.py` "Backward-compatible re-exports". The tool inventory implies the static tools work. Mark the canned tools as not implemented.
 - H1 (low, `docs/how-to/run-autonomous-backlog-engine.md:105-113`): nine `file:///home/ty/...` absolute links. Use repository-relative links.
-- H2 (low, `docs/how-to/simulate-npc-faction-agendas-and-world-ticks.md:31`): `services/the_watcher/src/the_watcher/factions.py` (actual `services/the_watcher/src/the_watcher/factions/factions.py`).
+- H2 (low, `docs/how-to/simulate-npc-faction-agendas-and-world-ticks.md:31`): `services/the_watcher/src/the_watcher/factions/` (actual `services/the_watcher/src/the_watcher/factions/factions.py`).
 - X2 (low, `docs/explanation/the-watcher-autonomous-dm.md:38`): `movement_parser.py` is 192 lines, not "under 180". Lines 32 and 38 say "backward-compatible". Correct both.
-- X1 (medium, `docs/explanation/the-watcher-autonomous-dm.md:24`): auto-pilot is described as persisting actions and emitting events end to end. The save and publish code exists (`services/game_session/src/game_session/routers/autopilot.py:122,138`), but activation does not work (TASK-0658 and the character-sheet stand-in work). Qualify the claim with the blocker.
-- X3 (low, `docs/explanation/realtime-voice-and-board-sync.md:85,98,107,113`): "legacy imports", "seamless compatibility", "backward-compatible alias", and re-exports. Remove the wording. TASK-0487 removes the code.
+- X1 (medium, `docs/explanation/the-watcher-autonomous-dm.md:24`): auto-pilot is described as persisting actions and emitting events end to end. The save and publish code exists (`services/game_session/src/game_session/routers/autopilot.py:122,138` (removed)), but activation does not work (TASK-0658 and the character-sheet stand-in work). Qualify the claim with the blocker.
+- X3 (low, `docs/explanation/realtime-voice-and-board-sync.md:85,98,107,113` (removed)): "legacy imports", "seamless compatibility", "backward-compatible alias", and re-exports. Remove the wording. TASK-0487 removes the code.
 
 ## Documentation & Architecture Review
 - Diataxis: reference pages state what exists. Explanation pages state the design and its current status. Each fix keeps the page in its quadrant.
@@ -66,7 +66,7 @@ Documentation accuracy. Not user-facing.
 
 Source: `.audit/synth/discovered-round1.md`.
 
-- `docs/how-to/define-spicedb-zanzibar-permissions.md:263` says "complete backward compatibility" for `runefoble_auth.mock_spicedb`. `docs/reference/ports-and-endpoints.md:107,114,115` call the voice routes "Backward-compatible" or "alias". Remove the wording after the code aliases are gone (TASK-0494).
+- `docs/how-to/define-spicedb-zanzibar-permissions.md:263` says "complete backward compatibility" for `runefoble_auth.mock_spicedb`. `docs/reference/ports-and-endpoints.md:107,114,115` (removed) call the voice routes "Backward-compatible" or "alias". Remove the wording after the code aliases are gone (TASK-0494).
 
 ## Audit Provenance
 

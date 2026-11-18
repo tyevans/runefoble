@@ -20,7 +20,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/246
 # TASK-0186: Caravan Aggregate and Contract Models Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `services/game_session/src/game_session/caravan.py` (351 lines, 70.2% of limit) and `caravan_ledger.py` (342 lines) into modular submodules under `services/game_session/src/game_session/caravan/`, extracting `CaravanContractState` Pydantic models, transit stage calculations, and escrow ledger validation into separate files (< 150 lines each) per Hard Invariant 6 and ADR-0007.

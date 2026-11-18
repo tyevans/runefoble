@@ -16,11 +16,13 @@ governing_adrs:
 - ADR-0013
 target_release: 0.3.0
 pr_url: https://github.com/tyevans/runefoble/pull/84
+governing_prds: []
+governing_stories: []
 ---
 # TASK-0051: TypeScript Audience Studio & Live Stream Interactivity Microservice
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Scaffold `services/audience_studio` as a first-class **TypeScript backend microservice** (Node.js / Fastify / TypeScript) leveraging the streaming ecosystem (`obs-websocket-js`, Twitch chat/polls, Stream Deck SDKs) and subscribing to Redis Streams to deliver live spectator interactivity without adding latency to core gameplay.

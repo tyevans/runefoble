@@ -20,7 +20,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/112
 # TASK-0069: Speech Intent Parser and Action Grammar Extractors Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `services/the_watcher/src/the_watcher/movement_parser.py` (327 lines, 65.4% of limit) into modular submodules (`grammars.py`, `spatial.py`, and `movement_parser.py`) to prevent breaching Hard Invariant 6 (File length limit < 500 lines) as streaming Whisper VAD integration (TASK-0039) and conversational disambiguation with compound intents (TASK-0054) are incorporated.

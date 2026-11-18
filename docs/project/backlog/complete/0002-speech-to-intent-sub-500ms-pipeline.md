@@ -13,6 +13,7 @@ governing_prds:
 governing_stories:
 - US-0001
 - US-0007
+dependencies: []
 ---
 # TASK-0002: Speech-to-Intent Sub-500ms Pipeline
 

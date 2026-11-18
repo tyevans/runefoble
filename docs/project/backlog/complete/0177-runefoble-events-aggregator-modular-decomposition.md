@@ -15,7 +15,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/228
 # TASK-0177: Runefoble Events Aggregator Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `libs/runefoble_events/src/runefoble_events/events.py` (474 lines, 94.8% of limit) and `libs/runefoble_events/src/runefoble_events/__init__.py` (442 lines, 88.4% of limit), modularizing domain event re-exports into focused category modules, ensuring all modules remain strictly < 150 lines per Hard Invariant 6.

@@ -23,7 +23,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/273
 # TASK-0203: Stand-In Guardrails Microfrontend Styles and Controls Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `services/character_sheet/ui/src/runefoble-stand-in-guardrails.ts` (311 lines, 62.2% of limit) by extracting inline Bauhaus CSS styles into `services/character_sheet/ui/src/runefoble-stand-in-guardrails.styles.ts` and form control templates into `runefoble-stand-in-guardrails.templates.ts`, keeping all modules strictly < 140 lines per Hard Invariant 6, ADR-0004, ADR-0012, and ADR-0013.

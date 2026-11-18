@@ -11,17 +11,19 @@ governing_adrs:
 - ADR-0009
 target_release: 0.4.0
 pr_url: https://github.com/tyevans/runefoble/pull/135
+governing_prds: []
+governing_stories: []
 ---
 # TASK-0122: Project Visualizer Test Suite Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
-Decompose `tests/test_project_visualizer.py` (416 lines) into modular test suites (`test_visualizer_parser.py`, `test_visualizer_graph.py`, and `test_visualizer_server.py`), ensuring all test files remain strictly under 250 lines.
+Decompose `tests/test_project_visualizer.py` (removed) (416 lines) into modular test suites (`test_visualizer_parser.py`, `test_visualizer_graph.py`, and `test_visualizer_server.py`), ensuring all test files remain strictly under 250 lines.
 
 ## Problem Statement
-`tests/test_project_visualizer.py` currently spans 416 lines, approaching the 500-line hard invariant limit (Hard Invariant 6). It consolidates entity parsing, graph edge construction, metric calculations, HTTP server handler, and CLI smoke tests.
+`tests/test_project_visualizer.py` (removed) currently spans 416 lines, approaching the 500-line hard invariant limit (Hard Invariant 6). It consolidates entity parsing, graph edge construction, metric calculations, HTTP server handler, and CLI smoke tests.
 
 ## Governing Architecture & ADRs
 - **ADR-0003: UV Monorepo Workspace for Python BCs**: Clean module and test organization.
@@ -30,7 +32,7 @@ Decompose `tests/test_project_visualizer.py` (416 lines) into modular test suite
 ## Detailed Specification & Implementation Plan
 1. **Parser Suite (`tests/test_visualizer_parser.py`)**:
    - Tests for `ProjectParser`, entity extraction across personas, ADRs, PRDs, stories, and tasks (< 150 lines).
-2. **Graph Builder Suite (`tests/test_visualizer_graph.py`)**:
+2. **Graph Builder Suite (`tests/test_visualizer_graph/`)**:
    - Tests for `ProjectGraphBuilder`, edge relationships (`governed_by`, `specifies`, `desires`), and buffer metrics (< 150 lines).
 3. **Server & CLI Suite (`tests/test_visualizer_server.py`)**:
    - Tests for `HTTPServer`, HTTP handlers, SSE live reload endpoints, static asset resolution, and CLI main entrypoint (< 150 lines).
@@ -45,7 +47,7 @@ Decompose `tests/test_project_visualizer.py` (416 lines) into modular test suite
 
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
 1. **Decomposed Modules**:
-   - `tests/test_project_visualizer.py` eliminated; replacement test files each strictly < 250 lines.
+   - `tests/test_project_visualizer.py` (removed) eliminated; replacement test files each strictly < 250 lines.
 2. **Zero Regressions**:
    - 100% of existing visualizer assertions pass without modification.
 3. **Quality Gates**:

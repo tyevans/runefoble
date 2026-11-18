@@ -24,7 +24,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/95
 # TASK-0057: Universal VTT Importer and Dynamic MCP Tool Registry
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Implement a Universal VTT (`.dd2vtt`) map format ingestion parser in `services/board_state` and a dynamic runtime FastMCP tool registration system in `gateway/mcp` enabling community map imports and extensible AI toolsets without gateway restarts.
@@ -49,12 +49,12 @@ Tabletop modders and third-party creators (Alex) are currently unable to import 
    - Parse `.dd2vtt` JSON: extract grid resolution, canvas dimensions, line-of-sight wall vectors, door coordinates, and ambient lights.
    - Extract embedded base64 image data and store background texture into Silo S3 via `services/board_state`.
    - Mutate `BoardStateAggregate` with parsed wall obstacles and grid bounds.
-2. **Dynamic FastMCP Tool Registry (`gateway/mcp/src/gateway_mcp/dynamic_registry.py`)**:
+2. **Dynamic FastMCP Tool Registry (`gateway/mcp/src/gateway_mcp/dynamic/`)**:
    - Provide administrative endpoints to register, update, and deregister runtime FastMCP tool definitions.
    - Validate JSON Schema parameters and execution sandbox policies.
    - Expose updated tools dynamically in `/mcp/tools` listing without dropping existing client SSE connections.
 3. **Frontdoor Blackbox Verification**:
-   - Create `tests/test_blackbox_uvtt_import.py` verifying file ingestion, wall coordinate projection, and dynamic tool invocation.
+   - Create `tests/test_blackbox_uvtt_import/` verifying file ingestion, wall coordinate projection, and dynamic tool invocation.
 
 ## INVEST Criteria Evaluation
 - **Independent (I)**: Parser operates strictly on board domain models; tool registry integrates directly into FastMCP server.
@@ -70,7 +70,7 @@ Tabletop modders and third-party creators (Alex) are currently unable to import 
 2. **FastMCP Dynamic Tool Listing**:
    - Dynamically registered tools appear immediately in FastMCP tool discovery without gateway restarts.
 3. **Frontdoor Blackbox Test Suite**:
-   - `tests/test_blackbox_uvtt_import.py` asserting wall geometry extraction, board state mutations, and dynamic MCP execution.
+   - `tests/test_blackbox_uvtt_import/` asserting wall geometry extraction, board state mutations, and dynamic MCP execution.
 4. **Quality Gates**:
    - Conforms strictly to Hard Invariant 6 (< 500 lines per file).
    - Passes `uv run pytest tests/test_blackbox_uvtt_import.py` and `uv run ruff check`.

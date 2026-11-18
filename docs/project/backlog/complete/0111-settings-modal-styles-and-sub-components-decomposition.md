@@ -22,7 +22,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/117
 # TASK-0111: Settings Modal Styles and Sub-Component CSS Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `frontend/src/components/runefoble-settings-modal.styles.ts` (356 lines, 71.2% of limit) into modular CSS sub-modules (`settings-modal-dialog.styles.ts`, `settings-modal-tabs.styles.ts`, `settings-modal-controls.styles.ts`) to prevent breaching Hard Invariant 6 (File length limit < 500 lines) as new streaming, broadcast overlay, and accessibility settings tabs are introduced.
@@ -65,7 +65,7 @@ As Milestone 4 introduces spectator broadcast overlay settings (TASK-0056) and c
 - **Valuable (V)**: Protects against Hard Invariant 6 violations (< 500 lines) and enables reuse of styled form controls across other modals.
 - **Estimable (E)**: Pure Lit `css` tagged template literal decomposition.
 - **Small (S)**: Scope strictly isolated to `frontend/src/components/runefoble-settings-modal.styles.ts`; all resulting files < 140 lines.
-- **Testable (T)**: Verified with `pnpm run build` and Storybook visual tests via `tests/test_theming.py`.
+- **Testable (T)**: Verified with `pnpm run build` and Storybook visual tests via `tests/test_theming.py` (removed).
 
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
 1. **Style Decomposition**:

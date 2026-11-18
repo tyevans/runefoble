@@ -12,11 +12,13 @@ governing_adrs:
 - ADR-0009
 target_release: 0.3.0
 pr_url: https://github.com/tyevans/runefoble/pull/87
+governing_prds: []
+governing_stories: []
 ---
 # TASK-0096: Stand-In Policy Guardrails and Hot-Swap Blackbox Test Suite Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `tests/test_blackbox_stand_in_guardrails.py` (369 lines, 73.8% of limit) into two focused blackbox test suites (`tests/test_blackbox_stand_in_policies.py` and `tests/test_blackbox_stand_in_takeover.py`) to prevent breaching Hard Invariant 6 (File length limit < 500 lines) as autonomous tactics and persona profiles expand.

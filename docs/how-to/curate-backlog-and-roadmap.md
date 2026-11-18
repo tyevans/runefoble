@@ -15,6 +15,15 @@ spec-ops schema check
 ```
 `spec-ops health` exits with status 1 when a source file exceeds 500 lines. This is the only file length gate. Tests do not check line counts.
 
+### Repairing Backlog Drift
+`make health-check` also runs `scripts/check_backlog_links.py`. The check reports five categories, and each must be zero: dead links in `refined/` and `proposed/` tasks, stale PRD links, complete-record body status that differs from frontmatter, cited repository paths in complete records that do not exist, and missing governance keys.
+
+To repair the mechanical drift, run the repair script. It is idempotent, so run it again after a merge:
+```bash
+uv run python scripts/fix_backlog_records.py
+```
+Link retargets are reviewed by hand in `scripts/backlog_link_map.py`. Add a row there only after you read the citing task and the target. Do not move task files between lifecycle folders with this script.
+
 ## Running the Backlog Curator
 To run the automated triage, refactoring scan, and JIT refinement cycle:
 

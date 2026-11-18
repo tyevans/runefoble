@@ -23,7 +23,7 @@ governing_stories:
 # TASK-0085: Board State API Router and Spatial Handler Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `services/board_state/src/board_state/main.py` (426 lines, 85.2% of limit) into modular FastAPI routers (`routers/boards.py`, `routers/tokens.py`, `routers/terrain.py`, `routers/previews.py`) to prevent breaching Hard Invariant 6 (File length limit < 500 lines) and align with the modular router architecture established in ADR-0003 and TASK-0040.

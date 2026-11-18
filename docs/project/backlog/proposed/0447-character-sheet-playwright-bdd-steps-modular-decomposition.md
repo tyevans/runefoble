@@ -42,10 +42,10 @@ Decompose `e2e/steps/character_sheet_steps.ts` (386 lines, 77.2% of limit) into 
 - Technical debt refactoring supporting:
   - [`prd-0006-digital-character-sheet-inventory-and-conditions.md`](../../product/accepted/prd-0006-digital-character-sheet-inventory-and-conditions.md)
   - [`prd-0023-unified-frontend-application-shell-and-campaign-hub.md`](../../product/accepted/prd-0023-unified-frontend-application-shell-and-campaign-hub.md)
-  - [`us-0015-dynamic-equipment-slots-and-encumbrance.md`](../../user_stories/accepted/us-0015-dynamic-equipment-slots-and-encumbrance.md)
-  - [`us-0051-character-sheet-inventory-equipment-and-conditions.md`](../../user_stories/accepted/us-0051-character-sheet-inventory-equipment-and-conditions.md)
-  - [`us-0064-character-roster-and-party-assignment.md`](../../user_stories/accepted/us-0064-character-roster-and-party-assignment.md)
-  - [`us-0069-deep-linkable-character-sheet-route.md`](../../user_stories/accepted/us-0069-deep-linkable-character-sheet-route.md)
+  - [`us-0015-dynamic-equipment-slots-and-encumbrance.md`](../../user_stories/accepted/us-0015-character-inventory-equipment-tracking.md)
+  - [`us-0051-character-sheet-inventory-equipment-and-conditions.md`](../../user_stories/accepted/us-0055-dynamic-character-wardrobe-and-condition-portraits.md)
+  - [`us-0064-character-roster-and-party-assignment.md`](../../user_stories/accepted/us-0064-character-roster-management-and-party-assignment.md)
+  - [`us-0069-deep-linkable-character-sheet-route.md`](../../user_stories/accepted/us-0069-character-sheet-inspector-and-active-session-binding.md)
 
 ## Scope of Work
 1. **Shared Fixtures & Helpers (`e2e/steps/character_sheet/common.ts`)**:

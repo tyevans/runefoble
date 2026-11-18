@@ -41,7 +41,7 @@ Audience Studio keeps polls, votes, open timers, and pending proposals in TypeSc
 - [`prd-0011-live-spectator-studio-and-audience-interactivity.md`](../../product/accepted/prd-0011-live-spectator-studio-and-audience-interactivity.md)
 
 ## Detailed Specification & Implementation Plan
-1. Create `PollAggregate` and `ProposalAggregate` in `services/audience_studio/src/aggregates/` with commands `start`, `vote`, `close`, `propose`, `approve`, `reject`. Each emits an existing event class from `audience.py` (verify the names first).
+1. Create `PollAggregate` and `ProposalAggregate` in `services/audience_studio/src/aggregates/` (removed) with commands `start`, `vote`, `close`, `propose`, `approve`, `reject`. Each emits an existing event class from `audience.py` (verify the names first).
 2. Repository: load by id, save events, publish through the Redis client. Rebuild open polls and timers on start-up from stored deadlines.
 3. Delete the `polls`, `votersByPoll`, `timers`, and `proposals` maps as sources of truth. Keep timer handles only.
 4. `redis.ts`: use a bounded retry with backoff. A publish failure rejects the command (HTTP 503 or WebSocket error frame). Add `/readyz` that fails while the stream is unavailable.

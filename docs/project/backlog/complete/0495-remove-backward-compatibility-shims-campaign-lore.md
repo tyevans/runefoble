@@ -25,13 +25,13 @@ Complete
 Audit 2026-11-17: dependency on proposed TASK-0349 removed. This task does not touch the West Marches router.
 
 ## Summary
-Decommission backward-compatibility router facades (`services/campaign_lore/src/campaign_lore/routers/codex.py`), excise class aliases in `retrieval.py` (`HybridRetrieval = HybridRetrievalCoordinator`), clean up package-root re-exports, and remove backward-compatibility tests in `tests/test_campaign_lore_modular_retrieval.py`.
+Decommission backward-compatibility router facades (`services/campaign_lore/src/campaign_lore/codex.py`), excise class aliases in `retrieval.py` (`HybridRetrieval = HybridRetrievalCoordinator`), clean up package-root re-exports, and remove backward-compatibility tests in `tests/test_campaign_lore_modular_retrieval.py`.
 
 ## Problem Statement
 In `services/campaign_lore`:
 - `src/campaign_lore/routers/codex.py` is a 37-line facade explicitly documented as `"""Facade backward compatibility re-exporting modular codex router and schemas."""`
 - `src/campaign_lore/retrieval.py` retains `# Backward-compatibility alias as defined in architecture records` (`HybridRetrieval = HybridRetrievalCoordinator`).
-- `tests/test_campaign_lore_modular_retrieval.py:test_import_from_retrieval_backward_compatibility` actively asserts that `campaign_lore.retrieval preserves 100% backward compatibility`.
+- `tests/test_campaign_lore_modular_retrieval.py:test_import_from_retrieval_backward_compatibility` (removed) actively asserts that `campaign_lore.retrieval preserves 100% backward compatibility`.
 Retaining these shims introduces dual import paths and violates the DoR zero backward compatibility mandate.
 
 ## Documentation & Architecture Review
@@ -49,7 +49,7 @@ Retaining these shims introduces dual import paths and violates the DoR zero bac
 
 ## Detailed Specification & Implementation Plan
 1. **Decommission Codex Router Facade**:
-   - Delete `services/campaign_lore/src/campaign_lore/routers/codex.py`.
+   - Delete `services/campaign_lore/src/campaign_lore/codex.py`.
    - Update `campaign_lore/main.py` and router mounts to include modular sub-routers (`routers/codex_entries.py`, `routers/codex_notes.py`) directly.
 2. **Remove Class and Module Aliases**:
    - In `services/campaign_lore/src/campaign_lore/retrieval.py`, remove `HybridRetrieval = HybridRetrievalCoordinator` alias.

@@ -21,13 +21,13 @@ pr_url: https://github.com/tyevans/runefoble/pull/86
 # TASK-0067: Silo S3 Media Asset Bucket Storage and Battlemap Pipeline Test Suite Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
-Decompose `tests/test_blackbox_silo_assets.py` (362 lines, 72.4% of limit) into two specialized test suites (`tests/test_blackbox_silo_asset_lifecycle.py` and `tests/test_blackbox_silo_asset_events.py`) to prevent breaching Hard Invariant 6 (File length limit < 500 lines) as new media asset formats and storage capabilities are added.
+Decompose `tests/test_blackbox_silo_assets.py` (removed) (362 lines, 72.4% of limit) into two specialized test suites (`tests/test_blackbox_silo_asset_lifecycle.py` and `tests/test_blackbox_silo_asset_events.py`) to prevent breaching Hard Invariant 6 (File length limit < 500 lines) as new media asset formats and storage capabilities are added.
 
 ## Problem Statement
-`tests/test_blackbox_silo_assets.py` currently spans 362 lines. It bundles multiple disparate test domains into a single test file:
+`tests/test_blackbox_silo_assets.py` (removed) currently spans 362 lines. It bundles multiple disparate test domains into a single test file:
 1. CloudEvents 1.0 schema compliance and registry verification (`test_asset_events_registration_and_cloudevents`).
 2. Blackbox file upload handling across both multipart/form-data and JSON base64 payloads for avatars, battlemaps, and audio tracks (`test_blackbox_upload_*`).
 3. Binary streaming, metadata retrieval, and attachment download header verification (`test_blackbox_get_asset_metadata_and_streaming`).
@@ -61,11 +61,11 @@ As campaign handouts, audio clips, token frames, and upload chunking are introdu
 - **Negotiable (N)**: Distribution between lifecycle and event test files can be adjusted.
 - **Valuable (V)**: Prevents Hard Invariant 6 violations (< 500 lines) and improves blackbox test maintainability.
 - **Estimable (E)**: Pure pytest module splitting with shared fixture support.
-- **Small (S)**: Scope isolated strictly to `tests/test_blackbox_silo_assets.py`; all resulting files < 200 lines.
+- **Small (S)**: Scope isolated strictly to `tests/test_blackbox_silo_assets.py` (removed); all resulting files < 200 lines.
 - **Testable (T)**: Verified with `uv run pytest tests/test_blackbox_silo_*.py`.
 
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
-1. `tests/test_blackbox_silo_assets.py` decomposed into focused modules strictly under 220 lines each.
+1. `tests/test_blackbox_silo_assets.py` (removed) decomposed into focused modules strictly under 220 lines each.
 2. 100% test pass rate on all 11 existing asset test scenarios with zero regressions.
 3. Conforms strictly to Hard Invariant 6 (< 500 lines per file).
 4. Maintains blackbox frontdoor interactions via public HTTP endpoints and published domain events.

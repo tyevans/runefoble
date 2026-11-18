@@ -21,10 +21,10 @@ Complete
 Four test functions check a behaviour and also assert source line counts. The line-limit part is structural. ADR-0017 owns the file length invariant, and the health gate owns its check. This task keeps the behavioural part and deletes the line-limit asserts.
 
 ## Problem Statement
-- `tests/test_blackbox_asset_forge_generation.py::test_raster_modular_decomposition_and_line_limits`
-- `tests/test_blackbox_bulletin_board/test_bulletin_posting.py::test_blackbox_bulletin_board_manifest_and_components`
-- `tests/test_blackbox_merchant_haggling/test_bargain_flow.py::test_blackbox_merchant_haggling_manifest_and_components`
-- `tests/test_blackbox_minigames_suite.py::test_minigames_suite_manifest_and_file_invariants`
+- `tests/test_blackbox_asset_forge_generation.py::test_raster_modular_decomposition_and_line_limits` (removed)
+- `tests/test_blackbox_bulletin_board/test_bulletin_posting.py::test_blackbox_bulletin_board_manifest_and_components` (removed)
+- `tests/test_blackbox_merchant_haggling/test_bargain_flow.py::test_blackbox_merchant_haggling_manifest_and_components` (removed)
+- `tests/test_blackbox_minigames_suite.py::test_minigames_suite_manifest_and_file_invariants` (removed)
 
 ## Documentation & Architecture Review
 - ADR-0017: file length is an invariant enforced by the health gate, not by feature tests.

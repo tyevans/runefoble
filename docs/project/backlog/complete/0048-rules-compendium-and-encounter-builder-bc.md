@@ -26,7 +26,7 @@ governing_stories:
 # TASK-0048: TTRPG Rules Compendium & Automated Encounter Builder Microservice
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Scaffold a new bounded context microservice `services/rules_compendium` in the UV monorepo workspace powered by `redstring` (`tyevans/redstring` on GitHub / PyPI). The service ingests canonical SRD 5.1 and ORC rules (monsters, spells, conditions, feats, action economy rules), provides sub-50ms hybrid BM25 and vector retrieval, implements an automated Challenge Rating (CR) encounter balancing engine, and exposes lookup tools to FastMCP.

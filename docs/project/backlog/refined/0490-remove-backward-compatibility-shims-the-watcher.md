@@ -41,9 +41,9 @@ When The Watcher was decomposed into focused submodules (such as modular copilot
 
 ## Product & User Story References
 - [`prd-0002-missing-player-ai-stand-in-with-penalties.md`](../../product/accepted/prd-0002-missing-player-ai-stand-in-with-penalties.md)
-- [`prd-0003-the-watcher-autonomous-dm-engine.md`](../../product/accepted/prd-0003-the-watcher-autonomous-dm-engine.md)
-- [`us-0002-autonomous-dm-intent-arbitration.md`](../../user_stories/accepted/us-0002-autonomous-dm-intent-arbitration.md)
-- [`us-0003-missing-player-tactical-stand-in.md`](../../user_stories/accepted/us-0003-missing-player-tactical-stand-in.md)
+- [`prd-0003-the-watcher-autonomous-dm-engine.md`](../../product/accepted/prd-0001-the-watcher-ai-dm-and-board-animator.md)
+- [`us-0002-autonomous-dm-intent-arbitration.md`](../../user_stories/accepted/us-0007-autonomous-dm-session-execution.md)
+- [`us-0003-missing-player-tactical-stand-in.md`](../../user_stories/accepted/us-0025-personalized-ai-stand-in-tactical-policies.md)
 
 ## Detailed Specification & Implementation Plan
 1. **Decommission Facade Files**:

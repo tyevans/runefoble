@@ -21,7 +21,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/346
 # TASK-0354: Dynamic Campaign Sessions Scoping, Scheduling & Offline Cache
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Eradicate hardcoded stub sessions by removing the universal "Session #15: Chamber of Horrors" fixture, scoping sessions strictly by campaign ID in `frontend/src/services/app-data-service.ts`, implementing an in-memory session cache that persists newly created sessions across view reloads in fallback mode, and auto-seeding an initial staging lobby session when a new campaign is created in `gateway_api/campaign_store/store.py`.
@@ -41,7 +41,7 @@ Furthermore, when a user clicks "+ Schedule Session" or creates a staging lobby 
   - **ADR-0013: Frontend Microfrontend Architecture**: State synchronization between App Shell and game session components.
 
 ## Scope of Work & Implementation Plan
-1. **Remove Hardcoded Universal Session Fixture (`frontend/src/services/app-data-service.fixtures.ts`)**:
+1. **Remove Hardcoded Universal Session Fixture (`frontend/src/fixtures/app-data-service.fixtures.ts`)**:
    - Remove the static `Session #15: Chamber of Horrors` item from `getFallbackCampaignSessions()`.
    - Implement `FALLBACK_CAMPAIGN_SESSIONS_MAP: Record<string, CampaignSessionItem[]>`:
      - Campaign `'4'` (Tomb of the Star-Eater) has `Session #14: Tomb of the Star-Eater` (active) and `Session #15: Chamber of Horrors` (lobby).
@@ -52,7 +52,7 @@ Furthermore, when a user clicks "+ Schedule Session" or creates a staging lobby 
      - When backend API request succeeds, return backend record.
      - When running in fallback mode, push newly created session into `FALLBACK_CAMPAIGN_SESSIONS_MAP[campaignId]`.
      - Ensure subsequent calls to `fetchCampaignSessions(campaignId)` include all created sessions.
-3. **Backend Initial Session Seeding (`gateway/api/src/gateway_api/campaign_store/store.py`)**:
+3. **Backend Initial Session Seeding (`gateway/api/src/gateway_api/campaign_store/store.py` (removed))**:
    - In `create_campaign()` / `create_from_request()`, automatically create a default staging lobby (`Session #1: Staging Lobby`, status: `lobby`) in `SessionManager`.
    - Write corresponding SpiceDB relation tuples `session:{id}#campaign@campaign:{campaign_id}`.
 4. **Schedule Session Modal Enhancement (`frontend/src/components/runefoble-session-modal.ts`)**:

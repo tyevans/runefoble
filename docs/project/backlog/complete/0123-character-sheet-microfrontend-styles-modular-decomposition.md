@@ -11,11 +11,13 @@ governing_adrs:
 - ADR-0013
 target_release: 0.4.0
 pr_url: https://github.com/tyevans/runefoble/pull/137
+governing_prds: []
+governing_stories: []
 ---
 # TASK-0123: Character Sheet Microfrontend Styles Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `services/character_sheet/ui/src/runefoble-character-sheet.styles.ts` (394 lines) into discrete CSS modules (`inventory.styles.ts`, `conditions.styles.ts`, and `core.styles.ts`), keeping all style modules strictly under 200 lines.
@@ -53,4 +55,4 @@ Decompose `services/character_sheet/ui/src/runefoble-character-sheet.styles.ts` 
    - Storybook stories for `<runefoble-character-sheet>` render identically across light and dark modes.
 3. **Quality Gates**:
    - Hard Invariant 6 met (< 500 lines per file).
-   - Passes `pnpm run build` and `tests/test_blackbox_character_sheet_ui.py`.
+   - Passes `pnpm run build` and `tests/test_blackbox_character_sheet_ui/`.

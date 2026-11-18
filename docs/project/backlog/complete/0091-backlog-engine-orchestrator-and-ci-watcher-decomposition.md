@@ -10,11 +10,13 @@ governing_adrs:
 - ADR-0009
 target_release: 0.2.0
 pr_url: https://github.com/tyevans/runefoble/pull/76
+governing_prds: []
+governing_stories: []
 ---
 # TASK-0091: Backlog Engine Orchestrator and CI Watcher Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `tools/backlog_engine/orchestrator.py` (447 lines, 89.4% of limit) and `tools/backlog_engine/ci_watcher.py` (432 lines, 86.4% of limit) into specialized, single-responsibility submodules to prevent breaching Hard Invariant 6 (File length limit < 500 lines).

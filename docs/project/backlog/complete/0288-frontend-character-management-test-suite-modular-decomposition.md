@@ -24,13 +24,13 @@ pr_url: https://github.com/tyevans/runefoble/pull/376
 # TASK-0288: Frontend Character Management Test Suite Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
-Decompose `frontend/test/character-management-and-profile.test.ts` (474 lines, 94.8% of limit) into modular TypeScript test submodules under `frontend/test/character_management/` (`navigation.test.ts`, `creation.test.ts`, `profile.test.ts`, `invariants.test.ts`), ensuring all test modules remain strictly < 130 lines per Hard Invariant 6.
+Decompose `frontend/test/character_management/` (474 lines, 94.8% of limit) into modular TypeScript test submodules under `frontend/test/character_management/` (`navigation.test.ts`, `creation.test.ts`, `profile.test.ts`, `invariants.test.ts`), ensuring all test modules remain strictly < 130 lines per Hard Invariant 6.
 
 ## Problem Statement
-`frontend/test/character-management-and-profile.test.ts` handles character creation modal events, character roster inspection routes, staging lobby character selection, dynamic VTT card binding, user profile settings view rendering, and campaign deduplication assertions in a single 474-line suite. Following character sheet sub-resource and stand-in guardrails expansions, this suite is now at 474 lines (approaching the 500-line invariant limit) and must be decomposed into focused submodules before reaching the limit.
+`frontend/test/character_management/` handles character creation modal events, character roster inspection routes, staging lobby character selection, dynamic VTT card binding, user profile settings view rendering, and campaign deduplication assertions in a single 474-line suite. Following character sheet sub-resource and stand-in guardrails expansions, this suite is now at 474 lines (approaching the 500-line invariant limit) and must be decomposed into focused submodules before reaching the limit.
 
 ## Documentation & Architecture Review
 - **Documentation Consulted**:
@@ -60,7 +60,7 @@ Decompose `frontend/test/character-management-and-profile.test.ts` (474 lines, 9
 4. **Bauhaus Theming & Invariants (`frontend/test/character_management/invariants.test.ts`)**:
    - Extract source file line count limits (< 500 lines), Bauhaus design token verification, and custom element encapsulation assertions (< 80 lines).
 5. **Verification**:
-   - Safely remove monolithic `frontend/test/character-management-and-profile.test.ts` and ensure `pnpm test` / `npm test` runs with 100% passing tests.
+   - Safely remove monolithic `frontend/test/character_management/` and ensure `pnpm test` / `npm test` runs with 100% passing tests.
 
 ## INVEST Criteria Evaluation
 - **Independent (I)**: Pure test suite decomposition without affecting UI runtime components.
@@ -71,7 +71,7 @@ Decompose `frontend/test/character-management-and-profile.test.ts` (474 lines, 9
 - **Testable (T)**: Directly executable via `pnpm test` in `frontend/`.
 
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
-1. `frontend/test/character-management-and-profile.test.ts` decomposed into `frontend/test/character_management/` suite.
+1. `frontend/test/character_management/` decomposed into `frontend/test/character_management/` suite.
 2. All extracted test modules strictly < 130 lines per Hard Invariant 6.
 3. 100% of test assertions pass via `pnpm test` (or `npm test`) in `frontend/`.
-4. Monolithic `frontend/test/character-management-and-profile.test.ts` safely removed.
+4. Monolithic `frontend/test/character_management/` safely removed.

@@ -23,13 +23,13 @@ pr_url: https://github.com/tyevans/runefoble/pull/90
 # TASK-0080: Gateway WebSocket Hub and Action Validator Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
-Decompose `gateway/api/src/gateway_api/websocket.py` (336 lines, 67.2% of limit) into modular components separating the SpiceDB Zanzibar action validation policy engine (`websocket_validator.py`), client connection manager (`websocket_manager.py`), and the WebSocket routing endpoint handler (`websocket_endpoint.py`) to prevent breaching Hard Invariant 6 (File length limit < 500 lines).
+Decompose `libs/runefoble_auth/src/runefoble_auth/websocket.py` (336 lines, 67.2% of limit) into modular components separating the SpiceDB Zanzibar action validation policy engine (`websocket_validator.py`), client connection manager (`websocket_manager.py`), and the WebSocket routing endpoint handler (`websocket_endpoint.py`) to prevent breaching Hard Invariant 6 (File length limit < 500 lines).
 
 ## Problem Statement
-`gateway/api/src/gateway_api/websocket.py` currently couples three distinct concerns:
+`libs/runefoble_auth/src/runefoble_auth/websocket.py` currently couples three distinct concerns:
 1. `WebSocketActionValidator`: Fine-grained SpiceDB Zanzibar permission checks for connection admission, DM role verification, token movement authorization, monster spawning guards, and character sheet edits.
 2. `CampaignConnectionManager`: Connection registry, connection state tracking, channel broadcasting, and error handling for active sockets.
 3. `campaign_websocket_endpoint`: WebSocket handshake handling, token query parameter/subprotocol extraction, heartbeat ping-pong loops, incoming JSON message dispatch, and disconnect cleanup.
@@ -47,7 +47,7 @@ With upcoming real-time features including voice room signaling integrations, sp
    - Encapsulate `WebSocketActionValidator` with permission checks against SpiceDB Zanzibar schema (< 140 lines).
 2. **Connection Hub Manager (`gateway/api/src/gateway_api/websocket_manager.py`)**:
    - Encapsulate `CampaignConnectionManager` tracking active clients and broadcasting messages (< 100 lines).
-3. **Endpoint & Lifecycle Handler (`gateway/api/src/gateway_api/websocket.py`)**:
+3. **Endpoint & Lifecycle Handler (`libs/runefoble_auth/src/runefoble_auth/websocket.py`)**:
    - Retain `campaign_websocket_endpoint` and re-export `WebSocketActionValidator` and `CampaignConnectionManager` for backward compatibility (< 130 lines).
 
 ## INVEST Criteria Evaluation
@@ -55,11 +55,11 @@ With upcoming real-time features including voice room signaling integrations, sp
 - **Negotiable (N)**: Distribution of connection registry helpers can be adapted.
 - **Valuable (V)**: Protects against Hard Invariant 6 violations (< 500 lines) and creates clean separation between authorization rules and socket I/O.
 - **Estimable (E)**: Standard refactoring extracting classes into dedicated modules with clean re-exports.
-- **Small (S)**: Scope strictly isolated to `gateway/api/src/gateway_api/websocket.py`; all resulting files < 150 lines.
+- **Small (S)**: Scope strictly isolated to `libs/runefoble_auth/src/runefoble_auth/websocket.py`; all resulting files < 150 lines.
 - **Testable (T)**: Verified with `uv run pytest tests/test_websocket_*.py tests/test_blackbox_zitadel_auth.py`.
 
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
-1. `gateway/api/src/gateway_api/websocket.py` decomposed into modular files strictly under 150 lines each.
+1. `libs/runefoble_auth/src/runefoble_auth/websocket.py` decomposed into modular files strictly under 150 lines each.
 2. 100% test pass rate across all WebSocket test suites.
 3. Conforms strictly to Hard Invariant 6 (< 500 lines per file).
 4. Zero breaking changes to client WebSocket protocols or permission validation behaviors.

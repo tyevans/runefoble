@@ -21,7 +21,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/174
 # TASK-0152: West Marches Shared Atlas Microfrontend Subviews and Pin Layer Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `services/campaign_lore/ui/src/runefoble-west-marches-atlas.ts` (386 lines, 77.2% of limit) into modular sub-components under `services/campaign_lore/ui/src/west_marches/` (`discovery_pin_layer.ts`, `stronghold_dashboard_panel.ts`, `frontier_hex_overlay.ts`), keeping all source files < 150 lines per Hard Invariant 6.

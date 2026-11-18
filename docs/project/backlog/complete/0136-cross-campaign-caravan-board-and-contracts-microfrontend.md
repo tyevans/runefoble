@@ -22,7 +22,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/148
 # TASK-0136: Cross-Campaign Caravan Trading & Frontier Bounty Board Microfrontend
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Build the `<runefoble-caravan-board>` microfrontend in `services/game_session/ui/src/` displaying active trade caravans, cargo manifests, escort contracts, payout bounties, transit route risk indicators, and real-time status notifications with Bauhaus design tokens and Storybook stories.

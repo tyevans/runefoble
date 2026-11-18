@@ -22,7 +22,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/253
 # TASK-0192: Board Templates Rendering and Subviews Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `services/board_state/ui/src/board-templates.ts` (338 lines, 67.6% of limit) into modular template components under `services/board_state/ui/src/templates/` (`kinematics.template.ts`, `cell.template.ts`, `overlays.template.ts`), keeping each template module strictly < 130 lines per Hard Invariant 6 and ADR-0013.

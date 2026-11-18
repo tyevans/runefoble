@@ -24,7 +24,7 @@ Complete
 The "semantic" half of rules search uses redstring's `FakeEmbeddingProvider`, which derives vectors from a hash of the text. The service and its README say "semantic vector retrieval". This task adds a configured embedding port with a real default. The fake stays only in tests. Docs state the retrieval mode the service actually uses.
 
 ## Problem Statement
-- `services/rules_compendium/src/.../retrieval.py:24`: `self.embeddings = redstring.FakeEmbeddingProvider(dimension=dimension)`.
+- `services/rules_compendium/src/.../retrieval.py:24` (removed): `self.embeddings = redstring.FakeEmbeddingProvider(dimension=dimension)`.
 - redstring documents the fake as "deterministic unit vectors derived from a hash of the text".
 - The lexical BM25 part is real.
 - No real provider is wired and no toggle exists. `services/rules_compendium/README.md` and the module docstring claim semantic retrieval.

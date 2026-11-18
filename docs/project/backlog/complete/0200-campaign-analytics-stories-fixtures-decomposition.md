@@ -21,7 +21,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/263
 # TASK-0200: Campaign Analytics Stories Fixtures Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `services/campaign_analytics/ui/src/runefoble-campaign-analytics.stories.ts` (322 lines, 64.4% of limit) by extracting embedded mock datasets into `services/campaign_analytics/ui/src/fixtures/campaign-analytics.fixtures.ts`, keeping the story definition file strictly < 100 lines per Hard Invariant 6 and ADR-0004/ADR-0013.

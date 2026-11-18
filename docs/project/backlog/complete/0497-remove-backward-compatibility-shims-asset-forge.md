@@ -49,7 +49,7 @@ These legacy artifacts exist only to prevent breakage for older callers, which v
 
 ## Detailed Specification & Implementation Plan
 1. **Delete Aggregator Facade**:
-   - Delete `services/asset_forge/src/asset_forge/generator.py`.
+   - Delete `services/asset_forge/src/asset_forge/generator.py` (removed).
    - Update callers to import generators directly from `asset_forge.raster.map_raster`, `asset_forge.raster.token_raster`, or `asset_forge.diffusion.*`.
 2. **Remove Function Aliases**:
    - In `services/asset_forge/src/asset_forge/raster/token_raster.py`, remove the `generate_token_avatar = generate_token_portrait` alias.

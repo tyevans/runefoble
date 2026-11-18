@@ -26,7 +26,7 @@ Several services send a SpiceDB preshared key that is a literal in code, and som
 - `libs/runefoble_auth/src/runefoble_auth/spicedb.py:29-30`: default `runefoble_secret_key`.
 - `libs/runefoble_auth/src/runefoble_auth/bootstrap_schema.py:61`: default `"secret"` (`w1-libs.md` F12).
 - `services/audience_studio/src/index.ts:10` and `src/auth.ts:294,386`: literal `runefoble_secret_key` fallback (`w2-audience-studio.md` F13).
-- `services/audience_studio/src/auth.ts` `SPICEDB_PRESHARED_KEY` is set in Helm (`audience-studio.yaml`), but the code path that uses it is dead (TASK-0439 scope).
+- `services/audience_studio/src/auth.ts` (removed) `SPICEDB_PRESHARED_KEY` is set in Helm (`audience-studio.yaml`), but the code path that uses it is dead (TASK-0439 scope).
 
 ## Documentation & Architecture Review
 - `docs/reference/platform-services.md` documents `RUNEFOBLE_SPICEDB_PRESHARED_KEY`. Keep that name as the single source; state that there is no default outside tests.

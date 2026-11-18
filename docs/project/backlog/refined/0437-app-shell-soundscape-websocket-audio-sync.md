@@ -51,7 +51,7 @@ While the `<runefoble-soundscape-controls>` Lit component provides stem volume s
 - [`prd-0023-unified-frontend-application-shell-and-campaign-hub.md`](../../product/accepted/prd-0023-unified-frontend-application-shell-and-campaign-hub.md)
 - [`us-0039-encounter-tension-adaptive-scoring-and-foley.md`](../../user_stories/accepted/us-0039-encounter-tension-adaptive-scoring-and-foley.md)
 - [`us-0053-dm-manual-soundboard-and-foley-triggers.md`](../../user_stories/accepted/us-0053-dm-manual-soundboard-and-foley-triggers.md)
-- [`us-0065-game-session-staging-lobby-and-pre-game-assembly.md`](../../user_stories/accepted/us-0065-game-session-staging-lobby-and-pre-game-assembly.md)
+- [`us-0065-game-session-staging-lobby-and-pre-game-assembly.md`](../../user_stories/accepted/us-0039-encounter-tension-adaptive-scoring-and-foley.md)
 
 ## Detailed Specification & Implementation Plan
 1. **App Shell WebSocket Message Handlers (`frontend/src/runefoble-app.ts`)**:

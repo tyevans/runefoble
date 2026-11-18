@@ -20,13 +20,13 @@ governing_stories:
 # TASK-0083: Streaming Whisper Audio Transcription Test Suite Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
-Decompose `tests/test_blackbox_streaming_whisper.py` (423 lines, 84.6% of limit) into shared audio fixtures (`tests/fixtures/audio.py` or helper module) and two focused test suites (`tests/test_blackbox_streaming_whisper_vad.py` and `tests/test_blackbox_streaming_whisper_e2e.py`) to prevent breaching Hard Invariant 6 (File length limit < 500 lines).
+Decompose `tests/test_blackbox_streaming_whisper.py` (removed) (423 lines, 84.6% of limit) into shared audio fixtures (`tests/fixtures/audio.py` (removed) or helper module) and two focused test suites (`tests/test_blackbox_streaming_whisper_vad.py` and `tests/test_blackbox_streaming_whisper_e2e.py`) to prevent breaching Hard Invariant 6 (File length limit < 500 lines).
 
 ## Problem Statement
-`tests/test_blackbox_streaming_whisper.py` currently stands at 423 lines, placing it within 77 lines of breaching the 500-line hard invariant ceiling. The file conflates several testing concerns:
+`tests/test_blackbox_streaming_whisper.py` (removed) currently stands at 423 lines, placing it within 77 lines of breaching the 500-line hard invariant ceiling. The file conflates several testing concerns:
 1. Synthetic audio waveform and WAV header synthesis utilities (`generate_pcm_sine`, `generate_pcm_silence`, `generate_wav_sine`).
 2. Low-level Voice Activity Detection (VAD) tests (silence rejection, speech onset buffering, trailing silence thresholds, WAV container decoding).
 3. High-level end-to-end orchestration tests (latency budget benchmarking, continuous WebSocket streaming, speaker buffer isolation, and inter-service Watcher intent routing).
@@ -38,7 +38,7 @@ As additional acoustic features (e.g. noise suppression, multi-language speech, 
 - **Negotiable (N)**: Split boundaries between VAD unit/blackbox tests and end-to-end WebSocket tests can be fine-tuned.
 - **Valuable (V)**: Safeguards against Hard Invariant 6 violations, speeds up test feedback loops, and clarifies test ownership.
 - **Estimable (E)**: Standard pytest suite decomposition with fixture sharing.
-- **Small (S)**: Scope strictly isolated to `tests/test_blackbox_streaming_whisper.py`.
+- **Small (S)**: Scope strictly isolated to `tests/test_blackbox_streaming_whisper.py` (removed).
 - **Testable (T)**: `uv run pytest tests/test_blackbox_streaming_whisper_*.py` verifies 100% test pass rate with zero test regression.
 
 ## Governing Architecture & ADRs
@@ -63,7 +63,7 @@ As additional acoustic features (e.g. noise suppression, multi-language speech, 
    - `test_multi_speaker_buffer_isolation`
    - Target length: < 190 lines.
 4. **Original Monolith Deletion**:
-   - Remove `tests/test_blackbox_streaming_whisper.py`.
+   - Remove `tests/test_blackbox_streaming_whisper.py` (removed).
 
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
 1. **Modular Test Suite Creation**:

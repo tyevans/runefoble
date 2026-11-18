@@ -44,9 +44,9 @@ These artifacts represent legacy debt violating the updated DoR.
   - **ADR-0010: Real-Time Audio Pipeline**: Room audio coordinator and WebRTC integration.
 
 ## Product & User Story References
-- [`prd-0007-realtime-voice-streaming-and-dsp.md`](../../product/accepted/prd-0007-realtime-voice-streaming-and-dsp.md)
-- [`us-0007-voice-streaming-audio-pipeline.md`](../../user_stories/accepted/us-0007-voice-streaming-audio-pipeline.md)
-- [`us-0020-voice-dsp-conditioning-filters.md`](../../user_stories/accepted/us-0020-voice-dsp-conditioning-filters.md)
+- [`prd-0007-realtime-voice-streaming-and-dsp.md`](../../product/accepted/prd-0004-dynamic-vocal-audio-conditioning-and-dsp-filters.md)
+- [`us-0007-voice-streaming-audio-pipeline.md`](../../user_stories/accepted/us-0001-player-commands-board-via-voice.md)
+- [`us-0020-voice-dsp-conditioning-filters.md`](../../user_stories/accepted/us-0020-dm-vocal-modulator-with-realtime-npc-filtering.md)
 
 ## Detailed Specification & Implementation Plan
 1. **Decommission Room Facade**:

@@ -23,7 +23,7 @@ Complete
 Broad `except Exception` blocks remain around aggregate loads and SpiceDB checks outside the TASK-0561 file list. They hide store and SpiceDB outages.
 
 ## Problem Statement
-- `services/campaign_lore/src/campaign_lore/routers/west_marches.py:102,132,178,216,261` and `west_marches_aggregate.py:37`.
+- `services/campaign_lore/src/campaign_lore/routers/west_marches.py:102,132,178,216,261` (removed) and `west_marches_aggregate.py:37`.
 - `services/game_session/src/game_session/west_marches.py:33`, `settlement/settlement_aggregate.py:33`, `stronghold.py:148,184`.
 - `services/soundscape/src/soundscape/routers/leitmotif.py:60`: swallows SpiceDB errors on the character `edit` check.
 - `services/game_session/src/game_session/minigame_tables/ws_manager.py` `broadcast`: silent catch around sends.

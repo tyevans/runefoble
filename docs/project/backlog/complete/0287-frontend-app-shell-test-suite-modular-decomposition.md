@@ -21,13 +21,13 @@ pr_url: https://github.com/tyevans/runefoble/pull/357
 # TASK-0287: Frontend App Shell Test Suite Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
-Decompose `frontend/test/app-shell.test.ts` (378 lines, 75.6% of limit) into modular TypeScript test submodules under `frontend/test/app_shell/` (`routing.test.ts`, `session-transitions.test.ts`, `websocket-lifecycle.test.ts`, `state-breadcrumbs.test.ts`), ensuring all test modules remain strictly < 130 lines per Hard Invariant 6.
+Decompose `frontend/test/app_shell/` (378 lines, 75.6% of limit) into modular TypeScript test submodules under `frontend/test/app_shell/` (`routing.test.ts`, `session-transitions.test.ts`, `websocket-lifecycle.test.ts`, `state-breadcrumbs.test.ts`), ensuring all test modules remain strictly < 130 lines per Hard Invariant 6.
 
 ## Problem Statement
-`frontend/test/app-shell.test.ts` is the second-largest source file in the entire repository and the single largest test file in `frontend/`. It consolidates dynamic view resolution, route parameter extraction, staging lobby-to-live session view transitions, route-bound WebSocket lifecycle management, and breadcrumb state updates into a monolithic 378-line suite. As new route-bound views and modal workflows are added to the App Shell, this file will rapidly approach the 500-line invariant limit unless modularized.
+`frontend/test/app_shell/` is the second-largest source file in the entire repository and the single largest test file in `frontend/`. It consolidates dynamic view resolution, route parameter extraction, staging lobby-to-live session view transitions, route-bound WebSocket lifecycle management, and breadcrumb state updates into a monolithic 378-line suite. As new route-bound views and modal workflows are added to the App Shell, this file will rapidly approach the 500-line invariant limit unless modularized.
 
 ## Documentation & Architecture Review
 - **Documentation Consulted**:
@@ -49,7 +49,7 @@ Decompose `frontend/test/app-shell.test.ts` (378 lines, 75.6% of limit) into mod
 4. **State & Breadcrumbs Orchestration (`frontend/test/app_shell/state-breadcrumbs.test.ts`)**:
    - Extract active view state transitions, breadcrumb trail updates, dynamic title resolution, and browser history assertions (< 100 lines).
 5. **Verification**:
-   - Safely remove monolithic `frontend/test/app-shell.test.ts` and ensure `npm test` runs all submodules with 100% passing rate.
+   - Safely remove monolithic `frontend/test/app_shell/` and ensure `npm test` runs all submodules with 100% passing rate.
 
 ## INVEST Criteria Evaluation
 - **Independent (I)**: Test reorganization is self-contained within `frontend/test/app_shell/` without modifying production App Shell behavior.
@@ -60,12 +60,12 @@ Decompose `frontend/test/app-shell.test.ts` (378 lines, 75.6% of limit) into mod
 - **Testable (T)**: Directly executable via `npm test` in `frontend/` with 100% assertions passing.
 
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
-1. `frontend/test/app-shell.test.ts` decomposed into modular submodules under `frontend/test/app_shell/`:
+1. `frontend/test/app_shell/` decomposed into modular submodules under `frontend/test/app_shell/`:
    - `frontend/test/app_shell/routing.test.ts` (< 130 lines)
    - `frontend/test/app_shell/session-transitions.test.ts` (< 130 lines)
    - `frontend/test/app_shell/websocket-lifecycle.test.ts` (< 130 lines)
    - `frontend/test/app_shell/state-breadcrumbs.test.ts` (< 130 lines)
 2. All extracted test modules strictly satisfy Hard Invariant 6 (< 130 lines).
 3. All tests pass with 100% success rate via frontend test runner (`npm test` in `frontend/`).
-4. Monolithic `frontend/test/app-shell.test.ts` safely removed.
+4. Monolithic `frontend/test/app_shell/` safely removed.
 5. All TypeScript lints pass cleanly.

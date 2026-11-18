@@ -21,7 +21,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/114
 # TASK-0118: Campaign Analytics Storage and Query Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `services/campaign_analytics/src/campaign_analytics/storage.py` (415 lines, 83.0% of limit) into an engine lifecycle / repository class (`storage.py`) and specialized query modules (`queries/spatial.py`, `queries/mvp.py`, `queries/timeline.py`) to prevent violating Hard Invariant 6 (File length limit < 500 lines).
@@ -62,7 +62,7 @@ As new analytical read-models (such as party spell slot efficiency and encounter
 - **Valuable (V)**: Protects against Hard Invariant 6 violations (< 500 lines) and allows adding new queries cleanly.
 - **Estimable (E)**: Pure refactoring separating query helper methods from connection lifecycle.
 - **Small (S)**: Scope strictly isolated to `services/campaign_analytics/src/campaign_analytics/storage.py`; all resulting files < 170 lines.
-- **Testable (T)**: Verified with `tests/test_blackbox_campaign_analytics.py`.
+- **Testable (T)**: Verified with `tests/test_blackbox_campaign_analytics.py` (removed).
 
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
 1. **Decomposition Executed**:

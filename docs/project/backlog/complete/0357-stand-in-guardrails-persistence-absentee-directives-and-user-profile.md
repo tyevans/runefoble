@@ -25,7 +25,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/353
 # TASK-0357: Stand-In Guardrails Persistence, Absentee Directives & User Profile Management
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Eradicate unpersisted guardrail stubs and read-only profile limitations by ensuring `<runefoble-stand-in-guardrails>` always renders on the character sheet with sensible defaults, wiring `@guardrails-saved` and `@hot-swap-requested` to backend endpoints, mounting `<runefoble-absentee-directive>` and `<runefoble-absentee-recap>` into the live session and re-entry flow, and implementing an editable profile mode with backend persistence on `gateway-api`.
@@ -61,10 +61,10 @@ Stand-in guardrails and absentee features are critical to Runefoble's core value
 4. **Editable User Profile (`frontend/src/components/runefoble-user-profile.ts`)**:
    - Add an "Edit Profile" toggle with inputs for Display Name, Avatar URL, and Bio.
    - Add `updateProfile(payload: UpdateProfilePayload)` in `appDataService.ts`.
-   - Add `PATCH /api/v1/profile` on `gateway/api/src/gateway_api/routers/auth.py`.
+   - Add `PATCH /api/v1/profile` on `gateway/api/src/gateway_api/routers/auth/`.
 5. **Blackbox TDD Tests**:
    - Author `tests/test_blackbox_standin_guardrails_persistence.py` testing guardrail updates and hot-swap requests through the gateway.
-   - Update `frontend/test/character-management-and-profile.test.ts` to assert profile editing and guardrail event handling.
+   - Update `frontend/test/character_management/` to assert profile editing and guardrail event handling.
 
 ## INVEST Criteria Evaluation
 - **Independent (I)**: Self-contained within stand-in guardrail configurations and user profile views.

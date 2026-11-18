@@ -7,6 +7,8 @@ completed: 2026-09-26
 dependencies: [TASK-0025]
 governing_adrs: [ADR-0004, ADR-0013]
 target_release: 0.1.0
+governing_prds: []
+governing_stories: []
 ---
 
 # TASK-0026: Service Bounded Context Component Extraction and HTTP Manifests

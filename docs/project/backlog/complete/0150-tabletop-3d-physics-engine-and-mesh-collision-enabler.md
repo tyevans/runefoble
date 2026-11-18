@@ -22,7 +22,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/160
 # TASK-0150: Tabletop 3D Physics Engine & Mesh Collision Integration
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Build the foundational backend physics and collision simulation engine for 3D tabletop miniatures and tumbling physical dice within `services/board_state/src/board_state/physics/`, providing rigid-body collision meshes, elevation step calculations, and spatial impact event dispatch.

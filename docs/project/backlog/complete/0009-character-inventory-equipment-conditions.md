@@ -8,6 +8,8 @@ governing_prds:
 governing_stories:
 - US-0015
 - US-0024
+governing_adrs: []
+dependencies: []
 ---
 
 # TASK-0009: Character Sheet Equipment, Inventory & Conditions Aggregate

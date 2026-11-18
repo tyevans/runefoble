@@ -20,7 +20,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/139
 # TASK-0132: Particle Canvas Decals and Projectile Physics Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `services/board_state/ui/src/particle_canvas.ts` (492 lines, 98.4% of limit) by extracting projectile trajectory calculation and ephemeral grid decal decay handling into dedicated modules (`particle_projectiles.ts` and `particle_decals.ts`), ensuring the particle canvas engine stays comfortably under 300 lines and guarding against breaches of Hard Invariant 6 (< 500 lines).
@@ -52,7 +52,7 @@ Decompose `services/board_state/ui/src/particle_canvas.ts` (492 lines, 98.4% of 
 - **Valuable (V)**: Eliminates risk of breaching Hard Invariant 6 on the largest frontend file (492 lines) in the repo.
 - **Estimable (E)**: Pure refactoring with well-defined interfaces and zero domain logic changes.
 - **Small (S)**: Single-pass decomposition creating two helper files (<140 lines each) and reducing `particle_canvas.ts` to <250 lines.
-- **Testable (T)**: Validated via frontend test suite and blackbox spell VFX test suite (`tests/test_blackbox_spell_vfx.py`).
+- **Testable (T)**: Validated via frontend test suite and blackbox spell VFX test suite (`tests/test_blackbox_spell_vfx/`).
 
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
 1. **Modular Extraction**:

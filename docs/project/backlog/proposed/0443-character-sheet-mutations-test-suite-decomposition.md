@@ -41,9 +41,9 @@ Decompose `tests/test_blackbox_character_sheet_mutations.py` (313 lines, 62.6% o
 ## Product & User Story References
 - [`prd-0006-digital-character-sheet-inventory-and-conditions.md`](../../product/accepted/prd-0006-digital-character-sheet-inventory-and-conditions.md)
 - [`prd-0023-unified-frontend-application-shell-and-campaign-hub.md`](../../product/accepted/prd-0023-unified-frontend-application-shell-and-campaign-hub.md)
-- [`us-0015-dynamic-equipment-slots-and-encumbrance.md`](../../user_stories/accepted/us-0015-dynamic-equipment-slots-and-encumbrance.md)
-- [`us-0051-character-sheet-inventory-equipment-and-conditions.md`](../../user_stories/accepted/us-0051-character-sheet-inventory-equipment-and-conditions.md)
-- [`us-0069-deep-linkable-client-routing-and-route-guards.md`](../../user_stories/accepted/us-0069-deep-linkable-client-routing-and-route-guards.md)
+- [`us-0015-dynamic-equipment-slots-and-encumbrance.md`](../../user_stories/accepted/us-0015-character-inventory-equipment-tracking.md)
+- [`us-0051-character-sheet-inventory-equipment-and-conditions.md`](../../user_stories/accepted/us-0055-dynamic-character-wardrobe-and-condition-portraits.md)
+- [`us-0069-deep-linkable-client-routing-and-route-guards.md`](../../user_stories/accepted/us-0069-character-sheet-inspector-and-active-session-binding.md)
 
 ## Scope of Work
 1. **Shared Fixtures & Helpers (`tests/test_blackbox_character_sheet_mutations/conftest.py`)**:

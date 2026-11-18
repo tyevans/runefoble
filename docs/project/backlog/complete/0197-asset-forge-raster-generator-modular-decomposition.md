@@ -22,13 +22,13 @@ pr_url: https://github.com/tyevans/runefoble/pull/258
 # TASK-0197: Asset Forge Raster Generator Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
-Decompose `services/asset_forge/src/asset_forge/generator.py` (330 lines, 66.0% of limit) into modular raster submodules under `services/asset_forge/src/asset_forge/raster/` (`png_codec.py`, `battlemap_raster.py`, and `token_raster.py`), keeping each submodule strictly < 120 lines per Hard Invariant 6 and ADR-0003/ADR-0007.
+Decompose `services/asset_forge/src/asset_forge/generator.py` (removed) (330 lines, 66.0% of limit) into modular raster submodules under `services/asset_forge/src/asset_forge/raster/` (`png_codec.py`, `battlemap_raster.py`, and `token_raster.py`), keeping each submodule strictly < 120 lines per Hard Invariant 6 and ADR-0003/ADR-0007.
 
 ## Problem Statement
-`services/asset_forge/src/asset_forge/generator.py` currently contains 330 lines combining low-level PNG binary chunk encoders (IHDR, IDAT, IEND, CRC32, scanline compression), procedural grid rasterization for dungeon/wilderness battlemaps, circular token portrait drawing, and printable papercraft standee generation. With upcoming 3D printable STL token and ring generation, this file will exceed 400 lines unless decoupled into focused raster modules.
+`services/asset_forge/src/asset_forge/generator.py` (removed) currently contains 330 lines combining low-level PNG binary chunk encoders (IHDR, IDAT, IEND, CRC32, scanline compression), procedural grid rasterization for dungeon/wilderness battlemaps, circular token portrait drawing, and printable papercraft standee generation. With upcoming 3D printable STL token and ring generation, this file will exceed 400 lines unless decoupled into focused raster modules.
 
 ## Governing Architecture & ADRs
 - **ADR-0003: UV Monorepo Workspace for Python BCs**: Clean internal package structure for asset generation services.
@@ -40,7 +40,7 @@ Decompose `services/asset_forge/src/asset_forge/generator.py` (330 lines, 66.0% 
    - `png_codec.py`: Standard PNG chunk encoder (`encode_png_rgba`), scanline packing, CRC32 calculations, zlib compression, and hex color parsing (`parse_hex_color`) (< 90 lines).
    - `battlemap_raster.py`: Procedural tactical battlemap raster generator (`generate_battlemap_png`) with thematic color palettes and grid line overlays (< 110 lines).
    - `token_raster.py`: Circular token portrait generator (`generate_token_png`), border rings, and letter monograms (< 100 lines).
-2. **Aggregator Facade (`services/asset_forge/src/asset_forge/generator.py`)**:
+2. **Aggregator Facade (`services/asset_forge/src/asset_forge/generator.py` (removed))**:
    - Maintain 100% backward-compatible function re-exports (`encode_png_rgba`, `parse_hex_color`, `generate_battlemap_png`, `generate_token_png`) (< 40 lines).
 3. **Verification**:
    - Run `tests/test_blackbox_asset_forge_generation.py` to verify raster outputs remain identical.

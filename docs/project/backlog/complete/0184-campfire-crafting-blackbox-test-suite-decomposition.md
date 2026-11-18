@@ -21,13 +21,13 @@ pr_url: https://github.com/tyevans/runefoble/pull/244
 # TASK-0184: Campfire Crafting Blackbox Test Suite Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
-Decompose `tests/test_blackbox_campfire_crafting.py` (357 lines, 71.4% of limit) into modular test submodules under `tests/test_blackbox_campfire_crafting/` (`conftest.py`, `test_recipe_crafting.py`, `test_volatile_mishaps.py`, `test_campfire_boons.py`), keeping all test files strictly < 150 lines per Hard Invariant 6 and ADR-0003.
+Decompose `tests/test_blackbox_campfire_crafting/` (357 lines, 71.4% of limit) into modular test submodules under `tests/test_blackbox_campfire_crafting/` (`conftest.py`, `test_recipe_crafting.py`, `test_volatile_mishaps.py`, `test_campfire_boons.py`), keeping all test files strictly < 150 lines per Hard Invariant 6 and ADR-0003.
 
 ## Problem Statement
-`tests/test_blackbox_campfire_crafting.py` tests alchemical recipe discovery, volatile mishap resolution tables, resting boons, and stronghold facility bonuses in a single 357-line file. Approaching the file size limit, it should be cleanly decomposed into focused submodules.
+`tests/test_blackbox_campfire_crafting/` tests alchemical recipe discovery, volatile mishap resolution tables, resting boons, and stronghold facility bonuses in a single 357-line file. Approaching the file size limit, it should be cleanly decomposed into focused submodules.
 
 ## Governing Architecture & ADRs
 - **ADR-0003: UV Monorepo Workspace for Python BCs**: Clean test package structuring.

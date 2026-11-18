@@ -24,13 +24,13 @@ pr_url: https://github.com/tyevans/runefoble/pull/103
 # TASK-0075: Spectator View Stream Clean Overlay and Broadcast Test Suite Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
-Decompose `tests/test_spectator_view.py` (330 lines, 66.0% of limit) into two specialized test modules (`tests/test_spectator_events_and_schema.py` and `tests/test_spectator_stream_overlay.py`) to prevent breaching Hard Invariant 6 (File length limit < 500 lines) as live audience interactivity (TASK-0051) and OBS stream overlays (TASK-0056) expand broadcast capabilities.
+Decompose `tests/test_spectator_view.py` (removed) (330 lines, 66.0% of limit) into two specialized test modules (`tests/test_spectator_events_and_schema.py` and `tests/test_spectator_stream_overlay.py`) to prevent breaching Hard Invariant 6 (File length limit < 500 lines) as live audience interactivity (TASK-0051) and OBS stream overlays (TASK-0056) expand broadcast capabilities.
 
 ## Problem Statement
-`tests/test_spectator_view.py` currently spans 330 lines and validates multiple facets of the spectator broadcast pipeline:
+`tests/test_spectator_view.py` (removed) currently spans 330 lines and validates multiple facets of the spectator broadcast pipeline:
 1. `SpectatorSessionConnected` CloudEvents 1.0 schema compliance and EventRegistry registration.
 2. State sanitization rules stripping hidden tokens, monster stat blocks, secret DM lore, and private chronicle entries to prevent stream spoiling.
 3. FastMCP / ASGI REST endpoint handling (`/api/v1/spectator/sessions/{id}`) and live WebSocket streaming broadcast (`/ws/spectator/{id}`).
@@ -64,11 +64,11 @@ As upcoming Milestone 4 broadcast features (Audience Studio interactivity in TAS
 - **Negotiable (N)**: Split boundaries between event/sanitizer unit tests and ASGI WebSocket blackbox tests can be adapted.
 - **Valuable (V)**: Protects against Hard Invariant 6 violations (< 500 lines) and speeds up focused spectator broadcast test cycles.
 - **Estimable (E)**: Clean separation of pure state sanitization logic from ASGI client transport tests.
-- **Small (S)**: Scope strictly isolated to `tests/test_spectator_view.py`; all resulting files < 190 lines.
+- **Small (S)**: Scope strictly isolated to `tests/test_spectator_view.py` (removed); all resulting files < 190 lines.
 - **Testable (T)**: Verified with `uv run pytest tests/test_spectator_*.py`.
 
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
-1. `tests/test_spectator_view.py` decomposed into focused test suites strictly under 200 lines each.
+1. `tests/test_spectator_view.py` (removed) decomposed into focused test suites strictly under 200 lines each.
 2. 100% test pass rate across all existing spectator schema, sanitization, and stream broadcast tests.
 3. Conforms strictly to Hard Invariant 6 (< 500 lines per file).
 4. Maintains blackbox frontdoor interactions via public HTTP routes and WebSockets.

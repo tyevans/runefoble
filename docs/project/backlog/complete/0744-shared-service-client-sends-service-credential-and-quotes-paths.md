@@ -23,7 +23,7 @@ The shared service client sends only `Authorization` and `traceparent`. It does 
 
 ## Problem Statement
 - `libs/runefoble_platform/src/runefoble_platform/service_client/headers.py:23` (`build_upstream_headers`) adds `Authorization` and `traceparent` only.
-- TASK-0689 (complete) added `X-Runefoble-Service-Credential` to the MCP-local client `gateway/mcp/src/gateway_mcp/clients/services.py`, not to the shared client.
+- TASK-0689 (complete) added `X-Runefoble-Service-Credential` to the MCP-local client `gateway/mcp/src/gateway_mcp/clients/services.py` (removed), not to the shared client.
 - MCP path segments built from agent input are unquoted at `services.py:127`, `:160`, `:249`, `:275`.
 
 ## Documentation & Architecture Review

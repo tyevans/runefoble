@@ -20,13 +20,13 @@ pr_url: https://github.com/tyevans/runefoble/pull/161
 # TASK-0146: Caravan Contracts Blackbox Test Suite Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
-Decompose `tests/test_blackbox_caravan_contracts.py` (476 lines, 95.2% of limit) into modular frontdoor blackbox test files under `tests/test_blackbox_caravan_contracts/` (`conftest.py`, `test_board_posting.py`, `test_cross_campaign_auth.py`, `test_caravan_lifecycle.py`, `test_caravan_destruction_and_ui.py`), guaranteeing all test files remain < 150 lines per Hard Invariant 6.
+Decompose `tests/test_blackbox_caravan_contracts/` (476 lines, 95.2% of limit) into modular frontdoor blackbox test files under `tests/test_blackbox_caravan_contracts/` (`conftest.py`, `test_board_posting.py`, `test_cross_campaign_auth.py`, `test_caravan_lifecycle.py`, `test_caravan_destruction_and_ui.py`), guaranteeing all test files remain < 150 lines per Hard Invariant 6.
 
 ## Problem Statement
-`tests/test_blackbox_caravan_contracts.py` has grown to 476 lines—dangerously close to the 500-line hard invariant ceiling. It covers notice board queries, cross-campaign acceptance, Zanzibar party leader permissions, caravan escort hazards/ambushes, and economy reward distribution in a single monolithic test file.
+`tests/test_blackbox_caravan_contracts/` has grown to 476 lines—dangerously close to the 500-line hard invariant ceiling. It covers notice board queries, cross-campaign acceptance, Zanzibar party leader permissions, caravan escort hazards/ambushes, and economy reward distribution in a single monolithic test file.
 
 ## Governing Architecture & ADRs
 - **ADR-0001: Fine-Grained Authorization with SpiceDB Zanzibar**: Authorization enforcement for contract acceptance and officer role validation.
@@ -50,7 +50,7 @@ Decompose `tests/test_blackbox_caravan_contracts.py` (476 lines, 95.2% of limit)
 5. **Caravan Destruction & UI Manifest (`tests/test_blackbox_caravan_contracts/test_caravan_destruction_and_ui.py`)**:
    - Extract tests for fatal ambushes, contract loss states, forfeit of deposits, and `/ui/manifest` frontdoor registration (< 110 lines).
 6. **Deprecation Migration**:
-   - Replace monolithic `tests/test_blackbox_caravan_contracts.py` with the modular directory suite.
+   - Replace monolithic `tests/test_blackbox_caravan_contracts/` with the modular directory suite.
 
 ## INVEST Criteria Evaluation
 - **Independent (I)**: Test reorganization with zero production code changes.

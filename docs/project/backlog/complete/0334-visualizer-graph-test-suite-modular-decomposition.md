@@ -19,13 +19,13 @@ pr_url: https://github.com/tyevans/runefoble/pull/340
 # TASK-0334: Visualizer Graph Test Suite Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
-Decompose `tests/test_visualizer_graph.py` (376 lines, 75.2% of limit) into modular test submodules under `tests/test_visualizer_graph/` (`test_builder.py`, `test_facade.py`, `test_filters_and_metrics.py`, `test_serialization.py`), ensuring all test modules remain strictly < 130 lines per Hard Invariant 6.
+Decompose `tests/test_visualizer_graph/` (376 lines, 75.2% of limit) into modular test submodules under `tests/test_visualizer_graph/` (`test_builder.py`, `test_facade.py`, `test_filters_and_metrics.py`, `test_serialization.py`), ensuring all test modules remain strictly < 130 lines per Hard Invariant 6.
 
 ## Problem Statement
-Following the modular decomposition of `tools/project_visualizer/graph.py` in TASK-0227, additional test coverage for new filtering, metrics, and linking logic expanded `tests/test_visualizer_graph.py` to 376 lines. It now tests graph node/edge creation, backward-compatible facades, entity filtering, metric aggregates, and bundle JSON serialization in a single monolithic test file. Approaching the 500-line invariant ceiling (Hard Invariant 6), it must be decomposed into focused, single-responsibility submodules.
+Following the modular decomposition of `tools/project_visualizer/graph.py` in TASK-0227, additional test coverage for new filtering, metrics, and linking logic expanded `tests/test_visualizer_graph/` to 376 lines. It now tests graph node/edge creation, backward-compatible facades, entity filtering, metric aggregates, and bundle JSON serialization in a single monolithic test file. Approaching the 500-line invariant ceiling (Hard Invariant 6), it must be decomposed into focused, single-responsibility submodules.
 
 ## Documentation & Architecture Review
 - **Documentation Consulted**:
@@ -48,7 +48,7 @@ Following the modular decomposition of `tools/project_visualizer/graph.py` in TA
 4. **Serialization Tests (`tests/test_visualizer_graph/test_serialization.py`)**:
    - Extract standalone JSON bundle serialization, node positioning metadata, and export tests (< 100 lines).
 5. **Verification**:
-   - Safely remove root `tests/test_visualizer_graph.py` and verify all tests pass via `uv run pytest tests/test_visualizer_graph/`.
+   - Safely remove root `tests/test_visualizer_graph/` and verify all tests pass via `uv run pytest tests/test_visualizer_graph/`.
 
 ## INVEST Criteria Evaluation
 - **Independent (I)**: Self-contained test restructuring without altering visualizer production logic.
@@ -59,8 +59,8 @@ Following the modular decomposition of `tools/project_visualizer/graph.py` in TA
 - **Testable (T)**: Directly executable via `uv run pytest tests/test_visualizer_graph/`.
 
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
-1. `tests/test_visualizer_graph.py` decomposed into `tests/test_visualizer_graph/` package.
+1. `tests/test_visualizer_graph/` decomposed into `tests/test_visualizer_graph/` package.
 2. All extracted submodules strictly < 130 lines per Hard Invariant 6.
 3. 100% of test assertions pass via `uv run pytest tests/test_visualizer_graph/`.
-4. Monolithic `tests/test_visualizer_graph.py` safely removed.
+4. Monolithic `tests/test_visualizer_graph/` safely removed.
 5. Code passes `uv run ruff check .` and `uv run ruff format --check .`.

@@ -42,8 +42,8 @@ Decompose `scripts/dev_server.py` (418 lines, 83.6% of limit) into modular utili
 ## Product & User Story References
 - Technical debt refactoring supporting:
   - [`prd-0023-unified-frontend-application-shell-and-campaign-hub.md`](../../product/accepted/prd-0023-unified-frontend-application-shell-and-campaign-hub.md)
-  - [`us-0001-developer-local-environment-setup.md`](../../user_stories/accepted/us-0001-developer-local-environment-setup.md)
-  - [`us-0065-game-session-staging-lobby-and-pre-game-assembly.md`](../../user_stories/accepted/us-0065-game-session-staging-lobby-and-pre-game-assembly.md)
+  - `us-0001-developer-local-environment-setup.md`
+  - [`us-0065-game-session-staging-lobby-and-pre-game-assembly.md`](../../user_stories/accepted/us-0065-game-session-lobby-readiness-and-launch.md)
 
 ## Detailed Specification & Implementation Plan
 1. **ANSI Colors & Formatting (`scripts/dev_orchestrator/colors.py`)**:

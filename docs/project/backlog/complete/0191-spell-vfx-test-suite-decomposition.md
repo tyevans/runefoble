@@ -21,13 +21,13 @@ pr_url: https://github.com/tyevans/runefoble/pull/251
 # TASK-0191: Kinetic Spell VFX Blackbox Test Suite Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
-Decompose `tests/test_blackbox_spell_vfx.py` (342 lines, 68.4% of limit) into modular focused sub-suites under `tests/test_blackbox_spell_vfx/` (`conftest.py`, `test_spell_adjudication.py`, `test_decals_and_lifecycle.py`, `test_speech_vfx_triggers.py`), keeping all test modules strictly < 150 lines per Hard Invariant 6 and Hard Invariant 7.
+Decompose `tests/test_blackbox_spell_vfx/` (342 lines, 68.4% of limit) into modular focused sub-suites under `tests/test_blackbox_spell_vfx/` (`conftest.py`, `test_spell_adjudication.py`, `test_decals_and_lifecycle.py`, `test_speech_vfx_triggers.py`), keeping all test modules strictly < 150 lines per Hard Invariant 6 and Hard Invariant 7.
 
 ## Problem Statement
-`tests/test_blackbox_spell_vfx.py` contains 342 lines testing REST spellcasting endpoints, Evocation/Abjuration/Conjuration archetypes, ephemeral decal decay over rounds, real-time WebSocket speech triggers, domain event sourcing replay, and particle canvas module contracts in a single file. As Milestone 9 adds rotatable AoE templates and elevation physics, this test file risks surpassing 400 lines unless decomposed into modular test suites.
+`tests/test_blackbox_spell_vfx/` contains 342 lines testing REST spellcasting endpoints, Evocation/Abjuration/Conjuration archetypes, ephemeral decal decay over rounds, real-time WebSocket speech triggers, domain event sourcing replay, and particle canvas module contracts in a single file. As Milestone 9 adds rotatable AoE templates and elevation physics, this test file risks surpassing 400 lines unless decomposed into modular test suites.
 
 ## Governing Architecture & ADRs
 - **ADR-0003: UV Monorepo Workspace for Python BCs**: Clean modular test package structure.
@@ -45,7 +45,7 @@ Decompose `tests/test_blackbox_spell_vfx.py` (342 lines, 68.4% of limit) into mo
 4. **Speech-to-VFX Triggers Tests (`tests/test_blackbox_spell_vfx/test_speech_vfx_triggers.py`)**:
    - Real-time WebSocket speech-to-VFX triggers, sub-150ms broadcast SLA, and event sourcing domain events persistence (< 110 lines).
 5. **Verification**:
-   - Remove root test module `tests/test_blackbox_spell_vfx.py` and run `uv run pytest tests/test_blackbox_spell_vfx/`.
+   - Remove root test module `tests/test_blackbox_spell_vfx/` and run `uv run pytest tests/test_blackbox_spell_vfx/`.
 
 ## INVEST Criteria Evaluation
 - **Independent (I)**: Test refactoring isolated entirely to the `tests/test_blackbox_spell_vfx/` package.

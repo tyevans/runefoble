@@ -22,7 +22,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/150
 # TASK-0137: Autonomous NPC Faction Agendas Radar & Intelligence Bulletin Microfrontend
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Build the `<runefoble-faction-radar>` microfrontend in `services/the_watcher/ui/src/` visualizing NPC faction power dynamics, territory control, secret DM intelligence bulletins, and tick-by-tick timeline events with Bauhaus design tokens and Storybook stories.

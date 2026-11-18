@@ -20,7 +20,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/296
 # TASK-0260: Assignable NPC Worker Engine and Social Relationship Graph
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Build the worker management and social relationship graph subsystem for establishments, enabling NPCs to be assigned to roles (head baker, armorer, croupier, bouncer, apprentice) with distinct personality traits, dynamic inventories, memory of town events, and interconnected interpersonal ties.
@@ -44,7 +44,7 @@ Town establishments currently lack living staff. Merchants are stateless entitie
 - **User Story**: [`us-0073-customizable-establishments-and-assignable-npc-workers.md`](../../user_stories/accepted/us-0073-customizable-establishments-and-assignable-npc-workers.md)
 
 ## Detailed Specification & Implementation Plan
-1. **Domain Events (`libs/runefoble_events/settlement_workers.py`)**:
+1. **Domain Events (`libs/runefoble_events/src/runefoble_events/settlement_workers.py`)**:
    - `NPCWorkerAssigned`: `npc_id`, `establishment_id`, `role`, `wage`, `assigned_at`.
    - `NPCWorkerRelieved`: `npc_id`, `establishment_id`, `reason`.
    - `NPCMoodUpdated`: `npc_id`, `mood`, `temperament`, `patience_delta`.
@@ -57,7 +57,7 @@ Town establishments currently lack living staff. Merchants are stateless entitie
    - `POST /api/v1/establishments/{establishment_id}/workers`: Assign worker to role.
    - `GET /api/v1/establishments/{establishment_id}/workers`: Query active staff with inventories and relationships.
    - `PATCH /api/v1/npcs/{npc_id}/mood`: Update worker temperament state.
-4. **Frontdoor Blackbox Verification (`tests/test_blackbox_npc_worker_engine.py`)**:
+4. **Frontdoor Blackbox Verification (`tests/test_blackbox_npc_worker/`)**:
    - Assign worker via frontdoor API, assert worker shows up in establishment roster.
    - Update worker mood, assert temperament projection reflects change.
 

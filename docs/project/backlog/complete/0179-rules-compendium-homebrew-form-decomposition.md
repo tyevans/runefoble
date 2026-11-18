@@ -19,7 +19,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/238
 # TASK-0179: Rules Compendium Homebrew Subview Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `services/rules_compendium/ui/src/runefoble-rules-compendium.ts` (374 lines, 74.8% of limit) by extracting the inline homebrew creation form, validation logic, and custom monster/spell state into a dedicated Web Component subview `runefoble-homebrew-creator.ts`, keeping all compendium UI components strictly < 200 lines per Hard Invariant 6 and ADR-0013.
@@ -42,7 +42,7 @@ Decompose `services/rules_compendium/ui/src/runefoble-rules-compendium.ts` (374 
    - Ensure the new subcomponent is properly documented and verified in Storybook.
    - Verify `/ui/manifest` continues to expose required custom elements cleanly.
 4. **Verification**:
-   - Run blackbox tests in `tests/test_blackbox_rules_compendium_ui.py` and TypeScript build checks.
+   - Run blackbox tests in `tests/test_blackbox_rules_compendium_ui/` and TypeScript build checks.
 
 ## INVEST Criteria Evaluation
 - **Independent (I)**: Frontend subview extraction without changes to backend REST endpoints.
@@ -50,7 +50,7 @@ Decompose `services/rules_compendium/ui/src/runefoble-rules-compendium.ts` (374 
 - **Valuable (V)**: Protects `runefoble-rules-compendium.ts` from breaching Hard Invariant 6 (500 lines) and improves UI maintainability.
 - **Estimable (E)**: Standard Lit component extraction and event dispatching.
 - **Small (S)**: Bounded strictly to `services/rules_compendium/ui/src/`; all components < 200 lines.
-- **Testable (T)**: Frontdoor verification via Storybook and `tests/test_blackbox_rules_compendium_ui.py`.
+- **Testable (T)**: Frontdoor verification via Storybook and `tests/test_blackbox_rules_compendium_ui/`.
 
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
 1. **Module Architecture**:
@@ -58,6 +58,6 @@ Decompose `services/rules_compendium/ui/src/runefoble-rules-compendium.ts` (374 
    - `runefoble-homebrew-creator.ts` created and strictly < 200 lines per Hard Invariant 6.
 2. **Frontdoor Test Verification**:
    - All Storybook stories render without console errors.
-   - `tests/test_blackbox_rules_compendium_ui.py` passes cleanly.
+   - `tests/test_blackbox_rules_compendium_ui/` passes cleanly.
 3. **Quality Gates**:
    - Passes `uv run pytest tests/test_blackbox_rules_compendium_ui.py`, `uv run ruff check .`, and `uv run ruff format --check .`.

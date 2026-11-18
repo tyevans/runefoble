@@ -26,7 +26,7 @@ Audit 2026-11-17: file list corrected. `soundscape_events.py` does not exist. Al
 Delete all package-root backward-compatibility alias modules in `libs/runefoble_events` (`board_events.py`, `narrative_events.py`, `platform_events.py`, `world_events.py`, `media_events.py`, `session_events.py`, `character_events.py`), updating all domain callers to import directly from `runefoble_events.events.<category>`, and remove obsolete parity tests.
 
 ## Problem Statement
-When domain events were modularized into `runefoble_events.events.*`, the root of `libs/runefoble_events/src/runefoble_events/` retained legacy alias files (`board_events.py`, `narrative_events.py`, `platform_events.py`, `world_events.py`, `media_events.py`, `session_events.py`, `character_events.py`) that merely re-export symbols for backward compatibility. Furthermore, tests like `tests/test_runefoble_events_modular_decomposition.py:test_backward_compatibility_re_export_parity` actively verify these shims. In accordance with the DoR zero backward compatibility mandate, these alias files must be deleted and all consumers migrated to authoritative paths.
+When domain events were modularized into `runefoble_events.events.*`, the root of `libs/runefoble_events/src/runefoble_events/` retained legacy alias files (`board_events.py`, `narrative_events.py`, `platform_events.py`, `world_events.py`, `media_events.py`, `session_events.py`, `character_events.py`) that merely re-export symbols for backward compatibility. Furthermore, tests like `tests/test_runefoble_events_modular_decomposition.py:test_backward_compatibility_re_export_parity` (removed) actively verify these shims. In accordance with the DoR zero backward compatibility mandate, these alias files must be deleted and all consumers migrated to authoritative paths.
 
 ## Documentation & Architecture Review
 - **Documentation Consulted**:
@@ -42,12 +42,12 @@ When domain events were modularized into `runefoble_events.events.*`, the root o
 
 ## Detailed Specification & Implementation Plan
 1. **Delete Root Alias Files in `libs/runefoble_events`**:
-   - Delete `libs/runefoble_events/src/runefoble_events/board_events.py`.
-   - Delete `libs/runefoble_events/src/runefoble_events/narrative_events.py`.
-   - Delete `libs/runefoble_events/src/runefoble_events/platform_events.py`.
-   - Delete `libs/runefoble_events/src/runefoble_events/world_events.py`.
-   - Delete `libs/runefoble_events/src/runefoble_events/media_events.py`, `session_events.py`, and `character_events.py` (each is an 8-line facade).
-   - Delete the stray facade `libs/runefoble_events/settlement_workers.py` (outside `src/`). Keep `src/runefoble_events/settlement_workers.py`: it is a 100-line module, not an alias.
+   - Delete `libs/runefoble_events/src/runefoble_events/events/board_events.py`.
+   - Delete `libs/runefoble_events/src/runefoble_events/events/narrative_events.py`.
+   - Delete `libs/runefoble_events/src/runefoble_events/events/platform_events.py`.
+   - Delete `libs/runefoble_events/src/runefoble_events/events/world_events.py`.
+   - Delete `libs/runefoble_events/src/runefoble_events/events/media_events.py`, `session_events.py`, and `character_events.py` (each is an 8-line facade).
+   - Delete the stray facade `libs/runefoble_events/src/runefoble_events/settlement_workers.py` (outside `src/`). Keep `src/runefoble_events/settlement_workers.py`: it is a 100-line module, not an alias.
 2. **Update Package Root `__init__.py`**:
    - Clean up `libs/runefoble_events/src/runefoble_events/__init__.py` to re-export only canonical core base classes (`BaseRunefobleEvent`, `DomainEvent`, `register_event`), removing obsolete re-export facades.
 3. **Migrate Import Sites Across All Services**:

@@ -7,6 +7,8 @@ governing_prds:
 - PRD-0003
 governing_stories:
 - US-0012
+governing_adrs: []
+dependencies: []
 ---
 
 # TASK-0004: Tactical Board Fog-of-War and Token Web Component
@@ -26,7 +28,7 @@ Extended `<runefoble-board>` with dynamic fog-of-war cell shading, token health 
   - Added animated golden glow (`@keyframes gold-pulse`) to highlight current active turn tokens.
   - Added token HP status bars with proportional color shifts (green > yellow > red).
   - Kept file concise and modular (362 lines, satisfying Hard Invariant 6).
-- `frontend/src/stories/runefoble-board.stories.ts`:
+- `services/board_state/ui/src/runefoble-board.stories.ts`:
   - Created interactive stories: `Default`, `ActiveEncounter`, `FogOfWarEncounter`, `ActiveTurn`, and `MultiplayerTokens`.
 - Verified zero errors across `pnpm run build` and `pnpm run build-storybook`.
 

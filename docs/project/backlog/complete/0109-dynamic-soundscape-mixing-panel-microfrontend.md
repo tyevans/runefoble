@@ -23,7 +23,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/110
 # TASK-0109: Dynamic Soundscape Mixing Panel Microfrontend and WebAudio Ducking Controls
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Develop the Lit Web Component microfrontend `<runefoble-soundscape-controls>` within `services/soundscape/ui/` to expose dynamic stem volume sliders, manual DM soundboard foley buttons, tension state indicators, and client-side WebAudio ducking configuration.
@@ -72,7 +72,7 @@ The dynamic soundscape service calculates encounter tension and generates audio 
 3. **Microfrontend Manifest**:
    - Manifest served at `/ui/manifest` exposing tags, styles, and script entries per ADR-0013.
 4. **Frontdoor Blackbox Test Suite**:
-   - `tests/test_blackbox_soundscape_ui.py` validating component registration, manifest endpoint, and REST/WebSocket data binding.
+   - `tests/test_blackbox_soundscape_ui/` validating component registration, manifest endpoint, and REST/WebSocket data binding.
 5. **Quality Gates**:
    - Strictly conforms to Hard Invariant 6 (< 500 lines per file).
    - Passes `pnpm run build` and `uv run pytest tests/test_blackbox_soundscape_ui.py`.

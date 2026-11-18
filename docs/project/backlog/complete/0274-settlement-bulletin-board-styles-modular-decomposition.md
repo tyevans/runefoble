@@ -18,7 +18,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/306
 # TASK-0274: Settlement Bulletin Board Styles Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `frontend/src/components/runefoble-bulletin-board.styles.ts` (384 lines, 76.8% of limit) into focused style modules (`bulletin-board-layout.styles.ts`, `bulletin-board-card.styles.ts`, `bulletin-board-dialog.styles.ts`) under `frontend/src/styles/` or as colocated style modules, reducing each file to < 140 lines per Hard Invariant 6.

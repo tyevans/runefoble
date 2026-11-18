@@ -23,14 +23,14 @@ governing_stories:
 # TASK-0065: Voice Agent DSP Pipeline, Audio Routing, and Room Coordinator Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
-Decompose `services/voice_agent/src/voice_agent/dsp.py` (373 lines, 74.6% of limit), `services/voice_agent/src/voice_agent/main.py` (384 lines, 76.8% of limit), and `services/voice_agent/src/voice_agent/room.py` (335 lines, 67.0% of limit) into modular DSP filter chains, phonetic generators, and FastAPI sub-routers before Hard Invariant 6 (File length limit < 500 lines) is breached.
+Decompose `services/voice_agent/src/voice_agent/dsp/` (373 lines, 74.6% of limit), `services/voice_agent/src/voice_agent/main.py` (384 lines, 76.8% of limit), and `services/voice_agent/src/voice_agent/room.py` (335 lines, 67.0% of limit) into modular DSP filter chains, phonetic generators, and FastAPI sub-routers before Hard Invariant 6 (File length limit < 500 lines) is breached.
 
 ## Problem Statement
 The `voice_agent` bounded context contains three core files approaching 400 lines:
-1. `services/voice_agent/src/voice_agent/dsp.py` (373 lines) mixes high-level phonetic text mutation rules (drunken slurring regexes, stutters, and hiccup insertions) with low-level 16-bit signed PCM byte/array processing, DSP coefficient math, pitch shifting, reverb delay lines, and pipeline orchestration.
+1. `services/voice_agent/src/voice_agent/dsp/` (373 lines) mixes high-level phonetic text mutation rules (drunken slurring regexes, stutters, and hiccup insertions) with low-level 16-bit signed PCM byte/array processing, DSP coefficient math, pitch shifting, reverb delay lines, and pipeline orchestration.
 2. `services/voice_agent/src/voice_agent/main.py` (384 lines) bundles FastAPI application instantiation, Redis Streams event bus listeners, speech-to-text endpoints, text-to-speech mock synthesis, and audio conditioning HTTP endpoints.
 3. `services/voice_agent/src/voice_agent/room.py` (335 lines) combines room lifecycle tracking, participant state dictionaries, audio stream session orchestration, and kick callbacks.
 
@@ -47,7 +47,7 @@ As real STT (Whisper streaming in TASK-0039) and dynamic ambient soundscapes (TA
    - Extract regex-based phonetic transforms (`apply_slurred_speech`, stuttering, hiccups) (< 110 lines).
 2. **PCM Audio Buffer Filters (`services/voice_agent/src/voice_agent/filters.py`)**:
    - Extract low-level PCM audio filters: pitch shift, reverb convolution, low-pass filter, volume attenuation (< 140 lines).
-3. **DSP Pipeline Orchestrator (`services/voice_agent/src/voice_agent/dsp.py`)**:
+3. **DSP Pipeline Orchestrator (`services/voice_agent/src/voice_agent/dsp/`)**:
    - Retain `VoiceDSPPipeline`, `DSPFilterConfig`, and `ProcessedSpeechResult` coordinating phonetics and filters (< 140 lines).
 4. **FastAPI Modular Sub-Routers (`services/voice_agent/src/voice_agent/routers/`)**:
    - `routers/audio.py`: Audio conditioning and DSP transformation routes (< 120 lines).

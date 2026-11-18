@@ -22,7 +22,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/181
 # TASK-0157: DM Live Vocal Modulator and Real-Time NPC Formant DSP Engine
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Implement real-time DSP pitch and formant shift filters in `services/voice_agent/` allowing DMs to apply NPC vocal transformations ("Ancient Dragon", "Goblin Skulker", "Celestial Spirit") to outgoing WebAudio streams with <50ms processing latency.

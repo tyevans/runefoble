@@ -26,7 +26,7 @@ target_release: 0.9.0
 Complete
 
 ## Summary
-Campaign records, membership, invites and campaign sessions live in `gateway/api/src/gateway_api/campaign_store/` as in-memory dicts. A restart loses them. No bounded context owns them. This task makes `game_session` the owner. It adds eventsource-py aggregates and public routes for each operation. TASK-0591 then moves the gateway to proxy them.
+Campaign records, membership, invites and campaign sessions live in `gateway/api/src/gateway_api/campaign_store/` (removed) as in-memory dicts. A restart loses them. No bounded context owns them. This task makes `game_session` the owner. It adds eventsource-py aggregates and public routes for each operation. TASK-0591 then moves the gateway to proxy them.
 
 **Decision required (see index report):** no ADR or doc assigns campaigns to a bounded context. This task uses `game_session` because it already holds the `game_session#campaign` relation in `libs/runefoble_auth/schema/runefoble.zed:35-41` and the `campaign_id` on sessions. If the owner decides a new campaign BC is needed, this task must be re-scoped first.
 

@@ -12,17 +12,19 @@ governing_adrs:
 - ADR-0009
 target_release: 0.2.0
 pr_url: https://github.com/tyevans/runefoble/pull/77
+governing_prds: []
+governing_stories: []
 ---
 # TASK-0079: Zitadel OIDC Token Verification and JWKS Blackbox Test Suite Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
-Decompose `tests/test_blackbox_zitadel_auth.py` (385 lines, 77.0% of limit) into two specialized test modules (`tests/test_blackbox_zitadel_http_auth.py` and `tests/test_blackbox_zitadel_websocket_auth.py`) to prevent breaching Hard Invariant 6 (File length limit < 500 lines) as new token claims and session authentication protocols are added.
+Decompose `tests/test_blackbox_zitadel_auth.py` (removed) (385 lines, 77.0% of limit) into two specialized test modules (`tests/test_blackbox_zitadel_http_auth.py` and `tests/test_blackbox_zitadel_websocket_auth.py`) to prevent breaching Hard Invariant 6 (File length limit < 500 lines) as new token claims and session authentication protocols are added.
 
 ## Problem Statement
-`tests/test_blackbox_zitadel_auth.py` currently spans 385 lines and covers two distinct authentication surfaces introduced in TASK-0034:
+`tests/test_blackbox_zitadel_auth.py` (removed) currently spans 385 lines and covers two distinct authentication surfaces introduced in TASK-0034:
 1. HTTP Bearer token authentication: RSA key generation, JWKS key rotation, token expiration, signature tampering, issuer verification, and role extraction (`BearerAuthDependency`).
 2. WebSocket connection authentication: Query parameter token decoding (`?token=...`), WebSocket Subprotocol token passing (`Sec-WebSocket-Protocol`), and connection rejection with RFC 6455 policy violation close frames (code 4003).
 
@@ -43,24 +45,24 @@ As upcoming voice streaming features and spectator interactivity expand authenti
    - WebSocket Subprotocol header authentication.
    - Invalid token close codes (4003) and anonymous user reject policies (< 190 lines).
 3. **Original Monolith Deletion**:
-   - Remove `tests/test_blackbox_zitadel_auth.py`.
+   - Remove `tests/test_blackbox_zitadel_auth.py` (removed).
 
 ## INVEST Criteria Evaluation
 - **Independent (I)**: Refactors test organization without modifying gateway auth middleware, Zitadel service logic, or FastAPI endpoints.
 - **Negotiable (N)**: Helper fixture sharing can be adapted between modules or placed in a shared auth fixture module.
 - **Valuable (V)**: Protects against Hard Invariant 6 violations (< 500 lines) and enables fast, targeted test execution for HTTP vs WebSocket auth.
 - **Estimable (E)**: Clean separation of HTTP Bearer tests from WebSocket handshake tests.
-- **Small (S)**: Scope strictly isolated to `tests/test_blackbox_zitadel_auth.py`; all resulting files < 220 lines.
+- **Small (S)**: Scope strictly isolated to `tests/test_blackbox_zitadel_auth.py` (removed); all resulting files < 220 lines.
 - **Testable (T)**: Verified with `uv run pytest tests/test_blackbox_zitadel_*.py`.
 
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
 1. **Modular Test Suite Partitioning**:
-   - `tests/test_blackbox_zitadel_auth.py` decomposed into `tests/test_blackbox_zitadel_http_auth.py` and `tests/test_blackbox_zitadel_websocket_auth.py`.
+   - `tests/test_blackbox_zitadel_auth.py` (removed) decomposed into `tests/test_blackbox_zitadel_http_auth.py` and `tests/test_blackbox_zitadel_websocket_auth.py`.
 2. **Strict File Length Compliance (Hard Invariant 6)**:
    - All resulting test files strictly under 220 lines each.
 3. **Frontdoor Blackbox Verification**:
    - 100% test pass rate across all existing HTTP Bearer and WebSocket authentication tests.
 4. **Original Monolith Removal**:
-   - `tests/test_blackbox_zitadel_auth.py` deleted.
+   - `tests/test_blackbox_zitadel_auth.py` (removed) deleted.
 5. **Quality Gates**:
    - Passes `uv run ruff check` and `uv run ruff format --check`.

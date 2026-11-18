@@ -23,7 +23,7 @@ Complete
 The move preview shows different hazard damage than the move applies. Three places hold hazard damage values, and they differ.
 
 ## Problem Statement
-- `services/board_state/src/board_state/rules.py:9-19`: `DEFAULT_HAZARD_DAMAGE` (acid `2d6`, spikes `2d4`, poison `1d4`, lava `2d10`, fire `1d6`). `handlers/tokens.py` applies it.
+- `services/board_state/src/board_state/rules/:9-19`: `DEFAULT_HAZARD_DAMAGE` (acid `2d6`, spikes `2d4`, poison `1d4`, lava `2d10`, fire `1d6`). `handlers/tokens.py` applies it.
 - `services/board_state/src/board_state/preview.py:145-146`: the preview hard-codes `2d10` for lava and `1d6` otherwise. For acid, spikes, and poison the preview and the move disagree.
 - `preview.py:94-178` repeats the bounds check, the difficult-terrain cost (2 per cell), and the hazard walk from `rules.py`. It does not call them.
 - `services/asset_forge/src/asset_forge/deterministic_map_generator.py` sets its own damage dice per theme. `libs/runefoble_events/src/runefoble_events/board_events/terrain.py:22-33` (`TerrainCellModified`) has no `damage_dice` field, so those values never reach the board.

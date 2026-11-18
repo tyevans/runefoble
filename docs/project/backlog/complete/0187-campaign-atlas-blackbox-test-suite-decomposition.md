@@ -19,13 +19,13 @@ pr_url: https://github.com/tyevans/runefoble/pull/247
 # TASK-0187: Campaign Atlas Blackbox Test Suite Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
-Decompose `tests/test_blackbox_campaign_atlas.py` (346 lines, 69.2% of limit) into modular focused test suites under `tests/test_blackbox_campaign_atlas/` (`conftest.py`, `test_territories.py`, `test_pins.py`, `test_codex_links.py`), keeping all test modules strictly < 150 lines per Hard Invariant 6 and Hard Invariant 7.
+Decompose `tests/test_blackbox_campaign_atlas/` (346 lines, 69.2% of limit) into modular focused test suites under `tests/test_blackbox_campaign_atlas/` (`conftest.py`, `test_territories.py`, `test_pins.py`, `test_codex_links.py`), keeping all test modules strictly < 150 lines per Hard Invariant 6 and Hard Invariant 7.
 
 ## Problem Statement
-`tests/test_blackbox_campaign_atlas.py` contains 346 lines verifying geopolitical territory definitions, polygon coordinate containment, milestone pin placements, era filtering, and codex cross-links in a single monolithic test file. With shared world frontier additions in Milestone 9, this test suite will expand beyond 400 lines unless decomposed into modular test suites.
+`tests/test_blackbox_campaign_atlas/` contains 346 lines verifying geopolitical territory definitions, polygon coordinate containment, milestone pin placements, era filtering, and codex cross-links in a single monolithic test file. With shared world frontier additions in Milestone 9, this test suite will expand beyond 400 lines unless decomposed into modular test suites.
 
 ## Governing Architecture & ADRs
 - **ADR-0001: Zanzibar Fine-Grained Authorization with SpiceDB**: Access control verification on territory and pin access.
@@ -42,7 +42,7 @@ Decompose `tests/test_blackbox_campaign_atlas.py` (346 lines, 69.2% of limit) in
 4. **Codex Links Tests (`tests/test_blackbox_campaign_atlas/test_codex_links.py`)**:
    - Cross-linking pins to codex entries and shared world metadata (< 90 lines).
 5. **Verification**:
-   - Remove root test module `tests/test_blackbox_campaign_atlas.py` and run `uv run pytest tests/test_blackbox_campaign_atlas/`.
+   - Remove root test module `tests/test_blackbox_campaign_atlas/` and run `uv run pytest tests/test_blackbox_campaign_atlas/`.
 
 ## INVEST Criteria Evaluation
 - **Independent (I)**: Test refactoring isolated entirely to the `tests/test_blackbox_campaign_atlas/` package.

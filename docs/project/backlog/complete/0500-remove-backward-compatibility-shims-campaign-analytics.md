@@ -32,7 +32,7 @@ Decommission backward-compatibility method aliases (`process_event`, a wrapper o
 In `services/campaign_analytics/src/campaign_analytics/worker.py`, line 115 retains:
 `"""Public alias for handle_event for backward-compatibility."""`
 `process_event`, a wrapper over `handle_event` (`worker.py:114-116`)
-Furthermore, `tests/test_campaign_analytics_modular_decomposition.py:test_worker_backward_compatible_properties` actively asserts that `CampaignAnalyticsWorker` maintains backward-compatible tracking properties and helper methods. In a system without active users, maintaining these aliases and writing tests for them incurs waste and violates DoR rule 9.
+Furthermore, `tests/test_campaign_analytics_modular_decomposition.py:test_worker_backward_compatible_properties` (removed) actively asserts that `CampaignAnalyticsWorker` maintains backward-compatible tracking properties and helper methods. In a system without active users, maintaining these aliases and writing tests for them incurs waste and violates DoR rule 9.
 
 ## Documentation & Architecture Review
 - **Documentation Consulted**:
@@ -53,7 +53,7 @@ Furthermore, `tests/test_campaign_analytics_modular_decomposition.py:test_worker
 2. **Clean Up `campaign_analytics/__init__.py`**:
    - Prune package root exports to expose only authoritative worker and query classes.
 3. **Update Blackbox Test Suites**:
-   - In `tests/test_campaign_analytics_modular_decomposition.py`, remove `test_worker_backward_compatible_properties()`.
+   - In `tests/test_campaign_analytics_modular_decomposition.py` (removed), remove `test_worker_backward_compatible_properties()`.
    - Update all remaining tests to verify telemetry processing through canonical methods.
 
 ## INVEST Criteria Evaluation
@@ -67,5 +67,5 @@ Furthermore, `tests/test_campaign_analytics_modular_decomposition.py:test_worker
 ## Definition of Done
 1. `process_event` wrapper removed from `worker.py`.
 2. All callers migrated to `handle_event`.
-3. Obsolete backward-compatibility tests removed from `tests/test_campaign_analytics_modular_decomposition.py`.
+3. Obsolete backward-compatibility tests removed from `tests/test_campaign_analytics_modular_decomposition.py` (removed).
 4. All campaign analytics tests pass cleanly.
