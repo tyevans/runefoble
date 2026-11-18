@@ -229,6 +229,77 @@ async def test_blackbox_create_encounter_stores_enemy_tokens(owning_services: di
     assert [(t["name"], t["x"], t["y"]) for t in state["tokens"]] == [("Bandit", 4, 4)]
 
 
+def _turn_order_cr(state: dict[str, Any], name: str) -> Any:
+    """Read the challenge rating that game_session stored for one combatant of the encounter."""
+    [combatant] = [c for c in state["turn_order"] if c["name"] == name]
+    return combatant.get("cr")
+
+
+@pytest.mark.asyncio
+async def test_blackbox_create_encounter_reads_missing_cr_from_compendium(
+    owning_services: dict[str, str],
+):
+    """Verify an enemy without a rating gets the challenge rating of its rules_compendium stat block."""
+    session_id = start_session_with_player(owning_services["session"])
+    created = tool_payload(
+        await call_tool(
+            "create_encounter",
+            {
+                "session_id": session_id,
+                "campaign_id": "camp-board-fixture",
+                "enemies": [{"name": "Goblin", "x": 1, "y": 1}],
+            },
+            "user-test",
+        )
+    )
+    state = tool_payload(
+        await call_tool("query_encounter_state", {"encounter_id": created["encounter_id"]})
+    )
+    assert _turn_order_cr(state, "Goblin") == 0.25
+
+
+@pytest.mark.asyncio
+async def test_blackbox_create_encounter_request_cr_is_kept_over_compendium(
+    owning_services: dict[str, str],
+):
+    """Verify a challenge rating given in the request is stored as given."""
+    session_id = start_session_with_player(owning_services["session"])
+    created = tool_payload(
+        await call_tool(
+            "create_encounter",
+            {
+                "session_id": session_id,
+                "campaign_id": "camp-board-fixture",
+                "enemies": [{"name": "Goblin", "x": 1, "y": 1, "cr": 2.0}],
+            },
+            "user-test",
+        )
+    )
+    state = tool_payload(
+        await call_tool("query_encounter_state", {"encounter_id": created["encounter_id"]})
+    )
+    assert _turn_order_cr(state, "Goblin") == 2.0
+
+
+@pytest.mark.asyncio
+async def test_blackbox_create_encounter_without_any_rating_is_validation_error(
+    owning_services: dict[str, str],
+):
+    """Verify an enemy with no rating in the request or the compendium is refused, not scored as zero."""
+    session_id = start_session_with_player(owning_services["session"])
+    result = await call_tool(
+        "create_encounter",
+        {
+            "session_id": session_id,
+            "campaign_id": "camp-board-fixture",
+            "enemies": [{"name": "Unlisted Horror", "x": 2, "y": 2}],
+        },
+        "user-test",
+    )
+    assert result.isError is True
+    assert "challenge rating" in result.content[0].text.lower()
+
+
 @pytest.mark.asyncio
 async def test_blackbox_move_board_token_then_inspect_reports_new_position(
     owning_services: dict[str, str],
@@ -277,7 +348,7 @@ async def test_blackbox_move_board_token_out_of_bounds_is_error_result(
             {
                 "session_id": combat_session_id,
                 "campaign_id": "camp-board-fixture",
-                "enemies": [{"name": "Imp", "x": 0, "y": 0}],
+                "enemies": [{"name": "Imp", "x": 0, "y": 0, "cr": 1.0}],
             },
             "user-test",
         )
