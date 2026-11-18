@@ -55,7 +55,16 @@ All events subclass `BaseRunefobleEvent` and are CloudEvents 1.0-compliant.
   - `consecutive_drinks`: int — Total drinks consumed.
   - `dsp_filters`: List[str] — Active DSP affliction filters (e.g. `["drunk"]`).
 
-### 5. `HagglingNegotiated`
+### 5. `MerchantCreated`
+- **Topic**: `runefoble.events.tavern`
+- **Aggregate Type**: `Merchant`
+- **Emitted**: Once, when a merchant id is first recorded. It precedes the first `HagglingNegotiated` for that merchant.
+- **Payload Fields**:
+  - `merchant_id`: str — NPC merchant identifier, as given in the haggle route.
+  - `name`: str — Display name. A known temperament sets its default name.
+  - `temperament`: str — `stubborn_greedy`, `shrewd`, `generous`, `hostile`, or `gullible`.
+
+### 6. `HagglingNegotiated`
 - **Topic**: `runefoble.events.tavern`
 - **Aggregate Type**: `Merchant`
 - **Payload Fields**:
@@ -74,22 +83,22 @@ All events subclass `BaseRunefobleEvent` and are CloudEvents 1.0-compliant.
   - `dialogue`: str — Persuasion dialogue submitted by player.
   - `voice_bark`: Optional[str] — Merchant in-character voice line.
 
-### 6. `NegotiationSessionStarted`
+### 7. `NegotiationSessionStarted`
 - **Topic**: `runefoble.events.tavern`, `runefoble.events.west_marches`
 - **Aggregate Type**: `Negotiation`
 - **Payload Fields**: `negotiation_id`, `character_id`, `item_id`, `item_name`, `original_price`, `current_offer`, `counter_price`, `patience`, `temperament`.
 
-### 7. `GambitExecuted`
+### 8. `GambitExecuted`
 - **Topic**: `runefoble.events.tavern`, `runefoble.events.west_marches`
 - **Aggregate Type**: `Negotiation`
 - **Payload Fields**: `negotiation_id`, `character_id`, `gambit`, `roll_value`, `target_dc`, `is_success`, `new_offer`, `counter_price`, `patience_delta`, `new_patience`, `voice_bark`.
 
-### 8. `DMNegotiationOverridden`
+### 9. `DMNegotiationOverridden`
 - **Topic**: `runefoble.events.tavern`, `runefoble.events.west_marches`
 - **Aggregate Type**: `Negotiation`
 - **Payload Fields**: `negotiation_id`, `dm_user_id`, `action`, `new_patience`, `override_price`, `narrative_bark`, `status`.
 
-### 9. `NegotiationConcluded`
+### 10. `NegotiationConcluded`
 - **Topic**: `runefoble.events.tavern`, `runefoble.events.west_marches`
 - **Aggregate Type**: `Negotiation`
 - **Payload Fields**: `negotiation_id`, `character_id`, `item_id`, `final_price`, `status`, `currency_deducted`, `closing_bark`.
@@ -123,8 +132,8 @@ A table ends with `MinigameEnded` when a darts winner or a Liar's Dice champion 
 | `/api/v1/sessions/{id}/tavern/games/{gid}` | `GET` | `game_session` | `session:participate` | Retrieves live minigame state machine status. |
 | `/api/v1/tavern/tables` | `POST` | `game_session` | `establishment:play` (or `view`, `manage`) | Opens a minigame table (`table_id`, `establishment_id`, `game_type`). Returns `409` when the id is already open. Sockets never open a table. |
 | `/api/v1/tavern/tables/{table_id}` | `GET` | `game_session` | `establishment:play` (or `view`, `manage`) | Returns the seats, chips, pot, bets, and current game state of an open table. Returns `404` when the table is not open. |
-| `/api/v1/sessions/{id}/merchants/{mid}/haggle` | `POST` | `game_session` / `gateway` | `campaign:play` | Evaluates charisma, mood, and computes counter-quote. |
-| `/api/v1/merchants/{mid}` | `GET` | `game_session` | — | Queries merchant temperament and negotiation record. |
+| `/api/v1/sessions/{id}/merchants/{mid}/haggle` | `POST` | `game_session` / `gateway` | `campaign:play` | Evaluates charisma, mood, and computes counter-quote. Records a new merchant first (`MerchantCreated`) when the id has no history. Returns `503` when the event store is unavailable. |
+| `/api/v1/merchants/{mid}` | `GET` | `game_session` | — | Queries merchant temperament and negotiation record. Returns `404` when no merchant exists for the id. Returns `503` when the event store is unavailable. |
 | `/api/v1/establishments/{id}/haggle` | `POST` | `game_session` | `establishment:view` | Starts interactive bartering encounter within establishment. |
 | `/api/v1/haggling/{id}/gambit` | `POST` | `game_session` | `negotiation:participate` | Executes bargaining gambit (flattery, bulk, flaw, intimidate, bluff). |
 | `/api/v1/haggling/{id}/dm-override` | `PATCH` | `game_session` | `negotiation:arbitrate` | Real-time DM controls: soothe, enrage, accept deal, kick out. |

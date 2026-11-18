@@ -73,6 +73,7 @@ add the `runefoble.` prefix when the identifier lacks it.
 | `MercenaryBountyClaimed` | `MercenaryBountyClaimed` | `runefoble_events.contracts` |
 | `MercenaryBountyFulfilled` | `MercenaryBountyFulfilled` | `runefoble_events.contracts` |
 | `MercenaryBountyPosted` | `MercenaryBountyPosted` | `runefoble_events.contracts` |
+| `MerchantCreated` | `MerchantCreated` | `runefoble_events.tavern` |
 | `MinigameEnded` | `MinigameEnded` | `runefoble_events.tavern` |
 | `MinigameStarted` | `MinigameStarted` | `runefoble_events.tavern` |
 | `MinigameTurnTaken` | `MinigameTurnTaken` | `runefoble_events.tavern` |
