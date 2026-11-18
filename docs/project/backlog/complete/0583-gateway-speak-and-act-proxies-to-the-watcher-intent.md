@@ -28,7 +28,7 @@ Complete
 `POST /api/v1/watcher/speak-and-act` returns a fixed sentence. Replace it with a proxy to The Watcher speech intent route. The Watcher owns intent parsing. Board changes happen in `board_state` after The Watcher emits an event (ADR-0002). The gateway does not parse speech and does not change the board.
 
 ## Problem Statement
-- `gateway/api/src/gateway_api/routers/tabletop.py:183-193` returns `action_taken: "Valeros stepped forward 2 squares."` and broadcasts that sentence. It has no auth and no Watcher call (`w1-gateway-api.md` F6, `w3-authz-coverage.md` F7).
+- `gateway/api/src/gateway_api/routers/tabletop.py:183-193` (removed) returns `action_taken: "Valeros stepped forward 2 squares."` and broadcasts that sentence. It has no auth and no Watcher call (`w1-gateway-api.md` F6, `w3-authz-coverage.md` F7).
 - This route is the entry point for "speak and the board obeys" (AGENTS.md design principles). It runs in the browser today as a fake.
 - The owner exists: `services/the_watcher/src/the_watcher/routers/intent/speech.py` exposes `POST /api/v1/watcher/intent` and `POST /api/v1/watcher/transcribe-and-act`.
 
@@ -47,7 +47,7 @@ Complete
 ## Detailed Specification & Implementation Plan
 1. Create `gateway/api/src/gateway_api/routers/watcher_speech_proxy.py`. Expose `POST /api/v1/watcher/speak-and-act` with the same request body fields. Map the body to the owner request. Return the owner status and body with no change.
 2. Forward the verified caller identity through `ServiceClient` (TASK-0580). Do not read the body's `user_id`.
-3. Delete the canned handler and its broadcast from `tabletop.py`. Delete `tabletop.py` if TASK-0581 and TASK-0582 have already moved every other route out of it.
+3. Delete the canned handler and its broadcast from `tabletop.py` (removed). Delete `tabletop.py` (removed) if TASK-0581 and TASK-0582 have already moved every other route out of it.
 4. Confirm in `services/the_watcher` that the speech route publishes `BoardMoveEvent` for a move. If it does not, record the gap in this task's PR. Do not add the publish in the gateway.
 5. Update `docs/reference/ports-and-endpoints.md` for the route's owner and status codes.
 
