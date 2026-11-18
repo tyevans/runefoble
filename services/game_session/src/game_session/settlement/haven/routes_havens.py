@@ -8,12 +8,13 @@ from __future__ import annotations
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException
+from game_session.child_index import ChildIndexKind
 from game_session.dependencies import (
-    get_campaign_settlements_index,
     get_event_bus,
     get_settlement_repository,
     get_spicedb_client,
 )
+from game_session.queries import link_child, list_settlements_for_campaign
 from game_session.settlement.auth import (
     check_campaign_write_permission,
     write_settlement_relationships,
@@ -30,6 +31,7 @@ from game_session.settlement.models import (
     SettlementProjectionResponse,
 )
 from game_session.settlement.settlement_aggregate import SettlementAggregate
+from runefoble_platform.aggregate_loading import load_if_exists
 
 router = APIRouter(dependencies=[Depends(get_caller_principal)])
 
@@ -70,7 +72,7 @@ async def found_settlement(
         founder_id=caller_id,
     )
 
-    get_campaign_settlements_index().setdefault(campaign_id, []).append(str(sid))
+    await link_child(ChildIndexKind.CAMPAIGN_SETTLEMENTS, campaign_id, str(sid))
     return await build_settlement_projection(agg)
 
 
@@ -97,16 +99,13 @@ async def list_campaign_settlements(
     campaign_id: str,
 ) -> list[SettlementProjectionResponse]:
     """List all settlement projections founded for a campaign."""
-    sids = get_campaign_settlements_index().get(campaign_id, [])
+    sids = await list_settlements_for_campaign(campaign_id)
     results: list[SettlementProjectionResponse] = []
     repo = get_settlement_repository()
     for sid in sids:
-        try:
-            agg = await repo.load(to_uuid(sid))
-            if agg.state.is_founded:
-                results.append(await build_settlement_projection(agg))
-        except Exception:
-            continue
+        agg = await load_if_exists(repo, to_uuid(sid))
+        if agg is not None and agg.state.is_founded:
+            results.append(await build_settlement_projection(agg))
     return results
 
 

@@ -8,6 +8,7 @@ import os
 from game_session.aggregate import GameSessionAggregate
 from game_session.caravan import CaravanContractAggregate
 from game_session.caravan_ledger import CaravanLedgerAggregate
+from game_session.child_index import ChildIndexAggregate
 from game_session.contracts.engine import MercenaryBountyAggregate
 from game_session.events import SessionEventPublisher
 from game_session.merchants import MerchantAggregate
@@ -81,6 +82,9 @@ worker_repo: AggregateRepository[NPCWorkerAggregate] = create_aggregate_reposito
 negotiation_repo: AggregateRepository[NegotiationAggregate] = create_aggregate_repository(
     NegotiationAggregate
 )
+child_index_repo: AggregateRepository[ChildIndexAggregate] = create_aggregate_repository(
+    ChildIndexAggregate
+)
 
 
 def get_tavern_repository() -> AggregateRepository[TavernGameAggregate]:
@@ -127,36 +131,8 @@ def get_worker_repository() -> AggregateRepository[NPCWorkerAggregate]:
     return worker_repo
 
 
-_world_contracts_index: dict[str, list[str]] = {}
-_session_bounties_index: dict[str, list[str]] = {}
-_settlement_establishments_index: dict[str, list[str]] = {}
-_campaign_settlements_index: dict[str, list[str]] = {}
-_establishment_workers_index: dict[str, list[str]] = {}
-_establishment_negotiations_index: dict[str, list[str]] = {}
-
-
-def get_world_contracts_index() -> dict[str, list[str]]:
-    return _world_contracts_index
-
-
-def get_session_bounties_index() -> dict[str, list[str]]:
-    return _session_bounties_index
-
-
-def get_settlement_establishments_index() -> dict[str, list[str]]:
-    return _settlement_establishments_index
-
-
-def get_campaign_settlements_index() -> dict[str, list[str]]:
-    return _campaign_settlements_index
-
-
-def get_establishment_workers_index() -> dict[str, list[str]]:
-    return _establishment_workers_index
-
-
-def get_establishment_negotiations_index() -> dict[str, list[str]]:
-    return _establishment_negotiations_index
+def get_child_index_repository() -> AggregateRepository[ChildIndexAggregate]:
+    return child_index_repo
 
 
 def get_spicedb_client() -> SpiceDBClient | MockSpiceDBClient:

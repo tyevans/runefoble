@@ -10,11 +10,12 @@ from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from game_session.caravan import CaravanContractAggregate
+from game_session.child_index import ChildIndexKind
 from game_session.dependencies import (
     get_caravan_contract_repository,
     get_spicedb_client,
-    get_world_contracts_index,
 )
+from game_session.queries import link_child, list_world_contracts_for_world
 from game_session.routers.caravan_contracts.auth import (
     _check_high_tier_auth,
     _check_perm,
@@ -23,6 +24,7 @@ from game_session.routers.caravan_contracts.auth import (
 )
 from game_session.settlement.auth.tokens import CallerId, get_caller_principal
 from game_session.west_marches_models import PostCaravanContractRequest
+from runefoble_platform.aggregate_loading import load_if_exists
 
 router = APIRouter(
     dependencies=[Depends(get_caller_principal)],
@@ -68,7 +70,7 @@ async def post_caravan_contract(
     await contract_repo.save(contract)
 
     # Register in world notice board index and write Zanzibar relations
-    get_world_contracts_index().setdefault(str(wid), []).append(cid)
+    await link_child(ChildIndexKind.WORLD_CONTRACTS, str(wid), cid)
     await spicedb.write_relationship(
         "caravan_contract", cid, "shared_world", "shared_world", str(wid)
     )
@@ -93,23 +95,22 @@ async def list_caravan_contracts(
     await _check_perm(spicedb, "shared_world", str(wid), "view", caller_id)
 
     contract_repo = get_caravan_contract_repository()
-    cids = get_world_contracts_index().get(str(wid), [])
+    cids = await list_world_contracts_for_world(str(wid))
     contracts: list[dict[str, Any]] = []
 
     for c_id in cids:
-        try:
-            c_agg = await contract_repo.load(UUID(c_id))
-            c_state = c_agg.state
-            if (
-                (status and c_state.status != status)
-                or (risk_level and c_state.route_risk_level.lower() != risk_level.lower())
-                or (destination and c_state.destination_outpost.lower() != destination.lower())
-                or (min_reward is not None and c_state.reward_gold < min_reward)
-            ):
-                continue
-            contracts.append(c_state.model_dump())
-        except Exception:
+        c_agg = await load_if_exists(contract_repo, UUID(c_id))
+        if c_agg is None:
             continue
+        c_state = c_agg.state
+        if (
+            (status and c_state.status != status)
+            or (risk_level and c_state.route_risk_level.lower() != risk_level.lower())
+            or (destination and c_state.destination_outpost.lower() != destination.lower())
+            or (min_reward is not None and c_state.reward_gold < min_reward)
+        ):
+            continue
+        contracts.append(c_state.model_dump())
 
     return {"shared_world_id": str(wid), "contracts": contracts}
 
