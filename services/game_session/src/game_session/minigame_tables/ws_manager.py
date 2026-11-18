@@ -6,9 +6,19 @@ TavernGame aggregate (TASK-0566), so a restart loses no table state.
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 from fastapi import WebSocket
+from starlette.websockets import WebSocketDisconnect, WebSocketDisconnected
+
+logger = logging.getLogger("runefoble.game_session.minigame_tables")
+
+# Errors that mean the peer has closed its socket. The socket is removed from the table.
+CLOSED_SOCKET_ERRORS: tuple[type[BaseException], ...] = (
+    WebSocketDisconnect,
+    WebSocketDisconnected,
+)
 
 
 class MinigameTableManager:
@@ -16,6 +26,7 @@ class MinigameTableManager:
 
     def __init__(self) -> None:
         self.connections: dict[str, set[WebSocket]] = {}
+        self.send_failures = 0
 
     def register(self, table_id: str, websocket: WebSocket) -> None:
         """Track an admitted, accepted socket. The route accepts it first."""
@@ -30,14 +41,23 @@ class MinigameTableManager:
                 del self.connections[table_id]
 
     async def broadcast(self, table_id: str, message: dict[str, Any]) -> None:
+        """Send `message` to every socket on the table.
+
+        A closed socket is removed. Any other send failure is logged and counted in
+        `send_failures`. The socket stays registered, and the other sockets still receive
+        the message.
+        """
         sockets = list(self.connections.get(table_id, set()))
-        dead: list[WebSocket] = []
+        closed: list[WebSocket] = []
         for ws in sockets:
             try:
                 await ws.send_json(message)
+            except CLOSED_SOCKET_ERRORS:
+                closed.append(ws)
             except Exception:
-                dead.append(ws)
-        for ws in dead:
+                self.send_failures += 1
+                logger.exception("Minigame table %s: send to a live socket failed", table_id)
+        for ws in closed:
             self.disconnect(table_id, ws)
 
 

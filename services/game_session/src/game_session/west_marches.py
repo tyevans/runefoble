@@ -30,7 +30,7 @@ def _to_uuid(val: Any) -> UUID | None:
         return None
     try:
         return UUID(str(val))
-    except Exception:
+    except ValueError:
         return None
 
 
