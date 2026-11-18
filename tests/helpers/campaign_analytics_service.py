@@ -62,6 +62,13 @@ class AnalyticsService:
         """Publish a domain event to a stream, as a producing service does."""
         asyncio.run(RedisStreamsEventBus(client=self.redis).publish_event(stream, event))
 
+    def redeliver(self, stream: str, group: str = "campaign_analytics_worker") -> None:
+        """Move the analytics consumer group back to the start of a stream (XGROUP SETID 0).
+
+        Every message in the stream is delivered again to the running consumer.
+        """
+        asyncio.run(self.redis.xgroup_setid(stream, group, "0"))
+
     def grant_view(self, campaign_id: str, user_id: str = SERVICE_SUBJECT) -> None:
         """Grant a member view rights on a campaign in the authorization double."""
         asyncio.run(
