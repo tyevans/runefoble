@@ -113,6 +113,8 @@ To generate watertight STL meshes for physical 3D printers and slicers:
 
 ## 4. Frontend Component (`<runefoble-print-forge>`)
 
+The App Shell mounts this element on the **Asset Forge** tab of a campaign, at `#/campaigns/:campaignId/forge`. The App Shell loads the bundle `@runefoble/asset-forge-ui` lazily through its package root. It sends the export requests to the same-origin gateway (`apiBaseUrl` is empty).
+
 The microfrontend is exposed in `services/asset_forge/ui/` and advertised via `/ui/manifest`:
 
 ```html

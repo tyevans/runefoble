@@ -17,7 +17,13 @@ import { createEntryFromEvent, createPinFromEvent } from '../app/lore-actions.ts
 import { inspectCharacterFromEvent } from './character-view.ts';
 import { setCurrentCampaign } from '../app/shell-state.ts';
 
-type CampaignTab = 'overview' | 'characters' | 'codex' | 'analytics';
+type CampaignTab = 'overview' | 'characters' | 'codex' | 'analytics' | 'forge';
+
+/**
+ * Base URL for the forge routes. The App Shell is served behind the gateway origin, so the
+ * forge elements call the same-origin `/api/v1/forge/*` routes through the gateway.
+ */
+const FORGE_API_BASE_URL = '';
 
 export async function loadCampaignHubData(host: RunefobleApp, route: MatchedRoute): Promise<void> {
   const c = route.params.campaignId ?? '';
@@ -46,7 +52,7 @@ export async function loadCampaignHubData(host: RunefobleApp, route: MatchedRout
 }
 
 export function renderCampaignHub(app: RunefobleApp, v: AppActiveView) {
-  const activeTab: CampaignTab = v === 'campaign-characters' ? 'characters' : v === 'campaign-codex' ? 'codex' : v === 'campaign-analytics' ? 'analytics' : 'overview';
+  const activeTab: CampaignTab = v === 'campaign-characters' ? 'characters' : v === 'campaign-codex' ? 'codex' : v === 'campaign-analytics' ? 'analytics' : v === 'campaign-forge' ? 'forge' : 'overview';
   const permissions = app.currentCampaign?.permissions;
   const canManage = Boolean(permissions?.manage);
   return html`<div class="campaign-hub-layout">
@@ -67,6 +73,12 @@ function renderCampaignTabContent(app: RunefobleApp, activeTab: CampaignTab, can
     return html`<runefoble-character-roster campaign-id=${app.campaignId} .characters=${app.characters.filter((c) => c.campaignId === app.campaignId)} .campaigns=${app.rosterCampaigns} current-user-id=${app.currentUserId} active-filter="assigned" @create-character=${(e: CustomEvent) => createCharacterFromEvent(app, e)} @assign-campaign=${(e: CustomEvent) => assignCharacterFromEvent(app, e)} @delete-character=${(e: CustomEvent) => deleteCharacterFromEvent(app, e)} @inspect-character=${(e: CustomEvent) => inspectCharacterFromEvent(e)}></runefoble-character-roster>`;
   }
   if (activeTab === 'codex') return renderCodexTab(app);
+  if (activeTab === 'forge') {
+    return html`<div class="campaign-forge-layout">
+      <runefoble-asset-forge campaign-id=${app.campaignId} .apiBaseUrl=${FORGE_API_BASE_URL}></runefoble-asset-forge>
+      <runefoble-print-forge campaign-id=${app.campaignId} .apiBaseUrl=${FORGE_API_BASE_URL}></runefoble-print-forge>
+    </div>`;
+  }
   return html`<runefoble-campaign-analytics .campaignId=${app.campaignId} .heatmapData=${app.campaignAnalytics?.heatmap ?? null} .mvpData=${app.campaignAnalytics?.mvp ?? null} .timelineData=${app.campaignAnalytics?.timeline ?? null}></runefoble-campaign-analytics>`;
 }
 
@@ -85,5 +97,5 @@ function renderCodexTab(app: RunefobleApp) {
 
 function renderCampaignTabs(app: RunefobleApp, activeTab: CampaignTab) {
   const cId = app.campaignId;
-  return html`<nav class="campaign-nav-tabs" role="tablist" aria-label="Campaign Sections"><a class="nav-tab ${activeTab === 'overview' ? 'active' : ''}" role="tab" aria-selected=${activeTab === 'overview'} href="#/campaigns/${cId}" @click=${(e: Event) => { e.preventDefault(); router.navigate('#/campaigns/' + cId); }}>Overview & Sessions</a><a class="nav-tab ${activeTab === 'characters' ? 'active' : ''}" role="tab" aria-selected=${activeTab === 'characters'} href="#/campaigns/${cId}/characters" @click=${(e: Event) => { e.preventDefault(); router.navigate('#/campaigns/' + cId + '/characters'); }}>Party Characters</a><a class="nav-tab ${activeTab === 'codex' ? 'active' : ''}" role="tab" aria-selected=${activeTab === 'codex'} href="#/campaigns/${cId}/codex" @click=${(e: Event) => { e.preventDefault(); router.navigate('#/campaigns/' + cId + '/codex'); }}>Codex & Lore</a><a class="nav-tab ${activeTab === 'analytics' ? 'active' : ''}" role="tab" aria-selected=${activeTab === 'analytics'} href="#/campaigns/${cId}/analytics" @click=${(e: Event) => { e.preventDefault(); router.navigate('#/campaigns/' + cId + '/analytics'); }}>Chronicle & Stats</a></nav>`;
+  return html`<nav class="campaign-nav-tabs" role="tablist" aria-label="Campaign Sections"><a class="nav-tab ${activeTab === 'overview' ? 'active' : ''}" role="tab" aria-selected=${activeTab === 'overview'} href="#/campaigns/${cId}" @click=${(e: Event) => { e.preventDefault(); router.navigate('#/campaigns/' + cId); }}>Overview & Sessions</a><a class="nav-tab ${activeTab === 'characters' ? 'active' : ''}" role="tab" aria-selected=${activeTab === 'characters'} href="#/campaigns/${cId}/characters" @click=${(e: Event) => { e.preventDefault(); router.navigate('#/campaigns/' + cId + '/characters'); }}>Party Characters</a><a class="nav-tab ${activeTab === 'codex' ? 'active' : ''}" role="tab" aria-selected=${activeTab === 'codex'} href="#/campaigns/${cId}/codex" @click=${(e: Event) => { e.preventDefault(); router.navigate('#/campaigns/' + cId + '/codex'); }}>Codex & Lore</a><a class="nav-tab ${activeTab === 'analytics' ? 'active' : ''}" role="tab" aria-selected=${activeTab === 'analytics'} href="#/campaigns/${cId}/analytics" @click=${(e: Event) => { e.preventDefault(); router.navigate('#/campaigns/' + cId + '/analytics'); }}>Chronicle & Stats</a><a class="nav-tab ${activeTab === 'forge' ? 'active' : ''}" role="tab" aria-selected=${activeTab === 'forge'} href="#/campaigns/${cId}/forge" @click=${(e: Event) => { e.preventDefault(); router.navigate('#/campaigns/' + cId + '/forge'); }}>Asset Forge</a></nav>`;
 }

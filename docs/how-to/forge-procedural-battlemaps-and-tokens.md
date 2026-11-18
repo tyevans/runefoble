@@ -114,6 +114,8 @@ Forged assets are written to Silo before the forge responds. The service never r
 
 ### Component Behaviour (`<runefoble-asset-forge>`)
 
+- The App Shell mounts this element on the **Asset Forge** tab of a campaign, at `#/campaigns/:campaignId/forge`. The Storybook stories stay the component's test surface.
+
 - **Forge Tactical Battlemap** posts the prompt to `POST /api/v1/forge/battlemap`. The preview appears only after the route returns a successful response.
 - **Forge Token Portrait** posts the name, type, and prompt to `POST /api/v1/forge/token`. The preview appears only after a successful response.
 - If the route returns an error (for example, `503` when Silo is down), the component shows the `detail` text from the response in an error banner. No preview is shown.

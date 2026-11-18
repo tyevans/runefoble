@@ -26,6 +26,9 @@ importers:
       '@lit/context':
         specifier: ^1.1.6
         version: 1.1.6
+      '@runefoble/asset-forge-ui':
+        specifier: workspace:*
+        version: link:../services/asset_forge/ui
       '@runefoble/audience-studio-ui':
         specifier: workspace:*
         version: link:../services/audience_studio/ui
