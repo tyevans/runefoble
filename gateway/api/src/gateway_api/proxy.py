@@ -9,7 +9,10 @@ Failure contract (see `upstream_errors.py`):
 - Connect failure, timeout, or no configured URL returns 503.
 - Upstream 5xx returns 502.
 - Upstream 4xx passes through with its status and body.
-- A 2xx answer that is not JSON returns 502.
+- A 2xx answer that is not JSON returns 502 (`forward_json` and `forward_raw`).
+
+`forward_bytes` relays the request body and the reply payload unchanged. It serves binary
+routes such as PDF, PNG and STL exports, and multipart uploads.
 """
 
 from __future__ import annotations
@@ -19,7 +22,7 @@ import logging
 from collections.abc import Mapping
 from typing import Any
 
-from fastapi import HTTPException, Request, status
+from fastapi import HTTPException, Request, Response, status
 from gateway_api.dependencies import get_upstreams
 from gateway_api.upstream_errors import UpstreamRejectedError
 from runefoble_platform.service_client import UpstreamReply
@@ -91,3 +94,41 @@ def _decode_reply(service: str, method: str, path: str, reply: UpstreamReply) ->
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY, detail=UPSTREAM_INVALID_DETAIL
         ) from exc
+
+
+async def forward_bytes(
+    request: Request,
+    *,
+    service: str,
+    method: str,
+    path: str,
+    params: Mapping[str, str] | None = None,
+    timeout: float = 5.0,
+) -> Response:
+    """Send one request with its raw body and return the owner's payload unchanged.
+
+    The request body and its `Content-Type` go to the owner as sent. The reply keeps its
+    status, content type, and relayed headers (such as `Content-Disposition`). A 4xx reply
+    raises UpstreamRejectedError, and the handler passes it on.
+    """
+    client = get_upstreams(request).client(service)
+    body = await request.body()
+    reply = await client.send(
+        method,
+        path,
+        authorization=request.headers.get("authorization"),
+        content=body or None,
+        content_type=request.headers.get("content-type") if body else None,
+        params=dict(params) if params else None,
+        timeout_s=timeout,
+    )
+
+    if reply.status_code >= 400:
+        raise UpstreamRejectedError(service, reply)
+
+    return Response(
+        content=reply.body,
+        status_code=reply.status_code,
+        media_type=reply.content_type,
+        headers=dict(reply.relayed_headers),
+    )
