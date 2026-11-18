@@ -4,6 +4,7 @@ import type { BoardToken } from '@runefoble/board-state-ui';
 import type { WatcherFeedEvent } from '@runefoble/the-watcher-ui';
 import type { CampaignSessionItem } from '../components/runefoble-session-list.ts';
 import { authService, type UserClaims } from '../auth/auth-service.ts';
+import { toWatcherFeedEvent, type SessionChronicleEntry } from './session-chronicle.ts';
 import { resolveLobbyAvailableCharacters } from './lobby-character-options.ts';
 import {
   dataFailure, dataOk, errorMessageFromBody, NETWORK_FAILURE_MESSAGE, UNREADABLE_RESPONSE_MESSAGE, type DataResult,
@@ -174,8 +175,11 @@ export class AppDataService {
     return res.ok ? dataOk(res.data.tokens) : res;
   }
 
-  /** No session-event read endpoint exists yet. The feed starts empty and fills from live WebSocket events. */
-  async fetchSessionEvents(_sessionId: string): Promise<DataResult<WatcherFeedEvent[]>> { return dataOk([]); }
+  /** Reads the session chronicle feed from the gateway (TASK-0641). An empty session yields []. */
+  async fetchSessionEvents(sessionId: string): Promise<DataResult<WatcherFeedEvent[]>> {
+    const res = await this.request<SessionChronicleEntry[]>(`${this.apiBase}/sessions/${sessionId}/events`);
+    return res.ok ? dataOk(res.data.map(toWatcherFeedEvent)) : res;
+  }
 
   async createCampaignSession(campaignId: string, payload: { title: string; status?: string; scheduled_at?: string; scheduledAt?: string; description?: string }): Promise<DataResult<CampaignSessionItem>> {
     const res = await this.request<any>(`${this.apiBase}/campaigns/${campaignId}/sessions`, { method: 'POST', body: JSON.stringify(payload) });

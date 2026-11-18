@@ -14,16 +14,16 @@ Locate the relevant domain module in `gateway/mcp/src/gateway_mcp/tools/` (e.g.,
 A tool that owns no data must not return fixed data. It calls the owning service over HTTP:
 
 ```python
-from gateway_mcp.clients import ServiceClient
+from gateway_mcp.owning_services import OwningServices
 
 
 async def inspect_tactical_board(session_id: str) -> dict:
     """Read tokens and grid dimensions for the session from board_state."""
-    board = await ServiceClient().get_board(session_id)
+    board = await OwningServices().get_board(session_id)
     return {"session_id": session_id, "tokens": list(board["tokens"].values())}
 ```
 
-Add a typed method to `gateway/mcp/src/gateway_mcp/clients/services.py` for each new upstream route. Use `self._request(...)`. It maps 5xx and connection failures to `ServiceUnavailableError`, and 4xx responses to `ServiceRejectedError`. Do not catch these errors in the tool. FastMCP reports them as MCP tool error results.
+Add a typed method to `OwningServices` in `gateway/mcp/src/gateway_mcp/owning_services.py` for each new upstream route. Build the route with `path(...)` from `runefoble_platform.service_client`, so that every agent-supplied segment stays inside one segment. Call `self._json(service, method, route, body)`. It sends through the shared service client. It maps 5xx and connection failures to `ServiceUnavailableError`, and 4xx responses to `ServiceRejectedError`. Do not catch these errors in the tool. FastMCP reports them as MCP tool error results.
 
 Add the base URL to `gateway/mcp/src/gateway_mcp/settings.py` and to the Helm `services.gatewayMcp` values when a new upstream service is added.
 
@@ -60,7 +60,7 @@ uv run pytest tests/test_mcp_tools.py tests/test_blackbox_mcp_gateway.py
 Write service-backed tools as blackbox tests. Start the owning service with `tests/helpers/live_services.py` (`serve(app)`), set its URL environment variable, and call the tool through the MCP protocol (`call_tool` in `tests/test_blackbox_mcp_gateway.py`). Add an error case that points the URL at `closed_port_url()` or a `unavailable_app(503)` stand-in.
 
 ### Check a Permission in a Mutating Tool
-A tool that changes state must name one schema permission. Add `ctx: Context | None = None` to the tool. Call `await authorize_tool_call(ctx, requirement)` from `gateway_mcp.tool_authz` before any service call. Build the requirement with a helper such as `dm_action_on_character`, `character_edit`, `token_move`, or `session_control`. Add a builder to `_STEP_BUILDERS` in the same module, so that `execute_agent_action_plan` checks the tool too. Pass `bearer=caller_bearer(ctx)` to `ServiceClient`. Never read the caller from an argument. Write a test where a player is denied and the DM succeeds.
+A tool that changes state must name one schema permission. Add `ctx: Context | None = None` to the tool. Call `await authorize_tool_call(ctx, requirement)` from `gateway_mcp.tool_authz` before any service call. Build the requirement with a helper such as `dm_action_on_character`, `character_edit`, `token_move`, or `session_control`. Add a builder to `_STEP_BUILDERS` in the same module, so that `execute_agent_action_plan` checks the tool too. Pass `bearer=caller_bearer(ctx)` to `OwningServices`. Never read the caller from an argument. Write a test where a player is denied and the DM succeeds.
 
 ### 5. Call the Tool with a Bearer Token
 In a blackbox test, mint a token with the shared signing issuer and pass it to the MCP client. `tests/helpers/mcp_http.py` provides `call_tool_over_http(endpoint, name, arguments, bearer=...)`. Do not send an `X-User-Id` header or a caller field in the arguments.

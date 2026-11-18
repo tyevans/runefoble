@@ -7,6 +7,7 @@ Governed by:
 - Hard Invariant 7: Blackbox TDD with Frontdoor Setup (strictly HTTP & WebSockets)
 """
 
+import asyncio
 from uuid import uuid4
 
 import pytest
@@ -31,7 +32,10 @@ def test_radial_token_action_execution_frontdoor(client):
     board_id = f"board-{uuid4().hex[:8]}"
 
     # Setup board and token via frontdoors
-    client.post("/api/v1/boards", json={"board_id": board_id, "cols": 10, "rows": 10})
+    client.post(
+        "/api/v1/boards",
+        json={"campaign_id": BOARD_CAMPAIGN, "board_id": board_id, "cols": 10, "rows": 10},
+    )
     client.post(
         f"/api/v1/boards/{board_id}/tokens",
         json={"token_id": "valeros", "name": "Valeros", "x": 2, "y": 2, "is_friendly": True},
@@ -90,7 +94,10 @@ def test_radial_token_action_execution_frontdoor(client):
 def test_aoe_rotatable_cone_calculations_and_angle_snapping(client):
     """Verify 15ft cone mathematical calculations, target tokens, and 15-degree angle snapping."""
     board_id = f"board-{uuid4().hex[:8]}"
-    client.post("/api/v1/boards", json={"board_id": board_id, "cols": 12, "rows": 12})
+    client.post(
+        "/api/v1/boards",
+        json={"campaign_id": BOARD_CAMPAIGN, "board_id": board_id, "cols": 12, "rows": 12},
+    )
 
     # Place caster Marcus at (2, 2)
     client.post(
@@ -151,7 +158,10 @@ def test_aoe_rotatable_cone_calculations_and_angle_snapping(client):
 def test_aoe_sphere_and_line_geometry_evaluations(client):
     """Verify spherical radius and line projection intersection testing."""
     board_id = f"board-{uuid4().hex[:8]}"
-    client.post("/api/v1/boards", json={"board_id": board_id, "cols": 12, "rows": 12})
+    client.post(
+        "/api/v1/boards",
+        json={"campaign_id": BOARD_CAMPAIGN, "board_id": board_id, "cols": 12, "rows": 12},
+    )
 
     # Center token at (5, 5)
     client.post(
@@ -209,7 +219,10 @@ def test_aoe_sphere_and_line_geometry_evaluations(client):
 def test_aoe_template_placement_and_lifecycle(client):
     """Verify AoE template placement, persistence in aggregate, listing, and deletion."""
     board_id = f"board-{uuid4().hex[:8]}"
-    client.post("/api/v1/boards", json={"board_id": board_id, "cols": 10, "rows": 10})
+    client.post(
+        "/api/v1/boards",
+        json={"campaign_id": BOARD_CAMPAIGN, "board_id": board_id, "cols": 10, "rows": 10},
+    )
     client.post(
         f"/api/v1/boards/{board_id}/tokens",
         json={"token_id": "tok-1", "name": "Valeros", "x": 3, "y": 3},
@@ -252,7 +265,10 @@ def test_aoe_template_placement_and_lifecycle(client):
 def test_websocket_radial_action_and_aoe_streaming(client):
     """Verify real-time WebSocket messaging for radial token actions and live AoE calculations."""
     board_id = f"board-{uuid4().hex[:8]}"
-    client.post("/api/v1/boards", json={"board_id": board_id, "cols": 10, "rows": 10})
+    client.post(
+        "/api/v1/boards",
+        json={"campaign_id": BOARD_CAMPAIGN, "board_id": board_id, "cols": 10, "rows": 10},
+    )
     client.post(
         f"/api/v1/boards/{board_id}/tokens",
         json={"token_id": "kyra", "name": "Kyra", "x": 4, "y": 4, "is_friendly": True},
@@ -307,3 +323,20 @@ def test_websocket_radial_action_and_aoe_streaming(client):
         msg_placed = ws.receive_json()
         assert msg_placed["type"] == "aoe_template_placed"
         assert msg_placed["template"]["template_id"] == "aoe-ws-1"
+
+
+BOARD_CAMPAIGN = "camp-board-fixture"
+
+
+@pytest.fixture(autouse=True)
+def _board_campaign_dm(spicedb):
+    """Make `user-test` the DM of the campaign that every board in this module belongs to."""
+    asyncio.run(
+        spicedb.write_relationship(
+            resource_type="campaign",
+            resource_id=BOARD_CAMPAIGN,
+            relation="dungeon_master",
+            subject_type="user",
+            subject_id="user-test",
+        )
+    )

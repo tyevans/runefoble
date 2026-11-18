@@ -7,6 +7,7 @@ Tests exercise FastMCP public protocol entrypoints exclusively:
 - Error handling for invalid tools and out-of-bounds tactical grid movements
 """
 
+import asyncio
 import json
 from collections.abc import Iterator
 from typing import Any
@@ -16,12 +17,14 @@ import pytest
 from gateway_mcp.server import mcp
 from mcp.types import CallToolResult
 from runefoble_auth.factory import get_spicedb_client
+from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_auth.sync import ZitadelSpiceDBSyncService
 from runefoble_auth.sync_events import handle_domain_event
 
 from tests.helpers.game_session_setup import start_session_with_player
 from tests.helpers.live_services import closed_port_url, serve, unavailable_app
 from tests.helpers.mcp_http import call_tool_over_http, serve_mcp
+from tests.helpers.spicedb_factory import shared_spicedb_client
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 _MCP: dict[str, str] = {}
@@ -70,9 +73,28 @@ def owning_services() -> Iterator[dict[str, str]]:
             env.setenv("GAME_SESSION_URL", session_url)
             env.setenv("RULES_COMPENDIUM_URL", compendium_url)
             # Setup through the public board_state HTTP frontdoor: place the active session token.
-            with httpx.Client(base_url=board_url, headers=bearer("user-test")) as http:
+            campaign_roles = MockSpiceDBClient()
+            asyncio.run(
+                campaign_roles.write_relationship(
+                    resource_type="campaign",
+                    resource_id="camp-board-fixture",
+                    relation="dungeon_master",
+                    subject_type="user",
+                    subject_id="user-test",
+                )
+            )
+            with (
+                shared_spicedb_client(campaign_roles),
+                httpx.Client(base_url=board_url, headers=bearer("user-test")) as http,
+            ):
                 created = http.post(
-                    "/api/v1/boards", json={"session_id": "camp1", "cols": 10, "rows": 10}
+                    "/api/v1/boards",
+                    json={
+                        "session_id": "camp1",
+                        "campaign_id": "camp-board-fixture",
+                        "cols": 10,
+                        "rows": 10,
+                    },
                 )
                 assert created.status_code == 200, created.text
                 placed = http.post(
@@ -92,7 +114,7 @@ def owning_services() -> Iterator[dict[str, str]]:
 async def call_tool(
     name: str, arguments: dict[str, Any], caller: str = "user-test"
 ) -> CallToolResult:
-    """Call a tool over MCP HTTP as `caller`. The DM of a started session is `encounter-dm`."""
+    """Call a tool over MCP HTTP as `caller`. The DM of a started session is `user-test`."""
     return await call_tool_over_http(_MCP["url"], name, arguments, bearer_token(caller))
 
 
@@ -101,7 +123,7 @@ async def grant_token_to_campaign(session_url: str, session_id: str, token_id: s
 
     The consumer writes the `board_token` relations that `board_token.move` reads.
     """
-    with httpx.Client(base_url=session_url, headers=bearer("encounter-dm")) as http:
+    with httpx.Client(base_url=session_url, headers=bearer("user-test")) as http:
         campaign_id = http.get(f"/api/v1/sessions/{session_id}").json()["campaign_id"]
     await handle_domain_event(
         ZitadelSpiceDBSyncService(spicedb_client=get_spicedb_client()),
@@ -191,9 +213,10 @@ async def test_blackbox_create_encounter_stores_enemy_tokens(owning_services: di
             "create_encounter",
             {
                 "session_id": session_id,
+                "campaign_id": "camp-board-fixture",
                 "enemies": [{"name": "Bandit", "x": 4, "y": 4, "hp": 11}],
             },
-            "encounter-dm",
+            "user-test",
         )
     )
     assert created["status"] == "encounter_created"
@@ -217,9 +240,10 @@ async def test_blackbox_move_board_token_then_inspect_reports_new_position(
             "create_encounter",
             {
                 "session_id": combat_session_id,
+                "campaign_id": "camp-board-fixture",
                 "enemies": [{"name": "Goblin", "x": 2, "y": 2}],
             },
-            "encounter-dm",
+            "user-test",
         )
     )
     session_id = created["encounter_id"]
@@ -230,7 +254,7 @@ async def test_blackbox_move_board_token_then_inspect_reports_new_position(
         await call_tool(
             "move_board_token",
             {"session_id": session_id, "token_id": token_id, "to_x": 6, "to_y": 2},
-            "encounter-dm",
+            "user-test",
         )
     )
     assert moved["status"] == "success"
@@ -252,9 +276,10 @@ async def test_blackbox_move_board_token_out_of_bounds_is_error_result(
             "create_encounter",
             {
                 "session_id": combat_session_id,
+                "campaign_id": "camp-board-fixture",
                 "enemies": [{"name": "Imp", "x": 0, "y": 0}],
             },
-            "encounter-dm",
+            "user-test",
         )
     )
     await grant_token_to_campaign(
@@ -270,7 +295,7 @@ async def test_blackbox_move_board_token_out_of_bounds_is_error_result(
             "to_x": 99,
             "to_y": -5,
         },
-        "encounter-dm",
+        "user-test",
     )
     assert result.isError is True
     assert "bounds" in tool_text(result).lower()
@@ -323,3 +348,26 @@ async def test_blackbox_calculate_encounter_balance_rejects_empty_party():
     )
     assert result.isError is True
     assert "rejected the request (422)" in tool_text(result)
+
+
+@pytest.fixture(autouse=True)
+def _board_campaign_dm(spicedb):
+    """Make `user-test` the DM of the campaign that create_encounter binds new boards to."""
+    asyncio.run(
+        spicedb.write_relationship(
+            resource_type="campaign",
+            resource_id="camp-board-fixture",
+            relation="dungeon_master",
+            subject_type="user",
+            subject_id="user-test",
+        )
+    )
+    asyncio.run(
+        spicedb.write_relationship(
+            resource_type="campaign",
+            resource_id="camp-board-fixture",
+            relation="dungeon_master",
+            subject_type="user",
+            subject_id="user-test",
+        )
+    )

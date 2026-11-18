@@ -1,5 +1,6 @@
 """Blackbox tests for real-time WebSocket speech VFX triggers and domain event persistence."""
 
+import asyncio
 import time
 from uuid import uuid4
 
@@ -13,7 +14,10 @@ def test_websocket_realtime_speech_spell_trigger_sub_150ms(client: TestClient) -
     """Verify WebSocket real-time stream handles spoken spellcast and broadcasts VFX in <150ms."""
     board_id = f"board-{uuid4().hex[:8]}"
 
-    client.post("/api/v1/boards", json={"board_id": board_id, "cols": 10, "rows": 10})
+    client.post(
+        "/api/v1/boards",
+        json={"campaign_id": BOARD_CAMPAIGN, "board_id": board_id, "cols": 10, "rows": 10},
+    )
     client.post(
         f"/api/v1/boards/{board_id}/tokens",
         json={"token_id": "nadia", "name": "Nadia", "x": 1, "y": 2, "is_friendly": True},
@@ -83,3 +87,20 @@ async def test_event_sourcing_domain_events_persistence() -> None:
     assert loaded_board is not None
     assert loaded_board.state.cols == 10
     assert len(loaded_board.state.active_decals) > 0
+
+
+BOARD_CAMPAIGN = "camp-board-fixture"
+
+
+@pytest.fixture(autouse=True)
+def _board_campaign_dm(spicedb):
+    """Make `user-test` the DM of the campaign that every board in this module belongs to."""
+    asyncio.run(
+        spicedb.write_relationship(
+            resource_type="campaign",
+            resource_id=BOARD_CAMPAIGN,
+            relation="dungeon_master",
+            subject_type="user",
+            subject_id="user-test",
+        )
+    )

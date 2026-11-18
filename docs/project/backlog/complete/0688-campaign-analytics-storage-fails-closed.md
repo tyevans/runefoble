@@ -1,7 +1,7 @@
 ---
 id: '0688'
 title: Campaign Analytics Storage Fails Closed When PostgreSQL Is Unreachable
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0684
@@ -19,7 +19,7 @@ target_release: 0.9.0
 # TASK-0688: Campaign Analytics Storage Fails Closed When PostgreSQL Is Unreachable
 
 ## Status
-Refined. Discovered in round 2 audit of report 0578. ADR-0015 (f) makes the PostgreSQL event store mandatory in deployed environments. This task applies it to campaign analytics.
+Complete
 
 ## Summary
 `campaign_analytics` catches any failure to connect to PostgreSQL at start-up and switches to an in-memory store. A deployed service then accepts writes and loses them on restart. The bus factory in the same service also suppresses every error. This task makes start-up fail when the database is configured and unreachable, and removes the silent fallback.

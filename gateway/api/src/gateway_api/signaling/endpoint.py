@@ -5,8 +5,8 @@ from __future__ import annotations
 import logging
 
 from fastapi import WebSocket, WebSocketDisconnect
-from gateway_api.auth import get_spicedb_client
-from gateway_api.signaling.auth import extract_peer_and_role, validate_voice_connection
+from gateway_api.session_access import socket_may
+from gateway_api.signaling.auth import extract_peer_and_role
 from gateway_api.signaling.handlers import (
     SignalingPeerState,
     dispatch_signaling_message,
@@ -30,31 +30,10 @@ async def voice_signaling_websocket_endpoint(
     user_id = principal.user_id
     sig_manager = manager or signaling_manager
     coord = sig_manager.coordinator
-    spicedb = get_spicedb_client()
     peer_id, role = extract_peer_and_role(websocket, user_id)
 
-    # 1. SpiceDB Zanzibar permission check on connect (Hard Invariant 1)
-    can_connect = await validate_voice_connection(spicedb, session_id, user_id)
-    if not can_connect:
-        logger.warning(
-            "Voice WebSocket connect rejected: subject '%s' lacks permissions for session '%s'",
-            user_id,
-            session_id,
-        )
-        await websocket.send_json(
-            {
-                "type": "error",
-                "code": "PERMISSION_DENIED",
-                "message": (
-                    f"Zanzibar authorization denied: insufficient permissions to join voice room "
-                    f"for session '{session_id}'"
-                ),
-                "action": "connect",
-            }
-        )
-        await websocket.close(
-            code=4003, reason="Forbidden: insufficient permissions for voice room"
-        )
+    # SpiceDB check on connect: session.observe (Hard Invariant 1)
+    if not await socket_may(websocket, session_id, user_id, "observe"):
         return
 
     await sig_manager.connect_peer(session_id, peer_id, websocket)

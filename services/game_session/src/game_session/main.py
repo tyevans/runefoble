@@ -15,12 +15,14 @@ from game_session.dependencies import (
     set_event_bus,
     set_spicedb_client,
 )
+from game_session.profile import profile_router
 from game_session.routers import (
     autopilot_router,
     bounties_router,
     campfire_router,
     caravan_contracts_router,
     caravan_trade_router,
+    chronicle_router,
     combat_router,
     director_router,
     minigames_ws_router,
@@ -71,6 +73,7 @@ app.include_router(tavern_router)
 app.include_router(minigames_ws_router)
 app.include_router(west_marches_router)
 app.include_router(caravan_trade_router)
+app.include_router(chronicle_router)
 app.include_router(caravan_contracts_router)
 app.include_router(settlements_router)
 app.include_router(settlements_router, prefix="/api/v1")
@@ -79,6 +82,7 @@ app.include_router(settlement_workers_router)
 app.include_router(settlement_haggling_router)
 app.include_router(bounties_router)
 app.include_router(bounties_router, prefix="/api/v1")
+app.include_router(profile_router)
 install_publish_failure_handler(app)
 
 

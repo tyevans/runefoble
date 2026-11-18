@@ -4,22 +4,18 @@ Governing ADRs: ADR-0001, ADR-0003, ADR-0007, ADR-0009.
 Interacts strictly through public frontdoors:
   - WebSocket `/ws/voice/{session_id}`
 Verifies:
-  - Zanzibar permission rejection (4003, PERMISSION_DENIED)
+  - `session.observe` rejection (close code 4403)
   - Authorized connection handshakes (connected, webrtc_joined)
   - Credential extraction variants (query params, headers, guest fallback)
   - CloudEvent publishing on connect/disconnect
 """
 
-import asyncio
 import json
 
 import pytest
 from fastapi import WebSocketDisconnect
-from fastapi.testclient import TestClient
-from gateway_api.main import app
 from gateway_api.signaling import signaling_manager
 from runefoble_auth.factory import get_spicedb_client
-from runefoble_auth.spicedb import MockSpiceDBClient
 from voice_agent.room import VoiceRoomCoordinator, set_voice_room_coordinator
 
 from tests.helpers.mock_redis import MockAsyncRedis
@@ -56,35 +52,26 @@ def reset_voice_signaling_environment(default_redis_event_bus, mock_bus):
     set_voice_room_coordinator(None)
 
 
-def test_voice_websocket_connect_unauthorized_subject_rejected():
-    """Subject lacking Zanzibar permissions is rejected with PERMISSION_DENIED and closed with 4003."""
-    client = TestClient(app)
-    session_id = "sess-unauth-test"
+def test_voice_websocket_connect_unauthorized_subject_rejected(gateway, table_for):
+    """A subject without `session.observe` is refused with close code 4403."""
+    _, session_id = table_for("dm_dora")
 
-    with client.websocket_connect(
-        f"/ws/voice/{session_id}?peer_id=peer_bob", subprotocols=ws_subprotocols("stranger_bob")
-    ) as ws:
-        err_msg = ws.receive_json()
-        assert err_msg["type"] == "error"
-        assert err_msg["code"] == "PERMISSION_DENIED"
-        assert err_msg["action"] == "connect"
-        assert "insufficient permissions" in err_msg["message"]
-
-        with pytest.raises(WebSocketDisconnect) as exc:
-            ws.receive_json()
-        assert exc.value.code == 4003
+    with (
+        pytest.raises(WebSocketDisconnect) as exc,
+        gateway.websocket_connect(
+            f"/ws/voice/{session_id}?peer_id=peer_bob", subprotocols=ws_subprotocols("stranger_bob")
+        ) as ws,
+    ):
+        ws.receive_json()
+    assert exc.value.code == 4403
 
 
-def test_voice_websocket_connect_authorized_subject_succeeds():
+def test_voice_websocket_connect_authorized_subject_succeeds(gateway, table_for):
     """Subject with Zanzibar session participation succeeds and receives connected and joined frames."""
-    spicedb = get_spicedb_client()
-    session_id = "sess-auth-success"
     user_id = "alice_player"
+    _, session_id = table_for("dm_dora", {user_id: "player"})
 
-    asyncio.run(spicedb.write_relationship("campaign", session_id, "player", "user", user_id))
-
-    client = TestClient(app)
-    with client.websocket_connect(
+    with gateway.websocket_connect(
         f"/ws/voice/{session_id}?peer_id=peer_alice&role=player",
         subprotocols=ws_subprotocols(user_id),
     ) as ws:
@@ -102,14 +89,10 @@ def test_voice_websocket_connect_authorized_subject_succeeds():
         assert joined_frame["peers"][0]["peer_id"] == "peer_alice"
 
 
-def test_voice_websocket_identity_comes_only_from_verified_token():
+def test_voice_websocket_identity_comes_only_from_verified_token(gateway, table_for):
     """Verify the voice socket admits only a verified bearer subprotocol. No guest fallback."""
-    spicedb = get_spicedb_client()
-    session_id = "sess-cred-variants"
-
-    asyncio.run(spicedb.write_relationship("campaign", session_id, "player", "user", "bearer_user"))
-
-    client = TestClient(app)
+    _, session_id = table_for("dm_dora", {"bearer_user": "player"})
+    client = gateway
     with client.websocket_connect(
         f"/ws/voice/{session_id}", subprotocols=ws_subprotocols("bearer_user")
     ) as ws:
@@ -129,18 +112,16 @@ def test_voice_websocket_identity_comes_only_from_verified_token():
         pass
 
 
-def test_voice_peer_lifecycle_events_published_to_redis(reset_voice_signaling_environment):
+def test_voice_peer_lifecycle_events_published_to_redis(
+    reset_voice_signaling_environment, gateway, table_for
+):
     """Verifies VoicePeerJoined and VoicePeerLeft events are published to runefoble.events.session."""
     env = reset_voice_signaling_environment
-    spicedb: MockSpiceDBClient = env["spicedb"]
     redis: MockAsyncRedis = env["redis"]
-    session_id = "sess-lifecycle-events"
     user_id = "valeros_user"
+    _, session_id = table_for("dm_dora", {user_id: "player"})
 
-    asyncio.run(spicedb.write_relationship("campaign", session_id, "player", "user", user_id))
-
-    client = TestClient(app)
-    with client.websocket_connect(
+    with gateway.websocket_connect(
         f"/ws/voice/{session_id}?peer_id=peer_valeros&role=player",
         subprotocols=ws_subprotocols(user_id),
     ) as ws:

@@ -273,9 +273,9 @@ class TableCommandsMixin:
             msg["payout"] = payout
         return msg
 
-    def spin_roulette(self, winning_number: int | None = None) -> dict[str, Any]:
+    def spin_roulette(self) -> dict[str, Any]:
         table = self._table()
-        win_num = winning_number if winning_number is not None else random.randint(0, 36)
+        win_num = random.SystemRandom().randint(0, 36)
         res = evaluate_roulette_bets(win_num, table.bets)
         self.create_event(
             RouletteSpun,
@@ -295,9 +295,10 @@ class TableCommandsMixin:
             "player_balances": {p.player_id: p.chips for p in table.players.values()},
         }
 
-    def roll_craps(self, dice: list[int] | None = None) -> dict[str, Any]:
+    def roll_craps(self) -> dict[str, Any]:
         table = self._table()
-        actual_dice = dice if dice is not None else [random.randint(1, 6), random.randint(1, 6)]
+        rng = random.SystemRandom()
+        actual_dice = [rng.randint(1, 6), rng.randint(1, 6)]
         new_point, payouts, _winning_bets, narrative = evaluate_craps_roll(
             actual_dice, table.point, table.bets
         )

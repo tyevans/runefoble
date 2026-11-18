@@ -1,9 +1,11 @@
 """Blackbox tests for REST spellcasting adjudication and archetype VFX generation."""
 
+import asyncio
 import time
 from typing import Any
 from uuid import uuid4
 
+import pytest
 from fastapi.testclient import TestClient
 
 
@@ -14,7 +16,10 @@ def test_evocation_fireball_spell_vfx_frontdoor_and_scorched_decals(
     board_id = f"board-{uuid4().hex[:8]}"
 
     # 1. Create board
-    res = client.post("/api/v1/boards", json={"board_id": board_id, "cols": 10, "rows": 10})
+    res = client.post(
+        "/api/v1/boards",
+        json={"campaign_id": BOARD_CAMPAIGN, "board_id": board_id, "cols": 10, "rows": 10},
+    )
     assert res.status_code == 200, res.text
 
     # 2. Place caster token Valeros at (2, 3) and hostile Monster at (6, 5)
@@ -72,7 +77,10 @@ def test_abjuration_shield_and_conjuration_portal_archetypes(client: TestClient)
     """Verify Abjuration Shield (reaction ward) and Conjuration Portal archetypes."""
     board_id = f"board-{uuid4().hex[:8]}"
 
-    client.post("/api/v1/boards", json={"board_id": board_id, "cols": 8, "rows": 8})
+    client.post(
+        "/api/v1/boards",
+        json={"campaign_id": BOARD_CAMPAIGN, "board_id": board_id, "cols": 8, "rows": 8},
+    )
     client.post(
         f"/api/v1/boards/{board_id}/tokens",
         json={"token_id": "ezren", "name": "Ezren", "x": 3, "y": 3, "is_friendly": True},
@@ -112,3 +120,20 @@ def test_abjuration_shield_and_conjuration_portal_archetypes(client: TestClient)
     assert portal_data["spell_archetype"] == "conjuration"
     assert portal_data["decal_type"] == "portal_residue"
     assert portal_data["audio_stinger"] == "conjuration_portal_drone"
+
+
+BOARD_CAMPAIGN = "camp-board-fixture"
+
+
+@pytest.fixture(autouse=True)
+def _board_campaign_dm(spicedb):
+    """Make `user-test` the DM of the campaign that every board in this module belongs to."""
+    asyncio.run(
+        spicedb.write_relationship(
+            resource_type="campaign",
+            resource_id=BOARD_CAMPAIGN,
+            relation="dungeon_master",
+            subject_type="user",
+            subject_id="user-test",
+        )
+    )

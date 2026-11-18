@@ -11,7 +11,6 @@ from eventsource.domain.exceptions import AggregateNotFoundError
 from fastapi import Depends
 from runefoble_auth.caller import CallerIdentity, require_user_or_service_credential
 from runefoble_auth.principal import VerifiedPrincipal, require_principal
-from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
 from runefoble_auth.zitadel import ZitadelAuthService
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.event_bus import EventBusProvider
@@ -23,7 +22,6 @@ from runefoble_platform.service_credential import expected_service_credential
 
 logger = logging.getLogger("runefoble.board_state")
 platform_settings = PlatformSettings()
-_spicedb_client: SpiceDBClient | MockSpiceDBClient | None = None
 _zitadel_auth_service: ZitadelAuthService | None = None
 
 repo: AggregateRepository[BoardAggregate] = create_aggregate_repository(BoardAggregate)
@@ -48,24 +46,6 @@ class BoardNotFoundError(LookupError):
 event_bus_provider = EventBusProvider(platform_settings)
 get_event_bus = event_bus_provider.get
 set_event_bus = event_bus_provider.set
-
-
-def get_spicedb_client() -> SpiceDBClient | MockSpiceDBClient:
-    """Provide SpiceDB Zanzibar authorization client."""
-    global _spicedb_client
-    if _spicedb_client is None:
-        _spicedb_client = SpiceDBClient(
-            endpoint=getattr(platform_settings, "spicedb_endpoint", "localhost:50051")
-            or "localhost:50051",
-            token=platform_settings.spicedb_preshared_key,
-        )
-    return _spicedb_client
-
-
-def set_spicedb_client(client: SpiceDBClient | MockSpiceDBClient | None) -> None:
-    """Override SpiceDB client for testing."""
-    global _spicedb_client
-    _spicedb_client = client
 
 
 def get_zitadel_auth_service() -> ZitadelAuthService:
@@ -102,62 +82,6 @@ def get_current_user_id(
 ) -> str:
     """Return the subject of the verified bearer token. Raise 401 when no token verifies."""
     return principal.user_id
-
-
-async def check_user_can_manage_traps(
-    user_id: str,
-    board_id: str,
-    campaign_id: str | None = None,
-    spicedb: SpiceDBClient | MockSpiceDBClient | None = None,
-) -> bool:
-    """Evaluate SpiceDB Zanzibar permissions to check whether user can manage traps."""
-    client = spicedb or get_spicedb_client()
-    target = campaign_id or board_id
-
-    for perm in ("dungeon_master", "run_session", "manage", "owner"):
-        try:
-            if await client.check_permission("campaign", str(target), perm, "user", user_id):
-                return True
-        except Exception:
-            pass
-
-    for perm in ("manage_traps", "view_secret_layer", "switch_map", "dungeon_master"):
-        try:
-            if await client.check_permission("board", str(board_id), perm, "user", user_id):
-                return True
-        except Exception:
-            pass
-
-    for perm in ("control", "run_session", "dungeon_master"):
-        try:
-            if await client.check_permission("session", str(target), perm, "user", user_id):
-                return True
-            if await client.check_permission("game_session", str(target), perm, "user", user_id):
-                return True
-        except Exception:
-            pass
-
-    return False
-
-
-async def check_user_can_view_secret_layer(
-    user_id: str,
-    board_id: str,
-    campaign_id: str | None = None,
-    spicedb: SpiceDBClient | None = None,
-) -> bool:
-    """Evaluate SpiceDB Zanzibar permissions to check whether user can view secret DM layer."""
-    return await check_user_can_manage_traps(user_id, board_id, campaign_id, spicedb)
-
-
-async def check_user_can_switch_map(
-    user_id: str,
-    board_id: str,
-    campaign_id: str | None = None,
-    spicedb: SpiceDBClient | None = None,
-) -> bool:
-    """Evaluate SpiceDB Zanzibar permissions to check whether user can switch active battlemap."""
-    return await check_user_can_manage_traps(user_id, board_id, campaign_id, spicedb)
 
 
 async def get_board(session_id: str) -> BoardAggregate:

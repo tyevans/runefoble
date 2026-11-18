@@ -227,4 +227,31 @@ export class FrontdoorApi {
     }
     return res.json();
   }
+  /** Creates a session in a campaign through the gateway (requires run_session). */
+  async createCampaignSession(
+    campaignId: string,
+    title: string,
+    token?: string
+  ): Promise<{ session_id: string; title: string }> {
+    const res = await this.request.post(`${this.baseUrl}/api/v1/campaigns/${campaignId}/sessions`, {
+      headers: { 'Content-Type': 'application/json', ...this.authHeaders(token) },
+      data: { title },
+    });
+    if (!res.ok()) {
+      const errText = await res.text();
+      throw new Error(`Failed to create session "${title}": ${res.status()} - ${errText}`);
+    }
+    return res.json();
+  }
+
+  /** Moves a session from lobby to active through the gateway (requires control). */
+  async startSession(sessionId: string, token?: string): Promise<void> {
+    const res = await this.request.post(`${this.baseUrl}/api/v1/sessions/${sessionId}/start`, {
+      headers: this.authHeaders(token),
+    });
+    if (!res.ok()) {
+      const errText = await res.text();
+      throw new Error(`Failed to start session ${sessionId}: ${res.status()} - ${errText}`);
+    }
+  }
 }

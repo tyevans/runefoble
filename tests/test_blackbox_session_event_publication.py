@@ -94,12 +94,15 @@ def test_next_turn_publishes_turn_advanced_once_to_session_stream(
 def test_dice_roll_for_unknown_session_returns_not_found(
     session_client: TestClient, stream_redis: MockAsyncRedis
 ) -> None:
-    """A roll for a session that does not exist is rejected and publishes nothing."""
+    """A roll for a session that does not exist is refused and publishes nothing.
+
+    The permission check runs first, so an unknown session reads as forbidden.
+    """
     unknown = uuid4()
 
     res = session_client.post(f"/api/v1/sessions/{unknown}/roll", json={"formula": "1d20"})
 
-    assert res.status_code == 404
+    assert res.status_code == 403
     assert _published_event_types(stream_redis, str(unknown)) == []
 
 

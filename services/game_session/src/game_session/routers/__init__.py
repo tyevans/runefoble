@@ -5,6 +5,7 @@ from game_session.routers.bounties import router as bounties_router
 from game_session.routers.campfire import router as campfire_router
 from game_session.routers.caravan_contracts import router as caravan_contracts_router
 from game_session.routers.caravan_trade import router as caravan_trade_router
+from game_session.routers.chronicle import router as chronicle_router
 from game_session.routers.combat import router as combat_router
 from game_session.routers.director import router as director_router
 from game_session.routers.minigames_ws import router as minigames_ws_router
@@ -21,6 +22,7 @@ __all__ = [
     "campfire_router",
     "caravan_contracts_router",
     "caravan_trade_router",
+    "chronicle_router",
     "combat_router",
     "director_router",
     "minigames_ws_router",

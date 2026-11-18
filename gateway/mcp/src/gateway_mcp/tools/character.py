@@ -7,8 +7,8 @@ own and return no substitute values when the service fails.
 
 from typing import TYPE_CHECKING, Any
 
-from gateway_mcp.clients import ServiceClient
-from gateway_mcp.clients.caller import caller_bearer
+from gateway_mcp.caller import caller_bearer
+from gateway_mcp.owning_services import OwningServices
 from gateway_mcp.tool_authz import authorize_tool_call, character_edit, dm_action_on_character
 from mcp.server.fastmcp import Context
 
@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 
 async def inspect_inventory(character_id: str) -> dict[str, Any]:
     """Inspect a character's equipped items and carried inventory."""
-    sheet = await ServiceClient().get_character(character_id)
+    sheet = await OwningServices().get_character(character_id)
     return {
         "character_id": sheet["character_id"],
         "equipped": sheet["equipment"],
@@ -28,7 +28,7 @@ async def inspect_inventory(character_id: str) -> dict[str, Any]:
 
 async def get_character_sheet(character_id: str) -> dict[str, Any]:
     """Retrieve complete character sheet details including stats, hit points, equipment, and conditions."""
-    sheet = await ServiceClient().get_character(character_id)
+    sheet = await OwningServices().get_character(character_id)
     return {
         "character_id": sheet["character_id"],
         "name": sheet["name"],
@@ -52,7 +52,7 @@ async def apply_absentee_penalty(
 ) -> dict[str, Any]:
     """Impose a session miss penalty (e.g. 'drunk', 'foolishness', 'cowardice') on an absent player's PC."""
     await authorize_tool_call(ctx, dm_action_on_character(character_id))
-    sheet = await ServiceClient(bearer=caller_bearer(ctx)).apply_penalty(
+    sheet = await OwningServices(bearer=caller_bearer(ctx)).apply_penalty(
         character_id, penalty_type=penalty_type, description=explanation
     )
     return {
@@ -72,7 +72,7 @@ async def cast_spell(
 ) -> dict[str, Any]:
     """Cast a spell from a spell slot. Use spell_level 0 for a cantrip. The character sheet tracks slot expenditure."""
     await authorize_tool_call(ctx, character_edit(character_id))
-    sheet = await ServiceClient(bearer=caller_bearer(ctx)).cast_spell(
+    sheet = await OwningServices(bearer=caller_bearer(ctx)).cast_spell(
         character_id, spell_name=spell_name, slot_level=spell_level
     )
     return {
@@ -93,7 +93,7 @@ async def modify_character_hp(
 ) -> dict[str, Any]:
     """Modify a character or token's hit points (negative for damage, positive for healing)."""
     await authorize_tool_call(ctx, dm_action_on_character(character_id))
-    sheet = await ServiceClient(bearer=caller_bearer(ctx)).change_health(
+    sheet = await OwningServices(bearer=caller_bearer(ctx)).change_health(
         character_id, delta=delta, source=f"{reason} [{damage_type}]"
     )
     return {
@@ -141,7 +141,7 @@ async def _impose_condition(
     """Send a condition to character_sheet and return the conditions it now stores."""
     await authorize_tool_call(ctx, dm_action_on_character(character_id))
     name = condition.lower().strip()
-    sheet = await ServiceClient(bearer=caller_bearer(ctx)).apply_condition(
+    sheet = await OwningServices(bearer=caller_bearer(ctx)).apply_condition(
         character_id, condition=name, duration_rounds=duration_rounds, source=source
     )
     return {

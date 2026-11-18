@@ -148,15 +148,15 @@ def test_custom_session_state_overrides_and_sanitization():
     assert "dm_notes" not in data
 
 
-def test_spectator_websocket_connection_and_initial_stream_state():
+def test_spectator_websocket_connection_and_initial_stream_state(gateway, table_for):
     """Verify live WebSocket /ws/spectator/{id} connects and delivers sanitized party state."""
-    client = TestClient(gateway_app)
-    with client.websocket_connect(
-        "/ws/spectator/sess-ws-spec-1", subprotocols=ws_subprotocols("spectator-tester")
+    _, session_id = table_for("dm_dora", {"spectator-tester": "spectator"})
+    with gateway.websocket_connect(
+        f"/ws/spectator/{session_id}", subprotocols=ws_subprotocols("spectator-tester")
     ) as ws:
         msg = ws.receive_json()
         assert msg["type"] == "overlay_connected"
-        assert msg["session_id"] == "sess-ws-spec-1"
+        assert msg["session_id"] == session_id
         assert msg["transparent"] is True
 
         party_names = [p["name"] for p in msg["party"]]
@@ -171,11 +171,11 @@ def test_spectator_websocket_connection_and_initial_stream_state():
             assert "ac" not in member
 
 
-def test_spectator_websocket_realtime_broadcast_updates():
+def test_spectator_websocket_realtime_broadcast_updates(gateway, table_for):
     """Verify live WebSocket receives camera updates upon turn start and token move events."""
-    client = TestClient(gateway_app)
-    with client.websocket_connect(
-        "/ws/spectator/sess-ws-events-spec", subprotocols=ws_subprotocols("spectator-tester")
+    _, session_id = table_for("dm_dora")
+    with gateway.websocket_connect(
+        f"/ws/spectator/{session_id}", subprotocols=ws_subprotocols("dm_dora")
     ) as ws:
         _init = ws.receive_json()
 

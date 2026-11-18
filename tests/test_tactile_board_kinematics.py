@@ -4,8 +4,10 @@ Governed by Hard Invariant 7 (Blackbox TDD with Frontdoor Setup).
 Interacts strictly through public HTTP routes and WebSockets.
 """
 
+import asyncio
 from uuid import uuid4
 
+import pytest
 from board_state.main import app
 from fastapi.testclient import TestClient
 
@@ -23,7 +25,10 @@ def test_tactile_kinematics_route_previews():
     board_id = f"board-{uuid4().hex[:8]}"
 
     # Create board
-    res = client.post("/api/v1/boards", json={"board_id": board_id, "cols": 10, "rows": 10})
+    res = client.post(
+        "/api/v1/boards",
+        json={"campaign_id": BOARD_CAMPAIGN, "board_id": board_id, "cols": 10, "rows": 10},
+    )
     assert res.status_code == 200
 
     # Place token
@@ -72,7 +77,10 @@ def test_tactile_kinematics_websocket_flow():
     client = TestClient(app, headers=bearer("user-test"))
     board_id = f"board-{uuid4().hex[:8]}"
 
-    client.post("/api/v1/boards", json={"board_id": board_id, "cols": 10, "rows": 10})
+    client.post(
+        "/api/v1/boards",
+        json={"campaign_id": BOARD_CAMPAIGN, "board_id": board_id, "cols": 10, "rows": 10},
+    )
     client.post(
         f"/api/v1/boards/{board_id}/tokens",
         json={"token_id": "merisiel", "name": "Merisiel", "x": 2, "y": 2, "is_friendly": True},
@@ -113,3 +121,20 @@ def test_tactile_kinematics_websocket_flow():
     # Verify board state
     board = client.get(f"/api/v1/boards/{board_id}").json()
     assert board["tokens"]["merisiel"]["x"] == 4
+
+
+BOARD_CAMPAIGN = "camp-board-fixture"
+
+
+@pytest.fixture(autouse=True)
+def _board_campaign_dm(spicedb):
+    """Make `user-test` the DM of the campaign that every board in this module belongs to."""
+    asyncio.run(
+        spicedb.write_relationship(
+            resource_type="campaign",
+            resource_id=BOARD_CAMPAIGN,
+            relation="dungeon_master",
+            subject_type="user",
+            subject_id="user-test",
+        )
+    )

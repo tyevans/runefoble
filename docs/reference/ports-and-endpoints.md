@@ -83,24 +83,26 @@ Campaign Lore routes require a verified bearer token, except `/health`, `/health
 | `the-watcher` | GET | `/the-watcher/regions/{region_id}/unrest` | Queries regional unrest score, security alert posture, and economic friction modifier (alias: `/api/v1/regions/{region_id}/unrest`, Zanzibar enforced) |
 | `game-session` | POST | `/api/v1/sessions/create` | Initializes a new event-sourced game session and links it to `campaign_id` in SpiceDB (`session` and `game_session` objects), so campaign members can observe and control it |
 | `game-session` | GET | `/api/v1/sessions/{session_id}` | Loads session state reconstituted from the event stream |
+| `game-session` | GET | `/api/v1/sessions/{session_id}/events` | Returns the session chronicle feed in commit order, read from the session event stream. Lines cover `StandInActionDecided`, `DiceRolled`, `SessionStarted`, and `SessionEnded`. Returns `[]` for a session with no such events. Gateway route requires `session.observe`. Returns 404 for an unknown session (TASK-0641) |
+| `game-session` | GET | `/api/v1/sessions/{session_id}/absentee-recap` | Returns the stand-in turns, penalties, and actions that the session recorded. Derived from stand-in actions only, never from fixed content. Returns an empty recap when no stand-in turn exists. Gateway route requires `session.observe`. Returns 404 for an unknown session (TASK-0641) |
 | `game-session` | POST | `/api/v1/sessions/{session_id}/start` | Transitions session from lobby to active and publishes `SessionStarted` event. Requires `session.control` |
 | `game-session` | POST | `/api/v1/sessions/{session_id}/join` | Seats the verified caller and their character in the session lobby. Requires `session.participate`. The body has no player id |
 | `game-session` | POST | `/api/v1/sessions/{session_id}/leave` | Records the verified caller's absence, toggling character for AI stand-in takeover. Requires `session.participate`. The body has no player id |
-| `game-session` | POST | `/api/v1/sessions/{session_id}/combat/start` | Starts combat encounter with initiative tracking and turn order |
-| `game-session` | POST | `/api/v1/sessions/{session_id}/combat/initiative` | Submits combatant initiative rolls |
-| `game-session` | POST | `/api/v1/sessions/{session_id}/combat/next-turn` | Advances initiative turn to next active combatant |
-| `game-session` | POST | `/api/v1/sessions/{session_id}/turns/auto-pilot` | Executes automated stand-in turn for absent player, records action, dispatches events, and advances turn (alias: `/api/v1/sessions/{session_id}/autopilot`) |
+| `game-session` | POST | `/api/v1/sessions/{session_id}/combat/start` | Starts combat encounter with initiative tracking and turn order. Requires `session.control` |
+| `game-session` | POST | `/api/v1/sessions/{session_id}/combat/initiative` | Submits combatant initiative rolls. Requires `session.control` |
+| `game-session` | POST | `/api/v1/sessions/{session_id}/combat/next-turn` | Advances initiative turn to next active combatant. Requires `session.control` |
+| `game-session` | POST | `/api/v1/sessions/{session_id}/turns/auto-pilot` | Executes automated stand-in turn for absent player, records action, dispatches events, and advances turn (alias: `/api/v1/sessions/{session_id}/autopilot`). Requires `session.control` |
 | `game-session` | POST | `/api/v1/sessions/{session_id}/lobby/readiness` | Records the verified caller's lobby readiness (`lobby` status only). Requires `session.participate`. Saved as `ReadinessToggled`; the session read model returns `lobby_readiness` |
 | `game-session` | POST | `/api/v1/sessions/{session_id}/lobby/character` | Records the character the verified caller brings to the lobby (`lobby` status only). Requires `session.participate`. Saved as `CharacterSelectedForLobby` |
-| `game-session` | POST | `/api/v1/sessions/{session_id}/roll` | Evaluates a dice roll and records it as `DiceRolled`. Returns 404 for an unknown session |
+| `game-session` | POST | `/api/v1/sessions/{session_id}/roll` | Evaluates a dice roll and records it as `DiceRolled` for the verified caller. Requires `session.participate`. The body has no roller id. An unknown session returns 403 |
 | `game-session` | POST | `/api/v1/sessions/{session_id}/hot-swap` | Hands off active turn and token control from AI stand-in to the verified caller mid-session (requires `session.participate` and `character.edit`) without disrupting combat round |
-| `game-session` | POST | `/api/v1/sessions/{session_id}/next-turn` | Advances the session turn counter and saves `TurnAdvanced`. Requires `active` status |
+| `game-session` | POST | `/api/v1/sessions/{session_id}/next-turn` | Advances the session turn counter and saves `TurnAdvanced`. Requires `active` status and `session.control` |
 | `game-session` | POST | `/api/v1/sessions/{session_id}/dm-override` | Records a DM override (`action`, `reason`, `payload`) as `DMOverrideApplied`. The override appears in `dm_overrides` on the session read model. Returns 404 for an unknown session (TASK-0581) |
 | `game-session` | POST | `/api/v1/sessions/{session_id}/atmosphere` | Sets the session location, lighting, mood, and ambient audio prompt as `AtmosphereUpdated`. The value appears in `atmosphere` on the session read model. Returns 404 for an unknown session (TASK-0581) |
-| `game-session` | POST | `/sessions/{session_id}/reactions/declare` | Halts active combat turn and initiates reaction window within 500ms (alias: `/api/v1/sessions/{session_id}/reactions/declare`) |
-| `game-session` | POST | `/sessions/{session_id}/reactions/ready-action` | Registers conditional ready-action trigger evaluated against combat events (alias: `/api/v1/sessions/{session_id}/reactions/ready-action`) |
-| `game-session` | POST | `/sessions/{session_id}/reactions/{reaction_id}/resolve` | Resolves or dismisses declared reaction interrupt, resuming active turn (alias: `/api/v1/sessions/{session_id}/reactions/{reaction_id}/resolve`) |
-| `game-session` | GET | `/sessions/{session_id}/reactions/active` | Retrieves current reaction pause state and registered ready actions (alias: `/api/v1/sessions/{session_id}/reactions/active`) |
+| `game-session` | POST | `/sessions/{session_id}/reactions/declare` | Halts active combat turn and initiates reaction window within 500ms (alias: `/api/v1/sessions/{session_id}/reactions/declare`). Requires `session.participate` |
+| `game-session` | POST | `/sessions/{session_id}/reactions/ready-action` | Registers conditional ready-action trigger evaluated against combat events (alias: `/api/v1/sessions/{session_id}/reactions/ready-action`). Requires `session.participate` |
+| `game-session` | POST | `/sessions/{session_id}/reactions/{reaction_id}/resolve` | Resolves or dismisses declared reaction interrupt, resuming active turn (alias: `/api/v1/sessions/{session_id}/reactions/{reaction_id}/resolve`). Requires `session.participate` |
+| `game-session` | GET | `/sessions/{session_id}/reactions/active` | Retrieves current reaction pause state and registered ready actions (alias: `/api/v1/sessions/{session_id}/reactions/active`). Requires `session.observe` |
 | `game-session` | POST | `/settlements` | Charters a new communal haven or outpost in a shared world (alias: `/api/v1/settlements`, Zanzibar enforced) |
 | `game-session` | GET | `/settlements/{settlement_id}` | Retrieves haven state, fortification ratings, and facility tiers (alias: `/api/v1/settlements/{settlement_id}`, Zanzibar enforced) |
 | `game-session` | POST | `/settlements/{settlement_id}/upgrade` | Upgrades haven workshop, sanctum, or fortifications tier (alias: `/api/v1/settlements/{settlement_id}/upgrade`, Zanzibar enforced) |
@@ -122,6 +124,8 @@ Campaign Lore routes require a verified bearer token, except `/health`, `/health
 | `game-session` | POST | `/api/v1/campaigns/{campaign_id}/sessions` | Creates a session or staging lobby (Zanzibar `run_session`) |
 | `game-session` | POST | `/api/v1/campaigns/{campaign_id}/roles` | Grants `dungeon_master`, `game_master`, `player`, or `spectator` and records the membership (Zanzibar `manage`). `owner` returns `422`. A failed write returns `503` |
 | `game-session` | GET | `/api/v1/campaigns/{campaign_id}/capabilities` | Returns the caller's `manage`, `run_session`, `play`, and `view` flags. Non-members receive all `false` |
+| `game-session` | GET | `/api/v1/profile` | Reads the caller's profile. Unedited fields show the verified token's username and email (owner: game_session, ADR-0015 a) |
+| `game-session` | PATCH | `/api/v1/profile` | Edits the caller's `display_name`, `avatar_url`, `bio`, or `email`. Only the fields sent change. Returns `409` on a concurrent edit |
 | `voice-agent` | POST | `/api/v1/voice/stream/chunk` | Streaming PCM/WAV chunk ingestion with sub-250ms VAD segmentation and Whisper STT. Returns `503` with `error: speech_engine_unavailable` when the configured engine cannot transcribe a completed utterance; publishes `VoiceTranscriptionFailed` to `runefoble.events.voice` and no `PlayerSpokeEvent` |
 | `voice-agent` | WS | `/api/v1/voice/stream/ws` | Real-time bidirectional WebSocket stream for continuous PCM audio frames and STT events. Sends `{"error": "speech_engine_unavailable", ...}` for a failed utterance and keeps the socket open |
 | `voice-agent` | POST | `/api/v1/voice/transcribe` | Transcribes player speech from `audio_base64` (STT port) or uses a non-empty typed `transcript`. Returns `source` (`audio` or `client_text`). Returns `422` when neither input is present or the audio is malformed, and `503` with `error: speech_engine_unavailable` when the engine fails. Emits `PlayerSpokeEvent` to Redis Streams only for non-empty text, and forwards that text to The Watcher. Never invents text |
@@ -142,15 +146,15 @@ Campaign Lore routes require a verified bearer token, except `/health`, `/health
 | `voice-agent` | POST | `/api/v1/voice/dsp/apply` | Applies DSP filters to supplied base64 PCM or WAV audio. Returns `422` when `audio_base64` is missing or invalid. The route never synthesises a carrier tone |
 | `voice-agent` | POST | `/api/v1/voice/dsp/condition` | Conditions speech text for affliction filters (for example `drunk`). Input: `text`, `filters`. Returns `original_text`, `conditioned_text`, `active_filters`, and `dsp_config`. Returns no audio. Called by `game-session` over HTTP at `RUNEFOBLE_VOICE_AGENT_URL` (`http://voice-agent:8005` in Helm) for drink rolls with `speech_text` |
 | `voice-agent` | GET | `/ui/manifest` | Discovers vendored microfrontends (`runefoble-voice-controls`, `runefoble-audio-indicator`, `runefoble-mobile-companion` [subviews: `audio-stream-controller`, `haptic-ping-panel`, `connection-status-badge`], `runefoble-voice-duplex-controls`) |
-| `board-state` | POST | `/api/v1/boards` | Creates the tactical grid aggregate with specified dimensions. This is the only route that creates a board. |
-| `board-state` | GET | `/api/v1/boards/{session_id}` | Retrieves tactical grid dimensions and placed token states. Returns `404` when no board exists. Never creates a board or adds tokens. |
+| `board-state` | POST | `/api/v1/boards` | Creates the tactical grid aggregate. This is the only route that creates a board. Needs a verified user token and `campaign_id` in the body (`400` when absent). The caller needs `campaign.run_session` (`403` otherwise). A second create for the same session returns `409`. The route then writes `board:<id>#campaign@campaign:<cid>`. |
+| `board-state` | GET | `/api/v1/boards/{session_id}` | Retrieves tactical grid dimensions and placed token states. Returns `404` when no board exists. Never creates a board or adds tokens. Secret traps, secret doors, and secret portals are absent unless the caller holds `board.view_secret_layer`. |
 | `board-state` | POST | `/api/v1/boards/{session_id}/tokens` | Places token onto tactical grid with bounds check and fog update. Returns `404` when no board exists; create the board with `POST /api/v1/boards` first. |
 | `board-state` | POST | `/api/v1/boards/{session_id}/tokens/{token_id}/move` | Moves token across grid, checks movement budget, and evaluates hazards (alias: `/api/v1/boards/{session_id}/move`) |
 | `board-state` | DELETE | `/api/v1/boards/{session_id}/tokens/{token_id}` | Removes a token from the tactical grid |
-| `board-state` | GET | `/api/v1/boards/{session_id}/visibility` | Computes Chebyshev fog-of-war masks and filters shrouded hostile tokens |
-| `board-state` | POST | `/api/v1/boards/{session_id}/terrain` | Configures cell elevation, terrain difficulty, and active hazard types |
-| `board-state` | POST | `/api/v1/boards/{session_id}/fog-of-war/reveal` | Manually reveals specified tactical grid coordinates from fog-of-war |
-| `board-state` | POST | `/api/v1/boards/{session_id}/fog-of-war/shroud` | Manually shrouds specified tactical grid coordinates under fog-of-war |
+| `board-state` | GET | `/api/v1/boards/{session_id}/visibility` | Computes Chebyshev fog-of-war masks and filters shrouded hostile tokens. The DM view needs `board.view_secret_layer`. There is no `is_dm` parameter |
+| `board-state` | POST | `/api/v1/boards/{session_id}/terrain` | Configures cell elevation, terrain difficulty, and active hazard types (needs `board.manage_traps`) |
+| `board-state` | POST | `/api/v1/boards/{session_id}/fog-of-war/reveal` | Manually reveals specified tactical grid coordinates from fog-of-war (needs `board.view_secret_layer`) |
+| `board-state` | POST | `/api/v1/boards/{session_id}/fog-of-war/shroud` | Manually shrouds specified tactical grid coordinates under fog-of-war (needs `board.view_secret_layer`) |
 | `board-state` | POST | `/api/v1/boards/{session_id}/tokens/{token_id}/preview` | Computes waypoint trajectory, 5-ft increments, terrain penalties, and hazard warnings (alias: `/api/v1/boards/{session_id}/preview`, `/preview-move`) |
 | `board-state` | POST | `/api/v1/boards/{session_id}/tokens/{token_id}/action` | Executes tactical token combat action (Dodge, Dash, Melee, Disengage, Cast; alias: `/api/v1/boards/{session_id}/actions`) |
 | `board-state` | POST | `/api/v1/boards/{session_id}/aoe/evaluate` | Evaluates rotatable AoE cone/sphere/line/cube geometry against grid tokens with 15-degree snapping. `origin_x` and `origin_y` are whole cell indices; the origin is the cell centre. Containment is shared with spell blooms (`board_state.geometry`) |
@@ -165,13 +169,13 @@ Campaign Lore routes require a verified bearer token, except `/health`, `/health
 | `board-state` | POST | `/api/v1/boards/{board_id}/physics/knockback` | Applies physical knockback impulse to miniature token, halting upon wall or elevation collisions |
 | `board-state` | POST | `/api/v1/board/{id}/import/uvtt` | Ingests Universal VTT (`.dd2vtt`) files, extracts walls/portals/lights, and stores map texture in Silo S3. Returns `404` when no board exists; create the board with `POST /api/v1/boards` first (alias: `/api/v1/boards/{id}/import/uvtt`) |
 | `board-state` | POST | `/api/v1/board/{id}/doors/{door_id}/toggle` | Toggles state of an interactive door or portal (alias: `/board/{id}/doors/{door_id}/toggle`) |
-| `board-state` | GET | `/api/v1/board/{id}/doors` | Queries interactive doors and secret portals on the board (alias: `/board/{id}/doors`) |
+| `board-state` | GET | `/api/v1/board/{id}/doors` | Queries interactive doors and portals. Secret ones need `board.view_secret_layer` (alias: `/board/{id}/doors`) |
 | `board-state` | POST | `/api/v1/board/{id}/lights` | Places or updates dynamic point light source (alias: `/board/{id}/lights`) |
 | `board-state` | GET | `/api/v1/board/{id}/lights` | Queries active dynamic point light sources on the board (alias: `/board/{id}/lights`) |
-| `board-state` | POST | `/api/v1/boards/{board_id}/traps` | Creates a secret DM spatial trap or trigger zone (DM only, alias: `/boards/{board_id}/traps`) |
-| `board-state` | GET | `/api/v1/boards/{board_id}/traps` | Retrieves board traps, filtering out secret traps for non-DM players (alias: `/boards/{board_id}/traps`) |
-| `board-state` | POST | `/api/v1/boards/{board_id}/switch-map` | Transitions board to a new battlemap and teleports party tokens atomically in a single event (DM only, alias: `/boards/{board_id}/switch-map`) |
-| `board-state` | POST | `/api/v1/boards/{board_id}/traps/{trap_id}/disarm` | Disarms an active trap on the tactical board (alias: `/boards/{board_id}/traps/{trap_id}/disarm`) |
+| `board-state` | POST | `/api/v1/boards/{board_id}/traps` | Creates a secret DM spatial trap or trigger zone (needs `board.manage_traps`, alias: `/boards/{board_id}/traps`) |
+| `board-state` | GET | `/api/v1/boards/{board_id}/traps` | Retrieves board traps. Without `board.view_secret_layer` the secret ones are absent, and a sprung one shows only its place (alias: `/boards/{board_id}/traps`) |
+| `board-state` | POST | `/api/v1/boards/{board_id}/switch-map` | Transitions board to a new battlemap and teleports party tokens atomically in a single event (needs `board.switch_map`, alias: `/boards/{board_id}/switch-map`) |
+| `board-state` | POST | `/api/v1/boards/{board_id}/traps/{trap_id}/disarm` | Disarms an active trap on the tactical board (needs `board.manage_traps`, alias: `/boards/{board_id}/traps/{trap_id}/disarm`) |
 | `board-state` | WS | `/ws/boards/{session_id}` | Real-time tactical board WebSocket stream for kinematic dragging, radial token actions, live rotatable AoE previews, and spell VFX |
 | `board-state` | GET | `/ui/manifest` | Discovers vendored microfrontends (`runefoble-board`, `runefoble-tactical-board`, `runefoble-map-uploader`, `runefoble-radial-menu`, `runefoble-aoe-template`) |
 | `character-sheet` | GET | `/api/v1/characters` | Lists the characters the verified caller may `view`. Optional `campaignId` query filters one campaign's party |
@@ -268,6 +272,8 @@ Campaign Lore routes require a verified bearer token, except `/health`, `/health
 | `gateway-api` | POST | `/api/v1/campaigns/join` | Proxies to `game_session`: redeems an invite and records membership. A used-up invite returns `409` |
 | `gateway-api` | GET | `/api/v1/campaigns/{campaign_id}/members` | Proxies to `game_session`: owner and members (requires `view`). The gateway adds `character_name` from its character store |
 | `gateway-api` | DELETE | `/api/v1/campaigns/{campaign_id}/members/{user_id}` | Proxies to `game_session`: removes a member and revokes campaign relations (requires `manage`). The owner cannot be removed |
+| `gateway-api` | GET | `/api/v1/profile` | Proxies to `game_session`: reads the caller's profile. The gateway holds no profile data (TASK-0742) |
+| `gateway-api` | PATCH | `/api/v1/profile` | Proxies to `game_session`: edits the caller's profile fields (TASK-0742) |
 | `gateway-api` | GET | `/api/v1/campaigns/{campaign_id}/capabilities` | Proxies to `game_session`: the caller's `manage`, `run_session`, `play`, and `view` flags. Non-members get all `false` |
 | `gateway-api` | GET | `/api/v1/campaigns/{campaign_id}/sessions` | Proxies to `game_session`: sessions and staging lobbies of a campaign (requires `view`) |
 | `gateway-api` | POST | `/api/v1/campaigns/{campaign_id}/sessions` | Proxies to `game_session`: creates a session or staging lobby (requires `run_session`). Returns `201` |
@@ -300,7 +306,7 @@ Campaign Lore routes require a verified bearer token, except `/health`, `/health
 | `gateway-api` | POST | `/api/v1/sessions/{session_id}/atmosphere` | Updates campaign sensory atmosphere, lighting, and ambient audio (requires `run_session`) |
 | `gateway-api` | POST | `/api/v1/board/tokens/{token_id}/move` | Moves a tactical token on the board (requires `move` on `board_token`) |
 | `gateway-api` | GET | `/api/v1/board/tokens/{token_id}` | Inspects tactical token state (requires `inspect` on `board_token`) |
-| `gateway-api` | WS | `/ws/voice/{session_id}` | Zanzibar-authorized live bidirectional WebRTC voice signaling stream |
+| `gateway-api` | WS | `/ws/voice/{session_id}` | Live bidirectional WebRTC voice signaling stream. Needs `session.observe` |
 | `gateway-api` | WS | `/ws/mobile-companion/{session_id}` | Zanzibar-protected low-bandwidth mobile WebRTC companion and haptic gateway |
 | `gateway-api` | WS | `/ws/campaigns/{campaign_id}` | Real-time Zanzibar-protected campaign WebSocket stream for party state synchronization |
 | `gateway-api` | GET | `/api/v1/voice/rooms/{session_id}` | Retrieves active WebRTC voice room participants, roles, and audio telemetry |
@@ -334,7 +340,7 @@ Campaign Lore routes require a verified bearer token, except `/health`, `/health
 
 ## Gateway WebSocket Authentication
 
-Every gateway WebSocket route (`/ws/*` and `/overlay/ws/*`) takes the caller's identity only from the `runefoble.bearer.<jwt>` subprotocol. The client offers `runefoble.v1` and `runefoble.bearer.<jwt>`. The gateway accepts the handshake with `runefoble.v1`. A handshake without a verified token closes with code `1008` before accept. Identity in the query string (`user_id`, `token`) or in headers (`X-User-Id`, `Authorization`) is refused. A token that is valid but lacks SpiceDB permission is admitted, then receives a `PERMISSION_DENIED` frame and close code `4003`.
+Every gateway WebSocket route (`/ws/*` and `/overlay/ws/*`) takes the caller's identity only from the `runefoble.bearer.<jwt>` subprotocol. The client offers `runefoble.v1` and `runefoble.bearer.<jwt>`. The gateway accepts the handshake with `runefoble.v1`. A handshake without a verified token closes with code `1008` before accept. Identity in the query string (`user_id`, `token`) or in headers (`X-User-Id`, `Authorization`) is refused. A token that is valid but lacks the object permission is refused. `/ws/campaigns/{id}` admits it, sends a `PERMISSION_DENIED` frame, and closes with `4003`. The session sockets (`/ws/session`, `/ws/voice`, `/ws/mobile-companion`, `/ws/overlay`, `/ws/spectator`) need `session.observe` and close with `4403` before accept. They close with `1011` when SpiceDB is unavailable. Overlay and spectator clients that send frames need `session.participate`. `POST /api/v1/mobile/companion/{id}/whisper` and `/turn-alert` need `session.control`. `POST /api/v1/watcher/speak-and-act` needs `session.participate`. All of these return `403` when refused.
 
 ## Voice Agent Identity (TASK-0530)
 

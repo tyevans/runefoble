@@ -7,8 +7,8 @@ The FastMCP Gateway (`gateway/mcp`) exposes Runefoble tabletop actions, spatial 
 The gateway server entrypoint (`gateway/mcp/src/gateway_mcp/server.py`) operates as a lightweight orchestration shell (< 100 lines) delegating domain capabilities to modular sub-packages:
 
 gateway/mcp/src/gateway_mcp/
-├── clients/               # HTTP clients for owning services (board_state, character_sheet, game_session, rules_compendium)
-│   └── services.py        # Typed async client and ServiceError types
+├── caller.py              # Reads the MCP caller's bearer token from the request
+├── owning_services.py     # Route helpers for owning services (board_state, character_sheet, game_session, rules_compendium, the_watcher) over the shared service client
 ├── dynamic/               # Dynamic tool registry package (< 140 lines per module)
 │   ├── auth.py            # SpiceDB Zanzibar authorization guard & relationship sync
 │   ├── builder.py         # Signature builder and callable adapter
@@ -66,7 +66,7 @@ All tools are registered onto FastMCP and callable by agents or action orchestra
 | `modify_character_hp` | `character_id: str`, `delta: int`, `damage_type: str`, `reason: str` | Apply damage (negative `delta`) or healing through `character_sheet` (`POST /api/v1/characters/{character_id}/health`). Returns the stored `current_hp`, `max_hp`, and stabilization state. The `damage_type` and `reason` are recorded in the change source. |
 | `add_condition` / `apply_condition` | `character_id: str`, `condition: str`, `duration_rounds: int`, `source: str` | Impose a status condition through `character_sheet` (`POST /api/v1/characters/{character_id}/conditions`). Returns the active conditions. Both tools share one route. |
 | `query_encounter_state` | `encounter_id: str` | Read an encounter. Round, active combatant, and turn order come from `game_session` (`GET /api/v1/sessions/{session_id}/combat`). Tokens, grid, and active hazards come from `board_state`. The `encounter_id` is the game session id. Returns `in_combat`, `round`, `active_combatant_id`, `turn_order`, `session_id`, `grid_dimensions`, `tokens`, and `active_hazards`. |
-| `create_encounter` | `session_id: str`, `enemies: list[{name, x, y, hp?}]` | Start combat in `game_session` (`POST /api/v1/sessions/{session_id}/combat/start`) with one combatant per enemy. Fetch or create the 10x8 board for the session in `board_state`, then place each enemy as a monster token that is not friendly. The `session_id` is the encounter id. Returns `encounter_id` (equal to `session_id`), `grid`, `enemies_spawned`, `in_combat`, `round`, `active_combatant_id`, and `turn_order`. An unknown or unavailable session returns a tool error and creates no board. |
+| `create_encounter` | `session_id: str`, `campaign_id: str?`, `enemies: list[{name, x, y, hp?}]` | Start combat in `game_session` (`POST /api/v1/sessions/{session_id}/combat/start`) with one combatant per enemy. Fetch or create the 10x8 board for the session in `board_state`. A new board needs `campaign_id`, and the caller needs `campaign.run_session` on it (`board_state` returns `400` or `403` otherwise), then place each enemy as a monster token that is not friendly. The `session_id` is the encounter id. Returns `encounter_id` (equal to `session_id`), `grid`, `enemies_spawned`, `in_combat`, `round`, `active_combatant_id`, and `turn_order`. An unknown or unavailable session returns a tool error and creates no board. |
 | `narrate_with_the_watcher` | `campaign_id: str`, `session_id: str`, `scene_prompt: str`, `player_actions: str`, `scene_environment: str`, `tone: str` (default `dark_fantasy`) | Call The Watcher route `POST /api/v1/watcher/narrate`. Returns The Watcher response unchanged: `narrative`, `sensory_details`, `suggested_dm_prompts`, `tension_level`, `source`, and `degraded`. The gateway adds no narration of its own. If the inference worker fails, the tool returns an error. |
 | `execute_agent_action_plan` | `session_id: str`, `campaign_id: str`, `actions: list[{tool, actor_name, description?, parameters}]` | Propose each step to The Watcher (`POST /api/v1/watcher/actions/propose`), in order. Each step returns the pending action that The Watcher stored. The DM can veto or change a pending action before it takes effect. No board state changes in this tool. Planning stops at the first failed step. An unknown tool name fails its step before any call. |
 | `query_monster_stat_block` | `monster_name: str` | Read the monster stat block from `rules_compendium` (`GET /api/v1/compendium/monsters/{name}`). An unknown name returns a tool error. |
@@ -95,7 +95,7 @@ A new tuple write that fails returns `503` and registers nothing. `POST /mcp/too
 
 ### Upstream Service Calls
 
-Board, encounter, and character tools hold no board, combat, or character state. They call the owning services over HTTP through `gateway/mcp/src/gateway_mcp/clients/services.py`:
+Board, encounter, and character tools hold no board, combat, or character state. They call the owning services over HTTP through `gateway/mcp/src/gateway_mcp/owning_services.py`. That module calls the shared `ServiceClient` from `runefoble_platform.service_client`, so each call sends the service credential and the W3C trace context (see [Service Client](service-client.md)). Each call runs in a client span. Agent-supplied path segments are built with `path(...)`:
 
 | Setting | Environment Variable | Default | Owning Service |
 |---|---|---|---|

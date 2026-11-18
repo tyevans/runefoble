@@ -64,7 +64,7 @@ The gateway MCP reads its upstream addresses from the environment:
 | `CHARACTER_SHEET_URL` | `character_sheet` |
 | `RULES_COMPENDIUM_URL` | `rules_compendium` |
 
-`ServiceClient` reads these settings when it is created. Each tool call creates a client. A test can therefore set the variable with `monkeypatch.setenv` inside the test body.
+`OwningServices` reads these settings on each tool call. The shared service client is reused per event loop, service, and base URL. A test can therefore set the variable with `monkeypatch.setenv` inside the test body, and a new base URL starts a new client.
 
 Some settings are read once, at import time, into a module constant. Setting the variable in a test does not change them. Section "Known gaps" lists them. Do not patch these constants from a test. Fix the code so that it reads the setting at call time.
 

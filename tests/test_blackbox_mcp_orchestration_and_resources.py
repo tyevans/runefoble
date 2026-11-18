@@ -6,6 +6,7 @@ an external process boundary. Setup runs through public routes only. Assertions 
 MCP tool or resource output, or a public service route.
 """
 
+import asyncio
 import json
 from collections.abc import Iterator
 from typing import Any
@@ -14,8 +15,8 @@ from uuid import uuid4
 import httpx
 import pytest
 from fastapi import FastAPI, Request
-from gateway_mcp.clients import ServiceClient
-from gateway_mcp.clients.caller import caller_bearer
+from gateway_mcp.caller import caller_bearer
+from gateway_mcp.owning_services import OwningServices
 from gateway_mcp.server import mcp
 from mcp.shared.exceptions import McpError
 from mcp.types import CallToolResult
@@ -235,7 +236,8 @@ async def test_blackbox_encounter_resource_returns_tokens_from_board_state(
     session_id = _create_session(services["session"], "Red Larch Encounter")
     with httpx.Client(base_url=services["board"], headers=bearer("user-test")) as http:
         created = http.post(
-            "/api/v1/boards", json={"session_id": session_id, "cols": 10, "rows": 8}
+            "/api/v1/boards",
+            json={"campaign_id": BOARD_CAMPAIGN, "session_id": session_id, "cols": 10, "rows": 8},
         )
         assert created.status_code == 200, created.text
         placed = http.post(
@@ -396,13 +398,13 @@ async def test_blackbox_monster_stat_block_compendium_down_is_tool_error(
 
 @pytest.mark.asyncio
 async def test_blackbox_service_client_forwards_bearer_to_upstream():
-    """Verify the shared client sends the caller bearer and no other credential."""
+    """Verify the owning-service calls send the caller bearer and no other credential."""
     from gateway_mcp.settings import GatewayMcpSettings
 
     with serve(_echo_authorization_app()) as board_url:
         settings = GatewayMcpSettings(board_state_url=board_url)
-        with_token = await ServiceClient(settings, bearer="token-abc").get_board("s-1")
-        without_token = await ServiceClient(settings).get_board("s-1")
+        with_token = await OwningServices(settings, bearer="token-abc").get_board("s-1")
+        without_token = await OwningServices(settings).get_board("s-1")
 
     assert with_token["authorization"] == "Bearer token-abc"
     assert without_token["authorization"] is None
@@ -435,3 +437,20 @@ def _owned_campaign(client) -> str:
     res = client.post("/api/v1/campaigns", json={"title": "Owned Campaign"})
     assert res.status_code == 201, res.text
     return res.json()["id"]
+
+
+BOARD_CAMPAIGN = "camp-board-fixture"
+
+
+@pytest.fixture(autouse=True)
+def _board_campaign_dm(spicedb):
+    """Make `user-test` the DM of the campaign that every board in this module belongs to."""
+    asyncio.run(
+        spicedb.write_relationship(
+            resource_type="campaign",
+            resource_id=BOARD_CAMPAIGN,
+            relation="dungeon_master",
+            subject_type="user",
+            subject_id="user-test",
+        )
+    )

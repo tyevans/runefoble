@@ -5,6 +5,7 @@ Governed by:
 - Hard Invariant 7: Blackbox TDD with frontdoor setup (HTTP only)
 """
 
+import asyncio
 from typing import Any
 from uuid import uuid4
 
@@ -19,7 +20,13 @@ BOARD_ROWS = 20
 def board_id(client: TestClient) -> str:
     board = f"board-{uuid4().hex[:8]}"
     res = client.post(
-        "/api/v1/boards", json={"board_id": board, "cols": BOARD_COLS, "rows": BOARD_ROWS}
+        "/api/v1/boards",
+        json={
+            "campaign_id": BOARD_CAMPAIGN,
+            "board_id": board,
+            "cols": BOARD_COLS,
+            "rows": BOARD_ROWS,
+        },
     )
     assert res.status_code == 200, res.text
     return board
@@ -96,3 +103,20 @@ def test_socket_aoe_evaluate_rejects_fractional_origin(client: TestClient, board
 
     assert frame["type"] == "error"
     assert frame["status"] == 422
+
+
+BOARD_CAMPAIGN = "camp-board-fixture"
+
+
+@pytest.fixture(autouse=True)
+def _board_campaign_dm(spicedb):
+    """Make `user-test` the DM of the campaign that every board in this module belongs to."""
+    asyncio.run(
+        spicedb.write_relationship(
+            resource_type="campaign",
+            resource_id=BOARD_CAMPAIGN,
+            relation="dungeon_master",
+            subject_type="user",
+            subject_id="user-test",
+        )
+    )

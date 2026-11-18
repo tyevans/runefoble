@@ -1,8 +1,10 @@
 """Blackbox tests for ephemeral decal decay, animation finished lifecycle, and particle contracts."""
 
+import asyncio
 from typing import Any
 from uuid import uuid4
 
+import pytest
 from fastapi.testclient import TestClient
 
 
@@ -11,7 +13,10 @@ def test_ephemeral_decal_decay_over_two_rounds(
 ) -> None:
     """Verify ephemeral scorched earth decals decay and naturally fade after 2 rounds."""
     board_id = f"board-{uuid4().hex[:8]}"
-    client.post("/api/v1/boards", json={"board_id": board_id, "cols": 10, "rows": 10})
+    client.post(
+        "/api/v1/boards",
+        json={"campaign_id": BOARD_CAMPAIGN, "board_id": board_id, "cols": 10, "rows": 10},
+    )
     client.post(
         f"/api/v1/boards/{board_id}/spells/cast",
         json={**fireball_payload, "target_x": 4, "target_y": 4, "radius_ft": 15},
@@ -34,7 +39,10 @@ def test_ephemeral_decal_decay_over_two_rounds(
 def test_vfx_animation_finished_endpoint(client: TestClient) -> None:
     """Verify POST /api/v1/boards/{session_id}/vfx/finish persists and acknowledges completion."""
     board_id = f"board-{uuid4().hex[:8]}"
-    client.post("/api/v1/boards", json={"board_id": board_id, "cols": 8, "rows": 8})
+    client.post(
+        "/api/v1/boards",
+        json={"campaign_id": BOARD_CAMPAIGN, "board_id": board_id, "cols": 8, "rows": 8},
+    )
 
     res = client.post(
         f"/api/v1/boards/{board_id}/vfx/finish",
@@ -49,3 +57,20 @@ def test_vfx_animation_finished_endpoint(client: TestClient) -> None:
     assert res.status_code == 200
     assert res.json()["status"] == "finished"
     assert res.json()["animation_id"] == "vfx-test-1234"
+
+
+BOARD_CAMPAIGN = "camp-board-fixture"
+
+
+@pytest.fixture(autouse=True)
+def _board_campaign_dm(spicedb):
+    """Make `user-test` the DM of the campaign that every board in this module belongs to."""
+    asyncio.run(
+        spicedb.write_relationship(
+            resource_type="campaign",
+            resource_id=BOARD_CAMPAIGN,
+            relation="dungeon_master",
+            subject_type="user",
+            subject_id="user-test",
+        )
+    )

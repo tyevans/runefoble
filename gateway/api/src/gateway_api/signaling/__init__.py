@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from gateway_api.signaling.auth import (
     extract_peer_and_role,
-    validate_voice_connection,
 )
 from gateway_api.signaling.endpoint import (
     voice_signaling_websocket_endpoint,
@@ -36,6 +35,5 @@ __all__ = [
     "handle_sdp_and_ice",
     "handle_telemetry",
     "signaling_manager",
-    "validate_voice_connection",
     "voice_signaling_websocket_endpoint",
 ]

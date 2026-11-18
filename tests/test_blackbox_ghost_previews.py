@@ -4,6 +4,7 @@ Governed by Hard Invariant 7 (Blackbox TDD with Frontdoor Setup).
 Interacts strictly through public HTTP routes and WebSockets.
 """
 
+import asyncio
 import time
 from uuid import uuid4
 
@@ -35,7 +36,10 @@ def test_http_preview_endpoint_waypoint_measuring_and_terrain_hazards():
     board_id = f"board-{uuid4().hex[:8]}"
 
     # 1. Create 10x10 tactical board
-    res = client.post("/api/v1/boards", json={"board_id": board_id, "cols": 10, "rows": 10})
+    res = client.post(
+        "/api/v1/boards",
+        json={"campaign_id": BOARD_CAMPAIGN, "board_id": board_id, "cols": 10, "rows": 10},
+    )
     assert res.status_code == 200, res.text
 
     # 2. Place token 'valeros' at (1, 1)
@@ -117,7 +121,10 @@ def test_preview_and_move_report_the_same_hazard_dice_for_every_hazard_type(
     client = TestClient(board_app, headers=bearer("user-test"))
     board_id = f"board-{uuid4().hex[:8]}"
 
-    client.post("/api/v1/boards", json={"board_id": board_id, "cols": 10, "rows": 10})
+    client.post(
+        "/api/v1/boards",
+        json={"campaign_id": BOARD_CAMPAIGN, "board_id": board_id, "cols": 10, "rows": 10},
+    )
     client.post(
         f"/api/v1/boards/{board_id}/tokens",
         json={"token_id": "hero", "name": "Hero", "x": 1, "y": 1, "is_friendly": True},
@@ -147,7 +154,10 @@ def test_preview_reports_the_hazard_a_move_crosses_when_the_token_lands_elsewher
     client = TestClient(board_app, headers=bearer("user-test"))
     board_id = f"board-{uuid4().hex[:8]}"
 
-    client.post("/api/v1/boards", json={"board_id": board_id, "cols": 10, "rows": 10})
+    client.post(
+        "/api/v1/boards",
+        json={"campaign_id": BOARD_CAMPAIGN, "board_id": board_id, "cols": 10, "rows": 10},
+    )
     client.post(
         f"/api/v1/boards/{board_id}/tokens",
         json={"token_id": "hero", "name": "Hero", "x": 1, "y": 1, "is_friendly": True},
@@ -176,7 +186,10 @@ def test_websocket_spoken_ghost_preview_and_instant_confirmation():
     client = TestClient(board_app, headers=bearer("user-test"))
     board_id = f"board-{uuid4().hex[:8]}"
 
-    client.post("/api/v1/boards", json={"board_id": board_id, "cols": 10, "rows": 10})
+    client.post(
+        "/api/v1/boards",
+        json={"campaign_id": BOARD_CAMPAIGN, "board_id": board_id, "cols": 10, "rows": 10},
+    )
     client.post(
         f"/api/v1/boards/{board_id}/tokens",
         json={"token_id": "kyra", "name": "Kyra", "x": 2, "y": 2, "is_friendly": True},
@@ -245,7 +258,10 @@ def test_websocket_ghost_preview_cancellation_preserves_original_state():
     client = TestClient(board_app, headers=bearer("user-test"))
     board_id = f"board-{uuid4().hex[:8]}"
 
-    client.post("/api/v1/boards", json={"board_id": board_id, "cols": 10, "rows": 10})
+    client.post(
+        "/api/v1/boards",
+        json={"campaign_id": BOARD_CAMPAIGN, "board_id": board_id, "cols": 10, "rows": 10},
+    )
     client.post(
         f"/api/v1/boards/{board_id}/tokens",
         json={"token_id": "merisiel", "name": "Merisiel", "x": 3, "y": 3, "is_friendly": True},
@@ -342,3 +358,20 @@ def test_gateway_campaign_websocket_ghost_preview_authorization():
         assert err["type"] == "error"
         assert err["code"] == "PERMISSION_DENIED"
         assert err["action"] == "ghost_preview"
+
+
+BOARD_CAMPAIGN = "camp-board-fixture"
+
+
+@pytest.fixture(autouse=True)
+def _board_campaign_dm(spicedb):
+    """Make `user-test` the DM of the campaign that every board in this module belongs to."""
+    asyncio.run(
+        spicedb.write_relationship(
+            resource_type="campaign",
+            resource_id=BOARD_CAMPAIGN,
+            relation="dungeon_master",
+            subject_type="user",
+            subject_id="user-test",
+        )
+    )

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from uuid import uuid4
 
 import pytest
@@ -192,7 +193,13 @@ async def test_frontdoor_board_endpoints():
         transport=transport, base_url="http://test", headers=bearer("user-test")
     ) as client:
         created = await client.post(
-            "/api/v1/boards", json={"session_id": "session-test-modular", "cols": 12, "rows": 12}
+            "/api/v1/boards",
+            json={
+                "campaign_id": BOARD_CAMPAIGN,
+                "session_id": "session-test-modular",
+                "cols": 12,
+                "rows": 12,
+            },
         )
         assert created.status_code == 200
         # Get board state
@@ -224,3 +231,20 @@ async def test_frontdoor_board_endpoints():
             json={"x": 3, "y": 3, "elevation": 1, "terrain_type": "stone", "hazard": None},
         )
         assert terrain_res.status_code == 200
+
+
+BOARD_CAMPAIGN = "camp-board-fixture"
+
+
+@pytest.fixture(autouse=True)
+def _board_campaign_dm(spicedb):
+    """Make `user-test` the DM of the campaign that every board in this module belongs to."""
+    asyncio.run(
+        spicedb.write_relationship(
+            resource_type="campaign",
+            resource_id=BOARD_CAMPAIGN,
+            relation="dungeon_master",
+            subject_type="user",
+            subject_id="user-test",
+        )
+    )

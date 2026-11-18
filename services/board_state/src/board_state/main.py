@@ -40,6 +40,8 @@ from board_state.routers import (
 from board_state.routers.boards import get_ui_manifest
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+from runefoble_auth.authz_http import authz_unavailable_handler, install_authz_error_handlers
+from runefoble_auth.errors import AuthzWriteError
 from runefoble_platform.event_publish import (
     event_publish_failures,
     install_publish_failure_handler,
@@ -65,6 +67,8 @@ app.include_router(physics_router)
 app.include_router(traps_router)
 app.include_router(uvtt_import_router)
 install_publish_failure_handler(app)
+install_authz_error_handlers(app)
+app.add_exception_handler(AuthzWriteError, authz_unavailable_handler)
 
 
 @app.exception_handler(BoardNotFoundError)

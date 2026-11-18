@@ -90,10 +90,11 @@ def test_dev_signed_token_is_refused_by_profile(signing_issuer) -> None:
     assert res.status_code == 401
 
 
-def test_signed_token_still_reads_profile(signing_issuer) -> None:
+def test_signed_token_still_reads_profile(trusted_ws_issuer, game_session_upstream) -> None:
     """The profile route stays on the verified principal and accepts a Zitadel-signed token."""
-    token = signing_issuer.mint("user_valeros")
-    res = client.get("/api/v1/profile", headers={"Authorization": f"Bearer {token}"})
+    token = trusted_ws_issuer.mint("user_valeros")
+    with TestClient(app) as gateway_client:
+        res = gateway_client.get("/api/v1/profile", headers={"Authorization": f"Bearer {token}"})
     assert res.status_code == 200
     assert res.json()["user_id"] == "user_valeros"
     assert "roles" not in res.json()

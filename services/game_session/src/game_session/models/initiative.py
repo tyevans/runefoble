@@ -16,7 +16,6 @@ class InitiativeRollRequest(BaseModel):
 
 class RollDiceRequest(BaseModel):
     formula: str = "1d20"
-    roller_id: str = "player"
     roller_name: str = "Player"
     roll_type: str = "general"
 

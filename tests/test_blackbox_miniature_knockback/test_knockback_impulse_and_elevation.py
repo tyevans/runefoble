@@ -9,9 +9,11 @@ Governed by:
 
 from __future__ import annotations
 
+import asyncio
 from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
+import pytest
 from board_state.dependencies import repo
 from fastapi.testclient import TestClient
 from runefoble_events.events import PhysicsCollisionOccurred, TokenMoved
@@ -23,7 +25,12 @@ def _create_board(client: TestClient, cols: int = 10, rows: int = 10) -> str:
     """Helper to create a fresh tactical board via public frontdoor."""
     resp = client.post(
         "/api/v1/boards",
-        json={"cols": cols, "rows": rows, "session_id": f"session-knockback-{uuid4()}"},
+        json={
+            "campaign_id": BOARD_CAMPAIGN,
+            "cols": cols,
+            "rows": rows,
+            "session_id": f"session-knockback-{uuid4()}",
+        },
     )
     assert resp.status_code == 200, resp.text
     return resp.json()["board_id"]
@@ -271,3 +278,20 @@ def test_knockback_websocket_broadcast(
         assert payload["status"] == "settled"
         assert payload["knockback"]["token_id"] == "broadcast-tok"
         assert payload["knockback"]["to_y"] == 3
+
+
+BOARD_CAMPAIGN = "camp-board-fixture"
+
+
+@pytest.fixture(autouse=True)
+def _board_campaign_dm(spicedb):
+    """Make `user-test` the DM of the campaign that every board in this module belongs to."""
+    asyncio.run(
+        spicedb.write_relationship(
+            resource_type="campaign",
+            resource_id=BOARD_CAMPAIGN,
+            relation="dungeon_master",
+            subject_type="user",
+            subject_id="user-test",
+        )
+    )

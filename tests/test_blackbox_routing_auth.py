@@ -74,10 +74,11 @@ def test_node_blackbox_routing_auth_suite_execution() -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_gateway_auth_frontdoors(client: TestClient, signing_issuer) -> None:
+def test_gateway_auth_frontdoors(client: TestClient, trusted_ws_issuer) -> None:
     """Verify Gateway API provides required frontdoor endpoints for auth workflows."""
-    # Test authenticated profile retrieval with a signed bearer token
-    headers = {"Authorization": f"Bearer {signing_issuer.mint('user-marcus')}"}
+    # Test authenticated profile retrieval with a signed bearer token. game_session serves the
+    # profile and verifies the token itself (ADR-0015 c), so the issuer must be trusted there too.
+    headers = {"Authorization": f"Bearer {trusted_ws_issuer.mint('user-marcus')}"}
     res = client.get("/api/v1/profile", headers=headers)
     assert res.status_code == 200
     user_data = res.json()

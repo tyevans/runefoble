@@ -4,6 +4,7 @@ Ensures zero contract regressions, public HTTP frontdoor reachability, OpenAPI s
 and strict compliance with Hard Invariant 6 (file length < 500 lines).
 """
 
+import asyncio
 from uuid import uuid4
 
 import pytest
@@ -57,7 +58,8 @@ def test_board_state_spatial_frontdoor(board_client):
 
     board_id = f"board-{uuid4().hex[:8]}"
     create_res = board_client.post(
-        "/api/v1/boards", json={"board_id": board_id, "cols": 12, "rows": 12}
+        "/api/v1/boards",
+        json={"campaign_id": BOARD_CAMPAIGN, "board_id": board_id, "cols": 12, "rows": 12},
     )
     assert create_res.status_code == 200
     get_res = board_client.get(f"/api/v1/boards/{board_id}")
@@ -68,7 +70,10 @@ def test_board_state_spatial_frontdoor(board_client):
 def test_board_state_tokens_frontdoor(board_client):
     """Verify token placement, movement, trajectory previews, and removal frontdoors."""
     board_id = f"board-{uuid4().hex[:8]}"
-    board_client.post("/api/v1/boards", json={"board_id": board_id, "cols": 12, "rows": 12})
+    board_client.post(
+        "/api/v1/boards",
+        json={"campaign_id": BOARD_CAMPAIGN, "board_id": board_id, "cols": 12, "rows": 12},
+    )
 
     tok_res = board_client.post(
         f"/api/v1/boards/{board_id}/tokens",
@@ -96,7 +101,10 @@ def test_board_state_tokens_frontdoor(board_client):
 def test_board_state_terrain_frontdoor(board_client):
     """Verify terrain hazards and fog-of-war visibility frontdoors."""
     board_id = f"board-{uuid4().hex[:8]}"
-    board_client.post("/api/v1/boards", json={"board_id": board_id, "cols": 12, "rows": 12})
+    board_client.post(
+        "/api/v1/boards",
+        json={"campaign_id": BOARD_CAMPAIGN, "board_id": board_id, "cols": 12, "rows": 12},
+    )
 
     terrain_res = board_client.post(
         f"/api/v1/boards/{board_id}/terrain",
@@ -123,7 +131,10 @@ def test_board_state_terrain_frontdoor(board_client):
 def test_board_state_previews_modular_frontdoors(board_client):
     """Verify previews REST and WebSocket frontdoors after modular router decomposition."""
     board_id = f"board-{uuid4().hex[:8]}"
-    board_client.post("/api/v1/boards", json={"board_id": board_id, "cols": 10, "rows": 10})
+    board_client.post(
+        "/api/v1/boards",
+        json={"campaign_id": BOARD_CAMPAIGN, "board_id": board_id, "cols": 10, "rows": 10},
+    )
     board_client.post(
         f"/api/v1/boards/{board_id}/tokens",
         json={"token_id": "valeros", "name": "Valeros", "x": 2, "y": 2, "is_friendly": True},
@@ -194,3 +205,20 @@ def test_board_state_previews_modular_frontdoors(board_client):
         cancel_msg = ws.receive_json()
         assert cancel_msg["type"] == "preview_cancelled"
         assert cancel_msg["token_id"] == "valeros"
+
+
+BOARD_CAMPAIGN = "camp-board-fixture"
+
+
+@pytest.fixture(autouse=True)
+def _board_campaign_dm(spicedb):
+    """Make `user-test` the DM of the campaign that every board in this module belongs to."""
+    asyncio.run(
+        spicedb.write_relationship(
+            resource_type="campaign",
+            resource_id=BOARD_CAMPAIGN,
+            relation="dungeon_master",
+            subject_type="user",
+            subject_id="user-test",
+        )
+    )

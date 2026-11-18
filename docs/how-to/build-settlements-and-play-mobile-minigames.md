@@ -168,18 +168,20 @@ Connect to table channels at `/ws/establishments/{establishment_id}/tables/{tabl
 
 ```json
 // 1. Join Table
-{ "action": "join", "player_id": "kip", "name": "Kip", "chips": 100, "game_type": "darts" }
+{ "action": "join", "name": "Kip", "chips": 100, "game_type": "darts" }
 
 // 2. Place Bet
-{ "action": "bet", "player_id": "kip", "amount": 10, "bet_type": "straight", "target": 17 }
+{ "action": "bet", "amount": 10, "bet_type": "straight", "target": 17 }
 
 // 3. Game Actions (dispatched to all connected mobile clients < 150ms)
-{ "action": "throw_dart", "player_id": "kip", "vx": 0.5, "vy": -2.1 }
-{ "action": "spin_roulette", "winning_number": 17 }
-{ "action": "bid", "player_id": "kip", "quantity": 3, "face": 4 }
-{ "action": "challenge", "challenger_id": "sam" }
-{ "action": "roll_craps", "dice": [3, 4] }
+{ "action": "throw_dart", "vx": 0.5, "vy": -2.1 }
+{ "action": "spin_roulette" }
+{ "action": "bid", "quantity": 3, "face": 4 }
+{ "action": "challenge" }
+{ "action": "roll_craps" }
 ```
+
+The server acts for the verified socket principal. Messages carry no player id, and the server ignores `player_id` and `challenger_id` fields. The server rolls the roulette wheel and the craps dice. It ignores `winning_number` and `dice` fields. Both socket paths check `establishment.play` on the establishment that the table names. The standalone path has no `est-default` exemption. A path with a different establishment id closes with `TABLE_NOT_FOUND`.
 
 ---
 

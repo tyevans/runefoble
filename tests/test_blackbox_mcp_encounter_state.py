@@ -5,6 +5,7 @@ routes served on loopback ports. The MCP tool reads round and turn order from
 GET /api/v1/sessions/{session_id}/combat and tokens from board_state.
 """
 
+import asyncio
 import json
 from collections.abc import Iterator
 from typing import Any
@@ -61,7 +62,7 @@ def encounter(upstreams: dict[str, str], monkeypatch: pytest.MonkeyPatch) -> str
     monkeypatch.setenv("BOARD_STATE_URL", upstreams["board"])
     monkeypatch.setenv("GAME_SESSION_URL", upstreams["session"])
 
-    auth = {"Authorization": f"Bearer {SIGNING_ISSUER.mint('encounter-dm')}"}
+    auth = {"Authorization": f"Bearer {SIGNING_ISSUER.mint('user-test')}"}
     with httpx.Client(base_url=upstreams["session"], headers=auth) as http:
         created = http.post(
             "/api/v1/sessions/create",
@@ -115,7 +116,8 @@ def encounter(upstreams: dict[str, str], monkeypatch: pytest.MonkeyPatch) -> str
 
     with httpx.Client(base_url=upstreams["board"], headers=bearer("user-test")) as http:
         created_board = http.post(
-            "/api/v1/boards", json={"session_id": session_id, "cols": 10, "rows": 8}
+            "/api/v1/boards",
+            json={"campaign_id": BOARD_CAMPAIGN, "session_id": session_id, "cols": 10, "rows": 8},
         )
         assert created_board.status_code == 200, created_board.text
         placed = http.post(
@@ -169,7 +171,8 @@ async def test_blackbox_query_encounter_state_upstream_unavailable_returns_error
     with httpx.Client(base_url=upstreams["board"], headers=bearer("user-test")) as http:
         session_id = str(uuid4())
         created_board = http.post(
-            "/api/v1/boards", json={"session_id": session_id, "cols": 10, "rows": 8}
+            "/api/v1/boards",
+            json={"campaign_id": BOARD_CAMPAIGN, "session_id": session_id, "cols": 10, "rows": 8},
         )
         assert created_board.status_code == 200, created_board.text
 
@@ -187,3 +190,20 @@ def _owned_campaign(client) -> str:
     res = client.post("/api/v1/campaigns", json={"title": "Owned Campaign"})
     assert res.status_code == 201, res.text
     return res.json()["id"]
+
+
+BOARD_CAMPAIGN = "camp-board-fixture"
+
+
+@pytest.fixture(autouse=True)
+def _board_campaign_dm(spicedb):
+    """Make `user-test` the DM of the campaign that every board in this module belongs to."""
+    asyncio.run(
+        spicedb.write_relationship(
+            resource_type="campaign",
+            resource_id=BOARD_CAMPAIGN,
+            relation="dungeon_master",
+            subject_type="user",
+            subject_id="user-test",
+        )
+    )

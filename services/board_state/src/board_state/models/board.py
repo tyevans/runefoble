@@ -46,6 +46,7 @@ class BoardState(BaseModel, BoardTransitionsMixin):
 
 
 class CreateBoardRequest(BaseModel):
+    campaign_id: str | None = None
     session_id: str | None = None
     board_id: str | None = None
     cols: int | None = None

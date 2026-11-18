@@ -74,15 +74,15 @@ def test_frontdoor_get_party_vitals_json():
     assert data["transparent"] is True
 
 
-def test_frontdoor_websocket_overlay_ws_endpoint():
+def test_frontdoor_websocket_overlay_ws_endpoint(gateway, table_for):
     """Verify WebSocket /overlay/ws/{session_id} connects and delivers sanitized real-time feeds."""
-    client = TestClient(gateway_app)
-    with client.websocket_connect(
-        "/overlay/ws/sess-decomp-ws-1", subprotocols=ws_subprotocols("overlay-tester")
+    _, session_id = table_for("dm_dora")
+    with gateway.websocket_connect(
+        f"/overlay/ws/{session_id}", subprotocols=ws_subprotocols("dm_dora")
     ) as ws:
         init_msg = ws.receive_json()
         assert init_msg["type"] == "overlay_connected"
-        assert init_msg["session_id"] == "sess-decomp-ws-1"
+        assert init_msg["session_id"] == session_id
         assert init_msg["transparent"] is True
 
         # Test turn_started broadcast over /overlay/ws/
