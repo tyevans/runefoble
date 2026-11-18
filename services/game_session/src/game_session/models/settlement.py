@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from game_session.settlements.models import (
+from game_session.settlement.models import (
     DEFAULT_FACILITIES,
     FACILITY_REST_BOONS,
     FACILITY_TIER_NAMES,

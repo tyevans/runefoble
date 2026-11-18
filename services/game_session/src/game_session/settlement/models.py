@@ -8,7 +8,7 @@ from __future__ import annotations
 from enum import StrEnum
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class SettlementScale(StrEnum):
@@ -297,3 +297,46 @@ class BulletinNoticeResponse(BaseModel):
     status: str = "active"
     created_at: str = ""
     metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class CharterSettlementRequest(BaseModel):
+    """Request payload to charter a new communal haven or outpost."""
+
+    name: str
+    shared_world_id: str
+    settlement_type: str = "outpost"
+    region: str = "Wilderness"
+    coordinates: dict[str, float] = Field(default_factory=dict)
+    founded_by_campaign_id: str = ""
+    facilities: dict[str, int] | None = None
+    defense_rating: int = 10
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class UpgradeFacilityRequest(BaseModel):
+    """Request payload to upgrade a settlement facility or fortification tier.
+
+    No cost field exists. Extra fields, such as a client-set `gold_spent`, answer 422.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    facility_id: str
+    contributing_campaign_id: str = ""
+
+
+class DepositSettlementRequest(BaseModel):
+    """Request payload to add gold and materials to a haven treasury (manage permission)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    gold: int = 0
+    materials: dict[str, int] = Field(default_factory=dict)
+
+
+class ClaimRestBoonRequest(BaseModel):
+    """Request payload to claim a sanctum rest boon for a character or party."""
+
+    campaign_id: str
+    character_id: str = ""
+    facility_id: str = "sanctum"

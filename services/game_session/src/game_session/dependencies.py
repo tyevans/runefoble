@@ -15,8 +15,8 @@ from game_session.merchants import MerchantAggregate
 from game_session.minigames import TavernGameAggregate
 from game_session.settlement.establishment_aggregate import EstablishmentAggregate
 from game_session.settlement.haggling import NegotiationAggregate
+from game_session.settlement.settlement_aggregate import SettlementAggregate
 from game_session.settlement.workers import NPCWorkerAggregate
-from game_session.settlements.aggregate import SettlementAggregate
 from game_session.stronghold import StrongholdAggregate
 from game_session.west_marches import SharedWorldAggregate
 from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
