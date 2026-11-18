@@ -16,10 +16,12 @@ Faction management and downtime world ticks are strictly gated by SpiceDB Zanzib
   Campaign members (players and spectators) can query faction lists and summaries via the `view` permission:
   `campaign:<campaign_id>#view@user:<user_id>`.
 
+Every request sends a Zitadel access token for the caller in `Authorization: Bearer`. The verified token subject is the caller. The examples in this guide use the placeholders `DM_EVELYN_TOKEN` and `PLAYER_VALEROS_TOKEN`. Set each one to a token for that user. See [Identity and Token Contract](../reference/identity-and-token-contract.md).
+
 ```bash
 # Execute world progression tick as authorized DM
 curl -X POST "http://localhost:8001/api/v1/campaigns/camp-101/world-tick" \
-  -H "X-User-Id: dm_evelyn" \
+  -H "Authorization: Bearer $DM_EVELYN_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"regional_stability": 55, "random_seed": 42}'
 ```
@@ -84,7 +86,7 @@ When a world tick is triggered:
 ### Trigger Downtime World Tick
 ```http
 POST /api/v1/campaigns/{campaign_id}/world-tick
-X-User-Id: dm_evelyn
+Authorization: Bearer <dm_evelyn_token>
 Content-Type: application/json
 
 {
@@ -100,7 +102,7 @@ Content-Type: application/json
 ### Register Custom Faction
 ```http
 POST /api/v1/campaigns/{campaign_id}/factions
-X-User-Id: dm_evelyn
+Authorization: Bearer <dm_evelyn_token>
 Content-Type: application/json
 
 {
@@ -117,19 +119,19 @@ Content-Type: application/json
 ### Query Campaign Factions
 ```http
 GET /api/v1/campaigns/{campaign_id}/factions
-X-User-Id: player_valeros
+Authorization: Bearer <player_valeros_token>
 ```
 
 ### Retrieve Latest DM Intelligence Bulletin
 ```http
 GET /api/v1/campaigns/{campaign_id}/world-ticks/latest
-X-User-Id: dm_evelyn
+Authorization: Bearer <dm_evelyn_token>
 ```
 
 ### Adjust Faction Treasury & Contraband
 ```http
 POST /factions/{faction_id}/resources/adjust
-X-User-Id: dm_evelyn
+Authorization: Bearer <dm_evelyn_token>
 Content-Type: application/json
 
 {
@@ -143,7 +145,7 @@ Content-Type: application/json
 ### Execute Bribery Resolution
 ```http
 POST /factions/{faction_id}/bribery/resolve
-X-User-Id: dm_evelyn
+Authorization: Bearer <dm_evelyn_token>
 Content-Type: application/json
 
 {
@@ -159,7 +161,7 @@ Content-Type: application/json
 ### Recruit Mercenary Detachment
 ```http
 POST /factions/{faction_id}/mercenaries/recruit
-X-User-Id: dm_evelyn
+Authorization: Bearer <dm_evelyn_token>
 Content-Type: application/json
 
 {
@@ -272,7 +274,7 @@ When rival factions clash over territory nodes, trade outposts, or control point
 DMs can trigger ad-hoc boundary skirmishes between rival factions via:
 ```http
 POST /the-watcher/factions/skirmish/simulate
-X-User-Id: dm_evelyn
+Authorization: Bearer <dm_evelyn_token>
 Content-Type: application/json
 
 {
@@ -320,7 +322,7 @@ Each skirmish escalates regional unrest (`RegionalUnrestEscalatedEvent`) based o
 Campaign participants can query regional stability and contested boundary history:
 ```http
 GET /the-watcher/regions/region-valen/unrest?campaign_id=camp-101
-X-User-Id: player_valeros
+Authorization: Bearer <player_valeros_token>
 ```
 
 Returns:

@@ -1,7 +1,7 @@
 # How-To: Verify Identity in FastAPI and WebSockets
 
 ## Purpose
-Use this guide to protect a FastAPI HTTP route or WebSocket with a verified principal. The shared helpers live in `libs/runefoble_auth`. Every bounded context uses them. Do not write a new token parser.
+Use this guide to protect a FastAPI HTTP route or WebSocket with a verified principal. The shared helpers live in `libs/runefoble_auth`. Every bounded context uses them. Do not write a new token parser. The surface rules, error codes, and removed routes are in [Identity and Token Contract](../reference/identity-and-token-contract.md).
 
 ## The Contract
 - A **verified principal** is `VerifiedPrincipal(user_id, username, email)`.
@@ -51,7 +51,7 @@ Behavior:
 - On success the dependency sets `request.state.principal`.
 - The dependency is synchronous. FastAPI runs it in a worker thread, so a JWKS fetch does not block the event loop.
 
-To build the verifier by hand, for example in a test, use `ZitadelAuthService(issuer=..., audience=..., internal_url=...)`. All three arguments are required. There is no default issuer. A blank issuer or audience raises `ConfigurationError` when the object is built.
+To build the verifier by hand, for example in a test, use `ZitadelAuthService(issuer=..., audience=..., internal_url=...)`. All three arguments are required. A blank issuer or audience raises `ConfigurationError` when the object is built (`libs/runefoble_auth/src/runefoble_auth/zitadel.py`).
 
 ## Routers: Depend on the Router and Take a `CallerId`
 
@@ -75,7 +75,7 @@ async def act(item_id: str, caller_id: CallerId):
 - Do not add a query, header, or body field for identity. A forged value never reaches the route.
 - Keep public routes (health, manifests, OpenAPI) on the app, not on a guarded router.
 - WebSocket routes do not use `require_principal`. They call `admit_websocket` (below).
-- Every service exposes the same names: `get_principal`, `CallerPrincipal`, and `CallerId`. The Watcher binds them in `the_watcher.identity`. Campaign Lore, Voice Agent, and the gateway bind them in their own identity modules.
+- Every service exposes the same names: `get_principal`, `CallerPrincipal`, and `CallerId`. The Watcher binds them in `services/the_watcher/src/the_watcher/identity.py`. Campaign Lore binds them in `services/campaign_lore/src/campaign_lore/identity.py`. Voice Agent binds them in `services/voice_agent/src/voice_agent/auth.py`. The gateway binds them in `gateway/api/src/gateway_api/auth.py`.
 
 ## Routes That Another Service Calls: Accept the Service Credential
 
@@ -177,11 +177,11 @@ client.websocket_connect("/ws", subprotocols=["runefoble.v1", f"runefoble.bearer
 Negative cases to cover: no token, garbage, HS256 with a known secret, `alg: none`, unsigned, unknown key, expired, wrong `aud`, wrong `iss`, missing `sub`. The reference suite is `libs/runefoble_auth/tests/test_verified_principal.py`.
 
 ## Configuration
-- `RUNEFOBLE_ZITADEL_ISSUER` (`zitadel_issuer`): must equal the token `iss`. The verifier has no default issuer. A blank value fails at start-up.
-- `RUNEFOBLE_ZITADEL_AUDIENCE` (`zitadel_audience`): must equal the token `aud`. In a cluster it is the project ID from the Secret `runefoble-zitadel-client`.
+- `RUNEFOBLE_ZITADEL_ISSUER` (`zitadel_issuer`): must equal the token `iss`. The settings default is `http://localhost:8080`, which is for local runs only. The Helm chart sets `http://auth.localhost`. Set the value in every deployed environment.
+- `RUNEFOBLE_ZITADEL_AUDIENCE` (`zitadel_audience`): must equal the token `aud`. In a cluster it is the project ID from the Secret `runefoble-zitadel-client`. When it is empty, the settings use `RUNEFOBLE_ZITADEL_CLIENT_ID` (default `runefoble-api`).
 - `RUNEFOBLE_ZITADEL_INTERNAL_URL` (`zitadel_internal_url`): optional. If set, discovery and JWKS requests go to this origin with `Host` set to the issuer host. If empty, the verifier reads discovery from the issuer.
 
-There is no development mode and no environment flag that skips verification.
+There is no development mode and no environment flag that skips verification. The settings are defined in `libs/runefoble_platform/src/runefoble_platform/config.py`.
 
 ## TypeScript Services
 

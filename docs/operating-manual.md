@@ -134,6 +134,7 @@ All system documentation outside project records lives in `docs/` and strictly f
 - [`architecture-overview.md`](reference/architecture-overview.md): Macro architecture, system boundaries, and cross-service data flows.
 - [`platform-services.md`](reference/platform-services.md): Directory of external platform services, container images, ports, environment variables, and test fallbacks.
 - [`ports-and-endpoints.md`](reference/ports-and-endpoints.md): Ingress routing table, microservice ports, core HTTP routes, and infrastructure ports.
+- [`identity-and-token-contract.md`](reference/identity-and-token-contract.md): Token settings, surface rules, public routes, error codes, service credentials, and removed identity routes.
 - [`events-schema.md`](reference/events-schema.md): CloudEvents domain events catalogue, payload schemas, and Redis Stream topics.
 - [`diegetic-handouts-and-relics-events.md`](reference/diegetic-handouts-and-relics-events.md): CloudEvents schemas and payloads for diegetic handouts, breakable wax seals, and 3D relics.
 - [`downtime-and-crafting-events.md`](reference/downtime-and-crafting-events.md): CloudEvents schemas and event flows for downtime crafting, rests, and stronghold facilities.
