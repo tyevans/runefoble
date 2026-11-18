@@ -33,6 +33,7 @@ from gateway_api.routers import (
     sessions_router,
     soundscape_router,
     spectator_router,
+    voice_proxy_router,
 )
 from gateway_api.session_websocket import session_websocket_endpoint
 from gateway_api.signaling import voice_signaling_websocket_endpoint
@@ -42,8 +43,6 @@ from gateway_api.websocket_endpoint import campaign_websocket_endpoint
 from runefoble_auth.authz_http import install_authz_error_handlers
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.telemetry import init_telemetry
-from voice_agent.room_routes import router as voice_rooms_router
-from voice_agent.routers.stream_diagnostics import router as stream_diagnostics_router
 
 
 @asynccontextmanager
@@ -95,9 +94,8 @@ app.include_router(overlay_router)
 app.include_router(soundscape_router)
 app.include_router(assets_router, prefix="/api/v1/assets", tags=["Assets"])
 app.include_router(auth_sync_router, prefix="/api/v1/auth/sync", tags=["Auth Sync"])
-app.include_router(voice_rooms_router)
+app.include_router(voice_proxy_router)
 app.include_router(companion_router)
-app.include_router(stream_diagnostics_router)
 
 
 init_telemetry("gateway-api", settings=platform_settings, app=app)

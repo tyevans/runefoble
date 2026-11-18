@@ -24,6 +24,13 @@ from tests.helpers.ws_identity import ws_subprotocols
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer", "trusted_voice_issuer")
 
 
+@pytest.fixture
+def client(voice_agent_upstream):
+    """Gateway client with its lifespan running, so it reaches the live voice_agent upstream."""
+    with TestClient(app) as gateway_client:
+        yield gateway_client
+
+
 @pytest.fixture(autouse=True)
 def reset_voice_signaling_environment(default_redis_event_bus, mock_bus):
     """Reset SpiceDB client, Redis event bus, and coordinator before each test."""
@@ -142,13 +149,12 @@ def test_voice_mute_toggle_and_telemetry_reporting(gateway, table_for):
         )
 
 
-def test_dm_moderation_kick_unauthorized_fails_with_403():
+def test_dm_moderation_kick_unauthorized_fails_with_403(client):
     """Regular player attempting to kick another peer receives 403 Forbidden."""
     spicedb = get_spicedb_client()
     session_id, player_id = "sess-kick-forbidden", "player_rebel"
     asyncio.run(spicedb.write_relationship("campaign", session_id, "player", "user", player_id))
 
-    client = TestClient(app)
     res = client.post(
         f"/api/v1/voice/rooms/{session_id}/kick",
         headers=voice_auth_headers(player_id),
@@ -158,7 +164,7 @@ def test_dm_moderation_kick_unauthorized_fails_with_403():
     assert res.json()["detail"]["error"] == "permission_denied"
 
 
-def test_dm_moderation_kick_authorized_succeeds_and_disconnects_peer():
+def test_dm_moderation_kick_authorized_succeeds_and_disconnects_peer(client):
     """Authorized DM kicks peer: target receives kick frame and connection is closed with 4001."""
     spicedb = get_spicedb_client()
     session_id, dm_user, bad_user = "sess-dm-kick-success", "the_watcher_dm", "troll_user"
@@ -166,7 +172,6 @@ def test_dm_moderation_kick_authorized_succeeds_and_disconnects_peer():
         asyncio.run(spicedb.write_relationship("campaign", session_id, r, "user", u))
     asyncio.run(grant_voice_session(session_id, dm=dm_user, players=[bad_user]))
 
-    client = TestClient(app)
     with client.websocket_connect(
         f"/ws/voice/{session_id}?peer_id=peer_troll", subprotocols=ws_subprotocols(bad_user)
     ) as ws:

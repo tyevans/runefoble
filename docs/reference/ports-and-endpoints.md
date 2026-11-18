@@ -310,7 +310,9 @@ Campaign Lore routes require a verified bearer token, except `/health`, `/health
 | `gateway-api` | WS | `/ws/voice/{session_id}` | Live bidirectional WebRTC voice signaling stream. Needs `session.observe` |
 | `gateway-api` | WS | `/ws/mobile-companion/{session_id}` | Zanzibar-protected low-bandwidth mobile WebRTC companion and haptic gateway |
 | `gateway-api` | WS | `/ws/campaigns/{campaign_id}` | Real-time Zanzibar-protected campaign WebSocket stream for party state synchronization |
-| `gateway-api` | GET | `/api/v1/voice/rooms/{session_id}` | Retrieves active WebRTC voice room participants, roles, and audio telemetry |
+| `gateway-api` | GET | `/api/v1/voice/rooms/{session_id}` | Proxies to `voice-agent`. Retrieves active WebRTC voice room participants, roles, and audio telemetry. Returns `503` when `voice-agent` is unreachable and `502` on an upstream `5xx`. The owner checks the bearer token and `session.observe` |
+| `gateway-api` | POST | `/api/v1/voice/rooms/{session_id}/kick` | Proxies to `voice-agent`. The owner checks `session.control` |
+| `gateway-api` | GET, POST | `/voice/streams/{session_id}/quality`, `/voice/streams/{session_id}/report`, and the `/api/v1/` forms | Proxies stream diagnostics to `voice-agent`. The owner checks `session.control` |
 | `gateway-api` | POST | `/api/v1/mobile/companion/{session_id}/whisper` | Dispatches secret DM whisper with triple-pulse haptic alert to mobile companion |
 | `gateway-api` | POST | `/api/v1/mobile/companion/{session_id}/turn-alert` | Triggers combat turn initiative double-pulse haptic alert for mobile companion |
 | `gateway-api` | GET | `/api/v1/mobile/companion/profiles` | Lists available adaptive Opus mobile audio streaming profiles |
