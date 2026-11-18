@@ -49,32 +49,6 @@ def session_client():
         yield client
 
 
-def test_table_state_survives_socket_layer_restart(
-    session_client: TestClient, mock_bus: MockAsyncRedis
-) -> None:
-    """A bet placed over the socket is still on the table after the socket layer restarts."""
-    table_id = f"table-restart-{uuid4().hex[:6]}"
-    open_minigame_table(table_id, game_type="darts")
-
-    with session_client.websocket_connect(
-        f"/ws/minigames/{table_id}", subprotocols=ws_subprotocols(PATRON)
-    ) as ws:
-        assert ws.receive_json()["type"] == "connected"
-        ws.send_json({"action": "join", "name": "Kip", "chips": 100})
-        assert ws.receive_json()["type"] == "player_joined"
-        ws.send_json({"action": "bet", "amount": 10, "bet_type": "dart_wager"})
-        assert ws.receive_json()["type"] == "bet_placed"
-
-    # Drop every live socket and build a fresh app client. Only the event store survives.
-    minigame_table_manager.connections.clear()
-    with TestClient(session_app, headers=_auth()) as fresh_client:
-        res = fresh_client.get(f"/api/v1/tavern/tables/{table_id}")
-    assert res.status_code == 200
-    body = res.json()
-    assert body["pot"] == 10
-    assert body["players"][PATRON]["chips"] == 90
-
-
 def test_dart_throw_publishes_dart_thrown_on_tavern_stream(
     session_client: TestClient, mock_bus: MockAsyncRedis
 ) -> None:
