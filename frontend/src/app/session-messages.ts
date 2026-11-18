@@ -6,13 +6,7 @@
  */
 
 import type { RunefobleApp } from '../runefoble-app.ts';
-import {
-  handleIncomingAoEPlaced,
-  handleIncomingDiceRoll,
-  handleIncomingDmWhisper,
-  handleIncomingSpellVFX,
-  handleIncomingTurnAdvanced,
-} from '../vtt-mesh-handlers.ts';
+import { dispatchSessionMessage } from '../vtt-mesh-handlers.ts';
 
 function clockTime(): string {
   return new Date().toLocaleTimeString();
@@ -29,9 +23,7 @@ export function handleSessionMessage(host: RunefobleApp, msg: any): void {
     host.lobbyParticipants = host.lobbyParticipants.map((p) => (p.userId === msg.userId ? { ...p, isReady: msg.isReady } : p));
   } else if (msg.type === 'player_stand_in') {
     host.lobbyParticipants = host.lobbyParticipants.map((p) => (p.userId === msg.userId ? { ...p, isAbsent: msg.isAbsent } : p));
-  } else if (msg.type === 'dice_rolled') handleIncomingDiceRoll(host, msg);
-  else if (msg.type === 'turn_advanced') handleIncomingTurnAdvanced(host, msg);
-  else if (msg.type === 'aoe_placed') handleIncomingAoEPlaced(host, msg);
-  else if (msg.type === 'spell_vfx') handleIncomingSpellVFX(host, msg);
-  else if (msg.type === 'dm_whisper') handleIncomingDmWhisper(host, msg);
+  } else {
+    dispatchSessionMessage(msg);
+  }
 }

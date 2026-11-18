@@ -108,6 +108,25 @@ runefoble/
 | `frontend` (App Shell) | `frontend` | `<runefoble-app>`, `<runefoble-settings-modal>`, `<runefoble-theme-switcher>` | `frontend/src/stories/runefoble-settings-modal.stories.ts` |
 
 
+## Session Mesh Events
+
+The App Shell forwards incoming session WebSocket messages to microfrontends as window events. The shell does not query service element tags or call their methods (TASK-0826, audit F-07). Each owner subscribes to the events it needs.
+
+| Session message `type` | Window event | Detail | Subscribers |
+|---|---|---|---|
+| `dice_rolled` | `runefoble:dice-rolled` | the session message | `<runefoble-dice-tray-3d>` (rolls the tray), `<runefoble-dice-roller>` (sets `forcedResult` from `result`), `<runefoble-board>` (`roll3DDice`) |
+| `turn_advanced` | `runefoble:turn-advanced` | the session message | `<runefoble-initiative-tracker>` (sets `activeCombatantId` and `roundNumber`, or advances the turn), `<runefoble-board>` (sets `activeTurnTokenId`) |
+| `aoe_placed` | `runefoble:aoe-placed` | the session message | `<runefoble-board>` (sets `activeAoE`) |
+| `spell_vfx` | `runefoble:spell-vfx` | the session message | `<runefoble-board>` (`triggerSpellVFX`) |
+| `dm_whisper` | `runefoble:dm-whisper` | the session message | `<runefoble-dm-whisper-bar>` (appends to `whispers`) |
+
+Rules:
+- The shell dispatches each event on `globalThis` (the window). The event does not bubble. Elements inside plugin slot shadow roots receive it, so the events are global.
+- Each subscriber adds its listener in `connectedCallback` and removes it in `disconnectedCallback`. A removed element does not react.
+- A subscriber reads `event.detail` only. The payload is the session message as the server sent it.
+- A message type that is not in the table is not forwarded.
+- Tests: `frontend/test-dom/session-mesh-events.test.ts` sends each message through the shell and checks the mounted element.
+
 ## Auth Context Contract (`runefoble-auth`)
 
 Microfrontends never read the shell's storage keys. The App Shell gives them the access token through the W3C Context Community Protocol (`@lit/context`).

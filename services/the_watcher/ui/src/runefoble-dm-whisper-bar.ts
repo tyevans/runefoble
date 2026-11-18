@@ -62,12 +62,27 @@ export class RunefobleDmWhisperBar extends LitElement {
     if (this.pendingAction) {
       this.startCountdown();
     }
+    globalThis.addEventListener('runefoble:dm-whisper', this.onSessionDmWhisper);
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
+    globalThis.removeEventListener('runefoble:dm-whisper', this.onSessionDmWhisper);
     this.stopCountdown();
   }
+
+  /** Session `dm_whisper` message (window event `runefoble:dm-whisper`): add the whisper to the bar. */
+  private readonly onSessionDmWhisper = (e: Event): void => {
+    const msg = (e as CustomEvent<Record<string, any>>).detail;
+    const whisper: WhisperItem = msg.whisper || {
+      whisper_id: msg.whisper_id || `whisp-${Date.now()}`,
+      whisper_type: msg.whisper_type || 'atmospheric_hint',
+      content: msg.content || msg.text || '',
+      timestamp: msg.timestamp || new Date().toLocaleTimeString(),
+    };
+    this.whispers = [...this.whispers, whisper];
+    if (msg.pendingAction) this.pendingAction = msg.pendingAction;
+  };
 
   updated(changedProperties: Map<string, unknown>) {
     if (changedProperties.has('pendingAction')) {

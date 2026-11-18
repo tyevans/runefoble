@@ -30,12 +30,22 @@ export class RunefobleInitiativeTracker extends LitElement {
   connectedCallback(): void {
     super.connectedCallback();
     this.startTimer();
+    globalThis.addEventListener('runefoble:turn-advanced', this.onSessionTurnAdvanced);
   }
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
+    globalThis.removeEventListener('runefoble:turn-advanced', this.onSessionTurnAdvanced);
     this.stopTimer();
   }
+
+  /** Session `turn_advanced` message (window event `runefoble:turn-advanced`): move the turn marker. */
+  private readonly onSessionTurnAdvanced = (e: Event): void => {
+    const msg = (e as CustomEvent<{ activeCombatantId?: string; roundNumber?: number }>).detail;
+    if (msg.activeCombatantId) this.activeCombatantId = msg.activeCombatantId;
+    if (msg.roundNumber) this.roundNumber = msg.roundNumber;
+    else this.nextTurn();
+  };
 
   private startTimer(): void {
     this.stopTimer();

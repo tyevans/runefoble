@@ -178,12 +178,12 @@ In the active session (`session-active`) and pre-game lobby (`session-lobby`), t
      - Slot `hud-widget`: `<runefoble-initiative-tracker>`, `<runefoble-soundscape-controls>`.
      - Slot `dice-panel`: `<runefoble-dice-roller>`, `<runefoble-dice-tray-3d>`.
      - Slot `sidebar-tool`: `<runefoble-combat-reaction-prompt>`, plus `<runefoble-dm-whisper-bar>` and `<runefoble-dm-trap-controls>` when `run_session` is true.
-4. **Expanded WebSocket Message Routing**:
-   - `dice_rolled`: Triggers 3D dice tray physics toss (`runefoble-dice-tray-3d.roll()`) and updates roller state.
-   - `turn_advanced`: Updates active combatant and round number on `<runefoble-initiative-tracker>`.
-   - `aoe_placed`: Renders AoE spell templates on `<runefoble-board>`.
-   - `spell_vfx`: Triggers WebGL particle blooms on `<runefoble-board>`.
-   - `dm_whisper`: Streams private DM whispers into `<runefoble-dm-whisper-bar>`.
+4. **Expanded WebSocket Message Routing**: The App Shell does not query service elements. It dispatches each message as a window event (`frontend/src/vtt-mesh-handlers.ts`). The owning element subscribes to the event. The event names and payloads are in [`microfrontend-architecture.md`](../reference/microfrontend-architecture.md#session-mesh-events).
+   - `dice_rolled` (`runefoble:dice-rolled`): `<runefoble-dice-tray-3d>` tosses the dice. `<runefoble-dice-roller>` shows the forced result. `<runefoble-board>` runs the 3D roll.
+   - `turn_advanced` (`runefoble:turn-advanced`): `<runefoble-initiative-tracker>` moves the active combatant and round. `<runefoble-board>` marks the active turn token.
+   - `aoe_placed` (`runefoble:aoe-placed`): `<runefoble-board>` renders the AoE spell template.
+   - `spell_vfx` (`runefoble:spell-vfx`): `<runefoble-board>` triggers the WebGL particle bloom.
+   - `dm_whisper` (`runefoble:dm-whisper`): `<runefoble-dm-whisper-bar>` adds the private DM whisper.
 
 ## 9. Capability-Gated Views (TASK-0559)
 

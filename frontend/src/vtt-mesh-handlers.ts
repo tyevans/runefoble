@@ -2,77 +2,33 @@
  * Live Tabletop VTT WebSocket Mesh & Tangential Action Handlers.
  *
  * Dispatches VTT board actions (radial menu, AoE templates, spell VFX, ghost confirmations)
- * and handles incoming WebSocket messages for dice rolls, turn changes, AoEs, and DM whispers.
+ * to the session socket. Forwards incoming session messages for dice rolls, turn changes,
+ * AoEs, spell VFX, and DM whispers as window events. The microfrontends that own those
+ * features subscribe to the events. The shell never queries service element tags.
+ * Event contract: docs/reference/microfrontend-architecture.md, "Session Mesh Events".
  * TASK-0358: Live Tabletop VTT WebSocket Event Mesh & Plugin Slots Integration.
+ * TASK-0826: App Shell stops reaching into service component internals (audit F-07).
  * ADR-0004, ADR-0005, ADR-0010, ADR-0013.
  */
 
-import type { LitElement } from 'lit';
+/** Session message types that the shell forwards, mapped to the window event they dispatch. */
+const SESSION_MESH_EVENTS: Readonly<Record<string, string>> = {
+  dice_rolled: 'runefoble:dice-rolled',
+  turn_advanced: 'runefoble:turn-advanced',
+  aoe_placed: 'runefoble:aoe-placed',
+  spell_vfx: 'runefoble:spell-vfx',
+  dm_whisper: 'runefoble:dm-whisper',
+};
 
-export function getMountedPluginElement<T extends HTMLElement = HTMLElement>(host: LitElement, tag: string): T | null {
-  const direct = host.shadowRoot?.querySelector(tag);
-  if (direct) return direct as T;
-  const slots = host.shadowRoot?.querySelectorAll('runefoble-plugin-slot') || [];
-  for (const slot of slots) {
-    const el = slot.shadowRoot?.querySelector(tag);
-    if (el) return el as T;
-  }
-  return null;
-}
-
-export function handleIncomingDiceRoll(host: any, msg: any): void {
-  const diceTray = getMountedPluginElement<any>(host, 'runefoble-dice-tray-3d');
-  if (diceTray && typeof diceTray.roll === 'function') {
-    diceTray.roll(msg.diceType || 'd20', msg.targetFaceValue ?? msg.total ?? msg.result, msg.opts);
-  }
-  const diceRoller = getMountedPluginElement<any>(host, 'runefoble-dice-roller');
-  if (diceRoller && msg.result) diceRoller.forcedResult = msg.result;
-  const board = host.shadowRoot?.querySelector('runefoble-board') as any;
-  if (board && typeof board.roll3DDice === 'function') {
-    board.roll3DDice(msg.dice || { diceType: msg.diceType || 'd20', face: msg.targetFaceValue ?? msg.total });
-  }
-}
-
-export function handleIncomingTurnAdvanced(host: any, msg: any): void {
-  const tracker = getMountedPluginElement<any>(host, 'runefoble-initiative-tracker');
-  if (tracker) {
-    if (msg.activeCombatantId) tracker.activeCombatantId = msg.activeCombatantId;
-    if (msg.roundNumber) tracker.roundNumber = msg.roundNumber;
-    else if (typeof tracker.nextTurn === 'function') tracker.nextTurn();
-  }
-  const board = host.shadowRoot?.querySelector('runefoble-board') as any;
-  if (board && msg.activeCombatantId) board.activeTurnTokenId = msg.activeCombatantId;
-}
-
-export function handleIncomingAoEPlaced(host: any, msg: any): void {
-  const board = host.shadowRoot?.querySelector('runefoble-board') as any;
-  if (board) {
-    board.activeAoE = msg.template || msg.config || msg.aoe || null;
-    if (typeof board.handleIncomingSocketMessage === 'function') {
-      board.handleIncomingSocketMessage({ action: 'aoe_placed', ...msg });
-    }
-  }
-}
-
-export function handleIncomingSpellVFX(host: any, msg: any): void {
-  const board = host.shadowRoot?.querySelector('runefoble-board') as any;
-  if (board && typeof board.triggerSpellVFX === 'function') {
-    board.triggerSpellVFX(msg.vfx || msg.params || msg);
-  }
-}
-
-export function handleIncomingDmWhisper(host: any, msg: any): void {
-  const whisperBar = getMountedPluginElement<any>(host, 'runefoble-dm-whisper-bar');
-  if (whisperBar) {
-    const whisper = msg.whisper || {
-      whisper_id: msg.whisper_id || `whisp-${Date.now()}`,
-      whisper_type: msg.whisper_type || 'atmospheric_hint',
-      content: msg.content || msg.text || '',
-      timestamp: msg.timestamp || new Date().toLocaleTimeString(),
-    };
-    whisperBar.whispers = [...(whisperBar.whispers || []), whisper];
-    if (msg.pendingAction) whisperBar.pendingAction = msg.pendingAction;
-  }
+/**
+ * Dispatches one incoming session message as a window event. The event detail is the message.
+ * Returns false when the message type has no microfrontend event.
+ */
+export function dispatchSessionMessage(msg: { type?: unknown }): boolean {
+  const type = typeof msg.type === 'string' && Object.hasOwn(SESSION_MESH_EVENTS, msg.type) ? msg.type : null;
+  if (!type) return false;
+  globalThis.dispatchEvent(new CustomEvent(SESSION_MESH_EVENTS[type], { detail: msg }));
+  return true;
 }
 
 export function handleToggleReadiness(host: any, e: CustomEvent, socket: WebSocket | null): void {
