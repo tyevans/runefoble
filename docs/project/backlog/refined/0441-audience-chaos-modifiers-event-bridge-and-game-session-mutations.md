@@ -77,3 +77,9 @@ When a DM approves an audience chaos poll outcome in `services/audience_studio`,
 2. Approved modifiers apply concrete mechanical effects to the session and trigger Watcher narrative commentary.
 3. Frontdoor blackbox test suite `tests/test_blackbox_audience_chaos_event_bridge.py` passes with 100% assertions.
 4. Code passes `uv run ruff check .` and `uv run ruff format --check .`.
+
+## Orchestrator Addenda (2026-11-17, round 2)
+
+Source: `.audit/synth/discovered-round2.md`.
+
+- Check that the audience proposal is approved before a chaos modifier is applied to game session state. Reject modifiers for proposals that are not approved.

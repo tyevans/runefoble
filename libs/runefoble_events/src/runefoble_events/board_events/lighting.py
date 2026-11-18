@@ -50,12 +50,7 @@ class BoardLightSourcePlacedEvent(BaseRunefobleEvent):
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 
-BoardDoorToggled = BoardDoorToggledEvent
-BoardLightSourcePlaced = BoardLightSourcePlacedEvent
-
 __all__ = [
-    "BoardDoorToggled",
     "BoardDoorToggledEvent",
-    "BoardLightSourcePlaced",
     "BoardLightSourcePlacedEvent",
 ]

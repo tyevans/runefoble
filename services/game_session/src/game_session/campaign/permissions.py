@@ -11,6 +11,8 @@ from typing import Annotated, Any
 
 from fastapi import Depends
 from game_session.campaign.errors import PermissionDeniedError
+from game_session.campaign.repositories import CampaignRepositories, get_campaign_repositories
+from game_session.campaign.service_campaigns import load_campaign, parse_campaign_id
 from game_session.dependencies import get_spicedb_client
 from game_session.settlement.auth.tokens import get_zitadel_auth_service
 from runefoble_auth.principal import VerifiedPrincipal, require_principal
@@ -31,12 +33,18 @@ async def check_campaign_permission(
 def campaign_permission(
     permission: str,
 ) -> Callable[..., Awaitable[VerifiedPrincipal]]:
-    """Build a dependency that requires `permission` on the `campaign_id` path parameter."""
+    """Build a dependency that requires `permission` on the `campaign_id` path parameter.
+
+    An unknown campaign returns 404 before any permission check, so callers can tell
+    a missing campaign from one they may not see.
+    """
 
     async def _dependency(
         campaign_id: str,
         principal: CampaignPrincipal,
+        repos: Annotated[CampaignRepositories, Depends(get_campaign_repositories)],
     ) -> VerifiedPrincipal:
+        await load_campaign(repos, parse_campaign_id(campaign_id))
         await check_campaign_permission(
             get_spicedb_client(), campaign_id, permission, principal.user_id
         )

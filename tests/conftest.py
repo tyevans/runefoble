@@ -7,14 +7,32 @@ from collections.abc import Iterator
 # Test mode: the SpiceDB preshared key has no default outside tests. Tests supply a throwaway
 # value before any settings object is built. Live tests may override it in their environment.
 os.environ.setdefault("RUNEFOBLE_SPICEDB_PRESHARED_KEY", "test-only-spicedb-key")
+# The gateway MCP has no localhost defaults. Unless a test sets an upstream itself, its URLs
+# point at a closed loopback port, so no test reaches a real service by accident.
+for _upstream in (
+    "BOARD_STATE_URL",
+    "CHARACTER_SHEET_URL",
+    "GAME_SESSION_URL",
+    "RULES_COMPENDIUM_URL",
+    "THE_WATCHER_URL",
+):
+    os.environ.setdefault(_upstream, "http://127.0.0.1:9")
+# The inference worker refuses to start without its service token (ADR-0015 e). Tests use a
+# throwaway value. Process-level tests remove it from the child environment on purpose.
+os.environ.setdefault("RUNEFOBLE_INFERENCE_SERVICE_TOKEN", "test-only-inference-token")
 # ruff: noqa: E402  (imports below construct settings, so the key must be set first)
 
 import pytest
+from board_state import dependencies as board_state_dependencies
+from campaign_analytics import dependencies as campaign_analytics_dependencies
 from game_session.settlement.auth.tokens import get_zitadel_auth_service as get_session_auth
 from game_session.settlement.auth.tokens import set_zitadel_auth_service as set_session_auth
 from gateway_api.auth import get_zitadel_auth_service, set_zitadel_auth_service
+from rules_compendium import dependencies as rules_compendium_dependencies
 from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
+from the_watcher.identity import get_zitadel_auth_service as get_watcher_auth
+from the_watcher.identity import set_zitadel_auth_service as set_watcher_auth
 
 from tests.helpers.spicedb_factory import shared_spicedb_client
 from tests.helpers.ws_identity import SIGNING_ISSUER
@@ -26,6 +44,7 @@ pytest_plugins = [
     "tests.helpers.prd_fixtures",
     "tests.helpers.silo_fixtures",
     "tests.helpers.spicedb",
+    "tests.helpers.voice_identity",
     "tests.helpers.zitadel_auth",
 ]
 collect_ignore = ["test_blackbox_uvtt_import.py"]
@@ -42,6 +61,13 @@ SPICEDB_SERVICE_MODULES = [
     "the_watcher.dependencies",
     "board_state.dependencies",
     "campaign_analytics.dependencies",
+]
+
+
+SERVICE_VERIFIER_MODULES = [
+    "asset_forge.dependencies",
+    "soundscape.dependencies",
+    "character_sheet.dependencies",
 ]
 
 
@@ -76,6 +102,50 @@ def default_redis_event_bus():
     finally:
         for mod, prev in modules_to_restore:
             mod.set_event_bus(prev)
+
+
+# Services that verify bearer tokens themselves (ADR-0015). The gateway forwards the caller's
+# token to them, so the shared test issuer must be trusted by each of them as well.
+SERVICE_IDENTITY_MODULES = [
+    board_state_dependencies,
+    campaign_analytics_dependencies,
+    rules_compendium_dependencies,
+]
+
+
+@pytest.fixture(autouse=True, scope="session")
+def shared_issuer_in_token_services() -> Iterator[None]:
+    """Trust the shared test issuer in each token-verifying service for the whole session.
+
+    Session scope lets module-scoped fixtures that start live upstreams send signed requests.
+    """
+    previous = [(mod, mod.get_zitadel_auth_service()) for mod in SERVICE_IDENTITY_MODULES]
+    verifier = SIGNING_ISSUER.verifier()
+    for mod in SERVICE_IDENTITY_MODULES:
+        mod.set_zitadel_auth_service(verifier)
+    yield
+    for mod, prev in previous:
+        mod.set_zitadel_auth_service(prev)
+
+
+@pytest.fixture(autouse=True)
+def default_service_verifiers() -> Iterator[None]:
+    """Trust the shared test signing issuer in the token-verifying microservices.
+
+    Tests send bearer tokens minted by SIGNING_ISSUER. A test that needs another issuer
+    overrides the verifier itself.
+    """
+    import importlib
+
+    modules = [importlib.import_module(name) for name in SERVICE_VERIFIER_MODULES]
+    previous = [mod.get_zitadel_auth_service() for mod in modules]
+    for mod in modules:
+        mod.set_zitadel_auth_service(SIGNING_ISSUER.verifier())
+    try:
+        yield
+    finally:
+        for mod, prev in zip(modules, previous, strict=True):
+            mod.set_zitadel_auth_service(prev)
 
 
 @pytest.fixture(autouse=True)
@@ -117,11 +187,40 @@ def default_spicedb_client(request):
 
 @pytest.fixture
 def trusted_ws_issuer() -> Iterator[SigningTestIssuer]:
-    """Trust the shared test issuer in the gateway and game_session verifiers."""
+    """Trust the shared test issuer in the gateway, game_session, and the_watcher verifiers."""
     previous_gateway = get_zitadel_auth_service()
     previous_session = get_session_auth()
+    previous_watcher = get_watcher_auth()
     set_zitadel_auth_service(SIGNING_ISSUER.verifier())
     set_session_auth(SIGNING_ISSUER.verifier())
+    set_watcher_auth(SIGNING_ISSUER.verifier())
     yield SIGNING_ISSUER
     set_zitadel_auth_service(previous_gateway)
     set_session_auth(previous_session)
+    set_watcher_auth(previous_watcher)
+
+
+@pytest.fixture
+def game_session_upstream(monkeypatch, trusted_ws_issuer) -> Iterator[str]:
+    """Serve game_session as a live loopback upstream with fresh in-memory campaign state.
+
+    The gateway reaches it over HTTP through RUNEFOBLE_GAME_SESSION_URL (TASK-0591). Tokens
+    minted by `trusted_ws_issuer` are accepted by both services. The URL is set before the
+    gateway lifespan runs, so build the gateway client after this fixture.
+    """
+    from eventsource.adapters.memory.store import InMemoryEventStore
+    from game_session.campaign.repositories import set_campaign_repositories
+    from game_session.main import app as session_app
+    from runefoble_platform.event_sourcing import set_event_store
+
+    from tests.helpers.live_services import serve
+
+    set_event_store(InMemoryEventStore())
+    set_campaign_repositories(None)
+    try:
+        with serve(session_app) as url:
+            monkeypatch.setenv("RUNEFOBLE_GAME_SESSION_URL", url)
+            yield url
+    finally:
+        set_event_store(None)
+        set_campaign_repositories(None)

@@ -74,3 +74,9 @@ Test file: `tests/test_blackbox_gateway_character_subresources.py`. `character_s
 3. TASK-0435 is closed as superseded in the index.
 4. The blackbox test file passes. `uv run ruff check .` passes.
 5. `docs/reference/ports-and-endpoints.md` matches the routes.
+
+## Orchestrator Addenda (2026-11-17, round 2)
+
+Source: `.audit/synth/discovered-round2.md`.
+
+- gateway/api/src/gateway_api/character_store_mutations.py: delete the functions with no callers (modify_health, equip_item, unequip_item, add_inventory_item, remove_inventory_item, apply_condition, remove_condition, cast_spell, prepare_spell, update_guardrails) and remove the gateway-held stand-in flag (about lines 62 and 244).

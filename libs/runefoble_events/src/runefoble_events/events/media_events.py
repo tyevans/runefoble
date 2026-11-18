@@ -25,9 +25,7 @@ from runefoble_events.soundscape import (
     SoundscapeTrackChanged,
 )
 from runefoble_events.vocal_dsp import (
-    VocalModulatorPresetApplied,
     VocalModulatorPresetAppliedEvent,
-    VoiceFilterToggled,
     VoiceFilterToggledEvent,
 )
 from runefoble_events.voice import (
@@ -41,9 +39,7 @@ from runefoble_events.voice import (
     VoiceTranscriptionFailed,
 )
 from runefoble_events.voice_barge_in import (
-    NeuralSpeechBargeInDetected,
     NeuralSpeechBargeInDetectedEvent,
-    TTSStreamAttenuated,
     TTSStreamAttenuatedEvent,
 )
 from runefoble_events.voice_stream_quality import (
@@ -70,20 +66,16 @@ __all__ = [
     "MobileAudioProfileAdapted",
     "MobileCompanionConnected",
     "MobileHapticPingDispatched",
-    "NeuralSpeechBargeInDetected",
     "NeuralSpeechBargeInDetectedEvent",
     "SoundscapeCueTriggered",
     "SoundscapeDuckingToggled",
     "SoundscapeMoodOverridden",
     "SoundscapeTensionUpdated",
     "SoundscapeTrackChanged",
-    "TTSStreamAttenuated",
     "TTSStreamAttenuatedEvent",
     "TokenAssetForged",
-    "VocalModulatorPresetApplied",
     "VocalModulatorPresetAppliedEvent",
     "VoiceAudioConditioned",
-    "VoiceFilterToggled",
     "VoiceFilterToggledEvent",
     "VoicePeerJoined",
     "VoicePeerLeft",

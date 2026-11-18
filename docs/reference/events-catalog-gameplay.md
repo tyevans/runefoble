@@ -1,0 +1,333 @@
+# Reference: Events Catalog: Gameplay
+
+Part of the [Events Schema](events-schema.md). Each event identifier in this page is listed in [Event Identifiers](event-identifiers.md).
+
+## Domain Event Catalog
+
+### GameSession Events (`aggregate_type: GameSession`)
+
+- **`SessionCreated`**: Emitted when a new session aggregate is initialized.
+  - `title`: String
+  - `dm_id`: String
+  - `created_by`: String
+- **`SessionStarted`** (alias: `GameSessionStarted`): Emitted when the session transitions from lobby to active combat/exploration.
+  - `started_at_turn`: Integer (default 1)
+- **`ParticipantJoined`**: Emitted when a user joins the session in a specific role (player, spectator, gm).
+  - `session_id`: UUID | str
+  - `campaign_id`: UUID | str
+  - `user_id`: String
+  - `role`: String (default "player")
+  - `character_id`: Optional[UUID | str]
+- **`PlayerJoinedSession`**: Emitted when a participant connects with an assigned character.
+  - `player_id`: String
+  - `character_id`: UUID
+  - `character_name`: String
+  - `character_class`: String
+- **`PlayerLeftSession`**: Emitted when a participant disconnects or misses game night.
+  - `player_id`: String
+  - `reason`: String
+- **`ReadinessToggled`**: Emitted when a player sets lobby readiness (`POST /api/v1/sessions/{session_id}/lobby/readiness`). Stream: `runefoble.events.session`.
+  - `player_id`: String
+  - `is_ready`: Boolean
+- **`CharacterSelectedForLobby`**: Emitted when a player selects the character brought to the lobby (`POST /api/v1/sessions/{session_id}/lobby/character`). Stream: `runefoble.events.session`.
+  - `player_id`: String
+  - `character_id`: UUID
+- **`TurnAdvanced`**: Emitted when the initiative turn counter advances.
+  - `previous_turn`: Integer
+  - `new_turn`: Integer
+  - `active_character_id`: Optional[UUID]
+- **`TurnStarted`**: Emitted when a combatant begins their turn, triggering autonomous camera focus.
+  - `session_id`: UUID | str
+  - `turn_number`: Integer
+  - `character_id`: UUID | str
+  - `character_name`: String
+  - `token_id`: Optional[String]
+- **`CameraTargetUpdated`**: Emitted when cinematic director recalculates camera viewport target (`runefoble.events.session.camera_target_updated`).
+  - `session_id`: String
+  - `target_x`: Float
+  - `target_y`: Float
+  - `zoom`: Float (default 1.5)
+  - `duration_ms`: Integer (default 300)
+  - `easing`: String (cubic-bezier)
+  - `active_token_id`: Optional[String]
+  - `reason`: String ("turn_started", "token_moved")
+- **`CombatEncounterStarted`**: Emitted when a combat encounter is initiated.
+  - `session_id`: Optional[UUID | str]
+  - `round_number`: Integer (default 1)
+  - `combatants`: List[Dict[str, Any]]
+- **`InitiativeRolled`**: Emitted when a participant or NPC submits an initiative score.
+  - `session_id`: Optional[UUID | str]
+  - `combatant_id`: String
+  - `combatant_name`: String
+  - `initiative_score`: Float / Integer
+  - `is_npc`: Boolean (default False)
+- **`InitiativeTurnAdvanced`**: Emitted when the combat turn cycles to the next combatant.
+  - `session_id`: Optional[UUID | str]
+  - `round_number`: Integer
+  - `active_combatant_id`: String
+  - `turn_seconds_remaining`: Integer (default 60)
+- **`CombatEncounterEnded`**: Emitted when combat concludes.
+  - `session_id`: Optional[UUID | str]
+  - `total_rounds`: Integer
+- **`CombatTurnPausedForReactionEvent`** (alias: `CombatTurnPausedForReaction`): Emitted when active combat turn is halted within 500ms for a spoken reaction interrupt (`combat.turn.paused_for_reaction`).
+  - `session_id`: UUID | str
+  - `reaction_id`: String
+  - `reacting_combatant_id`: String
+  - `reacting_combatant_name`: String
+  - `trigger_phrase`: String
+  - `reaction_type`: String ("shield", "counterspell", "opportunity_attack", etc.)
+  - `paused_turn_combatant_id`: String
+  - `timeout_seconds`: Float (default 15.0)
+- **`ReactionResolvedEvent`** (alias: `ReactionResolved`): Emitted when a declared combat reaction interrupt is resolved or dismissed, resuming the active combat turn (`combat.reaction.resolved`).
+  - `session_id`: UUID | str
+  - `reaction_id`: String
+  - `reacting_combatant_id`: String
+  - `action_taken`: String ("executed", "dismissed", "timeout")
+  - `resumed`: Boolean (default True)
+- **`ReadyActionRegisteredEvent`** (alias: `ReadyActionRegistered`): Emitted when a combatant registers a conditional ready-action trigger evaluated against incoming combat events (`combat.ready_action.registered`).
+  - `session_id`: UUID | str
+  - `ready_action_id`: String
+  - `combatant_id`: String
+  - `combatant_name`: String
+  - `trigger_type`: String ("enemy_enters_range", "spell_cast", "movement", "spatial", "attack")
+  - `trigger_condition`: String
+  - `readied_action`: String
+  - `target_id`: Optional[String]
+  - `range_cells`: Optional[Integer]
+- **`ReadyActionTriggeredEvent`** (alias: `ReadyActionTriggered`): Emitted when an incoming combat or board event fulfills a ready-action trigger condition (`combat.ready_action.triggered`).
+  - `session_id`: UUID | str
+  - `ready_action_id`: String
+  - `combatant_id`: String
+  - `combatant_name`: String
+  - `triggering_entity_id`: String
+  - `trigger_type`: String
+  - `readied_action`: String
+
+- **`CharacterControlTransferred`**: Emitted when active token and turn control is transferred mid-session between an AI stand-in and a player (`runefoble.events.session.character_control_transferred`).
+  - `session_id`: UUID | str
+  - `character_id`: UUID | str
+  - `character_name`: String
+  - `previous_controller_id`: String
+  - `new_controller_id`: String
+  - `transferred_to_player`: Boolean (default True)
+  - `active_turn`: Optional[Integer]
+  - `round_number`: Optional[Integer]
+- **`SessionEnded`**: Emitted when the session concludes.
+  - `summary`: String
+
+### BoardState Events (`aggregate_type: BoardState`)
+
+- **`BoardGridInitialized`**: Emitted when grid dimensions and cell sizes are established.
+  - `width`: Integer
+  - `height`: Integer
+  - `cell_size_px`: Integer
+  - `grid_type`: "square" | "hex"
+- **`TokenPlaced`**: Emitted when a token is added to the grid.
+  - `token_id`: String / UUID
+  - `name`: String
+  - `token_type`: "pc" | "monster" | "npc" | "obstacle"
+  - `x`: Integer, `y`: Integer
+  - `hp`: Optional[Integer]
+  - `is_friendly`: Boolean
+- **`TokenMoved`**: Emitted when a token traverses grid coordinates.
+  - `token_id`: String
+  - `name`: String
+  - `from_x`: Integer, `from_y`: Integer
+  - `to_x`: Integer, `to_y`: Integer
+  - `initiated_by`: "player" | "the_watcher" | "stand_in"
+- **`TokenRemoved`**: Emitted when a token leaves the board.
+  - `token_id`: String
+  - `reason`: String ("defeated", "retreated", "teleported")
+- **`TokenKnockbackApplied`**: Emitted when a directional knockback impulse is applied to a token (`runefoble.events.board.token_knockback_applied`).
+  - `token_id`: String
+  - `distance_ft`: Float
+  - `direction_x`: Float, `direction_y`: Float
+  - `from_x`: Integer, `from_y`: Integer
+  - `to_x`: Integer, `to_y`: Integer
+  - `mass`: Float (default 1.0)
+- **`ElevationChanged`**: Emitted when a token's elevation changes due to climbing, falling, or terrain stepping (`runefoble.events.board.elevation_changed`).
+  - `token_id`: String
+  - `previous_elevation`: Integer
+  - `new_elevation`: Integer
+  - `x`: Integer, `y`: Integer
+- **`FogOfWarRevealed`** (alias: `FogRevealed`): Emitted when a token's vision reveals uncharted grid cells.
+  - `revealed_cells`: List[List[Integer]]
+  - `revealed_by_token_id`: Optional[String]
+- **`FogOfWarShrouded`** (alias: `ShroudReset`): Emitted when fog-of-war shrouds previously revealed cells (`runefoble.events.board.fog_of_war_shrouded`).
+  - `session_id`: String
+  - `shrouded_cells`: List[List[Integer]]
+- **`VisibilityMaskUpdated`**: Emitted when the complete visibility mask or line-of-sight polygon is updated (`runefoble.events.board.visibility_mask_updated`).
+  - `session_id`: String
+  - `board_id`: String
+  - `token_id`: Optional[String]
+  - `revealed_count`: Integer
+  - `total_cells`: Integer
+- **`TerrainCellModified`**: Emitted when a tactical grid cell's elevation, terrain difficulty, or hazard is modified (`runefoble.events.board.terrain_modified`).
+  - `session_id`: String
+  - `board_id`: String
+  - `x`: Integer, `y`: Integer
+  - `elevation`: Integer (default 0)
+  - `terrain_type`: String ("normal", "difficult")
+  - `hazard`: Optional[String] (e.g. "lava", "fire", "acid", "spikes", "poison")
+- **`TokenHazardTriggered`**: Emitted when a token enters or traverses an environmental hazard cell (`runefoble.events.board.hazard_triggered`).
+  - `session_id`: String
+  - `board_id`: String
+  - `token_id`: String
+  - `hazard_type`: String
+  - `damage_dice`: String (e.g. "2d10", "1d6")
+- **`CandidateGhostPreviewEmitted`**: Emitted when a candidate target is highlighted on the tactical board during intent disambiguation (`runefoble.events.board.ghost_preview_candidate`).
+  - `session_id`: String
+  - `disambiguation_id`: String
+  - `candidate_id`: String
+  - `token_id`: String
+  - `target_x`: Integer, `target_y`: Integer
+  - `descriptor`: String
+  - `path`: List[List[Integer]]
+- **`UniversalVTTImported`** (alias: `BoardMapImported`): Emitted when a Universal VTT (`.dd2vtt`) map is imported onto the board (`runefoble.events.board.map_imported`).
+  - `session_id`: String
+  - `cols`: Integer
+  - `rows`: Integer
+  - `pixels_per_grid`: Integer
+  - `background_asset_id`: Optional[String]
+  - `background_image_url`: Optional[String]
+  - `wall_segments`: List[Dict[str, Any]]
+  - `portals`: List[Dict[str, Any]]
+  - `lights`: List[Dict[str, Any]]
+- **`TokenActionExecuted`**: Emitted when a tactical token executes a combat maneuver via the radial action dial (`runefoble.events.board.token_action_executed`).
+  - `session_id`: String
+  - `board_id`: String
+  - `token_id`: String
+  - `action`: String ("attack", "dodge", "dash", "disengage", "cast")
+  - `target_token_id`: Optional[String]
+  - `target_token_ids`: List[String]
+  - `details`: Dict[str, Any]
+  - `initiated_by`: String ("player", "the_watcher", "stand_in")
+- **`AoETemplatePlaced`**: Emitted when a geometric AoE spell template is positioned on the board (`runefoble.events.board.aoe_template_placed`).
+  - `session_id`: String
+  - `board_id`: String
+  - `template_id`: String
+  - `caster_token_id`: Optional[String]
+  - `shape`: String ("cone", "sphere", "line", "cube")
+  - `origin_x`: Float, `origin_y`: Float
+  - `direction_deg`: Float (0-360, snapped in 15° increments)
+  - `radius_ft`: Optional[Float]
+  - `length_ft`: Optional[Float]
+  - `width_ft`: Optional[Float]
+  - `spell_name`: Optional[String]
+  - `affected_token_ids`: List[String]
+  - `affected_cells`: List[List[Integer]]
+- **`AoETemplateRemoved`**: Emitted when an active AoE spell template is dismissed (`runefoble.events.board.aoe_template_removed`).
+  - `session_id`: String
+  - `board_id`: String
+  - `template_id`: String
+- **`SpellCast`**: Emitted when a kinetic spell is launched across the tactical canvas (`runefoble.events.board.spell_cast`).
+  - `session_id`: String
+  - `board_id`: String
+  - `caster_token_id`: Optional[String]
+  - `spell_name`: String
+  - `spell_archetype`: String ("evocation", "abjuration", "conjuration", etc.)
+  - `target_x`: Integer, `target_y`: Integer
+  - `origin_x`: Optional[Integer], `origin_y`: Optional[Integer]
+  - `radius_ft`: Integer (default 20)
+  - `damage_dice`: Optional[String]
+  - `damage_type`: Optional[String]
+  - `theme_palette`: Optional[String]
+- **`AreaEffectExploded`**: Emitted when an area-of-effect spell detonates, impacting tokens and creating ephemeral grid decals (`runefoble.events.board.area_effect_exploded`).
+  - `session_id`: String
+  - `board_id`: String
+  - `spell_name`: String
+  - `center_x`: Integer, `center_y`: Integer
+  - `radius_ft`: Integer
+  - `affected_token_ids`: List[String]
+  - `affected_cells`: List[List[Integer]]
+  - `decal_type`: Optional[String] ("scorched_earth", "frost", "lightning_scorch", "abjuration_glyph", "portal_residue")
+  - `decal_duration_rounds`: Integer (default 2)
+- **`VFXAnimationFinished`**: Emitted when a WebGL particle effect finishes visual rendering (`runefoble.events.board.vfx_animation_finished`).
+  - `session_id`: String
+  - `board_id`: String
+  - `animation_id`: String
+  - `spell_name`: String
+  - `target_x`: Integer, `target_y`: Integer
+  - `duration_ms`: Integer (default 500)
+- **`EphemeralDecalsDecayed`**: Emitted when terrain decals fade over active combat rounds (`runefoble.events.board.decals_decayed`).
+  - `session_id`: String
+  - `board_id`: String
+  - `rounds`: Integer (default 1)
+- **`PhysicsCollisionOccurred`**: Emitted when a physical rigid-body collision occurs on the board (`runefoble.events.board.physics.collision`).
+  - `session_id`: String
+  - `board_id`: String
+  - `entity_id`: String
+  - `entity_type`: String ("token", "dice")
+  - `collision_type`: String ("wall", "token", "boundary", "floor", "terrain_step")
+  - `x`: Float, `y`: Float, `z`: Float
+  - `impact_velocity`: Float
+  - `impact_energy`: Float
+  - `normal_x`: Float, `normal_y`: Float, `normal_z`: Float
+  - `details`: Dict[str, Any]
+- **`DiceSettled`**: Emitted when physical tumbling dice come to rest on the tactical board (`runefoble.events.board.dice.settled`).
+  - `session_id`: String
+  - `board_id`: String
+  - `dice_id`: String
+  - `dice_type`: String ("d4", "d6", "d8", "d10", "d12", "d20", "d100")
+  - `face_value`: Integer
+  - `settled_x`: Float, `settled_y`: Float, `settled_z`: Float
+  - `bounces`: Integer
+  - `trajectory`: List[Dict[str, Float]]
+- **`TrapPlacedEvent`** (alias: `TrapPlaced`): Emitted when a secret DM spatial trap or trigger is placed on the board (`runefoble.events.board.trap_placed`).
+  - `trap_id`: String
+  - `board_id`: String
+  - `name`: String
+  - `x`: Integer, `y`: Integer
+  - `trigger_type`: "step" | "proximity" | "touch"
+  - `proximity_radius`: Integer (default 1)
+  - `dc_detection`: Integer (default 15)
+  - `trap_type`: String ("pit_trap", "spear_trap", etc.)
+  - `is_secret`: Boolean (default True)
+  - `damage_dice`: Optional[String]
+  - `description`: String
+  - `effect_payload`: Dict[str, Any]
+- **`TrapSprungEvent`** (alias: `TrapSprung`): Emitted when a moving token breaches an armed trap cell or proximity zone, pausing movement (`runefoble.events.board.trap_sprung`).
+  - `trap_id`: String
+  - `board_id`: String
+  - `token_id`: String
+  - `trigger_type`: "step" | "proximity" | "touch"
+  - `x`: Integer, `y`: Integer
+  - `damage_dice`: Optional[String]
+  - `effect_payload`: Dict[str, Any]
+  - `movement_paused`: Boolean (default True)
+- **`TrapDisarmedEvent`** (alias: `TrapDisarmed`): Emitted when a secret trap is disarmed or disabled (`runefoble.events.board.trap_disarmed`).
+  - `trap_id`: String
+  - `board_id`: String
+  - `disarmed_by`: Optional[String]
+- **`BattlemapSwitchedEvent`** (alias: `BattlemapSwitched`): Emitted when the DM transitions the stage to a new battlemap and teleports party tokens in a single transaction (`runefoble.events.board.battlemap_switched`).
+  - `board_id`: String
+  - `previous_map_id`: Optional[String]
+  - `new_map_id`: String
+  - `cols`: Integer, `rows`: Integer
+  - `background_asset_id`: Optional[String]
+  - `background_image_url`: Optional[String]
+  - `teleported_tokens`: Dict[str, List[Integer]]
+  - `initiated_by`: Optional[String]
+- **`BoardDoorToggledEvent`** (alias: `BoardDoorToggled`): Emitted when an interactive door or portal changes state (`runefoble.events.board.door_toggled`).
+  - `board_id`: String
+  - `session_id`: String
+  - `door_id`: String
+  - `status`: "open" | "closed" | "locked"
+  - `is_open`: Boolean
+  - `toggled_by`: Optional[String]
+  - `metadata`: Dict[str, Any]
+- **`BoardLightSourcePlacedEvent`** (alias: `BoardLightSourcePlaced`): Emitted when a point light source or radiance emitter is placed on the board (`runefoble.events.board.light_source_placed`).
+  - `board_id`: String
+  - `session_id`: String
+  - `light_id`: String
+  - `x`: Float, `y`: Float
+  - `color_hex`: String
+  - `bright_radius`: Float
+  - `dim_radius`: Float
+  - `flicker_intensity`: Float
+  - `intensity`: Float
+  - `shadows`: Boolean
+  - `placed_by`: Optional[String]
+  - `metadata`: Dict[str, Any]
+
+

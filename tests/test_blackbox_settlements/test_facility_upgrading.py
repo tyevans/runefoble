@@ -12,8 +12,11 @@ from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import MockSpiceDBClient
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.ws_identity import SIGNING_ISSUER
 
 from .conftest import assert_stream_events
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
 @pytest.mark.asyncio
@@ -29,7 +32,7 @@ async def test_blackbox_upgrade_settlement_facilities(
     world_res = client.post(
         "/api/v1/shared-worlds",
         json={"name": "Crag Valley", "frontier_region": "Stonepeaks"},
-        headers={"x-user-id": user_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(user_id)}"},
     )
     world_id = world_res.json()["shared_world_id"]
     await spicedb.write_relationship("shared_world", world_id, "participant", "user", user_id)
@@ -45,7 +48,7 @@ async def test_blackbox_upgrade_settlement_facilities(
             "founded_by_campaign_id": camp_a,
             "defense_rating": 15,
         },
-        headers={"x-user-id": user_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(user_id)}"},
     )
     sid = charter_res.json()["settlement_id"]
 
@@ -58,7 +61,7 @@ async def test_blackbox_upgrade_settlement_facilities(
             "gold_spent": 200,
             "materials_spent": {"obsidian": 5, "mithril": 2},
         },
-        headers={"x-user-id": user_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(user_id)}"},
     )
     assert up_res.status_code == 200
     up_data = up_res.json()
@@ -75,7 +78,7 @@ async def test_blackbox_upgrade_settlement_facilities(
             "contributing_campaign_id": camp_a,
             "gold_spent": 100,
         },
-        headers={"x-user-id": user_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(user_id)}"},
     )
     assert fort_res.status_code == 200
     assert fort_res.json()["facilities"]["fortifications"] == 2
@@ -98,7 +101,7 @@ async def test_blackbox_claim_haven_rest_boon(
     world_res = client.post(
         "/api/v1/shared-worlds",
         json={"name": "Verdant Reach", "frontier_region": "Sunken Delta"},
-        headers={"x-user-id": user_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(user_id)}"},
     )
     world_id = world_res.json()["shared_world_id"]
     await spicedb.write_relationship("shared_world", world_id, "participant", "user", user_id)
@@ -111,14 +114,14 @@ async def test_blackbox_claim_haven_rest_boon(
             "shared_world_id": world_id,
             "founded_by_campaign_id": camp_id,
         },
-        headers={"x-user-id": user_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(user_id)}"},
     )
     sid = charter_res.json()["settlement_id"]
 
     boon_res = client.post(
         f"/settlements/{sid}/claim-boon",
         json={"campaign_id": camp_id, "character_id": "char_123", "facility_id": "sanctum"},
-        headers={"x-user-id": user_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(user_id)}"},
     )
     assert boon_res.status_code == 200
     assert "Sanctuary Rest" in boon_res.json()["boon"]

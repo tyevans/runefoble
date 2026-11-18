@@ -92,18 +92,6 @@ Then('the URL hash should be {string}', async ({ page }, expectedHash: string) =
     .toBe(expectedHash);
 });
 
-Then(
-  'I should see a toast notification containing {string}',
-  async ({ page }, messageText: string) => {
-    const toast = page
-      .locator('.toast-notification, [role="status"]')
-      .filter({ hasText: messageText })
-      .first();
-
-    await expect(toast).toBeVisible({ timeout: 10_000 });
-  }
-);
-
 Then('the active theme should be {string}', async ({ page }, expectedTheme: string) => {
   await expect
     .poll(

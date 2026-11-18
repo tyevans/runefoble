@@ -55,8 +55,7 @@ spec:
               value: {{ .Values.postgres.database }}
             - name: POSTGRES_USER
               value: {{ .Values.postgres.username }}
-            - name: POSTGRES_PASSWORD
-              value: {{ .Values.postgres.password }}
+            {{- include "runefoble.secretEnv" (dict "root" $ "name" "POSTGRES_PASSWORD" "key" "postgres-password") | nindent 12 }}
             - name: POSTGRES_MULTIPLE_DATABASES
               value: {{ .Values.postgres.multipleDatabases | default "zitadel,spicedb,openpanel" | quote }}
           volumeMounts:

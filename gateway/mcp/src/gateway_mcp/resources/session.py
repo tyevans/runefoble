@@ -1,51 +1,45 @@
-"""Session and encounter FastMCP resources."""
+"""Session and encounter FastMCP resources.
+
+Each resource takes the session id from its URI and reads the owning service.
+A session that the service does not know gives a resource error.
+"""
 
 from typing import TYPE_CHECKING, Any
 
-from gateway_mcp.tools.board import inspect_tactical_board
+from gateway_mcp.clients import ServiceClient
+from gateway_mcp.clients.caller import caller_bearer
+from gateway_mcp.tools.board import query_encounter_state
+from mcp.server.fastmcp import Context
 
 if TYPE_CHECKING:
     from mcp.server.fastmcp import FastMCP
 
-ACTIVE_SESSION_ID = "camp1"
 
-
-async def get_session_state(session_id: str) -> dict[str, Any]:
-    """Aggregate tactical board tokens and active scene atmosphere for a session."""
-    board = await inspect_tactical_board(session_id)
+async def get_session_state(session_id: str, ctx: Context | None = None) -> dict[str, Any]:
+    """Read the stored state of a game session from game_session."""
+    session = await ServiceClient(bearer=caller_bearer(ctx)).get_session(session_id)
     return {
-        "session_id": session_id,
-        "tokens": board["tokens"],
-        "active_tokens": board["tokens"],
-        "grid_dimensions": board["grid_dimensions"],
-        "threat_level": "medium",
-        "scene_atmosphere": {
-            "mood": "ominous tension",
-            "lighting": "dim flickering torches",
-            "ambient_audio_prompt": "distant dripping water and echoing chanting",
-            "threat_level": "medium",
-        },
+        "session_id": session["session_id"],
+        "campaign_id": session["campaign_id"],
+        "title": session["title"],
+        "dm_id": session["dm_id"],
+        "status": session["status"],
+        "current_turn": session["current_turn"],
+        "in_combat": session["in_combat"],
+        "combat_round": session["combat_round"],
+        "combat_active_id": session["combat_active_id"],
+        "participants": session["participants"],
     }
 
 
-async def get_active_session_context() -> dict[str, Any]:
-    """Retrieve complete context for the currently active tabletop gaming session."""
-    return await get_session_state(ACTIVE_SESSION_ID)
-
-
-async def get_combat_encounter_state() -> dict[str, Any]:
-    """Retrieve the board state of the active encounter (tokens, grid, and hazards)."""
-    board = await inspect_tactical_board(ACTIVE_SESSION_ID)
-    return {
-        "session_id": board["session_id"],
-        "grid_dimensions": board["grid_dimensions"],
-        "tokens": board["tokens"],
-        "active_hazards": board["active_hazards"],
-    }
+async def get_encounter_state(session_id: str, ctx: Context | None = None) -> dict[str, Any]:
+    """Read the encounter of a session: tokens and grid from board_state, round and order from game_session."""
+    return await query_encounter_state(session_id, ctx=ctx)
 
 
 def register_session_resources(mcp: "FastMCP") -> None:
     """Register session and encounter resources on FastMCP."""
     mcp.resource("session://{session_id}/state", mime_type="application/json")(get_session_state)
-    mcp.resource("session://active", mime_type="application/json")(get_active_session_context)
-    mcp.resource("encounter://current", mime_type="application/json")(get_combat_encounter_state)
+    mcp.resource("encounter://{session_id}/current", mime_type="application/json")(
+        get_encounter_state
+    )

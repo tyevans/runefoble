@@ -3,7 +3,7 @@
 ## Overview
 The Watcher AI system exposes tools to external LLMs and internal agents via the Model Context Protocol (MCP) server located in `gateway/mcp/src/gateway_mcp/server.py`. Tools, resources, and prompt templates are organized into modular domain sub-packages under `gateway/mcp/src/gateway_mcp/`:
 - `tools/`: Tabletop mechanics, dice, board mutations, character sheet actions, and action planning.
-- `resources/`: Dynamic session state (`session://active`, `session://{session_id}/state`) and combat encounters (`encounter://current`).
+- `resources/`: Dynamic session state (`session://{session_id}/state`) and combat encounters (`encounter://{session_id}/current`). Each resource reads its owning service.
 - `prompts/`: Narrative framing and tactical guidance prompts (`dm_narrative_guidance`, `tactical_action_adviser`).
 
 ## Adding a New MCP Tool
@@ -30,7 +30,7 @@ Add the base URL to `gateway/mcp/src/gateway_mcp/settings.py` and to the Helm `s
 Only pure computation, such as dice rolls or rule lookups, may run inside the gateway without a service call. Tools that store state must go through the owning bounded context (ADR-0007).
 
 ### 2. Register with FastMCP in Module Registration Hook
-Add the tool registration to the module's registration hook (e.g., `register_character_tools` in `tools/character.py`):
+Add the tool registration to the module's registration hook (e.g., `register_character_tools` in `gateway/mcp/src/gateway_mcp/tools/character.py`):
 
 ```python
 def register_character_tools(mcp: FastMCP) -> None:

@@ -12,8 +12,11 @@ from fastapi.testclient import TestClient
 from the_watcher.dependencies import STREAM_WORLD
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.ws_identity import SIGNING_ISSUER
 
 from .conftest import setup_campaign_roles
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
 @pytest.mark.asyncio
@@ -35,7 +38,7 @@ async def test_zanzibar_turf_war_authorization(client: TestClient):
     res_player = client.post(
         "/the-watcher/factions/skirmish/simulate",
         json=payload,
-        headers={"X-User-Id": player_user},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(player_user)}"},
     )
     assert res_player.status_code == 403
     assert "Forbidden" in res_player.json()["detail"]
@@ -44,7 +47,7 @@ async def test_zanzibar_turf_war_authorization(client: TestClient):
     res_dm = client.post(
         "/the-watcher/factions/skirmish/simulate",
         json=payload,
-        headers={"X-User-Id": dm_user},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_user)}"},
     )
     assert res_dm.status_code == 200
     data = res_dm.json()
@@ -74,7 +77,7 @@ async def test_turf_war_api_conflict_initiation_and_state_query(
     res = client.post(
         "/api/v1/factions/skirmish/simulate",
         json=payload,
-        headers={"X-User-Id": dm_user},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_user)}"},
     )
     assert res.status_code == 200
     sim_data = res.json()
@@ -84,7 +87,7 @@ async def test_turf_war_api_conflict_initiation_and_state_query(
     # Query territory state via /the-watcher and /api/v1 endpoints
     res_get = client.get(
         f"/the-watcher/regions/{region_id}/unrest?campaign_id={camp_id}",
-        headers={"X-User-Id": player_user},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(player_user)}"},
     )
     assert res_get.status_code == 200
     state = res_get.json()

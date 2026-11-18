@@ -44,16 +44,6 @@ class CharacterRecord:
     is_stabilized: bool = False
 
     def to_dict(self, campaign_title: str | None = None) -> dict[str, Any]:
-        title = campaign_title
-        if title is None and self.campaign_id:
-            try:
-                from gateway_api.campaign_store import campaign_store
-
-                c = campaign_store.get_campaign(self.campaign_id)
-                title = c.title if c else f"Campaign #{self.campaign_id}"
-            except Exception:
-                title = f"Campaign #{self.campaign_id}"
-
         return {
             "id": self.id,
             "name": self.name,
@@ -65,7 +55,7 @@ class CharacterRecord:
             "armor_class": self.armor_class,
             "speed": self.speed,
             "campaign_id": self.campaign_id,
-            "campaign_title": title,
+            "campaign_title": campaign_title,
             "owner_id": self.owner_id,
             "portrait_url": self.portrait_url,
             "equipment": dict(self.equipment),
@@ -84,7 +74,7 @@ class CharacterRecord:
             "maxHp": self.max_hp,
             "armorClass": self.armor_class,
             "campaignId": self.campaign_id,
-            "campaignTitle": title,
+            "campaignTitle": campaign_title,
             "ownerId": self.owner_id,
             "portraitUrl": self.portrait_url,
             "spellSlots": dict(self.spell_slots),

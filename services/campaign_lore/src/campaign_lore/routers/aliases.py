@@ -14,9 +14,10 @@ from campaign_lore.dependencies import (
     get_repo,
     get_retrieval_engine,
 )
+from campaign_lore.identity import get_campaign_principal
 from campaign_lore.retrieval import LoreRetrievalEngine
 
-router = APIRouter(tags=["Entity Aliases"])
+router = APIRouter(tags=["Entity Aliases"], dependencies=[Depends(get_campaign_principal)])
 
 
 class ConsolidateAliasRequest(BaseModel):

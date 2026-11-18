@@ -4,7 +4,7 @@ from typing import Annotated, Any
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_platform.event_sourcing import AggregateRepository
 
@@ -14,13 +14,15 @@ from campaign_lore.dependencies import (
 )
 from campaign_lore.handouts import RelicSynthesizer
 from campaign_lore.handouts_aggregate import RelicAggregate
+from campaign_lore.identity import CallerId, get_campaign_principal
 from campaign_lore.permissions import (
     check_user_can_inspect_relic,
     check_user_can_read_secrets,
-    get_current_user_id,
 )
 
-router = APIRouter(prefix="/api/v1/lore/relics", tags=["3D Relics"])
+router = APIRouter(
+    prefix="/api/v1/lore/relics", tags=["3D Relics"], dependencies=[Depends(get_campaign_principal)]
+)
 
 
 class ForgeRelicRequest(BaseModel):
@@ -37,9 +39,10 @@ class ForgeRelicRequest(BaseModel):
 
 
 class InspectRelicRequest(BaseModel):
-    """Payload to record a player's 3D rotation and relic inspection."""
+    """Payload to record a player's 3D rotation and relic inspection. The inspector is the verified caller."""
 
-    inspected_by: str = "player"
+    model_config = ConfigDict(extra="forbid")
+
     discovered_runes: list[dict[str, Any]] | None = None
     notes: str | None = None
 
@@ -55,7 +58,7 @@ class TranslateRuneRequest(BaseModel):
 @router.post("/forge", response_model=dict[str, Any], status_code=status.HTTP_200_OK)
 async def forge_relic(
     payload: ForgeRelicRequest,
-    user_id: Annotated[str | None, Depends(get_current_user_id)] = None,
+    user_id: CallerId,
     spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)] = None,
     repo: Annotated[AggregateRepository[RelicAggregate], Depends(get_relic_repo)] = None,
 ) -> dict[str, Any]:
@@ -108,7 +111,7 @@ async def forge_relic(
 @router.get("/{relic_id}", response_model=dict[str, Any])
 async def get_relic(
     relic_id: UUID,
-    user_id: Annotated[str | None, Depends(get_current_user_id)] = None,
+    user_id: CallerId,
     spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)] = None,
     repo: Annotated[AggregateRepository[RelicAggregate], Depends(get_relic_repo)] = None,
 ) -> dict[str, Any]:
@@ -154,7 +157,7 @@ async def get_relic(
 async def inspect_relic(
     relic_id: UUID,
     payload: InspectRelicRequest,
-    user_id: Annotated[str | None, Depends(get_current_user_id)] = None,
+    user_id: CallerId,
     spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)] = None,
     repo: Annotated[AggregateRepository[RelicAggregate], Depends(get_relic_repo)] = None,
 ) -> dict[str, Any]:
@@ -175,7 +178,7 @@ async def inspect_relic(
         )
 
     relic.inspect(
-        inspected_by=payload.inspected_by or user_id or "player",
+        inspected_by=user_id,
         discovered_runes=payload.discovered_runes,
         notes=payload.notes,
     )
@@ -183,7 +186,7 @@ async def inspect_relic(
 
     return {
         "relic_id": str(relic_id),
-        "inspected_by": payload.inspected_by or user_id or "player",
+        "inspected_by": user_id,
         "discovered_runes": relic.state.inspections[-1]["discovered_runes"],
         "status": "inspected",
     }
@@ -193,7 +196,7 @@ async def inspect_relic(
 async def translate_rune(
     relic_id: UUID,
     payload: TranslateRuneRequest,
-    user_id: Annotated[str | None, Depends(get_current_user_id)] = None,
+    user_id: CallerId,
     spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)] = None,
     repo: Annotated[AggregateRepository[RelicAggregate], Depends(get_relic_repo)] = None,
 ) -> dict[str, Any]:

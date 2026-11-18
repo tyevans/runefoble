@@ -21,7 +21,7 @@ When a human player cannot attend, their character remains active on the board:
   - *"Foolishness"*: The character displays reckless bravado, ignoring tactical cover, taunting foes, and imposing disadvantage on enemy attacks against allies while drawing threat.
   - *"Cowardice"*: The character adopts defensive posturing and seeks tactical retreat vectors, crouching behind cover or sturdy allies.
   - *"Greed"*: The character prioritizes searching chests, grabbing loose coins, and inspecting ancient relics over optimal combat positioning.
-- **Automated Turn Progression**: In `services/game_session`, when an absent character's turn arrives (`is_stand_in_active=True`), `POST /api/v1/sessions/{session_id}/turns/auto-pilot` invokes The Watcher engine, persists the stand-in action to the event-sourced session aggregate, emits `StandInActionDecided` and `AbsencePenaltyApplied` events to Redis Streams (`runefoble.events.watcher`), and advances the turn order.
+- **Automated Turn Progression**: In `services/game_session`, when an absent character's turn arrives (`is_stand_in_active=True`), `POST /api/v1/sessions/{session_id}/turns/auto-pilot` invokes The Watcher engine, persists the stand-in action to the event-sourced session aggregate, emits `StandInActionDecided` and `AbsencePenaltyApplied` events to Redis Streams (`runefoble.events.watcher`), and advances the turn order. Status: the save and publish code exists, but activation does not work end to end. The blocker is tracked in TASK-0658 and the character-sheet stand-in work.
 - **Absentee Chronicle & Humorous Recap**: When the absent player returns for the next session, `POST /api/v1/watcher/stand-in/recap` compiles all stand-in decisions and active penalties into a comedic narrative recap with memorable quotes and battle highlights.
 
 ### 3. Modular Domain Architecture
@@ -29,12 +29,12 @@ To ensure high maintainability, enforce file size limits (< 500 lines), and enab
 - **Scene Presets (`presets.py`)**: Catalogs narrative atmosphere presets (`dungeon`, `crypt`, `tavern`, `forest`, `dragon_lair`) including mood-specific environmental descriptions, dynamic lighting, and ambient soundscape audio prompts (`build_scene_atmosphere`).
 - **Encounter Generation (`encounters.py`)**: Balances Challenge Ratings (CR), party level and size scaling, monster stat blocks, and tactical objectives across easy, medium, hard, and deadly threat tiers (`build_encounter`).
 - **Tactical Action Resolution (`tactics.py`)**: Adjudicates NPC decision trees, spellcaster prioritization, wounded-target finishing strikes, and aggressive round-one opening charges (`adjudicate_npc_turn`).
-- **Engine Facade (`autonomous_dm.py`)**: Exposes the backward-compatible `AutonomousDMEngine` class and top-level helpers, orchestrating the underlying domain submodules without leaking implementation details.
+- **Engine Facade (`autonomous_dm.py`)**: Exposes the `AutonomousDMEngine` class and top-level helpers, orchestrating the underlying domain submodules without leaking implementation details.
 
 ### 4. Modular Speech-to-Intent Parsing Architecture
 To maintain file size invariants (< 500 lines) and support streaming transcription and compound intent processing, speech parsing in `services/the_watcher/src/the_watcher/` is structured into:
 - **Action Grammar Patterns (`grammars.py`)**: Action regular expressions and lexical token sets covering coordinates, cardinal directions, flanking, spells, token targeting, weapon attacks, skill checks, and dice rolls (< 100 lines).
 - **Tactical Spatial Math (`spatial.py`)**: Vector math, step normalization (feet-to-squares conversion), and bounded grid coordinate clamping (< 80 lines).
-- **Speech Intent Coordinator (`movement_parser.py`)**: Orchestrates lexical pattern matching and spatial calculation to synthesize validated `IntentResult` instances while retaining 100% backward-compatible public methods (< 180 lines).
+- **Speech Intent Coordinator (`movement_parser.py`)**: Orchestrates lexical pattern matching and spatial calculation to synthesize validated `IntentResult` instances while keeping its public methods (192 lines).
 
 

@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Annotated
-
-from fastapi import APIRouter, Header, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from runefoble_events.events import DMNarrativeWhispered
 from runefoble_platform.event_publish import publish_best_effort, publish_or_fail
 from the_watcher.dependencies import (
@@ -15,6 +13,7 @@ from the_watcher.dependencies import (
     get_spicedb_client,
     to_uuid,
 )
+from the_watcher.identity import CallerId, get_caller_principal
 from the_watcher.models import (
     WhisperCreateRequest,
     WhisperGenerateRequest,
@@ -22,11 +21,7 @@ from the_watcher.models import (
     WhisperSuggestion,
 )
 
-router = APIRouter(tags=["copilot"])
-
-
-def _extract_caller_id(x_user_id: str | None, user_id: str | None) -> str | None:
-    return x_user_id or user_id
+router = APIRouter(dependencies=[Depends(get_caller_principal)], tags=["copilot"])
 
 
 async def _assert_dm_permission(
@@ -47,16 +42,15 @@ async def _assert_dm_permission(
 
 @router.get("/api/v1/watcher/whispers", response_model=WhisperListResponse)
 async def get_whispers(
+    caller_id: CallerId,
     session_id: str,
     campaign_id: str | None = None,
     page: int = Query(default=1, ge=1),
     limit: int = Query(default=20, ge=1, le=100),
     whisper_type: str | None = None,
-    x_user_id: Annotated[str | None, Header(alias="X-User-Id")] = None,
-    user_id: Annotated[str | None, Query(alias="user_id")] = None,
 ) -> WhisperListResponse:
     """Return paginated DM private narrative suggestions. Restricted to dungeon_master relation."""
-    caller = _extract_caller_id(x_user_id, user_id)
+    caller = caller_id
     await _assert_dm_permission(caller, campaign_id, session_id)
 
     engine = get_copilot_engine()
@@ -72,12 +66,11 @@ async def get_whispers(
 
 @router.post("/api/v1/watcher/whispers", response_model=WhisperSuggestion)
 async def create_whisper(
+    caller_id: CallerId,
     req: WhisperCreateRequest,
-    x_user_id: Annotated[str | None, Header(alias="X-User-Id")] = None,
-    user_id: Annotated[str | None, Query(alias="user_id")] = None,
 ) -> WhisperSuggestion:
     """Add a private narrative suggestion to the DM channel. Restricted to dungeon_master."""
-    caller = _extract_caller_id(x_user_id, user_id)
+    caller = caller_id
     await _assert_dm_permission(caller, req.campaign_id, req.session_id)
 
     engine = get_copilot_engine()
@@ -109,12 +102,11 @@ async def create_whisper(
 
 @router.post("/api/v1/watcher/whispers/generate", response_model=list[WhisperSuggestion])
 async def generate_whispers(
+    caller_id: CallerId,
     req: WhisperGenerateRequest,
-    x_user_id: Annotated[str | None, Header(alias="X-User-Id")] = None,
-    user_id: Annotated[str | None, Query(alias="user_id")] = None,
 ) -> list[WhisperSuggestion]:
     """Generate dynamic narrative suggestions, monster tactics, and passive perception cues."""
-    caller = _extract_caller_id(x_user_id, user_id)
+    caller = caller_id
     await _assert_dm_permission(caller, req.campaign_id, req.session_id)
 
     engine = get_copilot_engine()

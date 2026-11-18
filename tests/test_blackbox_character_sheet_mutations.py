@@ -13,18 +13,21 @@ Verifies:
 
 import pytest
 from fastapi.testclient import TestClient
-from gateway_api.campaign_store import campaign_store
 from gateway_api.character_store import character_store
 from gateway_api.main import app
 
-client = TestClient(app)
+
+@pytest.fixture
+def client(game_session_upstream):
+    """Enter the gateway lifespan after game_session is served, so the proxy reaches it."""
+    with TestClient(app) as gateway_client:
+        yield gateway_client
 
 
 @pytest.fixture(autouse=True)
 def reset_stores():
     """Reset character and campaign memory stores before each test."""
     character_store.reset(load_defaults=False)
-    campaign_store.reset()
     yield
 
 
@@ -33,7 +36,9 @@ def _auth(issuer, sub: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {issuer.mint(sub)}"}
 
 
-def create_test_character(issuer, owner_id: str = "user_valeros", is_stand_in: bool = False) -> str:
+def create_test_character(
+    client: TestClient, issuer, owner_id: str = "user_valeros", is_stand_in: bool = False
+) -> str:
     """Helper to create a test character via frontdoor POST /api/v1/characters."""
     headers = _auth(issuer, owner_id)
     res = client.post(
@@ -59,10 +64,10 @@ def create_test_character(issuer, owner_id: str = "user_valeros", is_stand_in: b
     reason="TASK-0586: gateway character store is not the character_sheet store; sub-resource writes now reach the upstream only (TASK-0536)",
 )
 @pytest.mark.asyncio
-async def test_health_modification_and_clamping(signing_issuer):
+async def test_health_modification_and_clamping(trusted_ws_issuer, client):
     """Verify modifying HP with positive and negative deltas clamps within [0, maxHp]."""
-    char_id = create_test_character(signing_issuer)
-    headers = _auth(signing_issuer, "user_valeros")
+    char_id = create_test_character(client, trusted_ws_issuer)
+    headers = _auth(trusted_ws_issuer, "user_valeros")
 
     # Take 10 damage: 38 - 10 = 28
     res = client.post(
@@ -93,10 +98,12 @@ async def test_health_modification_and_clamping(signing_issuer):
     reason="TASK-0586: gateway character store is not the character_sheet store; sub-resource writes now reach the upstream only (TASK-0536)",
 )
 @pytest.mark.asyncio
-async def test_stand_in_permadeath_safeguard_stabilization(signing_issuer):
+async def test_stand_in_permadeath_safeguard_stabilization(trusted_ws_issuer, client):
     """Verify that when an AI stand-in character drops to <= 0 HP, safeguard stabilizes them."""
-    char_id = create_test_character(signing_issuer, owner_id="user_valeros", is_stand_in=True)
-    headers = _auth(signing_issuer, "user_valeros")
+    char_id = create_test_character(
+        client, trusted_ws_issuer, owner_id="user_valeros", is_stand_in=True
+    )
+    headers = _auth(trusted_ws_issuer, "user_valeros")
 
     # Take massive damage dropping HP to <= 0
     res = client.post(
@@ -119,10 +126,10 @@ async def test_stand_in_permadeath_safeguard_stabilization(signing_issuer):
     reason="TASK-0586: gateway character store is not the character_sheet store; sub-resource writes now reach the upstream only (TASK-0536)",
 )
 @pytest.mark.asyncio
-async def test_equipment_equip_and_unequip(signing_issuer):
+async def test_equipment_equip_and_unequip(trusted_ws_issuer, client):
     """Verify equipping and unequipping items via sub-resource endpoints."""
-    char_id = create_test_character(signing_issuer)
-    headers = _auth(signing_issuer, "user_valeros")
+    char_id = create_test_character(client, trusted_ws_issuer)
+    headers = _auth(trusted_ws_issuer, "user_valeros")
 
     # Equip Longsword to main_hand
     res = client.post(
@@ -157,10 +164,10 @@ async def test_equipment_equip_and_unequip(signing_issuer):
     reason="TASK-0586: gateway character store is not the character_sheet store; sub-resource writes now reach the upstream only (TASK-0536)",
 )
 @pytest.mark.asyncio
-async def test_inventory_add_and_remove(signing_issuer):
+async def test_inventory_add_and_remove(trusted_ws_issuer, client):
     """Verify adding and removing inventory items via sub-resource endpoints."""
-    char_id = create_test_character(signing_issuer)
-    headers = _auth(signing_issuer, "user_valeros")
+    char_id = create_test_character(client, trusted_ws_issuer)
+    headers = _auth(trusted_ws_issuer, "user_valeros")
 
     # Add Potion of Healing
     res = client.post(
@@ -214,10 +221,10 @@ async def test_inventory_add_and_remove(signing_issuer):
     reason="TASK-0586: gateway character store is not the character_sheet store; sub-resource writes now reach the upstream only (TASK-0536)",
 )
 @pytest.mark.asyncio
-async def test_conditions_apply_and_remove(signing_issuer):
+async def test_conditions_apply_and_remove(trusted_ws_issuer, client):
     """Verify applying and removing conditions via sub-resource endpoints."""
-    char_id = create_test_character(signing_issuer)
-    headers = _auth(signing_issuer, "user_valeros")
+    char_id = create_test_character(client, trusted_ws_issuer)
+    headers = _auth(trusted_ws_issuer, "user_valeros")
 
     # Apply poisoned condition
     res = client.post(
@@ -253,10 +260,10 @@ async def test_conditions_apply_and_remove(signing_issuer):
     reason="TASK-0586: gateway character store is not the character_sheet store; sub-resource writes now reach the upstream only (TASK-0536)",
 )
 @pytest.mark.asyncio
-async def test_spells_cast_and_prepare(signing_issuer):
+async def test_spells_cast_and_prepare(trusted_ws_issuer, client):
     """Verify spell casting slot deduction and spell preparation toggles."""
-    char_id = create_test_character(signing_issuer)
-    headers = _auth(signing_issuer, "user_valeros")
+    char_id = create_test_character(client, trusted_ws_issuer)
+    headers = _auth(trusted_ws_issuer, "user_valeros")
 
     # Prepare Fireball
     res = client.post(
@@ -295,10 +302,10 @@ async def test_spells_cast_and_prepare(signing_issuer):
 
 
 @pytest.mark.asyncio
-async def test_zanzibar_unauthorized_mutation_rejection(signing_issuer):
+async def test_zanzibar_unauthorized_mutation_rejection(trusted_ws_issuer, client):
     """Verify non-permitted user is rejected with 403 Forbidden on all sub-resource mutations."""
-    char_id = create_test_character(signing_issuer, owner_id="user_valeros")
-    headers_intruder = _auth(signing_issuer, "user_intruder")
+    char_id = create_test_character(client, trusted_ws_issuer, owner_id="user_valeros")
+    headers_intruder = _auth(trusted_ws_issuer, "user_intruder")
 
     # 403 on health mutation
     res = client.post(

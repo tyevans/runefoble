@@ -17,6 +17,10 @@ from voice_agent.main import app
 from voice_agent.stt import set_streaming_pipeline
 from voice_agent.synthesis_engine import set_speech_synthesizer
 
+from tests.helpers.voice_identity import voice_auth_headers
+
+pytestmark = pytest.mark.usefixtures("trusted_voice_issuer")
+
 MODEL_SIZE = "tiny.en"
 MODEL_REPO_DIR = f"models--Systran--faster-whisper-{MODEL_SIZE}"
 
@@ -66,7 +70,7 @@ def test_health_is_ready_with_speech_binary_and_cached_model(speech_env: None, m
     """With the binary present and the model cached, the health route reports ready."""
     _cache_model(model_dir)
 
-    resp = TestClient(app).get("/healthz")
+    resp = TestClient(app, headers=voice_auth_headers()).get("/healthz")
 
     assert resp.status_code == 200, resp.text
     assert resp.json()["status"] == "ok"
@@ -75,7 +79,7 @@ def test_health_is_ready_with_speech_binary_and_cached_model(speech_env: None, m
 def test_health_is_not_ready_when_model_cache_is_removed(speech_env: None, model_dir: Path):
     """Removing the cached model flips the health route to not-ready. No silent fallback."""
     _cache_model(model_dir)
-    client = TestClient(app)
+    client = TestClient(app, headers=voice_auth_headers())
     assert client.get("/healthz").status_code == 200
 
     shutil.rmtree(model_dir / MODEL_REPO_DIR)
@@ -92,7 +96,7 @@ def test_health_is_not_ready_when_model_cache_is_empty_and_download_disabled(
     speech_env: None,
 ):
     """An empty model directory with download disabled is not ready."""
-    resp = TestClient(app).get("/healthz")
+    resp = TestClient(app, headers=voice_auth_headers()).get("/healthz")
 
     assert resp.status_code == 503, resp.text
     assert "stt" in resp.json()["problems"]
@@ -105,7 +109,7 @@ def test_health_is_ready_when_download_is_enabled_and_cache_is_empty(
     monkeypatch.setenv("RUNEFOBLE_VOICE_STT_DOWNLOAD_ENABLED", "true")
     set_streaming_pipeline(None)
 
-    resp = TestClient(app).get("/healthz")
+    resp = TestClient(app, headers=voice_auth_headers()).get("/healthz")
 
     assert resp.status_code == 200, resp.text
 
@@ -118,7 +122,7 @@ def test_health_is_not_ready_when_speech_binary_is_missing(
     monkeypatch.setenv("RUNEFOBLE_VOICE_TTS_BINARY", str(tmp_path / "absent" / "espeak-ng"))
     set_speech_synthesizer(None)
 
-    resp = TestClient(app).get("/healthz")
+    resp = TestClient(app, headers=voice_auth_headers()).get("/healthz")
 
     assert resp.status_code == 503, resp.text
     body = resp.json()
@@ -138,7 +142,7 @@ def test_health_is_not_ready_when_speech_binary_version_check_fails(
     monkeypatch.setenv("RUNEFOBLE_VOICE_TTS_BINARY", str(broken))
     set_speech_synthesizer(None)
 
-    resp = TestClient(app).get("/healthz")
+    resp = TestClient(app, headers=voice_auth_headers()).get("/healthz")
 
     assert resp.status_code == 503, resp.text
     assert "tts" in resp.json()["problems"]

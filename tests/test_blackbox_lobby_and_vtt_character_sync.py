@@ -12,11 +12,11 @@ Governed by:
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
-from gateway_api.campaign_store import campaign_store
 from gateway_api.character_store import character_store
 from gateway_api.main import app as gateway_app
 
@@ -27,13 +27,13 @@ SERVICES_DIR = SRC_DIR / "services"
 
 
 @pytest.fixture
-def client() -> TestClient:
-    return TestClient(gateway_app)
+def client(game_session_upstream) -> Iterator[TestClient]:
+    with TestClient(gateway_app) as gateway_client:
+        yield gateway_client
 
 
 @pytest.fixture(autouse=True)
 def reset_stores():
-    campaign_store.reset()
     character_store.reset()
     yield
 
@@ -58,9 +58,9 @@ def reset_stores():
 # ---------------------------------------------------------------------------
 
 
-def test_gateway_character_and_campaign_frontdoors(client: TestClient, signing_issuer) -> None:
+def test_gateway_character_and_campaign_frontdoors(client: TestClient, trusted_ws_issuer) -> None:
     """Verify characters created via public API frontdoors are listed and campaign-assigned."""
-    headers = {"Authorization": f"Bearer {signing_issuer.mint('user-valeros')}"}
+    headers = {"Authorization": f"Bearer {trusted_ws_issuer.mint('user-valeros')}"}
 
     # 1. Create a campaign
     camp_res = client.post(

@@ -10,7 +10,11 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
 from .conftest import setup_campaign_roles
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
 @pytest.mark.asyncio
@@ -23,7 +27,7 @@ async def test_frontdoor_mercenary_recruiting_and_upkeep(client: TestClient):
     client.post(
         f"/factions/{faction_id}/resources/adjust",
         json={"treasury_delta": 100, "campaign_id": camp_id},
-        headers={"X-User-Id": dm_user},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_user)}"},
     )
 
     # Recruit 4 heavy infantry at 25 gold each (100 total, upkeep 2 each)
@@ -37,7 +41,7 @@ async def test_frontdoor_mercenary_recruiting_and_upkeep(client: TestClient):
             "upkeep_per_tick": 2,
             "campaign_id": camp_id,
         },
-        headers={"X-User-Id": dm_user},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_user)}"},
     )
     assert rec_res.status_code == 200
     data = rec_res.json()
@@ -54,7 +58,7 @@ async def test_frontdoor_mercenary_recruiting_and_upkeep(client: TestClient):
             "cost_per_unit": 50,
             "campaign_id": camp_id,
         },
-        headers={"X-User-Id": dm_user},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_user)}"},
     )
     assert fail_res.status_code == 400
     assert "Insufficient treasury" in fail_res.json()["detail"]
@@ -69,7 +73,7 @@ async def test_mercenary_recruitment_unauthorized(client: TestClient):
     res = client.post(
         f"/factions/{faction_id}/mercenaries/recruit",
         json={"unit_name": "Archers", "count": 2, "cost_per_unit": 10, "campaign_id": camp_id},
-        headers={"X-User-Id": player_user},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(player_user)}"},
     )
     assert res.status_code == 403
     assert "Forbidden" in res.json()["detail"]

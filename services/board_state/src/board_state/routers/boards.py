@@ -6,17 +6,19 @@ import logging
 from uuid import uuid4
 
 from board_state.aggregate import BoardAggregate, BoardState
-from board_state.dependencies import get_board, repo, to_board_uuid
+from board_state.dependencies import get_board, get_current_user_id, repo, to_board_uuid
 from board_state.models import CreateBoardRequest
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
 logger = logging.getLogger("runefoble.board_state.routers.boards")
 
-router = APIRouter(tags=["boards"])
+router = APIRouter(tags=["boards"], dependencies=[Depends(get_current_user_id)])
+# Microfrontend discovery stays public. It carries no board data.
+ui_manifest_router = APIRouter(tags=["boards"])
 
 
-@router.get("/ui/manifest")
-@router.get("/board_state/ui/manifest")
+@ui_manifest_router.get("/ui/manifest")
+@ui_manifest_router.get("/board_state/ui/manifest")
 def get_ui_manifest():
     """Advertise vendored microfrontend components for board state."""
     return {

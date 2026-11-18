@@ -9,7 +9,7 @@ from __future__ import annotations
 from uuid import UUID, uuid4
 
 from eventsource.domain.exceptions import AggregateNotFoundError
-from fastapi import APIRouter, Header, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from game_session.aggregate import GameSessionAggregate, GameSessionState
 from game_session.character_client import CharacterSheetUnavailableError, release_stand_in
 from game_session.dependencies import get_spicedb_client, repo
@@ -24,9 +24,10 @@ from game_session.models import (
     RollDiceResponse,
     SelectLobbyCharacterRequest,
 )
+from game_session.settlement.auth.tokens import CallerId, get_caller_principal
 from runefoble_platform.dice import parse_and_roll
 
-router = APIRouter(tags=["session"])
+router = APIRouter(dependencies=[Depends(get_caller_principal)], tags=["session"])
 
 
 async def _load_session(session_id: UUID) -> GameSessionAggregate:
@@ -126,33 +127,32 @@ async def select_lobby_character(
 
 @router.post("/api/v1/sessions/{session_id}/hot-swap", response_model=HotSwapResponse)
 async def hot_swap_session(
+    caller_id: CallerId,
     session_id: UUID,
     req: HotSwapRequest,
-    x_user_id: str | None = Header(None, alias="x-user-id"),
 ) -> HotSwapResponse:
     """Hands off active turn control from AI stand-in to authenticating player mid-session."""
     spicedb = get_spicedb_client()
-    if x_user_id:
+    allowed = await spicedb.check_permission(
+        resource_type="character",
+        resource_id=str(req.character_id),
+        permission="edit",
+        subject_type="user",
+        subject_id=caller_id,
+    )
+    if not allowed:
         allowed = await spicedb.check_permission(
-            resource_type="character",
-            resource_id=str(req.character_id),
-            permission="edit",
+            resource_type="game_session",
+            resource_id=str(session_id),
+            permission="participate",
             subject_type="user",
-            subject_id=x_user_id,
+            subject_id=caller_id,
         )
-        if not allowed:
-            allowed = await spicedb.check_permission(
-                resource_type="game_session",
-                resource_id=str(session_id),
-                permission="participate",
-                subject_type="user",
-                subject_id=x_user_id,
-            )
-        if not allowed:
-            raise HTTPException(
-                status_code=403,
-                detail=f"User '{x_user_id}' does not have permission to take control of character '{req.character_id}'",
-            )
+    if not allowed:
+        raise HTTPException(
+            status_code=403,
+            detail=f"User '{caller_id}' does not have permission to take control of character '{req.character_id}'",
+        )
 
     session = await _load_session(session_id)
     try:

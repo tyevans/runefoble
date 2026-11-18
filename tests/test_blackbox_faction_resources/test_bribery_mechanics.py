@@ -10,7 +10,11 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
 from .conftest import setup_campaign_roles
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
 @pytest.mark.asyncio
@@ -22,7 +26,7 @@ async def test_frontdoor_bribery_resolution_mechanics(client: TestClient):
     client.post(
         f"/factions/{fid}/resources/adjust",
         json={"treasury_delta": 400, "campaign_id": camp_id},
-        headers={"X-User-Id": dm_user},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_user)}"},
     )
 
     # 1. Bribe corruptible dock official with 100 gold
@@ -35,7 +39,9 @@ async def test_frontdoor_bribery_resolution_mechanics(client: TestClient):
         "campaign_id": camp_id,
     }
     bribe_res = client.post(
-        f"/factions/{fid}/bribery/resolve", json=bribe_payload, headers={"X-User-Id": dm_user}
+        f"/factions/{fid}/bribery/resolve",
+        json=bribe_payload,
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_user)}"},
     )
     assert bribe_res.status_code == 200 and bribe_res.json()["outcome"] == "success"
     assert bribe_res.json()["remaining_treasury"] == 400
@@ -51,7 +57,9 @@ async def test_frontdoor_bribery_resolution_mechanics(client: TestClient):
         "campaign_id": camp_id,
     }
     c_res = client.post(
-        f"/factions/{fid}/bribery/resolve", json=counter_payload, headers={"X-User-Id": dm_user}
+        f"/factions/{fid}/bribery/resolve",
+        json=counter_payload,
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_user)}"},
     )
     assert c_res.status_code == 200 and c_res.json()["outcome"] == "countered"
 
@@ -65,7 +73,7 @@ async def test_frontdoor_bribery_resolution_mechanics(client: TestClient):
             "roll": 20,
             "campaign_id": camp_id,
         },
-        headers={"X-User-Id": dm_user},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_user)}"},
     )
     assert crit.status_code == 200 and crit.json()["outcome"] == "critical_success"
 
@@ -79,7 +87,7 @@ async def test_frontdoor_bribery_resolution_mechanics(client: TestClient):
             "roll": 1,
             "campaign_id": camp_id,
         },
-        headers={"X-User-Id": dm_user},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_user)}"},
     )
     assert fail.status_code == 200 and fail.json()["outcome"] == "critical_failure"
 
@@ -87,7 +95,7 @@ async def test_frontdoor_bribery_resolution_mechanics(client: TestClient):
     broke = client.post(
         f"/factions/{fid}/bribery/resolve",
         json={"target_name": "Guildmaster", "bribe_amount": 5000, "campaign_id": camp_id},
-        headers={"X-User-Id": dm_user},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_user)}"},
     )
     assert broke.status_code == 400 and "Insufficient treasury" in broke.json()["detail"]
 
@@ -101,6 +109,6 @@ async def test_bribery_unauthorized_access(client: TestClient):
     res = client.post(
         f"/factions/{fid}/bribery/resolve",
         json={"target_name": "Guard Captain", "bribe_amount": 50, "campaign_id": camp_id},
-        headers={"X-User-Id": player_user},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(player_user)}"},
     )
     assert res.status_code == 403 and "Forbidden" in res.json()["detail"]

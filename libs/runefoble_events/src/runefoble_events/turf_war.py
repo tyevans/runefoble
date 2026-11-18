@@ -65,15 +65,8 @@ class RegionalUnrestEscalatedEvent(BaseRunefobleEvent):
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 
-FactionSkirmishResolved = FactionSkirmishResolvedEvent
-FactionTerritoryCaptured = FactionTerritoryCapturedEvent
-RegionalUnrestEscalated = RegionalUnrestEscalatedEvent
-
 __all__ = [
     "FactionSkirmishResolvedEvent",
-    "FactionSkirmishResolved",
     "FactionTerritoryCapturedEvent",
-    "FactionTerritoryCaptured",
     "RegionalUnrestEscalatedEvent",
-    "RegionalUnrestEscalated",
 ]

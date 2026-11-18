@@ -26,10 +26,11 @@ from voice_agent.phonetics import (
 from voice_agent.room import VoiceRoomAggregate, VoiceRoomState
 
 from tests.helpers.audio_synth import generate_synthetic_audio
+from tests.helpers.voice_identity import voice_auth_headers
 
-pytestmark = pytest.mark.usefixtures("fake_speech_synthesizer")
+pytestmark = pytest.mark.usefixtures("trusted_voice_issuer", "fake_speech_synthesizer")
 
-client = TestClient(app)
+client = TestClient(app, headers=voice_auth_headers())
 
 
 def test_dsp_text_slurring():

@@ -10,13 +10,17 @@ from uuid import uuid4
 import pytest
 from eventsource.domain.event_registry import get_event_class_or_none
 from fastapi.testclient import TestClient
-from runefoble_events import (
+from runefoble_events.events import (
     FactionBriberyAttemptedEvent,
     FactionMercenaryRecruitedEvent,
     FactionResourceUpdatedEvent,
 )
 
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
 from .conftest import setup_campaign_roles
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
 def test_cloudevents_registration():
@@ -42,19 +46,20 @@ async def test_zanzibar_faction_resource_authorization(client: TestClient):
     res = client.post(
         f"/factions/{fid}/resources/adjust",
         json={"treasury_delta": 100, "campaign_id": camp_id},
-        headers={"X-User-Id": player_user},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(player_user)}"},
     )
     assert res.status_code == 403 and "Forbidden" in res.json()["detail"]
 
     view_res = client.get(
-        f"/factions/{fid}/resources?campaign_id={camp_id}", headers={"X-User-Id": player_user}
+        f"/factions/{fid}/resources?campaign_id={camp_id}",
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(player_user)}"},
     )
     assert view_res.status_code == 200
 
     dm_res = client.post(
         f"/factions/{fid}/resources/adjust",
         json={"treasury_delta": 200, "campaign_id": camp_id},
-        headers={"X-User-Id": dm_user},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_user)}"},
     )
     assert dm_res.status_code == 200 and dm_res.json()["treasury"] == 300
 
@@ -69,14 +74,15 @@ async def test_frontdoor_resource_adjust_deplete_and_query(client: TestClient):
     res = client.post(
         f"/factions/{fid}/resources/adjust",
         json={"treasury_delta": 250, "contraband_delta": 15, "campaign_id": camp_id},
-        headers={"X-User-Id": dm_user},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_user)}"},
     )
     assert res.status_code == 200 and res.json()["treasury"] == 350
     assert res.json()["contraband_score"] == 15
 
     # Query via GET
     get_res = client.get(
-        f"/factions/{fid}/resources?campaign_id={camp_id}", headers={"X-User-Id": dm_user}
+        f"/factions/{fid}/resources?campaign_id={camp_id}",
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_user)}"},
     )
     assert get_res.status_code == 200 and get_res.json()["treasury"] == 350
 
@@ -84,7 +90,7 @@ async def test_frontdoor_resource_adjust_deplete_and_query(client: TestClient):
     spend = client.post(
         f"/factions/{fid}/resources/adjust",
         json={"treasury_delta": -50, "campaign_id": camp_id},
-        headers={"X-User-Id": dm_user},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_user)}"},
     )
     assert spend.status_code == 200 and spend.json()["treasury"] == 300
 
@@ -92,6 +98,6 @@ async def test_frontdoor_resource_adjust_deplete_and_query(client: TestClient):
     drain = client.post(
         f"/factions/{fid}/resources/adjust",
         json={"treasury_delta": -500, "campaign_id": camp_id},
-        headers={"X-User-Id": dm_user},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_user)}"},
     )
     assert drain.status_code == 200 and drain.json()["treasury"] == 0

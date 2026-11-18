@@ -59,6 +59,10 @@ async function ensureOnCharacterSheet(
     world.characterId = charId;
   }
 
+  if (!charId) {
+    throw new Error('Character id is missing. Character setup did not return an id.');
+  }
+
   await page.goto(`#/characters/${charId}`);
   await page.waitForLoadState('domcontentloaded');
   await page.waitForSelector('runefoble-character-sheet', { timeout: 15_000 });
@@ -232,16 +236,13 @@ When(
   async ({ page, world, auth, frontdoorApi }, _persona: string, itemName: string) => {
     await ensureOnCharacterSheet(page, world, auth, frontdoorApi);
 
-    // If Main Hand is already filled, unequip it first so equipping is an observable state transition
+    // This step runs on a fresh character, so Main Hand starts empty.
+    // The web-first assertion fails the scenario if a prior step filled it.
     const mainHandSlot = page
       .locator('runefoble-character-sheet .equip-slot')
       .filter({ hasText: 'Main Hand' })
       .first();
-    const unequipBtn = mainHandSlot.locator('button.unequip-btn');
-    if (await unequipBtn.isVisible()) {
-      await unequipBtn.click();
-      await page.waitForTimeout(200);
-    }
+    await expect(mainHandSlot.locator('button.unequip-btn')).toHaveCount(0, { timeout: 10_000 });
 
     const row = page
       .locator('runefoble-character-sheet table.inventory-table tr.inventory-row')
@@ -252,11 +253,11 @@ When(
     const equipBtn = row.locator('button.equip-btn, button:has-text("Equip")').first();
     await equipBtn.click();
 
-    const dialog = page.locator('runefoble-character-sheet .equip-dialog, .equip-dialog');
-    if (await dialog.isVisible()) {
-      const confirmBtn = dialog.locator('button.confirm-equip-btn, button:has-text("Confirm")').first();
-      await confirmBtn.click();
-    }
+    // Clicking Equip always opens the slot selector dialog.
+    const dialog = page.locator('runefoble-character-sheet .equip-dialog, .equip-dialog').first();
+    await expect(dialog).toBeVisible({ timeout: 10_000 });
+    const confirmBtn = dialog.locator('button.confirm-equip-btn, button:has-text("Confirm")').first();
+    await confirmBtn.click();
   }
 );
 
@@ -331,19 +332,6 @@ When(
       .first();
 
     await avoidMeleeCheckbox.setChecked(true);
-  }
-);
-
-When(
-  '{word} clicks "Save Guardrails"',
-  async ({ page }, _persona: string) => {
-    const guardrails = page.locator('runefoble-stand-in-guardrails').first();
-    const saveBtn = guardrails
-      .locator('button:has-text("Save Guardrails"), button:has-text("Save Tactical Guardrails"), button.btn:has-text("Save")')
-      .first();
-
-    await expect(saveBtn).toBeVisible({ timeout: 10_000 });
-    await saveBtn.click();
   }
 );
 

@@ -31,7 +31,7 @@ from game_session.campaign.service_campaigns import (
     load_memberships,
     parse_campaign_id,
 )
-from game_session.campaign.tuples import SpiceDB, grant_member, revoke_member
+from game_session.campaign.tuples import SpiceDB, grant_member, relation_for_role, revoke_member
 
 
 def display_name(user_id: str) -> str:
@@ -94,18 +94,14 @@ async def join_campaign(
     existing_role = memberships.role_of(user_id)
     if existing_role is not None:
         await grant_member(spicedb, campaign_key, existing_role, user_id)
-        return _joined(campaign_key, user_id, existing_role, _member_relation(existing_role))
+        return _joined(campaign_key, user_id, existing_role, relation_for_role(existing_role))
 
     invite.redeem(user_id, clock.utc_now())
     await save_aggregate(repos.invites, invite)
     memberships.add_member(user_id, invite.state.role)
     await save_aggregate(repos.memberships, memberships)
     await grant_member(spicedb, campaign_key, invite.state.role, user_id)
-    return _joined(campaign_key, user_id, invite.state.role, _member_relation(invite.state.role))
-
-
-def _member_relation(role: str) -> str:
-    return "spectator" if role == "spectator" else "player"
+    return _joined(campaign_key, user_id, invite.state.role, relation_for_role(invite.state.role))
 
 
 def _joined(campaign_id: str, user_id: str, role: str, relation: str) -> JoinCampaignResponse:
@@ -132,7 +128,7 @@ async def list_members(
 
 
 def _member(campaign_id: str, user_id: str, role: str) -> CampaignMemberResponse:
-    relation = "owner" if role == "owner" else _member_relation(role)
+    relation = "owner" if role == "owner" else relation_for_role(role)
     return CampaignMemberResponse(
         user_id=user_id,
         role=role,

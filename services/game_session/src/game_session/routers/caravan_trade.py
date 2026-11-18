@@ -9,20 +9,25 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, Header, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from game_session.dependencies import (
     get_caravan_ledger_repository,
     get_event_bus,
     get_spicedb_client,
 )
 from game_session.events import STREAM_WEST_MARCHES
+from game_session.settlement.auth.tokens import CallerId, get_caller_principal
 from game_session.west_marches_models import (
     CompleteCaravanRequest,
     DispatchCaravanRequest,
 )
 from runefoble_platform.event_publish import publish_or_fail
 
-router = APIRouter(prefix="/api/v1/shared-worlds", tags=["caravan-trade"])
+router = APIRouter(
+    dependencies=[Depends(get_caller_principal)],
+    prefix="/api/v1/shared-worlds",
+    tags=["caravan-trade"],
+)
 
 
 def _to_uuid(val: Any) -> UUID:
@@ -46,14 +51,14 @@ async def _check_perm(spicedb, res_id: str, perm: str, user_id: str | None) -> N
 
 @router.post("/{shared_world_id}/caravans/dispatch", status_code=201)
 async def dispatch_caravan(
+    caller_id: CallerId,
     shared_world_id: str,
     req: DispatchCaravanRequest,
-    x_user_id: str | None = Header(default=None),
 ) -> dict[str, Any]:
     """Dispatch scheduled caravan delivering crafted goods/reagents between outposts."""
     wid = _to_uuid(shared_world_id)
     spicedb = get_spicedb_client()
-    await _check_perm(spicedb, str(wid), "trade", x_user_id)
+    await _check_perm(spicedb, str(wid), "trade", caller_id)
 
     repo = get_caravan_ledger_repository()
     from game_session.caravan_ledger import CaravanLedgerAggregate
@@ -83,15 +88,15 @@ async def dispatch_caravan(
 
 @router.post("/{shared_world_id}/caravans/{caravan_id}/complete")
 async def complete_caravan_trade(
+    caller_id: CallerId,
     shared_world_id: str,
     caravan_id: str,
     req: CompleteCaravanRequest,
-    x_user_id: str | None = Header(default=None),
 ) -> dict[str, Any]:
     """Complete caravan transit, delivering cargo and unlocking regional merchant stock."""
     wid = _to_uuid(shared_world_id)
     spicedb = get_spicedb_client()
-    await _check_perm(spicedb, str(wid), "trade", x_user_id)
+    await _check_perm(spicedb, str(wid), "trade", caller_id)
 
     repo = get_caravan_ledger_repository()
     from game_session.caravan_ledger import CaravanLedgerAggregate
@@ -128,14 +133,14 @@ async def complete_caravan_trade(
 
 @router.get("/{shared_world_id}/outposts/{outpost_name}/merchant-stock")
 async def get_outpost_merchant_stock(
+    caller_id: CallerId,
     shared_world_id: str,
     outpost_name: str,
-    x_user_id: str | None = Header(default=None),
 ) -> dict[str, Any]:
     """Retrieve merchant stock and rare crafting reagents unlocked at a regional outpost."""
     wid = _to_uuid(shared_world_id)
     spicedb = get_spicedb_client()
-    await _check_perm(spicedb, str(wid), "view", x_user_id)
+    await _check_perm(spicedb, str(wid), "view", caller_id)
 
     repo = get_caravan_ledger_repository()
     from game_session.caravan_ledger import CaravanLedgerAggregate

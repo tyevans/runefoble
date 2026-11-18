@@ -168,8 +168,7 @@ spec:
           ports:
             - containerPort: {{ .Values.observability.grafana.port }}
           env:
-            - name: GF_SECURITY_ADMIN_PASSWORD
-              value: {{ .Values.observability.grafana.adminPassword | quote }}
+            {{- include "runefoble.secretEnv" (dict "root" $ "name" "GF_SECURITY_ADMIN_PASSWORD" "key" "grafana-admin-password") | nindent 12 }}
           volumeMounts:
             - name: grafana-datasources
               mountPath: /etc/grafana/provisioning/datasources

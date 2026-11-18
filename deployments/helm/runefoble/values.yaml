@@ -4,6 +4,27 @@ global:
   environment: local
   domain: runefoble.local
 
+# Credentials. The chart renders them into the Secret `runefoble-credentials`, and every
+# workload reads them with secretKeyRef. The values below are DEV-ONLY defaults for the local
+# Kind cluster. They are public in this repository. Never deploy them to a shared cluster.
+# For any environment other than `local`, set `credentials.existingSecret` to the name of a
+# Secret you manage. The chart then renders no Secret, and it fails if that name is empty.
+# The existing Secret must hold the keys listed in templates/secret.yaml.
+credentials:
+  existingSecret: ""
+  silo:
+    accessKey: silo_admin           # DEV-ONLY
+    secretKey: silo_secret_pass     # DEV-ONLY
+  zitadel:
+    masterKey: RunefobleMasterKeyMustBe32Bytes!   # DEV-ONLY
+    adminPassword: RunefobleAdminPassword123!     # DEV-ONLY
+  spicedb:
+    presharedKey: runefoble_secret_key            # DEV-ONLY
+  postgres:
+    password: runefoble_dev_password              # DEV-ONLY
+  grafana:
+    adminPassword: admin                          # DEV-ONLY
+
 ingress:
   enabled: true
   className: traefik
@@ -93,7 +114,6 @@ postgres:
   image: pgvector/pgvector:pg16
   database: runefoble
   username: runefoble_user
-  password: runefoble_dev_password
   port: 5432
   storageSize: 5Gi
 
@@ -114,8 +134,6 @@ redis:
 silo:
   enabled: true
   image: minio/minio:RELEASE.2024-01-01T00-00-00Z
-  accessKey: silo_admin
-  secretKey: silo_secret_pass
   port: 9000
   consolePort: 9001
   buckets:
@@ -132,9 +150,9 @@ zitadel:
   externalDomain: auth.localhost
   externalPort: 80
   externalSecure: false
+  # Expected token `aud`. Every verifying service reads it as RUNEFOBLE_ZITADEL_AUDIENCE.
+  audience: runefoble-api
   adminEmail: admin@runefoble.local
-  adminPassword: RunefobleAdminPassword123!
-  masterKey: RunefobleMasterKeyMustBe32Bytes!
 
 # Zanzibar Authorization (SpiceDB self-hosted)
 spicedb:
@@ -142,7 +160,6 @@ spicedb:
   image: authzed/spicedb:v1.34.0
   grpcPort: 50051
   httpPort: 8443
-  presharedKey: runefoble_secret_key
   schemaJob:
     enabled: true
     image: authzed/zed:latest
@@ -175,7 +192,6 @@ observability:
   grafana:
     image: grafana/grafana:11.0.0
     port: 3001
-    adminPassword: admin
 
 # OpenAPI Swagger UI Aggregator
 swaggerUI:
@@ -211,6 +227,13 @@ swaggerUI:
       url: "http://inference-worker:8100/openapi.json"
 
 # Services
+# Service-to-service credential (ADR-0015 e). The Watcher presents it to the inference worker,
+# and the worker refuses calls that do not carry it. The chart references this Secret. It does
+# not create it. Create the Secret out of band, with the key below, before install.
+inferenceServiceToken:
+  secretName: runefoble-inference-service
+  key: token
+
 services:
   gatewayApi:
     image: runefoble/gateway-api:0.1.0
@@ -270,6 +293,8 @@ services:
     image: runefoble/audience-studio:0.1.0
     replicas: 1
     port: 8010
+    # Expected token `aud` claim. The service refuses to start without it.
+    zitadelAudience: "runefoble-api"
   campaignAnalytics:
     image: runefoble/campaign-analytics:0.1.0
     replicas: 1
@@ -283,13 +308,18 @@ services:
     # Required when backend is openai_compatible. Empty means no base URL is set.
     openaiCompatibleBaseUrl: ""
   gatewayMcp:
-    # Upstream URLs that MCP tools call over HTTP (BOARD_STATE_URL, CHARACTER_SHEET_URL,
-    # GAME_SESSION_URL, RULES_COMPENDIUM_URL).
-    # No gateway-mcp deployment template exists yet; these values are for that template.
+    # MCP protocol over streamable HTTP at /mcp. ClusterIP only: no ingress path (ADR-0001).
+    # Tools keep their state in memory, so run one replica.
+    image: runefoble/gateway-mcp:0.1.0
+    replicas: 1
+    port: 8012
+    # Upstream URLs that MCP tools call over HTTP. Rendered as BOARD_STATE_URL,
+    # CHARACTER_SHEET_URL, GAME_SESSION_URL, RULES_COMPENDIUM_URL, and THE_WATCHER_URL.
     boardStateUrl: "http://board-state:8002"
     characterSheetUrl: "http://character-sheet:8003"
     gameSessionUrl: "http://game-session:8004"
     rulesCompendiumUrl: "http://rules-compendium:8007"
+    theWatcherUrl: "http://the-watcher:8001"
 
 # Frontend Application
 frontend:

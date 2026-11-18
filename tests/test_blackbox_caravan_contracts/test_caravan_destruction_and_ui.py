@@ -16,6 +16,9 @@ from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import MockSpiceDBClient
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
 @pytest.mark.asyncio
@@ -32,7 +35,7 @@ async def test_blackbox_caravan_destroyed_and_ui_manifest(
     world_res = client.post(
         "/api/v1/shared-worlds",
         json={"name": "Perilous Range"},
-        headers={"x-user-id": officer_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(officer_id)}"},
     )
     world_id = world_res.json()["shared_world_id"]
 
@@ -43,7 +46,7 @@ async def test_blackbox_caravan_destroyed_and_ui_manifest(
     client.post(
         f"/api/v1/shared-worlds/{world_id}/campaigns",
         json={"campaign_id": campaign_id, "party_name": "Ranger Corps"},
-        headers={"x-user-id": officer_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(officer_id)}"},
     )
 
     # Post, accept, and dispatch
@@ -59,19 +62,19 @@ async def test_blackbox_caravan_destroyed_and_ui_manifest(
             "reward_gold": 250,
             "posted_by_campaign_id": campaign_id,
         },
-        headers={"x-user-id": officer_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(officer_id)}"},
     )
     cid = post_res.json()["contract"]["contract_id"]
 
     client.post(
         f"/api/v1/shared-worlds/{world_id}/caravans/contracts/{cid}/accept",
         json={"contractor_campaign_id": campaign_id, "contractor_party_name": "Ranger Corps"},
-        headers={"x-user-id": contractor_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(contractor_id)}"},
     )
     client.post(
         f"/api/v1/shared-worlds/{world_id}/caravans/contracts/{cid}/dispatch",
         json={},
-        headers={"x-user-id": contractor_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(contractor_id)}"},
     )
 
     # Report catastrophic ambush: caravan destroyed
@@ -85,7 +88,7 @@ async def test_blackbox_caravan_destroyed_and_ui_manifest(
             "cargo_loss_percentage": 1.0,
             "notes": "Red dragon incinerated the entire caravan.",
         },
-        headers={"x-user-id": contractor_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(contractor_id)}"},
     )
     assert ambush_res.status_code == 200
     assert ambush_res.json()["status"] == "failed"
@@ -94,7 +97,7 @@ async def test_blackbox_caravan_destroyed_and_ui_manifest(
     fail_res = client.post(
         f"/api/v1/shared-worlds/{world_id}/caravans/contracts/{cid}/fulfill",
         json={},
-        headers={"x-user-id": contractor_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(contractor_id)}"},
     )
     assert fail_res.status_code == 400
 

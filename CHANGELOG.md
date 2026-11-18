@@ -8,12 +8,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Security
+- game_session and The Watcher take caller identity only from a verified Zitadel bearer token. The `x-user-id` header and the `user_id` query parameter no longer grant identity. Every route requires a token. (TASK-0529)
 - The gateway no longer issues or accepts self-signed tokens. Zitadel is the only token issuer (TASK-0523).
 - Campaign role grants now require the `manage` permission. `owner` cannot be granted through the API (422). A failed authorization write returns 503 and grants nothing. Non-members and players can no longer grant roles. (TASK-0543)
 - The SpiceDB preshared key has no default. Services and audience-studio fail at startup unless `RUNEFOBLE_SPICEDB_PRESHARED_KEY` is set. Literal keys were removed from the auth library, schema bootstrap, and audience-studio. (TASK-0625)
 - Gateway WebSocket routes admit a connection only with a verified `runefoble.bearer.<jwt>` subprotocol, checked before accept. Refused handshakes close with 1008. Removed the `?user_id=`, `?token=`, `x-user-id`, and `guest_user` identity paths on WebSocket and voice/companion signaling routes. (TASK-0522)
 
 ### Removed
+- Removed backward-compatibility event alias modules and `X = XEvent` aliases from `runefoble_events`. The package root exports only `BaseRunefobleEvent`, `DomainEvent` and `register_event`. Import domain events from `runefoble_events.events`. Wire event types are unchanged. (TASK-0487)
+- Removed the `gateway_mcp.dynamic_registry` backward-compatibility re-export module and the FastMCP `get_tool` monkeypatch in the MCP gateway. Import dynamic tool types from `gateway_mcp.dynamic` and look up FastMCP tools through `mcp._tool_manager.get_tool`. (TASK-0489)
 - asset_forge: deleted the `asset_forge.generator` aggregator facade and the `generate_token_png` alias. Import generators from `asset_forge.raster.*`. (TASK-0497)
 - Removed the `rules_compendium.srd_data` re-export shim. Callers import from `rules_compendium.srd`. (TASK-0496)
 - Removed about 290 test functions that checked per-file line limits, source file existence, module counts, and source text. `make health-check` is the only file length gate. (TASK-0681)
@@ -23,6 +26,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Campaign analytics worker `process_event` alias, tracking property wrappers, and package root re-exports. Callers use `handle_event`. (TASK-0500)
 
 ### Added
+- Gateway MCP serves the Model Context Protocol over streamable HTTP at `/mcp` on port 8012, with a Helm Deployment and ClusterIP Service `gateway-mcp` and a `make images` row (TASK-0623).
+- `game_session` serves `POST /api/v1/campaigns/{id}/roles` (manage) and `GET /api/v1/campaigns/{id}/capabilities`. (0591) (TASK-0591)
+- `scripts/check_doc_paths.py` checks the Diataxis docs for missing repository paths, absolute `file:///` links, and compatibility wording that does not name a removal task. (TASK-0662)
+- Event Identifiers reference page, generated from the `runefoble_events` registry by `scripts/generate_event_catalogue.py`. (TASK-0663)
+- Shared typed service client (`runefoble_platform.service_client`) for gateway calls to owning services. Each call sets its own timeout and forwards the verified bearer token and the trace context. (TASK-0580)
 - Stand-in guardrails are validated at The Watcher and at the inference worker. An unknown guardrail name returns HTTP 422. (TASK-0608)
 - `GET /readyz` on audience-studio returns 503 while Redis Streams or PostgreSQL is unavailable. (TASK-0575)
 - Character sheet: `POST /api/v1/characters/{id}/stand-in` activates or releases the AI stand-in. Emits `StandInActivated` or `StandInReleased`. (TASK-0570)
@@ -54,6 +62,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
 
 ### Changed
+- Audience Studio `dev` script runs TypeScript source with `tsx watch`, so `.js` imports resolve. Added `make dev-audience-studio`. (TASK-0692)
+- The App Shell takes the campaign and session from the route and the campaign switcher from the API. Fixed campaign, session, and character fixtures are removed. An empty state replaces the placeholder character. (TASK-0642)
+- Agent index in `AGENTS.md` lists every how-to, reference, and explanation guide. Index descriptions match their files. The repository layout lists `libs/runefoble_embeddings`, `services/inference_worker`, `tools`, `scripts`, and `tests`. (TASK-0661)
+- Helm chart credentials now come from one Kubernetes Secret, `runefoble-credentials`. Containers read them with `secretKeyRef`. Set `credentials.existingSecret` outside the local environment, or the chart fails to render. (TASK-0626)
+- Audience Studio verifies Zitadel access tokens on every route and WebSocket handshake. The actor is the token subject. Body and header identity is removed. (TASK-0533)
+- asset-forge, soundscape, and character-sheet routes verify the Zitadel bearer token on every route. The `x-user-id` header is ignored. Health, UI manifest, and OpenAPI routes stay public. (TASK-0528)
+- board_state, campaign_analytics, and rules_compendium take caller identity only from a verified Zitadel bearer token. Every route requires a token except health, OpenAPI, and microfrontend manifest routes. (TASK-0527)
+- E2E suite runs a strict TypeScript typecheck (`make test-bdd`, `make lint`) and fails on unused Playwright BDD step definitions. Step base URLs now follow `PLAYWRIGHT_BASE_URL`. (TASK-0651)
+- Blackbox tests for asset forge, bulletin board, merchant haggling, and minigames no longer assert line counts or file existence. The file length invariant stays with `make health-check`. (TASK-0696)
+- Campaign Lore takes the caller only from the verified bearer token. Every campaign-lore route except `/health`, `/healthz`, `/openapi.json`, and `/ui/manifest` returns 401 without a valid token. (TASK-0531)
+- Voice agent HTTP routes require a verified Zitadel bearer token. Health and manifest stay public. Duplex and stream WebSockets admit a connection only with the `runefoble.bearer.<jwt>` subprotocol. (TASK-0530)
+- Gateway MCP `narrate_with_the_watcher` returns The Watcher narration from `POST /api/v1/watcher/narrate`. `execute_agent_action_plan` proposes each step to The Watcher, which lets the DM veto it. `query_monster_stat_block` reads `rules_compendium`. Session and encounter resources take a session id and read `game_session` and `board_state`. (TASK-0605)
+- Game session routes save through the session aggregate. The session repository publishes every committed event to its stream. Session create, join, leave, next-turn, hot-swap, combat, and reaction events reach `runefoble.events.session` through the repository. (TASK-0565)
 - The inference worker now type-checks with mypy. `make lint` runs mypy on `services/inference_worker/src`. (TASK-0628)
 - Campaign Analytics and Soundscape start their Redis Stream consumers at start-up. A failed start stops the service. `/healthz` reports `consumers` as `running` or `failed` and returns 503 when a consumer fails. (TASK-0578)
 - Watcher world ticks keep their tick counter, faction registry, and latest bulletin in a durable `CampaignWorldAggregate`. A service restart resumes the simulation (TASK-0569).

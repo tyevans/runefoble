@@ -8,9 +8,7 @@ from runefoble_events.board_events.fog import (
     VisibilityMaskUpdated,
 )
 from runefoble_events.board_events.lighting import (
-    BoardDoorToggled,
     BoardDoorToggledEvent,
-    BoardLightSourcePlaced,
     BoardLightSourcePlacedEvent,
 )
 from runefoble_events.board_events.physics import (
@@ -48,10 +46,8 @@ __all__ = [
     "AoETemplatePlaced",
     "AoETemplateRemoved",
     "AreaEffectExploded",
-    "BoardDoorToggled",
     "BoardDoorToggledEvent",
     "BoardGridInitialized",
-    "BoardLightSourcePlaced",
     "BoardLightSourcePlacedEvent",
     "BoardMapImported",
     "BoardMoveEvent",

@@ -13,6 +13,9 @@ from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
 @pytest.fixture
@@ -33,7 +36,7 @@ def spicedb() -> MockSpiceDBClient:
 
 @pytest.fixture
 def client(spicedb: MockSpiceDBClient, mock_bus: MockAsyncRedis) -> TestClient:
-    return TestClient(app)
+    return TestClient(app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"})
 
 
 def assert_event_emitted(mock_bus: MockAsyncRedis, event_name: str) -> None:

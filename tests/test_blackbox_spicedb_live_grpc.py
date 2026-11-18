@@ -12,16 +12,38 @@ Membership is created through the public frontdoors (campaign create, invite, jo
 Only the live SpiceDB client test writes or deletes tuples directly.
 """
 
+from collections.abc import Iterator
+from contextlib import contextmanager
 from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
+from game_session.dependencies import get_spicedb_client as get_session_spicedb
+from game_session.dependencies import set_spicedb_client as set_session_spicedb
 from gateway_api.main import app
 from runefoble_auth.bootstrap_schema import bootstrap_schema
 from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
 
 from tests.helpers.spicedb_factory import shared_spicedb_client
+
+
+@contextmanager
+def _game_session_spicedb(client):
+    """Route game_session's own SpiceDB client to `client` for the duration of a live test."""
+    previous = get_session_spicedb()
+    set_session_spicedb(client)
+    try:
+        yield
+    finally:
+        set_session_spicedb(previous)
+
+
+@pytest.fixture
+def gateway_tc(game_session_upstream) -> Iterator[TestClient]:
+    """Gateway client with the lifespan entered after game_session is served."""
+    with TestClient(app) as gateway_client:
+        yield gateway_client
 
 
 def _bearer(issuer: SigningTestIssuer, sub: str) -> dict[str, str]:
@@ -67,18 +89,18 @@ def _join_with_invite(
 
 
 @pytest.mark.asyncio
-async def test_mock_spicedb_frontdoor_role_assignment(signing_issuer):
+async def test_mock_spicedb_frontdoor_role_assignment(trusted_ws_issuer, gateway_tc):
     """Verify invite-based membership and enforcement using MockSpiceDBClient."""
-    tc = TestClient(app)
+    tc = gateway_tc
 
-    owner = _bearer(signing_issuer, f"owner-{uuid4().hex[:6]}")
-    user_alice = _bearer(signing_issuer, f"user-{uuid4().hex[:6]}")
+    owner = _bearer(trusted_ws_issuer, f"owner-{uuid4().hex[:6]}")
+    user_alice = _bearer(trusted_ws_issuer, f"user-{uuid4().hex[:6]}")
     camp_id, session_id = _create_campaign_with_session(tc, owner)
 
     # Not a member -> 403 Forbidden
     res = tc.get(f"/api/v1/sessions/{session_id}", headers=user_alice)
     assert res.status_code == 403
-    assert res.json()["detail"]["required_permission"] == "view"
+    assert res.json()["detail"]["required_permission"] == "observe"
 
     # Redeem a player invite
     _join_with_invite(tc, camp_id, owner, user_alice, role="player")
@@ -107,8 +129,7 @@ async def test_mock_spicedb_frontdoor_role_assignment(signing_issuer):
 
 @pytest.mark.asyncio
 async def test_live_spicedb_frontdoor_role_assignment_and_checks(
-    live_spicedb_endpoint: str | None,
-    signing_issuer,
+    live_spicedb_endpoint: str | None, trusted_ws_issuer, gateway_tc
 ):
     """Verify live SpiceDB gRPC connection with Zanzibar schema and frontdoor endpoints."""
     if not live_spicedb_endpoint:
@@ -122,10 +143,10 @@ async def test_live_spicedb_frontdoor_role_assignment_and_checks(
     assert "definition campaign" in schema_text
     assert "relation dungeon_master: user" in schema_text
 
-    with shared_spicedb_client(live_client):
-        tc = TestClient(app)
-        dm = _bearer(signing_issuer, "dm_garrick")
-        player = _bearer(signing_issuer, "player_talia")
+    with shared_spicedb_client(live_client), _game_session_spicedb(live_client):
+        tc = gateway_tc
+        dm = _bearer(trusted_ws_issuer, "dm_garrick")
+        player = _bearer(trusted_ws_issuer, "player_talia")
         camp_id, session_id = _create_campaign_with_session(tc, dm)
 
         # Before membership -> 403 Forbidden
@@ -166,8 +187,7 @@ async def test_live_spicedb_frontdoor_role_assignment_and_checks(
 
 @pytest.mark.asyncio
 async def test_live_spicedb_relationship_deletion_and_revocation(
-    live_spicedb_endpoint: str | None,
-    signing_issuer,
+    live_spicedb_endpoint: str | None, trusted_ws_issuer, gateway_tc
 ):
     """Verify live tuple deletion instantly revokes permissions in SpiceDB."""
     if not live_spicedb_endpoint:
@@ -178,11 +198,11 @@ async def test_live_spicedb_relationship_deletion_and_revocation(
         token="test_deletion_token",
     )
     await bootstrap_schema(client=live_client)
-    with shared_spicedb_client(live_client):
-        tc = TestClient(app)
+    with shared_spicedb_client(live_client), _game_session_spicedb(live_client):
+        tc = gateway_tc
 
-        owner = _bearer(signing_issuer, "owner_revocation")
-        member = _bearer(signing_issuer, "user_revoked")
+        owner = _bearer(trusted_ws_issuer, "owner_revocation")
+        member = _bearer(trusted_ws_issuer, "user_revoked")
         camp_id, session_id = _create_campaign_with_session(tc, owner)
 
         # Membership through the invite frontdoor -> 200
