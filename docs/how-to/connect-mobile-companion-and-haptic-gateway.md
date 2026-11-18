@@ -210,3 +210,7 @@ Response:
 
 
 
+
+### Stored Stream Quality (TASK-0577)
+
+Each RTCP report saves a `VoiceStreamQualityMeasured` event in the room aggregate. A codec change also saves the codec state. `GET /api/v1/voice/streams/{session_id}/quality` reads the saved state. The result is the same on every replica and after a restart.
