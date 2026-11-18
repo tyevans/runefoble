@@ -10,6 +10,7 @@ Governed by:
 
 from __future__ import annotations
 
+import asyncio
 import json
 from uuid import uuid4
 
@@ -70,15 +71,18 @@ async def test_frontdoor_contract_integration(
     dm_user = f"dm-{uuid4().hex[:6]}"
 
     await spicedb.write_relationship("campaign", campaign_id, "dungeon_master", "user", dm_user)
-    await spicedb.write_relationship("board", board_id, "campaign", "campaign", campaign_id)
 
     # 1. Initialize board
-    init_res = client.post("/api/v1/boards", json={"board_id": board_id, "cols": 15, "rows": 15})
+    init_res = client.post(
+        "/api/v1/boards",
+        json={"campaign_id": campaign_id, "board_id": board_id, "cols": 15, "rows": 15},
+        headers=bearer(dm_user),
+    )
     assert init_res.status_code == 200
 
     # 2. Place trap using parameters defined in UI trap preset
     trap_res = client.post(
-        f"/api/v1/boards/{board_id}/traps?campaign_id={campaign_id}",
+        f"/api/v1/boards/{board_id}/traps",
         json={
             "name": "Spike Pit",
             "x": 3,
@@ -98,7 +102,7 @@ async def test_frontdoor_contract_integration(
 
     # 3. Execute map switch using parameters defined in UI map switcher
     switch_res = client.post(
-        f"/api/v1/boards/{board_id}/switch-map?campaign_id={campaign_id}",
+        f"/api/v1/boards/{board_id}/switch-map",
         json={
             "new_map_id": "dungeon_lvl2",
             "cols": 20,
@@ -113,3 +117,20 @@ async def test_frontdoor_contract_integration(
     assert switch_data["new_map_id"] == "dungeon_lvl2"
     assert switch_data["cols"] == 20
     assert switch_data["rows"] == 20
+
+
+BOARD_CAMPAIGN = "camp-board-fixture"
+
+
+@pytest.fixture(autouse=True)
+def _board_campaign_dm(spicedb):
+    """Make `user-test` the DM of the campaign that every board in this module belongs to."""
+    asyncio.run(
+        spicedb.write_relationship(
+            resource_type="campaign",
+            resource_id=BOARD_CAMPAIGN,
+            relation="dungeon_master",
+            subject_type="user",
+            subject_id="user-test",
+        )
+    )

@@ -6,6 +6,7 @@ event store port for a double that fails on read. No private state is written.
 
 from __future__ import annotations
 
+import asyncio
 from uuid import uuid4
 
 import board_state.dependencies as board_dependencies
@@ -74,7 +75,8 @@ def test_post_then_get_returns_only_the_created_board(board_client):
     session_id = _new_session_id()
 
     created = board_client.post(
-        "/api/v1/boards", json={"session_id": session_id, "cols": 6, "rows": 5}
+        "/api/v1/boards",
+        json={"campaign_id": BOARD_CAMPAIGN, "session_id": session_id, "cols": 6, "rows": 5},
     )
     assert created.status_code == 200
 
@@ -92,7 +94,8 @@ def test_store_load_failure_propagates_as_server_error_and_keeps_board(board_cli
     """A store failure on load returns 5xx. The stored board is not replaced."""
     session_id = _new_session_id()
     created = board_client.post(
-        "/api/v1/boards", json={"session_id": session_id, "cols": 4, "rows": 4}
+        "/api/v1/boards",
+        json={"campaign_id": BOARD_CAMPAIGN, "session_id": session_id, "cols": 4, "rows": 4},
     )
     assert created.status_code == 200
     before = board_client.get(f"/api/v1/boards/{session_id}").json()
@@ -125,3 +128,20 @@ class _OutageStore:
 
     def read_stream(self, *args, **kwargs):
         raise ConnectionError("event store unavailable")
+
+
+BOARD_CAMPAIGN = "camp-board-fixture"
+
+
+@pytest.fixture(autouse=True)
+def _board_campaign_dm(spicedb):
+    """Make `user-test` the DM of the campaign that every board in this module belongs to."""
+    asyncio.run(
+        spicedb.write_relationship(
+            resource_type="campaign",
+            resource_id=BOARD_CAMPAIGN,
+            relation="dungeon_master",
+            subject_type="user",
+            subject_id="user-test",
+        )
+    )

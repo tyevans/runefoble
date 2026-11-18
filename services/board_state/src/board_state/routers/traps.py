@@ -5,16 +5,21 @@ from __future__ import annotations
 import logging
 from typing import Annotated
 
+from board_state.authz import (
+    MANAGE_TRAPS,
+    SWITCH_MAP,
+    VIEW_SECRET_LAYER,
+    can_on_board,
+    require_board_permission,
+)
 from board_state.dependencies import (
-    check_user_can_manage_traps,
-    check_user_can_switch_map,
-    check_user_can_view_secret_layer,
     get_board,
     get_current_user_id,
     get_event_bus,
     repo,
 )
 from board_state.events import publish_board_events
+from board_state.projection import public_traps
 from board_state.traps import (
     CreateTrapRequest,
     SecretTrapState,
@@ -23,7 +28,7 @@ from board_state.traps import (
     TrapListResponse,
     perform_map_switch,
 )
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, status
 
 logger = logging.getLogger("runefoble.board_state.routers.traps")
 router = APIRouter(tags=["traps"], dependencies=[Depends(get_current_user_id)])
@@ -35,14 +40,9 @@ async def create_trap(
     board_id: str,
     req: CreateTrapRequest,
     user_id: Annotated[str, Depends(get_current_user_id)],
-    campaign_id: str | None = Query(default=None),
 ) -> SecretTrapState:
-    """Create a secret DM trap or trigger on the tactical board (DM only)."""
-    if not await check_user_can_manage_traps(user_id, board_id, campaign_id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Forbidden: DM permissions required to create secret traps",
-        )
+    """Create a secret DM trap or trigger on the tactical board. Needs `board.manage_traps`."""
+    await require_board_permission(user_id, board_id, MANAGE_TRAPS)
 
     board = await get_board(board_id)
     tid = board.place_trap(
@@ -75,14 +75,13 @@ async def create_trap(
 async def list_traps(
     board_id: str,
     user_id: Annotated[str, Depends(get_current_user_id)],
-    campaign_id: str | None = Query(default=None),
 ) -> TrapListResponse:
-    """Retrieve traps on the board, filtering out secret traps for non-DM players."""
+    """Retrieve traps on the board. Without `board.view_secret_layer` the secret ones are absent."""
     board = await get_board(board_id)
-    can_view_secret = await check_user_can_view_secret_layer(user_id, board_id, campaign_id)
-
-    all_traps = list(board.state.traps.values())
-    visible = all_traps if can_view_secret else [t for t in all_traps if not t.is_secret]
+    all_traps = board.state.traps
+    if not await can_on_board(user_id, board_id, VIEW_SECRET_LAYER):
+        all_traps = public_traps(all_traps)
+    visible = list(all_traps.values())
 
     return TrapListResponse(board_id=board_id, traps=visible, total=len(visible))
 
@@ -93,14 +92,9 @@ async def switch_map_endpoint(
     board_id: str,
     req: SwitchMapRequest,
     user_id: Annotated[str, Depends(get_current_user_id)],
-    campaign_id: str | None = Query(default=None),
 ) -> SwitchMapResponse:
-    """Transition board to new battlemap and teleport party tokens in a single transaction (DM only)."""
-    if not await check_user_can_switch_map(user_id, board_id, campaign_id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Forbidden: DM permissions required to switch battlemaps",
-        )
+    """Switch the battlemap and teleport party tokens in one transaction. Needs `board.switch_map`."""
+    await require_board_permission(user_id, board_id, SWITCH_MAP)
 
     board = await get_board(board_id)
     resp = perform_map_switch(board, req, initiated_by=user_id)
@@ -121,7 +115,11 @@ async def disarm_trap_endpoint(
     trap_id: str,
     user_id: Annotated[str, Depends(get_current_user_id)],
 ) -> dict[str, str]:
-    """Disarm a trap on the board."""
+    """Disarm a trap on the board. Needs `board.manage_traps`.
+
+    The trap model has no field that lets a player disarm a trap, so every disarm is DM only.
+    """
+    await require_board_permission(user_id, board_id, MANAGE_TRAPS)
     board = await get_board(board_id)
     if trap_id not in board.state.traps:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Trap not found")

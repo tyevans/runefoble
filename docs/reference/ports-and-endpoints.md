@@ -146,15 +146,15 @@ Campaign Lore routes require a verified bearer token, except `/health`, `/health
 | `voice-agent` | POST | `/api/v1/voice/dsp/apply` | Applies DSP filters to supplied base64 PCM or WAV audio. Returns `422` when `audio_base64` is missing or invalid. The route never synthesises a carrier tone |
 | `voice-agent` | POST | `/api/v1/voice/dsp/condition` | Conditions speech text for affliction filters (for example `drunk`). Input: `text`, `filters`. Returns `original_text`, `conditioned_text`, `active_filters`, and `dsp_config`. Returns no audio. Called by `game-session` over HTTP at `RUNEFOBLE_VOICE_AGENT_URL` (`http://voice-agent:8005` in Helm) for drink rolls with `speech_text` |
 | `voice-agent` | GET | `/ui/manifest` | Discovers vendored microfrontends (`runefoble-voice-controls`, `runefoble-audio-indicator`, `runefoble-mobile-companion` [subviews: `audio-stream-controller`, `haptic-ping-panel`, `connection-status-badge`], `runefoble-voice-duplex-controls`) |
-| `board-state` | POST | `/api/v1/boards` | Creates the tactical grid aggregate with specified dimensions. This is the only route that creates a board. |
-| `board-state` | GET | `/api/v1/boards/{session_id}` | Retrieves tactical grid dimensions and placed token states. Returns `404` when no board exists. Never creates a board or adds tokens. |
+| `board-state` | POST | `/api/v1/boards` | Creates the tactical grid aggregate. This is the only route that creates a board. Needs a verified user token and `campaign_id` in the body (`400` when absent). The caller needs `campaign.run_session` (`403` otherwise). A second create for the same session returns `409`. The route then writes `board:<id>#campaign@campaign:<cid>`. |
+| `board-state` | GET | `/api/v1/boards/{session_id}` | Retrieves tactical grid dimensions and placed token states. Returns `404` when no board exists. Never creates a board or adds tokens. Secret traps, secret doors, and secret portals are absent unless the caller holds `board.view_secret_layer`. |
 | `board-state` | POST | `/api/v1/boards/{session_id}/tokens` | Places token onto tactical grid with bounds check and fog update. Returns `404` when no board exists; create the board with `POST /api/v1/boards` first. |
 | `board-state` | POST | `/api/v1/boards/{session_id}/tokens/{token_id}/move` | Moves token across grid, checks movement budget, and evaluates hazards (alias: `/api/v1/boards/{session_id}/move`) |
 | `board-state` | DELETE | `/api/v1/boards/{session_id}/tokens/{token_id}` | Removes a token from the tactical grid |
-| `board-state` | GET | `/api/v1/boards/{session_id}/visibility` | Computes Chebyshev fog-of-war masks and filters shrouded hostile tokens |
-| `board-state` | POST | `/api/v1/boards/{session_id}/terrain` | Configures cell elevation, terrain difficulty, and active hazard types |
-| `board-state` | POST | `/api/v1/boards/{session_id}/fog-of-war/reveal` | Manually reveals specified tactical grid coordinates from fog-of-war |
-| `board-state` | POST | `/api/v1/boards/{session_id}/fog-of-war/shroud` | Manually shrouds specified tactical grid coordinates under fog-of-war |
+| `board-state` | GET | `/api/v1/boards/{session_id}/visibility` | Computes Chebyshev fog-of-war masks and filters shrouded hostile tokens. The DM view needs `board.view_secret_layer`. There is no `is_dm` parameter |
+| `board-state` | POST | `/api/v1/boards/{session_id}/terrain` | Configures cell elevation, terrain difficulty, and active hazard types (needs `board.manage_traps`) |
+| `board-state` | POST | `/api/v1/boards/{session_id}/fog-of-war/reveal` | Manually reveals specified tactical grid coordinates from fog-of-war (needs `board.view_secret_layer`) |
+| `board-state` | POST | `/api/v1/boards/{session_id}/fog-of-war/shroud` | Manually shrouds specified tactical grid coordinates under fog-of-war (needs `board.view_secret_layer`) |
 | `board-state` | POST | `/api/v1/boards/{session_id}/tokens/{token_id}/preview` | Computes waypoint trajectory, 5-ft increments, terrain penalties, and hazard warnings (alias: `/api/v1/boards/{session_id}/preview`, `/preview-move`) |
 | `board-state` | POST | `/api/v1/boards/{session_id}/tokens/{token_id}/action` | Executes tactical token combat action (Dodge, Dash, Melee, Disengage, Cast; alias: `/api/v1/boards/{session_id}/actions`) |
 | `board-state` | POST | `/api/v1/boards/{session_id}/aoe/evaluate` | Evaluates rotatable AoE cone/sphere/line/cube geometry against grid tokens with 15-degree snapping. `origin_x` and `origin_y` are whole cell indices; the origin is the cell centre. Containment is shared with spell blooms (`board_state.geometry`) |
@@ -169,13 +169,13 @@ Campaign Lore routes require a verified bearer token, except `/health`, `/health
 | `board-state` | POST | `/api/v1/boards/{board_id}/physics/knockback` | Applies physical knockback impulse to miniature token, halting upon wall or elevation collisions |
 | `board-state` | POST | `/api/v1/board/{id}/import/uvtt` | Ingests Universal VTT (`.dd2vtt`) files, extracts walls/portals/lights, and stores map texture in Silo S3. Returns `404` when no board exists; create the board with `POST /api/v1/boards` first (alias: `/api/v1/boards/{id}/import/uvtt`) |
 | `board-state` | POST | `/api/v1/board/{id}/doors/{door_id}/toggle` | Toggles state of an interactive door or portal (alias: `/board/{id}/doors/{door_id}/toggle`) |
-| `board-state` | GET | `/api/v1/board/{id}/doors` | Queries interactive doors and secret portals on the board (alias: `/board/{id}/doors`) |
+| `board-state` | GET | `/api/v1/board/{id}/doors` | Queries interactive doors and portals. Secret ones need `board.view_secret_layer` (alias: `/board/{id}/doors`) |
 | `board-state` | POST | `/api/v1/board/{id}/lights` | Places or updates dynamic point light source (alias: `/board/{id}/lights`) |
 | `board-state` | GET | `/api/v1/board/{id}/lights` | Queries active dynamic point light sources on the board (alias: `/board/{id}/lights`) |
-| `board-state` | POST | `/api/v1/boards/{board_id}/traps` | Creates a secret DM spatial trap or trigger zone (DM only, alias: `/boards/{board_id}/traps`) |
-| `board-state` | GET | `/api/v1/boards/{board_id}/traps` | Retrieves board traps, filtering out secret traps for non-DM players (alias: `/boards/{board_id}/traps`) |
-| `board-state` | POST | `/api/v1/boards/{board_id}/switch-map` | Transitions board to a new battlemap and teleports party tokens atomically in a single event (DM only, alias: `/boards/{board_id}/switch-map`) |
-| `board-state` | POST | `/api/v1/boards/{board_id}/traps/{trap_id}/disarm` | Disarms an active trap on the tactical board (alias: `/boards/{board_id}/traps/{trap_id}/disarm`) |
+| `board-state` | POST | `/api/v1/boards/{board_id}/traps` | Creates a secret DM spatial trap or trigger zone (needs `board.manage_traps`, alias: `/boards/{board_id}/traps`) |
+| `board-state` | GET | `/api/v1/boards/{board_id}/traps` | Retrieves board traps. Without `board.view_secret_layer` the secret ones are absent, and a sprung one shows only its place (alias: `/boards/{board_id}/traps`) |
+| `board-state` | POST | `/api/v1/boards/{board_id}/switch-map` | Transitions board to a new battlemap and teleports party tokens atomically in a single event (needs `board.switch_map`, alias: `/boards/{board_id}/switch-map`) |
+| `board-state` | POST | `/api/v1/boards/{board_id}/traps/{trap_id}/disarm` | Disarms an active trap on the tactical board (needs `board.manage_traps`, alias: `/boards/{board_id}/traps/{trap_id}/disarm`) |
 | `board-state` | WS | `/ws/boards/{session_id}` | Real-time tactical board WebSocket stream for kinematic dragging, radial token actions, live rotatable AoE previews, and spell VFX |
 | `board-state` | GET | `/ui/manifest` | Discovers vendored microfrontends (`runefoble-board`, `runefoble-tactical-board`, `runefoble-map-uploader`, `runefoble-radial-menu`, `runefoble-aoe-template`) |
 | `character-sheet` | GET | `/api/v1/characters` | Lists the characters the verified caller may `view`. Optional `campaignId` query filters one campaign's party |

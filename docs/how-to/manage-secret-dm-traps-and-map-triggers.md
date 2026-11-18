@@ -19,10 +19,21 @@ Governed by **US-0018**, **ADR-0001 (SpiceDB Zanzibar)**, and **ADR-0011 (events
 
 ## 2. Placing a Secret DM Trap
 
-To place a secret trap on the board (requires DM permissions in SpiceDB):
+A board belongs to a campaign. Create it as a caller who holds `campaign.run_session`. The route writes the `board:<id>#campaign@campaign:<cid>` tuple:
 
 ```http
-POST /api/v1/boards/{board_id}/traps?campaign_id={campaign_id}
+POST /api/v1/boards
+Authorization: Bearer <access token for dm_evelyn>
+
+{"session_id": "board-42", "campaign_id": "<campaign id>", "cols": 12, "rows": 12}
+```
+
+A request with no `campaign_id` returns `400`. A caller without `run_session` returns `403`.
+
+To place a secret trap on the board, the caller needs the SpiceDB permission `board.manage_traps`. The schema grants it to the board DM and to `campaign.run_session`:
+
+```http
+POST /api/v1/boards/{board_id}/traps
 Authorization: Bearer <access token for dm_evelyn>
 Content-Type: application/json
 
@@ -66,6 +77,10 @@ Players and spectators cannot view secret traps. When querying `/api/v1/boards/{
 - **DM View (`Authorization: Bearer <token for dm_evelyn>`)**: Returns all traps, including secret traps.
 - **Player View (`Authorization: Bearer <token for player_alice>`)**: Secret traps (`is_secret: true`) are filtered out; only revealed/public traps are returned.
 
+`GET /api/v1/boards/{board_id}` and the door routes apply the same rule. A caller without `board.view_secret_layer` gets no secret traps, no secret doors, and no secret portals. A secret trap that has sprung stays in the response with its name and place only. Its description, damage, and effect payload stay hidden. `GET .../visibility` has no `is_dm` parameter. The DM view comes from `board.view_secret_layer`. The disarm, create-trap, terrain, and fog-of-war routes need `board.manage_traps` or `board.view_secret_layer`. A player cannot disarm any trap, because the trap model has no player-disarm field.
+
+A SpiceDB outage returns `503`. A schema mismatch returns `500` with an `error_id`. Neither result is a denial.
+
 board_state takes the caller's identity only from the verified bearer token. It ignores `X-User-Id`. A request with no valid token returns `401`.
 
 ---
@@ -96,7 +111,7 @@ If a step trap is armed at `(4, 4)`:
 To transition the stage to a new battlemap and teleport the party:
 
 ```http
-POST /api/v1/boards/{board_id}/switch-map?campaign_id={campaign_id}
+POST /api/v1/boards/{board_id}/switch-map
 Authorization: Bearer <access token for dm_evelyn>
 Content-Type: application/json
 
@@ -132,7 +147,7 @@ Provides DM-exclusive HUD controls to toggle the hidden grid layer, select trap 
   - `isSecret: boolean`
 - **Additional Properties**:
   - `boardId: string`: Board that receives the trap. Required to arm.
-  - `campaignId: string`: Sent as `campaign_id` for the DM permission check.
+  - `campaignId: string`: Not used by the server. board_state takes the campaign from the board tuple.
   - `targetX: number | null`, `targetY: number | null`: Target grid cell. Required to arm.
 - **Events**:
   - `trap-selected`: Emitted on palette preset selection.
@@ -149,7 +164,7 @@ Quick-switcher modal providing a thumbnail grid of active campaign battlemaps wi
   - `tokenTeleports: Record<string, [number, number]>`
 - **Additional Properties**:
   - `boardId: string`: Board to switch. Required to teleport.
-  - `campaignId: string`: Sent as `campaign_id` for the DM permission check.
+  - `campaignId: string`: Not used by the server. board_state takes the campaign from the board tuple.
 - **Events**:
   - `map-switched`: Emitted after `POST /api/v1/boards/{boardId}/switch-map` returns 2xx, with `{ newMapId, cols, rows, backgroundImageUrl, tokenTeleports }` from the server response.
   - `switcher-closed`: Emitted when the modal closes.

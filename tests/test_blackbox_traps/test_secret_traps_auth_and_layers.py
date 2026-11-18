@@ -14,9 +14,6 @@ from __future__ import annotations
 from uuid import uuid4
 
 import pytest
-from board_state.dependencies import (
-    get_spicedb_client,
-)
 from board_state.main import app as board_app
 from eventsource.domain.event_registry import get_event_class_or_none
 from fastapi.testclient import TestClient
@@ -66,9 +63,8 @@ def test_board_traps_cloudevents_registration():
 
 
 @pytest.mark.asyncio
-async def test_zanzibar_dm_trap_creation_and_player_masking():
+async def test_zanzibar_dm_trap_creation_and_player_masking(spicedb: MockSpiceDBClient):
     """Verify non-DM players cannot place secret traps and cannot query secret markers."""
-    spicedb: MockSpiceDBClient = get_spicedb_client()
     client = TestClient(board_app, headers=bearer("user-test"))
 
     board_id = f"board-{uuid4().hex[:8]}"
@@ -79,15 +75,18 @@ async def test_zanzibar_dm_trap_creation_and_player_masking():
     # Set up SpiceDB Zanzibar relationships: Evelyn is DM, Alice is Player
     await spicedb.write_relationship("campaign", campaign_id, "dungeon_master", "user", dm_user)
     await spicedb.write_relationship("campaign", campaign_id, "player", "user", player_user)
-    await spicedb.write_relationship("board", board_id, "campaign", "campaign", campaign_id)
 
     # 1. Initialize board via public frontdoor
-    init_res = client.post("/api/v1/boards", json={"board_id": board_id, "cols": 12, "rows": 12})
+    init_res = client.post(
+        "/api/v1/boards",
+        json={"board_id": board_id, "campaign_id": campaign_id, "cols": 12, "rows": 12},
+        headers=bearer(dm_user),
+    )
     assert init_res.status_code == 200
 
     # 2. Unauthorized player attempts to create a secret trap -> 403 Forbidden
     unauth_post = client.post(
-        f"/api/v1/boards/{board_id}/traps?campaign_id={campaign_id}",
+        f"/api/v1/boards/{board_id}/traps",
         json={"name": "Player Sneaky Trap", "x": 5, "y": 5, "is_secret": True},
         headers=bearer(player_user),
     )
@@ -96,7 +95,7 @@ async def test_zanzibar_dm_trap_creation_and_player_masking():
 
     # 3. Authorized DM creates a secret pit trap at (4, 4)
     auth_post = client.post(
-        f"/api/v1/boards/{board_id}/traps?campaign_id={campaign_id}",
+        f"/api/v1/boards/{board_id}/traps",
         json={
             "name": "Secret Spiked Pit",
             "x": 4,
@@ -116,14 +115,14 @@ async def test_zanzibar_dm_trap_creation_and_player_masking():
 
     # 4. DM also creates a visible/revealed obstacle trap at (8, 8)
     client.post(
-        f"/api/v1/boards/{board_id}/traps?campaign_id={campaign_id}",
+        f"/api/v1/boards/{board_id}/traps",
         json={"name": "Visible Barricade", "x": 8, "y": 8, "is_secret": False},
         headers=bearer(dm_user),
     )
 
     # 5. Player queries traps -> secret traps MUST be masked; only visible trap returned
     player_get = client.get(
-        f"/api/v1/boards/{board_id}/traps?campaign_id={campaign_id}",
+        f"/api/v1/boards/{board_id}/traps",
         headers=bearer(player_user),
     )
     assert player_get.status_code == 200
@@ -134,7 +133,7 @@ async def test_zanzibar_dm_trap_creation_and_player_masking():
 
     # 6. DM queries traps -> receives all traps including secret pit
     dm_get = client.get(
-        f"/api/v1/boards/{board_id}/traps?campaign_id={campaign_id}",
+        f"/api/v1/boards/{board_id}/traps",
         headers=bearer(dm_user),
     )
     assert dm_get.status_code == 200

@@ -5,6 +5,7 @@ session id. Setup and assertions use public HTTP routes of game_session and
 board_state, and the MCP tools are called over streamable HTTP with a signed caller bearer.
 """
 
+import asyncio
 import json
 from collections.abc import Iterator
 from typing import Any
@@ -75,7 +76,7 @@ async def call_create_encounter(session_id: str, enemies: list[dict[str, Any]]) 
     return await call_tool_over_http(
         _MCP["url"],
         "create_encounter",
-        {"session_id": session_id, "enemies": enemies},
+        {"session_id": session_id, "campaign_id": BOARD_CAMPAIGN, "enemies": enemies},
         SIGNING_ISSUER.mint("user-test"),
     )
 
@@ -136,7 +137,8 @@ async def test_blackbox_create_encounter_reuses_existing_board_of_session(wired)
     session_id = start_session_with_player(wired["session"])
     with httpx.Client(base_url=wired["board"], headers=bearer("user-test")) as http:
         existing = http.post(
-            "/api/v1/boards", json={"session_id": session_id, "cols": 12, "rows": 9}
+            "/api/v1/boards",
+            json={"campaign_id": BOARD_CAMPAIGN, "session_id": session_id, "cols": 12, "rows": 9},
         )
         assert existing.status_code == 200, existing.text
 
@@ -174,3 +176,20 @@ async def test_blackbox_create_encounter_game_session_503_is_error_not_board_id(
     assert "503" in tool_text(result)
     assert "encounter_id" not in tool_text(result)
     assert board_status(wired["board"], session_id) == 404
+
+
+BOARD_CAMPAIGN = "camp-board-fixture"
+
+
+@pytest.fixture(autouse=True)
+def _board_campaign_dm(spicedb):
+    """Make `user-test` the DM of the campaign that every board in this module belongs to."""
+    asyncio.run(
+        spicedb.write_relationship(
+            resource_type="campaign",
+            resource_id=BOARD_CAMPAIGN,
+            relation="dungeon_master",
+            subject_type="user",
+            subject_id="user-test",
+        )
+    )

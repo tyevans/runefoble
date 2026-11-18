@@ -11,6 +11,7 @@ Governed by:
 
 from __future__ import annotations
 
+import asyncio
 from uuid import uuid4
 
 import pytest
@@ -36,7 +37,8 @@ async def test_frontdoor_board_state_integration_for_templates() -> None:
     ) as client:
         # 1. Create the board via POST, then fetch its state via GET
         created = await client.post(
-            "/api/v1/boards", json={"session_id": session_id, "cols": 12, "rows": 12}
+            "/api/v1/boards",
+            json={"campaign_id": BOARD_CAMPAIGN, "session_id": session_id, "cols": 12, "rows": 12},
         )
         assert created.status_code == 200
         get_res = await client.get(f"/api/v1/boards/{session_id}")
@@ -92,3 +94,20 @@ async def test_frontdoor_board_state_integration_for_templates() -> None:
         assert token_id in updated_board["tokens"]
         assert updated_board["tokens"][token_id]["x"] == 4
         assert updated_board["tokens"][token_id]["y"] == 5
+
+
+BOARD_CAMPAIGN = "camp-board-fixture"
+
+
+@pytest.fixture(autouse=True)
+def _board_campaign_dm(spicedb):
+    """Make `user-test` the DM of the campaign that every board in this module belongs to."""
+    asyncio.run(
+        spicedb.write_relationship(
+            resource_type="campaign",
+            resource_id=BOARD_CAMPAIGN,
+            relation="dungeon_master",
+            subject_type="user",
+            subject_id="user-test",
+        )
+    )
