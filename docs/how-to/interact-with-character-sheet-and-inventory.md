@@ -231,7 +231,7 @@ Per ADR-0003 and ADR-0007, the domain models for the Character Sheet bounded con
 - **Inventory & Encumbrance** (`models/inventory.py`): Defines `InventoryItem`, `EquipmentSlot`, `Encumbrance` (with `.calculate(...)` determining load tier thresholds per Strength score), and `InventoryTransitionsMixin`.
 - **Conditions & Absence Modifiers** (`models/conditions.py`): Defines `ConditionState`, `ConditionModifier`, and `ConditionsTransitionsMixin` managing tactical conditions and DM absence penalties.
 - **Progression & Spells** (`models/progression.py`): Encapsulates `SpellProgression`, `LevelProgression`, and `ProgressionTransitionsMixin` managing level ups and spell slot expending.
-- **Aggregator Facade** (`models.py`): Minimal backward-compatibility facade re-exporting all domain models, mixins, and request schemas.
+- **Aggregator Facade** (`models.py`): Defect (DoR 9): facade re-exporting all domain models, mixins, and request schemas. Removal: TASK-0493.
 
 ---
 

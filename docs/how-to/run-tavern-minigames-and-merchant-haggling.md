@@ -219,7 +219,7 @@ curl -X PATCH http://localhost:8004/api/v1/haggling/neg-101/dm-override \
 ## 5. Web Component & Storybook Verification
 
 Interactive components render with high-contrast Bauhaus tokens and shadow DOM isolation:
-- `<runefoble-tavern-parlor>`: Shaker cups, drinking contest meters, and legacy merchant panels.
+- `<runefoble-tavern-parlor>`: Shaker cups, drinking contest meters, and merchant panels.
 - `<runefoble-merchant-haggler>`: Responsive tug-of-war price meter, patience pips (1-5), and dialogue cards.
 - `<runefoble-dm-negotiation-drawer>`: Live DM arbitration drawer with one-click mood buttons and custom bark injection.
 
@@ -236,6 +236,6 @@ Per ADR-0003, ADR-0006, ADR-0007, and ADR-0013, the haggling negotiation engine 
 - **`state.py`**: Event-sourced `NegotiationAggregate` state machine and session initiation (`start_negotiation`), managing baseline offer calculations, price ranges, and patience counters.
 - **`rhetoric.py`**: `RhetoricMovesMixin` managing player bargaining gambits, roll adjudication via `evaluate_gambit`, merchant temperament modifiers, and patience decay.
 - **`dm_controls.py`**: `DMControlsMixin` managing live DM arbitration endpoints, narrative dialogue barks, manual price overrides, and immediate deal resolution.
-- **`haggling.py` / `__init__.py`**: Aggregator facades (< 40 lines) maintaining 100% backwards-compatible re-exports for existing routers and services.
+- **`haggling.py` / `__init__.py`**: Defect (DoR 9): aggregator facades (< 40 lines) re-export symbols for existing routers and services. Removal: TASK-0491.
 
 

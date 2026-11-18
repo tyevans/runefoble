@@ -204,7 +204,7 @@ The soundscape blackbox verification suite is partitioned into focused test modu
 - `tests/test_blackbox_leitmotif_api.py`: Verifies REST API routes (`/api/v1/soundscape/leitmotif/timbres`, `profile`, `trigger`, `active`), SpiceDB Zanzibar character owner authorization enforcement, and `<runefoble-leitmotif-config>` microfrontend manifest and component invariants.
 - `tests/test_blackbox_leitmotif_triggers.py`: Verifies multi-modal combat and reactive triggers (critical hits, near-death cello themes, WebAudio sidechain -12dB voice ducking) and volume envelope stage calculations.
 - `tests/test_blackbox_soundscape_gateway.py`: Verifies API Gateway `/api/v1/soundscape/*` proxy routing, OpenAPI schema exposure, SpiceDB Zanzibar object authorization (`play`, `run_session`, `manage`), and downstream service forwarding (< 500 lines).
-- `tests/test_blackbox_soundscape_event_handlers.py`: Verifies domain event subscription handlers (`CombatEncounterStarted`, `InitiativeTurnAdvanced`, `PlayerSpokeEvent`, `CriticalHitScored`, `DeathSaveStarted`), platform bus subscription wiring, backward-compatibility re-exports, and file length limit invariants (< 180 lines).
+- `tests/test_blackbox_soundscape_event_handlers.py`: Verifies domain event subscription handlers (`CombatEncounterStarted`, `InitiativeTurnAdvanced`, `PlayerSpokeEvent`, `CriticalHitScored`, `DeathSaveStarted`), platform bus subscription wiring, re-exports for existing callers (defect, DoR 9; removal: TASK-0498), and file length limit invariants (< 180 lines).
 
 ---
 

@@ -381,7 +381,7 @@ The Gateway API still holds a copy of the campaign and invite records under `gat
 - **Invite Management (`invites.py`)**: Provides secure token generation (`generate_invite_token`), expiration tracking (`calculate_invite_expiry`), `InviteManager` state storage, response formatting (`format_invite_response`), and Zanzibar redemption (`join_from_invite`).
 - **SpiceDB Zanzibar Queries (`queries.py`)**: Encapsulates fine-grained Zanzibar authorization queries, including `get_user_campaign_role`, `build_campaign_summary`, `get_all_viewable_campaigns`, and `get_campaign_members`.
 - **Store Repository (`store.py`)**: Implements thread-safe in-memory campaign lifecycle mutations (`create_campaign`, `update_campaign`, `create_from_request`, `update_from_request`), delegating invite tracking to `InviteManager` and session management to `SessionManager`.
-- **Package Facade (`__init__.py`)**: Re-exports all core classes, helpers, and default constants for complete backward compatibility across existing Gateway API routers and test suites.
+- **Package Facade (`__init__.py`)**: Re-exports all core classes, helpers, and default constants. Defect (DoR 9): it serves existing Gateway API routers and test suites. Removal: TASK-0488.
 
 ---
 

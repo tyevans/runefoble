@@ -11,7 +11,7 @@ Runefoble uses Redis Streams as a high-throughput, distributed event bus for cro
                       +--------------+--------------+
                                      | XADD
                                      v
-                       [ Redis Stream: events.session ]
+                       [ Redis Stream: runefoble.events.session ]
                                      |
           +--------------------------+--------------------------+
           | XREADGROUP (Group: <service>_workers)               |
@@ -23,18 +23,18 @@ Runefoble uses Redis Streams as a high-throughput, distributed event bus for cro
             |                                                     |
     Success | XACK                                        Failure | (handler raises)
             v                                                     v
-   (PEL Cleared)                                     [ DLQ: events.session.dlq ]
+   (PEL Cleared)                                     [ DLQ: runefoble.events.session.dlq ]
                                                      + XACK original stream
 ```
 
 ### Components
 
-1. **`RedisStreamsEventBus` (`libs/runefoble_platform/redis_bus.py`)**:
+1. **`RedisStreamsEventBus` (`libs/runefoble_platform/src/runefoble_platform/redis_bus.py`)**:
    - Publishes domain events, Pydantic models, or structured dictionaries to Redis Streams using `XADD`.
    - Serializes events into `event_type`, `event_id`, and JSON payload fields.
    - `publish_event(stream, event)` is the only publish method. No `publish` method exists.
 
-2. **`RedisConsumerGroup` & `deserialize_event` (`libs/runefoble_platform/consumer_group.py`, `event_deserializer.py`)**:
+2. **`RedisConsumerGroup` & `deserialize_event` (`libs/runefoble_platform/src/runefoble_platform/consumer_group.py`, `event_deserializer.py`)**:
    - `RedisConsumerGroup` (aliased as `RedisConsumerGroupWorker`) manages consumer group lifecycles (`create_group`, `read_group`, `ack`, `auto_claim_pending`, `route_to_dead_letter`).
    - `deserialize_event` (`event_deserializer.py`) provides isolated deserialization and CloudEvents/DomainEvent registry resolution with W3C trace context preservation (`traceparent`, `tracestate`).
    - `MockAsyncRedis` is a test double in `tests/helpers/mock_redis.py`. Production code must not import it.
@@ -42,7 +42,7 @@ Runefoble uses Redis Streams as a high-throughput, distributed event bus for cro
    - Recovers unacknowledged/stuck messages from failed or stalled workers using `XAUTOCLAIM`.
    - Isolates poison pill messages to Dead Letter Queues (`{stream}.dlq`) with failure metadata.
 
-3. **`StreamConsumer`, `SupervisedStreamConsumers` (`libs/runefoble_platform/stream_consumer.py`)**:
+3. **`StreamConsumer`, `SupervisedStreamConsumers` (`libs/runefoble_platform/src/runefoble_platform/stream_consumer.py`)**:
    - One consumer reads one stream for one group. It acknowledges a message only after its handler returns.
    - A handler failure routes the message to `{stream}.dlq`, then acknowledges it.
    - A set of consumers starts as one unit. Start-up raises when a consumer group cannot be created.
@@ -129,9 +129,9 @@ These consumers had no running process. TASK-0578 removed them or started them. 
 
 | Component | Decision | Reason |
 |---|---|---|
-| `SpiceDBEventListener` (`libs/runefoble_auth/listener.py`) | Removed. | No service called `register_bus_handlers`. The listener used the in-process `EventBus`, not Redis Streams. Tuple sync runs through `ZitadelSpiceDBSyncService` on the gateway sync routes (`/api/v1/auth/sync/*`). |
+| `SpiceDBEventListener` | Removed. | No service called `register_bus_handlers`. The listener used the in-process `EventBus`, not Redis Streams. Tuple sync runs through `ZitadelSpiceDBSyncService` on the gateway sync routes (`/api/v1/auth/sync/*`). |
 | `RedisInferenceConsumer` (`services/inference_worker`) | Removed. Config keys `RUNEFOBLE_WORKER_REDIS_*` removed. | No producer writes `runefoble.inference.requests`. TASK-0448 may add a producer and a dead-letter path later. |
-| `AnalyticsEventWorker` (`libs/runefoble_platform/analytics/worker.py`) | Removed. | No service started it. OpenPanel forwarding is not deployed. Domain services call `OpenPanelClient` directly if they need it. |
+| `AnalyticsEventWorker` | Removed. | No service started it. OpenPanel forwarding is not deployed. Domain services call `OpenPanelClient` directly if they need it. |
 | Gateway MCP dynamic tool bus | Kept. No mock fallback. | `configure_dynamic_tool_event_bus` in `gateway_api.main` injects the Redis bus when the module loads. It raises when `REDIS_URL` is empty. Dropped events log at `ERROR`. |
 
 ---
