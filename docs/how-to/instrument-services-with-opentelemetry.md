@@ -108,6 +108,7 @@ def process_traced_event(event_data: dict) -> None:
 
 ## Step 4: Verify in Grafana Dashboards
 
-1. Open Grafana at `http://localhost:3001` (default admin credentials: `admin` / `admin`).
-2. Navigate to **Explore** -> **OpenTelemetry / Loki**.
-3. Search for trace ID or service name `the-watcher` or `gateway-api` to inspect waterfall spans and execution latencies.
+1. Run `kubectl port-forward svc/grafana 3001:3001` in a separate terminal. The chart has no ingress route for Grafana.
+2. Open Grafana at `http://localhost:3001` (default admin credentials: `admin` / `admin`).
+3. Navigate to **Explore** -> **OpenTelemetry / Loki**.
+4. Search for trace ID or service name `the-watcher` or `gateway-api` to inspect waterfall spans and execution latencies.
