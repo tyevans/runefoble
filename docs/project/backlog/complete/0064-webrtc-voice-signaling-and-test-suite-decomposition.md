@@ -67,7 +67,7 @@ As audio capabilities expand in upcoming milestones (whisper tracks, autonomous 
 
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
 1. **Modular Submodule Creation**:
-   - `manager.py`, `auth.py`, and `handlers.py` created under `gateway/api/src/gateway_api/signaling/`.
+   - `manager.py`, `auth.py`, and `handlers.py` created under `gateway/api/src/gateway_api/signaling/` (removed).
    - Endpoint facade in `webrtc_signaling.py` ensures 100% backward compatibility for all existing imports and routes.
 2. **Wire Protocol Compatibility**:
    - Zero wire protocol changes: client WebSockets receive identical JSON event payloads.

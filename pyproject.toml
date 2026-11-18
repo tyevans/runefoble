@@ -116,7 +116,6 @@ source_modules = ["game_session"]
 forbidden_modules = ["voice_agent"]
 
 # The gateway stays thin (ADR-0015 b). It reaches each owner over HTTP through ServiceClient.
-# Asset Forge routes stay in the TASK-0595 exception until that task moves them to forward_json.
 [[tool.importlinter.contracts]]
 name = "gateway_api must not import a service package (ADR-0015 b, TASK-0775)"
 type = "forbidden"
