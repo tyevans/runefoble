@@ -72,8 +72,6 @@ spec:
             {{- include "runefoble.zitadelServiceEnv" $ | nindent 12 }}
             - name: RUNEFOBLE_SPICEDB_ENDPOINT
               value: "spicedb:{{ $.Values.spicedb.grpcPort }}"
-            - name: REDIS_URL
-              value: "redis://runefoble-redis:{{ $.Values.redis.port }}/0"
             - name: RUNEFOBLE_REDIS_URL
               value: "redis://runefoble-redis:{{ $.Values.redis.port }}/0"
             - name: RUNEFOBLE_OTEL_ENABLED

@@ -53,3 +53,13 @@ test('an unknown backend name fails at start-up', async () => {
     /must be "postgresql" or "memory"/
   );
 });
+
+test('a deployed process with only REDIS_URL set fails at start-up and names RUNEFOBLE_REDIS_URL', async () => {
+  await assert.rejects(
+    createAdapters(
+      { NODE_ENV: 'production', RUNEFOBLE_DATABASE_URL: DATABASE_URL, REDIS_URL: 'redis://127.0.0.1:1/0' },
+      logger
+    ),
+    /RUNEFOBLE_REDIS_URL is not set/
+  );
+});

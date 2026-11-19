@@ -75,7 +75,7 @@ def test_dice_expression_stays_in_range(client: TestClient):
         {"x": {"$expr": "base ** 99999999"}},
         {"x": {"$expr": "(lambda: 1)()"}},
         {"x": {"$expr": "ENV_SECRET"}},
-        {"x": "${REDIS_URL}"},
+        {"x": "${RUNEFOBLE_REDIS_URL}"},
         {"x": {"$call": "socket"}},
         {"x": {"$dice": "1000000d6"}},
         {"x": {"$dice": "not dice"}},

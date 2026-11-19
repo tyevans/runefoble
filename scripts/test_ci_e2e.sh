@@ -28,7 +28,6 @@ export RUNEFOBLE_SPICEDB_ENDPOINT="mock"
 export RUNEFOBLE_SPICEDB_PRESHARED_KEY="${RUNEFOBLE_SPICEDB_PRESHARED_KEY:-ci-only-spicedb-key}"
 export AUTH_DEV_MODE="true"
 export RUNEFOBLE_AUTH_DEV_MODE="true"
-export REDIS_URL="${REDIS_URL:-redis://localhost:6379/0}"
 export RUNEFOBLE_REDIS_URL="${RUNEFOBLE_REDIS_URL:-redis://localhost:6379/0}"
 
 # 2. Check if background services should be started or are already running

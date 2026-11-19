@@ -48,7 +48,7 @@ function createEventStore(env: NodeJS.ProcessEnv, isTest: boolean): EventStore {
     throw new Error(`${EVENT_STORE_BACKEND_VAR} must be "postgresql" or "memory". Got '${backend}'.`);
   }
   if (databaseUrl) {
-    return new PostgresEventStore(normalizePostgresUrl(databaseUrl));
+    return new PostgresEventStore(databaseUrl);
   }
   if (backend === 'postgresql') {
     throw new Error(`${DATABASE_URL_VAR} is not set. ${EVENT_STORE_BACKEND_VAR}=postgresql needs a database URL.`);
@@ -60,10 +60,10 @@ function createEventStore(env: NodeJS.ProcessEnv, isTest: boolean): EventStore {
 }
 
 function createStreamPublisher(env: NodeJS.ProcessEnv, isTest: boolean, log: Logger): StreamPublisher {
-  const redisUrl = env.REDIS_URL || env.RUNEFOBLE_REDIS_URL;
+  const redisUrl = env.RUNEFOBLE_REDIS_URL;
   if (!redisUrl) {
     if (isTest) return new InMemoryStreamPublisher();
-    throw new Error('REDIS_URL (or RUNEFOBLE_REDIS_URL) is not set. Audience Studio needs Redis Streams outside tests.');
+    throw new Error('RUNEFOBLE_REDIS_URL is not set. Audience Studio needs Redis Streams outside tests.');
   }
   if (redisUrl.startsWith('mock://')) {
     if (!isTest) {
@@ -72,9 +72,4 @@ function createStreamPublisher(env: NodeJS.ProcessEnv, isTest: boolean, log: Log
     return new InMemoryStreamPublisher();
   }
   return new RedisStreamsClient(redisUrl, log);
-}
-
-/** The Python services use the SQLAlchemy dialect. The pg driver needs the plain scheme. */
-export function normalizePostgresUrl(url: string): string {
-  return url.replace(/^postgresql\+asyncpg:\/\//, 'postgresql://');
 }

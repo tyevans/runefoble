@@ -35,7 +35,7 @@ Runefoble is designed around a Kubernetes-first microservices topology deployed 
   - `spicedb`: Zanzibar relationship tuple storage engine.
   - `openpanel`: Telemetry event tables.
 - **Environment Variables**:
-  - `RUNEFOBLE_DATABASE_URL`: Connection string (`postgresql+asyncpg://...` or standard `postgresql://...` auto-normalized to asyncpg).
+  - `RUNEFOBLE_DATABASE_URL`: Connection string (`postgresql+asyncpg://...` or standard `postgresql://...` auto-normalized to asyncpg). The Node service `audience_studio` takes only the plain `postgresql://` form.
   - `RUNEFOBLE_EVENT_STORE_BACKEND`: `postgresql` (default) or `memory`. `postgresql` selects the persistent `PostgreSQLEventStore`. `memory` selects `InMemoryEventStore` for tests and explicit injection only. The Helm chart sets `postgresql` for every service that owns aggregate state. A service in `staging` or `production` refuses `memory`.
   - `RUNEFOBLE_POSTGRES_POOL_SIZE`: Async connection pool size (default `5`).
   - `RUNEFOBLE_POSTGRES_MAX_OVERFLOW`: Async connection pool max overflow (default `10`).
@@ -50,7 +50,7 @@ Runefoble is designed around a Kubernetes-first microservices topology deployed 
 ### 2. Redis Streams (Event Streaming & Consumer Groups)
 - **Role**: High-throughput distributed event bus powering pub/sub across bounded contexts.
 - **Topics**: `runefoble.events.session`, `runefoble.events.board`, `runefoble.events.character`, `runefoble.events.voice`.
-- **Environment Variables**: `RUNEFOBLE_REDIS_URL`, `REDIS_URL`.
+- **Environment Variables**: `RUNEFOBLE_REDIS_URL`.
 - **Reference Guide**: [Redis Streams Event Bus](redis-streams-event-bus.md).
 
 ### 3. SpiceDB (Fine-Grained Zanzibar Authorization)
