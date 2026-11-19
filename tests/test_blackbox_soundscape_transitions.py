@@ -20,10 +20,11 @@ from runefoble_events.events import (
     PlayerSpokeEvent,
     SoundscapeTrackChanged,
 )
+from runefoble_platform.models import utc_now
 from soundscape.event_handlers import handle_incoming_domain_event
 from soundscape.main import app
 from soundscape.mixer import DUCKING_ATTENUATION_DB, DUCKING_LINEAR_MULTIPLIER, AudioStemMixer
-from soundscape.session_state import read_session_state, utc_now
+from soundscape.session_state import read_session_state
 
 from tests.helpers.ws_identity import SIGNING_ISSUER
 

@@ -13,10 +13,11 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from runefoble_platform.config import PlatformSettings
+from runefoble_platform.errors import ServiceUnavailableError
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 
 
-class EventBusUnavailableError(RuntimeError):
+class EventBusUnavailableError(ServiceUnavailableError):
     """Raised when the Redis event bus is not configured or cannot be reached."""
 
 

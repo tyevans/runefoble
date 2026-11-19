@@ -25,33 +25,6 @@ class EntityNotFoundError(RunefobleError):
         )
 
 
-class AuthorizationError(RunefobleError):
-    """Raised when Zanzibar / SpiceDB permission check fails."""
-
-    def __init__(self, user_id: str, action: str, resource: str):
-        super().__init__(
-            f"User '{user_id}' is not authorized to '{action}' on '{resource}'.",
-            {
-                "user_id": user_id,
-                "action": action,
-                "resource": resource,
-            },
-        )
-
-
-class GameRuleViolationError(RunefobleError):
-    """Raised when an action violates tactical rules or board physics."""
-
-    def __init__(self, rule: str, reason: str):
-        super().__init__(
-            f"Game rule violation: {rule} - {reason}",
-            {
-                "rule": rule,
-                "reason": reason,
-            },
-        )
-
-
 class ConfigurationError(RunefobleError):
     """Raised when a required setting is missing or invalid. The process must not start."""
 

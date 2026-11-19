@@ -215,6 +215,7 @@ The module `runefoble_platform.engine_ports` holds the parts that settings-selec
 
 - **`build_adapter(setting, value, registry)`**: returns `registry[value]()`. `registry` maps allowed values to zero-argument factories. An unknown value raises `UnknownAdapterError` (a `ValueError`). The message names `setting` and every allowed value.
 - **`EngineUnavailableError(error_code, engine, message, *, engine_field="engine")`**: raised by an adapter when its engine cannot produce a result. `body()` returns `{"error": error_code, <engine_field>: engine, "message": message}`.
+  It subclasses `ServiceUnavailableError` from `runefoble_platform.errors`, the one unavailable-error base.
 - **`engine_unavailable_handler`**: FastAPI exception handler. It returns HTTP `503` with the body under `detail`. Register it with `app.add_exception_handler(EngineUnavailableError, engine_unavailable_handler)`.
 
 Services that register the handler: `voice_agent`, `asset_forge`.

@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from game_session.campaign import clock
 from game_session.campaign.errors import (
     InvalidInviteError,
     OwnerNotRemovableError,
@@ -32,6 +31,7 @@ from game_session.campaign.service_campaigns import (
     parse_campaign_id,
 )
 from game_session.campaign.tuples import SpiceDB, grant_member, relation_for_role, revoke_member
+from runefoble_platform.models import utc_now
 
 
 def display_name(user_id: str) -> str:
@@ -54,7 +54,7 @@ async def create_invite(
     cid = parse_campaign_id(campaign_id)
     await load_campaign(repos, cid)
     token = generate_invite_token()
-    now = clock.utc_now()
+    now = utc_now()
     expires_at = invite_expiry(req.expires_in_hours, now)
     invite = repos.invites.create_new(invite_stream_id(token))
     invite.issue(
@@ -96,7 +96,7 @@ async def join_campaign(
         await grant_member(spicedb, campaign_key, existing_role, user_id)
         return _joined(campaign_key, user_id, existing_role, relation_for_role(existing_role))
 
-    invite.redeem(user_id, clock.utc_now())
+    invite.redeem(user_id, utc_now())
     await save_aggregate(repos.invites, invite)
     memberships.add_member(user_id, invite.state.role)
     await save_aggregate(repos.memberships, memberships)

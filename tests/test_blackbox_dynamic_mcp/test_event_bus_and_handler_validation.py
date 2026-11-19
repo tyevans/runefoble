@@ -21,6 +21,7 @@ from gateway_mcp.dynamic.events import publish_system_event
 from gateway_mcp.server import mcp
 from runefoble_events.events import DynamicToolUnregisteredEvent
 from runefoble_platform.config import PlatformSettings
+from runefoble_platform.event_bus import EventBusUnavailableError
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 
 EVENTS_LOGGER = "runefoble.gateway_mcp.dynamic.events"
@@ -74,7 +75,7 @@ def test_blackbox_gateway_mcp_startup_refuses_missing_redis_url():
     """Gateway startup fails when no Redis URL exists, so no tool runs without a bus."""
     from gateway_mcp.server import configure_dynamic_event_bus
 
-    with pytest.raises(RuntimeError, match="REDIS_URL"):
+    with pytest.raises(EventBusUnavailableError, match="REDIS_URL"):
         configure_dynamic_event_bus(PlatformSettings(redis_url=""))
 
 

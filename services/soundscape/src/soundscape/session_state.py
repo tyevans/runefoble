@@ -6,19 +6,15 @@ write loads the aggregate, records events, saves them, and then publishes them.
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import datetime
 
 from runefoble_platform.aggregate_loading import load_if_exists, load_or_create
+from runefoble_platform.models import utc_now
 
 from soundscape.aggregate import SoundscapeAggregate, SoundscapeState
 from soundscape.dependencies import get_soundscape_repo, publish_soundscape_event
 from soundscape.ids import soundscape_aggregate_id
 from soundscape.models import TensionStatusResponse
-
-
-def utc_now() -> datetime:
-    """Return the current instant in UTC. Ducking expiry compares against this value."""
-    return datetime.now(UTC)
 
 
 async def read_session_state(session_id: str) -> SoundscapeState:
