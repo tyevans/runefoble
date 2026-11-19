@@ -2,7 +2,7 @@
 
 The shared typed HTTP client for calls from a gateway to an owning bounded context. It lives in `libs/runefoble_platform/src/runefoble_platform/service_client/`.
 
-The gateway uses this client for every proxy call. Each proxy call goes through `gateway_api.proxy.forward_json` for a JSON body that the gateway builds, or `forward_bytes` for a raw body that the owner validates, a binary reply (PDF, PNG, STL), or an upload (TASK-0595). `forward_bytes` is the only raw-body path. All use the registry in `gateway_api.upstreams`. The MCP gateway uses it through the route helpers in `gateway_mcp.owning_services.OwningServices`. Those helpers map the errors to MCP tool errors. They keep one client for each event loop, service, and base URL.
+The gateway uses this client for every proxy call. Each proxy call goes through `gateway_api.proxy.forward_json` for a JSON body that the gateway builds, or `forward_bytes` for a raw body that the owner validates, a binary reply (PDF, PNG, STL), or an upload (TASK-0595). `forward_bytes` is the only raw-body path. All use the registry in `gateway_api.upstreams`. The MCP gateway uses it through the route helpers in `gateway_mcp.owning_services.OwningServices`. Those helpers map the errors to MCP tool errors. They keep one client for each event loop, service, and base URL. The client pool belongs to the gateway MCP container, so each app has its own pool (TASK-0746).
 
 ## Modules
 

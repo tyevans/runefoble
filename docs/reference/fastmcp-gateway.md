@@ -8,18 +8,21 @@ The gateway server entrypoint (`gateway/mcp/src/gateway_mcp/server.py`) operates
 
 gateway/mcp/src/gateway_mcp/
 ├── caller.py              # Reads the MCP caller's bearer token from the request
+├── container.py           # GatewayMcpContainer (registry, permission port, service client pool) and bind_container
+├── fastmcp_tools.py       # The one adapter over FastMCP tool registration and lookup
+├── permissions.py         # PermissionChecker port, PermissionDenied, AuthorizationUnavailable, and the SpiceDB adapter
+├── service_clients.py     # ServiceClientPool: one shared service client per event loop, service, and base URL
 ├── owning_services.py     # Route helpers for owning services (board_state, character_sheet, game_session, rules_compendium, the_watcher) over the shared service client
 ├── dynamic/               # Dynamic tool registry package (< 140 lines per module)
-│   ├── auth.py            # SpiceDB Zanzibar authorization guard & relationship sync
+│   ├── auth.py            # Authorization functions over the permission port (grant, revoke, check, enforce)
 │   ├── builder.py         # Signature builder and callable adapter
-│   ├── events.py          # Redis Streams system event bus integration
 │   ├── models.py          # Dynamic tool schemas and JSON Schema validation
-│   └── registry.py        # Thread-safe tool registry with event notifications
+│   └── registry.py        # Thread-safe tool registry, bound to one FastMCP app and one permission port
 ├── routers/               # FastMCP REST routers (< 130 lines)
 │   └── tools_registry.py  # REST endpoints for dynamic tool registration & lifecycle
 ├── asgi.py                # ASGI app (`gateway_mcp.asgi:app`) for the streamable HTTP endpoint
 ├── main.py                # CLI execution wrapper
-├── server.py              # FastMCP orchestration shell, module mounting, and `main()`
+├── server.py              # `build_mcp(container)` and `build_http_app(container)`, plus `main()`
 ├── settings.py            # Required upstream service URLs and the GATEWAY_MCP_HOST/PORT listen address
 ├── tools/                 # MCP tool implementations (< 180 lines each)
 │   ├── dice.py            # Dice notation parsing and rolling (roll_dice)
@@ -144,6 +147,10 @@ Prompt templates provide standardized prompts for LLM decision-making and narrat
 ## Dynamic Runtime Tool Registry
 
 The Dynamic Tool Registry (`gateway/mcp/src/gateway_mcp/dynamic/`) enables tabletop creators, homebrew modders, and external developers to register, update, and hot-reload custom FastMCP tools dynamically at runtime with SpiceDB authorization checks, without restarting the FastMCP gateway or terminating active AI agent sessions (ADR-0001, ADR-0003, ADR-0006, ADR-0007, ADR-0008, TASK-0172).
+
+### Gateway Container and Ports (TASK-0746)
+
+`server.build_mcp(container)` builds one FastMCP app. The container holds the dynamic tool registry, the `PermissionChecker` port, and the service client pool. Each test or app builds its own container, so two apps keep separate registries. The guard in `dynamic/auth.py` raises `PermissionDenied`. The admin router maps it to `403`. The router maps `AuthorizationUnavailable` to `503` with `authorization_unavailable`. A tool maps both to a tool error. The SpiceDB adapter is the only code that imports the SpiceDB client.
 
 ### Administrative REST Endpoints
 
