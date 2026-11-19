@@ -27,6 +27,10 @@ Part of the [Events Schema](events-schema.md). Each event identifier in this pag
   - `delta`: Integer
   - `current_hp`: Integer, `max_hp`: Integer
   - `source`: String
+- **`CharacterCraftingOutcomeApplied`** (`runefoble.events.character.crafting_outcome_applied`): Emitted on the character stream when the character applies one recorded crafting outcome. Replaying it again is a no-op.
+  - `character_id`: String
+  - `crafting_event_id`: String. The id of the crafting success or mishap event that was applied.
+  - `attempt_id`: Optional[String]. The client attempt id, when the combine request named one.
 - **`AbsencePenaltyApplied`** (`runefoble.events.character.absence_penalty_applied`): Emitted when an absent player's character is inflicted with a session miss penalty.
   - `penalty_type`: "drunk" | "foolishness" | "cowardice" | "greed" | "curse"
   - `description`: String

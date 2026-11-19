@@ -48,3 +48,33 @@ by environment type:
   name use it.
 - A service in a `staging` or `production` environment refuses `memory` at start-up with
   `EventStoreInitializationError`.
+
+## Amendment (2026-11-18, TASK-0772): Commands across two aggregates
+`AggregateRepository.save` appends to one stream. The library gives no atomic save across two
+aggregates. A command that changes two aggregates therefore uses a process manager:
+
+1. **Commit the decision first.** The command records its decision and outcome on the owning
+   aggregate, and saves that aggregate. This save is the commit point. Example: the crafting
+   aggregate records a combine attempt, its outcome, and the damage it deals.
+2. **Apply the outcome to the other aggregate, once.** The other aggregate applies the recorded
+   outcome. It records an applied marker that names the source event id (for example
+   `CharacterCraftingOutcomeApplied` with `crafting_event_id`). The effects and the marker share
+   one save of that aggregate, so the apply is all or nothing.
+3. **Make the apply idempotent.** The applied set on the target aggregate blocks a second apply
+   of the same source event. A retry never applies an effect twice.
+4. **Recover pending outcomes.** When step 2 fails, the request answers `503`. The outcome stays
+   pending. Every later command on the target aggregate, and every read that a route marks for
+   recovery, applies pending outcomes first. Pending means: the decision has an outcome event, the
+   target has not applied it, and the record opted into the process manager.
+5. **Let clients retry safely.** A command that a client can repeat carries an optional client
+   attempt id. The decision records it. A repeat with the same id returns the recorded outcome and
+   records nothing new. A command without an id is always a new decision.
+6. **Record old data as not pending.** Events written before the pattern default to the value
+   that means "no apply needed", so the recovery pass never re-applies them.
+
+Trade-offs: a client can see a `503` after the decision is saved. The recorded decision then
+takes effect later, on the next command or read. Event publishing happens after each save. A
+publish failure does not undo a save. This is the same best-effort rule as TASK-0729.
+
+Applied to: `CombineReagentsService` in `services/character_sheet` (crafting decision, then
+character effects). See `docs/how-to/run-campfire-rests-and-alchemical-crafting.md`.

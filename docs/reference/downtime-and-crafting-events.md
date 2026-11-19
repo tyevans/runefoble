@@ -17,6 +17,8 @@ All downtime events subclass `BaseRunefobleEvent` and are CloudEvents 1.0-compli
   - `reagents`: List[str] — List of ingredient names placed in the crucible.
   - `catalyst`: Optional[str] — Stabilizing or amplifying catalyst used (e.g. `purified_water`, `dragon_bile`).
   - `risk_score`: Float — Volatility probability (0.0 to 1.0) computed by the risk matrix.
+  - `attempt_id`: Optional[UUID] — Client attempt id from the combine request. A repeat with the same id is the same attempt. Null when the request named none.
+  - `applies_to_character`: Boolean — `true` when the character applies this attempt through the crafting process manager. Attempts recorded before TASK-0772 carry `false` and need no apply.
 
 ### 2. `runefoble.events.downtime.crafting_succeeded`
 - **Topic**: `runefoble.events.crafting`
@@ -49,7 +51,11 @@ A mishap that deals damage publishes the standard health events on the character
 - **`CharacterDamaged`** (event type `runefoble.events.character.damaged`): same `delta`, `current_hp`, `max_hp`, and `source`.
 - **`StandInStabilized`**: published only when the damage stabilizes a stand-in at 0 HP.
 
-These events publish after the character and the crafting history are saved. A mishap with no damage publishes no health event.
+The character applies a mishap once. The events publish when the character save succeeds, during the combine or the next character read. A retry of a recorded attempt publishes nothing again. A mishap with no damage publishes no health event.
+
+### 3b. Applying a Recorded Outcome
+
+The crafting aggregate records each combine decision before the character changes. The character then applies the outcome and records `CharacterCraftingOutcomeApplied` (`runefoble.events.character.crafting_outcome_applied`) on its own stream, keyed by the crafting outcome event id. A second apply of the same outcome is a no-op. See ADR-0011, amendment TASK-0772.
 
 ### 5. `runefoble.events.downtime.stronghold_created`
 - **Topic**: `runefoble.events.stronghold`
@@ -98,7 +104,7 @@ The credit to the outpost store is the `runefoble.events.west_marches.outpost_re
 |---|---|---|---|---|
 | `/api/v1/crafting/recipes` | `GET` | `character_sheet` | — | Lists canonical known alchemical recipes. |
 | `/api/v1/crafting/reagents` | `GET` | `character_sheet` | — | Lists available reagents, catalysts, and mishap tables. |
-| `/api/v1/crafting/recipes/combine` | `POST` | `character_sheet` (gateway proxy) | `character:edit` or `campaign:play` | Transmutes crucible reagents and updates inventory. Answers `404` when the character does not exist and `503` when the event store fails. A failed request saves nothing. |
+| `/api/v1/crafting/recipes/combine` | `POST` | `character_sheet` (gateway proxy) | `character:edit` or `campaign:play` | Transmutes crucible reagents and updates inventory. Accepts an optional `attempt_id`: a repeat with the same id returns the recorded outcome and spends nothing again. Answers `404` when the character does not exist and `503` when the event store fails. A `503` before the decision save changes nothing. A `503` after it leaves the outcome pending, and the next combine or character read applies it. |
 | `/api/v1/crafting/{char_id}/history` | `GET` | `character_sheet` | `character:view` | Retrieves crafting attempts and discovered recipes. Answers an empty state only when no crafting history exists. Answers `503` when the event store fails. |
 | `/api/v1/sessions/{id}/rest/prompts` | `GET` | `game_session` | — | Retrieves collaborative storytelling prompts. |
 | `/api/v1/sessions/{id}/rest/campfire` | `POST` | `game_session` (gateway proxy) | `campaign:play` | Executes campfire rest sequence and applies boons. Accepts the session id returned by the campaign session routes (a UUID, the same id as the game session). The campaign link is read from SpiceDB. A session with no campaign link answers `403`. |

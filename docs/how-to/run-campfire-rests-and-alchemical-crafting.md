@@ -31,6 +31,24 @@ curl -X POST http://localhost:8003/api/v1/crafting/recipes/combine \
   }'
 ```
 
+### Retry Safely with an Attempt Id
+
+A combine has two saves: the crafting history, then the character. A failed request can leave the first save in place. Send an `attempt_id` (a UUID that your client creates once per request) to make retries safe:
+
+```bash
+curl -X POST http://localhost:8003/api/v1/crafting/recipes/combine \
+  -H "Content-Type: application/json" \
+  -d '{
+    "character_id": "c1a84f33-1b03-4f51-b8d2-97ba6c3b9991",
+    "reagents": ["Glowmoss Extract", "Volcano Ash"],
+    "attempt_id": "5f0c2a9e-7d3b-4c1e-9a8f-2b6d4e1c0a77"
+  }'
+```
+
+- A repeat with the same `attempt_id` spends nothing again. It returns the recorded outcome. The character applies that outcome once, even if an earlier request failed with `503`.
+- A request without `attempt_id` is always a new attempt. Each such call consumes reagents and applies its own outcome.
+- A character read (`GET /api/v1/characters/{character_id}`) applies any pending outcome first, so the hit points and inventory are current.
+
 ### Response
 ```json
 {
@@ -71,7 +89,9 @@ Mishap damage and status conditions (e.g. `poisoned`, `blinded`) are directly ap
 
 Mishap damage publishes `runefoble.events.character.health_changed` and `CharacterDamaged` on the character stream. These are the same events that `POST /api/v1/characters/{id}/health` publishes.
 
-If the character does not exist, the route answers `404`. If the event store fails, the route answers `503`. In both cases nothing is saved.
+If the character does not exist, the route answers `404` and saves nothing.
+
+If the event store fails before the crafting decision is saved, the route answers `503` and saves nothing. If the store fails after that save, the route answers `503`, but the decision stays recorded. Its damage and reagent cost are pending. The next combine or character read applies them once.
 
 ---
 
