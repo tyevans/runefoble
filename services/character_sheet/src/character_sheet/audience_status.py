@@ -12,8 +12,14 @@ from typing import Any
 from uuid import UUID
 
 from character_sheet.dependencies import repo
-from runefoble_events.events import AudienceModifierApproved
 from runefoble_platform.aggregate_loading import load_if_exists
+from runefoble_platform.audience_modifiers import (
+    approved_modifier,
+    parameter,
+    refusal,
+    require_same_campaign,
+    text_parameter,
+)
 from runefoble_platform.consumer_group import RedisConsumerGroup
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 from runefoble_platform.stream_consumer import StreamConsumer, SupervisedStreamConsumers
@@ -27,10 +33,6 @@ STATUS_BUFF_MODIFIER = "status_buff"
 STATUS_BUFF_CONDITIONS = frozenset({"blessed", "inspired"})
 
 
-class AudienceStatusError(RuntimeError):
-    """Raised when an approved status modifier cannot be applied to its character."""
-
-
 async def apply_audience_status_event(event: Any) -> None:
     """Apply the buff condition to the character named in the modifier.
 
@@ -38,42 +40,22 @@ async def apply_audience_status_event(event: Any) -> None:
     A missing or unknown character id, condition, or character raises, so the message is
     dead-lettered. A character outside the campaign of the modifier also raises.
     """
-    if not isinstance(event, AudienceModifierApproved):
+    modifier = approved_modifier(event, STATUS_BUFF_MODIFIER)
+    if modifier is None:
         return
-    if event.approved is not True or event.modifier_type != STATUS_BUFF_MODIFIER:
-        return
-    raw_character = event.parameters.get("character_id")
-    if raw_character is None or not str(raw_character).strip():
-        raise AudienceStatusError(
-            f"Approved status modifier {event.proposal_id} has no 'character_id' parameter."
-        )
+    raw_character = parameter(modifier, "character_id")
     try:
         character_id = UUID(str(raw_character))
     except ValueError as exc:
-        raise AudienceStatusError(
-            f"Approved status modifier {event.proposal_id} names a character id that is not a UUID."
-        ) from exc
-    condition = event.parameters.get("condition")
-    if not isinstance(condition, str) or not condition.strip():
-        raise AudienceStatusError(
-            f"Approved status modifier {event.proposal_id} has no 'condition' parameter."
-        )
-    condition = condition.strip().lower()
+        raise refusal(modifier, "names a character id that is not a UUID.") from exc
+    condition = text_parameter(modifier, "condition").strip().lower()
     if condition not in STATUS_BUFF_CONDITIONS:
-        raise AudienceStatusError(
-            f"Approved status modifier {event.proposal_id} names unknown condition '{condition}'."
-        )
+        raise refusal(modifier, f"names unknown condition '{condition}'.")
     character = await load_if_exists(repo, character_id)
     if character is None:
-        raise AudienceStatusError(
-            f"Approved status modifier {event.proposal_id} names unknown character {character_id}."
-        )
-    if character.state.campaign_id != str(event.campaign_id):
-        raise AudienceStatusError(
-            f"Approved status modifier {event.proposal_id} belongs to campaign {event.campaign_id}, "
-            f"not to the campaign of character {character_id}."
-        )
-    character.apply_condition(condition, source=f"audience:{event.proposal_id}")
+        raise refusal(modifier, f"names unknown character {character_id}.")
+    require_same_campaign(modifier, character.state.campaign_id, f"character {character_id}")
+    character.apply_condition(condition, source=f"audience:{modifier.proposal_id}")
     await repo.save(character)
 
 
