@@ -325,5 +325,5 @@ The TypeScript `audience_studio` service publishes these events to the `runefobl
 - **`AudienceModifierProposed`**: Emitted when winning chaos option enters DM moderation queue (`runefoble.events.audience.modifier_proposed`). Fields: `proposal_id`, `poll_id`, `campaign_id`, `session_id`, `title`, `modifier_type`, `description`, `parameters`, `status`.
 - **`AudienceModifierApproved`**: Emitted when the DM decides a proposal (`runefoble.events.audience.modifier_approved`). Fields: `proposal_id`, `poll_id`, `campaign_id`, `session_id`, `approved_by`, `approved`, `modifier_type`, `parameters`, `applied_at` (the decision time). A veto uses the same event type with `approved: false`. No separate veto event exists.
 
-Consumers must check `approved` before they apply a modifier.
+Consumers must check `approved` before they apply a modifier. `game_session` applies `weather_change`. `character_sheet` applies `status_buff`. Each consumer ignores the other modifier types.
 

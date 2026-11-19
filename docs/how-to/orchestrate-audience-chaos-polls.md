@@ -81,7 +81,8 @@ When a poll duration expires (or is explicitly closed via `POST /api/v1/audience
      ```
    - Emits `runefoble.events.audience.modifier_approved` with `approved: true`. Each game owner consumes this event for its own effect.
      - `weather_change`: `game_session` consumes it. The `parameters.weather` value is recorded as `WeatherChanged` (`runefoble.events.session.weather_changed`) and appears in `weather` on `GET /api/v1/sessions/{session_id}`. A `weather_change` with no weather value, or for an unknown session, is dead-lettered on `runefoble.events.audience.dlq`.
-     - `hazard_spawn`, `status_buff`, `item_drop`, and narration are applied by their owners in TASK-0835 to TASK-0838.
+     - `status_buff`: `character_sheet` consumes it. The `parameters.character_id` character receives the `parameters.condition` buff condition, which appears in `conditions` on `GET /api/v1/characters/{character_id}`. The allowed conditions are `blessed` and `inspired`. A `status_buff` with a missing or non-UUID `character_id`, a missing or unknown `condition`, an unknown character, or a character outside the modifier's campaign is dead-lettered on `runefoble.events.audience.dlq`.
+     - `hazard_spawn`, `item_drop`, and narration are applied by their owners in TASK-0835, TASK-0837, and TASK-0838.
    - Alternatively, the DM exercises veto power via `POST /api/v1/audience/proposals/{proposal_id}/veto`. A veto emits the same event type with `approved: false`.
    - A proposal can be decided once. A second approve or veto returns `400 Bad Request`.
 
