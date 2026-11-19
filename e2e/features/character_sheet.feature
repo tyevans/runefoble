@@ -20,6 +20,7 @@ Feature: Character Sheet and Inventory Mutations Playwright BDD Test Suite
 
   Scenario: Equipping and Unequipping Gear
     Given an authenticated player "Marcus"
+    And Marcus has "Longsword +1" in his inventory
     When Marcus clicks "Equip" on "Longsword +1" in his inventory table
     Then "Longsword +1" appears in the Main Hand equipment slot
     And inventory encumbrance updates

@@ -11,7 +11,8 @@ import { expect, type Page } from '@playwright/test';
 import { Given, When, Then } from '../support/fixtures';
 import type { World } from '../support/world';
 import type { AuthFixtures } from '../support/auth_fixtures';
-import type { FrontdoorApi } from '../support/frontdoor_api';
+import { bearerHeader, type FrontdoorApi } from '../support/frontdoor_api';
+import { API_BASE_URL } from '../support/env';
 import { assertOk, exactText, requireValue } from '../support/guards';
 
 const SHEET = 'runefoble-character-sheet';
@@ -239,6 +240,25 @@ Then(
   'current HP remains {int}',
   async ({ page }, expectedHp: number) => {
     await expect(hitPointsValue(page)).toHaveText(currentHpText(expectedHp), { timeout: 10_000 });
+  }
+);
+
+Given(
+  '{word} has {string} in his inventory',
+  async ({ page, world, auth, frontdoorApi, request }, _persona: string, itemName: string) => {
+    const charId = await ensureOnCharacterSheet(page, world, auth, frontdoorApi);
+    const token = requireValue(world.currentUser?.token, 'No access token. Sign the player in first.');
+
+    // Setup goes through the public inventory route (ADR-0014). No backdoor seed.
+    const itemId = itemName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    const res = await request.post(`${API_BASE_URL}/api/v1/characters/${charId}/inventory`, {
+      headers: { 'Content-Type': 'application/json', ...bearerHeader(token) },
+      data: { itemId, name: itemName, quantity: 1, weightLbs: 3 },
+    });
+    await assertOk(res, `Adding "${itemName}" to the inventory`);
+
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.waitForSelector(SHEET, { timeout: 15_000 });
   }
 );
 
