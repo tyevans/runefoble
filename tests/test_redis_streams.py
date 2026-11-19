@@ -7,6 +7,7 @@ from typing import Any
 import pytest
 from pydantic import BaseModel
 from runefoble_events.events import SessionCreated, TokenMoved
+from runefoble_platform.event_fields import EventTypeMissingError
 from runefoble_platform.redis_bus import RedisStreamsEventBus, deserialize_event
 
 
@@ -70,6 +71,12 @@ class SampleModel(BaseModel):
     score: int
 
 
+class TypedSampleModel(BaseModel):
+    event_type: str = "runefoble.events.test.sample"
+    name: str
+    score: int
+
+
 @pytest.fixture
 def mock_redis() -> MockAsyncRedis:
     return MockAsyncRedis()
@@ -102,16 +109,26 @@ async def test_publish_domain_event(
 
 
 @pytest.mark.asyncio
-async def test_publish_pydantic_model(
+async def test_publish_typed_pydantic_model_uses_its_event_type(
     event_bus: RedisStreamsEventBus, mock_redis: MockAsyncRedis
 ) -> None:
-    model = SampleModel(name="Aragorn", score=100)
+    model = TypedSampleModel(name="Aragorn", score=100)
     entry_id = await event_bus.publish_event("runefoble.events.test", model)
     assert entry_id == "1700000000000-1"
 
     _, fields = mock_redis.streams["runefoble.events.test"][0]
-    assert fields["event_type"] == "SampleModel"
+    assert fields["event_type"] == "runefoble.events.test.sample"
     assert "Aragorn" in fields["payload"]
+
+
+@pytest.mark.asyncio
+async def test_publish_untyped_pydantic_model_fails_loudly(
+    event_bus: RedisStreamsEventBus, mock_redis: MockAsyncRedis
+) -> None:
+    with pytest.raises(EventTypeMissingError):
+        await event_bus.publish_event("runefoble.events.test", SampleModel(name="x", score=1))
+
+    assert "runefoble.events.test" not in mock_redis.streams
 
 
 @pytest.mark.asyncio

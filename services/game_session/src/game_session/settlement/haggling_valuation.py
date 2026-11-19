@@ -6,13 +6,12 @@ Governed by ADR-0002, ADR-0006, and ADR-0012.
 
 from __future__ import annotations
 
-import random
-
 from game_session.settlement.haggling_models import (
     GambitEvaluationResult,
     GambitType,
     MerchantTemperament,
 )
+from runefoble_platform.dice import roll_d20
 
 
 def evaluate_gambit(
@@ -64,7 +63,7 @@ def evaluate_gambit(
     target_dc = max(6, min(25, target_dc + mood_dc_adjustment))
 
     # Evaluate roll
-    d20 = random.randint(1, 20) if explicit_roll is None else explicit_roll
+    d20 = roll_d20(explicit_roll)
     roll_total = d20 + charisma_mod
     is_success = roll_total >= target_dc
 

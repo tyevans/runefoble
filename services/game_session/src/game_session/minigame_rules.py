@@ -9,6 +9,7 @@ import random
 from typing import Any
 
 from game_session.voice_client import condition_speech_text
+from runefoble_platform.dice import roll_die
 
 INTOXICATION_STAGES: list[str] = ["sober", "tipsy", "drunk", "smashed", "blackout"]
 
@@ -27,7 +28,7 @@ PIRATE_BLUFF_BARKS: list[str] = [
 
 def roll_dice_hand(num_dice: int = 5) -> list[int]:
     """Roll a secret hand of 6-sided dice."""
-    return sorted([random.randint(1, 6) for _ in range(num_dice)])
+    return sorted([roll_die(6) for _ in range(num_dice)])
 
 
 def validate_liars_dice_bid(

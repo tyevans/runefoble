@@ -29,6 +29,7 @@ from runefoble_events.events import (
     MinigameStarted,
     MinigameTurnTaken,
 )
+from runefoble_platform.dice import roll_d20
 from runefoble_platform.identifiers import opaque_aggregate_id, opaque_optional_aggregate_id
 
 
@@ -245,7 +246,7 @@ class TavernGameAggregate(TableCommandsMixin, DeclarativeAggregate[TavernGameSta
         current_stage = self.state.intoxication_levels.get(character_id, "sober")
         con_dc = 10 + (current_drinks - 1) * 2
 
-        roll = con_roll if con_roll is not None else random.randint(1, 20)
+        roll = roll_d20(con_roll)
         new_stage, dsp_filters = compute_intoxication_progression(current_stage, roll, con_dc)
 
         dsp_result = None

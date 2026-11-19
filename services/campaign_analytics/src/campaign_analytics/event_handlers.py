@@ -13,9 +13,10 @@ from typing import Any
 from uuid import NAMESPACE_URL, UUID, uuid5
 
 from eventsource.application.aggregates.repository import AggregateRepository
+from runefoble_platform.event_fields import event_field
 
 from campaign_analytics.aggregate import CampaignChronicleAggregate
-from campaign_analytics.event_helpers import get_event_attr, is_event_type
+from campaign_analytics.event_helpers import is_event_type
 from campaign_analytics.projection import (
     ACTIVE_COMBATANT_SCOPE,
     ACTIVE_ENCOUNTER_SCOPE,
@@ -28,8 +29,6 @@ from campaign_analytics.projection import (
 __all__ = [
     "AnalyticsEventDispatcher",
     "chronicle_aggregate_id",
-    "get_event_attr",
-    "is_event_type",
 ]
 
 
@@ -46,10 +45,8 @@ class AnalyticsEventDispatcher:
 
     async def extract_context(self, event: Any, tx: ProjectionTx) -> tuple[str, str]:
         """Extract session_id and campaign_id from the incoming event."""
-        sid = str(
-            get_event_attr(event, "session_id") or get_event_attr(event, "aggregate_id") or ""
-        )
-        raw_c = get_event_attr(event, "campaign_id") or get_event_attr(event, "campaign_id_str")
+        sid = str(event_field(event, "session_id") or event_field(event, "aggregate_id") or "")
+        raw_c = event_field(event, "campaign_id") or event_field(event, "campaign_id_str")
         cid = str(raw_c) if raw_c else await tx.resolve_campaign(sid)
         return sid, cid
 
@@ -125,8 +122,8 @@ class AnalyticsEventDispatcher:
     ) -> bool:
         """Handle SessionCreated, SessionStarted, and SessionEnded milestones."""
         if is_event_type(event, ["runefoble.events.session.created"]):
-            title = str(get_event_attr(event, "title", "Untitled Session"))
-            if (nc := str(get_event_attr(event, "campaign_id", ""))) and sid:
+            title = str(event_field(event, "title", "Untitled Session"))
+            if (nc := str(event_field(event, "campaign_id", ""))) and sid:
                 await tx.map_session(sid, nc)
                 cid = nc
             await self._milestone(
@@ -144,7 +141,7 @@ class AnalyticsEventDispatcher:
             await self._milestone(tx, sid, cid, "session_start", "Session Began", desc)
             return True
         if is_event_type(event, ["runefoble.events.session.ended"]):
-            s = str(get_event_attr(event, "summary", "Session concluded"))
+            s = str(event_field(event, "summary", "Session concluded"))
             await self._milestone(
                 tx, sid, cid, "session_end", "Session Concluded", s, {"summary": s}
             )
@@ -158,12 +155,12 @@ class AnalyticsEventDispatcher:
         if not (is_p or is_m):
             return False
         tok, name = (
-            str(get_event_attr(event, "token_id", "")),
-            str(get_event_attr(event, "name", "Token")),
+            str(event_field(event, "token_id", "")),
+            str(event_field(event, "name", "Token")),
         )
         x, y = (
-            int(get_event_attr(event, "to_x" if is_m else "x", 0)),
-            int(get_event_attr(event, "to_y" if is_m else "y", 0)),
+            int(event_field(event, "to_x" if is_m else "x", 0)),
+            int(event_field(event, "to_y" if is_m else "y", 0)),
         )
         if tok:
             await tx.set_state(TOKEN_POSITION_SCOPE, tok, [x, y])
@@ -177,10 +174,10 @@ class AnalyticsEventDispatcher:
         """Handle damage, healing, knockout milestones, and combatant efficacy."""
         if not is_event_type(event, ["runefoble.events.character.health_changed"]):
             return False
-        char_id = str(get_event_attr(event, "aggregate_id", ""))
-        delta = int(get_event_attr(event, "delta", 0))
-        curr_hp = int(get_event_attr(event, "current_hp", 0))
-        dealer = get_event_attr(event, "dealer_id")
+        char_id = str(event_field(event, "aggregate_id", ""))
+        delta = int(event_field(event, "delta", 0))
+        curr_hp = int(event_field(event, "current_hp", 0))
+        dealer = event_field(event, "dealer_id")
         active = await tx.get_state(ACTIVE_COMBATANT_SCOPE, sid)
         actor = str(dealer or active or char_id)
         pos = await tx.get_state(TOKEN_POSITION_SCOPE, char_id, [0, 0])
@@ -213,14 +210,14 @@ class AnalyticsEventDispatcher:
         """Handle dice rolls, critical strikes, and fumbles."""
         if not is_event_type(event, ["runefoble.events.dice.rolled"]):
             return False
-        rid = str(get_event_attr(event, "roller_id", "roller"))
-        rname = str(get_event_attr(event, "roller_name", rid))
+        rid = str(event_field(event, "roller_id", "roller"))
+        rname = str(event_field(event, "roller_name", rid))
         if rid and rname:
             await tx.set_state(TOKEN_NAME_SCOPE, rid, rname)
-        formula = str(get_event_attr(event, "formula", "1d20"))
-        total = int(get_event_attr(event, "total", 0))
-        crit = bool(get_event_attr(event, "is_crit", False))
-        fumble = bool(get_event_attr(event, "is_fumble", False))
+        formula = str(event_field(event, "formula", "1d20"))
+        total = int(event_field(event, "total", 0))
+        crit = bool(event_field(event, "is_crit", False))
+        fumble = bool(event_field(event, "is_fumble", False))
         await self._stat(tx, sid, cid, rid, rname, critical_hits=int(crit), fumbles=int(fumble))
         if crit:
             desc = f"{rname} rolled a natural critical ({total}) on {formula}."
@@ -237,8 +234,8 @@ class AnalyticsEventDispatcher:
         its active combatant. A round milestone is recorded when the round number changes.
         """
         if is_event_type(event, ["runefoble.events.session.initiative_turn_advanced"]):
-            rnd = int(get_event_attr(event, "round_number", 1))
-            active_id = str(get_event_attr(event, "active_combatant_id", ""))
+            rnd = int(event_field(event, "round_number", 1))
+            active_id = str(event_field(event, "active_combatant_id", ""))
             if active_id and sid:
                 await tx.set_state(ACTIVE_COMBATANT_SCOPE, sid, active_id)
                 aname = await tx.get_state(TOKEN_NAME_SCOPE, active_id, active_id)
@@ -258,9 +255,9 @@ class AnalyticsEventDispatcher:
             "runefoble.events.encounter.spawned",
         ]
         if is_event_type(event, types):
-            raw = get_event_attr(event, "encounter_name") or get_event_attr(event, "name")
+            raw = event_field(event, "encounter_name") or event_field(event, "name")
             name = str(raw or "Combat")
-            enc_id = str(get_event_attr(event, "encounter_id", "enc_1"))
+            enc_id = str(event_field(event, "encounter_id", "enc_1"))
             if sid:
                 await tx.set_state(ACTIVE_ENCOUNTER_SCOPE, sid, enc_id)
             t = f"Encounter Initiated: {name}"
@@ -275,8 +272,8 @@ class AnalyticsEventDispatcher:
         """Handle absentee chronicle recaps."""
         if not is_event_type(event, ["runefoble.events.recap.generated"]):
             return False
-        cname = str(get_event_attr(event, "character_name", "Adventurer"))
-        narrative = str(get_event_attr(event, "narrative_summary", ""))
+        cname = str(event_field(event, "character_name", "Adventurer"))
+        narrative = str(event_field(event, "narrative_summary", ""))
         desc = narrative or f"Session recap recorded for {cname}."
         meta = {"character_name": cname}
         await self._milestone(tx, sid, cid, "recap", f"Chronicle Recap: {cname}", desc, meta)
@@ -288,9 +285,9 @@ class AnalyticsEventDispatcher:
         A health change with no session id is skipped. Its aggregate_id names a character, so it
         must never stand in for a session.
         """
-        if is_event_type(
-            event, ["runefoble.events.character.health_changed"]
-        ) and not get_event_attr(event, "session_id"):
+        if is_event_type(event, ["runefoble.events.character.health_changed"]) and not event_field(
+            event, "session_id"
+        ):
             return
         sid, cid = await self.extract_context(event, tx)
         for h in (

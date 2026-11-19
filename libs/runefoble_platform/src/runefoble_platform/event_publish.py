@@ -18,6 +18,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from runefoble_platform.errors import RunefobleError
+from runefoble_platform.event_fields import event_type_of
 
 logger = logging.getLogger("runefoble.event_publish")
 
@@ -54,15 +55,9 @@ def record_publish_failure(destination: str, event_type: str, exc: BaseException
     )
 
 
-def _event_type_of(event: Any) -> str:
-    if isinstance(event, dict):
-        return str(event.get("event_type") or event.get("type") or "GenericEvent")
-    return str(getattr(event, "event_type", None) or event.__class__.__name__)
-
-
 async def publish_or_fail(bus: Any, stream: str, event: Any) -> str:
     """Publish an event or raise DomainEventPublishError. Use for state-changing decisions."""
-    event_type = _event_type_of(event)
+    event_type = event_type_of(event)
     try:
         return await bus.publish_event(stream, event)
     except Exception as exc:
@@ -83,10 +78,12 @@ async def deliver_best_effort(
 
 
 async def publish_best_effort(bus: Any, stream: str, event: Any) -> bool:
-    """Publish an event. Log and count a failure, but do not raise."""
-    return await deliver_best_effort(
-        stream, _event_type_of(event), bus.publish_event(stream, event)
-    )
+    """Publish an event. Log and count a delivery failure, but do not raise.
+
+    An event without a type raises EventTypeMissingError. That is a programming error, so it is
+    not counted as a delivery failure.
+    """
+    return await deliver_best_effort(stream, event_type_of(event), bus.publish_event(stream, event))
 
 
 def install_publish_failure_handler(app: FastAPI) -> None:

@@ -59,6 +59,20 @@ def evaluate_dice(
     }
 
 
+def roll_die(sides: int, rng: random.Random | None = None) -> int:
+    """Roll one die with `sides` faces. Use `rng` for a seeded, reproducible roll."""
+    if sides < 1:
+        raise ValueError(f"Dice sides must be at least 1, got {sides}")
+    return (rng or random).randint(1, sides)
+
+
+def roll_d20(explicit: int | None = None, rng: random.Random | None = None) -> int:
+    """Return a d20 result. An explicit roll, such as a client-supplied value, wins."""
+    if explicit is not None:
+        return explicit
+    return roll_die(20, rng)
+
+
 def _validate_dice_arguments(
     count: int, sides: int, keep_highest: int | None, keep_lowest: int | None
 ) -> None:
@@ -159,5 +173,7 @@ def parse_and_roll(formula: str, *, fixed_rolls: list[int] | None = None) -> dic
 __all__ = [
     "evaluate_dice",
     "parse_and_roll",
+    "roll_d20",
+    "roll_die",
     "DICE_FORMULA_PATTERN",
 ]

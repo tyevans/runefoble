@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-import random
 from uuid import uuid4
 
+from runefoble_platform.dice import roll_d20
 from the_watcher.turf_war.models import SkirmishOutcome, SkirmishSimulateRequest
 
 TERRAIN_DEFENSIVE_MODIFIERS: dict[str, int] = {
@@ -23,8 +23,8 @@ class SkirmishEngine:
 
     def resolve(self, req: SkirmishSimulateRequest) -> SkirmishOutcome:
         """Resolve a boundary clash between two factions based on terrain and strength."""
-        atk_roll = req.attacker_roll if req.attacker_roll is not None else random.randint(1, 20)
-        def_roll = req.defender_roll if req.defender_roll is not None else random.randint(1, 20)
+        atk_roll = roll_d20(req.attacker_roll)
+        def_roll = roll_d20(req.defender_roll)
         terrain_mod = TERRAIN_DEFENSIVE_MODIFIERS.get(req.terrain.lower(), 1)
 
         atk_score = req.attacker.military_strength + req.attacker.morale_modifier + atk_roll

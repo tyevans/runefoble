@@ -14,6 +14,7 @@ from runefoble_platform.consumer_group import (
     RedisConsumerGroup,
     deserialize_event,
 )
+from runefoble_platform.event_fields import event_type_of
 from runefoble_platform.telemetry import inject_trace_context
 
 logger = logging.getLogger(__name__)
@@ -41,7 +42,6 @@ class RedisStreamsEventBus:
         """Publish a domain event, model, or dictionary to a Redis Stream via XADD."""
         client = await self.get_client()
 
-        event_type: str = "GenericEvent"
         event_id: str | None = None
         payload: str
 
@@ -54,16 +54,16 @@ class RedisStreamsEventBus:
                 event.metadata["traceparent"] = traceparent
             if tracestate and "tracestate" not in event.metadata:
                 event.metadata["tracestate"] = tracestate
-            event_type = event.event_type or event.__class__.__name__
+            event_type = event_type_of(event)
             event_id = str(event.event_id)
             payload = event.model_dump_json()
         elif isinstance(event, BaseModel):
-            event_type = getattr(event, "event_type", event.__class__.__name__)
+            event_type = event_type_of(event)
             raw_id = getattr(event, "event_id", None) or getattr(event, "id", None)
             event_id = str(raw_id) if raw_id is not None else None
             payload = event.model_dump_json()
         elif isinstance(event, dict):
-            event_type = str(event.get("event_type") or event.get("type") or "GenericEvent")
+            event_type = event_type_of(event)
             raw_id = event.get("event_id") or event.get("id")
             event_id = str(raw_id) if raw_id is not None else None
             if traceparent and "traceparent" not in event:
@@ -74,7 +74,7 @@ class RedisStreamsEventBus:
                 event["metadata"].setdefault("traceparent", traceparent)
             payload = json_dumps(to_jsonable_python(event))
         else:
-            event_type = getattr(event, "event_type", event.__class__.__name__)
+            event_type = event_type_of(event)
             raw_id = getattr(event, "event_id", None) or getattr(event, "id", None)
             event_id = str(raw_id) if raw_id is not None else None
             try:
