@@ -110,7 +110,7 @@ async def get_campaign_atlas(
     if not can_view:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Forbidden: SpiceDBPort Zanzibar policy denies view access to this campaign atlas.",
+            detail="Forbidden: SpiceDB Zanzibar policy denies view access to this campaign atlas.",
         )
 
     aggregate = await load_if_exists(repo, campaign_id)

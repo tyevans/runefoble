@@ -170,7 +170,7 @@ async def get_document(
         if not can_read:
             raise HTTPException(
                 status_code=403,
-                detail="Forbidden: SpiceDBPort Zanzibar policy denies access to DM-only secret lore.",
+                detail="Forbidden: SpiceDB Zanzibar policy denies access to DM-only secret lore.",
             )
     else:
         # Public lore needs campaign view (lore_document.read_public).
