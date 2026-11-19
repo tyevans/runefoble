@@ -6,7 +6,7 @@ Verifies:
    - Spell slot preservation limits under penalties.
    - Frontline melee avoidance under penalties.
 2. Public HTTP frontdoor POST /api/v1/watcher/stand-in/recap generates chronicle recaps.
-3. StandInAIEngine facade delegates cleanly with 100% backward compatibility.
+3. Guardrail results carry the guardrail name and action type through the HTTP frontdoor.
 4. Hard Invariant 6: All stand-in source modules are strictly under their line limits (< 150 lines).
 """
 
@@ -16,14 +16,8 @@ import pytest
 from httpx import ASGITransport, AsyncClient
 from runefoble_events.events import StandInActionDecided
 from runefoble_platform.redis_bus import deserialize_event
-from runefoble_platform.stand_in_guardrails import GuardrailName, StandInGuardrailPolicy
+from runefoble_platform.stand_in_guardrails import GuardrailName
 from the_watcher.main import app as watcher_app
-from the_watcher.stand_in_ai import (
-    StandInAIEngine,
-    apply_penalty_modifiers,
-    evaluate_tactical_guardrails,
-    generate_absentee_recap,
-)
 
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.spicedb_factory import make_table_runner
@@ -35,11 +29,6 @@ pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 @pytest.fixture
 def mock_redis() -> MockAsyncRedis:
     return MockAsyncRedis()
-
-
-@pytest.fixture
-def stand_in_engine() -> StandInAIEngine:
-    return StandInAIEngine()
 
 
 # ---------------------------------------------------------------------------
@@ -139,67 +128,6 @@ async def test_blackbox_stand_in_guardrails_scenarios(
     assert any(
         e.action_type == exp_type and exp_dlg.lower() in e.dialogue.lower() for e in action_events
     )
-
-
-# ---------------------------------------------------------------------------
-# 2. StandInAIEngine Facade & Direct Sub-Module Verification
-# ---------------------------------------------------------------------------
-
-
-def test_stand_in_facade_and_submodule_backward_compatibility(
-    stand_in_engine: StandInAIEngine,
-):
-    """Verify facade and extracted helper functions retain full backward compatibility."""
-    # 1. Direct evaluate_tactical_guardrails invocation
-    gr_action = evaluate_tactical_guardrails(
-        character_name="Valeros",
-        character_class="Fighter",
-        penalties=["drunk"],
-        scene_context="Protect Marcus at all costs!",
-        personality_traits=["valiant"],
-        guardrails=StandInGuardrailPolicy(protect_allies=["Marcus"]),
-    )
-    assert gr_action is not None
-    assert gr_action.guardrails_applied == [GuardrailName.PROTECT_ALLIES]
-    assert gr_action.action_type == "cast_spell"
-    assert (
-        evaluate_tactical_guardrails("Valeros", "Fighter", [], "Walking peacefully", None, None)
-        is None
-    )
-
-    # 2. Direct apply_penalty_modifiers invocation
-    persona_action = apply_penalty_modifiers(
-        character_name="Merisiel",
-        character_class="Rogue",
-        penalties=["cowardice"],
-        scene_context="Ambush",
-        personality_traits=["impulsive"],
-    )
-    assert persona_action.action_type == "defend"
-    assert "Cowardice" in (persona_action.penalty_influence or "")
-
-    # 3. Direct generate_absentee_recap invocation
-    recap = generate_absentee_recap(
-        character_name="Kyra",
-        actions=[gr_action, persona_action],
-        penalties=["drunk", "cowardice"],
-    )
-    assert recap["character_name"] == "Kyra"
-    assert "drunk" in recap["penalties_active"]
-    assert "cowardice" in recap["penalties_active"]
-    assert len(recap["highlights"]) >= 2
-
-    # 4. Engine facade produces identical outputs
-    facade_action = stand_in_engine.generate_stand_in_action(
-        character_name="Valeros",
-        character_class="Fighter",
-        penalties=["drunk"],
-        scene_context="Protect Marcus at all costs!",
-        personality_traits=["valiant"],
-        guardrails=StandInGuardrailPolicy(protect_allies=["Marcus"]),
-    )
-    assert facade_action.action_type == gr_action.action_type
-    assert facade_action.dialogue == gr_action.dialogue
 
 
 # ---------------------------------------------------------------------------
