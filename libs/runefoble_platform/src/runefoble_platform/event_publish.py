@@ -11,7 +11,7 @@ No call site may suppress publish errors silently.
 from __future__ import annotations
 
 import logging
-from collections.abc import Awaitable
+from collections.abc import Awaitable, Iterable
 from typing import Any
 
 from fastapi import FastAPI, Request
@@ -65,6 +65,17 @@ async def publish_or_fail(bus: Any, stream: str, event: Any) -> str:
         raise DomainEventPublishError(stream, event_type) from exc
 
 
+async def publish_aggregate_events(bus: Any, stream: str, events: Iterable[Any]) -> None:
+    """Publish the events of one aggregate to one stream, in order, with publish_or_fail.
+
+    Call it after the aggregate is saved. Read ``uncommitted_events`` before the save and pass
+    that list here. The caller keeps its own ``if bus`` guard. The first failed publish raises
+    DomainEventPublishError, and the remaining events are not published.
+    """
+    for event in events:
+        await publish_or_fail(bus, stream, event)
+
+
 async def deliver_best_effort(
     destination: str, event_type: str, delivery: Awaitable[object]
 ) -> bool:
@@ -107,6 +118,7 @@ __all__ = [
     "deliver_best_effort",
     "event_publish_failures",
     "install_publish_failure_handler",
+    "publish_aggregate_events",
     "publish_best_effort",
     "publish_or_fail",
     "record_publish_failure",

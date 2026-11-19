@@ -6,7 +6,6 @@ Governed by ADR-0001 (SpiceDB Zanzibar), ADR-0002 (Domain Events), ADR-0006 (Red
 
 from __future__ import annotations
 
-from typing import Any
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -37,19 +36,10 @@ from game_session.settlement.haggling_models import (
 )
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_platform.aggregate_loading import load_if_exists
-from runefoble_platform.event_publish import publish_or_fail
+from runefoble_platform.event_publish import publish_aggregate_events
 from runefoble_platform.identifiers import parse_uuid
 
 router = APIRouter(dependencies=[Depends(get_principal)], tags=["merchant-haggling"])
-
-
-async def _save_and_publish(repo: Any, bus: Any, agg: Any) -> None:
-    events = list(agg.uncommitted_events)
-    await repo.save(agg)
-    if bus:
-        for ev in events:
-            await publish_or_fail(bus, STREAM_TAVERN, ev)
-            await publish_or_fail(bus, STREAM_WEST_MARCHES, ev)
 
 
 async def _load_negotiation(nid: str) -> NegotiationAggregate:
@@ -129,7 +119,11 @@ async def haggle_establishment(
 
     repo = get_negotiation_repository()
     bus = get_event_bus()
-    await _save_and_publish(repo, bus, neg_agg)
+    events = list(neg_agg.uncommitted_events)
+    await repo.save(neg_agg)
+    if bus:
+        await publish_aggregate_events(bus, STREAM_TAVERN, events)
+        await publish_aggregate_events(bus, STREAM_WEST_MARCHES, events)
 
     # 4. Write SpiceDB Zanzibar tuples
     await write_negotiation_relationships(
@@ -174,7 +168,11 @@ async def start_haggling_session(
 
     repo = get_negotiation_repository()
     bus = get_event_bus()
-    await _save_and_publish(repo, bus, neg_agg)
+    events = list(neg_agg.uncommitted_events)
+    await repo.save(neg_agg)
+    if bus:
+        await publish_aggregate_events(bus, STREAM_TAVERN, events)
+        await publish_aggregate_events(bus, STREAM_WEST_MARCHES, events)
 
     await write_negotiation_relationships(
         spicedb,
@@ -211,7 +209,11 @@ async def execute_gambit_route(
 
     repo = get_negotiation_repository()
     bus = get_event_bus()
-    await _save_and_publish(repo, bus, neg_agg)
+    events = list(neg_agg.uncommitted_events)
+    await repo.save(neg_agg)
+    if bus:
+        await publish_aggregate_events(bus, STREAM_TAVERN, events)
+        await publish_aggregate_events(bus, STREAM_WEST_MARCHES, events)
     return neg_agg.state
 
 
@@ -241,7 +243,11 @@ async def dm_negotiation_override(
 
     repo = get_negotiation_repository()
     bus = get_event_bus()
-    await _save_and_publish(repo, bus, neg_agg)
+    events = list(neg_agg.uncommitted_events)
+    await repo.save(neg_agg)
+    if bus:
+        await publish_aggregate_events(bus, STREAM_TAVERN, events)
+        await publish_aggregate_events(bus, STREAM_WEST_MARCHES, events)
     return neg_agg.state
 
 
@@ -278,5 +284,9 @@ async def accept_negotiation(
 
     repo = get_negotiation_repository()
     bus = get_event_bus()
-    await _save_and_publish(repo, bus, neg_agg)
+    events = list(neg_agg.uncommitted_events)
+    await repo.save(neg_agg)
+    if bus:
+        await publish_aggregate_events(bus, STREAM_TAVERN, events)
+        await publish_aggregate_events(bus, STREAM_WEST_MARCHES, events)
     return neg_agg.state

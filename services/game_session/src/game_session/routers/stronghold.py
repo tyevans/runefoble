@@ -21,7 +21,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.permissions import require_subject
 from runefoble_platform.aggregate_loading import load_if_exists, load_or_create
-from runefoble_platform.event_publish import publish_or_fail
+from runefoble_platform.event_publish import publish_aggregate_events
 from runefoble_platform.identifiers import parse_uuid
 
 router = APIRouter(dependencies=[Depends(get_principal)], tags=["stronghold"])
@@ -158,8 +158,7 @@ async def deposit_stronghold_resources(
 
     bus = get_event_bus()
     if bus:
-        for ev in events_to_publish:
-            await publish_or_fail(bus, STREAM_STRONGHOLD, ev)
+        await publish_aggregate_events(bus, STREAM_STRONGHOLD, events_to_publish)
     return stronghold.state
 
 
@@ -189,8 +188,7 @@ async def upgrade_stronghold_facility(
     # Publish events to Redis Streams
     bus = get_event_bus()
     if bus:
-        for ev in events_to_publish:
-            await publish_or_fail(bus, STREAM_STRONGHOLD, ev)
+        await publish_aggregate_events(bus, STREAM_STRONGHOLD, events_to_publish)
 
     return UpgradeStrongholdResponse(
         campaign_id=str(campaign_id),
@@ -262,6 +260,5 @@ async def contribute_treasury_gold(
 
     bus = get_event_bus()
     if bus:
-        for ev in events_to_publish:
-            await publish_or_fail(bus, STREAM_STRONGHOLD, ev)
+        await publish_aggregate_events(bus, STREAM_STRONGHOLD, events_to_publish)
     return stronghold.state

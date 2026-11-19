@@ -15,7 +15,7 @@ from game_session.dependencies import get_event_bus, get_merchant_repository
 from game_session.events import STREAM_TAVERN
 from game_session.merchants import MerchantAggregate
 from runefoble_platform.aggregate_loading import load_if_exists, load_or_create
-from runefoble_platform.event_publish import publish_or_fail
+from runefoble_platform.event_publish import publish_aggregate_events
 from runefoble_platform.identifiers import opaque_aggregate_id
 
 
@@ -78,8 +78,7 @@ async def haggle(
 
     bus = get_event_bus()
     if bus:
-        for ev in events_to_publish:
-            await publish_or_fail(bus, STREAM_TAVERN, ev)
+        await publish_aggregate_events(bus, STREAM_TAVERN, events_to_publish)
 
     return HaggleResult(
         temperament=res["temperament"],

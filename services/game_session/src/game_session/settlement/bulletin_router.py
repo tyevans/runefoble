@@ -29,18 +29,10 @@ from game_session.settlement.models import (
 )
 from game_session.settlement.settlement_aggregate import SettlementAggregate
 from runefoble_auth.factory import get_spicedb_client
-from runefoble_platform.event_publish import publish_or_fail
+from runefoble_platform.event_publish import publish_aggregate_events
 from runefoble_platform.identifiers import parse_uuid
 
 router = APIRouter(dependencies=[Depends(get_principal)], tags=["bulletin-board"])
-
-
-async def _save_and_publish(repo: Any, bus: Any, agg: Any) -> None:
-    events = list(agg.uncommitted_events)
-    await repo.save(agg)
-    if bus:
-        for ev in events:
-            await publish_or_fail(bus, STREAM_WEST_MARCHES, ev)
 
 
 async def _load_settlement_for_bulletin(
@@ -135,7 +127,14 @@ async def pin_bulletin_notice(
         campaign_id=agg.state.campaign_id or None,
     )
 
-    await _save_and_publish(get_settlement_repository(), get_event_bus(), agg)
+    events = list(agg.uncommitted_events)
+
+    await get_settlement_repository().save(agg)
+
+    bus = get_event_bus()
+
+    if bus:
+        await publish_aggregate_events(bus, STREAM_WEST_MARCHES, events)
     notice = agg.state.bulletin_notices[nid]
     return _format_notice_response(notice, caller_id)
 
@@ -206,7 +205,14 @@ async def remove_bulletin_notice(
         campaign_id=agg.state.campaign_id or None,
     )
 
-    await _save_and_publish(get_settlement_repository(), get_event_bus(), agg)
+    events = list(agg.uncommitted_events)
+
+    await get_settlement_repository().save(agg)
+
+    bus = get_event_bus()
+
+    if bus:
+        await publish_aggregate_events(bus, STREAM_WEST_MARCHES, events)
     return {
         "status": "removed",
         "notice_id": notice_id,
@@ -244,7 +250,14 @@ async def decrypt_cipher_notice(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
 
-    await _save_and_publish(get_settlement_repository(), get_event_bus(), agg)
+    events = list(agg.uncommitted_events)
+
+    await get_settlement_repository().save(agg)
+
+    bus = get_event_bus()
+
+    if bus:
+        await publish_aggregate_events(bus, STREAM_WEST_MARCHES, events)
     notice = agg.state.bulletin_notices[notice_id]
     return {
         "status": "decrypted",

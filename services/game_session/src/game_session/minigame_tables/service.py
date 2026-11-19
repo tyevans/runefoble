@@ -16,7 +16,7 @@ from game_session.events import STREAM_TAVERN
 from game_session.minigame_tables.models import MinigameTableState
 from game_session.minigames import TavernGameAggregate
 from runefoble_platform.aggregate_loading import load_if_exists
-from runefoble_platform.event_publish import publish_or_fail
+from runefoble_platform.event_publish import publish_aggregate_events
 from runefoble_platform.identifiers import opaque_aggregate_id
 
 _table_lock = asyncio.Lock()
@@ -38,7 +38,12 @@ async def open_table(table_id: str, establishment_id: str, game_type: str) -> Mi
             raise TableAlreadyOpenError(f"Table '{table_id}' is already open")
         aggregate = TavernGameAggregate(table_uuid)
         aggregate.open_table(table_id, establishment_id, game_type)
-        await _save_and_publish(aggregate)
+        events = list(aggregate.uncommitted_events)
+        if events:
+            await get_tavern_repository().save(aggregate)
+            bus = get_event_bus()
+            if bus:
+                await publish_aggregate_events(bus, STREAM_TAVERN, events)
         return _table_of(aggregate, table_id)
 
 
@@ -64,19 +69,13 @@ async def run_table_command(
         if aggregate is None:
             raise TableNotFoundError(f"Table '{table_id}' is not open")
         message = command(aggregate)
-        await _save_and_publish(aggregate)
+        events = list(aggregate.uncommitted_events)
+        if events:
+            await get_tavern_repository().save(aggregate)
+            bus = get_event_bus()
+            if bus:
+                await publish_aggregate_events(bus, STREAM_TAVERN, events)
     return message
-
-
-async def _save_and_publish(aggregate: TavernGameAggregate) -> None:
-    events = list(aggregate.uncommitted_events)
-    if not events:
-        return
-    await get_tavern_repository().save(aggregate)
-    bus = get_event_bus()
-    if bus:
-        for event in events:
-            await publish_or_fail(bus, STREAM_TAVERN, event)
 
 
 def _table_of(aggregate: TavernGameAggregate, table_id: str) -> MinigameTableState:
