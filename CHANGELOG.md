@@ -83,6 +83,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Campaign analytics worker `process_event` alias, tracking property wrappers, and package root re-exports. Callers use `handle_event`. (TASK-0500)
 
 ### Added
+- Stream consumers reclaim messages left pending by a dead worker (`consumer_reclaim_min_idle_ms`, `consumer_reclaim_every_polls`). Every consumer handler is idempotent; soundscape keeps a bounded ledger of handled source event ids per session. (TASK-0854)
 - An import-linter contract keeps `gateway_api` from importing service packages, and `docs/reference/` has a route ownership table generated from the gateway proxy tables. (TASK-0598)
 - An approved audience `status_buff` modifier gives a character the `blessed` or `inspired` condition. (TASK-0836)
 - An approved audience `hazard_spawn` modifier places a hazard on the board cell it names. The board hazard table adds `deep_water` (1d6), `chasm` (3d6) and `arcane_void` (2d8), the types the forge emits. (TASK-0835)
@@ -1278,6 +1279,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **Documentation & Build Navigation**: Featured the Platform Showcase and Changelog in `zensical.toml` and root documentation landing page (`docs/index.md`), and enhanced `scripts/build_docs.py` to synchronize `CHANGELOG.md` to `docs/changelog.md` during documentation compilation.
 
 ### Fixed
+- The App Shell data mappers read the real owner responses (`session_id`, `combat_round`, the participant and token maps). A required field the owner does not send fails with an error instead of a made-up default. (TASK-0867)
+- `deserialize_event` returns a registered event or `UnknownEvent`, or raises `EventDecodeError`. Stream consumers send undecodable messages to the dead-letter stream. (TASK-0851)
 - The soundscape controls send the shell bearer token with ducking requests, not a raw Authorization string. (TASK-0868)
 - The homebrew creator reports only registrations that the owner accepted, through the shared request helper, and shows the owner's error detail. (TASK-0866)
 - Audience Studio commits a poll before it writes the campaign binding. A failed binding answers 503 and is logged. (TASK-0849)

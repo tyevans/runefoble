@@ -1,7 +1,7 @@
 ---
 id: '0851'
 title: Event Decoder Fails Loud on Malformed or Invalid Payloads
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies: []
 governing_adrs:
@@ -15,7 +15,7 @@ target_release: 0.9.0
 # TASK-0851: Event Decoder Fails Loud on Malformed or Invalid Payloads
 
 ## Status
-Refined
+Complete
 
 ## Summary
 `deserialize_event` returns different kinds of value for bad input. A non-JSON string comes back as a string. A non-JSON payload becomes `{"raw": ...}`. A registered event that fails validation logs a warning and comes back as an untyped dict. Consumers cannot tell a typed event from raw data. The fix raises a typed `EventDecodeError` for bad input and returns an explicit `UnknownEvent` value for unregistered types.

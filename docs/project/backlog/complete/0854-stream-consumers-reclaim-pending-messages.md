@@ -1,7 +1,7 @@
 ---
 id: '0854'
 title: Stream Consumers Reclaim Messages Left Pending by a Dead Worker
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies: []
 governing_adrs:
@@ -15,7 +15,7 @@ target_release: 0.9.0
 # TASK-0854: Stream Consumers Reclaim Messages Left Pending by a Dead Worker
 
 ## Status
-Refined
+Complete
 
 ## Summary
 `RedisConsumerGroup.auto_claim_pending` exists to reclaim messages that a crashed worker read and did not acknowledge. No production code calls it. A message held by a dead consumer stays pending. The fix wires the method into `StreamConsumer.poll_once` on a fixed cadence. The handlers must be idempotent, because a reclaimed message can run twice.

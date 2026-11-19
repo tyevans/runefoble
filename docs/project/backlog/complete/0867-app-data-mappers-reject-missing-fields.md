@@ -1,7 +1,7 @@
 ---
 id: '0867'
 title: App Data Mappers Reject Missing Required Fields Instead of Inventing Them
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies: []
 governing_adrs:
@@ -17,7 +17,7 @@ target_release: 0.9.0
 # TASK-0867: App Data Mappers Reject Missing Required Fields Instead of Inventing Them
 
 ## Status
-Refined.
+Complete
 
 ## Summary
 The App Shell data mappers replace missing values with defaults. A board with no size becomes a 10 by 10 board. A session with no status becomes `active`. Required fields must return a data failure. The shell must not show a guessed value.
@@ -39,7 +39,7 @@ The App Shell data mappers replace missing values with defaults. A board with no
 1. In each mapper in `app-data-service.ts`, list the required fields in one constant near the mapper.
 2. When a required field is missing or has the wrong type, return the existing `dataFailure` shape with a clear message. Remove the `?? 10`, `|| 'active'`, `|| 1` and `|| ''` defaults for required fields.
 3. Optional fields (for example `tokens`) keep an empty list. Document each optional field in a comment.
-4. Update `frontend/src/fixtures/app-data-service.fixtures.ts` so that every fixture has the required fields.
+4. Update `frontend/test/support/app-data-service.fixtures.ts` so that every fixture has the required fields.
 5. Do not change wire casing in this task.
 
 ## Frontdoor Blackbox Test Plan
