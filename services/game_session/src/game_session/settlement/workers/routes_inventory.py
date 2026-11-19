@@ -5,7 +5,7 @@ Governed by ADR-0003, ADR-0007, ADR-0013, and PRD-0024.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 
 from fastapi import APIRouter, Depends, HTTPException
 from game_session.dependencies import get_event_bus, get_worker_repository
@@ -54,21 +54,11 @@ async def restock_worker_inventory(
     caller_id: CallerId,
     npc_id: str,
     item: WorkerInventoryItem,
-    destination: str = "shelf",
+    destination: Literal["shelf", "backroom"] = "shelf",
 ) -> WorkerInventoryItem:
     """Restock or add merchandise items to an NPC worker's shelf or backroom vault."""
     agg = await load_worker(npc_id, "manage", caller_id)
-    target_list = (
-        agg.state.shelf_inventory if destination == "shelf" else agg.state.backroom_inventory
-    )
-    existing = next((i for i in target_list if i.item_id == item.item_id), None)
-    if existing:
-        existing.quantity += item.quantity
-        existing.unit_price = item.unit_price
-        result = existing
-    else:
-        target_list.append(item)
-        result = item
+    result = agg.restock(item, destination)
     events = list(agg.uncommitted_events)
     await get_worker_repository().save(agg)
     if bus := get_event_bus():

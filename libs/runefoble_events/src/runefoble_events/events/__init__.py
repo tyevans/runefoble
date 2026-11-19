@@ -182,6 +182,7 @@ from runefoble_events.settlement_workers import (
     NPCMoodUpdated,
     NPCRelationshipFormed,
     NPCWorkerAssigned,
+    NPCWorkerInventoryRestocked,
     NPCWorkerRelieved,
 )
 from runefoble_events.settlements import (

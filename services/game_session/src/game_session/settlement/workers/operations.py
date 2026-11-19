@@ -124,8 +124,8 @@ async def create_and_assign_worker(
         campaign_id=est.state.campaign_id,
         manager_id=uid,
     )
+    await sync_establishment_operations(establishment_id)
     if bus := get_event_bus():
         await publish_aggregate_events(bus, STREAM_WEST_MARCHES, events)
-    await sync_establishment_operations(establishment_id)
     agg.refresh_computed_fields(establishment_tier=est.state.tier)
     return agg.state

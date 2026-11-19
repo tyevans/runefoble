@@ -6,7 +6,7 @@ Governed by ADR-0001, ADR-0002, ADR-0007, ADR-0011, and Hard Invariant 2.
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, Literal
 
 from eventsource.domain.aggregate import DeclarativeAggregate
 from eventsource.domain.decorators import handles
@@ -33,6 +33,7 @@ from runefoble_events.events import (
     NPCMoodUpdated,
     NPCRelationshipFormed,
     NPCWorkerAssigned,
+    NPCWorkerInventoryRestocked,
     NPCWorkerRelieved,
 )
 from runefoble_platform.identifiers import parse_uuid
@@ -118,6 +119,22 @@ class NPCWorkerAggregate(DeclarativeAggregate[NPCWorkerState]):
                     metadata=dict(ev.metadata),
                 )
             )
+
+    @handles(NPCWorkerInventoryRestocked)
+    def handle_inventory_restocked(self, ev: NPCWorkerInventoryRestocked) -> None:
+        """Add stock to an item on the shelf or in the backroom, or add a new item."""
+        target = (
+            self._state.shelf_inventory
+            if ev.destination == "shelf"
+            else self._state.backroom_inventory
+        )
+        item = WorkerInventoryItem.model_validate(ev.item)
+        existing = next((i for i in target if i.item_id == item.item_id), None)
+        if existing:
+            existing.quantity += item.quantity
+            existing.unit_price = item.unit_price
+        else:
+            target.append(item)
 
     def assign(
         self,
@@ -207,8 +224,18 @@ class NPCWorkerAggregate(DeclarativeAggregate[NPCWorkerState]):
         notes: str = "",
         metadata: dict[str, Any] | None = None,
     ) -> None:
-        """Form or update an interpersonal relationship with another NPC."""
+        """Form or update a tie with another NPC. An identical tie raises no event."""
         nid = str(self._state.npc_id or self.aggregate_id)
+        wanted = WorkerRelationship(
+            source_npc_id=nid,
+            target_npc_id=str(target_npc_id),
+            relation_type=relation_type,
+            intensity=intensity,
+            notes=notes,
+            metadata=metadata or {},
+        )
+        if any(r == wanted for r in self._state.relationships):
+            return
         self.create_event(
             NPCRelationshipFormed,
             aggregate_id=parse_uuid(nid, field="npc_id"),
@@ -219,6 +246,25 @@ class NPCWorkerAggregate(DeclarativeAggregate[NPCWorkerState]):
             notes=notes,
             metadata=metadata or {},
         )
+
+    def restock(
+        self, item: WorkerInventoryItem, destination: Literal["shelf", "backroom"]
+    ) -> WorkerInventoryItem:
+        """Restock an item on the shelf or in the backroom. Return the stocked item."""
+        nid = str(self._state.npc_id or self.aggregate_id)
+        self.create_event(
+            NPCWorkerInventoryRestocked,
+            aggregate_id=parse_uuid(nid, field="npc_id"),
+            npc_id=nid,
+            destination=destination,
+            item=item.model_dump(),
+        )
+        target = (
+            self._state.shelf_inventory
+            if destination == "shelf"
+            else self._state.backroom_inventory
+        )
+        return next(i for i in target if i.item_id == item.item_id)
 
     def refresh_computed_fields(
         self,

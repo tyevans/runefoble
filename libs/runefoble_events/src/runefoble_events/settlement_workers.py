@@ -5,7 +5,7 @@ Governed by ADR-0002, ADR-0007, ADR-0011, and PRD-0024.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 from uuid import UUID, uuid4
 
 from pydantic import Field
@@ -78,9 +78,22 @@ class NPCRelationshipFormed(BaseRunefobleEvent):
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 
+@register_event("runefoble.events.game_session.npc_worker_inventory_restocked")
+class NPCWorkerInventoryRestocked(BaseRunefobleEvent):
+    """Emitted when a manager restocks an item on an NPC worker's shelf or in the backroom."""
+
+    aggregate_type: str = "NPCWorker"
+    aggregate_id: UUID = Field(default_factory=uuid4)
+    event_type: str = "runefoble.events.game_session.npc_worker_inventory_restocked"
+    npc_id: str
+    destination: Literal["shelf", "backroom"]
+    item: dict[str, Any]
+
+
 __all__ = [
     "NPCMoodUpdated",
     "NPCRelationshipFormed",
     "NPCWorkerAssigned",
+    "NPCWorkerInventoryRestocked",
     "NPCWorkerRelieved",
 ]

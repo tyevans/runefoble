@@ -35,10 +35,10 @@ async def update_worker_mood(
     agg.update_mood(req.mood, req.temperament, req.patience_delta, req.metadata)
     events = list(agg.uncommitted_events)
     await get_worker_repository().save(agg)
-    if bus := get_event_bus():
-        await publish_aggregate_events(bus, STREAM_WEST_MARCHES, events)
     if agg.state.establishment_id:
         await sync_establishment_operations(agg.state.establishment_id)
+    if bus := get_event_bus():
+        await publish_aggregate_events(bus, STREAM_WEST_MARCHES, events)
     agg.refresh_computed_fields()
     return agg.state
 
@@ -56,10 +56,10 @@ async def form_npc_relationship(
     )
     events = list(agg.uncommitted_events)
     await get_worker_repository().save(agg)
-    if bus := get_event_bus():
-        await publish_aggregate_events(bus, STREAM_WEST_MARCHES, events)
     if agg.state.establishment_id:
         await sync_establishment_operations(agg.state.establishment_id)
+    if bus := get_event_bus():
+        await publish_aggregate_events(bus, STREAM_WEST_MARCHES, events)
     agg.refresh_computed_fields()
     return agg.state
 
