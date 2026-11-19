@@ -26,6 +26,7 @@ e2e/
 | `e2e/support/auth_fixtures.ts` | The `AuthFixtures` class. `signInAs` signs a persona in through Zitadel. |
 | `e2e/support/env.ts` | The only module that reads environment variables. It holds the API base URL, the Zitadel issuer and audience, and the name of the admin token variable. |
 | `e2e/support/frontdoor_api.ts` | The `FrontdoorApi` class. Calls public REST routes through the ingress. |
+| `e2e/support/campaign_capabilities.ts` | `openAndRecordCapabilities` opens an App Shell route and records the `GET /api/v1/campaigns/{campaign_id}/capabilities` reply. `recordedCapabilities` returns it. Steps compare a role-gated control with the server flag. |
 | `e2e/support/world.ts` | Scenario context: the current user, campaign and session ids, one page per persona, and extra browser contexts. |
 
 ## Global Setup and Personas
@@ -126,4 +127,6 @@ The `e2e-playwright` job in `.github/workflows/ci.yml` runs the suite on each pu
 
 ## Feature Files
 
-The feature files live in `e2e/features/`. They cover the campaign hub, the campaign rules tab and its homebrew forge, the character sheet, the session lobby and VTT, the session chronicle feed, asset forge, the caravan board, the app shell routes, identity negative paths and smoke checks. Read the files for the scenarios. This page does not repeat them.
+The feature files live in `e2e/features/`. They cover the campaign hub, the campaign roster management controls, the campaign rules tab and its homebrew forge, the character sheet, the session lobby and VTT, the lobby role gate and readiness summary, the session chronicle feed, asset forge, the caravan board, the app shell routes, identity negative paths and smoke checks. Read the files for the scenarios. This page does not repeat them.
+
+The asset forge error scenario sends a prompt that asset_forge refuses with `422`. It fakes no reply. The caravan board `503` scenarios still answer the action route with `page.route` in the browser.

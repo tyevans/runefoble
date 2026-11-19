@@ -39,3 +39,15 @@ And Evelyn assigns Marcus the "player" role
 And a SpiceDB relationship tuple "campaign:4#player@user:marcus" is written
 And Marcus's dashboard reflects player access to campaign assets.
 ```
+
+## Scenario 3: Management Controls Follow the Server's Manage Flag
+```gherkin
+Given Evelyn owns the campaign "Ember Court"
+And Marcus has the "player" role in the campaign
+When Evelyn opens the campaign overview
+Then the server reports that Evelyn can manage the campaign
+And the roster shows the invite, role and remove controls for Marcus
+When Marcus opens the campaign overview
+Then the server reports that Marcus cannot manage the campaign
+And the roster shows no invite, role or remove control
+```

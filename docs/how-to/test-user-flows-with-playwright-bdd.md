@@ -106,6 +106,8 @@ await page.evaluate(() => {
 ```
 - **Read the Base URL From Config**: Never write a host such as `http://localhost:5173` in a step. Use `test.info().project.use.baseURL`.
 - **Fail on Missing Setup**: A setup step that cannot create its data must throw.
+- **Prove an Error Path With a Real Refusal**: Do not fake a reply of a Runefoble service with `page.route`. Send a request that the owner service refuses, such as a forge prompt that is too short (`e2e/features/asset_forge.feature`). Assert the status that the page received and the message that the page shows. A fake reply is allowed only for a true external boundary. TASK-0840.
+- **Check a Hidden Control Against the Server Flag**: A control that a role does not get must be absent, and the step must prove that the page finished loading. Record the capabilities reply with `openAndRecordCapabilities` (`e2e/support/campaign_capabilities.ts`). Assert the server flag, wait for a sibling element that always renders, then assert `toHaveCount(0)`. Write the positive scenario too, so a control that never renders also fails. See `e2e/steps/session_lobby_roles_steps.ts`.
 
 ---
 
@@ -134,16 +136,6 @@ Global setup creates the personas in Zitadel before the suite runs. See the [E2E
 | `Evelyn`, `Valeros`, `Sarah`, `Marcus` | The persona with that name |
 
 A name that matches no persona fails the step. Add a new persona to `PERSONA_KEYS` in `e2e/support/personas.ts`. Do not add a fallback.
-
-The step `I am logged in as a {string}` in `e2e/steps/common_steps.ts` accepts any of these names.
-
----|---|
-| `evelyn` | Evelyn, the DM who hosts sessions |
-| `valeros` | Valeros, a player |
-| `sarah` | Sarah, a player |
-| `dm`, `master`, or `gm` | The DM persona (`gm` is an alias) |
-| `spectator` | A spectator |
-| any other name | The default player persona |
 
 The step `I am logged in as a {string}` in `e2e/steps/common_steps.ts` accepts any of these names.
 
