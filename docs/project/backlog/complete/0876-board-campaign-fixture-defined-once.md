@@ -1,7 +1,7 @@
 ---
 id: '0876'
 title: Board Campaign Fixture Is Defined Once in the Shared Campaign Helper
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies: []
 governing_adrs:
@@ -14,7 +14,7 @@ target_release: 0.9.0
 # TASK-0876: Board Campaign Fixture Is Defined Once in the Shared Campaign Helper
 
 ## Status
-Refined.
+Complete
 
 ## Summary
 Twenty-eight test files under `tests/` and `gateway/api/tests/` define the same `board_campaign` fixture. Each one returns `create_dm_campaign("user-test")`. Define the fixture once in the shared campaign helper, and register it in the root `conftest.py`.

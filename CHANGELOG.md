@@ -175,6 +175,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
 
 ### Changed
+- The `board_campaign` test fixture is defined once in `tests/helpers/campaign_setup.py` and used by 25 test modules. (TASK-0876)
 - The Campaign Analytics token verifier comes from the settings passed to `create_app`; the module-level settings object is removed. (TASK-0880)
 - Campaign Analytics is built through `create_app(settings, event_bus)`. Start-up tests use the public factory instead of patching module state. (TASK-0873)
 - Blackbox tests restore every seam they replace, and dead fixtures are removed. (TASK-0872)
