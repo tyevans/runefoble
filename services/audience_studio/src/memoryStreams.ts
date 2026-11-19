@@ -1,5 +1,5 @@
 /**
- * In-memory stream publisher. Used only in tests (REDIS_URL=mock://...). It can simulate an
+ * In-memory stream publisher. Used only in tests (RUNEFOBLE_REDIS_URL=mock://...). It can simulate an
  * outage and publish failures, so tests can exercise the rejection path.
  */
 
