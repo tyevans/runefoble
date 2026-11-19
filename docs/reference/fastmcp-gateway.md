@@ -4,7 +4,7 @@ The FastMCP Gateway (`gateway/mcp`) exposes Runefoble tabletop actions, spatial 
 
 ## Architecture
 
-The gateway server entrypoint (`gateway/mcp/src/gateway_mcp/server.py`) operates as a lightweight orchestration shell (< 100 lines) delegating domain capabilities to modular sub-packages:
+The gateway server entrypoint (`gateway/mcp/src/gateway_mcp/server.py`) is a short orchestration shell. `build_mcp(container)` imports each registration hook from its defining module and calls it. The package `__init__.py` files hold only a docstring and export no names:
 
 gateway/mcp/src/gateway_mcp/
 ├── caller.py              # Reads the MCP caller's bearer token from the request
@@ -16,18 +16,21 @@ gateway/mcp/src/gateway_mcp/
 ├── dynamic/               # Dynamic tool registry package (< 140 lines per module)
 │   ├── auth.py            # Authorization functions over the permission port (grant, revoke, check, enforce)
 │   ├── builder.py         # Signature builder and callable adapter
+│   ├── expressions.py     # Allow-list interpreter for arithmetic and dice expressions (ADR-0020)
+│   ├── handlers.py        # Declarative handler validation and evaluation (ADR-0020)
 │   ├── models.py          # Dynamic tool schemas and JSON Schema validation
 │   └── registry.py        # Thread-safe tool registry, bound to one FastMCP app and one permission port
 ├── routers/               # FastMCP REST routers (< 130 lines)
 │   └── tools_registry.py  # REST endpoints for dynamic tool registration & lifecycle
 ├── asgi.py                # ASGI app (`gateway_mcp.asgi:app`) for the streamable HTTP endpoint
-├── main.py                # CLI execution wrapper
+├── main.py                # `python -m gateway_mcp.main` runs `server.main()`
 ├── server.py              # `build_mcp(container)` and `build_http_app(container)`, plus `main()`
 ├── settings.py            # Required upstream service URLs and the GATEWAY_MCP_HOST/PORT listen address
 ├── tools/                 # MCP tool implementations (< 180 lines each)
 │   ├── dice.py            # Dice notation parsing and rolling (roll_dice)
 │   ├── board.py           # Tactical board and encounter tools (HTTP-backed by board_state)
 │   ├── character.py       # Character stats, HP, spells, conditions, inventory (HTTP-backed by character_sheet)
+│   ├── compendium.py      # Monster stat blocks and encounter balance (HTTP-backed by rules_compendium)
 │   ├── orchestration.py   # The Watcher narration and agent action plan execution
 │   └── plan.py            # Action plan steps: map, validate, then authorize and propose (run_plan)
 ├── resources/             # FastMCP dynamic resource providers (< 120 lines each)
@@ -147,7 +150,7 @@ Prompt templates provide standardized prompts for LLM decision-making and narrat
 
 ## Dynamic Runtime Tool Registry
 
-The Dynamic Tool Registry (`gateway/mcp/src/gateway_mcp/dynamic/`) enables tabletop creators, homebrew modders, and external developers to register, update, and hot-reload custom FastMCP tools dynamically at runtime with SpiceDB authorization checks, without restarting the FastMCP gateway or terminating active AI agent sessions (ADR-0001, ADR-0003, ADR-0006, ADR-0007, ADR-0008, TASK-0172).
+The Dynamic Tool Registry (`gateway/mcp/src/gateway_mcp/dynamic/`) enables tabletop creators, homebrew modders, and external developers to register, update, and hot-reload custom FastMCP tools dynamically at runtime with SpiceDB authorization checks, without restarting the FastMCP gateway or terminating active AI agent sessions (ADR-0001, ADR-0003, ADR-0006, ADR-0007, TASK-0172).
 
 ### Gateway Container and Ports (TASK-0746)
 
