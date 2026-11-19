@@ -110,7 +110,7 @@ The App Shell fetches data parameterized by route attributes via `appDataService
 - **Campaign Detail**: Fetches roster from `GET /api/v1/campaigns/:id/members` and sessions from `GET /api/v1/campaigns/:id/sessions`.
 - **Characters**: Fetches player characters from `GET /api/v1/characters` and scopes party roster in `#/campaigns/:id/characters`.
 - **Session Lobby**: Fetches participant readiness from `GET /api/v1/sessions/:id`.
-- **Active Tabletop**: Fetches tactical tokens from `GET /api/v1/boards/:id`. The route returns `404` for an unknown board and never creates one. Create the board first with `POST /api/v1/boards`.
+- **Active Tabletop**: Fetches tactical tokens from `GET /api/v1/boards/:id`. The route returns `404` for an unknown board and never creates one. Create the board first with `POST /api/v1/boards`. A `404` is not a load failure. `fetchBoardState` returns the typed `{ kind: 'no_board' }` result, and the view still renders the feed, the character card and the other panels. The board area shows `<runefoble-board-empty>` ("No battlemap yet"). A caller with the `run_session` capability also sees a hint to set up a map. The DM board controls do not show until the board exists. Other board failures (`401`, `403`, `5xx`, network) still set `loadError`.
 - **Session Scheduling & Staging**: Creates new sessions or launches staging lobbies from `POST /api/v1/campaigns/:id/sessions` via `<runefoble-session-modal>`.
 
 ## 5. Character Roster Event Binding & Data Mutations
@@ -169,7 +169,7 @@ In the active session (`session-active`) and pre-game lobby (`session-lobby`), t
    - `<runefoble-session-lobby>` dispatches `@toggle-readiness` and `@toggle-stand-in`.
    - The App Shell updates `lobbyParticipants` state and broadcasts `{ type: 'player_readiness', userId, isReady }` and `{ type: 'player_stand_in', userId, isAbsent }` to all connected party members.
 2. **Tactical Board Event Mesh & Dynamic Bounds**:
-   - `<runefoble-board>` receives `.cols` and `.rows` dynamically from `appDataService.fetchBoardState(sessionId)` and `.websocketUrl` connecting directly to the session WebSocket.
+   - `<runefoble-board>` receives `.cols` and `.rows` dynamically from `appDataService.fetchBoardState(sessionId)` when the result is `{ kind: 'board' }` and `.websocketUrl` connecting directly to the session WebSocket.
    - Listens to board actions:
      - `@token-action`: Broadcasts `{ type: 'token_action', ... }` (radial menu actions).
      - `@aoe-place`: Broadcasts `{ type: 'aoe_placed', ... }` (geometric spell placements).

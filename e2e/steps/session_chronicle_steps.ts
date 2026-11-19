@@ -33,3 +33,7 @@ Then('the session feed shows the entry {string}', async ({ page }, text: string)
     timeout: 10_000,
   });
 });
+
+Then('the board area shows {string}', async ({ page }, text: string) => {
+  await expect(page.locator('runefoble-board-empty').getByRole('status')).toContainText(text, { timeout: 10_000 });
+});

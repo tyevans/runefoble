@@ -1,4 +1,5 @@
 # TASK-0641: The App Shell session feed reads the chronicle through the gateway.
+# TASK-0906: A session without a board still shows the feed. The board area shows the empty state.
 # Governing ADRs: ADR-0011, ADR-0014. Setup uses public frontdoor routes only.
 
 Feature: Session Chronicle Feed Shows What Happened At The Table
@@ -12,3 +13,4 @@ Feature: Session Chronicle Feed Shows What Happened At The Table
     And the DM creates and starts session "Chronicle Night" in that campaign
     When I open session "Chronicle Night" in the App Shell
     Then the session feed shows the entry "Session started."
+    And the board area shows "No battlemap yet"
