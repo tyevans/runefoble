@@ -26,7 +26,7 @@ Feature: Campaign Hub
 ```
 
 ### Golden Rules for Scenarios
-1. **Persona Grounding**: Start each scenario with an explicit persona (`DM`, `Player`, `Spectator`, or a named persona from the [persona table](../reference/e2e-harness.md#persona-resolution)).
+1. **Persona Grounding**: Start each scenario with an explicit persona (`DM`, `Player`, or a named persona from the [persona table](../reference/e2e-harness.md#global-setup-and-personas)).
 2. **Declarative Intent**: Describe what the user does and sees. Do not describe CSS classes or DOM structure.
 3. **Frontdoor Preconditions**: Every `Given` must reach its state through UI actions, public REST routes or an OIDC session.
 
@@ -35,7 +35,7 @@ Feature: Campaign Hub
 ## 2. Set Up Preconditions Through Frontdoors
 
 ### Log In a Persona
-The step `I am logged in as a {string}` injects a session for the persona. It is defined in `e2e/steps/common_steps.ts`:
+The step `I am logged in as a {string}` signs the persona in through Zitadel. The first sign-in of a persona in a worker completes the hosted login page, as a real user does. Later scenarios in the same worker reuse that session. The suite never forges a token. The step is defined in `e2e/steps/common_steps.ts`:
 
 ```gherkin
 Given I am logged in as a "DM"
@@ -117,7 +117,7 @@ Use one browser context for each persona that acts at the same time. Create the 
 const context = await browser.newContext({ baseURL: test.info().project.use.baseURL });
 world.extraContexts.push(context);
 const page = await context.newPage();
-await auth.injectUserIntoPage(page, 'valeros');
+await auth.signInAs('valeros', page);
 world.setPage('valeros', page);
 ```
 
@@ -125,10 +125,19 @@ world.setPage('valeros', page);
 
 ### Personas
 
-`e2e/support/auth_fixtures.ts` resolves a persona from the name in the step. The match ignores case and punctuation:
+Global setup creates the personas in Zitadel before the suite runs. See the [E2E Harness reference](../reference/e2e-harness.md#global-setup-and-personas) for the table. The step name ignores case and punctuation:
 
-| Name in step | Persona |
+| Name in step | Persona key |
 |---|---|
+| `DM`, `Dungeon Master`, `GM`, `master` | `dm` |
+| `Player` | `player` |
+| `Evelyn`, `Valeros`, `Sarah`, `Marcus` | The persona with that name |
+
+A name that matches no persona fails the step. Add a new persona to `PERSONA_KEYS` in `e2e/support/personas.ts`. Do not add a fallback.
+
+The step `I am logged in as a {string}` in `e2e/steps/common_steps.ts` accepts any of these names.
+
+---|---|
 | `evelyn` | Evelyn, the DM who hosts sessions |
 | `valeros` | Valeros, a player |
 | `sarah` | Sarah, a player |
@@ -146,8 +155,10 @@ Use these commands from the repository root. The reference page lists what each 
 
 ```bash
 make test-bdd      # Typecheck, unused-step check and Gherkin mapping. No browsers.
-make test-e2e      # Full suite in Chromium, Firefox and WebKit.
+make test-e2e      # Full suite in Chromium, Firefox and WebKit, against the running Kind stack.
 make test-e2e-ui   # Playwright UI mode for debugging.
+
+# Both e2e targets read the Zitadel admin token from the cluster. Start the Kind stack first.
 ```
 
 To run one browser or one scenario, pass `ARGS`:
