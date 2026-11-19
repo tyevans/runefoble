@@ -8,7 +8,6 @@ build the routes, map upstream failures to tool errors, and never return a subst
 from __future__ import annotations
 
 import asyncio
-import json
 import weakref
 from typing import Any, Literal
 from uuid import UUID
@@ -16,10 +15,14 @@ from uuid import UUID
 from opentelemetry import trace
 from opentelemetry.trace import SpanKind
 from runefoble_platform.service_client import (
+    OWNER_URL_FIELDS,
     ServiceClient,
     UpstreamFailureError,
     UpstreamReply,
     UpstreamUnavailableError,
+    decode_json_body,
+    error_detail,
+    owner_routes,
     path,
 )
 
@@ -29,14 +32,6 @@ TIMEOUT_SECONDS = 5.0
 
 TokenType = Literal["pc", "monster", "npc", "obstacle"]
 InitiatedBy = Literal["player", "the_watcher", "stand_in"]
-
-_SERVICE_URL_FIELDS = {
-    "board_state": "board_state_url",
-    "character_sheet": "character_sheet_url",
-    "game_session": "game_session_url",
-    "rules_compendium": "rules_compendium_url",
-    "the_watcher": "the_watcher_url",
-}
 
 # One shared client per event loop, service, base URL, and credential. The HTTP connections of a
 # client belong to the loop that opened them, so a loop never reuses another loop's clients.
@@ -62,17 +57,6 @@ class ServiceRejectedError(ServiceError):
         self.status_code = status_code
 
 
-def _error_detail(body: bytes) -> str:
-    """Return the service error detail, or the raw body when it is not JSON."""
-    try:
-        decoded = json.loads(body)
-    except ValueError:
-        return body.decode("utf-8", errors="replace")
-    if isinstance(decoded, dict) and "detail" in decoded:
-        return str(decoded["detail"])
-    return str(decoded)
-
-
 def _shared_client(service: str, base_url: str, credential: str) -> ServiceClient:
     """Return the shared client of the running event loop for one service, creating it on first use."""
     clients = _shared_clients.setdefault(asyncio.get_running_loop(), {})
@@ -84,15 +68,14 @@ def _shared_client(service: str, base_url: str, credential: str) -> ServiceClien
     return client
 
 
-def _character_route(character_id: str, *segments: str) -> str:
-    """Return the character_sheet route for a character id. A malformed id is refused."""
+def _canonical_character_id(character_id: str) -> str:
+    """Return the canonical UUID of a character id. A malformed id is refused before any call."""
     try:
-        canonical = str(UUID(character_id))
+        return str(UUID(character_id))
     except ValueError as exc:
         raise ServiceRejectedError(
             f"character_id must be a character UUID, got '{character_id}'"
         ) from exc
-    return path("api", "v1", "characters", canonical, *segments)
 
 
 class OwningServices:
@@ -118,7 +101,7 @@ class OwningServices:
         params: dict[str, str] | None = None,
     ) -> UpstreamReply:
         """Send one call through the shared client, inside a client span, and map failures."""
-        base_url = getattr(self._settings, _SERVICE_URL_FIELDS[service])
+        base_url = getattr(self._settings, OWNER_URL_FIELDS[service])
         client = _shared_client(
             service, base_url, self._settings.service_credential.get_secret_value()
         )
@@ -142,13 +125,12 @@ class OwningServices:
                 ) from exc
             except UpstreamFailureError as exc:
                 raise ServiceUnavailableError(
-                    f"{service} returned {exc.status_code}: {_error_detail(exc.body)}"
+                    f"{service} returned {exc.status_code}: {error_detail(exc.body)}"
                 ) from exc
 
         if reply.status_code >= 400:
             raise ServiceRejectedError(
-                f"{service} rejected the request ({reply.status_code}): "
-                f"{_error_detail(reply.body)}",
+                f"{service} rejected the request ({reply.status_code}): {error_detail(reply.body)}",
                 status_code=reply.status_code,
             )
         return reply
@@ -164,7 +146,7 @@ class OwningServices:
         """Send one call and decode its 2xx JSON object. A body that is not an object is an error."""
         reply = await self._send(service, method, route, json_body, params)
         try:
-            decoded = json.loads(reply.body)
+            decoded = decode_json_body(reply.body)
         except ValueError as exc:
             raise ServiceUnavailableError(f"{service} returned a body that is not JSON") from exc
         if not isinstance(decoded, dict):
@@ -212,25 +194,25 @@ class OwningServices:
 
     async def get_character(self, character_id: str) -> dict[str, Any]:
         """Read the stored character sheet from character_sheet."""
-        return await self._json("character_sheet", "GET", _character_route(character_id))
+        route = owner_routes.get_character(_canonical_character_id(character_id))
+        return await self._json("character_sheet", route.method, route.path)
 
     async def change_health(self, character_id: str, *, delta: int, source: str) -> dict[str, Any]:
         """Apply damage (negative delta) or healing and return the stored sheet."""
+        route = owner_routes.change_health(_canonical_character_id(character_id))
         return await self._json(
-            "character_sheet",
-            "POST",
-            _character_route(character_id, "health"),
-            {"delta": delta, "source": source},
+            "character_sheet", route.method, route.path, {"delta": delta, "source": source}
         )
 
     async def apply_penalty(
         self, character_id: str, *, penalty_type: str, description: str
     ) -> dict[str, Any]:
         """Impose a session miss penalty and return the stored sheet."""
+        route = owner_routes.apply_penalty(_canonical_character_id(character_id))
         return await self._json(
             "character_sheet",
-            "POST",
-            _character_route(character_id, "penalties"),
+            route.method,
+            route.path,
             {
                 "penalty_type": penalty_type,
                 "description": description,
@@ -242,10 +224,11 @@ class OwningServices:
         self, character_id: str, *, spell_name: str, slot_level: int
     ) -> dict[str, Any]:
         """Cast a spell from a slot and return the stored sheet."""
+        route = owner_routes.cast_spell(_canonical_character_id(character_id))
         return await self._json(
             "character_sheet",
-            "POST",
-            _character_route(character_id, "spells", "cast"),
+            route.method,
+            route.path,
             {"spell_name": spell_name, "slot_level": slot_level},
         )
 
@@ -258,10 +241,11 @@ class OwningServices:
         source: str,
     ) -> dict[str, Any]:
         """Impose a status condition and return the stored sheet."""
+        route = owner_routes.apply_condition(_canonical_character_id(character_id))
         return await self._json(
             "character_sheet",
-            "POST",
-            _character_route(character_id, "conditions"),
+            route.method,
+            route.path,
             {"condition": condition, "duration_rounds": duration_rounds, "source": source},
         )
 
@@ -301,22 +285,19 @@ class OwningServices:
         initiated_by: InitiatedBy,
     ) -> dict[str, Any]:
         """Move a token and return the move result from the board."""
+        route = owner_routes.move_token(session_id, token_id)
         return await self._json(
             "board_state",
-            "POST",
-            path("api", "v1", "boards", session_id, "tokens", token_id, "move"),
+            route.method,
+            route.path,
             {"to_x": to_x, "to_y": to_y, "initiated_by": initiated_by},
         )
 
     async def get_monster(self, name: str, *, campaign_id: str | None = None) -> dict[str, Any]:
         """Read a monster stat block from rules_compendium. `campaign_id` adds that campaign's homebrew."""
         params = {"campaign_id": campaign_id} if campaign_id else None
-        return await self._json(
-            "rules_compendium",
-            "GET",
-            path("api", "v1", "compendium", "monsters", name),
-            params=params,
-        )
+        route = owner_routes.get_monster(name)
+        return await self._json("rules_compendium", route.method, route.path, params=params)
 
     async def narrate(self, request: dict[str, Any]) -> dict[str, Any]:
         """Ask The Watcher for DM narration. The response is returned as The Watcher sent it."""
@@ -334,9 +315,10 @@ class OwningServices:
         self, party_levels: list[int], target_difficulty: str
     ) -> dict[str, Any]:
         """Ask rules_compendium to balance an encounter for a party."""
+        route = owner_routes.balance_encounter()
         return await self._json(
             "rules_compendium",
-            "POST",
-            path("api", "v1", "compendium", "encounters", "balance"),
+            route.method,
+            route.path,
             {"party_levels": party_levels, "target_difficulty": target_difficulty},
         )

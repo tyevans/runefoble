@@ -12,10 +12,10 @@ Use this guide to add a gateway route that calls an owning bounded context. The 
 
 If the owning service has no field yet, add one to `PlatformSettings` in `libs/runefoble_platform/src/runefoble_platform/config.py`. Use the `RUNEFOBLE_<SERVICE>_URL` name, with `default=None`.
 
-Then add the service to `UPSTREAM_SETTINGS` in `gateway/api/src/gateway_api/upstreams.py`:
+Then add the service to `OWNER_URL_FIELDS` in `libs/runefoble_platform/src/runefoble_platform/service_client/owners.py`. Both gateways read this map:
 
 ```python
-UPSTREAM_SETTINGS = {
+OWNER_URL_FIELDS = {
     ...
     "rules_compendium": "rules_compendium_url",
 }
@@ -59,6 +59,24 @@ Rules:
 - Do not copy client headers to the upstream request. Only the bearer token, the service credential, and the trace context leave the gateway.
 - Do not import a service package in `gateway_api`. Forward the body instead. Use `forward_bytes` when the owner validates the body. `forward_bytes` sends the caller's raw body and its `Content-Type` unchanged, so a malformed body returns the owner's `422`, and it relays the owner's reply unchanged. Use `forward_json` only when the gateway builds the JSON itself.
 - The import-contract gate (`make lint`, `uv run lint-imports`) fails when `gateway_api` imports a service package, directly or through a library. The contract is `gateway_api must not import a service package` in the root `pyproject.toml`. Keep the service list in that contract in step with `services/`.
+
+### A pass-through route as a table row
+
+If the route only forwards the request, add a `ProxyRoute` row to the module's `ROUTES` tuple instead of a handler. Each field is documented in `gateway_api/proxy_table.py`:
+
+```python
+ProxyRoute(
+    "GET",
+    "/api/v1/campaigns/{campaign_id}/atlas",
+    ("api", "v1", "campaigns", "{campaign_id}", "atlas"),
+    "campaign_lore",
+    name="get_campaign_atlas",
+    doc="Read the campaign atlas from campaign_lore.",
+    principal=True,
+)
+```
+
+Then call `register_proxy_routes(router, ROUTES)` once at the end of the module. Use a row for each route that needs no check and no transform. Keep a hand-written handler for a route with a check, a body transform, or a second owner call. Add an owner route function to `runefoble_platform.service_client.owner_routes` when another caller also uses the route.
 
 ## 4. Test the route through public frontdoors
 
@@ -122,7 +140,7 @@ Test a relayed socket with a stand-in owner from `serve(...)`. Check that the be
 ## Checklist
 
 - [ ] Setting field exists, with `default=None` and no `localhost` default.
-- [ ] Service name is in `UPSTREAM_SETTINGS`.
+- [ ] Service name is in `OWNER_URL_FIELDS` (`runefoble_platform.service_client.owners`).
 - [ ] Helm renders the variable for `gateway-api`.
 - [ ] Route calls `forward_json(..., service=..., ...)` with a timeout.
 - [ ] Tests set the variable before they enter `TestClient`, and cover the 5 cases above.

@@ -21,6 +21,7 @@ from gateway_api.character_models import (
 from gateway_api.character_view import (
     CHARACTER_SERVICE,
     CHARACTERS_PATH,
+    respond_with_campaign_title,
     to_character_response,
     to_owner_create_payload,
 )
@@ -33,13 +34,6 @@ from gateway_api.routers.characters_subresources_proxy import router as subresou
 router = APIRouter(tags=["Characters"])
 router.include_router(subresources_router)
 router.include_router(spells_guardrails_router)
-
-
-async def _respond(request: Request, view: dict) -> CharacterResponse:
-    """Attach the campaign title (read through the game_session owner with the caller's token)."""
-    campaign_id = view.get("campaign_id")
-    title = (await campaign_titles(request, {campaign_id}))[campaign_id] if campaign_id else None
-    return to_character_response(view, title)
 
 
 @router.get("/api/v1/characters", response_model=list[CharacterResponse])
@@ -75,7 +69,7 @@ async def create_character(
         path=CHARACTERS_PATH,
         json_body=to_owner_create_payload(req),
     )
-    return await _respond(request, view)
+    return await respond_with_campaign_title(request, view)
 
 
 @router.get("/api/v1/characters/{character_id}", response_model=CharacterResponse)
@@ -86,7 +80,7 @@ async def get_character(
     view = await forward_json(
         request, service=CHARACTER_SERVICE, method="GET", path=f"{CHARACTERS_PATH}/{character_id}"
     )
-    return await _respond(request, view)
+    return await respond_with_campaign_title(request, view)
 
 
 @router.patch("/api/v1/characters/{character_id}/campaign", response_model=CharacterResponse)
@@ -104,4 +98,4 @@ async def assign_campaign(
         path=f"{CHARACTERS_PATH}/{character_id}/campaign",
         json_body={"campaign_id": req.campaign_id},
     )
-    return await _respond(request, view)
+    return await respond_with_campaign_title(request, view)

@@ -9,6 +9,9 @@ Owner routes:
 - stronghold and campfire: game_session
 - tavern games and merchant haggling: game_session
 - recipe combine: character_sheet
+
+Pure pass-through routes are rows in `ROUTES` (TASK-0822). The haggling route stays hand-written:
+it maps the public body onto another owner route.
 """
 
 from __future__ import annotations
@@ -26,107 +29,84 @@ from gateway_api.models import (
     UpgradeStrongholdGatewayRequest,
 )
 from gateway_api.proxy import forward_json
-from runefoble_platform.service_client import path
+from gateway_api.proxy_table import ProxyRoute, register_proxy_routes
 
 GAME_SESSION = "game_session"
 CHARACTER_SHEET = "character_sheet"
 
 router = APIRouter(tags=["Downtime & Crafting"])
 
+ROUTES = (
+    ProxyRoute(
+        "GET",
+        "/api/v1/campaigns/{campaign_id}/stronghold",
+        ("api", "v1", "campaigns", "{campaign_id}", "stronghold"),
+        GAME_SESSION,
+        name="get_stronghold_gateway",
+        doc="Read the campaign stronghold from game_session (requires `view` there).",
+        principal=True,
+    ),
+    ProxyRoute(
+        "POST",
+        "/api/v1/campaigns/{campaign_id}/stronghold/upgrade",
+        ("api", "v1", "campaigns", "{campaign_id}", "stronghold", "upgrade"),
+        GAME_SESSION,
+        name="upgrade_stronghold_gateway",
+        doc="Upgrade a stronghold facility in game_session (owner checks `play` or `upgrade`).",
+        body="json",
+        body_model=UpgradeStrongholdGatewayRequest,
+        principal=True,
+    ),
+    ProxyRoute(
+        "POST",
+        "/api/v1/campaigns/{campaign_id}/stronghold/deposit",
+        ("api", "v1", "campaigns", "{campaign_id}", "stronghold", "deposit"),
+        GAME_SESSION,
+        name="deposit_stronghold_gateway",
+        doc=(
+            "Add gold and materials to the campaign stronghold in game_session "
+            "(owner checks `stronghold.manage`)."
+        ),
+        body="json",
+        body_model=DepositStrongholdGatewayRequest,
+        principal=True,
+    ),
+    ProxyRoute(
+        "POST",
+        "/api/v1/sessions/{session_id}/rest/campfire",
+        ("api", "v1", "sessions", "{session_id}", "rest", "campfire"),
+        GAME_SESSION,
+        name="campfire_rest_gateway",
+        doc="Run a campfire rest in game_session and return its boons (owner checks `stronghold.manage`).",
+        body="json",
+        body_model=CampfireRestGatewayRequest,
+        principal=True,
+    ),
+    ProxyRoute(
+        "POST",
+        "/api/v1/crafting/recipes/combine",
+        ("api", "v1", "crafting", "recipes", "combine"),
+        CHARACTER_SHEET,
+        name="combine_reagents_gateway",
+        doc="Combine reagents in character_sheet (owner checks `edit` on the character).",
+        body="json",
+        body_model=CombineReagentsGatewayRequest,
+        principal=True,
+    ),
+    ProxyRoute(
+        "POST",
+        "/api/v1/sessions/{session_id}/tavern/games",
+        ("api", "v1", "sessions", "{session_id}", "tavern", "games"),
+        GAME_SESSION,
+        name="start_minigame_gateway",
+        doc="Start a tavern minigame in game_session (owner checks session participation).",
+        body="json",
+        body_model=StartMinigameGatewayRequest,
+        principal=True,
+    ),
+)
 
-@router.get("/api/v1/campaigns/{campaign_id}/stronghold")
-async def get_stronghold_gateway(campaign_id: str, request: Request, user: CallerPrincipal) -> Any:
-    """Read the campaign stronghold from game_session (requires `view` there)."""
-    return await forward_json(
-        request,
-        service=GAME_SESSION,
-        method="GET",
-        path=path("api", "v1", "campaigns", campaign_id, "stronghold"),
-    )
-
-
-@router.post("/api/v1/campaigns/{campaign_id}/stronghold/upgrade")
-async def upgrade_stronghold_gateway(
-    campaign_id: str,
-    req: UpgradeStrongholdGatewayRequest,
-    request: Request,
-    user: CallerPrincipal,
-) -> Any:
-    """Upgrade a stronghold facility in game_session (owner checks `play` or `upgrade`)."""
-    return await forward_json(
-        request,
-        service=GAME_SESSION,
-        method="POST",
-        path=path("api", "v1", "campaigns", campaign_id, "stronghold", "upgrade"),
-        json_body=req.model_dump(mode="json"),
-    )
-
-
-@router.post("/api/v1/campaigns/{campaign_id}/stronghold/deposit")
-async def deposit_stronghold_gateway(
-    campaign_id: str,
-    req: DepositStrongholdGatewayRequest,
-    request: Request,
-    user: CallerPrincipal,
-) -> Any:
-    """Add gold and materials to the campaign stronghold in game_session (owner checks `stronghold.manage`)."""
-    return await forward_json(
-        request,
-        service=GAME_SESSION,
-        method="POST",
-        path=path("api", "v1", "campaigns", campaign_id, "stronghold", "deposit"),
-        json_body=req.model_dump(mode="json"),
-    )
-
-
-@router.post("/api/v1/sessions/{session_id}/rest/campfire")
-async def campfire_rest_gateway(
-    session_id: str,
-    req: CampfireRestGatewayRequest,
-    request: Request,
-    user: CallerPrincipal,
-) -> Any:
-    """Run a campfire rest in game_session and return its boons (owner checks `stronghold.manage`)."""
-    return await forward_json(
-        request,
-        service=GAME_SESSION,
-        method="POST",
-        path=path("api", "v1", "sessions", session_id, "rest", "campfire"),
-        json_body=req.model_dump(mode="json"),
-    )
-
-
-@router.post("/api/v1/crafting/recipes/combine")
-async def combine_reagents_gateway(
-    req: CombineReagentsGatewayRequest,
-    request: Request,
-    user: CallerPrincipal,
-) -> Any:
-    """Combine reagents in character_sheet (owner checks `edit` on the character)."""
-    return await forward_json(
-        request,
-        service=CHARACTER_SHEET,
-        method="POST",
-        path="/api/v1/crafting/recipes/combine",
-        json_body=req.model_dump(mode="json"),
-    )
-
-
-@router.post("/api/v1/sessions/{session_id}/tavern/games")
-async def start_minigame_gateway(
-    session_id: str,
-    req: StartMinigameGatewayRequest,
-    request: Request,
-    user: CallerPrincipal,
-) -> Any:
-    """Start a tavern minigame in game_session (owner checks session participation)."""
-    return await forward_json(
-        request,
-        service=GAME_SESSION,
-        method="POST",
-        path=path("api", "v1", "sessions", session_id, "tavern", "games"),
-        json_body=req.model_dump(mode="json"),
-    )
+register_proxy_routes(router, ROUTES)
 
 
 @router.post("/api/v1/sessions/{session_id}/merchants/{merchant_id}/haggle")

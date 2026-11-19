@@ -4,96 +4,89 @@ The gateway verifies the bearer token, then forwards the request with that same 
 validates each body and checks every permission (SpiceDB Zanzibar, ADR-0001). The gateway writes
 no tuple and keeps no rule, encounter or homebrew state. A failed upstream call returns the mapping
 in `upstream_errors.py`: 503 when unreachable, 502 on upstream 5xx, upstream 4xx unchanged.
+
+Each route is a row in `ROUTES` (TASK-0822).
 """
 
 from __future__ import annotations
 
-from typing import Any
-
-from fastapi import APIRouter, Request
-from gateway_api.auth import CallerPrincipal
-from gateway_api.proxy import forward_bytes, forward_json
-from runefoble_platform.service_client import path
+from fastapi import APIRouter
+from gateway_api.proxy_table import ProxyRoute, register_proxy_routes
 
 COMPENDIUM_SERVICE = "rules_compendium"
 
 router = APIRouter(tags=["Rules Compendium"])
 
+ROUTES = (
+    ProxyRoute(
+        "GET",
+        "/api/v1/compendium/rules/search",
+        ("api", "v1", "compendium", "rules", "search"),
+        COMPENDIUM_SERVICE,
+        name="search_rules",
+        doc="Hybrid rule search. The query string reaches the owner unchanged.",
+        query_all=True,
+        principal=True,
+    ),
+    ProxyRoute(
+        "GET",
+        "/api/v1/compendium/monsters/{name}",
+        ("api", "v1", "compendium", "monsters", "{name}"),
+        COMPENDIUM_SERVICE,
+        name="get_monster",
+        doc="Monster stat block by name. A `campaign_id` query value reaches the owner unchanged.",
+        query_all=True,
+        principal=True,
+    ),
+    ProxyRoute(
+        "GET",
+        "/api/v1/compendium/spells/{name}",
+        ("api", "v1", "compendium", "spells", "{name}"),
+        COMPENDIUM_SERVICE,
+        name="get_spell",
+        doc="Spell definition by name.",
+        principal=True,
+    ),
+    ProxyRoute(
+        "GET",
+        "/api/v1/compendium/conditions/{name}",
+        ("api", "v1", "compendium", "conditions", "{name}"),
+        COMPENDIUM_SERVICE,
+        name="get_condition",
+        doc="Condition mechanics by name.",
+        principal=True,
+    ),
+    ProxyRoute(
+        "POST",
+        "/api/v1/compendium/encounters/balance",
+        ("api", "v1", "compendium", "encounters", "balance"),
+        COMPENDIUM_SERVICE,
+        name="balance_encounter",
+        doc="Balance an encounter for a party roster. A campaign-scoped call needs `campaign.play`.",
+        reply="bytes",
+        body="raw",
+        principal=True,
+    ),
+    ProxyRoute(
+        "POST",
+        "/api/v1/compendium/homebrew",
+        ("api", "v1", "compendium", "homebrew"),
+        COMPENDIUM_SERVICE,
+        name="register_homebrew",
+        doc="Register a campaign homebrew rule. The owner checks `manage` or `run_session`.",
+        reply="bytes",
+        body="raw",
+        principal=True,
+    ),
+    ProxyRoute(
+        "GET",
+        "/api/v1/compendium/homebrew/{campaign_id}",
+        ("api", "v1", "compendium", "homebrew", "{campaign_id}"),
+        COMPENDIUM_SERVICE,
+        name="list_homebrew",
+        doc="List the campaign homebrew rules the caller may view. The owner filters them.",
+        principal=True,
+    ),
+)
 
-@router.get("/api/v1/compendium/rules/search")
-async def search_rules(request: Request, user: CallerPrincipal) -> Any:
-    """Hybrid rule search. The query string reaches the owner unchanged."""
-    return await forward_json(
-        request,
-        service=COMPENDIUM_SERVICE,
-        method="GET",
-        path=path("api", "v1", "compendium", "rules", "search"),
-        params=dict(request.query_params),
-    )
-
-
-@router.get("/api/v1/compendium/monsters/{name}")
-async def get_monster(name: str, request: Request, user: CallerPrincipal) -> Any:
-    """Monster stat block by name. A `campaign_id` query value reaches the owner unchanged."""
-    return await forward_json(
-        request,
-        service=COMPENDIUM_SERVICE,
-        method="GET",
-        path=path("api", "v1", "compendium", "monsters", name),
-        params=dict(request.query_params),
-    )
-
-
-@router.get("/api/v1/compendium/spells/{name}")
-async def get_spell(name: str, request: Request, user: CallerPrincipal) -> Any:
-    """Spell definition by name."""
-    return await forward_json(
-        request,
-        service=COMPENDIUM_SERVICE,
-        method="GET",
-        path=path("api", "v1", "compendium", "spells", name),
-    )
-
-
-@router.get("/api/v1/compendium/conditions/{name}")
-async def get_condition(name: str, request: Request, user: CallerPrincipal) -> Any:
-    """Condition mechanics by name."""
-    return await forward_json(
-        request,
-        service=COMPENDIUM_SERVICE,
-        method="GET",
-        path=path("api", "v1", "compendium", "conditions", name),
-    )
-
-
-@router.post("/api/v1/compendium/encounters/balance")
-async def balance_encounter(request: Request, user: CallerPrincipal) -> Any:
-    """Balance an encounter for a party roster. A campaign-scoped call needs `campaign.play`."""
-    return await forward_bytes(
-        request,
-        service=COMPENDIUM_SERVICE,
-        method="POST",
-        path=path("api", "v1", "compendium", "encounters", "balance"),
-    )
-
-
-@router.post("/api/v1/compendium/homebrew")
-async def register_homebrew(request: Request, user: CallerPrincipal) -> Any:
-    """Register a campaign homebrew rule. The owner checks `manage` or `run_session`."""
-    return await forward_bytes(
-        request,
-        service=COMPENDIUM_SERVICE,
-        method="POST",
-        path=path("api", "v1", "compendium", "homebrew"),
-    )
-
-
-@router.get("/api/v1/compendium/homebrew/{campaign_id}")
-async def list_homebrew(campaign_id: str, request: Request, user: CallerPrincipal) -> Any:
-    """List the campaign homebrew rules the caller may view. The owner filters them."""
-    return await forward_json(
-        request,
-        service=COMPENDIUM_SERVICE,
-        method="GET",
-        path=path("api", "v1", "compendium", "homebrew", campaign_id),
-    )
+register_proxy_routes(router, ROUTES)

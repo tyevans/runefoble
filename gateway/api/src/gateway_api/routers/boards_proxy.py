@@ -14,7 +14,7 @@ from fastapi import APIRouter, Request
 from gateway_api.auth import CallerPrincipal
 from gateway_api.models import TokenMoveRequest
 from gateway_api.proxy import forward_json
-from runefoble_platform.service_client import path
+from runefoble_platform.service_client import owner_routes, path
 
 SERVICE = "board_state"
 
@@ -52,10 +52,11 @@ async def move_token(
     user: CallerPrincipal,
 ) -> Any:
     """Move a token on the board (board_state checks `board_token.move`)."""
+    route = owner_routes.move_token(session_id, token_id)
     return await forward_json(
         request,
         service=SERVICE,
-        method="POST",
-        path=path("api", "v1", "boards", session_id, "tokens", token_id, "move"),
+        method=route.method,
+        path=route.path,
         json_body=req.model_dump(mode="json"),
     )

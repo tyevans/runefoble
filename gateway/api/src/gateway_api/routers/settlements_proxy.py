@@ -5,196 +5,138 @@ game_session verifies the token again and checks every object permission. The ga
 no settlement state and returns no substitute value. A failed upstream call returns the mapping
 in `upstream_errors.py`: 503 when unreachable, 502 on upstream 5xx, upstream 4xx unchanged.
 
-Only the `/api/v1` paths are proxied. Each route keeps its owner path and method.
+Only the `/api/v1` paths are proxied. Each route keeps its owner path and method. Each route is a
+row in `ROUTES` (TASK-0822). A path segment the owner cannot encode returns 404.
 """
 
 from __future__ import annotations
 
-from typing import Annotated, Any
-
-from fastapi import APIRouter, Body, HTTPException, Request, status
-from gateway_api.auth import CallerPrincipal
-from gateway_api.proxy import forward_json
-from runefoble_platform.service_client import path
+from fastapi import APIRouter, status
+from gateway_api.proxy_table import ProxyRoute, register_proxy_routes
 
 SERVICE = "game_session"
-API = "/api/v1"
 
 router = APIRouter(tags=["Settlements & Establishments"])
 
-
-def _owner_path(*segments: str) -> str:
-    """Quote each path segment for the owner. A segment such as `..` is a client error."""
-    try:
-        return f"{API}{path(*segments)}"
-    except ValueError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from exc
-
-
-@router.post("/api/v1/campaigns/{campaign_id}/settlements", status_code=status.HTTP_201_CREATED)
-async def found_settlement(
-    campaign_id: str, request: Request, user: CallerPrincipal, body: Annotated[Any, Body()]
-) -> Any:
-    """Found a settlement haven in a campaign (game_session checks campaign write)."""
-    return await forward_json(
-        request,
-        service=SERVICE,
-        method="POST",
-        path=_owner_path("campaigns", campaign_id, "settlements"),
-        json_body=body,
-    )
-
-
-@router.get("/api/v1/campaigns/{campaign_id}/settlements")
-async def list_campaign_settlements(
-    campaign_id: str, request: Request, user: CallerPrincipal
-) -> Any:
-    """List the settlements of a campaign (game_session checks view)."""
-    return await forward_json(
-        request,
-        service=SERVICE,
-        method="GET",
-        path=_owner_path("campaigns", campaign_id, "settlements"),
-    )
-
-
-@router.get("/api/v1/campaigns/{campaign_id}/settlements/{settlement_id}")
-async def get_campaign_settlement(
-    campaign_id: str, settlement_id: str, request: Request, user: CallerPrincipal
-) -> Any:
-    """Read one settlement projection (game_session checks view)."""
-    return await forward_json(
-        request,
-        service=SERVICE,
-        method="GET",
-        path=_owner_path("campaigns", campaign_id, "settlements", settlement_id),
-    )
-
-
-@router.post(
-    "/api/v1/settlements/{settlement_id}/establishments", status_code=status.HTTP_201_CREATED
+ROUTES = (
+    ProxyRoute(
+        "POST",
+        "/api/v1/campaigns/{campaign_id}/settlements",
+        ("api", "v1", "campaigns", "{campaign_id}", "settlements"),
+        SERVICE,
+        name="found_settlement",
+        doc="Found a settlement haven in a campaign (game_session checks campaign write).",
+        body="json",
+        principal=True,
+        status_code=status.HTTP_201_CREATED,
+    ),
+    ProxyRoute(
+        "GET",
+        "/api/v1/campaigns/{campaign_id}/settlements",
+        ("api", "v1", "campaigns", "{campaign_id}", "settlements"),
+        SERVICE,
+        name="list_campaign_settlements",
+        doc="List the settlements of a campaign (game_session checks view).",
+        principal=True,
+    ),
+    ProxyRoute(
+        "GET",
+        "/api/v1/campaigns/{campaign_id}/settlements/{settlement_id}",
+        ("api", "v1", "campaigns", "{campaign_id}", "settlements", "{settlement_id}"),
+        SERVICE,
+        name="get_campaign_settlement",
+        doc="Read one settlement projection (game_session checks view).",
+        principal=True,
+    ),
+    ProxyRoute(
+        "POST",
+        "/api/v1/settlements/{settlement_id}/establishments",
+        ("api", "v1", "settlements", "{settlement_id}", "establishments"),
+        SERVICE,
+        name="construct_establishment",
+        doc="Construct an establishment in a settlement district (game_session checks upgrade).",
+        body="json",
+        principal=True,
+        status_code=status.HTTP_201_CREATED,
+    ),
+    ProxyRoute(
+        "GET",
+        "/api/v1/settlements/{settlement_id}/establishments",
+        ("api", "v1", "settlements", "{settlement_id}", "establishments"),
+        SERVICE,
+        name="list_settlement_establishments",
+        doc="List the establishments of a settlement (game_session checks view).",
+        principal=True,
+    ),
+    ProxyRoute(
+        "GET",
+        "/api/v1/establishments/{establishment_id}",
+        ("api", "v1", "establishments", "{establishment_id}"),
+        SERVICE,
+        name="get_establishment",
+        doc="Read one establishment (game_session checks view).",
+        principal=True,
+    ),
+    ProxyRoute(
+        "POST",
+        "/api/v1/settlements/{settlement_id}/upgrade-tier",
+        ("api", "v1", "settlements", "{settlement_id}", "upgrade-tier"),
+        SERVICE,
+        name="upgrade_settlement_tier",
+        doc="Upgrade a settlement to a higher civic tier (game_session checks upgrade).",
+        body="json",
+        principal=True,
+    ),
+    ProxyRoute(
+        "POST",
+        "/api/v1/establishments/{establishment_id}/upgrade",
+        ("api", "v1", "establishments", "{establishment_id}", "upgrade"),
+        SERVICE,
+        name="upgrade_establishment",
+        doc="Upgrade an establishment tier, amenity, or capacity (game_session checks edit).",
+        body="json",
+        principal=True,
+    ),
+    ProxyRoute(
+        "POST",
+        "/api/v1/settlements/{settlement_id}/bulletin",
+        ("api", "v1", "settlements", "{settlement_id}", "bulletin"),
+        SERVICE,
+        name="pin_bulletin_notice",
+        doc="Pin a notice to the settlement bulletin board (game_session checks the board).",
+        body="json",
+        principal=True,
+        status_code=status.HTTP_201_CREATED,
+    ),
+    ProxyRoute(
+        "GET",
+        "/api/v1/settlements/{settlement_id}/bulletin",
+        ("api", "v1", "settlements", "{settlement_id}", "bulletin"),
+        SERVICE,
+        name="list_bulletin_notices",
+        doc="List the bulletin notices of a settlement (game_session checks view).",
+        principal=True,
+    ),
+    ProxyRoute(
+        "DELETE",
+        "/api/v1/settlements/{settlement_id}/bulletin/{notice_id}",
+        ("api", "v1", "settlements", "{settlement_id}", "bulletin", "{notice_id}"),
+        SERVICE,
+        name="remove_bulletin_notice",
+        doc="Remove or fulfill a bulletin notice (game_session checks the board).",
+        query_defaults=(("reason", "removed"),),
+        principal=True,
+    ),
+    ProxyRoute(
+        "POST",
+        "/api/v1/settlements/{settlement_id}/bulletin/{notice_id}/decrypt",
+        ("api", "v1", "settlements", "{settlement_id}", "bulletin", "{notice_id}", "decrypt"),
+        SERVICE,
+        name="decrypt_cipher_notice",
+        doc="Submit a cipher solution for a hidden bulletin notice (game_session checks the board).",
+        body="json",
+        principal=True,
+    ),
 )
-async def construct_establishment(
-    settlement_id: str, request: Request, user: CallerPrincipal, body: Annotated[Any, Body()]
-) -> Any:
-    """Construct an establishment in a settlement district (game_session checks upgrade)."""
-    return await forward_json(
-        request,
-        service=SERVICE,
-        method="POST",
-        path=_owner_path("settlements", settlement_id, "establishments"),
-        json_body=body,
-    )
 
-
-@router.get("/api/v1/settlements/{settlement_id}/establishments")
-async def list_settlement_establishments(
-    settlement_id: str, request: Request, user: CallerPrincipal
-) -> Any:
-    """List the establishments of a settlement (game_session checks view)."""
-    return await forward_json(
-        request,
-        service=SERVICE,
-        method="GET",
-        path=_owner_path("settlements", settlement_id, "establishments"),
-    )
-
-
-@router.get("/api/v1/establishments/{establishment_id}")
-async def get_establishment(establishment_id: str, request: Request, user: CallerPrincipal) -> Any:
-    """Read one establishment (game_session checks view)."""
-    return await forward_json(
-        request,
-        service=SERVICE,
-        method="GET",
-        path=_owner_path("establishments", establishment_id),
-    )
-
-
-@router.post("/api/v1/settlements/{settlement_id}/upgrade-tier")
-async def upgrade_settlement_tier(
-    settlement_id: str, request: Request, user: CallerPrincipal, body: Annotated[Any, Body()]
-) -> Any:
-    """Upgrade a settlement to a higher civic tier (game_session checks upgrade)."""
-    return await forward_json(
-        request,
-        service=SERVICE,
-        method="POST",
-        path=_owner_path("settlements", settlement_id, "upgrade-tier"),
-        json_body=body,
-    )
-
-
-@router.post("/api/v1/establishments/{establishment_id}/upgrade")
-async def upgrade_establishment(
-    establishment_id: str, request: Request, user: CallerPrincipal, body: Annotated[Any, Body()]
-) -> Any:
-    """Upgrade an establishment tier, amenity, or capacity (game_session checks edit)."""
-    return await forward_json(
-        request,
-        service=SERVICE,
-        method="POST",
-        path=_owner_path("establishments", establishment_id, "upgrade"),
-        json_body=body,
-    )
-
-
-@router.post("/api/v1/settlements/{settlement_id}/bulletin", status_code=status.HTTP_201_CREATED)
-async def pin_bulletin_notice(
-    settlement_id: str, request: Request, user: CallerPrincipal, body: Annotated[Any, Body()]
-) -> Any:
-    """Pin a notice to the settlement bulletin board (game_session checks the board)."""
-    return await forward_json(
-        request,
-        service=SERVICE,
-        method="POST",
-        path=_owner_path("settlements", settlement_id, "bulletin"),
-        json_body=body,
-    )
-
-
-@router.get("/api/v1/settlements/{settlement_id}/bulletin")
-async def list_bulletin_notices(settlement_id: str, request: Request, user: CallerPrincipal) -> Any:
-    """List the bulletin notices of a settlement (game_session checks view)."""
-    return await forward_json(
-        request,
-        service=SERVICE,
-        method="GET",
-        path=_owner_path("settlements", settlement_id, "bulletin"),
-    )
-
-
-@router.delete("/api/v1/settlements/{settlement_id}/bulletin/{notice_id}")
-async def remove_bulletin_notice(
-    settlement_id: str,
-    notice_id: str,
-    request: Request,
-    user: CallerPrincipal,
-    reason: str = "removed",
-) -> Any:
-    """Remove or fulfill a bulletin notice (game_session checks the board)."""
-    return await forward_json(
-        request,
-        service=SERVICE,
-        method="DELETE",
-        path=_owner_path("settlements", settlement_id, "bulletin", notice_id),
-        params={"reason": reason},
-    )
-
-
-@router.post("/api/v1/settlements/{settlement_id}/bulletin/{notice_id}/decrypt")
-async def decrypt_cipher_notice(
-    settlement_id: str,
-    notice_id: str,
-    request: Request,
-    user: CallerPrincipal,
-    body: Annotated[Any, Body()],
-) -> Any:
-    """Submit a cipher solution for a hidden bulletin notice (game_session checks the board)."""
-    return await forward_json(
-        request,
-        service=SERVICE,
-        method="POST",
-        path=_owner_path("settlements", settlement_id, "bulletin", notice_id, "decrypt"),
-        json_body=body,
-    )
+register_proxy_routes(router, ROUTES)
