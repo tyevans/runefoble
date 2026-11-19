@@ -82,4 +82,3 @@ class DynamicToolRegistry:
         if not tool_def:
             raise ValueError(f"Dynamic tool '{name}' not found")
         return evaluate_handler(tool_def.handler, arguments)
-

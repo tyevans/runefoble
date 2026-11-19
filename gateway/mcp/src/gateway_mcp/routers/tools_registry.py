@@ -148,7 +148,9 @@ async def _permission_denied(_request: Request, exc: PermissionDenied) -> JSONRe
     return JSONResponse(status_code=403, content={"detail": str(exc)})
 
 
-async def _authorization_unavailable(_request: Request, _exc: AuthorizationUnavailable) -> JSONResponse:
+async def _authorization_unavailable(
+    _request: Request, _exc: AuthorizationUnavailable
+) -> JSONResponse:
     """Map a failed authorization decision to 503. A failed check is never a success."""
     return JSONResponse(
         status_code=503,
@@ -176,7 +178,5 @@ def mount_tools_registry(
         AuthorizationUnavailable,
         _authorization_unavailable,  # type: ignore[arg-type]
     )
-    admin.include_router(
-        build_tools_registry_router(principal_dependency, lambda: container)
-    )
+    admin.include_router(build_tools_registry_router(principal_dependency, lambda: container))
     app.router.routes.append(Mount("/", app=admin))

@@ -13,6 +13,8 @@ from typing import Any
 
 import httpx
 import pytest
+from gateway_mcp.container import GatewayMcpContainer
+from gateway_mcp.server import build_mcp
 from mcp.types import CallToolResult
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.mock import MockSpiceDBClient
@@ -22,8 +24,6 @@ from runefoble_auth.sync_events import handle_domain_event
 from tests.helpers.campaign_setup import create_campaign
 from tests.helpers.game_session_setup import start_session_with_player
 from tests.helpers.live_services import closed_port_url, serve, unavailable_app
-from gateway_mcp.container import GatewayMcpContainer
-from gateway_mcp.server import build_mcp
 from tests.helpers.mcp_http import call_tool_over_http, listed_tools, serve_mcp
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.service_harness import routed_event_bus

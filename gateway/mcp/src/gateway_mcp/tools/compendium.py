@@ -17,9 +17,12 @@ if TYPE_CHECKING:
 
 
 async def query_monster_stat_block(
-    container: GatewayMcpContainer,monster_name: str, ctx: Context | None = None) -> dict[str, Any]:
+    container: GatewayMcpContainer, monster_name: str, ctx: Context | None = None
+) -> dict[str, Any]:
     """Retrieve full canonical monster stat block by name (e.g. 'Goblin', 'Ogre', 'Young Red Dragon')."""
-    monster = await OwningServices(container.service_clients, bearer=caller_bearer(ctx)).get_monster(monster_name.strip())
+    monster = await OwningServices(
+        container.service_clients, bearer=caller_bearer(ctx)
+    ).get_monster(monster_name.strip())
     return {"status": "success", "monster": monster}
 
 
@@ -30,9 +33,9 @@ async def calculate_encounter_balance(
     ctx: Context | None = None,
 ) -> dict[str, Any]:
     """Calculate balanced combat encounter group and CR XP thresholds for a party roster."""
-    return await OwningServices(container.service_clients, bearer=caller_bearer(ctx)).balance_encounter(
-        party_levels, target_difficulty
-    )
+    return await OwningServices(
+        container.service_clients, bearer=caller_bearer(ctx)
+    ).balance_encounter(party_levels, target_difficulty)
 
 
 def register_compendium_tools(mcp: "FastMCP", container: GatewayMcpContainer) -> None:

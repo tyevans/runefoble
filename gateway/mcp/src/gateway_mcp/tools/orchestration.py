@@ -10,8 +10,8 @@ from typing import TYPE_CHECKING, Any, Literal
 from mcp.server.fastmcp import Context
 
 from gateway_mcp.caller import caller_bearer
-from gateway_mcp.fastmcp_tools import find_tool
 from gateway_mcp.container import GatewayMcpContainer, bind_container
+from gateway_mcp.fastmcp_tools import find_tool
 from gateway_mcp.owning_services import OwningServices, ServiceError
 from gateway_mcp.tool_authz import (
     ToolAuthzError,
@@ -44,7 +44,9 @@ async def narrate_with_the_watcher(
         "scene_environment": scene_environment,
         "tone": tone,
     }
-    return await OwningServices(container.service_clients, bearer=caller_bearer(ctx)).narrate(request)
+    return await OwningServices(container.service_clients, bearer=caller_bearer(ctx)).narrate(
+        request
+    )
 
 
 async def execute_agent_action_plan(
@@ -116,7 +118,9 @@ async def execute_agent_action_plan(
         )
         target = params.get("target", params.get("token_id"))
         try:
-            requirement = step_requirement(container.registry, tool_name, {"session_id": session_id, **params})
+            requirement = step_requirement(
+                container.registry, tool_name, {"session_id": session_id, **params}
+            )
             if requirement is not None:
                 await check_requirement(container.permissions, caller_id, requirement)
         except ToolAuthzError as exc:

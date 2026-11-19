@@ -33,6 +33,7 @@ TIMEOUT_SECONDS = 5.0
 TokenType = Literal["pc", "monster", "npc", "obstacle", "loot"]
 InitiatedBy = Literal["player", "the_watcher", "stand_in"]
 
+
 class ServiceError(Exception):
     """Base error for a failed call to an owning service."""
 

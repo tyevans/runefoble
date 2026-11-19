@@ -72,9 +72,7 @@ def serve_mcp(container: GatewayMcpContainer | None = None) -> Iterator[str]:
     production does (TASK-0532). It trusts the shared test issuer, so each tool sees the
     verified caller of its request.
     """
-    with serve(
-        mcp_http_app(container or GatewayMcpContainer.default()), lifespan="on"
-    ) as base_url:
+    with serve(mcp_http_app(container or GatewayMcpContainer.default()), lifespan="on") as base_url:
         yield f"{base_url}/mcp"
 
 

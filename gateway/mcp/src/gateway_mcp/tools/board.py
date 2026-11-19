@@ -97,9 +97,12 @@ async def _challenge_rating(
 
 
 async def inspect_tactical_board(
-    container: GatewayMcpContainer,session_id: str, ctx: Context | None = None) -> dict[str, Any]:
+    container: GatewayMcpContainer, session_id: str, ctx: Context | None = None
+) -> dict[str, Any]:
     """Retrieve all tokens, coordinates, and grid dimensions for the active session."""
-    board = await OwningServices(container.service_clients, bearer=caller_bearer(ctx)).get_board(session_id)
+    board = await OwningServices(container.service_clients, bearer=caller_bearer(ctx)).get_board(
+        session_id
+    )
     return _board_summary(board)
 
 
@@ -132,7 +135,8 @@ async def move_board_token(
 
 
 async def query_encounter_state(
-    container: GatewayMcpContainer,encounter_id: str, ctx: Context | None = None) -> dict[str, Any]:
+    container: GatewayMcpContainer, encounter_id: str, ctx: Context | None = None
+) -> dict[str, Any]:
     """Query an encounter: round, turn order, active combatant, tokens, grid, and hazards.
 
     Round and turn order come from game_session. Tokens, grid, and hazards come from

@@ -18,9 +18,12 @@ if TYPE_CHECKING:
 
 
 async def get_session_state(
-    container: GatewayMcpContainer,session_id: str, ctx: Context | None = None) -> dict[str, Any]:
+    container: GatewayMcpContainer, session_id: str, ctx: Context | None = None
+) -> dict[str, Any]:
     """Read the stored state of a game session from game_session."""
-    session = await OwningServices(container.service_clients, bearer=caller_bearer(ctx)).get_session(session_id)
+    session = await OwningServices(
+        container.service_clients, bearer=caller_bearer(ctx)
+    ).get_session(session_id)
     return {
         "session_id": session["session_id"],
         "campaign_id": session["campaign_id"],
@@ -36,14 +39,17 @@ async def get_session_state(
 
 
 async def get_encounter_state(
-    container: GatewayMcpContainer,session_id: str, ctx: Context | None = None) -> dict[str, Any]:
+    container: GatewayMcpContainer, session_id: str, ctx: Context | None = None
+) -> dict[str, Any]:
     """Read the encounter of a session: tokens and grid from board_state, round and order from game_session."""
     return await query_encounter_state(container, session_id, ctx=ctx)
 
 
 def register_session_resources(mcp: "FastMCP", container: GatewayMcpContainer) -> None:
     """Register session and encounter resources on FastMCP."""
-    mcp.resource("session://{session_id}/state", mime_type="application/json")(bind_container(get_session_state, container))
+    mcp.resource("session://{session_id}/state", mime_type="application/json")(
+        bind_container(get_session_state, container)
+    )
     mcp.resource("encounter://{session_id}/current", mime_type="application/json")(
         bind_container(get_encounter_state, container)
     )

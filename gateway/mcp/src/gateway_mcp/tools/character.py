@@ -24,10 +24,13 @@ if TYPE_CHECKING:
 
 
 async def inspect_inventory(
-    container: GatewayMcpContainer,character_id: str, ctx: Context | None = None) -> dict[str, Any]:
+    container: GatewayMcpContainer, character_id: str, ctx: Context | None = None
+) -> dict[str, Any]:
     """Inspect a character's equipped items and carried inventory."""
     await authorize_tool_call(ctx, container.permissions, character_view(character_id))
-    sheet = await OwningServices(container.service_clients, bearer=caller_bearer(ctx)).get_character(character_id)
+    sheet = await OwningServices(
+        container.service_clients, bearer=caller_bearer(ctx)
+    ).get_character(character_id)
     return {
         "character_id": sheet["character_id"],
         "equipped": sheet["equipment"],
@@ -36,10 +39,13 @@ async def inspect_inventory(
 
 
 async def get_character_sheet(
-    container: GatewayMcpContainer,character_id: str, ctx: Context | None = None) -> dict[str, Any]:
+    container: GatewayMcpContainer, character_id: str, ctx: Context | None = None
+) -> dict[str, Any]:
     """Retrieve complete character sheet details including stats, hit points, equipment, and conditions."""
     await authorize_tool_call(ctx, container.permissions, character_view(character_id))
-    sheet = await OwningServices(container.service_clients, bearer=caller_bearer(ctx)).get_character(character_id)
+    sheet = await OwningServices(
+        container.service_clients, bearer=caller_bearer(ctx)
+    ).get_character(character_id)
     return {
         "character_id": sheet["character_id"],
         "name": sheet["name"],
@@ -60,13 +66,16 @@ async def get_character_sheet(
 
 async def apply_absentee_penalty(
     container: GatewayMcpContainer,
-    character_id: str, penalty_type: str, explanation: str, ctx: Context | None = None
+    character_id: str,
+    penalty_type: str,
+    explanation: str,
+    ctx: Context | None = None,
 ) -> dict[str, Any]:
     """Impose a session miss penalty (e.g. 'drunk', 'foolishness', 'cowardice') on an absent player's PC."""
     await authorize_tool_call(ctx, container.permissions, dm_action_on_character(character_id))
-    sheet = await OwningServices(container.service_clients, bearer=caller_bearer(ctx)).apply_penalty(
-        character_id, penalty_type=penalty_type, description=explanation
-    )
+    sheet = await OwningServices(
+        container.service_clients, bearer=caller_bearer(ctx)
+    ).apply_penalty(character_id, penalty_type=penalty_type, description=explanation)
     return {
         "status": "applied",
         "character_id": sheet["character_id"],
@@ -107,9 +116,9 @@ async def modify_character_hp(
 ) -> dict[str, Any]:
     """Modify a character or token's hit points (negative for damage, positive for healing)."""
     await authorize_tool_call(ctx, container.permissions, dm_action_on_character(character_id))
-    sheet = await OwningServices(container.service_clients, bearer=caller_bearer(ctx)).change_health(
-        character_id, delta=delta, source=f"{reason} [{damage_type}]"
-    )
+    sheet = await OwningServices(
+        container.service_clients, bearer=caller_bearer(ctx)
+    ).change_health(character_id, delta=delta, source=f"{reason} [{damage_type}]")
     return {
         "status": "success",
         "character_id": sheet["character_id"],
@@ -158,9 +167,9 @@ async def _impose_condition(
     """Send a condition to character_sheet and return the conditions it now stores."""
     await authorize_tool_call(ctx, container.permissions, dm_action_on_character(character_id))
     name = condition.lower().strip()
-    sheet = await OwningServices(container.service_clients, bearer=caller_bearer(ctx)).apply_condition(
-        character_id, condition=name, duration_rounds=duration_rounds, source=source
-    )
+    sheet = await OwningServices(
+        container.service_clients, bearer=caller_bearer(ctx)
+    ).apply_condition(character_id, condition=name, duration_rounds=duration_rounds, source=source)
     return {
         "status": "condition_applied",
         "character_id": sheet["character_id"],
