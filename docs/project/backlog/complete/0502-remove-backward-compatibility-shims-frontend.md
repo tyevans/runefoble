@@ -25,7 +25,7 @@ target_release: 0.9.0
 ## Status
 Complete
 
-Audit 2026-11-17: re-counted. There are 29 forwarders: 28 under `frontend/src/components/` (the 27 named in the Problem Statement plus `components/audience-studio.ts`) and `frontend/src/utils/dice.ts`. Delete all 29 and list each by name before pull.
+Audit 2026-11-17: re-counted. There are 29 forwarders: 28 under `frontend/src/components/` (the 27 named in the Problem Statement plus `components/audience-studio.ts`) and `frontend/src/utils/dice.ts` (removed). Delete all 29 and list each by name before pull.
 
 ## Summary
 Delete all 29 forwarding export components in `frontend/src/components/` created for "App Shell backwards compatibility", migrate any lingering App Shell imports directly to the vendored microfrontend packages (`@runefoble/*-ui`), and purge legacy fallback re-export assertions from frontend test suites.

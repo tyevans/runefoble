@@ -32,7 +32,7 @@ Source-text and file-existence asserts remain (TASK-0681 forbids them), three br
 None. Refactor and consolidation chosen by the user on 2026-11-18.
 
 ## Detailed Specification & Implementation Plan
-1. Delete the structural asserts; keep any behaviour check. Delete the three bridge modules, `tests/helpers/app_shell_source.py` and the stale `collect_ignore` entry. Rewrite or delete facade tests.
+1. Delete the structural asserts; keep any behaviour check. Delete the three bridge modules, `tests/helpers/app_shell_source.py` (removed) and the stale `collect_ignore` entry. Rewrite or delete facade tests.
 
 4. Frontend node tests also hold line-count and file-existence blocks ("File Length Invariants"). Remove them from `frontend/test/stand-in-guardrails-decomposition.test.ts`, `bulletin-board-styles-decomposition.test.ts`, `radial-menu-decomposition.test.ts`, `character-sheet-actions-decomposition.test.ts`, `character-roster-styles-decomposition.test.ts` and `campaign-atlas-templates.test.ts`. Keep behaviour checks.
 

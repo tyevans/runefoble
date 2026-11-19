@@ -31,7 +31,7 @@ Reference pages document deleted projections, a how-to contradicts Hard Invarian
 None. Refactor and consolidation chosen by the user on 2026-11-18.
 
 ## Detailed Specification & Implementation Plan
-1. Fix D1 to D5. Stop tracking the generated `docs/changelog.md` and `docs/operating-manual.md` copies if the docs build creates them (D6). Merge the two Playwright BDD how-tos (D7). Move reference sections out of how-tos where cheap (D8).
+1. Fix D1 to D5. Stop tracking the generated `docs/changelog.md` (removed) and `docs/operating-manual.md` (removed) copies if the docs build creates them (D6). Merge the two Playwright BDD how-tos (D7). Move reference sections out of how-tos where cheap (D8).
 
 ## Frontdoor Blackbox Test Plan
 - `scripts/check_agents_index.py` passes; the docs build passes; links resolve.

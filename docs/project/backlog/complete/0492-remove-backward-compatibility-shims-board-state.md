@@ -24,13 +24,13 @@ target_release: 0.9.0
 Complete
 
 ## Summary
-Decommission backward-compatibility router aggregator facades (`src/board_state/routers/previews.py`), frontend template aggregator facades (`ui/src/board-templates.ts`), and legacy re-export shims from `services/board_state`, migrating all Python and Lit Web Component callers directly to modular submodules.
+Decommission backward-compatibility router aggregator facades (`src/board_state/routers/previews.py` (removed)), frontend template aggregator facades (`ui/src/board-templates.ts` (removed)), and legacy re-export shims from `services/board_state`, migrating all Python and Lit Web Component callers directly to modular submodules.
 
 ## Problem Statement
 In `services/board_state`:
-- `src/board_state/routers/previews.py` acts as an aggregator facade re-exporting preview and kinematics endpoints.
-- `ui/src/board-templates.ts` acts as an aggregator facade re-exporting modular Lit HTML templates across kinematics, cell, and overlays.
-- `tests/test_board-templates.test.ts` actively tests re-export matching.
+- `src/board_state/routers/previews.py` (removed) acts as an aggregator facade re-exporting preview and kinematics endpoints.
+- `ui/src/board-templates.ts` (removed) acts as an aggregator facade re-exporting modular Lit HTML templates across kinematics, cell, and overlays.
+- `tests/test_board-templates.test.ts` (removed) actively tests re-export matching.
 These aggregator facades exist solely for transitional backward compatibility, conflicting with the DoR zero-shim requirement.
 
 ## Documentation & Architecture Review
@@ -48,9 +48,9 @@ These aggregator facades exist solely for transitional backward compatibility, c
 
 ## Detailed Specification & Implementation Plan
 1. **Decommission Router Aggregator Facade**:
-   - In `services/board_state/src/board_state/routers/previews.py`, decompose or retire the facade; mount modular sub-routers directly in `routers/__init__.py` and `main.py`.
+   - In `services/board_state/src/board_state/routers/previews.py` (removed), decompose or retire the facade; mount modular sub-routers directly in `routers/__init__.py` and `main.py`.
 2. **Decommission UI Template Aggregator Facade**:
-   - In `services/board_state/ui/src/board-templates.ts`, remove the facade re-export file.
+   - In `services/board_state/ui/src/board-templates.ts` (removed), remove the facade re-export file.
    - Update `<runefoble-board>` and other UI consumers to import cell, kinematics, and overlay templates directly from `ui/src/templates/*`.
 3. **Clean Up Tests**:
    - Update `frontend/test/board-templates.test.ts` to test template submodules directly, removing facade parity assertions.
@@ -66,8 +66,8 @@ These aggregator facades exist solely for transitional backward compatibility, c
 - **Testable (T)**: Verified via `uv run pytest tests/test_board_state*` and `pnpm test` in `services/board_state/ui`.
 
 ## Definition of Done
-1. Router aggregator facade `src/board_state/routers/previews.py` retired.
-2. UI template aggregator `ui/src/board-templates.ts` deleted and call sites migrated.
+1. Router aggregator facade `src/board_state/routers/previews.py` (removed) retired.
+2. UI template aggregator `ui/src/board-templates.ts` (removed) deleted and call sites migrated.
 3. Obsolete facade parity tests removed.
 4. Python and frontend typechecks/tests pass cleanly.
 

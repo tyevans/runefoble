@@ -25,14 +25,14 @@ target_release: 0.9.0
 Complete
 
 ## Summary
-Decommission `voice_agent/room.py` aggregator facade, excise backward-compatibility method aliases in `phonetics.py` and `audio_utils.py`, migrate call sites to modular subpackages, and remove obsolete backward-compatibility assertions from `tests/test_voice_agent_dsp.py`.
+Decommission `voice_agent/room.py` (removed) aggregator facade, excise backward-compatibility method aliases in `phonetics.py` and `audio_utils.py`, migrate call sites to modular subpackages, and remove obsolete backward-compatibility assertions from `tests/test_voice_agent_dsp.py`.
 
 ## Problem Statement
 In `services/voice_agent`:
-- `src/voice_agent/room.py` exists as a 32-line facade re-exporting room aggregates, state models, and coordinator for backward compatibility.
+- `src/voice_agent/room.py` (removed) exists as a 32-line facade re-exporting room aggregates, state models, and coordinator for backward compatibility.
 - `src/voice_agent/phonetics.py` retains a backward-compatibility alias `apply_slurred_speech` for canonical phonetic slurring.
 - `src/voice_agent/audio_utils.py` retains a private alias for `to_samples_array` for backward compatibility.
-- `tests/test_voice_agent_dsp.py:test_backward_compatible_reexports` actively tests backward-compatible re-exports from `voice_agent.dsp` and `voice_agent.room`.
+- `tests/test_voice_agent_dsp.py:test_backward_compatible_reexports` (removed) actively tests backward-compatible re-exports from `voice_agent.dsp` and `voice_agent.room`.
 These artifacts represent legacy debt violating the updated DoR.
 
 ## Documentation & Architecture Review
@@ -50,7 +50,7 @@ These artifacts represent legacy debt violating the updated DoR.
 
 ## Detailed Specification & Implementation Plan
 1. **Decommission Room Facade**:
-   - Delete or refactor `services/voice_agent/src/voice_agent/room.py` to route callers directly to `voice_agent.room.*` (room aggregates, coordinator, models).
+   - Delete or refactor `services/voice_agent/src/voice_agent/room.py` (removed) to route callers directly to `voice_agent.room.*` (room aggregates, coordinator, models).
 2. **Remove Function and Utility Aliases**:
    - In `services/voice_agent/src/voice_agent/phonetics.py`, remove the `apply_slurred_speech` alias, standardizing callers on the canonical function name.
    - In `services/voice_agent/src/voice_agent/audio_utils.py`, remove the backward-compatibility alias for `to_samples_array`.
