@@ -263,9 +263,24 @@ The App Shell mounts the compendium in two places. The route needs a signed-in p
 
 The encounter builder is a tab inside `<runefoble-rules-compendium>`, so neither route mounts it a second time.
 
+### Encounter builder errors
+
+Auto-Balance sends `POST /api/v1/compendium/encounters/balance` through the shared UI transport with the shell bearer (TASK-0759). When the request fails, the builder keeps the draft and shows one of these texts in an alert box:
+
+| Reply | Text |
+|---|---|
+| `401` | `Sign in to continue with this encounter balance request.` |
+| `403` | `Your account is not authorized for this encounter balance request.` |
+| `503` | `Service unavailable: <detail>` |
+| Other codes, for example `422` | The server detail. |
+| No connection | `Network error: <reason>` |
+| Empty `apiBaseUrl` | `The compendium service address is not set.` The builder sends nothing. |
+
+See [UI Transport](../reference/ui-transport.md).
+
 ### Key Features:
 - **Instant Hybrid Search**: Debounced autocomplete with sub-50ms latency badge and category filter pills (`ALL`, `MONSTER`, `SPELL`, `CONDITION`, `HOMEBREW`).
-- **Interactive CR Encounter Builder**: Dynamic XP threshold computation across party levels/sizes with real-time lethality calculation and 1-click Auto-Balance.
+- **Interactive CR Encounter Builder**: Dynamic XP threshold computation across party levels/sizes with real-time lethality calculation and 1-click Auto-Balance. A failed Auto-Balance shows its reason.
 - **Homebrew Forge Subview**: Dedicated `<runefoble-homebrew-creator>` component with form validation against compendium schemas guarded by SpiceDB Zanzibar authorization.
 - **Modular Sub-Stylesheets**: Tokenized CSS modules under `src/styles/` (`compendium-base.styles.ts`, `encounter-builder.styles.ts`, `homebrew-form.styles.ts`) strictly < 150 lines per Hard Invariant 6 and ADR-0013.
 
