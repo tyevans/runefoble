@@ -6,6 +6,7 @@ from typing import Any
 from uuid import UUID
 
 from board_state.aoe_models import AoETemplateState
+from board_state.camera.models import CameraTarget
 from board_state.models.physics import DiceSettledState, PhysicsCollisionState
 from board_state.models.terrain import TerrainCellState, TerrainDict
 from board_state.models.tokens import PlacedTokenState
@@ -37,6 +38,7 @@ class BoardState(BaseModel, BoardTransitionsMixin):
     last_collision: PhysicsCollisionState | None = None
     last_dice_settled: DiceSettledState | None = None
     current_map_id: str | None = None
+    camera: CameraTarget = Field(default_factory=CameraTarget.initial)
     traps: dict[str, Any] = Field(default_factory=dict)
     last_trap_sprung: Any | None = None
 

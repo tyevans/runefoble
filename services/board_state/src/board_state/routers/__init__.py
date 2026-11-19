@@ -4,9 +4,11 @@ from board_state.routers.actions import router as actions_router
 from board_state.routers.aoe import router as aoe_router
 from board_state.routers.boards import router as boards_router
 from board_state.routers.boards import ui_manifest_router
+from board_state.routers.camera import router as camera_router
 from board_state.routers.physics import router as physics_router
 from board_state.routers.previews_http import router as previews_http_router
 from board_state.routers.previews_ws import router as previews_ws_router
+from board_state.routers.spectator import router as spectator_router
 from board_state.routers.terrain import router as terrain_router
 from board_state.routers.tokens import router as tokens_router
 from board_state.routers.traps import router as traps_router
@@ -17,10 +19,12 @@ __all__ = [
     "actions_router",
     "aoe_router",
     "boards_router",
+    "camera_router",
     "ui_manifest_router",
     "physics_router",
     "previews_http_router",
     "previews_ws_router",
+    "spectator_router",
     "terrain_router",
     "tokens_router",
     "traps_router",

@@ -10,9 +10,11 @@ from board_state.routers import (
     actions_router,
     aoe_router,
     boards_router,
+    camera_router,
     physics_router,
     previews_http_router,
     previews_ws_router,
+    spectator_router,
     terrain_router,
     tokens_router,
     traps_router,
@@ -41,6 +43,8 @@ app = FastAPI(
 
 app.include_router(ui_manifest_router)
 app.include_router(boards_router)
+app.include_router(spectator_router)
+app.include_router(camera_router)
 app.include_router(tokens_router)
 app.include_router(terrain_router)
 app.include_router(previews_http_router)
