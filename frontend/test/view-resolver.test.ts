@@ -59,7 +59,7 @@ describe('fetchSession without a title', () => {
   afterEach(() => gateway.restore());
 
   it('returns an empty title and never invents one', async () => {
-    gateway = installFakeGateway({ 'GET /api/v1/sessions/s9': { body: { id: 's9', campaign_id: 'c1' } } });
+    gateway = installFakeGateway({ 'GET /api/v1/sessions/s9': { body: { id: 's9', campaign_id: 'c1', title: '', status: 'lobby', round: 1 } } });
     const result = await new AppDataService().fetchSession('s9');
     assert.ok(result.ok);
     assert.equal(result.data.title, '');

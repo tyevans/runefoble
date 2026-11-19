@@ -12,6 +12,9 @@ import type { CampaignCapabilities } from './campaign-capabilities.ts';
 import {
   dataFailure, dataOk, NETWORK_FAILURE_MESSAGE, UNREADABLE_RESPONSE_MESSAGE, type DataResult,
 } from './data-result.ts';
+import {
+  isArray, isNonEmptyString, isPositiveInteger, isString, malformedResponse, requireFields, type RequiredFields,
+} from './required-fields.ts';
 import { errorMessageFromBody } from '@runefoble/ui-core';
 import {
   mutateCharacterHealth, mutateCharacterEquip, mutateCharacterUnequip, mutateCharacterAddInventory,
@@ -100,32 +103,45 @@ export class AppDataService {
   async fetchCampaignSessions(campaignId: string): Promise<DataResult<CampaignSessionItem[]>> {
     const res = await this.request<any[]>(`${this.apiBase}/campaigns/${campaignId}/sessions`);
     if (!res.ok) return res;
-    return dataOk(res.data.map((item) => this.toSessionItem(item)));
+    if (!isArray(res.data)) return malformedResponse('the session list is not a list');
+    const items: CampaignSessionItem[] = [];
+    for (const item of res.data) {
+      const mapped = this.toSessionItem(item);
+      if (!mapped.ok) return mapped;
+      items.push(mapped.data);
+    }
+    return dataOk(items);
   }
 
   /** Reads the caravan notice board of a shared world through the gateway (TASK-0807). */
   async fetchCaravanContracts(sharedWorldId: string): Promise<DataResult<CaravanContractItem[]>> {
-    const res = await this.request<{ contracts?: CaravanContractItem[] }>(`${this.apiBase}/shared-worlds/${sharedWorldId}/caravans/contracts`);
+    const res = await this.request<{ contracts: CaravanContractItem[] }>(`${this.apiBase}/shared-worlds/${sharedWorldId}/caravans/contracts`);
     if (!res.ok) return res;
-    return dataOk(res.data.contracts ?? []);
+    if (!isArray(res.data.contracts)) return malformedResponse('contracts is not a list');
+    return dataOk(res.data.contracts);
   }
 
   async fetchSession(sessionId: string): Promise<DataResult<CampaignSessionItem>> {
     const res = await this.request<any>(`${this.apiBase}/sessions/${sessionId}`);
     if (!res.ok) return res;
     const data = res.data;
-    return dataOk({
+    // `id` echoes the requested session id, the identifier the caller already holds.
+    return requireFields({
       id: data.id || sessionId,
-      campaignId: data.campaign_id || data.campaignId || '',
-      title: data.title || '',
-      status: data.status || 'active',
-      round: data.round || 1,
+      campaignId: data.campaign_id || data.campaignId,
+      title: data.title,
+      status: data.status,
+      round: data.round,
       participantsCount: Array.isArray(data.participants) ? data.participants.length : (data.participantsCount || 0),
-    });
+    }, SESSION_REQUIRED_FIELDS);
   }
 
-  private toSessionItem(item: any): CampaignSessionItem {
-    return { ...item, campaignId: item.campaign_id || item.campaignId, participantsCount: item.participants_count ?? item.participantsCount ?? 0 };
+  private toSessionItem(item: any): DataResult<CampaignSessionItem> {
+    return requireFields({
+      ...item,
+      campaignId: item?.campaign_id || item?.campaignId,
+      participantsCount: item?.participants_count ?? item?.participantsCount ?? 0,
+    }, SESSION_REQUIRED_FIELDS);
   }
 
   async fetchCharacters(): Promise<DataResult<CharacterItem[]>> { return this.request<CharacterItem[]>(`${this.apiBase}/characters`); }
@@ -168,14 +184,16 @@ export class AppDataService {
     if (!session.ok) return session;
     const characters = await this.fetchCharacters();
     if (!characters.ok) return characters;
-    const participants: LobbyParticipant[] = Array.isArray(session.data?.participants) ? session.data.participants : [];
-    return dataOk({ participants, availableCharacters: resolveLobbyAvailableCharacters(characters.data, campaignId) });
+    const participants = session.data?.participants;
+    if (!isArray(participants)) return malformedResponse('the session participants are not a list');
+    return dataOk({ participants: participants as LobbyParticipant[], availableCharacters: resolveLobbyAvailableCharacters(characters.data, campaignId) });
   }
 
   async fetchBoardState(sessionId: string): Promise<DataResult<{ cols: number; rows: number; tokens: BoardToken[] }>> {
     const res = await this.request<any>(`${this.apiBase}/boards/${sessionId}`);
     if (!res.ok) return res;
-    return dataOk({ cols: res.data?.cols ?? 10, rows: res.data?.rows ?? 10, tokens: res.data?.tokens || [] });
+    // `tokens` is optional: an absent list reads as no tokens on the board.
+    return requireFields({ cols: res.data?.cols, rows: res.data?.rows, tokens: res.data?.tokens || [] }, BOARD_REQUIRED_FIELDS);
   }
 
   async fetchBoardTokens(sessionId: string): Promise<DataResult<BoardToken[]>> {
@@ -191,7 +209,7 @@ export class AppDataService {
 
   async createCampaignSession(campaignId: string, payload: { title: string; status?: string; scheduled_at?: string; scheduledAt?: string; description?: string }): Promise<DataResult<CampaignSessionItem>> {
     const res = await this.request<any>(`${this.apiBase}/campaigns/${campaignId}/sessions`, { method: 'POST', body: JSON.stringify(payload) });
-    return res.ok ? dataOk(this.toSessionItem(res.data)) : res;
+    return res.ok ? this.toSessionItem(res.data) : res;
   }
 
   async createCampaign(payload: CreateCampaignPayload): Promise<DataResult<CampaignItem>> {
@@ -219,5 +237,23 @@ export class AppDataService {
 }
 
 export interface UpdateProfilePayload { displayName?: string; avatarUrl?: string; bio?: string; email?: string; }
+
+/**
+ * Required fields of a session as the App Shell maps it (TASK-0867).
+ * `participantsCount` is not listed: its read belongs to TASK-0771.
+ */
+const SESSION_REQUIRED_FIELDS: RequiredFields = {
+  id: isNonEmptyString,
+  campaignId: isNonEmptyString,
+  title: isString,
+  status: isNonEmptyString,
+  round: isPositiveInteger,
+};
+
+/** Required fields of a board state. `tokens` is optional and defaults to an empty list. */
+const BOARD_REQUIRED_FIELDS: RequiredFields = {
+  cols: isPositiveInteger,
+  rows: isPositiveInteger,
+};
 
 export const appDataService = AppDataService.getInstance();
