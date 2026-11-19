@@ -130,7 +130,7 @@ Each limit below has no App Shell path yet. Fix the blocker, then update the sta
 | Limit | Affects | Blocker |
 |---|---|---|
 | No App Shell route creates a board or places tokens | Steps 2b, 2c | No backlog task yet |
-| The board does not apply a spoken move (`board_state` does not consume `token_moved`) | Step 3 | No backlog task yet |
+| A spoken move waits for the player's `confirm_move` on the board socket. The App Shell does not send `confirm_move` for a spoken proposal yet | Step 3 | No backlog task yet |
 | The App Shell does not call any speech route | Step 3 | No backlog task yet |
 | The App Shell does not call the leave or auto-pilot routes | Step 4 | No backlog task yet |
 | No automatic stand-in trigger runs at a turn start | Step 4 | No backlog task yet |
