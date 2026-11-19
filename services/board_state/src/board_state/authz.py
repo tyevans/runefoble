@@ -140,18 +140,7 @@ async def require_session_participate(user_id: str, session_id: str) -> None:
     The camera follows live play, so a focus change needs the same right as a player action.
     A spectator holds `session.observe` only and is refused here.
     """
-    allowed = await get_spicedb_client().check_permission(
-        resource_type="session",
-        resource_id=session_id,
-        permission="participate",
-        subject_type="user",
-        subject_id=user_id,
-    )
-    if not allowed:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Forbidden: the session permission 'participate' is required",
-        )
+    await require_subject(get_spicedb_client(), "session", session_id, "participate", user_id)
 
 
 async def require_token_move(user_id: str, session_id: str, token_id: str) -> None:
