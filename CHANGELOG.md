@@ -1334,6 +1334,8 @@ The App Shell auth service keeps JWT claim handling, session storage and session
 - **Documentation & Build Navigation**: Featured the Platform Showcase and Changelog in `zensical.toml` and root documentation landing page (`docs/index.md`), and enhanced `scripts/build_docs.py` to synchronize `CHANGELOG.md` to `docs/changelog.md` during documentation compilation.
 
 ### Fixed
+Shared readiness checks in `runefoble_platform`, and every app pod has a Helm readiness probe. gateway-api `/readyz` waits for SpiceDB and Redis (it always answered 200 before). TASK-0931 gates the remaining services.
+game_session serves `GET /readyz`, which answers 503 until its event store, SpiceDB and Redis each answered once. Its Helm readiness probe calls it; the pod had no readiness probe before. An event store failure that becomes a 503 is logged.
 The Silo client (`SiloStorageService`) signs every S3 request with AWS Signature Version 4 through botocore. Before, Silo refused every unsigned upload, read and delete with 403, so asset flows failed on a deployed stack. New setting `RUNEFOBLE_SILO_REGION` (default `us-east-1`)
 The campaign list is in creation order, oldest first. The stand-in guardrails save sends only the policy fields, so the strict policy model no longer refuses it with 422.
 The Helm chart creates the Silo buckets (`runefoble-assets`, `runefoble-recordings`) with the post-install and post-upgrade hook Job `silo-buckets`. The Job uses the digest-pinned Chainguard MinIO client and skips a bucket that exists. The manual bucket step is gone

@@ -1,7 +1,7 @@
 ---
 id: '0930'
 title: Every Service Has a Readiness Probe That Reflects Its Dependencies
-status: Refined
+status: Complete
 created: 2026-11-19
 dependencies:
 - '0929'
@@ -18,7 +18,7 @@ target_release: 0.9.0
 
 ## Status
 
-Refined. Follow-up of TASK-0929 (`.audit/work/0929.md`).
+Complete
 
 ## Summary
 

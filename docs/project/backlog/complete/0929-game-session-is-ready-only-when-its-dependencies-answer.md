@@ -1,7 +1,7 @@
 ---
 id: '0929'
 title: "game_session Reports Ready Only When It Can Serve Writes"
-status: Refined
+status: Complete
 created: 2026-11-19
 dependencies: []
 governing_adrs:
@@ -17,7 +17,7 @@ target_release: 0.9.0
 
 ## Status
 
-Refined.
+Complete
 
 ## Summary
 
