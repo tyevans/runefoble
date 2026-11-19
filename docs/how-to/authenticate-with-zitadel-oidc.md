@@ -76,9 +76,11 @@ from gateway_api.auth import CallerPrincipal, get_principal
 
 router = APIRouter()
 
+
 @router.get("/api/v1/profile")
 async def get_profile(user: CallerPrincipal):
     return {"user_id": user.user_id, "username": user.username, "email": user.email}
+
 
 @router.get("/api/v1/sessions/{session_id}", dependencies=[Depends(get_principal)])
 async def get_session(session_id: str):
@@ -106,6 +108,7 @@ The server reads the bearer subprotocol, verifies the token, and rejects the han
 ```python
 from fastapi import WebSocket
 from runefoble_auth.websocket import admit_websocket
+
 
 async def campaign_websocket_endpoint(websocket: WebSocket, verifier) -> None:
     principal = await admit_websocket(websocket, verifier)

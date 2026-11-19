@@ -13,6 +13,7 @@ from typing import ClassVar
 
 from runefoble_events.base import BaseRunefobleEvent, register_event
 
+
 @register_event("runefoble.events.character.loot_item_acquired")
 class LootItemAcquired(BaseRunefobleEvent):
     suppress_event_type_warning: ClassVar[bool] = True
@@ -34,6 +35,7 @@ The aggregate state is an immutable Pydantic model representing reconstituted ag
 from uuid import UUID
 from pydantic import BaseModel, Field
 
+
 class CharacterInventoryState(BaseModel):
     character_id: UUID
     items: dict[str, int] = Field(default_factory=dict)
@@ -46,6 +48,7 @@ Subclass `DeclarativeAggregate[StateModel]` and annotate state mutation methods 
 ```python
 from eventsource.domain.aggregate import DeclarativeAggregate
 from eventsource.domain.decorators import handles
+
 
 class CharacterInventoryAggregate(DeclarativeAggregate[CharacterInventoryState]):
     aggregate_type = "CharacterSheet"
@@ -153,6 +156,7 @@ Repositories hold no store. Each one resolves the process store from the provide
 import pytest
 from eventsource.adapters.memory.store import InMemoryEventStore
 from eventsource.application.aggregates.repository import AggregateRepository
+
 
 @pytest.mark.asyncio
 async def test_inventory_aggregate():

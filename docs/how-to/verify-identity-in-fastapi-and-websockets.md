@@ -174,7 +174,7 @@ from runefoble_auth.websocket import action_authorizer, serve_authorized_socket
 await serve_authorized_socket(
     websocket,
     admit=lambda ws: admit_gateway_websocket(ws, action_authorizer("session.observe", session_id)),
-    on_open=open_room,      # register the socket, send "connected"; return False if refused
+    on_open=open_room,  # register the socket, send "connected"; return False if refused
     on_frame=handle_frame,  # one call per inbound frame
     on_close=lambda: ws_manager.disconnect(session_id, websocket),  # always runs once
     receive=WebSocket.receive_text,  # default: WebSocket.receive_json

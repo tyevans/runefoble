@@ -301,10 +301,15 @@ from gateway_api.auth import require_zanzibar_permission
 
 router = APIRouter()
 
+
 @router.get(
     "/api/v1/spectate/{session_id}",
     dependencies=[
-        Depends(require_zanzibar_permission("observe", resource_type="game_session", resource_param="session_id"))
+        Depends(
+            require_zanzibar_permission(
+                "observe", resource_type="game_session", resource_param="session_id"
+            )
+        )
     ],
 )
 async def get_spectator_state(session_id: str):

@@ -76,7 +76,9 @@ def test_gateway_returns_the_watchers_parsed_intent_unchanged(
     body = _speech(campaign_id, session_id, "move three squares north")
 
     res = gateway.post(SPEAK_PATH, json=body, headers=bearer("valeros"))
-    owner = httpx.post(f"{watcher_url}/api/v1/watcher/transcribe-and-act", json=body, headers=bearer("valeros"))
+    owner = httpx.post(
+        f"{watcher_url}/api/v1/watcher/transcribe-and-act", json=body, headers=bearer("valeros")
+    )
 
     assert res.status_code == owner.status_code == 200, res.text
     assert res.json() == owner.json()

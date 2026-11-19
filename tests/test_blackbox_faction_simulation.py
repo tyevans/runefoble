@@ -239,7 +239,6 @@ async def test_downtime_world_tick_advances_agendas_and_rumors(client: TestClien
     assert "Evolving Tavern Rumors" in bulletin
 
 
-
 @pytest.mark.asyncio
 async def test_agenda_completion_triggers_geopolitical_shift(client: TestClient):
     """Verify that when a faction completes an agenda, a geopolitical shift occurs with ripple effects."""

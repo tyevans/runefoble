@@ -50,8 +50,8 @@ Current creation points: `CaravanContractAggregate()` with no id, `minigames` an
 ```python
 from runefoble_platform.identifiers import opaque_aggregate_id, parse_uuid
 
-settlement_uuid = parse_uuid(settlement_id, field="settlement_id")   # 400 on "abc"
-stream_id = opaque_aggregate_id(session_id, field="session_id")     # stable for "sess-1"
+settlement_uuid = parse_uuid(settlement_id, field="settlement_id")  # 400 on "abc"
+stream_id = opaque_aggregate_id(session_id, field="session_id")  # stable for "sess-1"
 ```
 
 ## Tests

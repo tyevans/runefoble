@@ -68,7 +68,9 @@ def test_posted_bounty_is_listed_after_restart(restart_stack: RestartStack) -> N
     bounty_id = posted.json()["bounty"]["bounty_id"]
 
     with restart_stack.start(GAME_SESSION_APP) as base:
-        listed = _get(f"{base}/api/v1/sessions/{session_id}/contracts/bounties", headers=_headers(poster))
+        listed = _get(
+            f"{base}/api/v1/sessions/{session_id}/contracts/bounties", headers=_headers(poster)
+        )
     assert listed.status_code == 200, listed.text
     assert [b["bounty_id"] for b in listed.json()["bounties"]] == [bounty_id]
 
