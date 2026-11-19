@@ -104,13 +104,8 @@ def test_gateway_campaign_atlas_frontdoor(
     assert data["service"] == "campaign-lore"
     assert data["path"] == f"/api/v1/campaigns/{created_campaign_id}/atlas"
     assert data["authorization"] == headers["Authorization"]
-
-    # Unauthorized access check (Hard Invariant 1)
-    unauthorized_res = client.get(
-        f"/api/v1/campaigns/{created_campaign_id}/atlas",
-        headers=_auth(trusted_ws_issuer, "stranger_bob"),
-    )
-    assert unauthorized_res.status_code == 403
+    # The owner checks `view` (Hard Invariant 1). The echo stand-in does not, so a denial is
+    # tested against the real campaign_lore in test_blackbox_gateway_owner_permission_checks.py.
 
 
 def test_gateway_campaign_codex_frontdoors(
@@ -126,13 +121,8 @@ def test_gateway_campaign_codex_frontdoors(
         assert data["service"] == "campaign-lore"
         assert data["path"] == f"/api/v1/campaigns/{created_campaign_id}/codex/entries"
         assert data["authorization"] == headers["Authorization"]
-
-    # Unauthorized access check (Hard Invariant 1)
-    unauthorized_res = client.get(
-        f"/api/v1/campaigns/{created_campaign_id}/codex",
-        headers=_auth(trusted_ws_issuer, "stranger_bob"),
-    )
-    assert unauthorized_res.status_code == 403
+    # The owner checks `view` (Hard Invariant 1). The echo stand-in does not, so a denial is
+    # tested against the real campaign_lore in test_blackbox_gateway_owner_permission_checks.py.
 
 
 # ---------------------------------------------------------------------------

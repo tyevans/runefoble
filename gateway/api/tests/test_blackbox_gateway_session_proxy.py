@@ -31,27 +31,34 @@ def _auth(issuer, sub: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {issuer.mint(sub)}"}
 
 
+# The last field is True when the gateway keeps the check on that route (TASK-0845).
 SESSION_ROUTES = [
-    ("GET", "/api/v1/sessions/{sid}", None),
-    ("POST", "/api/v1/sessions/{sid}/start", None),
-    ("POST", "/api/v1/sessions/{sid}/hot-swap", {"characterId": str(uuid4())}),
-    ("POST", "/api/v1/sessions/{sid}/turns/advance", None),
-    ("POST", "/api/v1/sessions/{sid}/dm-override", {"action": "pause"}),
-    ("POST", "/api/v1/sessions/{sid}/atmosphere", {"location_name": "Crypt"}),
+    ("GET", "/api/v1/sessions/{sid}", None, False),
+    ("POST", "/api/v1/sessions/{sid}/start", None, False),
+    ("POST", "/api/v1/sessions/{sid}/hot-swap", {"characterId": str(uuid4())}, True),
+    ("POST", "/api/v1/sessions/{sid}/turns/advance", None, False),
+    ("POST", "/api/v1/sessions/{sid}/dm-override", {"action": "pause"}, True),
+    ("POST", "/api/v1/sessions/{sid}/atmosphere", {"location_name": "Crypt"}, True),
 ]
 
 
-@pytest.mark.parametrize(("method", "path", "body"), SESSION_ROUTES)
-def test_missing_token_is_refused_before_any_upstream_call(client, method, path, body) -> None:
+@pytest.mark.parametrize(("method", "path", "body", "_gateway_checked"), SESSION_ROUTES)
+def test_missing_token_is_refused_before_any_upstream_call(
+    client, method, path, body, _gateway_checked
+) -> None:
     res = client.request(method, path.format(sid=uuid4()), json=body)
     assert res.status_code == 401
 
 
-@pytest.mark.parametrize(("method", "path", "body"), SESSION_ROUTES)
+@pytest.mark.parametrize(("method", "path", "body", "gateway_checked"), SESSION_ROUTES)
 def test_unobservable_session_is_refused_and_no_canned_state_is_returned(
-    client, trusted_ws_issuer, method, path, body
+    client, trusted_ws_issuer, method, path, body, gateway_checked
 ) -> None:
-    """A session with no campaign link in SpiceDB gives the caller no observe or control right."""
+    """A session with no campaign link in SpiceDB gives the caller no observe or control right.
+
+    A route that keeps its gateway check answers with the gateway body. The other routes answer
+    with the owner's 403 body, which carries a string detail.
+    """
     res = client.request(
         method,
         path.format(sid=uuid4()),
@@ -59,7 +66,10 @@ def test_unobservable_session_is_refused_and_no_canned_state_is_returned(
         headers=_auth(trusted_ws_issuer, "dm-evelyn"),
     )
     assert res.status_code == 403
-    assert res.json()["detail"]["error"] == "permission_denied"
+    if gateway_checked:
+        assert res.json()["detail"]["error"] == "permission_denied"
+    else:
+        assert isinstance(res.json()["detail"], str)
 
 
 @pytest.fixture

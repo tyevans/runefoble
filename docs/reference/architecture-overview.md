@@ -44,3 +44,12 @@ graph TD
 | `gateway_api` | `gateway/api` | API Gateway: authentication, routing to owners, WebSocket fan-out, and OpenAPI spec aggregation. It owns no domain state and imports no service package (see [Gateway route ownership](gateway-route-ownership.md)) |
 | `gateway_mcp` | `gateway/mcp` | Model Context Protocol server exposing RPG tools to AI models |
 | `frontend` | `frontend/` | Lightweight App Shell, global Bauhaus theme switcher, Storybook studio aggregator |
+
+## Permission Checks at the Gateway
+
+The gateway follows one rule for object permissions (TASK-0845, ADR-0001, ADR-0015):
+
+- A **proxy route** verifies the bearer token and forwards it. The owning service checks the object permission. The gateway passes the owner's `403` through.
+- A **composite route** combines several owner reads. The gateway checks the permission that the reply needs.
+
+Proxy routes that keep a gateway check are listed in [Call Owning Services Through the Gateway](../how-to/call-owning-services-through-the-gateway.md#permission-rule).

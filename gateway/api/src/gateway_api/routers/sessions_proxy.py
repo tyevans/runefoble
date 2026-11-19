@@ -1,9 +1,17 @@
 """Tabletop session routes proxied to game_session, which owns session state (TASK-0581).
 
-The gateway keeps the public paths and the Zanzibar check on each route. It forwards the
-caller's bearer token, so game_session verifies the caller again and applies the state change.
-The gateway stores no session state. A failed upstream call returns the mapping in
-`upstream_errors.py`: 503 when unreachable, 502 on upstream 5xx, upstream 4xx unchanged.
+The gateway keeps the public paths and verifies the caller's bearer token on each route. It
+forwards that token, so game_session verifies the caller again and checks the permission that
+the route needs. The gateway stores no session state. A failed upstream call returns the mapping
+in `upstream_errors.py`: 503 when unreachable, 502 on upstream 5xx, upstream 4xx unchanged.
+
+Three routes keep a gateway check because game_session does not check the same permission for
+the same caller. `hot-swap` needs `observe` here, and the owner checks `participate` and
+`character.edit`. `dm-override` and `atmosphere` need `control` here, and the owner checks only
+the token (see TASK-0845 for the open owner gaps). `events` and `absentee-recap` keep their
+gateway check because game_session answers 404 for an unknown session before it checks
+`observe`. Without the gateway check, a caller could tell a session that exists from one that
+does not.
 """
 
 from __future__ import annotations
@@ -12,7 +20,7 @@ from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Request
-from gateway_api.auth import require_zanzibar_permission
+from gateway_api.auth import get_principal, require_zanzibar_permission
 from gateway_api.dependencies import ws_manager
 from gateway_api.models import AtmosphereUpdateRequest, DMOverrideRequest
 from gateway_api.proxy import forward_json
@@ -23,6 +31,8 @@ SESSIONS = "/api/v1/sessions"
 
 router = APIRouter(tags=["Tabletop & Game Sessions"])
 
+_VERIFIED = [Depends(get_principal)]
+
 
 class HotSwapRequest(BaseModel):
     character_id: UUID = Field(alias="characterId")
@@ -30,10 +40,7 @@ class HotSwapRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
 
-@router.get(
-    "/api/v1/sessions/{session_id}",
-    dependencies=[Depends(require_zanzibar_permission("observe", resource_type="session"))],
-)
+@router.get("/api/v1/sessions/{session_id}", dependencies=_VERIFIED)
 async def get_session_proxy(session_id: str, request: Request) -> Any:
     """Read session state, participants, and turn index (requires 'observe'; game_session)."""
     return await forward_json(
@@ -41,10 +48,7 @@ async def get_session_proxy(session_id: str, request: Request) -> Any:
     )
 
 
-@router.post(
-    "/api/v1/sessions/{session_id}/start",
-    dependencies=[Depends(require_zanzibar_permission("control", resource_type="session"))],
-)
+@router.post("/api/v1/sessions/{session_id}/start", dependencies=_VERIFIED)
 async def start_session_proxy(session_id: str, request: Request) -> Any:
     """Move a lobby to active (requires 'control'; game_session).
 
@@ -75,10 +79,7 @@ async def hot_swap_session_proxy(session_id: str, req: HotSwapRequest, request: 
     )
 
 
-@router.post(
-    "/api/v1/sessions/{session_id}/turns/advance",
-    dependencies=[Depends(require_zanzibar_permission("control", resource_type="session"))],
-)
+@router.post("/api/v1/sessions/{session_id}/turns/advance", dependencies=_VERIFIED)
 async def advance_turn_proxy(session_id: str, request: Request) -> Any:
     """Advance the session to its next turn (requires 'control'; game_session)."""
     return await forward_json(

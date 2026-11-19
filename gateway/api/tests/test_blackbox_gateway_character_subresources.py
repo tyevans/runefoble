@@ -47,7 +47,7 @@ def test_unknown_character_is_refused_with_403(
 ):
     """A subresource call on a character the caller holds no relation to is refused with 403.
 
-    The gateway check and the owner check both deny before the handler runs. Neither answers 200.
+    The owner denies before the handler runs, and the gateway passes that 403 through. It does not answer 200.
     """
     headers = _auth(trusted_ws_issuer, "user_unknown")
     missing = "00000000-0000-4000-8000-0000000000ff"

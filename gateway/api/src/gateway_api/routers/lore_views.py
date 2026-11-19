@@ -1,21 +1,27 @@
 """Campaign Lore proxy routes for the Atlas and the Codex (TASK-0587, TASK-0695).
 
 Every route forwards to the owning `campaign_lore` service through the shared `ServiceClient`.
-The gateway checks the object permission in the Zanzibar schema, then forwards the caller's
-bearer token. It never filters or substitutes the owner's answer. Upstream failure returns
-503 or 502, never canned data (ADR-0015).
+The gateway verifies the caller's bearer token, then forwards it. The owner checks the object
+permission in the Zanzibar schema. It never filters or substitutes the owner's answer. Upstream
+failure returns 503 or 502, never canned data (ADR-0015).
+
+The one gateway check is the atlas pin route. It requires `run_session`, and the owner checks
+`play` on that route, which is a different permission. The gateway check keeps the stricter rule
+until the owner checks `run_session` too (TASK-0845).
 """
 
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Body, Depends, Query, Request
-from gateway_api.auth import require_zanzibar_permission
+from gateway_api.auth import get_principal, require_zanzibar_permission
 from gateway_api.proxy import forward_json
 
 SERVICE = "campaign_lore"
 CAMPAIGNS = "/api/v1/campaigns"
 
 router = APIRouter(tags=["Campaign Lore Views"])
+
+_VERIFIED = [Depends(get_principal)]
 
 
 def _query(values: dict[str, str | None]) -> dict[str, str] | None:
@@ -26,7 +32,7 @@ def _query(values: dict[str, str | None]) -> dict[str, str] | None:
 
 @router.get(
     "/api/v1/campaigns/{campaign_id}/atlas",
-    dependencies=[Depends(require_zanzibar_permission("view", "campaign", "campaign_id"))],
+    dependencies=_VERIFIED,
 )
 async def get_campaign_atlas(
     campaign_id: str,
@@ -65,14 +71,8 @@ async def create_campaign_atlas_pin(
     )
 
 
-@router.get(
-    "/api/v1/campaigns/{campaign_id}/codex",
-    dependencies=[Depends(require_zanzibar_permission("view", "campaign", "campaign_id"))],
-)
-@router.get(
-    "/api/v1/campaigns/{campaign_id}/codex/entries",
-    dependencies=[Depends(require_zanzibar_permission("view", "campaign", "campaign_id"))],
-)
+@router.get("/api/v1/campaigns/{campaign_id}/codex", dependencies=_VERIFIED)
+@router.get("/api/v1/campaigns/{campaign_id}/codex/entries", dependencies=_VERIFIED)
 async def get_campaign_codex(
     campaign_id: str,
     request: Request,
@@ -93,7 +93,7 @@ async def get_campaign_codex(
 @router.post(
     "/api/v1/campaigns/{campaign_id}/codex/entries",
     status_code=201,
-    dependencies=[Depends(require_zanzibar_permission("play", "campaign", "campaign_id"))],
+    dependencies=_VERIFIED,
 )
 async def publish_campaign_codex_entry(
     campaign_id: str,

@@ -34,12 +34,10 @@ async def test_zanzibar_authorization_enforcement(trusted_ws_issuer, client):
     campaign_id = create_campaign(client, owner_id)
     session_id = create_owner_session(os.environ["RUNEFOBLE_GAME_SESSION_URL"], owner, campaign_id)
 
-    # 1. Unassigned user tries to view session -> 403 Forbidden
+    # 1. Unassigned user tries to view session -> 403 Forbidden from game_session (the owner checks `observe`)
     res_unauth = client.get(f"/api/v1/sessions/{session_id}", headers=stranger)
     assert res_unauth.status_code == 403
-    err_data = res_unauth.json()["detail"]
-    assert err_data["error"] == "permission_denied"
-    assert err_data["required_permission"] == "observe"
+    assert "lacks 'observe'" in res_unauth.json()["detail"]
 
     # 2. Owner invites the player; the player redeems the invite
     invite_and_join(client, campaign_id, owner_id, player_id, role="player")
@@ -56,7 +54,7 @@ async def test_zanzibar_authorization_enforcement(trusted_ws_issuer, client):
         json={"next_character_id": "c2"},
     )
     assert res_player_advance.status_code == 403
-    assert res_player_advance.json()["detail"]["required_permission"] == "control"
+    assert "lacks 'control'" in res_player_advance.json()["detail"]
 
     # 5. The owner runs the session as DM and can advance turn successfully
     assert client.post(f"/api/v1/sessions/{session_id}/start", headers=owner).status_code == 200

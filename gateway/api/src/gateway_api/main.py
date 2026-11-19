@@ -1,8 +1,11 @@
 """Runefoble API Gateway.
 
 Aggregates downstream microservices, exposes unified OpenAPI documentation,
-enforces fine-grained SpiceDB Zanzibar object authorization, and powers
-real-time WebSockets for the tactical board and voice chronicle.
+and powers real-time WebSockets for the tactical board and voice chronicle.
+A proxy route forwards the caller's token, and the owning service checks the
+object permission (ADR-0001). A composite route, which combines several owner
+reads, checks the permission at the gateway. The proxy routes that keep a gateway
+check are listed in the call-owning-services how-to guide (TASK-0845).
 """
 
 from collections.abc import AsyncIterator

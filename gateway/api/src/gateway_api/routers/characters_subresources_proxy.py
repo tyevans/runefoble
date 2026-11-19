@@ -1,7 +1,7 @@
 """Character health, equipment, inventory and condition routes proxied to character_sheet (TASK-0586).
 
-The gateway keeps the public paths and the Zanzibar check on each route. It forwards the caller's
-bearer token, so character_sheet verifies the caller again and applies the change. The gateway
+The gateway keeps the public paths and verifies the caller's bearer token on each route. It forwards
+that token, so character_sheet checks `edit` on the character and applies the change. The gateway
 holds no character state and returns no substitute value. A failed upstream call returns the
 mapping in `upstream_errors.py`: 503 when unreachable, 502 on upstream 5xx, upstream 4xx unchanged.
 
@@ -11,7 +11,7 @@ Spells and guardrails are in `characters_spells_guardrails_proxy.py`.
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Request
-from gateway_api.auth import require_zanzibar_permission
+from gateway_api.auth import get_principal
 from gateway_api.character_models import (
     AddInventoryItemRequest,
     ApplyConditionRequest,
@@ -24,13 +24,13 @@ from runefoble_platform.service_client import owner_routes
 
 router = APIRouter(tags=["characters-subresources"])
 
-EDIT = [Depends(require_zanzibar_permission("edit", "character", "character_id"))]
+_VERIFIED = [Depends(get_principal)]
 
 
 @router.post(
     "/api/v1/characters/{character_id}/health",
     response_model=CharacterResponse,
-    dependencies=EDIT,
+    dependencies=_VERIFIED,
 )
 async def modify_health(
     character_id: str, req: HealthChangeRequest, request: Request
@@ -45,7 +45,7 @@ async def modify_health(
 @router.post(
     "/api/v1/characters/{character_id}/equipment",
     response_model=CharacterResponse,
-    dependencies=EDIT,
+    dependencies=_VERIFIED,
 )
 async def equip_item(
     character_id: str, req: EquipItemRequest, request: Request
@@ -62,7 +62,7 @@ async def equip_item(
 @router.delete(
     "/api/v1/characters/{character_id}/equipment/{slot}",
     response_model=CharacterResponse,
-    dependencies=EDIT,
+    dependencies=_VERIFIED,
 )
 async def unequip_item(character_id: str, slot: str, request: Request) -> CharacterResponse:
     """Clear an equipment slot. character_sheet checks `edit`."""
@@ -74,7 +74,7 @@ async def unequip_item(character_id: str, slot: str, request: Request) -> Charac
 @router.post(
     "/api/v1/characters/{character_id}/inventory",
     response_model=CharacterResponse,
-    dependencies=EDIT,
+    dependencies=_VERIFIED,
 )
 async def add_inventory(
     character_id: str, req: AddInventoryItemRequest, request: Request
@@ -91,7 +91,7 @@ async def add_inventory(
 @router.delete(
     "/api/v1/characters/{character_id}/inventory/{item_id}",
     response_model=CharacterResponse,
-    dependencies=EDIT,
+    dependencies=_VERIFIED,
 )
 async def remove_inventory(
     character_id: str, item_id: str, request: Request, quantity: int = 1
@@ -108,7 +108,7 @@ async def remove_inventory(
 @router.post(
     "/api/v1/characters/{character_id}/conditions",
     response_model=CharacterResponse,
-    dependencies=EDIT,
+    dependencies=_VERIFIED,
 )
 async def apply_condition(
     character_id: str, req: ApplyConditionRequest, request: Request
@@ -123,7 +123,7 @@ async def apply_condition(
 @router.delete(
     "/api/v1/characters/{character_id}/conditions/{condition}",
     response_model=CharacterResponse,
-    dependencies=EDIT,
+    dependencies=_VERIFIED,
 )
 async def remove_condition(
     character_id: str, condition: str, request: Request
