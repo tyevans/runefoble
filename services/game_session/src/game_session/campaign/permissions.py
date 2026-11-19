@@ -13,8 +13,8 @@ from fastapi import Depends
 from game_session.campaign.errors import PermissionDeniedError
 from game_session.campaign.repositories import CampaignRepositories, get_campaign_repositories
 from game_session.campaign.service_campaigns import load_campaign, parse_campaign_id
-from game_session.dependencies import get_spicedb_client
 from game_session.settlement.auth.tokens import CallerPrincipal
+from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.permissions import check_subject
 from runefoble_auth.principal import VerifiedPrincipal
 

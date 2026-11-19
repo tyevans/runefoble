@@ -19,9 +19,9 @@ import pytest
 from fastapi.testclient import TestClient
 from gateway_api.main import app
 from gateway_mcp.dynamic import dynamic_registry
-from gateway_mcp.dynamic.auth import get_spicedb_client, set_spicedb_client
 from gateway_mcp.server import mcp
 from runefoble_auth.errors import AuthzError
+from runefoble_auth.factory import get_spicedb_client, set_spicedb_client
 from runefoble_auth.spicedb import MockSpiceDBClient
 
 from tests.helpers.mcp_http import call_tool_over_http, serve_mcp

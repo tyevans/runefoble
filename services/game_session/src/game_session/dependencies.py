@@ -19,7 +19,6 @@ from game_session.settlement.settlement_aggregate import SettlementAggregate
 from game_session.settlement.workers import NPCWorkerAggregate
 from game_session.stronghold import StrongholdAggregate
 from game_session.west_marches import SharedWorldAggregate
-from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.event_bus import EventBusProvider
 from runefoble_platform.event_sourcing import (
@@ -42,7 +41,6 @@ if platform_settings.is_deployed and watcher_service_url() is None:
         "RUNEFOBLE_WATCHER_URL must be set when RUNEFOBLE_ENVIRONMENT is "
         f"'{platform_settings.environment}'"
     )
-_spicedb_client: SpiceDBClient | MockSpiceDBClient | None = None
 
 repo: AggregateRepository[GameSessionAggregate] = create_aggregate_repository(
     GameSessionAggregate,
@@ -133,18 +131,6 @@ def get_worker_repository() -> AggregateRepository[NPCWorkerAggregate]:
 
 def get_child_index_repository() -> AggregateRepository[ChildIndexAggregate]:
     return child_index_repo
-
-
-def get_spicedb_client() -> SpiceDBClient | MockSpiceDBClient:
-    global _spicedb_client
-    if _spicedb_client is None:
-        _spicedb_client = SpiceDBClient()
-    return _spicedb_client
-
-
-def set_spicedb_client(client: SpiceDBClient | MockSpiceDBClient | None) -> None:
-    global _spicedb_client
-    _spicedb_client = client
 
 
 event_bus_provider = EventBusProvider(platform_settings)

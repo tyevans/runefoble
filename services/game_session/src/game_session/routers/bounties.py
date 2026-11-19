@@ -24,14 +24,11 @@ from game_session.contracts.models import (
     CompleteBountyRequest,
     PostBountyRequest,
 )
-from game_session.dependencies import (
-    get_bounty_contract_repository,
-    get_event_bus,
-    get_spicedb_client,
-)
+from game_session.dependencies import get_bounty_contract_repository, get_event_bus
 from game_session.events import STREAM_SESSION
 from game_session.queries import link_child, list_bounties_for_session
 from game_session.settlement.auth.tokens import CallerId, get_principal
+from runefoble_auth.factory import get_spicedb_client
 from runefoble_platform.aggregate_loading import load_if_exists
 from runefoble_platform.event_publish import publish_or_fail
 from runefoble_platform.identifiers import parse_uuid

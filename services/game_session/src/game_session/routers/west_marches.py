@@ -11,7 +11,7 @@ from uuid import uuid4
 
 from eventsource import AggregateNotFoundError
 from fastapi import APIRouter, Depends, HTTPException, Query
-from game_session.dependencies import get_event_bus, get_shared_world_repository, get_spicedb_client
+from game_session.dependencies import get_event_bus, get_shared_world_repository
 from game_session.events import STREAM_WEST_MARCHES
 from game_session.settlement.auth.tokens import CallerId, get_principal
 from game_session.west_marches_models import (
@@ -21,6 +21,7 @@ from game_session.west_marches_models import (
     RecordDiscoveryRequest,
     RegisterCampaignRequest,
 )
+from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.permissions import require_subject
 from runefoble_platform.event_publish import publish_or_fail
 from runefoble_platform.identifiers import parse_uuid

@@ -2,8 +2,8 @@
 
 import pytest
 from character_sheet.main import app as character_app
-from character_sheet.main import set_spicedb_client as character_set_spicedb
 from httpx import ASGITransport, AsyncClient
+from runefoble_auth.factory import set_spicedb_client
 from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_events.events import StandInPolicyUpdated, StandInStabilized
 from runefoble_platform.redis_bus import deserialize_event
@@ -44,7 +44,7 @@ async def test_character_guardrails_configuration_and_events(
     """PUT /api/v1/characters/{id}/guardrails configures tactical constraints and emits event."""
     use_redis_client(mock_redis)
     spicedb = MockSpiceDBClient()
-    character_set_spicedb(spicedb)
+    set_spicedb_client(spicedb)
 
     async with AsyncClient(
         transport=ASGITransport(app=character_app),

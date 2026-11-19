@@ -12,10 +12,11 @@ from uuid import UUID
 from eventsource import AggregateNotFoundError
 from fastapi import APIRouter, Depends, HTTPException
 from game_session.auth import check_session_participation
-from game_session.dependencies import get_event_bus, get_spicedb_client, repo, stronghold_repo
+from game_session.dependencies import get_event_bus, repo, stronghold_repo
 from game_session.events import STREAM_SESSION
 from game_session.settlement.auth.tokens import CallerId, get_principal
 from pydantic import BaseModel, Field
+from runefoble_auth.factory import get_spicedb_client
 from runefoble_events.events import CampfireRestCompleted
 from runefoble_platform.aggregate_loading import load_if_exists
 from runefoble_platform.event_publish import publish_or_fail

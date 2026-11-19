@@ -19,7 +19,7 @@ from runefoble_auth.principal import VerifiedPrincipal
 
 
 def _get_spicedb() -> Any:
-    from game_session.dependencies import get_spicedb_client
+    from runefoble_auth.factory import get_spicedb_client
 
     return get_spicedb_client()
 

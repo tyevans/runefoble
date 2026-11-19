@@ -12,8 +12,8 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import Depends, HTTPException
-from game_session.dependencies import get_spicedb_client
 from game_session.settlement.auth.tokens import CallerId, CallerOrService
+from runefoble_auth.factory import get_spicedb_client
 
 
 def session_permission(permission: str) -> Callable[..., Awaitable[str]]:

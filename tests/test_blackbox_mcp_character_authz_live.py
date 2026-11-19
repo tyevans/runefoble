@@ -19,10 +19,9 @@ from typing import Any
 
 import httpx
 import pytest
-from character_sheet import dependencies as sheet_deps
-from gateway_mcp.dynamic import auth as mcp_auth
 from gateway_mcp.server import mcp
 from mcp.types import CallToolResult
+from runefoble_auth.factory import set_spicedb_client
 
 from tests.helpers.mcp_http import call_tool_over_http, serve_mcp
 from tests.helpers.ws_identity import SIGNING_ISSUER
@@ -41,14 +40,12 @@ def live_read_stack(live_spicedb_with_schema, character_sheet_upstream) -> Itera
     checks the same live schema, so both checks read the same tuples.
     """
     live_client = live_spicedb_with_schema.client
-    sheet_deps.set_spicedb_client(live_client)
-    mcp_auth.set_spicedb_client(live_client)
+    set_spicedb_client(live_client)
     try:
         with serve_mcp(mcp) as endpoint:
             yield endpoint
     finally:
-        sheet_deps.set_spicedb_client(None)
-        mcp_auth.set_spicedb_client(None)
+        set_spicedb_client(None)
 
 
 @pytest.fixture
