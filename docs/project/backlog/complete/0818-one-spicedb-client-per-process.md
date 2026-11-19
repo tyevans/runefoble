@@ -1,7 +1,7 @@
 ---
 id: '0818'
 title: "Each Process Uses One SpiceDB Client From the Lib Factory"
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies:
 - TASK-0817
@@ -16,7 +16,7 @@ target_release: 0.9.0
 # TASK-0818: Each Process Uses One SpiceDB Client From the Lib Factory
 
 ## Status
-Refined
+Complete
 
 ## Summary
 game_session and character_sheet build their own SpiceDB client, so a process holds two clients and ignores `runefoble_auth.factory`.

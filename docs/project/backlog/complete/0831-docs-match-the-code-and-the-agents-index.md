@@ -1,7 +1,7 @@
 ---
 id: '0831'
 title: "Docs Match the Code and the AGENTS.md Index"
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies: []
 governing_adrs:
@@ -15,7 +15,7 @@ target_release: 0.9.0
 # TASK-0831: Docs Match the Code and the AGENTS.md Index
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Reference pages document deleted projections, a how-to contradicts Hard Invariant 3, AGENTS.md misses 10 reference pages and the runefoble_ui row, and a tracked generated changelog copy is stale.

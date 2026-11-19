@@ -1,7 +1,7 @@
 ---
 id: '0829'
 title: "Tests Share One Bearer Helper and One Campaign Setup Helper"
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies:
 - TASK-0827
@@ -16,7 +16,7 @@ target_release: 0.9.0
 # TASK-0829: Tests Share One Bearer Helper and One Campaign Setup Helper
 
 ## Status
-Refined
+Complete
 
 ## Summary
 164 bearer helper definitions in about 90 modules and 12 copies of campaign setup.

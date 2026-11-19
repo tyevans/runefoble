@@ -1,7 +1,7 @@
 ---
 id: '0828'
 title: "Tests Remove Structural Checks, Facade Tests and Double-Run Bridges"
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies:
 - TASK-0815
@@ -16,7 +16,7 @@ target_release: 0.9.0
 # TASK-0828: Tests Remove Structural Checks, Facade Tests and Double-Run Bridges
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Source-text and file-existence asserts remain (TASK-0681 forbids them), three bridge modules make tests run twice, and facade tests lock in shims.

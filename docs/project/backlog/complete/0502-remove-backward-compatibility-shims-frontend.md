@@ -1,7 +1,7 @@
 ---
 id: '0502'
 title: Remove Backward Compatibility Shims & Forwarding Exports in frontend
-status: Refined
+status: Complete
 created: 2026-09-29
 dependencies:
 - TASK-0026
@@ -23,7 +23,7 @@ target_release: 0.9.0
 # TASK-0502: Remove Backward Compatibility Shims & Forwarding Exports in frontend
 
 ## Status
-Refined
+Complete
 
 Audit 2026-11-17: re-counted. There are 29 forwarders: 28 under `frontend/src/components/` (the 27 named in the Problem Statement plus `components/audience-studio.ts`) and `frontend/src/utils/dice.ts`. Delete all 29 and list each by name before pull.
 

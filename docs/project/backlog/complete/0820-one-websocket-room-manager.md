@@ -1,7 +1,7 @@
 ---
 id: '0820'
 title: "One WebSocket Room Manager and One Serve Loop"
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies:
 - TASK-0810
@@ -16,7 +16,7 @@ target_release: 0.9.0
 # TASK-0820: One WebSocket Room Manager and One Serve Loop
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Five WebSocket group managers (three in the gateway, two in services) and three copies of the socket serve loop exist.

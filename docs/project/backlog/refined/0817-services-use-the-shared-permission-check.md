@@ -44,3 +44,6 @@ None. Refactor and consolidation chosen by the user on 2026-11-18.
 ## Audit Provenance
 - Severity: refactor
 - Source audits: `.audit/research/services-backend.md` (SVC-05, SVC-06)
+
+## Progress (batch 31)
+Shared `runefoble_auth.permissions` check used by five services; remaining services in progress (TASK-0817 rest).

@@ -1,7 +1,7 @@
 ---
 id: '0814'
 title: "A Spoken Move Reaches the Board Through Preview and Player Confirm"
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies:
 - TASK-0583
@@ -18,7 +18,7 @@ target_release: 0.9.0
 # TASK-0814: A Spoken Move Reaches the Board Through Preview and Player Confirm
 
 ## Status
-Refined
+Complete
 
 ## Summary
 No test shows that a spoken move reaches the board. The design is: The Watcher proposes (a ghost preview), and the player confirms. Only the confirm commits the move.

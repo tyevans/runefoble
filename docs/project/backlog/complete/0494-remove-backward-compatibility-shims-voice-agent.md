@@ -1,7 +1,7 @@
 ---
 id: '0494'
 title: Remove Backward Compatibility Shims & Re-exports in voice_agent
-status: Refined
+status: Complete
 created: 2026-09-29
 dependencies:
 - TASK-0006
@@ -22,7 +22,7 @@ target_release: 0.9.0
 # TASK-0494: Remove Backward Compatibility Shims & Re-exports in voice_agent
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decommission `voice_agent/room.py` aggregator facade, excise backward-compatibility method aliases in `phonetics.py` and `audio_utils.py`, migrate call sites to modular subpackages, and remove obsolete backward-compatibility assertions from `tests/test_voice_agent_dsp.py`.

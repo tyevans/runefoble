@@ -1,7 +1,7 @@
 ---
 id: '0486'
 title: Remove Backward Compatibility Shims & Re-exports in runefoble_auth
-status: Refined
+status: Complete
 created: 2026-09-29
 dependencies:
 - TASK-0034
@@ -19,7 +19,7 @@ target_release: 0.9.0
 # TASK-0486: Remove Backward Compatibility Shims & Re-exports in runefoble_auth
 
 ## Status
-Refined
+Complete
 
 Audit 2026-11-17: class names corrected. The auth shim items depend on TASK-0520. The `verify_token` method is not removed.
 

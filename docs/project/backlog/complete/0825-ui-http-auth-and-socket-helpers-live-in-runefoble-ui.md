@@ -1,7 +1,7 @@
 ---
 id: '0825'
 title: "UI HTTP, Auth and Socket Helpers Live in libs/runefoble_ui"
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies:
 - TASK-0812
@@ -18,7 +18,7 @@ target_release: 0.9.0
 # TASK-0825: UI HTTP, Auth and Socket Helpers Live in libs/runefoble_ui
 
 ## Status
-Refined
+Complete
 
 ## Summary
 HTTP error and JSON plumbing exists in four or five versions, and bearer and WebSocket URL helpers repeat about seven times.

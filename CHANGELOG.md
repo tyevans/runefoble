@@ -38,6 +38,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Gateway WebSocket routes admit a connection only with a verified `runefoble.bearer.<jwt>` subprotocol, checked before accept. Refused handshakes close with 1008. Removed the `?user_id=`, `?token=`, `x-user-id`, and `guest_user` identity paths on WebSocket and voice/companion signaling routes. (TASK-0522)
 
 ### Removed
+- The five WebSocket group managers. (TASK-0820)
+- Duplicate voice routes `POST /api/v1/voice/tts` and the unprefixed `/voice/*` paths. (TASK-0494)
+- The board templates facade and forwarding re-exports in board, settings, bulletin and compendium UI modules. (TASK-0502)
+- board_state router facade `routers/previews.py`, dead `models.py` shim and facade re-exports. (TASK-0492)
+- `runefoble_auth` `mock_spicedb` facade and re-exports (import from `runefoble_auth.mock`), the `SpiceDBClient(use_mock=...)` parameter and the `SPICEDB_ENDPOINT` fallback (set `RUNEFOBLE_SPICEDB_ENDPOINT`). (TASK-0486)
+- Structural tests (file existence, source text, line counts, facade re-exports) and three bridge modules that ran tests twice. (TASK-0828)
 - Event facade modules (`events.py`, `board.py`, `watcher.py`, `uvtt_elements.py`, `events/*_events.py`) and 23 event alias names. (TASK-0815)
 - App Shell forwarding modules, the unused frontend barrel, unreachable WebRTC client modules and the `runefoble-tactical-board` alias. (TASK-0824)
 - The Watcher copy of the SpiceDB failure handler. (TASK-0813)
@@ -69,6 +75,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Campaign analytics worker `process_event` alias, tracking property wrappers, and package root re-exports. Callers use `handle_event`. (TASK-0500)
 
 ### Added
+- `POST /api/v1/boards/{session_id}/ghost-previews` stages a proposed move; only the player's `confirm_move` commits it. (TASK-0814)
+- `runefoble_auth.factory.set_spicedb_client` test seam; every process reads one SpiceDB client from the factory. (TASK-0818)
+- `@runefoble/ui-core` HTTP, bearer and WebSocket URL helpers (`requestJson`, `postJson`, `HttpError`, `wsUrl`). (TASK-0825)
+- App Shell `runefoble:*` window events for live session messages; owning elements subscribe to them. (TASK-0826)
 - Gateway routes for shared-world creation and caravan contracts, and the App Shell route `#/caravans/:sharedWorldId` with the caravan board. (TASK-0807)
 - Identity and token contract reference (`docs/reference/identity-and-token-contract.md`). (TASK-0537)
 - Blackbox test that runs game_session and soundscape on one real Redis. Ending combat through game_session returns soundscape tension to ambient. (TASK-0803)
@@ -137,6 +147,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
 
 ### Changed
+- Speak-and-act publishes no board event for a proposed move; a confirmed move publishes one `token_moved`. (TASK-0814)
+- WebSocket rooms share one `WebSocketGroups` class and one `serve_authorized_socket` loop. (TASK-0820)
+- Event types are read through `event_type_of`; an event without a type fails with `EventTypeMissingError`. Unavailable errors share the `ServiceUnavailableError` base; `runefoble_platform.dice` is the one dice roller. (TASK-0821)
+- A failed microfrontend request with no server detail reads `Request failed with status <code>`. (TASK-0825)
+- Speech synthesis is served only at `POST /api/v1/voice/synthesize`, and stream diagnostics only under `/api/v1/voice/streams/`. (TASK-0494)
+- The speculative feature inventory matches the code, and how-to guides no longer hold module-layout or test-inventory sections. (TASK-0831)
+- Tests share one bearer helper, one campaign setup helper, one `live_upstream` builder and one event-store reset fixture. (TASK-0829)
 - UUID parsing follows one rule (`runefoble_platform.identifiers`): ids typed as UUID are parsed strictly and bad input is 400 with the field name; opaque session ids map to aggregate ids through one deterministic function. No route substitutes a random id for bad or missing input. (TASK-0816)
 - Tests share helpers for free ports, polling, Node suites and Docker, and every subprocess call in tests has a timeout. (TASK-0827)
 - Every service that checks SpiceDB answers an outage with 503 `{"error": "authorization_unavailable"}`, and a schema defect with 500 and an `error_id`. (TASK-0813)

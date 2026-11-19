@@ -1,7 +1,7 @@
 ---
 id: '0826'
 title: "The App Shell Stops Reaching Into Service Component Internals"
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies:
 - TASK-0824
@@ -16,7 +16,7 @@ target_release: 0.9.0
 # TASK-0826: The App Shell Stops Reaching Into Service Component Internals
 
 ## Status
-Refined
+Complete
 
 ## Summary
 `frontend/src/vtt-mesh-handlers.ts` queries service component tags and drives them directly, which couples the shell to service internals.

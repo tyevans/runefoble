@@ -1,7 +1,7 @@
 ---
 id: '0492'
 title: Remove Backward Compatibility Shims & Re-exports in board_state
-status: Refined
+status: Complete
 created: 2026-09-29
 dependencies:
 - TASK-0084
@@ -21,7 +21,7 @@ target_release: 0.9.0
 # TASK-0492: Remove Backward Compatibility Shims & Re-exports in board_state
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decommission backward-compatibility router aggregator facades (`src/board_state/routers/previews.py`), frontend template aggregator facades (`ui/src/board-templates.ts`), and legacy re-export shims from `services/board_state`, migrating all Python and Lit Web Component callers directly to modular submodules.

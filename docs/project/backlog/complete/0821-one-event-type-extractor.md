@@ -1,7 +1,7 @@
 ---
 id: '0821'
 title: "Event Type Extraction and Small Helpers Have One Home"
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies:
 - TASK-0815
@@ -16,7 +16,7 @@ target_release: 0.9.0
 # TASK-0821: Event Type Extraction and Small Helpers Have One Home
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Event-type extraction exists in five places with different fallbacks; `utc_now` is copied three times; d20 rolls repeat in five services; two "unavailable" error families have four bases; dead platform models remain.

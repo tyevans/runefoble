@@ -45,3 +45,6 @@ None. Refactor and consolidation chosen by the user on 2026-11-18.
 ## Audit Provenance
 - Severity: refactor
 - Source audits: `.audit/research/gateways.md` (G-02, G-03, G-12)
+
+## Progress (batch 31)
+Shared owner map, route table for seven routers and G-12 fixes merged. Remaining routers and owner-path builders in progress.
