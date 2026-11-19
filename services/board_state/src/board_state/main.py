@@ -5,7 +5,11 @@ Manages tactical maps, token coordinates, collision rules, kinematics, and fog-o
 
 from __future__ import annotations
 
+import contextlib
+from collections.abc import AsyncIterator
+
 from board_state.dependencies import BoardNotFoundError, event_bus_provider
+from board_state.forged_battlemap import start_board_consumers
 from board_state.routers import (
     actions_router,
     aoe_router,
@@ -30,6 +34,22 @@ from runefoble_platform.event_publish import (
     install_publish_failure_handler,
 )
 from runefoble_platform.event_sourcing import event_store_kind, get_event_store
+from runefoble_platform.stream_consumer import consumer_statuses
+
+
+@contextlib.asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    """Open the Redis Streams bus and start the forged battlemap consumer."""
+    bus = await event_bus_provider.connect()
+    consumers = await start_board_consumers(bus)
+    app.state.consumers = {"board_state": consumers}
+    try:
+        yield
+    finally:
+        await consumers.stop()
+        await event_bus_provider.close()
+        app.state.consumers = {}
+
 
 # Build the event store now. A deployed service without a reachable store refuses to start (TASK-0707).
 get_event_store()
@@ -38,7 +58,7 @@ app = FastAPI(
     title="Runefoble - Board State Service",
     version="0.1.0",
     description="Tactical Map, Grid Coordinates, Token Management, and Spatial Queries backed by eventsource-py.",
-    lifespan=event_bus_provider.lifespan,
+    lifespan=lifespan,
 )
 
 app.include_router(ui_manifest_router)
@@ -65,10 +85,11 @@ async def board_not_found_handler(request: Request, exc: BoardNotFoundError) -> 
 
 
 @app.get("/healthz")
-async def health_check():
+async def health_check(request: Request):
     return {
         "status": "ok",
         "service": "board_state",
+        "consumers": consumer_statuses(getattr(request.app.state, "consumers", {})),
         "event_publish_failures": event_publish_failures(),
         "event_store": event_store_kind(),
     }

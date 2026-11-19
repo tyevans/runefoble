@@ -1,5 +1,6 @@
 """Asset domain events for Silo S3 asset storage."""
 
+from typing import Any
 from uuid import UUID, uuid4
 
 from pydantic import Field
@@ -55,6 +56,10 @@ class BattlemapForged(BaseRunefobleEvent):
     hazard_cells_count: int = 0
     doors_count: int = 0
     theme: str = "dungeon"
+    # Layout for board_state. Wall dicts have x1, y1, x2, y2. Hazard dicts have x, y, hazard_type,
+    # terrain_type. board_state owns the obstacle rule and the hazard damage table.
+    wall_segments: list[dict[str, Any]] = Field(default_factory=list)
+    hazard_cells: list[dict[str, Any]] = Field(default_factory=list)
 
 
 @register_event("runefoble.events.asset.token_forged")

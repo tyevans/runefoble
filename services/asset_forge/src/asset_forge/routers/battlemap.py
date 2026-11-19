@@ -133,6 +133,8 @@ async def forge_battlemap(
         hazard_cells_count=len(hazard_cells),
         doors_count=len(doors),
         theme=theme,
+        wall_segments=[w.model_dump() for w in wall_segments],
+        hazard_cells=[h.model_dump() for h in hazard_cells],
     )
     await publish_forge_event(event)
 

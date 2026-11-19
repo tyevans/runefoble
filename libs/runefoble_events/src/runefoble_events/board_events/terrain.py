@@ -46,6 +46,20 @@ class TokenHazardTriggered(BaseRunefobleEvent):
     damage_dice: str
 
 
+@register_event("runefoble.events.board.forged_battlemap_applied")
+class ForgedBattlemapApplied(BaseRunefobleEvent):
+    """Emitted when a forged battlemap becomes the board geometry (walls, grid size)."""
+
+    aggregate_type: str = "BoardState"
+    aggregate_id: UUID = Field(default_factory=uuid4)
+    event_type: str = "runefoble.events.board.forged_battlemap_applied"
+    session_id: str = ""
+    asset_id: str
+    cols: int
+    rows: int
+    wall_segments: list[dict[str, Any]] = Field(default_factory=list)
+
+
 @register_event("runefoble.events.board.map_imported")
 class UniversalVTTImported(BaseRunefobleEvent):
     """Emitted when a Universal VTT (.dd2vtt) battlemap is imported onto the board."""

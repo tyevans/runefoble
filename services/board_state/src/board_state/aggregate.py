@@ -20,6 +20,7 @@ from eventsource.domain.decorators import handles
 from runefoble_events.events import (
     BoardGridInitialized,
     CameraFocused,
+    ForgedBattlemapApplied,
     TerrainCellModified,
     UniversalVTTImported,
 )
@@ -125,6 +126,41 @@ class BoardAggregate(
             lights=lights or [],
         )
 
+        self._place_wall_obstacles(walls, cols, rows)
+
+    def apply_forged_battlemap(
+        self,
+        asset_id: str,
+        cols: int,
+        rows: int,
+        wall_segments: list[dict[str, Any]],
+        hazard_cells: list[dict[str, Any]],
+    ) -> None:
+        """Make a forged battlemap the board geometry: grid size, walls, obstacles, and hazards.
+
+        The grid event is recorded first, so the hazard bounds check uses the new grid size.
+        """
+        self.create_event(
+            ForgedBattlemapApplied,
+            session_id=str(self.state.session_id),
+            aggregate_id=self.aggregate_id,
+            asset_id=asset_id,
+            cols=cols,
+            rows=rows,
+            wall_segments=wall_segments,
+        )
+        for cell in hazard_cells:
+            self.configure_terrain(
+                x=cell["x"],
+                y=cell["y"],
+                elevation=0,
+                terrain_type=cell["terrain_type"],
+                hazard=cell["hazard_type"],
+            )
+        self._place_wall_obstacles(wall_segments, cols, rows)
+
+    def _place_wall_obstacles(self, walls: list[dict[str, Any]], cols: int, rows: int) -> None:
+        """Place one obstacle token per wall obstacle cell. A token that exists is kept."""
         for idx, (ox, oy) in enumerate(extract_wall_obstacles(walls, cols, rows)):
             tid = f"wall-obs-{idx + 1}"
             if tid not in self.state.tokens:
@@ -151,6 +187,16 @@ class BoardAggregate(
             portals=event.portals,
             lights=event.lights,
             doors=getattr(event, "doors", {}),
+        )
+
+    @handles(ForgedBattlemapApplied)
+    def _on_forged_battlemap_applied(self, event: ForgedBattlemapApplied) -> None:
+        self._state = self.state.model_copy(
+            update={
+                "cols": event.cols,
+                "rows": event.rows,
+                "wall_segments": list(event.wall_segments),
+            }
         )
 
     @handles(CameraFocused)
