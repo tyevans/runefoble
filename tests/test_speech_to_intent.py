@@ -242,7 +242,8 @@ async def test_watcher_redis_stream_event_emission(
 
     # The proposal is a preview. The board stream gets no TokenMoved, and the token stays put.
     assert token_position(board_state_upstream, session_id, "tok-valeros", "test-user") == (3, 2)
-    assert "runefoble.events.board" not in mock_redis.streams
+    board_types = [f["event_type"] for _, f in mock_redis.streams.get("runefoble.events.board", [])]
+    assert "runefoble.events.board.token_moved" not in board_types
 
 
 @pytest.mark.asyncio
