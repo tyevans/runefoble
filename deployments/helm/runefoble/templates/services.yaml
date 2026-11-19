@@ -95,6 +95,7 @@ spec:
               port: {{ $svc.port }}
             initialDelaySeconds: 5
             periodSeconds: 10
+            timeoutSeconds: {{ $svc.readinessTimeoutSeconds | default 1 }}
           {{- end }}
           {{- with $svc.livenessPath }}
           livenessProbe:

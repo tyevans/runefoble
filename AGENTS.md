@@ -138,6 +138,7 @@ All system documentation outside project records lives in `docs/` and strictly f
 - [`call-owning-services-through-the-gateway.md`](docs/how-to/call-owning-services-through-the-gateway.md): How to add a gateway route that calls an owning bounded context through the shared service client, and test it through public frontdoors.
 - [`run-autonomous-backlog-engine.md`](docs/how-to/run-autonomous-backlog-engine.md): How to run the autonomous backlog engine (`tools/backlog_engine`) that executes refined tasks in isolated worktrees.
 - [`run-supervised-redis-stream-consumers.md`](docs/how-to/run-supervised-redis-stream-consumers.md): How to run supervised Redis Stream consumers in a service lifespan and report their status on `/healthz`.
+- [`gate-pod-readiness-on-dependencies.md`](docs/how-to/gate-pod-readiness-on-dependencies.md): How to report a pod ready only after the event store, SpiceDB and Redis answer once, with `GET /readyz` and the Helm readiness probe.
 - [`verify-identity-in-fastapi-and-websockets.md`](docs/how-to/verify-identity-in-fastapi-and-websockets.md): How to require a verified principal on FastAPI HTTP routes and WebSockets, and test both with signed tokens.
 - [`compose-a-service-with-an-app-container.md`](docs/how-to/compose-a-service-with-an-app-container.md): How to build a service's repositories and clients in one app container at start-up, read them through FastAPI `Depends` providers, and test through a test container.
 
