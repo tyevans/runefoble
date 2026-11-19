@@ -101,6 +101,8 @@ Real-time campaign mutations, token movement broadcasts, health modifications, a
   `admit_gateway_websocket` binds the gateway verifier to the shared `runefoble_auth.websocket.admit_websocket` check. Every gateway socket route calls it before accept, and no route keeps its own admission code. The token comes only from the `runefoble.bearer.<jwt>` subprotocol. Query strings and headers carry no identity.
 - **WebSocket Routing Endpoint (`gateway_api.websocket_endpoint`)**:
   `campaign_websocket_endpoint` runs the shared `runefoble_auth.websocket.serve_authorized_socket` loop, validates viewer connection permissions, dispatches incoming actions to Redis Streams (`runefoble.events.board`, `runefoble.events.session`, `runefoble.events.watcher`), and coordinates disconnect cleanup.
+- **Socket Route Table (`gateway_api.routers.realtime`)**:
+  One `APIRouter` holds the campaign, session, voice, mobile companion, and minigame socket routes. `gateway_api.main` includes it once. The router defines the socket paths. The owning relay or endpoint defines the close codes.
 
 ## Latency Budgets
 - **Audio Capture & Streaming**: < 100ms
