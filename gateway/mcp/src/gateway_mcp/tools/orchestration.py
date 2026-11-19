@@ -4,21 +4,20 @@ The Watcher owns narration and action decisions. These tools forward agent reque
 the_watcher public routes and return its answer unchanged.
 """
 
-import time
 from typing import TYPE_CHECKING, Any, Literal
 
 from mcp.server.fastmcp import Context
 
 from gateway_mcp.caller import caller_bearer
 from gateway_mcp.container import GatewayMcpContainer, bind_container
-from gateway_mcp.fastmcp_tools import find_tool
-from gateway_mcp.owning_services import OwningServices, ServiceError
+from gateway_mcp.owning_services import OwningServices
 from gateway_mcp.tool_authz import (
     ToolAuthzError,
     check_requirement,
     require_caller_id,
     step_requirement,
 )
+from gateway_mcp.tools.plan import Authorize, PlanPorts, PlanStepError, run_plan
 
 if TYPE_CHECKING:
     from mcp.server.fastmcp import FastMCP
@@ -63,108 +62,28 @@ async def execute_agent_action_plan(
     """
     caller_id = require_caller_id(ctx)
     client = OwningServices(container.service_clients, bearer=caller_bearer(ctx))
-    step_results: list[dict[str, Any]] = []
-    total_duration_ms: float = 0.0
+    ports = PlanPorts(
+        tool_exists=container.registry.has_tool,
+        authorize=_step_authorizer(container, caller_id, session_id),
+        propose=client.propose_action,
+    )
+    return await run_plan(actions, session_id=session_id, campaign_id=campaign_id, ports=ports)
 
-    def _fail(err: str, idx: int, tool_name: str, duration: float = 0.0) -> dict[str, Any]:
-        step_results.append(
-            {
-                "step": idx + 1,
-                "tool": tool_name,
-                "status": "error",
-                "error": err,
-                "duration_ms": duration,
-            }
-        )
-        return {
-            "status": "error",
-            "success": False,
-            "session_id": session_id,
-            "campaign_id": campaign_id,
-            "error": err,
-            "failed_step": idx + 1,
-            "total_steps": len(actions),
-            "completed_steps": idx,
-            "steps": step_results,
-            "total_duration_ms": round(total_duration_ms + duration, 2),
-        }
 
-    for idx, action in enumerate(actions):
-        tool_name = action.get("tool") or action.get("name") or action.get("tool_name")
-        if not tool_name:
-            return _fail("Action missing 'tool' specification", idx, "unknown")
+def _step_authorizer(container: GatewayMcpContainer, caller_id: str, session_id: str) -> Authorize:
+    """Return the port that checks one step's schema permission for the verified caller."""
 
-        tool = (
-            find_tool(container.registry.mcp, tool_name)
-            if container.registry.mcp is not None
-            else None
-        )
-        if tool is None:
-            return _fail(f"Invalid tool: '{tool_name}' not found", idx, tool_name)
-
-        actor_name = action.get("actor_name")
-        if not actor_name:
-            return _fail("Action missing 'actor_name' specification", idx, tool_name)
-
-        raw = action.get("parameters") or action.get("arguments") or action.get("args")
-        params = (
-            dict(raw)
-            if isinstance(raw, dict)
-            else {
-                k: v
-                for k, v in action.items()
-                if k not in {"tool", "name", "tool_name", "actor_name", "step_id", "description"}
-            }
-        )
-        target = params.get("target", params.get("token_id"))
+    async def authorize(tool: str, params: dict[str, Any]) -> None:
         try:
             requirement = step_requirement(
-                container.registry, tool_name, {"session_id": session_id, **params}
+                container.registry, tool, {"session_id": session_id, **params}
             )
             if requirement is not None:
                 await check_requirement(container.permissions, caller_id, requirement)
         except ToolAuthzError as exc:
-            return _fail(str(exc), idx, tool_name)
+            raise PlanStepError(str(exc), tool) from exc
 
-        request = {
-            "session_id": session_id,
-            "campaign_id": campaign_id,
-            "actor_name": actor_name,
-            "action_type": tool_name,
-            "description": action.get("description") or tool_name,
-            "target": str(target) if target is not None else None,
-            "parameters": params,
-        }
-
-        t0 = time.perf_counter()
-        try:
-            pending = await client.propose_action(request)
-        except ServiceError as exc:
-            duration_ms = round((time.perf_counter() - t0) * 1000, 2)
-            return _fail(str(exc), idx, tool_name, duration_ms)
-
-        duration_ms = round((time.perf_counter() - t0) * 1000, 2)
-        total_duration_ms += duration_ms
-        step_results.append(
-            {
-                "step": idx + 1,
-                "tool": tool_name,
-                "status": "success",
-                "output": pending,
-                "duration_ms": duration_ms,
-            }
-        )
-
-    return {
-        "status": "success",
-        "success": True,
-        "session_id": session_id,
-        "campaign_id": campaign_id,
-        "total_steps": len(actions),
-        "completed_steps": len(actions),
-        "steps": step_results,
-        "total_duration_ms": round(total_duration_ms, 2),
-    }
+    return authorize
 
 
 def register_orchestration_tools(mcp: "FastMCP", container: GatewayMcpContainer) -> None:
