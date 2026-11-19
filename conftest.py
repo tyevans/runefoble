@@ -7,6 +7,7 @@ and the package test folders, whichever folder a run starts from.
 import os
 
 import pytest
+from runefoble_platform.config import PlatformSettings
 from runefoble_platform.service_client import OWNER_URL_FIELDS
 
 from tests.helpers.container_owner import remove_orphaned_test_containers
@@ -16,8 +17,13 @@ from tests.helpers.container_owner import remove_orphaned_test_containers
 os.environ.setdefault("RUNEFOBLE_SPICEDB_PRESHARED_KEY", "test-only-spicedb-key")
 # Service URLs have no code defaults. Unless a test sets one itself, these point at a closed
 # loopback port, so no test reaches a real service by accident.
+# The environment name is the settings alias when the field has one (the_watcher_url reads
+# RUNEFOBLE_WATCHER_URL), else the RUNEFOBLE_ prefix and the field name.
 for _field in OWNER_URL_FIELDS.values():
-    os.environ.setdefault("RUNEFOBLE_" + _field.upper(), "http://127.0.0.1:9")
+    _alias = PlatformSettings.model_fields[_field].validation_alias
+    _names = getattr(_alias, "choices", None) or ["RUNEFOBLE_" + _field.upper()]
+    for _name in _names:
+        os.environ.setdefault(_name, "http://127.0.0.1:9")
 # The inference worker refuses to start without its service token (ADR-0015 e). Tests use a
 # throwaway value. Process-level tests remove it from the child environment on purpose.
 os.environ.setdefault("RUNEFOBLE_SERVICE_CREDENTIAL", "test-only-service-credential")
