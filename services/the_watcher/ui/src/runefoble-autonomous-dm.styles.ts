@@ -58,12 +58,12 @@ export const autonomousDmStyles = css`
   }
 
   .badge-threat.easy {
-    background: var(--rf-success, var(--rf-accent-secondary));
+    background: var(--rf-status-success);
     color: var(--rf-text-inverse);
   }
 
   .badge-threat.medium {
-    background: var(--rf-warning, var(--rf-accent-tertiary));
+    background: var(--rf-status-warning);
     color: var(--rf-text-primary);
   }
 

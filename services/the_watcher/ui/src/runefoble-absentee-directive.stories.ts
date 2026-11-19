@@ -84,7 +84,11 @@ export const WithoutActivePoll: Story = {
 
 export const LightThemePreview: Story = {
   render: () => html`
-    <div style="background: #ffffff; color: #1e293b; padding: 16px; border-radius: 8px;">
+    <div
+      data-theme="bauhaus"
+      data-color-mode="light"
+      style="background: var(--rf-bg-canvas); color: var(--rf-text-primary); padding: 16px;"
+    >
       <runefoble-absentee-directive
         characterName="Sarah"
         characterClass="Cleric"
@@ -94,7 +98,6 @@ export const LightThemePreview: Story = {
         .maxHp=${38}
         .penalties=${['drunk']}
         .activePoll=${sampleRestPoll}
-        style="--rf-bg-surface: #f8fafc; --rf-bg-surface-raised: #f1f5f9; --rf-border-color: #cbd5e1; --rf-text-primary: #0f172a; --rf-text-secondary: #475569;"
       ></runefoble-absentee-directive>
     </div>
   `,

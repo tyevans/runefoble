@@ -299,7 +299,7 @@ export class RunefobleDmWhisperBar extends LitElement {
       <div class="whisper-section">
         <div class="section-title">
           <span>Private Narrative Whispers</span>
-          <span style="font-size: 0.75rem; color: #6b7280;">${filteredWhispers.length} Suggestions</span>
+          <span style="font-size: 0.75rem; color: var(--rf-text-muted);">${filteredWhispers.length} Suggestions</span>
         </div>
 
         <div class="filter-tabs">
