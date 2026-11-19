@@ -14,15 +14,11 @@ from runefoble_auth.wiring import (
     verifier_from_settings,
 )
 from runefoble_platform.config import PlatformSettings
-from runefoble_platform.event_bus import EventBusProvider
 
 from campaign_analytics.storage import CampaignAnalyticsStorage, StorageUnavailableError
 from campaign_analytics.worker import CampaignAnalyticsWorker
 
 platform_settings = PlatformSettings()
-event_bus_provider = EventBusProvider(platform_settings)
-get_event_bus = event_bus_provider.get
-set_event_bus = event_bus_provider.set
 
 _storage: CampaignAnalyticsStorage | None = None
 _worker: CampaignAnalyticsWorker | None = None

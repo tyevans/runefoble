@@ -81,7 +81,7 @@ def test_campaign_analytics_refuses_to_start_when_consumer_group_cannot_be_creat
     analytics_service: AnalyticsService, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """A Redis failure at start-up stops the service. It does not run without its consumer."""
-    from campaign_analytics.main import app
+    from campaign_analytics.main import create_app_from_environment
 
     class UnreachableRedis(MockAsyncRedis):
         async def xgroup_create(self, *_args: Any, **_kwargs: Any) -> bool:
@@ -89,7 +89,10 @@ def test_campaign_analytics_refuses_to_start_when_consumer_group_cannot_be_creat
 
     monkeypatch.setattr(redis.asyncio, "from_url", lambda *_a, **_k: UnreachableRedis())
 
-    with pytest.raises(ConnectionError, match="redis unreachable"), TestClient(app):
+    with (
+        pytest.raises(ConnectionError, match="redis unreachable"),
+        TestClient(create_app_from_environment()),
+    ):
         pass
 
 

@@ -17,9 +17,9 @@ from typing import Any
 
 import pytest
 import redis.asyncio
+from campaign_analytics.main import create_app_from_environment
 from fastapi.testclient import TestClient
 from runefoble_auth.mock import MockSpiceDBClient
-from runefoble_platform.config import PlatformSettings
 from runefoble_platform.event_sourcing import get_event_store, set_event_store
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 
@@ -76,10 +76,8 @@ class AnalyticsService:
 
         Requests carry the member's bearer token unless `authenticated` is False.
         """
-        from campaign_analytics.main import app
-
         headers = bearer(SERVICE_SUBJECT) if authenticated else None
-        return TestClient(app, headers=headers)
+        return TestClient(create_app_from_environment(), headers=headers)
 
 
 @pytest.fixture
@@ -88,11 +86,8 @@ def analytics_service(
 ) -> Iterator[AnalyticsService]:
     """Point the service at the PostgreSQL container and the Redis double for one test."""
 
-    import campaign_analytics.main as analytics_main
-
     dsn = str(postgres_service["async_dsn"])
     monkeypatch.setenv("RUNEFOBLE_DATABASE_URL", dsn)
-    monkeypatch.setattr(analytics_main, "platform_settings", PlatformSettings())
 
     double = MockAsyncRedis()
     monkeypatch.setattr(redis.asyncio, "from_url", lambda *_a, **_k: double)

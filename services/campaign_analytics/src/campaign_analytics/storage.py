@@ -54,6 +54,14 @@ class StorageUnavailableError(ServiceUnavailableError):
     """Raised when a query runs before the storage engine is ready."""
 
 
+def require_postgresql(settings: PlatformSettings) -> None:
+    """Raise StorageConfigurationError unless the configured database URL names PostgreSQL."""
+    if "postgresql" not in str(settings.database_url):
+        raise StorageConfigurationError(
+            "Campaign analytics requires PostgreSQL. SQLite and in-memory storage are not supported."
+        )
+
+
 def campaign_match(table: Any, campaign_id: str) -> Any:
     """Match rows that belong to a campaign id, or to a session that belongs to it.
 
@@ -88,13 +96,9 @@ class CampaignAnalyticsStorage:
     @classmethod
     async def create(cls, settings: PlatformSettings) -> CampaignAnalyticsStorage:
         """Connect to PostgreSQL and create the read-model tables. Errors propagate."""
-        url = str(settings.database_url)
-        if "postgresql" not in url:
-            raise StorageConfigurationError(
-                "Campaign analytics requires PostgreSQL. SQLite and in-memory storage are not supported."
-            )
+        require_postgresql(settings)
         engine = create_async_engine(
-            normalize_async_postgres_url(url),
+            normalize_async_postgres_url(str(settings.database_url)),
             pool_size=5,
             max_overflow=10,
             pool_pre_ping=True,
