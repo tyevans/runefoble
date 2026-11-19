@@ -41,6 +41,8 @@ Both need a Playwright run (`make test-e2e`) to verify.
 2. Add the lobby scenario and its step. The step fails when the control is missing or shown by mistake.
 3. Run the two scenarios with `make test-e2e ARGS="--grep ..."`.
 
+Addendum (2026-11-18, TASK-0870): 3. Add the lobby readiness scenarios: readiness counts players only (an owner or DM is never counted), and a session with no players shows "No players have joined". 4. Add the campaign members scenario: management controls show only when the server's can-manage flag is set.
+
 ## Frontdoor Test Plan
 The two Gherkin scenarios above, through the browser only.
 

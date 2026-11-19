@@ -156,7 +156,7 @@ describe('Session Lobby Readiness Summary Calculation (US-0065)', () => {
     assert.equal(res.totalActivePlayers, 0);
     assert.equal(res.absentCount, 0);
     assert.equal(res.allReady, false);
-    assert.equal(res.summaryText, '0 of 0 players ready');
+    assert.equal(res.summaryText, 'No players have joined');
   });
 });
 

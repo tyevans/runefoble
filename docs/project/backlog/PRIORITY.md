@@ -862,4 +862,5 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 856. **TASK-0876 (Refined)**: [`0876-board-campaign-fixture-defined-once.md`](refined/0876-board-campaign-fixture-defined-once.md) — Board Campaign Fixture Is Defined Once in the Shared Campaign Helper
 857. **TASK-0877 (Refined)**: [`0877-store-outage-helper-records-appends.md`](refined/0877-store-outage-helper-records-appends.md) — Store Outage Helper Records Appends and Replaces Copied Outage Stubs
 858. **TASK-0878 (Refined)**: [`0878-campaign-rules-route-hosts-the-homebrew-creator.md`](refined/0878-campaign-rules-route-hosts-the-homebrew-creator.md) — Campaign Rules Route Hosts the Homebrew Creator
-859. **TASK-0879 (Proposed)**: [`0879-audience-poll-binding-runs-through-the-outbox.md`](proposed/0879-audience-poll-binding-runs-through-the-outbox.md) — Audience Poll Binding Runs Through the Outbox
+859. **TASK-0880 (Refined)**: [`0880-campaign-analytics-token-verifier-uses-create-app-settings.md`](refined/0880-campaign-analytics-token-verifier-uses-create-app-settings.md) — Campaign Analytics Token Verifier Uses the Settings Passed to create_app
+860. **TASK-0879 (Proposed)**: [`0879-audience-poll-binding-runs-through-the-outbox.md`](proposed/0879-audience-poll-binding-runs-through-the-outbox.md) — Audience Poll Binding Runs Through the Outbox
