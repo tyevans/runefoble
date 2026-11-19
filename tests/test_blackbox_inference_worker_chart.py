@@ -11,7 +11,7 @@ from pathlib import Path
 
 import yaml
 
-from tests.helpers.process import run_command
+from tests.helpers.helm import render_chart
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CHART = REPO_ROOT / "deployments" / "helm" / "runefoble"
@@ -21,9 +21,7 @@ WORKER_URL = f"http://inference-worker:{WORKER_PORT}/openapi.json"
 
 
 def _rendered_documents() -> list[dict]:
-    result = run_command(["helm", "template", "runefoble", str(CHART)], timeout=120)
-    assert result.returncode == 0, f"helm template failed: {result.stderr}"
-    return [doc for doc in yaml.safe_load_all(result.stdout) if doc]
+    return render_chart()
 
 
 def _find(documents: list[dict], kind: str, name: str) -> dict:

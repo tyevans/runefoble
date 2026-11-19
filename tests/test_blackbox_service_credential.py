@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import os
 import subprocess
-import sys
 from uuid import uuid4
 
 import pytest
@@ -18,7 +17,7 @@ from fastapi.testclient import TestClient
 from game_session.main import app as session_app
 from runefoble_platform.service_credential import SERVICE_CREDENTIAL_HEADER
 
-from tests.helpers.process import run_command
+from tests.helpers.process import run_python_child
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
@@ -144,13 +143,7 @@ def test_game_session_join_refuses_the_service_credential():
 def _run_import(
     module: str, env_overrides: dict[str, str | None]
 ) -> subprocess.CompletedProcess[str]:
-    env = {key: value for key, value in os.environ.items() if key != "RUNEFOBLE_SERVICE_CREDENTIAL"}
-    for key, value in env_overrides.items():
-        if value is not None:
-            env[key] = value
-    return run_command(
-        [sys.executable, "-c", f"import {module}"], env=env, timeout=120, check=False
-    )
+    return run_python_child(f"import {module}", env_overrides)
 
 
 @pytest.mark.parametrize(

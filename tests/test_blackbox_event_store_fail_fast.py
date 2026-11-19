@@ -19,13 +19,11 @@ Verifies:
 from __future__ import annotations
 
 import os
-import shutil
 import subprocess
 import sys
 from pathlib import Path
 
 import pytest
-import yaml
 from board_state.main import app as board_state_app
 from eventsource.adapters.memory.store import InMemoryEventStore
 from eventsource.adapters.postgresql.store import PostgreSQLEventStore
@@ -37,6 +35,7 @@ from runefoble_platform.event_sourcing import (
     event_store_kind,
 )
 
+from tests.helpers.helm import render_chart
 from tests.helpers.ports import free_port
 from tests.helpers.process import run_command
 from tests.helpers.ws_identity import bearer
@@ -44,7 +43,6 @@ from tests.helpers.ws_identity import bearer
 pytestmark = pytest.mark.usefixtures("reset_event_store")
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-CHART_DIR = REPO_ROOT / "deployments" / "helm" / "runefoble"
 
 AGGREGATE_OWNING_DEPLOYMENTS = [
     "asset-forge",
@@ -168,10 +166,7 @@ def test_deployed_service_with_reachable_postgres_starts_on_postgresql(postgres_
 
 
 def _render_chart() -> list[dict]:
-    if shutil.which("helm") is None:
-        pytest.skip("helm not available")
-    result = run_command(["helm", "template", "runefoble", str(CHART_DIR)], check=True, timeout=120)
-    return [doc for doc in yaml.safe_load_all(result.stdout) if doc]
+    return render_chart()
 
 
 def _deployment_env(doc: dict) -> dict[str, str]:

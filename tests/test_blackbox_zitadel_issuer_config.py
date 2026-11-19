@@ -6,15 +6,9 @@ audience and client ID come from the Secret that the bootstrap Job writes.
 """
 
 import json
-import shutil
-from pathlib import Path
 
-import pytest
-import yaml
+from tests.helpers.helm import render_chart
 
-from tests.helpers.process import run_command
-
-HELM_CHART = Path("deployments/helm/runefoble")
 EXPECTED_ISSUER = "http://auth.localhost"
 EXPECTED_INTERNAL_URL = "http://zitadel:8080"
 CLIENT_SECRET = "runefoble-zitadel-client"
@@ -22,12 +16,7 @@ ZITADEL_HOST = "auth.localhost"
 
 
 def _render() -> list[dict]:
-    if not shutil.which("helm"):
-        pytest.skip("helm CLI not available")
-    proc = run_command(
-        ["helm", "template", "runefoble", str(HELM_CHART)], check=True, timeout=240.0
-    )
-    return [doc for doc in yaml.safe_load_all(proc.stdout) if doc]
+    return render_chart()
 
 
 def _find(docs: list[dict], kind: str, name: str) -> dict:
@@ -172,21 +161,7 @@ def test_bootstrap_role_may_write_only_the_client_secret_by_name():
 
 def test_bootstrap_job_is_omitted_when_disabled():
     """Set zitadel.bootstrap.enabled=false for the first install, before the admin token exists."""
-    if not shutil.which("helm"):
-        pytest.skip("helm CLI not available")
-    proc = run_command(
-        [
-            "helm",
-            "template",
-            "runefoble",
-            str(HELM_CHART),
-            "--set",
-            "zitadel.bootstrap.enabled=false",
-        ],
-        check=True,
-        timeout=240.0,
-    )
-    docs = [doc for doc in yaml.safe_load_all(proc.stdout) if doc]
+    docs = render_chart("--set", "zitadel.bootstrap.enabled=false")
     assert not any(
         doc.get("kind") == "Job" and doc["metadata"]["name"] == "zitadel-bootstrap" for doc in docs
     )

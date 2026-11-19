@@ -19,6 +19,7 @@ import pytest
 import yaml
 
 from scripts.check_helm_event_store import discover_owners
+from tests.helpers.helm import require_helm
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CHART_DIR = REPO_ROOT / "deployments" / "helm" / "runefoble"
@@ -37,8 +38,7 @@ def _run_gate(chart_dir: Path) -> subprocess.CompletedProcess[str]:
 
 @pytest.fixture
 def helm_required() -> None:
-    if shutil.which("helm") is None:
-        pytest.skip("helm not available")
+    require_helm()
 
 
 def test_gate_passes_on_the_chart(helm_required: None) -> None:

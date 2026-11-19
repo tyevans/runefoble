@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import asyncio
 import os
-import shutil
 import socket
 import subprocess
 import sys
@@ -21,12 +20,12 @@ from pathlib import Path
 
 import httpx
 import pytest
-import yaml
 from gateway_mcp.dynamic import DynamicToolDefinition, dynamic_registry
 from gateway_mcp.dynamic.auth import grant_tool_permissions
 from gateway_mcp.identity import get_verifier, set_verifier
 from gateway_mcp.server import build_http_app
 
+from tests.helpers.helm import render_chart
 from tests.helpers.live_services import serve
 from tests.helpers.mcp_http import call_tool_over_http, mcp_session
 from tests.helpers.module_state import restored_seam
@@ -42,7 +41,6 @@ from tests.test_blackbox_deployability_images import (
 )
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-HELM_CHART = REPO_ROOT / "deployments" / "helm" / "runefoble"
 GATEWAY_MCP_PORT = 8012
 
 # The static tools documented in docs/reference/fastmcp-gateway.md.
@@ -254,12 +252,7 @@ def test_entrypoint_refuses_to_start_without_upstream_urls():
 
 
 def _rendered_documents() -> list[dict]:
-    if not shutil.which("helm"):
-        pytest.skip("helm CLI not available")
-    result = run_command(
-        ["helm", "template", "runefoble", str(HELM_CHART)], check=True, timeout=120
-    )
-    return [doc for doc in yaml.safe_load_all(result.stdout) if doc]
+    return render_chart()
 
 
 def test_helm_renders_gateway_mcp_service_on_port_8012_without_ingress():

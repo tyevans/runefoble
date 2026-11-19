@@ -4,29 +4,15 @@ The tests use only the rendered Helm manifests and the frontend Vite config.
 They do not reach into service internals.
 """
 
-import shutil
-from pathlib import Path
+from tests.helpers.helm import render_chart
 
-import pytest
-import yaml
-
-from tests.helpers.process import run_command
-
-HELM_CHART = Path("deployments/helm/runefoble")
 # Zitadel has its own host. It is not an application host and has no /ws route.
 ZITADEL_HOST = "auth.localhost"
 
 
 def _render_ingress_documents() -> list[dict]:
     """Render the umbrella chart and return every Ingress manifest."""
-    if not shutil.which("helm"):
-        pytest.skip("helm CLI not available")
-
-    proc = run_command(
-        ["helm", "template", "runefoble", str(HELM_CHART)], check=True, timeout=240.0
-    )
-    docs = [doc for doc in yaml.safe_load_all(proc.stdout) if doc]
-    return [doc for doc in docs if doc.get("kind") == "Ingress"]
+    return [doc for doc in render_chart() if doc.get("kind") == "Ingress"]
 
 
 def _app_rules() -> list[dict]:

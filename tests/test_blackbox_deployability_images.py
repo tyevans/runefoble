@@ -21,6 +21,7 @@ from pathlib import Path
 import pytest
 import yaml
 
+from tests.helpers.helm import helm_template_result, render_chart
 from tests.helpers.ports import free_port
 from tests.helpers.process import run_command
 
@@ -116,10 +117,7 @@ def test_make_help_documents_images_target():
 
 def test_helm_template_image_tags_match_built_tags():
     """Image tags in `helm template` equal the tags that `make images` builds."""
-    result = run_command(
-        ["helm", "template", "runefoble", str(REPO_ROOT / "deployments/helm/runefoble")],
-        timeout=120,
-    )
+    result = helm_template_result()
     assert result.returncode == 0, f"helm template failed: {result.stderr}"
     rendered = set(re.findall(r"image: (runefoble/[\w-]+:[\w.]+)", result.stdout))
     built = {row.tag for row in read_image_table()}
@@ -219,12 +217,7 @@ def test_voice_agent_image_synthesizes_speech_with_espeak():
 
 
 def _rendered_helm_documents() -> list[dict]:
-    result = run_command(
-        ["helm", "template", "runefoble", str(REPO_ROOT / "deployments/helm/runefoble")],
-        timeout=120,
-    )
-    assert result.returncode == 0, f"helm template failed: {result.stderr}"
-    return [doc for doc in yaml.safe_load_all(result.stdout) if doc]
+    return render_chart()
 
 
 def test_voice_agent_chart_mounts_model_cache_and_probes_readiness():

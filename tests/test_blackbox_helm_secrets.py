@@ -8,38 +8,17 @@ value, that each credential env var reads a Secret key, and that a non-local ren
 """
 
 import re
-import shutil
-import subprocess
-from pathlib import Path
 
-import pytest
-import yaml
+from tests.helpers.helm import helm_template_result, render_chart
 
-from tests.helpers.process import run_command
-
-HELM_CHART = Path("deployments/helm/runefoble")
 SECRET_NAME = "runefoble-credentials"
 
 # Env var names that carry a credential. Any such var must read a Secret, or stay empty.
 CREDENTIAL_ENV_NAME = re.compile(r"(PASSWORD|SECRET_KEY|PRESHARED_KEY|MASTERKEY|ACCESS_KEY|TOKEN)$")
 
 
-def _require_helm() -> None:
-    if not shutil.which("helm"):
-        pytest.skip("helm CLI not available")
-
-
-def _helm_template(*extra_args: str) -> subprocess.CompletedProcess:
-    _require_helm()
-    return run_command(
-        ["helm", "template", "runefoble", str(HELM_CHART), *extra_args], timeout=240.0
-    )
-
-
 def _rendered_docs(*extra_args: str) -> list[dict]:
-    proc = _helm_template(*extra_args)
-    assert proc.returncode == 0, f"helm template failed:\n{proc.stderr}"
-    return [doc for doc in yaml.safe_load_all(proc.stdout) if doc]
+    return render_chart(*extra_args)
 
 
 def _containers(docs: list[dict]) -> list[tuple[str, dict]]:
@@ -145,7 +124,7 @@ def test_spicedb_server_reads_its_preshared_key_from_env_not_argv():
 
 def test_non_local_render_without_existing_secret_fails():
     """A non-local render fails when credentials.existingSecret is empty."""
-    proc = _helm_template("--set", "global.environment=production")
+    proc = helm_template_result("--set", "global.environment=production")
 
     assert proc.returncode != 0
     assert "credentials.existingSecret must name a Secret" in proc.stderr
