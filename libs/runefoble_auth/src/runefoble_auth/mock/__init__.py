@@ -1,6 +1,6 @@
 """Mock SpiceDB Zanzibar engine package."""
 
-from runefoble_auth.mock.client import MockSpiceDBClient, Relationship
+from runefoble_auth.mock.client import MockSpiceDBClient
 from runefoble_auth.mock.evaluator import PermissionEvaluator
 from runefoble_auth.schema_graph import (
     ObjectDef,
@@ -17,7 +17,6 @@ __all__ = [
     "PermissionDef",
     "PermissionEvaluator",
     "RelationDef",
-    "Relationship",
     "SchemaGraph",
     "load_default_schema",
     "parse_zed_schema",

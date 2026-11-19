@@ -3,35 +3,15 @@
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass
 from typing import Any
 
 from runefoble_auth.contract import require_permission, require_relation, require_subject_type
 from runefoble_auth.errors import SchemaContractError
 from runefoble_auth.mock.evaluator import PermissionEvaluator
+from runefoble_auth.relationship import Relationship
 from runefoble_auth.schema_graph import SchemaGraph, load_default_schema, parse_zed_schema
 
 logger = logging.getLogger(__name__)
-
-
-@dataclass(frozen=True)
-class Relationship:
-    resource_type: str
-    resource_id: str
-    relation: str
-    subject_type: str
-    subject_id: str
-
-    def to_tuple_key(self) -> str:
-        return f"{self.resource_type}:{self.resource_id}#{self.relation}@{self.subject_type}:{self.subject_id}"
-
-    @classmethod
-    def from_tuple_key(cls, key: str) -> Relationship:
-        res, rest = key.split("#", 1)
-        res_t, res_id = res.split(":", 1)
-        rel, subj = rest.split("@", 1)
-        sub_t, sub_id = subj.split(":", 1)
-        return cls(res_t, res_id, rel, sub_t, sub_id)
 
 
 class MockSpiceDBClient:
@@ -40,6 +20,8 @@ class MockSpiceDBClient:
     A write to an undefined type, relation, or subject raises SchemaContractError. A check
     for an undefined permission raises it too. Live SpiceDB rejects the same calls.
     """
+
+    backend_name = "mock"
 
     def __init__(
         self,

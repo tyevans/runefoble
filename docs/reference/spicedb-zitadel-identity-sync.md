@@ -188,4 +188,14 @@ There is no fallback to an in-memory client:
 
 - `SpiceDBClient` refuses to run without SpiceDB and does not fall back to `MockSpiceDBClient` (`libs/runefoble_auth/src/runefoble_auth/spicedb.py`).
 - The shared factory `get_spicedb_client` builds only the gRPC client (`libs/runefoble_auth/src/runefoble_auth/factory.py`).
-- `check_health` reports `backend: mock` only when the sync service holds a `MockSpiceDBClient`. The gateway builds the service with the shared factory client and its Zitadel verifier, so the deployed backend is `grpc`.
+- `check_health` copies the `backend` field from the `backend_name` attribute of the client. `SpiceDBClient` sets `"grpc"`. `MockSpiceDBClient` sets `"mock"`. The gateway builds the service with the shared factory client and its Zitadel verifier, so the deployed backend is `grpc`.
+
+## SpiceDB Client Port
+
+Callers type against the `SpiceDBPort` Protocol (`libs/runefoble_auth/src/runefoble_auth/port.py`, TASK-0911). They never name a concrete client.
+
+- The port lists `check_permission`, `write_relationship`, `touch_relationship`, `delete_relationship`, `read_relationships`, `lookup_resources`, `write_schema`, and `read_schema`.
+- The port has a `backend_name: str` attribute. It names the transport.
+- `read_relationships` returns `Relationship` values. `Relationship` is in `libs/runefoble_auth/src/runefoble_auth/relationship.py`.
+- `get_spicedb_client` returns a `SpiceDBPort`. `set_spicedb_client` accepts a `SpiceDBPort` or `None`. `ZitadelSpiceDBSyncService` accepts a `SpiceDBPort`.
+- Production modules do not import `runefoble_auth.mock`. Only tests import the mock package.
