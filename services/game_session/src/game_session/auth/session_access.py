@@ -5,6 +5,7 @@ from __future__ import annotations
 from fastapi import HTTPException
 from game_session.dependencies import repo as session_repo
 from runefoble_auth.factory import get_spicedb_client
+from runefoble_auth.permissions import check_subject
 from runefoble_platform.aggregate_loading import load_if_exists
 from runefoble_platform.identifiers import opaque_aggregate_id
 
@@ -16,16 +17,14 @@ async def check_session_participation(session_id: str, user_id: str) -> None:
     A store error propagates to the caller and maps to 503.
     """
     spicedb = get_spicedb_client()
-    has_perm = await spicedb.check_permission(
-        "session", str(session_id), "participate", "user", user_id
-    )
+    has_perm = await check_subject(spicedb, "session", str(session_id), "participate", user_id)
     if not has_perm:
         sess = await load_if_exists(
             session_repo, opaque_aggregate_id(session_id, field="session_id")
         )
         if sess is not None and sess.state.campaign_id:
-            has_perm = await spicedb.check_permission(
-                "campaign", str(sess.state.campaign_id), "play", "user", user_id
+            has_perm = await check_subject(
+                spicedb, "campaign", str(sess.state.campaign_id), "play", user_id
             )
     if not has_perm:
         raise HTTPException(status_code=403, detail="Player or DM permission required")

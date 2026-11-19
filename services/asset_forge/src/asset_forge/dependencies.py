@@ -6,6 +6,7 @@ import logging
 from uuid import UUID
 
 from fastapi import HTTPException
+from runefoble_auth.permissions import require_subject
 from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_auth.wiring import (
     build_identity_dependencies,
@@ -80,18 +81,14 @@ async def require_forge_permission(
     """
     if campaign_id is None:
         raise HTTPException(status_code=400, detail="A campaign_id is required to forge assets.")
-    allowed = await spicedb.check_permission(
-        resource_type="campaign",
-        resource_id=str(campaign_id),
-        permission="play",
-        subject_type="user",
-        subject_id=user_id,
+    await require_subject(
+        spicedb,
+        "campaign",
+        str(campaign_id),
+        "play",
+        user_id,
+        detail=f"Forbidden: User '{user_id}' cannot forge assets for campaign '{campaign_id}'.",
     )
-    if not allowed:
-        raise HTTPException(
-            status_code=403,
-            detail=f"Forbidden: User '{user_id}' cannot forge assets for campaign '{campaign_id}'.",
-        )
     return campaign_id
 
 
@@ -127,18 +124,14 @@ async def require_asset_view(spicedb: SpiceDBClient, asset_id: str, user_id: str
     Raises:
         HTTPException: 403 when the caller lacks the permission.
     """
-    allowed = await spicedb.check_permission(
-        resource_type="forged_asset",
-        resource_id=asset_id,
-        permission="view",
-        subject_type="user",
-        subject_id=user_id,
+    await require_subject(
+        spicedb,
+        "forged_asset",
+        asset_id,
+        "view",
+        user_id,
+        detail=f"Forbidden: User '{user_id}' cannot view forged asset '{asset_id}'.",
     )
-    if not allowed:
-        raise HTTPException(
-            status_code=403,
-            detail=f"Forbidden: User '{user_id}' cannot view forged asset '{asset_id}'.",
-        )
 
 
 STREAM_ASSET = "runefoble.events.asset"

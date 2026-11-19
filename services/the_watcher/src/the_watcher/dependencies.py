@@ -7,6 +7,7 @@ import logging
 from fastapi import HTTPException
 from runefoble_auth.contract import permission_for_action
 from runefoble_auth.factory import get_spicedb_client
+from runefoble_auth.permissions import check_subject
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.event_bus import EventBusProvider
 from runefoble_platform.event_sourcing import create_aggregate_repository
@@ -83,8 +84,8 @@ async def check_action_permission(
     action_type, permission = permission_for_action(action)
     if action_type != resource_type:
         raise ValueError(f"Action '{action}' checks '{action_type}', not '{resource_type}'")
-    return await get_spicedb_client().check_permission(
-        resource_type, str(resource_id), permission, "user", user_id
+    return await check_subject(
+        get_spicedb_client(), resource_type, str(resource_id), permission, user_id
     )
 
 

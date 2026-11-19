@@ -12,6 +12,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from runefoble_auth.factory import get_spicedb_client
+from runefoble_auth.permissions import check_subject
 from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_platform.models import utc_now
 
@@ -49,13 +50,7 @@ async def check_leitmotif_authorization(
 ) -> bool:
     """Enforce Zanzibar permissions for character leitmotif configuration & triggers."""
     # 1. Check if user has edit rights for this character
-    can_edit = await spicedb.check_permission(
-        resource_type="character",
-        resource_id=character_id,
-        permission="edit",
-        subject_type="user",
-        subject_id=user_id,
-    )
+    can_edit = await check_subject(spicedb, "character", character_id, "edit", user_id)
     if can_edit:
         return True
 
