@@ -20,6 +20,6 @@ def is_port_open(host: str, port: int, timeout: float = 0.5) -> bool:
 
 def redis_endpoint(env: Mapping[str, str]) -> tuple[str, int]:
     """Return the Redis host and port that services will use, from the same env as the gateway."""
-    url = env.get("RUNEFOBLE_REDIS_URL") or env.get("REDIS_URL") or DEFAULT_REDIS_URL
+    url = env.get("RUNEFOBLE_REDIS_URL") or DEFAULT_REDIS_URL
     parsed = urlparse(url)
     return parsed.hostname or "localhost", parsed.port or 6379

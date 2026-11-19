@@ -71,7 +71,6 @@ class PlatformSettings(BaseSettings):
     # Cache & Event Streaming (Redis)
     redis_url: str = Field(
         default="redis://localhost:6379/0",
-        validation_alias=AliasChoices("RUNEFOBLE_REDIS_URL", "REDIS_URL"),
         description="Redis connection string",
     )
 

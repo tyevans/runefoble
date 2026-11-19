@@ -121,7 +121,7 @@ class AudienceStudioProcess:
                 "PORT": str(self.port),
                 "HOST": "127.0.0.1",
                 "NODE_ENV": "test",
-                "REDIS_URL": "mock://redis",
+                "RUNEFOBLE_REDIS_URL": "mock://redis",
                 "RUNEFOBLE_ZITADEL_ISSUER": DEFAULT_ISSUER,
                 "RUNEFOBLE_ZITADEL_AUDIENCE": DEFAULT_AUDIENCE,
             }

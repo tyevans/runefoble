@@ -121,7 +121,7 @@ def test_short_window_poll_closes_after_restart_and_publishes_completion(
             {
                 "RUNEFOBLE_DATABASE_URL": database_url,
                 "RUNEFOBLE_EVENT_STORE_BACKEND": "postgresql",
-                "REDIS_URL": redis_url,
+                "RUNEFOBLE_REDIS_URL": redis_url,
                 **roles.env,
             }
         )
@@ -144,7 +144,7 @@ def test_short_window_poll_closes_after_restart_and_publishes_completion(
             {
                 "RUNEFOBLE_DATABASE_URL": database_url,
                 "RUNEFOBLE_EVENT_STORE_BACKEND": "postgresql",
-                "REDIS_URL": redis_url,
+                "RUNEFOBLE_REDIS_URL": redis_url,
                 **roles.env,
             }
         )
@@ -181,7 +181,7 @@ def test_publishing_recovers_when_redis_starts_after_the_service(
         {
             "RUNEFOBLE_DATABASE_URL": database_url,
             "RUNEFOBLE_EVENT_STORE_BACKEND": "postgresql",
-            "REDIS_URL": f"redis://127.0.0.1:{port}/0",
+            "RUNEFOBLE_REDIS_URL": f"redis://127.0.0.1:{port}/0",
             **roles.env,
         }
     )

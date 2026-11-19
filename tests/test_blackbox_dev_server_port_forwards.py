@@ -103,7 +103,7 @@ def test_dev_server_children_stop_when_dev_server_stops(
     env = {
         key: value
         for key, value in os.environ.items()
-        if key not in ("SPICEDB_ENDPOINT", "RUNEFOBLE_SPICEDB_ENDPOINT", "REDIS_URL")
+        if key not in ("SPICEDB_ENDPOINT", "RUNEFOBLE_SPICEDB_ENDPOINT")
     }
     env["PATH"] = f"{bin_dir}{os.pathsep}{os.environ['PATH']}"
     env["FAKE_PROCESS_DIR"] = str(markers)

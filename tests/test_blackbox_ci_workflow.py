@@ -78,7 +78,7 @@ def test_e2e_playwright_job_structure() -> None:
     bg_step = next(s for s in steps if "make dev &" in s.get("run", ""))
     bg_env = bg_step.get("env", {})
     assert bg_env.get("SPICEDB_ENDPOINT") == "mock"
-    assert "6379" in bg_env.get("REDIS_URL", "")
+    assert "6379" in bg_env.get("RUNEFOBLE_REDIS_URL", "")
 
     # Health & readiness polling
     readiness_step = next(s for s in steps if "api/v1/health" in s.get("run", ""))
