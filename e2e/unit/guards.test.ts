@@ -8,8 +8,8 @@ import { test } from 'node:test';
 import {
   assertOk,
   exactText,
+  fillRouteTemplate,
   requireValue,
-  sessionIdFromTitle,
   type SetupResponse,
 } from '../support/guards.ts';
 
@@ -43,9 +43,22 @@ test('requireValue returns the value that setup stored', () => {
   assert.equal(requireValue('camp-7', 'No campaign id.'), 'camp-7');
 });
 
-test('sessionIdFromTitle reads the session number and refuses a title without one', () => {
-  assert.equal(sessionIdFromTitle('Lobby 15'), '15');
-  assert.throws(() => sessionIdFromTitle('Lobby'), /Session title "Lobby" has no session number\./);
+test('fillRouteTemplate puts the ids that setup stored into the route', () => {
+  assert.equal(
+    fillRouteTemplate('#/campaigns/{campaignId}/sessions/{sessionId}', {
+      campaignId: 'c-1',
+      sessionId: 's-2',
+    }),
+    '#/campaigns/c-1/sessions/s-2'
+  );
+});
+
+test('fillRouteTemplate refuses a placeholder that setup did not store', () => {
+  assert.throws(
+    () => fillRouteTemplate('#/campaigns/{campaignId}/sessions/{sessionId}', { campaignId: 'c-1', sessionId: null }),
+    /Route "#\/campaigns\/\{campaignId\}\/sessions\/\{sessionId\}" needs "sessionId", which setup did not store\./
+  );
+  assert.throws(() => fillRouteTemplate('#/campaigns/{campaignTitle}', { campaignId: 'c-1' }), /needs "campaignTitle"/);
 });
 
 test('exactText matches only the whole label', () => {
