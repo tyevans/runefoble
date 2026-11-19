@@ -201,6 +201,8 @@ uv run pytest tests/test_blackbox_app_shell_views_audit.py tests/test_blackbox_a
 
 `AppDataService` returns a `DataResult` from every read and write. A result is either `{ ok: true, data }` or `{ ok: false, status, message }`. A failed call never returns canned data. Source: `frontend/src/services/data-result.ts` and `frontend/src/services/app-data-service.ts`.
 
+A mapper never fills a missing required field with a default. When a gateway body lacks a required field, or sends it with the wrong type, the read returns `{ ok: false, status: 502 }` and names the field in `message`. Each mapper lists its required fields in a constant. The check helper is `frontend/src/services/required-fields.ts`. Optional fields, such as a board's `tokens`, default to an empty list and are documented in the mapper.
+
 - A failed read shows `<runefoble-data-error>`. HTTP 404 shows "Not found". Any other failure shows "Could not load this view" with a Retry control.
 - A failed write shows a toast that starts with "Not saved." (or the matching action label). The local view state does not change.
 - Fixture arrays live in `frontend/test/support/app-data-service.fixtures.ts`. Only unit tests under `frontend/test/` may import them. The test `frontend/test/fixture-isolation.test.ts` enforces that no App Shell source imports them.
