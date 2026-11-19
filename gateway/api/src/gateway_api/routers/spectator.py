@@ -5,9 +5,10 @@ the same permission again. The GET has no side effect. The spectator connection 
 when the WebSocket is admitted (see `routers/overlay.py`).
 """
 
-from fastapi import APIRouter, Depends, Request, WebSocket
+from fastapi import APIRouter, Depends, Request
 from gateway_api.auth import require_zanzibar_permission
 from gateway_api.dependencies import get_upstreams
+from gateway_api.routers.overlay import overlay_websocket_endpoint
 from gateway_api.spectator import (
     SpectatorStateResponse,
     SpectatorViewerInfo,
@@ -40,9 +41,5 @@ async def get_spectator_state(request: Request, session_id: str) -> SpectatorSta
     return compose_spectator_state(session, board, viewer)
 
 
-@router.websocket("/ws/spectator/{session_id}")
-async def spectator_websocket_endpoint(websocket: WebSocket, session_id: str) -> None:
-    """Real-time spectator WebSocket feed. Same frames as /ws/overlay/{session_id}."""
-    from gateway_api.routers.overlay import overlay_websocket_endpoint
-
-    await overlay_websocket_endpoint(websocket, session_id)
+# The spectator path serves the overlay feed. Both paths register the same endpoint object.
+router.websocket("/ws/spectator/{session_id}")(overlay_websocket_endpoint)

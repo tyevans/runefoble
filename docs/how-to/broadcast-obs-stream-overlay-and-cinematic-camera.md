@@ -88,6 +88,13 @@ ws.onmessage = (event) => {
 
 The path `/overlay/ws/{session_id}` was removed (TASK-0823). Use `/ws/overlay/{session_id}`. The path `/ws/spectator/{session_id}` remains and serves the same feed.
 
+Gateway code layout (TASK-0860):
+- `gateway_api/routers/overlay.py`: the HTTP party vitals route and the `/ws/overlay/{session_id}` socket.
+- `gateway_api/routers/spectator.py`: the spectator state GET and the `/ws/spectator/{session_id}` socket. It registers the overlay endpoint.
+- `gateway_api/overlay/frame_dispatch.py`: validates each inbound frame and routes it by action. Add an action with one row in `HANDLERS`.
+- `gateway_api/overlay/camera_relay.py`: calls the board owner for a camera change and broadcasts the result.
+- `gateway_api/overlay/room.py`: the live socket group for each session.
+
 ## 4. Microfrontend Component Usage
 
 The `<runefoble-spectator-overlay>` element is vendored by `services/game_session/ui/`:
