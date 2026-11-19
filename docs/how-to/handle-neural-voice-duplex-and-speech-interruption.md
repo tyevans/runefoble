@@ -297,7 +297,7 @@ In Helm, set `services.voiceAgent.sttEngine: whisper-cpp` and `services.voiceAge
 When the engine fails to load a model or to infer text, the utterance is dropped and the caller receives an explicit error:
 
 - `POST /api/v1/voice/stream/chunk` returns `503` with `{"detail": {"error": "speech_engine_unavailable", "engine": "faster-whisper", "message": "..."}}`.
-- `WS /api/v1/voice/stream/ws` sends `{"error": "speech_engine_unavailable", "engine": "...", "message": "..."}` and keeps the socket open.
+- `WS /api/v1/voice/stream/ws/{session_id}/{speaker_id}` sends `{"error": "speech_engine_unavailable", "engine": "...", "message": "..."}` and keeps the socket open.
 - A RIFF body with no `data` chunk, or shorter than the 44-byte header, returns `400` with `{"error": "audio_format_invalid", "message": "..."}` on the HTTP routes. The WebSocket sends the same body as a frame and keeps the socket open. The service never reads such bytes as raw PCM.
 - The route returns the 503 and records no speech. No Redis Streams event is published for the failure.
 - No `runefoble.events.watcher.player_spoke` is published, and The Watcher receives no transcript.
@@ -307,6 +307,17 @@ Check the active engine with `GET /healthz`. The response includes `"stt_engine"
 With download disabled, `GET /healthz` returns `503` and `"status": "not_ready"` when the cache holds no model for `RUNEFOBLE_VOICE_STT_MODEL_SIZE`. The body names the failing engine in `problems.stt`.
 
 Callers cannot supply a transcript. The chunk request and the WebSocket frame do not accept `mock_transcript`. The configured engine always decides the text.
+
+### Audio Stream Socket Contract (TASK-0915)
+
+Open the audio stream at `WS /api/v1/voice/stream/ws/{session_id}/{speaker_id}?campaign_id=<id>&speaker_name=<name>`.
+
+- The path must name the session and the speaker. The service has no `/ws` route without them.
+- The query must name `campaign_id` and `speaker_name`. The service never uses the session id as the campaign id, and it never supplies a default name.
+- When a query value is missing, the socket sends `{"type": "error", "code": "INVALID_REQUEST", "message": "Missing query value: ..."}`. Then it closes with code `1008`.
+- A binary frame is raw audio.
+- A text frame is a JSON object. The optional fields are `audio_data` (or `audio_base64`), `session_id`, `speaker_id`, `speaker_name`, `campaign_id`, `sample_rate`, and `is_final`. A field that a frame sets applies to that frame and to the frames after it.
+- A text frame that is not a JSON object, has base64 that is not valid, or has a field of the wrong type gets `{"type": "error", "code": "INVALID_FRAME", "message": "..."}`. The service does not process that frame. The socket stays open.
 
 ### Transcribe Route Input (TASK-0602)
 
@@ -398,6 +409,10 @@ If the event store cannot load or save the room, the route answers `503`. The se
 ### Test Setup
 
 Blackbox tests start a playback through the HTTP route, build a new coordinator to model a restart, and then read the status through the same route. See `tests/test_blackbox_voice_duplex_state.py`.
+
+### DM Kick
+
+`POST /api/v1/voice/rooms/{session_id}/kick` saves `VoicePeerLeft` first. Then it runs each kick callback: the signaling manager sends `webrtc_kicked` to the peer, closes its socket with `4001`, and tells the other peers. A peer whose socket is already closed gets no frame, and the route still answers `200` with `"status": "kicked"`. A callback that fails is not hidden. The route answers `500`, and the saved `VoicePeerLeft` stays.
 
 ### Graceful Restart Keeps Room Seats
 

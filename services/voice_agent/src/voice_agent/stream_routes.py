@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import base64
-import json
+import binascii
 import logging
 from typing import Annotated, Any
 
@@ -11,13 +11,21 @@ from fastapi import APIRouter, Header, HTTPException, WebSocket, WebSocketDiscon
 from pydantic import BaseModel
 from runefoble_auth.websocket import (
     WS_AUTHORIZATION_REFUSED,
+    WS_POLICY_VIOLATION,
     admit_websocket,
     bearer_token_from_subprotocols,
+    send_socket_error,
 )
 from runefoble_platform.engine_ports import EngineUnavailableError
 from runefoble_platform.event_publish import DomainEventPublishError
 from voice_agent.auth import CallerPrincipal, get_voice_verifier
 from voice_agent.authz import require_speaker, speaker_allowed, speaker_authorizer
+from voice_agent.stream_frames import (
+    FRAME_PARSE_ERRORS,
+    AudioFrame,
+    StreamContext,
+    parse_text_frame,
+)
 from voice_agent.stt import get_streaming_pipeline
 from voice_agent.vad import AudioFormatError
 
@@ -69,7 +77,7 @@ async def ingest_audio_chunk(
     if raw_b64:
         try:
             audio_bytes = base64.b64decode(raw_b64)
-        except Exception as e:
+        except binascii.Error as e:
             raise HTTPException(
                 status_code=400,
                 detail=f"Invalid base64 audio payload: {e}",
@@ -92,75 +100,78 @@ async def ingest_audio_chunk(
     return AudioStreamChunkResponse(**result.model_dump())
 
 
+REQUIRED_QUERY_VALUES = ("campaign_id", "speaker_name")
+
+
 @router.websocket("/ws/{session_id}/{speaker_id}")
-@router.websocket("/ws")
-async def audio_stream_websocket(
-    websocket: WebSocket,
-    session_id: str = "session_default",
-    speaker_id: str = "speaker_default",
-):
-    """Real-time bidirectional WebSocket stream for continuous PCM audio frames."""
-    qp = websocket.query_params
-    sess_id = qp.get("session_id") or session_id
-    spk_id = qp.get("speaker_id") or speaker_id
-    spk_name = qp.get("speaker_name") or "Player"
-    camp_id = qp.get("campaign_id") or sess_id
+async def audio_stream_websocket(websocket: WebSocket, session_id: str, speaker_id: str):
+    """Real-time bidirectional WebSocket stream for continuous PCM audio frames.
+
+    The query must name `campaign_id` and `speaker_name`. A missing value gets an
+    `INVALID_REQUEST` error frame, and the socket closes with 1008.
+    """
     principal = await admit_websocket(
-        websocket, get_voice_verifier(), speaker_authorizer(sess_id, spk_id)
+        websocket, get_voice_verifier(), speaker_authorizer(session_id, speaker_id)
     )
     if principal is None:
         return
+    qp = websocket.query_params
+    missing = [name for name in REQUIRED_QUERY_VALUES if not qp.get(name)]
+    if missing:
+        await send_socket_error(
+            websocket, "INVALID_REQUEST", f"Missing query value: {', '.join(missing)}"
+        )
+        await websocket.close(code=WS_POLICY_VIOLATION)
+        return
+    context = StreamContext(
+        session_id=session_id,
+        speaker_id=speaker_id,
+        speaker_name=qp["speaker_name"],
+        campaign_id=qp["campaign_id"],
+    )
     pipeline = get_streaming_pipeline()
     token = bearer_token_from_subprotocols(list(websocket.scope.get("subprotocols", [])))
     caller_authorization = f"Bearer {token}" if token else None
-    verified_pairs = {(sess_id, spk_id)}
+    verified_pairs = {(session_id, speaker_id)}
 
     try:
         while True:
             message = await websocket.receive()
             if message.get("type") == "websocket.disconnect":
                 break
-            audio_bytes = b""
-            is_final = False
-            sample_rate = 16000
-
-            if "bytes" in message and message["bytes"]:
-                audio_bytes = message["bytes"]
-            elif "text" in message and message["text"]:
+            if message.get("bytes"):
+                frame = AudioFrame(context=context, audio_bytes=message["bytes"])
+            elif message.get("text"):
                 try:
-                    payload = json.loads(message["text"])
-                    b64 = payload.get("audio_data") or payload.get("audio_base64")
-                    if b64:
-                        audio_bytes = base64.b64decode(b64)
-                    spk_name = payload.get("speaker_name") or spk_name
-                    spk_id = payload.get("speaker_id") or spk_id
-                    sess_id = payload.get("session_id") or sess_id
-                    camp_id = payload.get("campaign_id") or camp_id
-                    is_final = bool(payload.get("is_final", False))
-                    sample_rate = int(payload.get("sample_rate", 16000))
-                except Exception as exc:
-                    logger.warning("Failed to parse WebSocket JSON audio frame: %s", exc)
+                    frame = parse_text_frame(message["text"], context)
+                except FRAME_PARSE_ERRORS as exc:
+                    # The frame is not forwarded. Tell the client, then keep the stream open.
+                    await send_socket_error(websocket, "INVALID_FRAME", str(exc))
                     continue
+            else:
+                frame = AudioFrame(context=context)
+            context = frame.context
 
             # A frame may name another session or speaker. Each new pair needs its own check.
-            if (sess_id, spk_id) not in verified_pairs:
-                if not await speaker_allowed(sess_id, spk_id, principal.user_id):
+            pair = (context.session_id, context.speaker_id)
+            if pair not in verified_pairs:
+                if not await speaker_allowed(*pair, principal.user_id):
                     logger.warning(
                         "Voice stream frame names a speaker the principal may not act for"
                     )
                     await websocket.close(code=WS_AUTHORIZATION_REFUSED)
                     break
-                verified_pairs.add((sess_id, spk_id))
+                verified_pairs.add(pair)
 
             try:
                 result = await pipeline.process_chunk(
-                    session_id=sess_id,
-                    speaker_id=spk_id,
-                    speaker_name=spk_name,
-                    campaign_id=camp_id,
-                    audio_bytes=audio_bytes,
-                    sample_rate=sample_rate,
-                    is_final=is_final,
+                    session_id=context.session_id,
+                    speaker_id=context.speaker_id,
+                    speaker_name=context.speaker_name,
+                    campaign_id=context.campaign_id,
+                    audio_bytes=frame.audio_bytes,
+                    sample_rate=frame.sample_rate,
+                    is_final=frame.is_final,
                     caller_authorization=caller_authorization,
                 )
             except AudioFormatError as e:
@@ -179,4 +190,8 @@ async def audio_stream_websocket(
 
             await websocket.send_json(result.model_dump())
     except WebSocketDisconnect:
-        logger.debug("Voice stream WebSocket disconnected for %s:%s", sess_id, spk_id)
+        logger.debug(
+            "Voice stream WebSocket disconnected for %s:%s",
+            context.session_id,
+            context.speaker_id,
+        )

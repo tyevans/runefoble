@@ -7,11 +7,9 @@ saves it, and then publishes its event. No room state stays in process (TASK-057
 
 from __future__ import annotations
 
-import logging
 import time
-from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Protocol
 
 from runefoble_events.events import (
     VocalModulatorPresetAppliedEvent,
@@ -33,9 +31,14 @@ from voice_agent.webrtc.adaptive_bitrate import AdaptiveBitrateRegulator, OpusCo
 from voice_agent.webrtc.models import RTCPReportRequest
 from voice_agent.webrtc.quality_monitor import NetworkQualityMonitor, QualityMetrics
 
-logger = logging.getLogger("runefoble.voice_agent.coordinator")
 STREAM_SESSION = "runefoble.events.session"
 STREAM_VOICE = "runefoble.events.voice"
+
+
+class KickCallback(Protocol):
+    """Run after a kick is saved. A failure propagates to the kick route."""
+
+    async def __call__(self, session_id: str, peer_id: str, reason: str) -> None: ...
 
 
 @dataclass(frozen=True)
@@ -61,12 +64,12 @@ class VoiceRoomCoordinator:
         self._quality = NetworkQualityMonitor()
         self._regulator = AdaptiveBitrateRegulator()
         self._telemetry = PeerTelemetryView()
-        self._kick_callbacks: list[Callable[[str, str, str], Any]] = []
+        self._kick_callbacks: list[KickCallback] = []
 
     def set_event_bus(self, bus: RedisStreamsEventBus | None) -> None:
         self._event_bus = bus
 
-    def register_kick_callback(self, cb: Callable[[str, str, str], Any]) -> None:
+    def register_kick_callback(self, cb: KickCallback) -> None:
         self._kick_callbacks.append(cb)
 
     async def _load_room(self, session_id: str) -> VoiceRoomAggregate:
@@ -175,14 +178,13 @@ class VoiceRoomCoordinator:
     async def kick_peer(
         self, session_id: str, peer_id: str, kicked_by: str, reason: str = "kicked_by_dm"
     ) -> dict[str, Any]:
+        """Save peer_left, then run each kick callback. A callback failure propagates.
+
+        The saved peer_left stays when a callback fails. The kick route then answers 5xx.
+        """
         await self.peer_left(session_id, peer_id, reason=reason)
         for cb in self._kick_callbacks:
-            try:
-                res = cb(session_id, peer_id, reason)
-                if hasattr(res, "__await__"):
-                    await res
-            except Exception as e:
-                logger.warning("Error in kick callback: %s", e)
+            await cb(session_id, peer_id, reason)
         return {
             "status": "kicked",
             "session_id": session_id,

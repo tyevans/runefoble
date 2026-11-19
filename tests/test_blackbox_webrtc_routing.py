@@ -204,3 +204,35 @@ def test_dm_moderation_kick_authorized_succeeds_and_disconnects_peer(client):
     assert (
         client.get(room_url, headers=voice_auth_headers(dm_user)).json()["participant_count"] == 0
     )
+
+
+def test_kick_after_the_peer_socket_closed_answers_kicked_and_empties_the_room(client):
+    """The peer closed its signaling socket first. The kick still saves peer_left and answers 200."""
+    spicedb = get_spicedb_client()
+    session_id, dm_user, gone_user = "sess-dm-kick-closed", "the_watcher_dm", "gone_user"
+    for r, u in (("dungeon_master", dm_user), ("player", gone_user)):
+        asyncio.run(spicedb.write_relationship("campaign", session_id, r, "user", u))
+    asyncio.run(grant_voice_session(session_id, dm=dm_user, players=[gone_user]))
+
+    with client.websocket_connect(
+        f"/ws/voice/{session_id}?peer_id=peer_gone", subprotocols=ws_subprotocols(gone_user)
+    ) as ws:
+        ws.receive_json()
+        ws.receive_json()
+
+    kick_res = client.post(
+        f"/api/v1/voice/rooms/{session_id}/kick",
+        headers=voice_auth_headers(dm_user),
+        json={"peer_id": "peer_gone", "reason": "left_early"},
+    )
+
+    assert kick_res.status_code == 200, kick_res.text
+    assert kick_res.json() == {
+        "status": "kicked",
+        "session_id": session_id,
+        "peer_id": "peer_gone",
+        "reason": "left_early",
+        "kicked_by": dm_user,
+    }
+    room = client.get(f"/api/v1/voice/rooms/{session_id}", headers=voice_auth_headers(dm_user))
+    assert room.json()["participant_count"] == 0

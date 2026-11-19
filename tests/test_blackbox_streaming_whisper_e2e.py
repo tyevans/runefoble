@@ -152,7 +152,7 @@ def test_continuous_stream_over_websocket_frontdoor(client: TestClient, mock_red
     speaker_id = "spk-ws-valeros"
 
     with client.websocket_connect(
-        f"/api/v1/voice/stream/ws/{session_id}/{speaker_id}?speaker_name=Valeros",
+        f"/api/v1/voice/stream/ws/{session_id}/{speaker_id}?campaign_id={uuid.uuid4()}&speaker_name=Valeros",
         subprotocols=voice_ws_subprotocols(),
     ) as ws:
         # Frame 1: 200ms speech

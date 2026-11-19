@@ -15,10 +15,16 @@ from typing import Any, cast
 from uuid import NAMESPACE_DNS, UUID, uuid4, uuid5
 
 from eventsource.application.aggregates.repository import AggregateRepository
+from opentelemetry import metrics
+from runefoble_auth.errors import AuthzUnavailableError
 from runefoble_events.events import (
     PENDING_ACTIONS_AGGREGATE,
 )
-from runefoble_platform.aggregate_loading import load_if_exists, load_or_create
+from runefoble_platform.aggregate_loading import (
+    STORE_UNAVAILABLE_ERRORS,
+    load_if_exists,
+    load_or_create,
+)
 from runefoble_platform.event_sourcing import FullEventStore
 from the_watcher.copilot_state.errors import PendingActionNotFoundError
 from the_watcher.copilot_state.pending_actions import OPEN_STATUSES, PendingActionAggregate
@@ -27,7 +33,20 @@ from the_watcher.models import PendingAction, ProposeActionRequest
 logger = logging.getLogger("runefoble.the_watcher.copilot")
 
 RETRY_SECONDS = 1.0
+MAX_EXPIRY_RETRIES = 5
 DEFAULT_PAUSE_WINDOW_MS = 2000
+
+# Only an outage of the event store or of SpiceDB is retried. Other errors are defects.
+RETRYABLE_EXPIRY_ERRORS: tuple[type[BaseException], ...] = (
+    *STORE_UNAVAILABLE_ERRORS,
+    AuthzUnavailableError,
+)
+
+_meter = metrics.get_meter("runefoble.the_watcher")
+_expiry_failures = _meter.create_counter(
+    "runefoble.watcher.pending_action.expiry_failures",
+    description="Pending action expiry timers that stopped after the retry limit",
+)
 
 Callback = Callable[[], Coroutine[Any, Any, None]]
 
@@ -48,8 +67,12 @@ class CopilotEngine:
         self,
         *,
         pending_repo: AggregateRepository[PendingActionAggregate],
+        retry_seconds: float = RETRY_SECONDS,
+        max_retries: int = MAX_EXPIRY_RETRIES,
     ) -> None:
         self._pending_repo = pending_repo
+        self._retry_seconds = retry_seconds
+        self._max_retries = max_retries
         self._timer_tasks: dict[str, asyncio.Task[None]] = {}
         self._callbacks: dict[str, Callback] = {}
 
@@ -200,21 +223,41 @@ class CopilotEngine:
         self._release(action_id)
         self._schedule(session_id, action_id, expires_at)
 
-    def _schedule(self, session_id: str, action_id: str, due_at: float) -> None:
+    def _schedule(self, session_id: str, action_id: str, due_at: float, attempt: int = 0) -> None:
         delay = max(0.0, due_at - time.time())
         self._timer_tasks[action_id] = asyncio.create_task(
-            self._run_timer(session_id, action_id, delay)
+            self._run_timer(session_id, action_id, delay, attempt)
         )
 
-    async def _run_timer(self, session_id: str, action_id: str, delay: float) -> None:
+    async def _run_timer(self, session_id: str, action_id: str, delay: float, attempt: int) -> None:
+        """Expire the action after `delay`. Retry a store or SpiceDB outage up to the limit.
+
+        After the limit the timer stops, and the action stays open in the store. A restart
+        re-arms it. Any other error propagates and ends the timer task.
+        """
         await asyncio.sleep(delay)
         try:
             await self._expire(session_id, action_id)
-        except Exception:
-            logger.exception(
-                "Expiry of action %s failed; retrying in %.1fs", action_id, RETRY_SECONDS
+        except RETRYABLE_EXPIRY_ERRORS:
+            if attempt >= self._max_retries:
+                self._timer_tasks.pop(action_id, None)
+                _expiry_failures.add(1)
+                logger.error(
+                    "Expiry of action %s failed %d times; the timer stopped",
+                    action_id,
+                    attempt + 1,
+                    exc_info=True,
+                )
+                return
+            logger.warning(
+                "Expiry of action %s failed; retry %d of %d in %.2fs",
+                action_id,
+                attempt + 1,
+                self._max_retries,
+                self._retry_seconds,
+                exc_info=True,
             )
-            self._schedule(session_id, action_id, time.time() + RETRY_SECONDS)
+            self._schedule(session_id, action_id, time.time() + self._retry_seconds, attempt + 1)
 
     async def _expire(self, session_id: str, action_id: str) -> None:
         repo = self._pending_repo

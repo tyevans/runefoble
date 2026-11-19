@@ -159,7 +159,7 @@ def _grant_control(spicedb, user_id: str) -> None:
     "path",
     [
         f"/api/v1/voice/duplex/ws/{SESSION_ID}/spk-1",
-        f"/api/v1/voice/stream/ws/{SESSION_ID}/spk-1",
+        f"/api/v1/voice/stream/ws/{SESSION_ID}/spk-1?campaign_id=camp-stream-1&speaker_name=Valeros",
     ],
 )
 def test_websocket_refuses_handshake_without_bearer_subprotocol(path):
@@ -178,7 +178,7 @@ def test_websocket_refuses_handshake_without_bearer_subprotocol(path):
     "path",
     [
         f"/api/v1/voice/duplex/ws/{SESSION_ID}/spk-1",
-        f"/api/v1/voice/stream/ws/{SESSION_ID}/spk-1",
+        f"/api/v1/voice/stream/ws/{SESSION_ID}/spk-1?campaign_id=camp-stream-1&speaker_name=Valeros",
     ],
 )
 def test_websocket_refuses_forged_or_garbage_bearer(path):
@@ -231,7 +231,7 @@ def test_stream_websocket_accepts_valid_bearer_subprotocol():
     token = VOICE_SIGNING_ISSUER.mint("user-dm")
 
     with client.websocket_connect(
-        f"/api/v1/voice/stream/ws/{SESSION_ID}/spk-1",
+        f"/api/v1/voice/stream/ws/{SESSION_ID}/spk-1?campaign_id=camp-stream-1&speaker_name=Valeros",
         subprotocols=["runefoble.v1", f"runefoble.bearer.{token}"],
     ) as ws:
         assert ws.accepted_subprotocol == "runefoble.v1"
