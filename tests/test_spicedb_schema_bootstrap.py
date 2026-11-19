@@ -11,7 +11,8 @@ from pathlib import Path
 import pytest
 from runefoble_auth.bootstrap_schema import DEFAULT_SCHEMA_PATH, bootstrap_schema
 from runefoble_auth.errors import AuthzWriteError
-from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
+from runefoble_auth.mock import MockSpiceDBClient
+from runefoble_auth.spicedb import SpiceDBClient
 
 
 def test_schema_file_exists_and_syntax_structure() -> None:

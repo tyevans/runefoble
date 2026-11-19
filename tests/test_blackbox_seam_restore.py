@@ -5,7 +5,7 @@ build a real SpiceDB client, so the check uses the process seam through its publ
 """
 
 from runefoble_auth.factory import get_spicedb_client, set_spicedb_client
-from runefoble_auth.spicedb import MockSpiceDBClient
+from runefoble_auth.mock import MockSpiceDBClient
 
 from tests.helpers.module_state import restored_seam
 

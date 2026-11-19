@@ -9,7 +9,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from runefoble_auth.spicedb import Relationship
+from runefoble_auth.mock.client import Relationship
 
 logger = logging.getLogger(__name__)
 

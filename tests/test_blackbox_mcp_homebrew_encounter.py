@@ -18,7 +18,7 @@ import httpx
 import pytest
 from gateway_mcp.server import mcp
 from mcp.types import CallToolResult
-from runefoble_auth.spicedb import MockSpiceDBClient
+from runefoble_auth.mock import MockSpiceDBClient
 
 from tests.helpers.game_session_setup import start_session_with_player
 from tests.helpers.live_services import serve

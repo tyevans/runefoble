@@ -10,7 +10,8 @@ from runefoble_platform.config import PlatformSettings
 
 from runefoble_auth.errors import AuthzError
 from runefoble_auth.factory import get_spicedb_client
-from runefoble_auth.spicedb import MockSpiceDBClient, Relationship, SpiceDBClient
+from runefoble_auth.mock.client import MockSpiceDBClient, Relationship
+from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_auth.sync_events import (
     handle_character_created,
     handle_domain_event,

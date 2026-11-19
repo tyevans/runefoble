@@ -9,7 +9,7 @@ Governed by ADR-0007, ADR-0011, PRD-0024, and Hard Invariant 7 (frontdoor blackb
 from __future__ import annotations
 
 from fastapi.testclient import TestClient
-from runefoble_auth.spicedb import MockSpiceDBClient
+from runefoble_auth.mock import MockSpiceDBClient
 
 from .conftest import setup_campaign_settlement
 

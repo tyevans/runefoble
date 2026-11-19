@@ -24,7 +24,7 @@ from typing import Literal
 
 import pytest
 from fastapi import FastAPI
-from runefoble_auth.spicedb import MockSpiceDBClient
+from runefoble_auth.mock import MockSpiceDBClient
 from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
 
 from tests.helpers.live_services import serve

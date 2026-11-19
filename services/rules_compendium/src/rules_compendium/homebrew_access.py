@@ -5,7 +5,8 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID
 
-from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
+from runefoble_auth.mock import MockSpiceDBClient
+from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_platform.aggregate_loading import load_if_exists
 from runefoble_platform.event_sourcing import AggregateRepository
 

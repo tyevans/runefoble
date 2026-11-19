@@ -8,7 +8,7 @@ from __future__ import annotations
 import pytest
 from fastapi.testclient import TestClient
 from game_session.main import app as session_app
-from runefoble_auth.spicedb import MockSpiceDBClient
+from runefoble_auth.mock import MockSpiceDBClient
 
 from tests.helpers.ws_identity import SIGNING_ISSUER
 

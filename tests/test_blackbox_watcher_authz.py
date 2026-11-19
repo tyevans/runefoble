@@ -20,7 +20,7 @@ import pytest
 from fastapi.testclient import TestClient
 from runefoble_auth.errors import AuthzSchemaError, AuthzUnavailableError
 from runefoble_auth.factory import get_spicedb_client
-from runefoble_auth.spicedb import MockSpiceDBClient
+from runefoble_auth.mock import MockSpiceDBClient
 from the_watcher.main import app
 
 from tests.helpers.spicedb_factory import (

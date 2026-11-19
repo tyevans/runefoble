@@ -14,7 +14,7 @@ from game_session.character_client import CHARACTER_SHEET_URL_ENV
 from game_session.main import app as session_app
 from httpx import ASGITransport, AsyncClient
 from runefoble_auth.factory import set_spicedb_client
-from runefoble_auth.spicedb import MockSpiceDBClient
+from runefoble_auth.mock import MockSpiceDBClient
 
 from tests.helpers.live_services import serve
 from tests.helpers.mock_redis import MockAsyncRedis

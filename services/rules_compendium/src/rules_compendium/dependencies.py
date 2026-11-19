@@ -4,8 +4,9 @@ from uuid import UUID
 
 from fastapi import Request
 from runefoble_auth.factory import get_spicedb_client as get_spicedb_client
+from runefoble_auth.mock import MockSpiceDBClient
 from runefoble_auth.permissions import check_subject
-from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
+from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_auth.wiring import (
     build_identity_dependencies,
     make_verifier_holder,

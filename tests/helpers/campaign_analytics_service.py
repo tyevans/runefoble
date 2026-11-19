@@ -18,7 +18,7 @@ from typing import Any
 import pytest
 import redis.asyncio
 from fastapi.testclient import TestClient
-from runefoble_auth.mock_spicedb import MockSpiceDBClient
+from runefoble_auth.mock import MockSpiceDBClient
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.event_sourcing import get_event_store, set_event_store
 from runefoble_platform.redis_bus import RedisStreamsEventBus

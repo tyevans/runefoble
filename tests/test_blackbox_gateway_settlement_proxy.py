@@ -19,7 +19,7 @@ import pytest
 from fastapi import FastAPI, WebSocket
 from fastapi.testclient import TestClient
 from gateway_api.main import app as gateway_app
-from runefoble_auth.spicedb import MockSpiceDBClient
+from runefoble_auth.mock import MockSpiceDBClient
 from starlette.websockets import WebSocketDisconnect
 
 from tests.helpers.live_services import closed_port_url, serve

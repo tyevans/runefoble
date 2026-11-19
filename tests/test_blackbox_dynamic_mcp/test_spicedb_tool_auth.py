@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 from fastapi.testclient import TestClient
-from runefoble_auth.spicedb import MockSpiceDBClient
+from runefoble_auth.mock import MockSpiceDBClient
 
 from tests.test_blackbox_dynamic_mcp.conftest import caller_headers
 

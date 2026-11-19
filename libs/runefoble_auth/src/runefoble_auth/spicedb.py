@@ -19,15 +19,13 @@ from runefoble_auth.grpc_adapter import (
     grpc_write_relationship,
     grpc_write_schema,
 )
-from runefoble_auth.mock_spicedb import MockSpiceDBClient, Relationship
+from runefoble_auth.mock.client import Relationship
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["MockSpiceDBClient", "Relationship", "SpiceDBClient"]
+__all__ = ["SpiceDBClient"]
 
-DEFAULT_SPICEDB_ENDPOINT = os.getenv(
-    "RUNEFOBLE_SPICEDB_ENDPOINT", os.getenv("SPICEDB_ENDPOINT", "localhost:50051")
-)
+DEFAULT_SPICEDB_ENDPOINT = os.getenv("RUNEFOBLE_SPICEDB_ENDPOINT", "localhost:50051")
 SPICEDB_PRESHARED_KEY_VAR = "RUNEFOBLE_SPICEDB_PRESHARED_KEY"
 
 
@@ -53,15 +51,9 @@ class SpiceDBClient:
         self,
         endpoint: str = DEFAULT_SPICEDB_ENDPOINT,
         token: str | None = None,
-        use_mock: bool | None = None,
         insecure: bool = True,
         grpc_client: Any = None,
     ):
-        if use_mock:
-            raise ValueError(
-                "SpiceDBClient no longer supports mock fallback. "
-                "Use runefoble_auth.spicedb.MockSpiceDBClient directly for offline testing."
-            )
         self.endpoint = endpoint
         self.token = token if token is not None else preshared_key_from_env()
         self.insecure = insecure

@@ -3,7 +3,7 @@
 from uuid import uuid4
 
 import pytest
-from runefoble_auth.spicedb import MockSpiceDBClient
+from runefoble_auth.mock import MockSpiceDBClient
 
 
 @pytest.mark.asyncio

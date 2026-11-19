@@ -7,7 +7,8 @@ from fastapi import WebSocketDisconnect
 from fastapi.testclient import TestClient
 from gateway_api.main import app
 from runefoble_auth.factory import get_spicedb_client
-from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
+from runefoble_auth.mock import MockSpiceDBClient
+from runefoble_auth.spicedb import SpiceDBClient
 
 from tests.helpers.ws_identity import ws_subprotocols
 
@@ -104,10 +105,7 @@ def test_dynamic_permission_revocation_rejects_reconnect():
 
 
 def test_spicedb_client_mock_and_grpc_handling():
-    """Verify SpiceDBClient rejects use_mock and instantiates live gRPC client."""
-    with pytest.raises(ValueError, match="no longer supports mock fallback"):
-        SpiceDBClient(use_mock=True)
-
+    """Verify SpiceDBClient instantiates a live gRPC client and the mock evaluates locally."""
     default_client = SpiceDBClient()
     assert default_client._grpc_client is not None
 

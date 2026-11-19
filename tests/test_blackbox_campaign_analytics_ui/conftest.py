@@ -16,7 +16,7 @@ from collections.abc import Iterator
 
 import pytest
 from fastapi.testclient import TestClient
-from runefoble_auth.mock_spicedb import MockSpiceDBClient
+from runefoble_auth.mock import MockSpiceDBClient
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 
 from tests.helpers.campaign_analytics_service import AnalyticsService

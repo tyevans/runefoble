@@ -12,7 +12,8 @@ from collections.abc import Awaitable, Callable
 from typing import Any
 
 from game_session.campaign.errors import AuthorizationStoreError
-from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
+from runefoble_auth.mock import MockSpiceDBClient
+from runefoble_auth.spicedb import SpiceDBClient
 
 logger = logging.getLogger("runefoble.game_session.campaign")
 

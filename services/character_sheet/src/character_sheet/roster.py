@@ -12,7 +12,8 @@ from uuid import UUID
 from character_sheet.aggregate import CharacterAggregate
 from character_sheet.models import CharacterState
 from fastapi import HTTPException
-from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
+from runefoble_auth.mock import MockSpiceDBClient
+from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_platform.aggregate_loading import load_if_exists
 from runefoble_platform.event_sourcing import AggregateRepository
 

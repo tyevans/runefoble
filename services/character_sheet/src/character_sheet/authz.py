@@ -9,7 +9,8 @@ from __future__ import annotations
 from uuid import UUID
 
 from character_sheet.roster import permission_denied
-from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
+from runefoble_auth.mock import MockSpiceDBClient
+from runefoble_auth.spicedb import SpiceDBClient
 
 AuthzClient = SpiceDBClient | MockSpiceDBClient
 

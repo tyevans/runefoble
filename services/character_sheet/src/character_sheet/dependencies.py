@@ -18,8 +18,9 @@ from character_sheet.schemas import CreateCharacterRequest
 from eventsource.domain.exceptions import AggregateNotFoundError
 from fastapi import Depends, HTTPException
 from runefoble_auth.factory import get_spicedb_client
+from runefoble_auth.mock import MockSpiceDBClient
 from runefoble_auth.principal import VerifiedPrincipal
-from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
+from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_auth.wiring import (
     build_identity_dependencies,
     make_verifier_holder,
