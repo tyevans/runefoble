@@ -34,6 +34,7 @@ from runefoble_events.events import (
     StandInActionDecided,
     TurnAdvanced,
     TurnStarted,
+    WeatherChanged,
 )
 from runefoble_platform.event_publish import publish_or_fail
 
@@ -66,6 +67,7 @@ SESSION_EVENT_STREAMS: dict[type[DomainEvent], str] = {
     ReadyActionTriggeredEvent: STREAM_SESSION,
     DMOverrideApplied: STREAM_SESSION,
     AtmosphereUpdated: STREAM_SESSION,
+    WeatherChanged: STREAM_SESSION,
     StandInActionDecided: STREAM_WATCHER,
 }
 

@@ -184,3 +184,13 @@ class AtmosphereUpdated(BaseRunefobleEvent):
     mood: str = "Neutral"
     description: str = ""
     ambient_audio_prompt: str | None = None
+
+
+@register_event("runefoble.events.session.weather_changed")
+class WeatherChanged(BaseRunefobleEvent):
+    """The session weather changed because an approved audience modifier applied (TASK-0441)."""
+
+    aggregate_type: str = "GameSession"
+    event_type: str = "runefoble.events.session.weather_changed"
+    weather: str
+    source_proposal_id: UUID | str | None = None

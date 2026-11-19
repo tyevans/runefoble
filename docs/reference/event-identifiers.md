@@ -166,6 +166,7 @@ CloudEvents exports (`to_cloudevent_dict()`) lower-case the identifier.
 | `runefoble.events.session.started` | `SessionStarted` | `runefoble_events.session` |
 | `runefoble.events.session.turn_advanced` | `TurnAdvanced` | `runefoble_events.session` |
 | `runefoble.events.session.turn_started` | `TurnStarted` | `runefoble_events.session` |
+| `runefoble.events.session.weather_changed` | `WeatherChanged` | `runefoble_events.session` |
 | `runefoble.events.soundscape.channel_volume_changed` | `ChannelVolumeChanged` | `runefoble_events.soundscape` |
 | `runefoble.events.soundscape.cue_triggered` | `SoundscapeCueTriggered` | `runefoble_events.soundscape` |
 | `runefoble.events.soundscape.ducking_engaged` | `DuckingEngaged` | `runefoble_events.soundscape` |

@@ -40,6 +40,7 @@ class GameSessionState(BaseModel, GameSessionTransitionsMixin):
     lobby_readiness: dict[str, bool] = Field(default_factory=dict)
     lobby_characters: dict[str, UUID] = Field(default_factory=dict)
     atmosphere: dict[str, Any] | None = None
+    weather: str | None = None
     dm_overrides: list[dict[str, Any]] = Field(default_factory=list)
 
 
