@@ -4,10 +4,7 @@ import time
 from uuid import uuid4
 
 import pytest
-from board_state.aggregate import BoardAggregate
-from board_state.dependencies import repo
 from fastapi.testclient import TestClient
-from runefoble_platform.identifiers import opaque_aggregate_id
 
 from tests.helpers.ws_identity import ws_subprotocols
 
@@ -67,31 +64,3 @@ def test_websocket_realtime_speech_spell_trigger_sub_150ms(
         assert vfx_msg["radius_ft"] == 20
         assert len(vfx_msg["trajectory"]) >= 2
         assert vfx_msg["decal_type"] == "scorched_earth"
-
-
-@pytest.mark.asyncio
-async def test_event_sourcing_domain_events_persistence() -> None:
-    """Verify SpellCast, AreaEffectExploded, and VFXAnimationFinished events are recorded."""
-    sess_id = f"board-{uuid4().hex[:8]}"
-    board_uuid = opaque_aggregate_id(sess_id, field="session_id")
-    board = BoardAggregate(board_uuid)
-    board.initialize_grid(cols=10, rows=10, session_id=sess_id)
-    board.place_token("valeros", "Valeros", "pc", 2, 2, 40, True)
-
-    anim_id, trajectory, affected_tokens, affected_cells, decal = board.cast_spell(
-        spell_name="Chain Lightning",
-        target_x=5,
-        target_y=5,
-        caster_token_id="valeros",
-        spell_archetype="evocation",
-        radius_ft=15,
-        damage_type="lightning",
-    )
-    board.finish_vfx(anim_id, "Chain Lightning", 5, 5, 400)
-    await repo.save(board)
-
-    # Reload aggregate and verify event replay
-    loaded_board = await repo.load(board_uuid)
-    assert loaded_board is not None
-    assert loaded_board.state.cols == 10
-    assert len(loaded_board.state.active_decals) > 0

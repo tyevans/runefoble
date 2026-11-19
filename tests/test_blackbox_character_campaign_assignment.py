@@ -9,15 +9,9 @@ Complies strictly with:
 - Hard Invariant 7: Blackbox TDD with public frontdoors
 """
 
-from uuid import uuid4
-
 import pytest
-from character_sheet.aggregate import CharacterAggregate
 from character_sheet.main import app
-from eventsource.domain.event_registry import default_registry
 from fastapi.testclient import TestClient
-from runefoble_events.events import CharacterAssignedToCampaign
-from runefoble_platform.event_sourcing import AggregateRepository, InMemoryEventStore
 
 from tests.helpers.ws_identity import bearer
 
@@ -25,106 +19,6 @@ from tests.helpers.ws_identity import bearer
 @pytest.fixture
 def client(spicedb):
     return TestClient(app, headers=bearer("character-owner"))
-
-
-def test_character_assigned_to_campaign_event_registry_and_schema():
-    """Verify CharacterAssignedToCampaign event is registered, versioned, and CloudEvents compatible."""
-    # Check registry resolution
-    cls1 = default_registry.get("runefoble.events.character.assigned_to_campaign")
-    cls2 = default_registry.get("runefoble.events.character.assigned_to_campaign")
-    assert cls1 is CharacterAssignedToCampaign
-    assert cls2 is CharacterAssignedToCampaign
-
-    # Create event
-    char_id = uuid4()
-    event = CharacterAssignedToCampaign(
-        aggregate_id=char_id,
-        character_id=str(char_id),
-        campaign_id="camp-underdark-101",
-        assigned_by="dm-vance",
-    )
-    assert event.aggregate_type == "CharacterSheet"
-    assert event.event_type == "runefoble.events.character.assigned_to_campaign"
-    assert getattr(event, "schema_version", None) == 1
-    assert event.campaign_id == "camp-underdark-101"
-    assert event.assigned_by == "dm-vance"
-
-    # Verify serialization round-trip
-    dumped = event.to_dict()
-    assert dumped["campaign_id"] == "camp-underdark-101"
-    assert dumped["assigned_by"] == "dm-vance"
-
-    rehydrated = CharacterAssignedToCampaign.from_dict(dumped)
-    assert rehydrated.aggregate_id == char_id
-    assert rehydrated.campaign_id == "camp-underdark-101"
-    assert rehydrated.assigned_by == "dm-vance"
-
-    # CloudEvents export
-    ce = event.to_cloudevent_dict()
-    assert ce["specversion"] == "1.0"
-    assert ce["type"] == "runefoble.events.character.assigned_to_campaign"
-    assert ce["source"] == f"/runefoble/charactersheet/{char_id}"
-    assert ce["data"]["campaign_id"] == "camp-underdark-101"
-
-
-@pytest.mark.asyncio
-async def test_character_aggregate_core_attributes_and_campaign_mutation():
-    """Verify event-sourced CharacterAggregate handles core attributes and campaign assignment."""
-    store = InMemoryEventStore()
-    repo = AggregateRepository(event_store=store, aggregate_factory=CharacterAggregate)
-
-    char_id = uuid4()
-    char = CharacterAggregate(char_id)
-
-    custom_scores = {"str": 16, "dex": 14, "con": 14, "int": 10, "wis": 12, "cha": 8}
-    char.create(
-        name="Karlach",
-        character_class="Barbarian",
-        max_hp=48,
-        player_id="usr-player-1",
-        personality_traits=["fierce", "protective"],
-        campaign_id="camp-avernus",
-        subclass="Wild Magic",
-        armor_class=15,
-        speed_ft=35,
-        ability_scores=custom_scores,
-    )
-
-    # Verify initial state
-    assert char.state.name == "Karlach"
-    assert char.state.campaign_id == "camp-avernus"
-    assert char.state.subclass == "Wild Magic"
-    assert char.state.armor_class == 15
-    assert char.state.speed_ft == 35
-    assert char.state.ability_scores == custom_scores
-
-    # Re-assign campaign
-    char.assign_campaign("camp-baldurs-gate", assigned_by="usr-dm-1")
-    assert char.state.campaign_id == "camp-baldurs-gate"
-
-    # Unassign campaign
-    char.assign_campaign(None, assigned_by="usr-player-1")
-    assert char.state.campaign_id is None
-
-    # Save to event store
-    await repo.save(char)
-
-    # Reconstitute and verify event replay integrity
-    reconstituted = await repo.load(char_id)
-    assert reconstituted.state.name == "Karlach"
-    assert reconstituted.state.campaign_id is None
-    assert reconstituted.state.subclass == "Wild Magic"
-    assert reconstituted.state.armor_class == 15
-    assert reconstituted.state.speed_ft == 35
-    assert reconstituted.state.ability_scores == custom_scores
-
-    # Re-assign on reconstituted aggregate
-    reconstituted.assign_campaign("camp-final-battle", assigned_by="usr-dm-1")
-    assert reconstituted.state.campaign_id == "camp-final-battle"
-    await repo.save(reconstituted)
-
-    final_load = await repo.load(char_id)
-    assert final_load.state.campaign_id == "camp-final-battle"
 
 
 def test_blackbox_character_creation_with_core_attributes(client):
