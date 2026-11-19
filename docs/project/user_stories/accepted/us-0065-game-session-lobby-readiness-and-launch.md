@@ -38,3 +38,19 @@ And the session state transitions from "lobby" to "active"
 And a "SessionStarted" event is published to Redis Streams
 And all connected lobby browsers transition automatically to the active VTT board at "#/campaigns/4/sessions/15".
 ```
+
+## Scenario 3: A Player Who Is Not the DM Does Not See the Launch Control
+```gherkin
+Given Evelyn runs the campaign "Lantern Vigil" and created the session "Lantern Night"
+And Marcus has the "player" role in the campaign
+When Marcus opens the lobby of "Lantern Night"
+Then the server reports that Marcus cannot run the session
+And Marcus does not see the "Launch Session" control
+```
+
+## Scenario 4: The Readiness Summary Never Counts the Owner or the DM
+```gherkin
+Given Evelyn runs the campaign "Lantern Vigil" and created the session "Lantern Night"
+When Evelyn opens the lobby of "Lantern Night" and no player has taken a seat
+Then the lobby readiness summary reads "No players have joined"
+```

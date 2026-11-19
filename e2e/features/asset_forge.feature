@@ -15,11 +15,13 @@ Feature: Asset Forge and Print Forge Call the Forge API and Show Results
     And I should see the image "Forged Battlemap Preview"
     And I should see the asset id returned by the forge
 
-  Scenario: Forging a battlemap shows the error when Silo storage is unavailable
-    Given the forge route "/api/v1/forge/battlemap" responds with status 503
-    When I enter "Subterranean dwarven forge" as the battlemap prompt
+  # TASK-0840: the failure is a real one. asset_forge refuses a prompt shorter than 3 characters.
+  # No route is faked. The gateway passes the 422 reply to the browser unchanged.
+  Scenario: Forging a battlemap with a too-short prompt shows the server's refusal
+    When I enter "ab" as the battlemap prompt
     And I click the "Forge Tactical Battlemap" button
-    Then I should see the error "Silo asset storage is unavailable. The asset was not stored."
+    Then the forge route "/api/v1/forge/battlemap" answers with status 422
+    And I should see the error "String should have at least 3 characters"
     And I should not see the image "Forged Battlemap Preview"
 
   Scenario: Exporting the tiled PDF offers the returned file
