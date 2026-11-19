@@ -252,11 +252,13 @@ test-e2e-ui: ## Launch interactive Playwright UI mode for live debugging (needs 
 	@pnpm exec bddgen
 	@ZITADEL_ADMIN_PAT="$$(kubectl --context kind-runefoble-local get secret zitadel-admin -o jsonpath='{.data.pat}' | base64 -d)" pnpm exec playwright test --ui $(ARGS)
 
-lint: helm-lint ## Check types, Ruff lint, format, and Helm
+lint: helm-lint ## Check types, Ruff lint, format, hex colour literals, and Helm
 	@echo "==> Checking Ruff lint rules..."
 	uv run ruff check .
 	@echo "==> Checking Ruff formatting..."
 	uv run ruff format --check .
+	@echo "==> Checking hex colour literals against the baseline (TASK-0763)..."
+	uv run python scripts/check_hex_literals.py
 	@echo "==> Checking import contracts (gateway imports no service package, ADR-0015 b)..."
 	uv run lint-imports
 	@echo "==> Typechecking inference worker..."

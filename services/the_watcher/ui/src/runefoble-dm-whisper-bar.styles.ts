@@ -4,10 +4,10 @@ export const dmWhisperBarStyles = css`
   :host {
     display: block;
     font-family: var(--rf-font-family, system-ui, -apple-system, sans-serif);
-    color: var(--rf-text-primary, #111827);
-    background: var(--rf-bg-surface, #ffffff);
-    border: var(--rf-border-width, 2px) solid var(--rf-border-color, #111827);
-    box-shadow: var(--rf-shadow, 4px 4px 0px 0px rgba(0, 0, 0, 1));
+    color: var(--rf-text-primary);
+    background: var(--rf-bg-surface);
+    border: var(--rf-border-width, 2px) solid var(--rf-border-color);
+    box-shadow: var(--rf-shadow);
     padding: 16px;
     box-sizing: border-box;
     width: 100%;
@@ -18,7 +18,7 @@ export const dmWhisperBarStyles = css`
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: var(--rf-border-width, 2px) solid var(--rf-border-color, #111827);
+    border-bottom: var(--rf-border-width, 2px) solid var(--rf-border-color);
     padding-bottom: 10px;
     margin-bottom: 12px;
   }
@@ -44,23 +44,23 @@ export const dmWhisperBarStyles = css`
     font-weight: 800;
     text-transform: uppercase;
     padding: 3px 8px;
-    border: 1px solid var(--rf-border-color, #111827);
+    border: 1px solid var(--rf-border-color);
     letter-spacing: 0.04em;
   }
 
   .badge-dm {
-    background: var(--rf-accent-secondary, #2563eb);
-    color: var(--rf-text-inverse, #ffffff);
+    background: var(--rf-accent-secondary);
+    color: var(--rf-text-inverse);
   }
 
   .badge-whisper-type {
-    background: var(--rf-accent-tertiary, #eab308);
-    color: var(--rf-text-primary, #111827);
+    background: var(--rf-accent-tertiary);
+    color: var(--rf-text-primary);
   }
 
   .badge-pending {
-    background: var(--rf-accent-primary, #dc2626);
-    color: var(--rf-text-inverse, #ffffff);
+    background: var(--rf-accent-primary);
+    color: var(--rf-text-inverse);
     animation: pulse 1.5s infinite;
   }
 
@@ -71,8 +71,8 @@ export const dmWhisperBarStyles = css`
 
   /* Pending Action Interceptor Banner */
   .interceptor-box {
-    background: var(--rf-bg-canvas, #f3f4f6);
-    border: 2px solid var(--rf-accent-primary, #dc2626);
+    background: var(--rf-bg-canvas);
+    border: 2px solid var(--rf-accent-primary);
     padding: 12px;
     margin-bottom: 16px;
     position: relative;
@@ -88,7 +88,7 @@ export const dmWhisperBarStyles = css`
   .interceptor-title {
     font-weight: 800;
     font-size: 0.95rem;
-    color: var(--rf-accent-primary, #dc2626);
+    color: var(--rf-accent-primary);
     display: flex;
     align-items: center;
     gap: 6px;
@@ -97,14 +97,14 @@ export const dmWhisperBarStyles = css`
   .countdown-bar {
     width: 100%;
     height: 6px;
-    background: #e5e7eb;
+    background: var(--rf-bg-inset);
     margin-bottom: 10px;
     overflow: hidden;
   }
 
   .countdown-fill {
     height: 100%;
-    background: var(--rf-accent-primary, #dc2626);
+    background: var(--rf-accent-primary);
     transition: width 0.1s linear;
   }
 
@@ -131,43 +131,43 @@ export const dmWhisperBarStyles = css`
     text-transform: uppercase;
     letter-spacing: 0.04em;
     padding: 6px 14px;
-    border: var(--rf-border-width, 2px) solid var(--rf-border-color, #111827);
+    border: var(--rf-border-width, 2px) solid var(--rf-border-color);
     cursor: pointer;
-    box-shadow: 2px 2px 0px 0px rgba(0, 0, 0, 1);
+    box-shadow: 2px 2px 0px 0px var(--rf-shadow-color);
     transition: transform 0.05s ease, box-shadow 0.05s ease;
   }
 
   .rf-btn:hover {
     transform: translate(-1px, -1px);
-    box-shadow: 3px 3px 0px 0px rgba(0, 0, 0, 1);
+    box-shadow: 3px 3px 0px 0px var(--rf-shadow-color);
   }
 
   .rf-btn:active {
     transform: translate(1px, 1px);
-    box-shadow: 1px 1px 0px 0px rgba(0, 0, 0, 1);
+    box-shadow: 1px 1px 0px 0px var(--rf-shadow-color);
   }
 
   .btn-approve {
-    background: var(--rf-accent-secondary, #2563eb);
-    color: var(--rf-text-inverse, #ffffff);
+    background: var(--rf-accent-secondary);
+    color: var(--rf-text-inverse);
   }
 
   .btn-veto {
-    background: var(--rf-accent-primary, #dc2626);
-    color: var(--rf-text-inverse, #ffffff);
+    background: var(--rf-accent-primary);
+    color: var(--rf-text-inverse);
   }
 
   .btn-edit {
-    background: var(--rf-accent-tertiary, #eab308);
-    color: var(--rf-text-primary, #111827);
+    background: var(--rf-accent-tertiary);
+    color: var(--rf-text-primary);
   }
 
   /* Inline Edit Form */
   .edit-form {
     margin-top: 10px;
     padding: 10px;
-    background: #ffffff;
-    border: 1px solid var(--rf-border-color, #111827);
+    background: var(--rf-bg-card);
+    border: 1px solid var(--rf-border-color);
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -189,7 +189,7 @@ export const dmWhisperBarStyles = css`
     font-family: inherit;
     font-size: 0.85rem;
     padding: 4px 8px;
-    border: 1px solid var(--rf-border-color, #111827);
+    border: 1px solid var(--rf-border-color);
   }
 
   /* Whisper Stream Section */
@@ -218,14 +218,14 @@ export const dmWhisperBarStyles = css`
     font-size: 0.7rem;
     font-weight: 700;
     padding: 3px 8px;
-    border: 1px solid var(--rf-border-color, #111827);
-    background: var(--rf-bg-surface, #ffffff);
+    border: 1px solid var(--rf-border-color);
+    background: var(--rf-bg-surface);
     cursor: pointer;
   }
 
   .tab-btn.active {
-    background: var(--rf-border-color, #111827);
-    color: var(--rf-text-inverse, #ffffff);
+    background: var(--rf-border-color);
+    color: var(--rf-text-inverse);
   }
 
   .whisper-list {
@@ -237,8 +237,8 @@ export const dmWhisperBarStyles = css`
   }
 
   .whisper-card {
-    background: var(--rf-bg-canvas, #f3f4f6);
-    border: 1px solid var(--rf-border-color, #111827);
+    background: var(--rf-bg-canvas);
+    border: 1px solid var(--rf-border-color);
     padding: 8px 12px;
   }
 
@@ -257,9 +257,9 @@ export const dmWhisperBarStyles = css`
   .whisper-notice {
     margin-top: 6px;
     padding: 6px 8px;
-    border: 1px dashed var(--rf-border-color, #111827);
+    border: 1px dashed var(--rf-border-color);
     font-size: 0.8rem;
-    color: #6b7280;
+    color: var(--rf-text-muted);
   }
 
   .whisper-actions {
@@ -271,13 +271,13 @@ export const dmWhisperBarStyles = css`
 
   .sent-badge {
     font-size: 0.75rem;
-    color: #065f46;
+    color: var(--rf-status-success);
     font-weight: 600;
   }
 
   .empty-state {
     font-size: 0.85rem;
-    color: #6b7280;
+    color: var(--rf-text-muted);
     font-style: italic;
     padding: 12px 0;
     text-align: center;

@@ -52,7 +52,18 @@ Hard drop-shadows provide tactile neobrutalist depth. In dark mode, `--rf-shadow
 | `--rf-shadow` | `4px 4px 0px var(--rf-shadow-color)` |
 | `--rf-shadow-sm` | `2px 2px 0px var(--rf-shadow-color)` |
 
-### 5. Universal Base Tokens
+### 5. Status Tokens
+Status tokens mark severity, health and outcome (badges, pills, alerts). The file `frontend/src/styles/themes/status.css` derives them from the theme palette. Each theme block defines the palette colour `--rf-color-green`. The status rule matches `:root`, `[data-theme]` and `[data-color-mode]`, so a nested theme container gets its own values.
+
+| Token | Value | Use |
+|---|---|---|
+| `--rf-status-danger` | `var(--rf-color-red)` | Critical, offline, hostile |
+| `--rf-status-warning` | `var(--rf-color-yellow)` | High urgency, caution |
+| `--rf-status-info` | `var(--rf-color-blue)` | Medium urgency, notice |
+| `--rf-status-success` | `var(--rf-color-green)` | Low urgency, online, healthy. Safe as text: contrast is 4.5:1 or more on `--rf-bg-surface` |
+| `--rf-status-<name>-bg` | `color-mix(in srgb, var(--rf-status-<name>) 16%, var(--rf-bg-surface))` | Tinted badge background. Put `--rf-text-primary` text on it |
+
+### 6. Universal Base Tokens
 Universal root CSS custom properties (`frontend/src/styles/themes/base.css`) define foundational geometry, typography scales, spacing, transitions, and z-index layers across all themes:
 
 | Category | Token | Value |
@@ -80,7 +91,8 @@ frontend/src/styles/
     ├── bauhaus.css          # Bauhaus Modernist light & dark mode palettes, borders, and shadows (< 150 lines)
     ├── dark-fantasy.css     # Dark Fantasy gothic stone and shadow palettes (< 150 lines)
     ├── parchment.css        # Parchment aged paper, sepia, and manuscript tokens (< 150 lines)
-    └── cyber-rune.css       # Cyber-Rune neon cyan, grid, and circuitry tokens (< 150 lines)
+    ├── cyber-rune.css       # Cyber-Rune neon cyan, grid, and circuitry tokens (< 150 lines)
+    └── status.css           # Semantic status tokens derived from the theme palette (TASK-0763)
 ```
 
 Each sub-module encapsulates both light and dark variations as well as `@media (prefers-color-scheme)` queries for its respective theme.
@@ -196,7 +208,27 @@ The theming architecture and design tokens are continuously verified by a modula
    - Confirms index CSS imports and `<runefoble-theme-switcher>` component contracts.
    - Enforces Storybook preview controls and contrast matrix stories.
 2. **`tests/test_theming_contrast.py`**:
-   - Calculates mathematical contrast ratios enforcing WCAG 2.1 AA (min 4.5:1 for body) and AAA (min 7:1 for headings).
-   - Scans microfrontend Web Component CSS styles for zero hardcoded hex literals.
-   - Validates consumption of `--rf-*` tokens across all UI services.
-   - Verifies settings modal style decomposition sub-modules.
+   - Calculates contrast ratios for every theme block. Primary text needs 7:1 (AAA) on the canvas and the surface. Secondary text needs 4.5:1 (AA) on the canvas.
+   - Checks that `--rf-color-green` (the success colour) has 4.5:1 or more on the surface in all 12 theme blocks.
+3. **`scripts/check_hex_literals.py`**: the hex colour gate. Refer to the next section.
+
+## Hex Colour Lint Gate
+
+Components must use `var(--rf-*)` tokens, not hex colours (ADR-0012, ADR-0004). The gate `scripts/check_hex_literals.py` blocks new hex literals (TASK-0763).
+
+- **Run it**: `make lint` runs the gate. CI runs it in the `python-quality` job. To run it alone, use `uv run python scripts/check_hex_literals.py`.
+- **Scope**: `.ts`, `.tsx`, `.js`, `.mjs`, `.css` and `.html` files under `frontend/src`, `services/*/ui/src` and `libs/*/src`.
+- **Allowed files**: the token definition files `frontend/src/styles/themes.css` and `frontend/src/styles/themes/*.css`.
+- **What counts**: `#rgb`, `#rgba`, `#rrggbb` and `#rrggbbaa`. A fallback such as `var(--rf-text-primary, #121212)` counts. Private class fields (`this.#field`), element ids (`#add-button`) and HTML entities (`&#x27;`) do not count.
+- **Baseline**: `scripts/hex_baseline.json` records the permitted count per file. A file that is not in the baseline permits zero.
+- **Failure**: the gate exits `1` when a file holds more literals than its baseline entry. It prints each literal with its file and line. It exits `2` when the baseline file is missing or invalid.
+- **Lower the baseline**: after you remove hex literals, run `uv run python scripts/check_hex_literals.py --update-baseline`. The command lowers the counts and removes clean files. It refuses to raise a count, so the baseline can only fall.
+
+### Remove a hex literal
+1. Find a semantic token that has the same meaning (surface, text, border, accent or status).
+2. Replace the literal with `var(--rf-<token>)`. Do not keep a hex fallback. Every App Shell page and every Storybook story loads `frontend/src/styles/themes.css`.
+3. If no token has the meaning, add the token to the theme files in `frontend/src/styles/themes/`. Do not define colours in a component.
+4. Check the component in light and dark mode. The story `Design System/WatcherContrastMatrix` (`services/the_watcher/ui/src/watcher-theme-matrix.stories.ts`) shows the pattern.
+5. Lower the baseline with `--update-baseline`.
+
+The Watcher UI (`services/the_watcher/ui/src`) holds no hex literals.

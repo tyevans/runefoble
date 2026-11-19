@@ -3,6 +3,7 @@
  * ADR-0012: Design System Theming Tokens and Bauhaus Modernist Aesthetic
  * TASK-0074: Dark/Light Mode Tokens & Cross-Component Contrast Invariants
  * TASK-0120: CSS Design Tokens and Theme Variables Modular Decomposition
+ * TASK-0763: Semantic status tokens
  */
 
 @import './themes/base.css';
@@ -10,3 +11,4 @@
 @import './themes/dark-fantasy.css';
 @import './themes/parchment.css';
 @import './themes/cyber-rune.css';
+@import './themes/status.css';

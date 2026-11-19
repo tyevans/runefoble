@@ -67,3 +67,18 @@ def test_wcag_contrast_ratios_across_theme_matrix():
                 assert ratio >= 7.0, f"Surface contrast in {selector.strip()}: {ratio:.2f} < 7.0"
 
     assert checked_blocks >= 8, f"Expected at least 8 theme/mode variations, found {checked_blocks}"
+
+
+def test_status_green_is_legible_on_the_surface_in_every_theme_block():
+    """The success colour is used as text, so it must reach WCAG AA (4.5:1) on the surface."""
+    content = resolve_css_imports(THEMES_CSS)
+    checked = 0
+    for selector, body in re.findall(r"([^{]+)\{([^}]+)\}", content):
+        values = dict(re.findall(r"(--rf-[a-z0-9\-]+):\s*([^;]+);", body))
+        green = values.get("--rf-color-green", "").strip()
+        surface = values.get("--rf-bg-surface", "").strip()
+        if green.startswith("#") and surface.startswith("#"):
+            ratio = contrast(green, surface)
+            assert ratio >= 4.5, f"Green contrast in {selector.strip()}: {ratio:.2f} < 4.5"
+            checked += 1
+    assert checked >= 12, f"Expected --rf-color-green in 12 theme blocks, found {checked}"

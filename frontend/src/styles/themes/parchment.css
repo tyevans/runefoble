@@ -12,6 +12,7 @@
   --rf-color-red: #9b2226;
   --rf-color-blue: #2c4c64;
   --rf-color-yellow: #bb8524;
+  --rf-color-green: #3f6b2a;
   --rf-color-dark: #2e1b0f;
   --rf-color-light: #fff9eb;
 
@@ -51,6 +52,7 @@
   --rf-color-red: #e05353;
   --rf-color-blue: #4a7a96;
   --rf-color-yellow: #f3ba4f;
+  --rf-color-green: #8fbf6a;
   --rf-color-dark: #1a140e;
   --rf-color-light: #fff9eb;
 
@@ -91,6 +93,7 @@
     --rf-color-red: #e05353;
     --rf-color-blue: #4a7a96;
     --rf-color-yellow: #f3ba4f;
+    --rf-color-green: #8fbf6a;
     --rf-bg-canvas: #1a140e;
     --rf-bg-surface: #261d15;
     --rf-bg-surface-elevated: #33271c;

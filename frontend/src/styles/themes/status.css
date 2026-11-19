@@ -1,0 +1,24 @@
+/**
+ * Runefoble Design System - Semantic Status Tokens
+ * ADR-0012: Design System Theming Tokens and Bauhaus Modernist Aesthetic
+ * TASK-0763: Hex colour lint gate and token migration
+ *
+ * Status tokens derive from the theme palette, so every theme and colour mode
+ * gets them without new hex values. The rule matches every element that sets a
+ * theme or a colour mode, so a nested theme container recomputes the tokens.
+ */
+
+:root,
+[data-theme],
+[data-color-mode] {
+  --rf-status-danger: var(--rf-color-red);
+  --rf-status-warning: var(--rf-color-yellow);
+  --rf-status-info: var(--rf-color-blue);
+  --rf-status-success: var(--rf-color-green);
+
+  /* Tinted backgrounds for badges and pills. Put --rf-text-primary text on them. */
+  --rf-status-danger-bg: color-mix(in srgb, var(--rf-status-danger) 16%, var(--rf-bg-surface));
+  --rf-status-warning-bg: color-mix(in srgb, var(--rf-status-warning) 16%, var(--rf-bg-surface));
+  --rf-status-info-bg: color-mix(in srgb, var(--rf-status-info) 16%, var(--rf-bg-surface));
+  --rf-status-success-bg: color-mix(in srgb, var(--rf-status-success) 16%, var(--rf-bg-surface));
+}
