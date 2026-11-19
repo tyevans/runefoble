@@ -10,7 +10,7 @@ from pydantic import BaseModel
 class PlacedTokenState(BaseModel):
     token_id: str
     name: str
-    token_type: Literal["pc", "monster", "npc", "obstacle"] = "pc"
+    token_type: Literal["pc", "monster", "npc", "obstacle", "loot"] = "pc"
     x: int
     y: int
     hp: int | None = None
@@ -38,7 +38,7 @@ class PlacedTokenState(BaseModel):
 class PlaceTokenRequest(BaseModel):
     token_id: str | None = None
     name: str
-    token_type: Literal["pc", "monster", "npc", "obstacle"] = "pc"
+    token_type: Literal["pc", "monster", "npc", "obstacle", "loot"] = "pc"
     x: int
     y: int
     hp: int | None = None
@@ -58,7 +58,7 @@ class MoveTokenRequest(BaseModel):
 class MoveTokenResponse(BaseModel):
     token_id: str
     name: str
-    token_type: Literal["pc", "monster", "npc", "obstacle"] = "pc"
+    token_type: Literal["pc", "monster", "npc", "obstacle", "loot"] = "pc"
     x: int
     y: int
     hp: int | None = None

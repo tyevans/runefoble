@@ -30,7 +30,7 @@ from gateway_mcp.settings import GatewayMcpSettings, load_settings
 
 TIMEOUT_SECONDS = 5.0
 
-TokenType = Literal["pc", "monster", "npc", "obstacle"]
+TokenType = Literal["pc", "monster", "npc", "obstacle", "loot"]
 InitiatedBy = Literal["player", "the_watcher", "stand_in"]
 
 # One shared client per event loop, service, base URL, and credential. The HTTP connections of a

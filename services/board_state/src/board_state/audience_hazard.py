@@ -1,4 +1,4 @@
-"""Redis Streams consumer that places an approved audience hazard on the board of its session (TASK-0835).
+"""Places an approved audience hazard on the board of its session (TASK-0835).
 
 Governed by ADR-0006 (Redis Streams event bus), ADR-0007 (each owner applies its own effect),
 ADR-0011 (state changes go through the BoardState aggregate), and ADR-0015 (fail loud).
@@ -22,13 +22,8 @@ from runefoble_platform.audience_modifiers import (
     require_same_campaign,
     text_parameter,
 )
-from runefoble_platform.consumer_group import RedisConsumerGroup
 from runefoble_platform.redis_bus import RedisStreamsEventBus
-from runefoble_platform.stream_consumer import StreamConsumer
 
-GROUP_NAME = "board_state_audience_workers"
-WORKER_NAME = "board_state_audience_consumer_1"
-AUDIENCE_STREAM = "runefoble.events.audience"
 HAZARD_MODIFIER = "hazard_spawn"
 
 
@@ -71,20 +66,3 @@ async def apply_audience_hazard_event(event: Any, bus: RedisStreamsEventBus | No
         hazard=hazard_type,
     )
     await save_and_publish(repo, board, bus)
-
-
-def build_audience_hazard_consumer(
-    consumer_group: RedisConsumerGroup, bus: RedisStreamsEventBus
-) -> StreamConsumer:
-    """Build the stream consumer for the audience stream. The caller starts it."""
-
-    async def _handle(_message_id: str, event: Any) -> None:
-        await apply_audience_hazard_event(event, bus)
-
-    return StreamConsumer(
-        consumer_group=consumer_group,
-        stream=AUDIENCE_STREAM,
-        group_name=GROUP_NAME,
-        consumer_name=WORKER_NAME,
-        handler=_handle,
-    )
