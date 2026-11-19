@@ -10,42 +10,19 @@ from runefoble_platform.event_fields import event_field, event_type_of
 logger = logging.getLogger(__name__)
 
 
-async def handle_session_created(sync_service: Any, event: Any) -> list[str]:
-    """Handle SessionCreated domain event to configure DM and session binding."""
-    campaign_id = (
-        event_field(event, "campaign_id")
-        or event_field(event, "session_id")
-        or str(event_field(event, "aggregate_id", ""))
-    )
-    dm_id = event_field(event, "dm_id") or event_field(event, "created_by", "system")
-    session_id = event_field(event, "session_id") or str(
-        event_field(event, "aggregate_id", campaign_id)
-    )
-
-    synced: list[str] = []
-    if campaign_id and dm_id:
-        synced.extend(
-            await sync_service.sync_membership(str(campaign_id), str(dm_id), "game_master")
-        )
-    if session_id and campaign_id:
-        synced.extend(await sync_service.sync_session_campaign(str(session_id), str(campaign_id)))
-    return synced
-
-
 async def handle_participant_joined(sync_service: Any, event: Any) -> list[str]:
-    """Handle PlayerJoinedSession domain events."""
+    """Handle PlayerJoinedSession domain events.
+
+    The event grants no campaign role (ADR-0015 (d)). Only the character binding is written.
+    """
     campaign_id = (
         event_field(event, "campaign_id")
         or event_field(event, "session_id")
         or str(event_field(event, "aggregate_id", ""))
     )
     user_id = event_field(event, "user_id") or event_field(event, "player_id")
-    role = event_field(event, "role", "player")
 
     synced: list[str] = []
-    if campaign_id and user_id:
-        synced.extend(await sync_service.sync_membership(str(campaign_id), str(user_id), str(role)))
-
     char_id = event_field(event, "character_id")
     if char_id and user_id:
         camp_arg = str(campaign_id) if campaign_id else None
@@ -87,8 +64,6 @@ async def handle_domain_event(
 ) -> list[str]:
     """Route a domain event or CloudEvent payload to appropriate relationship handlers."""
     event_type = event_type_of(event)
-    if event_type == "runefoble.events.session.created":
-        return await handle_session_created(sync_service, event)
     if event_type == "runefoble.events.session.player_joined_session":
         return await handle_participant_joined(sync_service, event)
     if event_type == "runefoble.events.character.created":

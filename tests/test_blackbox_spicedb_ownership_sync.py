@@ -36,7 +36,7 @@ async def test_domain_events_provision_spicedb_relationships() -> None:
     player_id = "barbarian_grog"
     char_id = uuid4()
 
-    # Publish SessionCreated -> DM run_session permission
+    # Publish SessionCreated. It grants the DM no campaign relation (TASK-0855).
     session_event = SessionCreated(
         aggregate_id=uuid4(),
         campaign_id=campaign_id,
@@ -44,8 +44,8 @@ async def test_domain_events_provision_spicedb_relationships() -> None:
         dm_id=dm_id,
         title="Crypt of Shadows",
     )
-    await sync_service.handle_session_created(session_event)
-    assert await spicedb.check_permission("campaign", campaign_id, "run_session", "user", dm_id)
+    assert await sync_service.handle_domain_event(session_event) == []
+    assert not await spicedb.check_permission("campaign", campaign_id, "run_session", "user", dm_id)
 
     # Publish CharacterCreated -> character owner edit permission
     char_event = CharacterCreated(

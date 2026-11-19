@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Literal
+from typing import Any
 from uuid import UUID
 
 from runefoble_auth.errors import AuthzError
@@ -13,15 +13,12 @@ from runefoble_auth.sync_events import (
     handle_character_created,
     handle_domain_event,
     handle_participant_joined,
-    handle_session_created,
     handle_token_placed,
 )
 from runefoble_auth.sync_tuples import (
     SyncResult,
     batch_write_tuples,
-    delete_relationship_tuple,
     execute_with_retry,
-    normalize_campaign_role,
     reconcile_tuples,
     write_relationship_tuple,
 )
@@ -58,33 +55,6 @@ class ZitadelSpiceDBSyncService:
             self.spicedb, res_t, res_id, rel, sub_t, sub_id, self._execute_with_retry
         )
 
-    async def _delete_tuple(
-        self, res_t: str, res_id: str, rel: str, sub_t: str, sub_id: str
-    ) -> str:
-        return await delete_relationship_tuple(
-            self.spicedb, res_t, res_id, rel, sub_t, sub_id, self._execute_with_retry
-        )
-
-    async def sync_membership(
-        self,
-        campaign_id: str,
-        user_id: str,
-        role: Literal["game_master", "player", "spectator", "owner"] | str,
-        session_id: str | None = None,
-        action: Literal["grant", "revoke"] = "grant",
-    ) -> list[str]:
-        """Grant or revoke campaign or session roles for a given user."""
-        if action not in ("grant", "revoke"):
-            raise ValueError(f"Unsupported action: {action}")
-        fn = self._write_tuple if action == "grant" else self._delete_tuple
-        res = [
-            await fn("campaign", campaign_id, r, "user", user_id)
-            for r in normalize_campaign_role(role)
-        ]
-        if session_id and action == "grant":
-            res.extend(await self.sync_session_campaign(session_id, campaign_id))
-        return res
-
     async def sync_character_ownership(
         self, character_id: str | UUID, user_id: str, campaign_id: str | None = None
     ) -> list[str]:
@@ -92,14 +62,6 @@ class ZitadelSpiceDBSyncService:
         if campaign_id:
             t.append(("character", str(character_id), "campaign", "campaign", campaign_id))
         return [await self._write_tuple(*x) for x in t]
-
-    async def sync_session_campaign(self, session_id: str | UUID, campaign_id: str) -> list[str]:
-        """Write the one campaign link, `game_session#campaign` (ADR-0015 (a))."""
-        return [
-            await self._write_tuple(
-                "game_session", str(session_id), "campaign", "campaign", campaign_id
-            )
-        ]
 
     async def sync_board_token(
         self, token_id: str, character_id: str | UUID | None = None, campaign_id: str | None = None
@@ -153,9 +115,6 @@ class ZitadelSpiceDBSyncService:
 
     async def handle_domain_event(self, event: Any, campaign_id: str | None = None) -> list[str]:
         return await handle_domain_event(self, event, campaign_id=campaign_id)
-
-    async def handle_session_created(self, event: Any) -> list[str]:
-        return await handle_session_created(self, event)
 
     async def handle_participant_joined(self, event: Any) -> list[str]:
         return await handle_participant_joined(self, event)
