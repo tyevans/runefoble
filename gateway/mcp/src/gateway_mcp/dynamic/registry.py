@@ -73,6 +73,18 @@ class DynamicToolRegistry:
         with self._lock:
             return self._tools.get(name)
 
+    def has_tool(self, name: str) -> bool:
+        """Return True when `name` is a dynamic tool or a static tool of the MCP app.
+
+        Refuses to answer before the MCP app is built. A missing app is an error, never a
+        false "not found".
+        """
+        if self.get_tool(name) is not None:
+            return True
+        if self.mcp is None:
+            raise RuntimeError("The gateway MCP app is not built, so tool names cannot be checked.")
+        return find_tool(self.mcp, name) is not None
+
     def list_tools(self) -> list[DynamicToolRecord]:
         with self._lock:
             return list(self._tools.values())
