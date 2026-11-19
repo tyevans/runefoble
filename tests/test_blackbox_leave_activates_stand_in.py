@@ -11,10 +11,10 @@ import httpx
 import pytest
 from character_sheet.main import app as character_app
 from game_session.character_client import CHARACTER_SHEET_URL_ENV
-from game_session.main import app as session_app
 from httpx import ASGITransport, AsyncClient
 from runefoble_auth.mock import MockSpiceDBClient
 
+from tests.helpers.game_session_app import session_app
 from tests.helpers.live_services import serve
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.spicedb_factory import shared_spicedb_client

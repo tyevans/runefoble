@@ -8,9 +8,9 @@ from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
-from game_session.main import app as session_app
 
 from tests.helpers.campaign_setup import create_owned_campaign
+from tests.helpers.game_session_app import session_app
 from tests.helpers.stand_in_policy import create_character
 from tests.helpers.watcher_double import (
     STAND_IN_ACTION_BODY,

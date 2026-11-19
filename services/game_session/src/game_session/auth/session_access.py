@@ -3,14 +3,17 @@
 from __future__ import annotations
 
 from fastapi import HTTPException
-from game_session.dependencies import repo as session_repo
+from game_session.aggregate import GameSessionAggregate
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.permissions import check_subject
 from runefoble_platform.aggregate_loading import load_if_exists
+from runefoble_platform.event_sourcing import AggregateRepository
 from runefoble_platform.identifiers import opaque_aggregate_id
 
 
-async def check_session_participation(session_id: str, user_id: str) -> None:
+async def check_session_participation(
+    session_repo: AggregateRepository[GameSessionAggregate], session_id: str, user_id: str
+) -> None:
     """Allow the user to participate in the session, or raise 403.
 
     A session with no event history has no campaign link, so no campaign grant applies.

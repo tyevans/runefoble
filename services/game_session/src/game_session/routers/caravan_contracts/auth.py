@@ -12,10 +12,10 @@ from uuid import UUID
 
 from fastapi import HTTPException
 from game_session.caravan import CaravanContractAggregate
-from game_session.dependencies import get_caravan_contract_repository
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.permissions import check_subject, require_subject
 from runefoble_platform.aggregate_loading import load_or_404
+from runefoble_platform.event_sourcing import AggregateRepository
 
 
 async def _check_high_tier_auth(
@@ -37,9 +37,11 @@ async def _set_contractor(spicedb, cid: UUID, user_id: str) -> None:
     await spicedb.write_relationship("caravan_contract", str(cid), "contractor", "user", user_id)
 
 
-async def _load_contract(cid: UUID, perm: str, user_id: str) -> CaravanContractAggregate:
+async def _load_contract(
+    repo: AggregateRepository[CaravanContractAggregate], cid: UUID, perm: str, user_id: str
+) -> CaravanContractAggregate:
     await require_subject(get_spicedb_client(), "caravan_contract", str(cid), perm, user_id)
-    return await load_or_404(get_caravan_contract_repository(), cid, "Contract not found")
+    return await load_or_404(repo, cid, "Contract not found")
 
 
 def _val_err(fn: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:

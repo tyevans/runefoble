@@ -9,7 +9,6 @@ from typing import Any
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException
-from game_session.dependencies import get_event_bus, get_settlement_repository
 from game_session.settlement.auth import (
     check_settlement_permission,
     check_world_charter_permission,
@@ -23,7 +22,9 @@ from game_session.settlement.models import (
     DepositSettlementRequest,
     UpgradeFacilityRequest,
 )
+from game_session.settlement.repositories import SettlementRepos, SettlementRepositories
 from game_session.settlement.settlement_aggregate import SettlementAggregate
+from game_session.shared.container_access import EventBus
 from game_session.shared.identity import CallerId, get_principal
 from game_session.shared.streams import STREAM_WEST_MARCHES
 from runefoble_auth.factory import get_spicedb_client
@@ -35,10 +36,12 @@ router = APIRouter(
 )
 
 
-async def _load_haven(sid: str, perm: str, uid: str | None) -> SettlementAggregate:
+async def _load_haven(
+    repos: SettlementRepositories, sid: str, perm: str, uid: str | None
+) -> SettlementAggregate:
     settlement_uuid = parse_uuid(sid, field="settlement_id")
     try:
-        agg = await get_settlement_repository().load(settlement_uuid)
+        agg = await repos.settlements.load(settlement_uuid)
     except Exception as e:
         raise HTTPException(status_code=404, detail="Settlement not found") from e
     await check_settlement_permission(get_spicedb_client(), sid, perm, uid)
@@ -49,9 +52,11 @@ async def _load_haven(sid: str, perm: str, uid: str | None) -> SettlementAggrega
 async def charter_settlement(
     caller_id: CallerId,
     req: CharterSettlementRequest,
+    repos: SettlementRepos,
+    events: EventBus,
 ) -> dict[str, Any]:
     """Charter a new persistent communal haven or outpost in a shared world."""
-    spicedb, repo, bus = get_spicedb_client(), get_settlement_repository(), get_event_bus()
+    spicedb, repo, bus = get_spicedb_client(), repos.settlements, events.get()
     await check_world_charter_permission(spicedb, req.shared_world_id, caller_id)
     sid = uuid4()
     agg = SettlementAggregate(sid)
@@ -67,10 +72,10 @@ async def charter_settlement(
         defense_rating=req.defense_rating,
         metadata=req.metadata,
     )
-    events = list(agg.uncommitted_events)
+    new_events = list(agg.uncommitted_events)
     await repo.save(agg)
     if bus:
-        await publish_aggregate_events(bus, STREAM_WEST_MARCHES, events)
+        await publish_aggregate_events(bus, STREAM_WEST_MARCHES, new_events)
     await write_settlement_relationships(
         spicedb,
         str(sid),
@@ -85,9 +90,10 @@ async def charter_settlement(
 async def get_settlement(
     caller_id: CallerId,
     settlement_id: str,
+    repos: SettlementRepos,
 ) -> dict[str, Any]:
     """Query settlement state, fortification ratings, and facility tiers."""
-    agg = await _load_haven(settlement_id, "view", caller_id)
+    agg = await _load_haven(repos, settlement_id, "view", caller_id)
     return {"settlement_id": str(settlement_id), **agg.state.model_dump()}
 
 
@@ -96,20 +102,22 @@ async def upgrade_settlement(
     caller_id: CallerId,
     settlement_id: str,
     req: UpgradeFacilityRequest,
+    repos: SettlementRepos,
+    events: EventBus,
 ) -> dict[str, Any]:
     """Upgrade workshop, resting sanctum, or fortifications tier."""
-    agg = await _load_haven(settlement_id, "upgrade", caller_id)
+    agg = await _load_haven(repos, settlement_id, "upgrade", caller_id)
     try:
         tier = agg.upgrade_facility(req.facility_id, req.contributing_campaign_id)
     except InsufficientSettlementResources as e:
         raise HTTPException(status_code=409, detail=str(e)) from e
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
-    events = list(agg.uncommitted_events)
-    await get_settlement_repository().save(agg)
-    bus = get_event_bus()
+    new_events = list(agg.uncommitted_events)
+    await repos.settlements.save(agg)
+    bus = events.get()
     if bus:
-        await publish_aggregate_events(bus, STREAM_WEST_MARCHES, events)
+        await publish_aggregate_events(bus, STREAM_WEST_MARCHES, new_events)
     if req.contributing_campaign_id:
         await register_campaign_haven_discovery(
             get_spicedb_client(), settlement_id, req.contributing_campaign_id
@@ -127,18 +135,20 @@ async def deposit_haven_resources(
     caller_id: CallerId,
     settlement_id: str,
     req: DepositSettlementRequest,
+    repos: SettlementRepos,
+    events: EventBus,
 ) -> dict[str, Any]:
     """Add gold and materials to the haven treasury. Only a manager may fund a haven."""
-    agg = await _load_haven(settlement_id, "manage", caller_id)
+    agg = await _load_haven(repos, settlement_id, "manage", caller_id)
     try:
         agg.deposit_resources(gold=req.gold, materials=req.materials, deposited_by=caller_id)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
-    events = list(agg.uncommitted_events)
-    await get_settlement_repository().save(agg)
-    bus = get_event_bus()
+    new_events = list(agg.uncommitted_events)
+    await repos.settlements.save(agg)
+    bus = events.get()
     if bus:
-        await publish_aggregate_events(bus, STREAM_WEST_MARCHES, events)
+        await publish_aggregate_events(bus, STREAM_WEST_MARCHES, new_events)
     return {"settlement_id": str(settlement_id), **agg.state.model_dump()}
 
 
@@ -147,15 +157,17 @@ async def claim_haven_rest_boon(
     caller_id: CallerId,
     settlement_id: str,
     req: ClaimRestBoonRequest,
+    repos: SettlementRepos,
+    events: EventBus,
 ) -> dict[str, Any]:
     """Claim sanctum resting boons or workshop buffs for an adventuring party."""
-    agg = await _load_haven(settlement_id, "use", caller_id)
+    agg = await _load_haven(repos, settlement_id, "use", caller_id)
     boon = agg.claim_rest_boon(req.campaign_id, req.character_id, caller_id, req.facility_id)
-    events = list(agg.uncommitted_events)
-    await get_settlement_repository().save(agg)
-    bus = get_event_bus()
+    new_events = list(agg.uncommitted_events)
+    await repos.settlements.save(agg)
+    bus = events.get()
     if bus:
-        await publish_aggregate_events(bus, STREAM_WEST_MARCHES, events)
+        await publish_aggregate_events(bus, STREAM_WEST_MARCHES, new_events)
     return {"settlement_id": str(settlement_id), "boon": boon, **agg.state.model_dump()}
 
 

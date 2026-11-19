@@ -13,10 +13,12 @@ from game_session.campaign.errors import ConcurrentUpdateError
 from game_session.campaign.invite_aggregate import InviteAggregate
 from game_session.campaign.membership_aggregate import MembershipAggregate
 from game_session.campaign.session_aggregate import CampaignSessionsAggregate
+from game_session.shared.container_access import app_container
 from runefoble_platform.event_sourcing import (
     AggregateRepository,
     create_aggregate_repository,
 )
+from starlette.requests import HTTPConnection
 
 
 @dataclass(frozen=True)
@@ -37,20 +39,9 @@ def build_campaign_repositories() -> CampaignRepositories:
     )
 
 
-_repositories: CampaignRepositories | None = None
-
-
-def get_campaign_repositories() -> CampaignRepositories:
-    global _repositories
-    if _repositories is None:
-        _repositories = build_campaign_repositories()
-    return _repositories
-
-
-def set_campaign_repositories(repos: CampaignRepositories | None) -> None:
-    """Replace the repositories. Tests use this to bind a fresh process to a store."""
-    global _repositories
-    _repositories = repos
+def campaign_repositories(conn: HTTPConnection) -> CampaignRepositories:
+    """Return the campaign repositories of the app container (ADR-0021 D6 rule 4)."""
+    return app_container(conn).campaign
 
 
 def concurrent_update() -> ConcurrentUpdateError:

@@ -11,7 +11,7 @@ from typing import Annotated, Any
 
 from fastapi import Depends
 from game_session.campaign.errors import PermissionDeniedError
-from game_session.campaign.repositories import CampaignRepositories, get_campaign_repositories
+from game_session.campaign.repositories import CampaignRepositories, campaign_repositories
 from game_session.campaign.service_campaigns import load_campaign, parse_campaign_id
 from game_session.shared.identity import CallerPrincipal
 from runefoble_auth.factory import get_spicedb_client
@@ -41,7 +41,7 @@ def campaign_permission(
     async def _dependency(
         campaign_id: str,
         principal: CallerPrincipal,
-        repos: Annotated[CampaignRepositories, Depends(get_campaign_repositories)],
+        repos: Annotated[CampaignRepositories, Depends(campaign_repositories)],
     ) -> VerifiedPrincipal:
         await load_campaign(repos, parse_campaign_id(campaign_id))
         await check_campaign_permission(

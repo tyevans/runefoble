@@ -6,19 +6,16 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
 from game_session.aggregate import GameSessionAggregate
-from game_session.dependencies import repo as default_repo
 from game_session.models import (
     CombatStateResponse,
     InitiativeRollRequest,
     NextTurnRequest,
     StartCombatRequest,
 )
+from game_session.play.repositories import SessionRepo
 from game_session.routers.session_auth import SessionReader, session_permission
-from runefoble_platform.event_sourcing import AggregateRepository
 
 router = APIRouter(tags=["combat"])
-
-_repo: AggregateRepository[GameSessionAggregate] = default_repo
 
 
 def _build_combat_response(
@@ -39,13 +36,15 @@ def _build_combat_response(
     dependencies=[Depends(session_permission("control"))],
     response_model=CombatStateResponse,
 )
-async def start_combat_encounter(session_id: UUID, req: StartCombatRequest | None = None):
+async def start_combat_encounter(
+    session_id: UUID, repo: SessionRepo, req: StartCombatRequest | None = None
+):
     """Start combat encounter and initiate turn/round tracking."""
     combatants = req.combatants if req else []
     try:
-        session = await _repo.load(session_id)
+        session = await repo.load(session_id)
         session.start_combat(combatants=combatants)
-        await _repo.save(session)
+        await repo.save(session)
     except HTTPException:
         raise
     except ValueError as e:
@@ -61,17 +60,17 @@ async def start_combat_encounter(session_id: UUID, req: StartCombatRequest | Non
     dependencies=[Depends(session_permission("control"))],
     response_model=CombatStateResponse,
 )
-async def roll_combat_initiative(session_id: UUID, req: InitiativeRollRequest):
+async def roll_combat_initiative(session_id: UUID, req: InitiativeRollRequest, repo: SessionRepo):
     """Submit or update initiative roll for a combatant."""
     try:
-        session = await _repo.load(session_id)
+        session = await repo.load(session_id)
         session.roll_initiative(
             combatant_id=req.combatant_id,
             combatant_name=req.combatant_name,
             initiative_score=req.initiative_score,
             is_npc=req.is_npc,
         )
-        await _repo.save(session)
+        await repo.save(session)
     except HTTPException:
         raise
     except ValueError as e:
@@ -87,13 +86,15 @@ async def roll_combat_initiative(session_id: UUID, req: InitiativeRollRequest):
     dependencies=[Depends(session_permission("control"))],
     response_model=CombatStateResponse,
 )
-async def advance_combat_turn(session_id: UUID, req: NextTurnRequest | None = None):
+async def advance_combat_turn(
+    session_id: UUID, repo: SessionRepo, req: NextTurnRequest | None = None
+):
     """Advance turn to next combatant in initiative order, cycling rounds."""
     turn_secs = req.turn_seconds if req else 60
     try:
-        session = await _repo.load(session_id)
+        session = await repo.load(session_id)
         session.advance_initiative(turn_seconds_remaining=turn_secs)
-        await _repo.save(session)
+        await repo.save(session)
     except HTTPException:
         raise
     except ValueError as e:
@@ -109,12 +110,12 @@ async def advance_combat_turn(session_id: UUID, req: NextTurnRequest | None = No
     dependencies=[Depends(session_permission("control"))],
     response_model=CombatStateResponse,
 )
-async def end_combat_encounter(session_id: UUID):
+async def end_combat_encounter(session_id: UUID, repo: SessionRepo):
     """Conclude active combat encounter."""
     try:
-        session = await _repo.load(session_id)
+        session = await repo.load(session_id)
         session.end_combat()
-        await _repo.save(session)
+        await repo.save(session)
     except HTTPException:
         raise
     except ValueError as e:
@@ -130,10 +131,10 @@ async def end_combat_encounter(session_id: UUID):
     dependencies=[SessionReader],
     response_model=CombatStateResponse,
 )
-async def get_combat_state(session_id: UUID):
+async def get_combat_state(session_id: UUID, repo: SessionRepo):
     """Retrieve current combat encounter state, initiative order, active turn, and timer."""
     try:
-        session = await _repo.load(session_id)
+        session = await repo.load(session_id)
         return _build_combat_response(session)
     except Exception as e:
         raise HTTPException(status_code=404, detail=f"Session not found: {e}") from e

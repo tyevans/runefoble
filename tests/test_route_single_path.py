@@ -72,7 +72,7 @@ def test_no_handler_answers_two_paths(module_name: str) -> None:
 
 
 def test_game_session_settlement_and_bounty_routes_answer_only_on_api_v1() -> None:
-    from game_session.main import app
+    from tests.helpers.game_session_app import session_app as app
 
     client = TestClient(app)
     assert client.post("/settlements", json={}).status_code == 404

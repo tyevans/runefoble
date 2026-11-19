@@ -8,11 +8,11 @@ from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
-from game_session.main import app as session_app
 from game_session.shared.streams import STREAM_TAVERN
 from gateway_api.main import app as gateway_app
 from voice_agent.main import app as voice_app
 
+from tests.helpers.game_session_app import session_app
 from tests.helpers.live_services import serve
 from tests.helpers.voice_identity import voice_auth_headers
 from tests.helpers.ws_identity import SIGNING_ISSUER, bearer

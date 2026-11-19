@@ -23,6 +23,7 @@ from uuid import uuid4
 
 import pytest
 
+from tests.helpers.game_session_startup import STARTED_MARKER, start_game_session
 from tests.helpers.ports import free_port
 from tests.helpers.process import run_command
 
@@ -37,7 +38,6 @@ SERVICE_DEPENDENCY_MODULES = [
     "the_watcher.dependencies",
     "campaign_lore.dependencies",
     "character_sheet.dependencies",
-    "game_session.dependencies",
     "campaign_analytics.main",
     "gateway_api.dependencies",
     "gateway_mcp.asgi",
@@ -87,6 +87,15 @@ def test_service_startup_fails_without_key(module_name: str, tmp_path: Path) -> 
     assert result.returncode != 0
     assert "ConfigurationError" in result.stderr
     assert KEY_VAR in result.stderr
+
+
+def test_game_session_startup_fails_without_key(tmp_path: Path) -> None:
+    """game_session builds its container in the lifespan. Its start-up refuses a missing key."""
+    result = start_game_session({}, tmp_path, base_env=_env())
+    assert result.returncode != 0
+    assert "ConfigurationError" in result.stderr
+    assert KEY_VAR in result.stderr
+    assert STARTED_MARKER not in result.stdout
 
 
 def test_rules_compendium_sends_configured_key(tmp_path: Path) -> None:

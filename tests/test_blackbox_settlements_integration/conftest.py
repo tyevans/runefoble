@@ -7,7 +7,6 @@ from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
-from game_session.main import app as session_app
 from game_session.shared import identity
 from gateway_api.auth import get_zitadel_auth_service as get_gw_verifier
 from gateway_api.auth import set_zitadel_auth_service as set_gw_verifier
@@ -16,6 +15,7 @@ from gateway_api.websocket_manager import ws_campaign_manager
 from runefoble_auth.mock import MockSpiceDBClient
 
 from tests.helpers.campaign_setup import create_campaign, invite_and_join
+from tests.helpers.game_session_app import session_app
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.module_state import SeamRestorer
 from tests.helpers.signing_test_issuer import SigningTestIssuer

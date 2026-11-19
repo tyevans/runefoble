@@ -10,19 +10,15 @@ from __future__ import annotations
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
-from game_session.aggregate import GameSessionAggregate
-from game_session.dependencies import repo as default_repo
 from game_session.encounter_settings import EncounterGridSettings
 from game_session.models import CombatStateResponse
+from game_session.play.repositories import SessionRepo
 from game_session.routers.combat import _build_combat_response
 from game_session.routers.session_auth import session_permission
 from pydantic import BaseModel, Field
 from runefoble_platform.aggregate_loading import load_if_exists
-from runefoble_platform.event_sourcing import AggregateRepository
 
 router = APIRouter(tags=["encounters"])
-
-_repo: AggregateRepository[GameSessionAggregate] = default_repo
 
 
 class EncounterEnemy(BaseModel):
@@ -81,10 +77,11 @@ def _placements(enemies: list[EncounterEnemy]) -> list[dict[str, object]]:
 async def start_encounter(
     session_id: UUID,
     req: StartEncounterRequest,
+    repo: SessionRepo,
     actor: str = Depends(session_permission("control")),
 ) -> StartEncounterResponse:
     """Start combat and record the enemy placements on one event. Answer 200 after that save."""
-    session = await load_if_exists(_repo, session_id)
+    session = await load_if_exists(repo, session_id)
     if session is None:
         raise HTTPException(status_code=404, detail=f"Session not found: {session_id}")
     grid = EncounterGridSettings()
@@ -99,6 +96,6 @@ async def start_encounter(
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
-    await _repo.save(session)
+    await repo.save(session)
     combat = _build_combat_response(session)
     return StartEncounterResponse(**combat.model_dump(), placements=placements)

@@ -14,10 +14,10 @@ from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
-from game_session.main import app as session_app
 from runefoble_auth.mock import MockSpiceDBClient
 from runefoble_platform.event_sourcing import get_event_store
 
+from tests.helpers.game_session_app import session_app
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")

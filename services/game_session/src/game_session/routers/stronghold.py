@@ -8,7 +8,8 @@ from __future__ import annotations
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
-from game_session.dependencies import get_event_bus, get_stronghold_repository
+from game_session.downtime.repositories import DowntimeRepos
+from game_session.shared.container_access import EventBus
 from game_session.shared.identity import CallerId, get_principal
 from game_session.shared.streams import STREAM_STRONGHOLD
 from game_session.stronghold import (
@@ -22,6 +23,7 @@ from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.permissions import require_subject
 from runefoble_platform.aggregate_loading import load_if_exists, load_or_create
 from runefoble_platform.event_publish import publish_aggregate_events
+from runefoble_platform.event_sourcing import AggregateRepository
 from runefoble_platform.identifiers import parse_uuid
 
 router = APIRouter(dependencies=[Depends(get_principal)], tags=["stronghold"])
@@ -74,7 +76,9 @@ class CreateStrongholdRequest(BaseModel):
 
 
 @router.get("/api/v1/campaigns/{campaign_id}/stronghold", response_model=StrongholdState)
-async def get_stronghold(caller_id: CallerId, campaign_id: str) -> StrongholdState:
+async def get_stronghold(
+    caller_id: CallerId, campaign_id: str, repos: DowntimeRepos
+) -> StrongholdState:
     """Retrieve party stronghold / campsite status and facility tiers."""
     await require_subject(
         get_spicedb_client(),
@@ -85,7 +89,7 @@ async def get_stronghold(caller_id: CallerId, campaign_id: str) -> StrongholdSta
         detail="Campaign view required",
     )
     stronghold = await load_if_exists(
-        get_stronghold_repository(), parse_uuid(campaign_id, field="campaign_id")
+        repos.strongholds, parse_uuid(campaign_id, field="campaign_id")
     )
     if stronghold is None:
         # Return default initialized state if none exists yet
@@ -98,6 +102,7 @@ async def initialize_stronghold(
     caller_id: CallerId,
     campaign_id: str,
     req: CreateStrongholdRequest,
+    repos: DowntimeRepos,
 ) -> StrongholdState:
     """Initialize or rename party stronghold / campsite."""
     spicedb = get_spicedb_client()
@@ -109,7 +114,7 @@ async def initialize_stronghold(
         caller_id,
         detail="DM or owner permission required",
     )
-    repo = get_stronghold_repository()
+    repo = repos.strongholds
     stronghold = await load_or_create(
         repo, parse_uuid(campaign_id, field="campaign_id"), StrongholdAggregate
     )
@@ -121,11 +126,15 @@ async def initialize_stronghold(
 
 
 async def _load_or_start_stronghold(
-    spicedb: Any, campaign_id: str, caller_id: str, detail: str
+    repo: AggregateRepository[StrongholdAggregate],
+    spicedb: Any,
+    campaign_id: str,
+    caller_id: str,
+    detail: str,
 ) -> StrongholdAggregate:
     """Load the campsite. A new campsite needs a campaign player, and the link lets it resolve."""
     camp_uuid = parse_uuid(campaign_id, field="campaign_id")
-    existing = await load_if_exists(get_stronghold_repository(), camp_uuid)
+    existing = await load_if_exists(repo, camp_uuid)
     if existing is not None:
         return existing
     await require_subject(spicedb, "campaign", campaign_id, "play", caller_id, detail=detail)
@@ -140,6 +149,8 @@ async def deposit_stronghold_resources(
     caller_id: CallerId,
     campaign_id: str,
     req: DepositStrongholdRequest,
+    repos: DowntimeRepos,
+    events: EventBus,
 ) -> StrongholdState:
     """Add gold and materials to the campsite treasury and material store.
 
@@ -147,16 +158,18 @@ async def deposit_stronghold_resources(
     """
     spicedb = get_spicedb_client()
     detail = "DM permission required to fund campsite"
-    stronghold = await _load_or_start_stronghold(spicedb, campaign_id, caller_id, detail)
+    stronghold = await _load_or_start_stronghold(
+        repos.strongholds, spicedb, campaign_id, caller_id, detail
+    )
     await require_subject(spicedb, "stronghold", campaign_id, "manage", caller_id, detail=detail)
     try:
         stronghold.deposit_resources(gold=req.gold, materials=req.materials)
         events_to_publish = list(stronghold.uncommitted_events)
-        await get_stronghold_repository().save(stronghold)
+        await repos.strongholds.save(stronghold)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
 
-    bus = get_event_bus()
+    bus = events.get()
     if bus:
         await publish_aggregate_events(bus, STREAM_STRONGHOLD, events_to_publish)
     return stronghold.state
@@ -169,24 +182,28 @@ async def upgrade_stronghold_facility(
     caller_id: CallerId,
     campaign_id: str,
     req: UpgradeStrongholdRequest,
+    repos: DowntimeRepos,
+    events: EventBus,
 ) -> UpgradeStrongholdResponse:
     """Upgrade campsite/stronghold facility, consuming gold/materials and granting resting boons."""
     spicedb = get_spicedb_client()
     detail = "Player or DM permission required to upgrade campsite"
-    stronghold = await _load_or_start_stronghold(spicedb, campaign_id, caller_id, detail)
+    stronghold = await _load_or_start_stronghold(
+        repos.strongholds, spicedb, campaign_id, caller_id, detail
+    )
     await require_subject(spicedb, "stronghold", campaign_id, "upgrade", caller_id, detail=detail)
 
     try:
         upgrade_result = stronghold.upgrade_facility(facility_id=req.facility_id)
         events_to_publish = list(stronghold.uncommitted_events)
-        await get_stronghold_repository().save(stronghold)
+        await repos.strongholds.save(stronghold)
     except InsufficientStrongholdResources as e:
         raise HTTPException(status_code=409, detail=str(e)) from e
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
 
     # Publish events to Redis Streams
-    bus = get_event_bus()
+    bus = events.get()
     if bus:
         await publish_aggregate_events(bus, STREAM_STRONGHOLD, events_to_publish)
 
@@ -203,7 +220,9 @@ async def upgrade_stronghold_facility(
 
 
 @router.get("/api/v1/campaigns/{campaign_id}/stronghold/boons")
-async def get_stronghold_boons(caller_id: CallerId, campaign_id: str) -> dict[str, Any]:
+async def get_stronghold_boons(
+    caller_id: CallerId, campaign_id: str, repos: DowntimeRepos
+) -> dict[str, Any]:
     """Retrieve active party rest bonuses granted by camp facilities."""
     await require_subject(
         get_spicedb_client(),
@@ -214,7 +233,7 @@ async def get_stronghold_boons(caller_id: CallerId, campaign_id: str) -> dict[st
         detail="Campaign view required",
     )
     stronghold = await load_if_exists(
-        get_stronghold_repository(), parse_uuid(campaign_id, field="campaign_id")
+        repos.strongholds, parse_uuid(campaign_id, field="campaign_id")
     )
     if stronghold is None:
         return {"campaign_id": campaign_id, "active_boons": [], "catalog": FACILITY_TIERS}
@@ -233,6 +252,8 @@ async def contribute_treasury_gold(
     caller_id: CallerId,
     campaign_id: str,
     req: ContributeTreasuryRequest,
+    repos: DowntimeRepos,
+    events: EventBus,
 ) -> StrongholdState:
     """Debit gold from the treasury for a frontier outpost. `stronghold.manage` is required.
 
@@ -242,7 +263,7 @@ async def contribute_treasury_gold(
     spicedb = get_spicedb_client()
     detail = "DM or stronghold manager permission required to contribute treasury gold"
     await require_subject(spicedb, "stronghold", campaign_id, "manage", caller_id, detail=detail)
-    repo = get_stronghold_repository()
+    repo = repos.strongholds
     stronghold = await load_or_create(
         repo, parse_uuid(campaign_id, field="campaign_id"), StrongholdAggregate
     )
@@ -258,7 +279,7 @@ async def contribute_treasury_gold(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
 
-    bus = get_event_bus()
+    bus = events.get()
     if bus:
         await publish_aggregate_events(bus, STREAM_STRONGHOLD, events_to_publish)
     return stronghold.state

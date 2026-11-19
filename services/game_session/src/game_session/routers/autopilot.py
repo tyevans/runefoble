@@ -2,19 +2,24 @@
 
 from __future__ import annotations
 
+import logging
 from uuid import UUID
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException
 from game_session.aggregate import ParticipantState
 from game_session.character_client import CharacterSheetUnavailableError, fetch_stand_in_policy
-from game_session.dependencies import get_event_bus, logger, repo, watcher_service_url
+from game_session.container import watcher_service_url
 from game_session.models import AutoPilotRequest, AutoPilotResponse
+from game_session.play.repositories import SessionRepo
 from game_session.routers.session_auth import session_permission
+from game_session.shared.container_access import EventBus
 from game_session.shared.streams import STREAM_WATCHER
 from runefoble_events.events import AbsencePenaltyApplied
 from runefoble_platform.event_publish import publish_aggregate_events
 from runefoble_platform.stand_in_action import StandInAction
+
+logger = logging.getLogger("runefoble.game_session")
 
 router = APIRouter(dependencies=[Depends(session_permission("control"))], tags=["autopilot"])
 
@@ -55,6 +60,8 @@ async def _request_stand_in_action(watcher_url: str, payload: dict[str, object])
 )
 async def auto_pilot_turn(
     session_id: UUID,
+    repo: SessionRepo,
+    events: EventBus,
     req: AutoPilotRequest | None = None,
 ) -> AutoPilotResponse:
     """Automatically execute a turn for an absent character using The Watcher stand-in engine."""
@@ -143,7 +150,7 @@ async def auto_pilot_turn(
 
     # Dispatch absence penalties to Redis Streams. The stand-in action is published
     # by the session repository when it commits the aggregate above.
-    bus = get_event_bus()
+    bus = events.get()
     if bus:
         penalty_events = [
             AbsencePenaltyApplied(

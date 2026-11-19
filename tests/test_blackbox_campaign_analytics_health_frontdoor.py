@@ -12,9 +12,9 @@ from __future__ import annotations
 import pytest
 from character_sheet.main import app as character_app
 from fastapi.testclient import TestClient
-from game_session.main import app as game_app
 
 from tests.helpers.campaign_analytics_service import AnalyticsService
+from tests.helpers.game_session_app import session_app as game_app
 from tests.helpers.polling import wait_until
 from tests.helpers.ws_identity import SIGNING_ISSUER
 

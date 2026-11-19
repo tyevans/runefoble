@@ -14,10 +14,11 @@ from uuid import UUID
 
 from eventsource.domain.event import DomainEvent
 from eventsource.domain.stream_id import StreamId
-from game_session.dependencies import repo
+from game_session.aggregate import GameSessionAggregate
 from game_session.models import GameSessionState
 from pydantic import BaseModel, Field
 from runefoble_events.events import DiceRolled, SessionEnded, SessionStarted, StandInActionDecided
+from runefoble_platform.event_sourcing import AggregateRepository
 
 ChronicleKind = Literal["stand_in_action", "dice_roll", "session_started", "session_ended"]
 
@@ -95,7 +96,9 @@ def _chronicle_entry(event_id: str, event: DomainEvent) -> ChronicleEntry | None
     return None
 
 
-async def read_session_chronicle(session_id: UUID) -> list[ChronicleEntry]:
+async def read_session_chronicle(
+    repo: AggregateRepository[GameSessionAggregate], session_id: UUID
+) -> list[ChronicleEntry]:
     """Return the feed lines of one session in commit order. An empty stream yields no lines."""
     stream = StreamId(aggregate_id=session_id, category=repo.aggregate_type)
     entries: list[ChronicleEntry] = []

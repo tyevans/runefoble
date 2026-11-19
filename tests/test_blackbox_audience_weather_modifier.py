@@ -17,10 +17,10 @@ from uuid import uuid4
 import pytest
 import redis.asyncio
 from fastapi.testclient import TestClient
-from game_session.main import app as session_app
 from runefoble_events.events import AudienceModifierApproved
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 
+from tests.helpers.game_session_app import session_app
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.polling import wait_until
 from tests.helpers.ws_identity import SIGNING_ISSUER

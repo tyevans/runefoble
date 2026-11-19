@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import pytest
 from fastapi.testclient import TestClient
-from game_session.main import app as session_app
 from runefoble_auth.mock import MockSpiceDBClient
 from the_watcher.main import app as watcher_app
 
+from tests.helpers.game_session_app import session_app
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.signing_test_issuer import SigningTestIssuer
 from tests.helpers.ws_identity import SIGNING_ISSUER

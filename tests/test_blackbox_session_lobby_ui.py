@@ -13,8 +13,8 @@ from __future__ import annotations
 
 import pytest
 from fastapi.testclient import TestClient
-from game_session.main import app as session_app
 
+from tests.helpers.game_session_app import session_app
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")

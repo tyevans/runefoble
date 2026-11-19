@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
+from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException
-from game_session.dependencies import repo
+from fastapi import APIRouter, Depends, HTTPException
 from game_session.models import (
     DeclareReactionRequest,
     DeclareReactionResponse,
@@ -16,37 +16,38 @@ from game_session.models import (
     ResolveReactionRequest,
     ResolveReactionResponse,
 )
+from game_session.play.repositories import SessionRepo
 from game_session.reactions.interrupt_coordinator import ReactionInterruptCoordinator
 from game_session.reactions.ready_action_registry import ReadyActionRegistry
 from game_session.routers.session_auth import SessionController, SessionObserver, SessionParticipant
 
 router = APIRouter(tags=["reactions"])
 
-_coordinator = ReactionInterruptCoordinator(repo)
-_registry = ReadyActionRegistry(repo)
+
+def _coordinator(repo: SessionRepo) -> ReactionInterruptCoordinator:
+    return ReactionInterruptCoordinator(repo)
 
 
-def init_reaction_dependencies(
-    coordinator: ReactionInterruptCoordinator | None = None,
-    registry: ReadyActionRegistry | None = None,
-) -> None:
-    """Dependency injection hook for testing reaction coordinators."""
-    global _coordinator, _registry
-    if coordinator is not None:
-        _coordinator = coordinator
-    if registry is not None:
-        _registry = registry
+def _registry(repo: SessionRepo) -> ReadyActionRegistry:
+    return ReadyActionRegistry(repo)
+
+
+Coordinator = Annotated[ReactionInterruptCoordinator, Depends(_coordinator)]
+Registry = Annotated[ReadyActionRegistry, Depends(_registry)]
 
 
 @router.post(
     "/api/v1/sessions/{session_id}/reactions/declare", response_model=DeclareReactionResponse
 )
 async def declare_reaction_interrupt(
-    session_id: UUID, req: DeclareReactionRequest, _player: SessionParticipant
+    session_id: UUID,
+    req: DeclareReactionRequest,
+    _player: SessionParticipant,
+    coordinator: Coordinator,
 ) -> DeclareReactionResponse:
     """Halt active combat turn and initiate a spoken reaction window."""
     try:
-        return await _coordinator.declare_reaction(
+        return await coordinator.declare_reaction(
             session_id=session_id,
             reacting_combatant_id=req.reacting_combatant_id,
             trigger_phrase=req.trigger_phrase,
@@ -66,11 +67,14 @@ async def declare_reaction_interrupt(
     "/api/v1/sessions/{session_id}/reactions/ready-action", response_model=ReadyActionResponse
 )
 async def register_ready_action_trigger(
-    session_id: UUID, req: ReadyActionRequest, _player: SessionParticipant
+    session_id: UUID,
+    req: ReadyActionRequest,
+    _player: SessionParticipant,
+    registry: Registry,
 ) -> ReadyActionResponse:
     """Register a conditional ready-action trigger evaluated against combat events."""
     try:
-        return await _registry.register_ready_action(
+        return await registry.register_ready_action(
             session_id=session_id,
             combatant_id=req.combatant_id,
             combatant_name=req.combatant_name,
@@ -95,13 +99,14 @@ async def resolve_reaction_interrupt(
     session_id: UUID,
     reaction_id: str,
     _player: SessionParticipant,
+    coordinator: Coordinator,
     req: ResolveReactionRequest | None = None,
 ) -> ResolveReactionResponse:
     """Resolve or dismiss declared reaction interrupt, resuming the combat turn."""
     action_taken = req.action_taken if req else "executed"
     details = req.details if req else {}
     try:
-        return await _coordinator.resolve_reaction(
+        return await coordinator.resolve_reaction(
             session_id=session_id,
             reaction_id=reaction_id,
             action_taken=action_taken,
@@ -118,11 +123,14 @@ async def resolve_reaction_interrupt(
     response_model=EvaluateTriggersResponse,
 )
 async def evaluate_ready_action_triggers(
-    session_id: UUID, req: EvaluateTriggersRequest, _controller: SessionController
+    session_id: UUID,
+    req: EvaluateTriggersRequest,
+    _controller: SessionController,
+    registry: Registry,
 ) -> EvaluateTriggersResponse:
     """Evaluate domain events against ready-action triggers for this session."""
     try:
-        triggered = await _registry.evaluate_triggers(
+        triggered = await registry.evaluate_triggers(
             session_id=session_id,
             event_type=req.event_type,
             event_data=req.event_data,
@@ -137,7 +145,7 @@ async def evaluate_ready_action_triggers(
 
 
 @router.get("/api/v1/sessions/{session_id}/reactions/active")
-async def get_active_reaction(session_id: UUID, _observer: SessionObserver):
+async def get_active_reaction(session_id: UUID, _observer: SessionObserver, repo: SessionRepo):
     """Retrieve currently active paused reaction interrupt if any."""
     try:
         session = await repo.load(session_id)

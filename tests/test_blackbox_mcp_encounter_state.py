@@ -37,11 +37,12 @@ def mcp_endpoint() -> Iterator[None]:
 def upstreams() -> Iterator[dict[str, str]]:
     """Run game_session and board_state as real HTTP services. game_session trusts the test issuer."""
     from board_state.main import app as board_app
-    from game_session.main import app as session_app
     from game_session.shared.identity import (
         get_zitadel_auth_service,
         set_zitadel_auth_service,
     )
+
+    from tests.helpers.game_session_app import session_app
 
     previous = get_zitadel_auth_service()
     set_zitadel_auth_service(SIGNING_ISSUER.verifier())

@@ -11,14 +11,19 @@ import logging
 from typing import Any
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from game_session.downtime.repositories import DowntimeRepos
 from game_session.minigame_tables.service import TableNotFoundError, load_table, run_table_command
 from game_session.minigame_tables.ws_commands import table_command_for
 from game_session.minigame_tables.ws_manager import minigame_table_manager
+from game_session.minigames import TavernGameAggregate
+from game_session.shared.container_access import EventBus
 from game_session.shared.identity import get_zitadel_auth_service
 from game_session.shared.permissions import check_establishment_play_permission
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.principal import BearerVerifier
 from runefoble_auth.websocket import WebSocketAuthorizer, admit_websocket, send_socket_error
+from runefoble_platform.event_bus import EventBusProvider
+from runefoble_platform.event_sourcing import AggregateRepository
 
 logger = logging.getLogger("runefoble.game_session.minigames_ws")
 
@@ -31,7 +36,10 @@ async def _reject(websocket: WebSocket, code: str, message: str, close_code: int
 
 
 def _table_play_authorizer(
-    spicedb: object, table_id: str, establishment_id: str | None
+    repo: AggregateRepository[TavernGameAggregate],
+    spicedb: object,
+    table_id: str,
+    establishment_id: str | None,
 ) -> WebSocketAuthorizer:
     """Check `establishment` play access (Zanzibar) for the table's establishment."""
 
@@ -39,7 +47,7 @@ def _table_play_authorizer(
         target = establishment_id
         if target is None:
             try:
-                target = (await load_table(table_id)).establishment_id
+                target = (await load_table(repo, table_id)).establishment_id
             except TableNotFoundError:
                 # Admit, then report TABLE_NOT_FOUND below. A missing table is not a denial.
                 return True
@@ -50,6 +58,8 @@ def _table_play_authorizer(
 
 async def handle_table_websocket(
     websocket: WebSocket,
+    repo: AggregateRepository[TavernGameAggregate],
+    events: EventBusProvider,
     table_id: str,
     establishment_id: str | None,
     verifier: BearerVerifier | None = None,
@@ -60,7 +70,7 @@ async def handle_table_websocket(
     principal = await admit_websocket(
         websocket,
         verifier or get_zitadel_auth_service(),
-        _table_play_authorizer(spicedb, table_id, establishment_id),
+        _table_play_authorizer(repo, spicedb, table_id, establishment_id),
         denial_message="The caller lacks permission to play at this table",
     )
     if principal is None:
@@ -68,7 +78,7 @@ async def handle_table_websocket(
     user_id = principal.user_id
 
     try:
-        table = await load_table(table_id)
+        table = await load_table(repo, table_id)
     except TableNotFoundError:
         await _reject(websocket, "TABLE_NOT_FOUND", f"Table '{table_id}' is not open", 4404)
         return
@@ -92,7 +102,7 @@ async def handle_table_websocket(
         while True:
             data: dict[str, Any] = await websocket.receive_json()
             action = data.get("action") or data.get("type") or "unknown"
-            await _handle_action(websocket, table_id, user_id, action, data)
+            await _handle_action(websocket, repo, events, table_id, user_id, action, data)
     except WebSocketDisconnect:
         pass
     finally:
@@ -101,6 +111,8 @@ async def handle_table_websocket(
 
 async def _handle_action(
     websocket: WebSocket,
+    repo: AggregateRepository[TavernGameAggregate],
+    events: EventBusProvider,
     table_id: str,
     user_id: str,
     action: str,
@@ -112,7 +124,7 @@ async def _handle_action(
         await minigame_table_manager.broadcast(table_id, data)
         return
     try:
-        message = await run_table_command(table_id, command)
+        message = await run_table_command(repo, events, table_id, command)
     except ValueError as exc:
         await websocket.send_json({"type": "error", "code": "ACTION_REJECTED", "message": str(exc)})
         return
@@ -124,18 +136,22 @@ async def establishment_table_ws(
     websocket: WebSocket,
     establishment_id: str,
     table_id: str,
+    repos: DowntimeRepos,
+    events: EventBus,
 ) -> None:
     """Establishment-scoped multiplayer minigame table WebSocket channel."""
-    await handle_table_websocket(websocket, table_id, establishment_id)
+    await handle_table_websocket(websocket, repos.tavern_games, events, table_id, establishment_id)
 
 
 @router.websocket("/ws/minigames/{table_id}")
 async def standalone_minigame_ws(
     websocket: WebSocket,
     table_id: str,
+    repos: DowntimeRepos,
+    events: EventBus,
 ) -> None:
     """Standalone multiplayer minigame table WebSocket channel."""
-    await handle_table_websocket(websocket, table_id, None)
+    await handle_table_websocket(websocket, repos.tavern_games, events, table_id, None)
 
 
 __all__ = ["handle_table_websocket", "router"]

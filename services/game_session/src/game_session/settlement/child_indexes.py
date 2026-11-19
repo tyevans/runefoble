@@ -7,7 +7,11 @@ from __future__ import annotations
 
 from enum import StrEnum
 
+from game_session.shared.child_index import ChildIndexAggregate
 from game_session.shared.child_index_queries import list_child_ids
+from runefoble_platform.event_sourcing import AggregateRepository
+
+ChildIndexRepository = AggregateRepository[ChildIndexAggregate]
 
 
 class SettlementChildIndex(StrEnum):
@@ -19,19 +23,31 @@ class SettlementChildIndex(StrEnum):
     ESTABLISHMENT_NEGOTIATIONS = "establishment_negotiations"
 
 
-async def list_establishments_for_settlement(settlement_id: str) -> list[str]:
+async def list_establishments_for_settlement(
+    child_indexes: ChildIndexRepository, settlement_id: str
+) -> list[str]:
     """Return the establishment ids built in one settlement."""
-    return await list_child_ids(SettlementChildIndex.SETTLEMENT_ESTABLISHMENTS, settlement_id)
+    return await list_child_ids(
+        child_indexes, SettlementChildIndex.SETTLEMENT_ESTABLISHMENTS, settlement_id
+    )
 
 
-async def list_settlements_for_campaign(campaign_id: str) -> list[str]:
+async def list_settlements_for_campaign(
+    child_indexes: ChildIndexRepository, campaign_id: str
+) -> list[str]:
     """Return the settlement ids founded for one campaign."""
-    return await list_child_ids(SettlementChildIndex.CAMPAIGN_SETTLEMENTS, campaign_id)
+    return await list_child_ids(
+        child_indexes, SettlementChildIndex.CAMPAIGN_SETTLEMENTS, campaign_id
+    )
 
 
-async def list_workers_for_establishment(establishment_id: str) -> list[str]:
+async def list_workers_for_establishment(
+    child_indexes: ChildIndexRepository, establishment_id: str
+) -> list[str]:
     """Return the NPC worker ids assigned to one establishment."""
-    return await list_child_ids(SettlementChildIndex.ESTABLISHMENT_WORKERS, establishment_id)
+    return await list_child_ids(
+        child_indexes, SettlementChildIndex.ESTABLISHMENT_WORKERS, establishment_id
+    )
 
 
 __all__ = [

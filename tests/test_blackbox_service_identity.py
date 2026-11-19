@@ -14,7 +14,6 @@ from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
-from game_session.main import app as session_app
 from httpx import ASGITransport, AsyncClient
 from inference_worker import api as worker_api
 from inference_worker.llm_factory import build_llm_port
@@ -22,6 +21,7 @@ from runefoble_platform.service_credential import SERVICE_CREDENTIAL_HEADER
 from the_watcher import dependencies as watcher_dependencies
 from the_watcher.main import app as watcher_app
 
+from tests.helpers.game_session_app import session_app
 from tests.helpers.inference_worker_port import install_worker_port
 from tests.helpers.minigame_tables import open_minigame_table
 from tests.helpers.process import run_python_child

@@ -16,10 +16,10 @@ import pytest
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from game_session.character_client import CHARACTER_SHEET_URL_ENV
-from game_session.main import app as session_app
 from httpx import ASGITransport, AsyncClient
 
 from tests.helpers.campaign_setup import create_owned_campaign_async
+from tests.helpers.game_session_app import session_app
 from tests.helpers.ports import free_port
 from tests.helpers.stand_in_policy import create_character, store_policy
 from tests.helpers.watcher_double import STAND_IN_ACTION_BODY, serve_watcher_double
