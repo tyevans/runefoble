@@ -17,7 +17,7 @@ from typing import Any
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.errors import ServiceUnavailableError
 from runefoble_platform.event_sourcing import normalize_async_postgres_url
-from sqlalchemy import func, or_, select
+from sqlalchemy import func, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 
@@ -36,7 +36,6 @@ from campaign_analytics.schema import (
     combat_perf_table,
     metadata,
     projection_state_table,
-    session_campaign_table,
     spatial_table,
     timeline_table,
 )
@@ -63,24 +62,8 @@ def require_postgresql(settings: PlatformSettings) -> None:
 
 
 def campaign_match(table: Any, campaign_id: str) -> Any:
-    """Match rows that belong to a campaign id, or to a session that belongs to it.
-
-    A query id matches when it names the row's campaign or session. It also matches when the
-    row's session maps to it, or when the query names a session whose campaign is the row's.
-    """
-    q = str(campaign_id)
-    sessions_of_q = select(session_campaign_table.c.session_id).where(
-        session_campaign_table.c.campaign_id == q
-    )
-    campaign_of_q = select(session_campaign_table.c.campaign_id).where(
-        session_campaign_table.c.session_id == q
-    )
-    return or_(
-        table.c.campaign_id == q,
-        table.c.session_id == q,
-        table.c.session_id.in_(sessions_of_q),
-        table.c.campaign_id.in_(campaign_of_q),
-    )
+    """Match the rows of one campaign. Rows of unmapped sessions have no campaign and never match."""
+    return table.c.campaign_id == str(campaign_id)
 
 
 def _session_filter(table: Any, session_id: str | None) -> list[Any]:

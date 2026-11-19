@@ -15,7 +15,7 @@ from datetime import UTC, datetime
 from typing import Any
 from uuid import NAMESPACE_URL, uuid4, uuid5
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, text, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncConnection
 
@@ -40,6 +40,11 @@ def _now() -> str:
     return datetime.now(UTC).isoformat()
 
 
+def _optional(value: str | None) -> str | None:
+    """Keep a missing campaign as NULL. An unmapped row never takes a session id as its campaign."""
+    return None if value is None else str(value)
+
+
 class ProjectionTx:
     """Writes for one stream message, bound to one database transaction."""
 
@@ -59,18 +64,36 @@ class ProjectionTx:
         key = "|".join([self.stream, self.message_id, str(self._sequence), *map(str, content)])
         return str(uuid5(NAMESPACE_URL, f"runefoble:{key}"))
 
-    async def resolve_campaign(self, id_or_session: str) -> str:
-        """Return the campaign that owns a session id, or the id itself when none is mapped."""
-        q = str(id_or_session)
+    async def _lock_session(self, session_id: str) -> None:
+        """Hold a transaction lock on one session until this message commits.
+
+        Messages from different streams run in parallel. Without the lock, a row written with no
+        campaign could commit after the mapping's re-key ran, and it would never get its campaign.
+        The lock makes each session's pending writes and its mapping run one at a time.
+        """
+        await self._conn.execute(
+            text("SELECT pg_advisory_xact_lock(hashtextextended(:key, 0))"),
+            {"key": f"campaign-analytics:session:{session_id}"},
+        )
+
+    async def resolve_campaign(self, session_id: str) -> str | None:
+        """Return the campaign that owns a session, or None while the session is unmapped."""
+        await self._lock_session(str(session_id))
         stmt = select(session_campaign_table.c.campaign_id).where(
-            session_campaign_table.c.session_id == q
+            session_campaign_table.c.session_id == str(session_id)
         )
         found = (await self._conn.execute(stmt)).scalar_one_or_none()
-        return str(found) if found is not None else q
+        return None if found is None else str(found)
 
     async def map_session(self, session_id: str, campaign_id: str) -> None:
+        """Map a session to its campaign and re-key the rows that the session recorded so far.
+
+        Rows that arrived before the mapping wait with no campaign. The mapping gives them their
+        campaign in this same transaction, so a row never shows under the wrong campaign.
+        """
         if not (session_id and campaign_id):
             return
+        await self._lock_session(str(session_id))
         stmt = pg_insert(session_campaign_table).values(
             session_id=str(session_id), campaign_id=str(campaign_id)
         )
@@ -79,10 +102,16 @@ class ProjectionTx:
             set_={"campaign_id": stmt.excluded.campaign_id},
         )
         await self._conn.execute(stmt)
+        for table in (spatial_table, combat_perf_table, timeline_table):
+            await self._conn.execute(
+                update(table)
+                .where(table.c.session_id == str(session_id))
+                .values(campaign_id=str(campaign_id))
+            )
 
     async def add_spatial(
         self,
-        campaign_id: str,
+        campaign_id: str | None,
         session_id: str,
         token_id: str,
         token_name: str,
@@ -92,8 +121,8 @@ class ProjectionTx:
         damage: int = 0,
     ) -> None:
         stmt = pg_insert(spatial_table).values(
-            id=self._row_id(campaign_id, session_id, token_id, x, y, event_type, damage),
-            campaign_id=str(campaign_id),
+            id=self._row_id(session_id, token_id, x, y, event_type, damage),
+            campaign_id=_optional(campaign_id),
             session_id=str(session_id),
             token_id=str(token_id),
             token_name=token_name,
@@ -107,7 +136,7 @@ class ProjectionTx:
 
     async def add_combatant_stat(
         self,
-        campaign_id: str,
+        campaign_id: str | None,
         session_id: str,
         encounter_id: str,
         combatant_id: str,
@@ -120,7 +149,7 @@ class ProjectionTx:
         values.update({k: int(v) for k, v in deltas.items() if k in values})
         stmt = pg_insert(combat_perf_table).values(
             id=str(uuid4()),
-            campaign_id=str(campaign_id),
+            campaign_id=_optional(campaign_id),
             session_id=str(session_id),
             encounter_id=encounter_id or "default",
             combatant_id=str(combatant_id),
@@ -131,9 +160,10 @@ class ProjectionTx:
         table = combat_perf_table.c
         excluded = stmt.excluded
         stmt = stmt.on_conflict_do_update(
-            constraint="uq_combatant_per_session",
+            index_elements=[combat_perf_table.c.session_id, combat_perf_table.c.combatant_id],
             set_={
                 **{f: table[f] + excluded[f] for f in COMBAT_METRIC_FIELDS},
+                "campaign_id": func.coalesce(excluded.campaign_id, table.campaign_id),
                 "combatant_name": func.coalesce(
                     func.nullif(excluded.combatant_name, ""), table.combatant_name
                 ),
@@ -145,7 +175,7 @@ class ProjectionTx:
     async def add_milestone(
         self,
         milestone_id: str,
-        campaign_id: str,
+        campaign_id: str | None,
         session_id: str,
         milestone_type: str,
         title: str,
@@ -156,7 +186,7 @@ class ProjectionTx:
         """Project one saved chronicle milestone. Its id is the saved milestone's event id."""
         stmt = pg_insert(timeline_table).values(
             id=milestone_id,
-            campaign_id=str(campaign_id),
+            campaign_id=_optional(campaign_id),
             session_id=str(session_id),
             milestone_type=milestone_type,
             title=title,
