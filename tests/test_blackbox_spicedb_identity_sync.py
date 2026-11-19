@@ -209,11 +209,9 @@ async def test_redis_streams_event_bus_deserialization_and_sync(client) -> None:
     entry_id = await event_bus.publish_event("runefoble.events.session", evt)
     assert entry_id is not None
 
-    # Pass the consumed event to the sync service
-    await sync_service.handle_session_created(evt)
-
-    # Assert permission is synchronized
-    assert await spicedb.check_permission("campaign", campaign_id, "run_session", "user", dm_id)
+    # Pass the consumed event to the sync service. A session event grants the DM nothing (TASK-0855).
+    assert await sync_service.handle_domain_event(evt) == []
+    assert not await spicedb.check_permission("campaign", campaign_id, "run_session", "user", dm_id)
 
 
 @pytest.mark.asyncio
@@ -237,6 +235,6 @@ async def test_sync_resilience_and_retry() -> None:
     )
 
     # Should succeed after retrying
-    synced = await service.sync_membership("camp_flaky", "user_1", "player")
+    synced = await service.sync_character_ownership("char_flaky", "user_1")
     assert call_count == 3
-    assert len(synced) > 0
+    assert synced == ["character:char_flaky#owner@user:user_1"]

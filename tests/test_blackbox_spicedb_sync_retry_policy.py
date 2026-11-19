@@ -139,10 +139,10 @@ async def test_unavailable_spicedb_recovers_within_the_retry_budget() -> None:
     spicedb = RecoveringSpiceDB(failures=2)
     service = _service(spicedb, max_retries=3)
 
-    synced = await service.sync_membership("camp-1", "user-1", "player")
+    synced = await service.sync_character_ownership("char-1", "user-1")
 
     assert spicedb.calls == 3
-    assert synced == ["campaign:camp-1#player@user:user-1"]
+    assert synced == ["character:char-1#owner@user:user-1"]
 
 
 @pytest.mark.asyncio
@@ -150,10 +150,10 @@ async def test_write_unavailable_over_grpc_is_retried_and_succeeds() -> None:
     stub = WriteStub([FakeRpcError(grpc.StatusCode.UNAVAILABLE, "connection refused")])
     service = _grpc_service(stub, max_retries=3)
 
-    synced = await service.sync_membership("camp-1", "user-1", "player")
+    synced = await service.sync_character_ownership("char-1", "user-1")
 
     assert stub.calls == 2
-    assert synced == ["campaign:camp-1#player@user:user-1"]
+    assert synced == ["character:char-1#owner@user:user-1"]
 
 
 @pytest.mark.asyncio
@@ -162,7 +162,7 @@ async def test_write_deadline_exceeded_over_grpc_exhausts_the_retry_budget() -> 
     service = _grpc_service(stub, max_retries=3)
 
     with pytest.raises(AuthzWriteUnavailableError, match="DEADLINE_EXCEEDED"):
-        await service.sync_membership("camp-1", "user-1", "player")
+        await service.sync_character_ownership("char-1", "user-1")
 
     assert stub.calls == 3
 
@@ -173,7 +173,7 @@ async def test_write_permission_denied_over_grpc_is_not_retried() -> None:
     service = _grpc_service(stub, max_retries=3)
 
     with pytest.raises(AuthzWriteError, match="PERMISSION_DENIED") as info:
-        await service.sync_membership("camp-1", "user-1", "player")
+        await service.sync_character_ownership("char-1", "user-1")
 
     assert not isinstance(info.value, AuthzUnavailableError)
     assert stub.calls == 1

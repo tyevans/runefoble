@@ -7,11 +7,7 @@ from runefoble_auth.mock import MockSpiceDBClient, Relationship
 from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_auth.sync import SyncResult, ZitadelSpiceDBSyncService
 from runefoble_auth.sync_events import handle_domain_event
-from runefoble_auth.sync_tuples import (
-    CAMPAIGN_ROLE_RELATIONS,
-    format_tuple,
-    normalize_campaign_role,
-)
+from runefoble_auth.sync_tuples import format_tuple
 from runefoble_events.events import CharacterCreated, SessionCreated
 from runefoble_platform.event_fields import event_type_of
 
@@ -59,19 +55,13 @@ async def test_spicedb_client_crud_and_permissions(
 
 
 def test_sync_tuples_helpers_and_models() -> None:
-    """Verify SyncResult, tuple formatting, and role normalization."""
+    """Verify SyncResult and tuple formatting."""
     result = SyncResult(status="success", synced_tuples=["campaign:c1#game_master@user:u1"])
     assert result.status == "success"
     assert len(result.synced_tuples) == 1
 
     formatted = format_tuple("campaign", "c1", "player", "user", "u2")
     assert formatted == "campaign:c1#player@user:u2"
-
-    assert normalize_campaign_role("gm") == ["game_master"]
-    assert normalize_campaign_role("dm") == ["game_master"]
-    assert normalize_campaign_role("player") == ["player"]
-    assert normalize_campaign_role("custom_role") == ["custom_role"]
-    assert "spectator" in CAMPAIGN_ROLE_RELATIONS
 
 
 @pytest.mark.asyncio
@@ -91,8 +81,8 @@ async def test_handle_domain_event_dispatch() -> None:
         session_id=sess_id,
         dm_id=dm_id,
     )
-    synced_session = await service.handle_domain_event(evt_session)
-    assert any("campaign:" in t and "#game_master@" in t for t in synced_session)
+    # A session event carries no membership: the DM gets no campaign relation (TASK-0855).
+    assert await service.handle_domain_event(evt_session) == []
 
     # 3. Pydantic CharacterCreated
     user_id = f"player-{uuid4().hex[:6]}"
@@ -131,8 +121,7 @@ async def test_handle_domain_event_dispatch() -> None:
             "session_id": "dict_sess",
         },
     }
-    synced_dict = await handle_domain_event(service, dict_event)
-    assert len(synced_dict) > 0
+    assert await handle_domain_event(service, dict_event) == []
 
     # 6. Unknown event type returns empty list
     assert await service.handle_domain_event({"type": "UnknownEvent"}) == []

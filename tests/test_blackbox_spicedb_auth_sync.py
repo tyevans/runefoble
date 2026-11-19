@@ -36,20 +36,35 @@ async def test_token_roles_grant_no_campaign_relations(
 
 
 @pytest.mark.asyncio
-async def test_auth_sync_membership_lifecycle() -> None:
-    """Verify granting and revoking campaign memberships."""
+async def test_domain_events_carry_role_names_into_no_campaign_relation() -> None:
+    """A role named in a domain event writes no campaign relation (ADR-0015 (d), TASK-0855).
+
+    The DM of a new session and a player who joins as `owner` both get no campaign grant.
+    Memberships come only from the campaign roles and join routes.
+    """
     spicedb = MockSpiceDBClient()
     service = ZitadelSpiceDBSyncService(spicedb_client=spicedb, zitadel_auth=sync_test_verifier())
-    campaign_id = f"camp-{uuid4().hex[:6]}"
+    camp_id = f"camp-{uuid4().hex[:6]}"
     dm_id = f"dm-{uuid4().hex[:6]}"
+    joiner_id = f"joiner-{uuid4().hex[:6]}"
 
-    # Grant DM role
-    await service.sync_membership(campaign_id, dm_id, role="dungeon_master", action="grant")
-    assert await spicedb.check_permission("campaign", campaign_id, "run_session", "user", dm_id)
+    await service.handle_domain_event(
+        SessionCreated(
+            aggregate_id=uuid4(), campaign_id=camp_id, session_id=f"sess-{camp_id}", dm_id=dm_id
+        )
+    )
+    await service.handle_domain_event(
+        {
+            "type": "runefoble.events.session.player_joined_session",
+            "data": {"campaign_id": camp_id, "user_id": joiner_id, "role": "owner"},
+        }
+    )
 
-    # Revoke DM role
-    await service.sync_membership(campaign_id, dm_id, role="dungeon_master", action="revoke")
-    assert not await spicedb.check_permission("campaign", campaign_id, "run_session", "user", dm_id)
+    for permission in ("manage", "run_session", "play", "view"):
+        assert not await spicedb.check_permission("campaign", camp_id, permission, "user", dm_id)
+        assert not await spicedb.check_permission(
+            "campaign", camp_id, permission, "user", joiner_id
+        )
 
 
 @pytest.mark.asyncio
@@ -59,19 +74,11 @@ async def test_auth_sync_domain_event_orchestration() -> None:
     service = ZitadelSpiceDBSyncService(spicedb_client=spicedb, zitadel_auth=sync_test_verifier())
 
     camp_id = f"camp-{uuid4().hex[:6]}"
-    dm_id = f"dm-{uuid4().hex[:6]}"
     player_id = f"player-{uuid4().hex[:6]}"
-    sess_id = f"sess-{uuid4().hex[:6]}"
     char_id = uuid4()
     token_id = f"tok-{uuid4().hex[:6]}"
 
-    # 1. Session created
-    await service.handle_domain_event(
-        SessionCreated(aggregate_id=uuid4(), campaign_id=camp_id, session_id=sess_id, dm_id=dm_id)
-    )
-    assert await spicedb.check_permission("game_session", sess_id, "control", "user", dm_id)
-
-    # 3. Character created
+    # 1. Character created
     await service.handle_domain_event(
         CharacterCreated(
             aggregate_id=char_id,
@@ -84,9 +91,8 @@ async def test_auth_sync_domain_event_orchestration() -> None:
         )
     )
     assert await spicedb.check_permission("character", str(char_id), "edit", "user", player_id)
-    assert await spicedb.check_permission("character", str(char_id), "edit", "user", dm_id)
 
-    # 4. Token placed
+    # 2. Token placed
     await service.handle_domain_event(
         {
             "type": "runefoble.events.board.token_placed",
@@ -94,7 +100,6 @@ async def test_auth_sync_domain_event_orchestration() -> None:
         }
     )
     assert await spicedb.check_permission("board_token", token_id, "move", "user", player_id)
-    assert await spicedb.check_permission("board_token", token_id, "move", "user", dm_id)
 
 
 @pytest.mark.asyncio

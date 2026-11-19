@@ -24,23 +24,6 @@ class SyncResult(BaseModel):
     errors: list[str] = Field(default_factory=list)
 
 
-# Mapping from incoming role names to canonical Zanzibar campaign relations.
-# The schema defines one Game Master relation: `game_master`. `gm` is never a relation.
-CAMPAIGN_ROLE_RELATIONS: dict[str, list[str]] = {
-    "gm": ["game_master"],
-    "dm": ["game_master"],
-    "dungeon_master": ["game_master"],
-    "player": ["player"],
-    "spectator": ["spectator"],
-    "owner": ["owner"],
-}
-
-
-def normalize_campaign_role(role: str) -> list[str]:
-    """Normalize role string into corresponding Zanzibar campaign relations."""
-    return CAMPAIGN_ROLE_RELATIONS.get(role.strip().lower(), [role.strip().lower()])
-
-
 def format_tuple(res_t: str, res_id: str, rel: str, sub_t: str, sub_id: str) -> str:
     """Format Zanzibar tuple string representation (resource#relation@subject)."""
     return f"{res_t}:{res_id}#{rel}@{sub_t}:{sub_id}"
@@ -104,21 +87,6 @@ async def write_relationship_tuple(
     """Write relationship tuple via SpiceDB client, optionally with an execution wrapper."""
     return await _mutate(
         spicedb_client.write_relationship, res_t, res_id, rel, sub_t, sub_id, executor
-    )
-
-
-async def delete_relationship_tuple(
-    spicedb_client: Any,
-    res_t: str,
-    res_id: str,
-    rel: str,
-    sub_t: str,
-    sub_id: str,
-    executor: Callable[..., Any] | None = None,
-) -> str:
-    """Delete relationship tuple via SpiceDB client, optionally with an execution wrapper."""
-    return await _mutate(
-        spicedb_client.delete_relationship, res_t, res_id, rel, sub_t, sub_id, executor
     )
 
 
