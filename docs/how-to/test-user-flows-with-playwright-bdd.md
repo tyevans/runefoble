@@ -58,10 +58,33 @@ Given I am logged in as a "DM"
 And campaign "The Sunless Citadel" exists
 ```
 
-### Setup Rules
-- A setup step must throw when its request fails.
-- A setup step must not fall back to a fixed id.
+### Setup Rules (Fail Loud)
+- A setup step must throw when its request fails. The error must hold the response status and body.
+- A setup step must not fall back to a fixed id or title. Store the value that the setup call returns in `world`.
+- A later step reads that value through `requireValue` from `e2e/support/guards.ts`. A missing value fails the step.
+- `world.getPage(name)` throws when no step opened a page for that persona. Do not substitute another persona's page.
 - A step must not call a database, a private store or a test-only route.
+
+Correct pattern. The setup call throws on failure, and the id comes from its reply:
+
+```typescript
+const token = requireValue(world.currentUser?.token, 'No access token. Sign Evelyn in before campaign setup.');
+const camp = await frontdoorApi.createCampaign('Wrath of the Lich King', { setting: 'Northrend', token });
+world.campaignId = requireValue(camp.id, 'The campaign reply has no id.');
+```
+
+Incorrect pattern. Do not write this:
+
+```typescript
+// Wrong: a failed precondition lets the scenario run on a campaign that may not exist.
+try {
+  world.campaignId = (await frontdoorApi.createCampaign(title, { token })).id;
+} catch {
+  world.campaignId = '4';
+}
+```
+
+`make test-bdd` runs the unit tests of these guards (`e2e/unit/guards.test.ts`) with `node --test`.
 
 ---
 
@@ -69,17 +92,28 @@ And campaign "The Sunless Citadel" exists
 
 Runefoble components are Lit Web Components with Shadow DOM. Playwright locators pierce open shadow roots, so a step does not need custom XPath.
 
-The step `I click the {string} button` resolves a button by role, text or `aria-label`. It is defined in `e2e/steps/common_steps.ts`:
+The step `I click the {string} button` finds the button whose accessible name is exactly the feature text. It is defined in `e2e/steps/common_steps.ts`:
 
 ```typescript
 When('I click the {string} button', async ({ page }, buttonName: string) => {
-  const button = page
-    .getByRole('button', { name: buttonName })
-    .or(page.locator(`button:has-text("${buttonName}")`))
-    .or(page.locator(`[aria-label="${buttonName}"]`))
-    .first();
+  const button = page.getByRole('button', { name: buttonName, exact: true });
   await button.click();
 });
+```
+
+### Selector Rules (Precise Selectors)
+- A selector names the element in the feature text. Use `getByRole` with the label and `exact: true`, or scope the locator to the card or row of the named participant.
+- Do not add `.first()`, `.nth(0)` or an `.or()` chain to pick "the first match". Playwright strict mode then fails the step when the locator matches zero or several elements.
+- If a list can hold several valid matches, `.first()` is allowed only with a comment that says why.
+- A control without an accessible name is a component defect. Give the control a label in the component (for example `aria-labelledby`), then select it by that name.
+- An assertion must fail when its precondition is missing. Do not wrap a comparison in `if (value)`.
+
+Example from `e2e/steps/character_sheet_steps.ts`. The feature says `checks "Avoid Melee"`:
+
+```typescript
+const toggle = guardrails.getByRole('checkbox', { name: toggleLabel, exact: true });
+await expect(toggle).toHaveCount(1, { timeout: 10_000 });
+await toggle.setChecked(true);
 ```
 
 ### Best Practices for Step Definitions
@@ -90,7 +124,9 @@ When('I click the {string} button', async ({ page }, buttonName: string) => {
 Correct pattern, from `e2e/steps/vtt_steps.ts`: launch the session through the DM's button, then drag, then assert the result on the board.
 
 ```typescript
-const launchBtn = evelynPage.locator('runefoble-session-lobby .btn-launch').first();
+const launchBtn = evelynPage
+  .locator('runefoble-session-lobby')
+  .getByRole('button', { name: 'Launch Session' });
 await expect(launchBtn, 'Launch control must be visible to the DM').toBeVisible({ timeout: 10_000 });
 await launchBtn.click();
 ```
@@ -146,7 +182,7 @@ The step `I am logged in as a {string}` in `e2e/steps/common_steps.ts` accepts a
 Use these commands from the repository root. The reference page lists what each command runs.
 
 ```bash
-make test-bdd      # Typecheck, unused-step check and Gherkin mapping. No browsers.
+make test-bdd      # Typecheck, guard unit tests, unused-step check and Gherkin mapping. No browsers.
 make test-e2e      # Full suite in Chromium, Firefox and WebKit, against the running Kind stack.
 make test-e2e-ui   # Playwright UI mode for debugging.
 

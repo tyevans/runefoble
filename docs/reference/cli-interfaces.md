@@ -42,7 +42,7 @@
 | `make lint` | Runs Ruff lint and format checks, mypy on the inference worker and the MCP gateway, frontend and e2e typechecks, and `helm lint` |
 | `make lint-fix` | Runs `ruff check --fix` and `ruff format` on the repository |
 | `make pre-commit` | Runs every pre-commit hook on all files with `uv run pre-commit run --all-files` |
-| `make test-bdd` | Typechecks `e2e/` (`pnpm run e2e:typecheck`), fails on unused Playwright BDD step definitions (`uv run python scripts/check_e2e_unused_steps.py`), and runs `bddgen`. Does not launch browsers |
+| `make test-bdd` | Typechecks `e2e/` (`pnpm run e2e:typecheck`), runs the e2e guard unit tests (`node --test e2e/unit/*.test.ts`), fails on unused Playwright BDD step definitions (`uv run python scripts/check_e2e_unused_steps.py`), and runs `bddgen`. Does not launch browsers |
 | `make build` | Produces production frontend bundle and static Storybook documentation |
 | `make check-ui-manifests` | Fails when a service UI manifest is missing or invalid (ADR-0013, ADR-0015) |
 | `make voice-model-cache` | Downloads the faster-whisper model set by `VOICE_MODEL_SIZE` (default `tiny.en`) into `.cache/voice-models`, then copies it into the running voice-agent pod. Needs the `faster-whisper` engine: the chart creates no model cache for `whisper-cpp` |

@@ -12,6 +12,34 @@ import { Given, When, Then } from '../support/fixtures';
 import type { World } from '../support/world';
 import type { AuthFixtures } from '../support/auth_fixtures';
 import type { FrontdoorApi } from '../support/frontdoor_api';
+import { assertOk, exactText, requireValue } from '../support/guards';
+
+const SHEET = 'runefoble-character-sheet';
+
+/** The Hit Points value, for example "33 / 38". */
+function hitPointsValue(page: Page) {
+  return page
+    .locator(`${SHEET} .vital-card`)
+    .filter({ has: page.locator('.vital-label', { hasText: exactText('Hit Points') }) })
+    .locator('.vital-val');
+}
+
+/** Matches a Hit Points value whose current HP is exactly `hp`. */
+function currentHpText(hp: number): RegExp {
+  return new RegExp(`^\\s*${hp}\\s*/`);
+}
+
+function mainHandSlot(page: Page) {
+  return page
+    .locator(`${SHEET} .equip-slot`)
+    .filter({ has: page.locator('.slot-label', { hasText: 'Main Hand' }) });
+}
+
+/** The roster card of the character that this scenario created. */
+function createdCharacterCard(page: Page, world: World) {
+  const id = requireValue(world.characterId, 'No character id. Create the character in this scenario first.');
+  return page.locator(`runefoble-character-roster article.character-card[data-character-id="${id}"]`);
+}
 
 /**
  * Ensures user is authenticated and navigating the character sheet
@@ -39,28 +67,21 @@ async function ensureOnCharacterSheet(
 
   let charId = world.characterId;
   if (!charId) {
-    try {
-      const created = await frontdoorApi.createCharacter(
-        {
-          name: expectedName,
-          characterClass: 'Fighter',
-          level: 4,
-          maxHp: 38,
-          currentHp: 38,
-          armorClass: 18,
-          speed: 30,
-        },
-        world.currentUser?.token
-      );
-      charId = created.id;
-    } catch {
-      charId = 'char-valeros';
-    }
+    // Setup goes through the public characters route. A failed call throws with the response body.
+    const created = await frontdoorApi.createCharacter(
+      {
+        name: expectedName,
+        characterClass: 'Fighter',
+        level: 4,
+        maxHp: 38,
+        currentHp: 38,
+        armorClass: 18,
+        speed: 30,
+      },
+      requireValue(world.currentUser.token, 'No access token. Sign the player in before character setup.')
+    );
+    charId = requireValue<string>(created.id, 'The character reply has no id.');
     world.characterId = charId;
-  }
-
-  if (!charId) {
-    throw new Error('Character id is missing. Character setup did not return an id.');
   }
 
   await page.goto(`#/characters/${charId}`);
@@ -89,10 +110,7 @@ When(
     await page.waitForLoadState('domcontentloaded');
     await page.waitForSelector('runefoble-character-roster', { timeout: 15_000 });
 
-    const createBtn = page
-      .locator('runefoble-character-roster #create-char-btn')
-      .or(page.locator('runefoble-character-roster button:has-text("Create Character")'))
-      .first();
+    const createBtn = page.locator('runefoble-character-roster #create-char-btn');
 
     await expect(createBtn).toBeVisible({ timeout: 15_000 });
     await createBtn.click();
@@ -120,8 +138,16 @@ When(
     const hpInput = modal.locator('#char-hp');
     await hpInput.fill('38');
 
+    // Read the id of the new character from the reply to the UI's own create call.
+    const createReply = page.waitForResponse(
+      (res) => res.request().method() === 'POST' && new URL(res.url()).pathname === '/api/v1/characters'
+    );
     const submitBtn = modal.locator('button.btn-submit');
     await submitBtn.click();
+    const reply = await createReply;
+    await assertOk(reply, 'Character creation from the builder');
+    const created = (await reply.json()) as { id?: string };
+    world.characterId = requireValue(created.id, 'The character reply has no id.');
 
     await expect(modal.locator('.modal-dialog')).not.toBeVisible({ timeout: 10_000 });
   }
@@ -130,33 +156,18 @@ When(
 Then(
   'a new character card appears in the roster',
   async ({ page, world }) => {
-    const targetName = world.get<string>('characterName') || 'Thorne Ironbreaker';
-    const card = page
-      .locator('runefoble-character-roster article.character-card')
-      .filter({ hasText: targetName })
-      .first();
+    const name = requireValue(world.get<string>('characterName'), 'No character name. Fill in the builder first.');
+    const card = createdCharacterCard(page, world);
 
     await expect(card).toBeVisible({ timeout: 10_000 });
-    const id = await card.getAttribute('data-character-id');
-    if (id) {
-      world.characterId = id;
-    }
+    await expect(card).toContainText(name);
   }
 );
 
 When(
   '{word} clicks "Inspect Sheet"',
   async ({ page, world }, _persona: string) => {
-    const targetName = world.get<string>('characterName') || 'Thorne Ironbreaker';
-    const card = page
-      .locator('runefoble-character-roster article.character-card')
-      .filter({ hasText: targetName })
-      .first();
-
-    const inspectBtn = card
-      .locator('button.btn-secondary')
-      .filter({ hasText: 'Inspect Sheet' })
-      .first();
+    const inspectBtn = createdCharacterCard(page, world).getByRole('button', { name: 'Inspect Sheet', exact: true });
 
     await expect(inspectBtn).toBeVisible({ timeout: 10_000 });
     await inspectBtn.click();
@@ -172,13 +183,9 @@ Then(
 
     const hash = await page.evaluate(() => window.location.hash);
     const id = hash.replace(/^#\/characters\//, '').split('?')[0];
-    if (id) {
-      world.characterId = id;
-    }
+    expect(id, 'The sheet route must name the character that this scenario created').toBe(world.characterId);
 
-    const heading = page
-      .locator('runefoble-character-sheet .char-identity h1, runefoble-character-sheet h1, .character-sheet-view h1')
-      .first();
+    const heading = page.locator(`${SHEET} .char-identity h1`);
 
     await expect(heading).toContainText(expectedName, { timeout: 10_000 });
   }
@@ -187,11 +194,14 @@ Then(
 When(
   '{word} clicks the "-5 HP" adjustment button',
   async ({ page, world, auth, frontdoorApi }, _persona: string) => {
-    await ensureOnCharacterSheet(page, world, auth, frontdoorApi);
+    const charId = await ensureOnCharacterSheet(page, world, auth, frontdoorApi);
 
-    const minus5Btn = page
-      .locator('runefoble-character-sheet button.hp-btn-minus-5, runefoble-character-sheet button:has-text("-5")')
-      .first();
+    // Read the starting HP from the public character record. The Then step asserts the change from it.
+    const token = requireValue(world.currentUser?.token, 'No access token. Sign the player in first.');
+    const before = await frontdoorApi.getCharacter(charId, token);
+    world.set('hpBefore', requireValue<number>(before.current_hp, 'The character record has no current_hp.'));
+
+    const minus5Btn = page.locator(`${SHEET} button.hp-btn-minus-5`);
 
     await expect(minus5Btn).toBeVisible({ timeout: 10_000 });
     await minus5Btn.click();
@@ -200,15 +210,20 @@ When(
 
 Then(
   'current HP updates from {int} to {int} and health bar recalculates',
-  async ({ page }, _fromHp: number, toHp: number) => {
-    const vitalVal = page
-      .locator('runefoble-character-sheet .vital-card:has-text("Hit Points") .vital-val, runefoble-character-sheet .vital-val')
-      .first();
+  async ({ page, world, frontdoorApi }, fromHp: number, toHp: number) => {
+    const hpBefore = requireValue(world.get<number>('hpBefore'), 'No starting HP. Run the HP adjustment step first.');
+    expect(hpBefore, 'The public character record must hold the starting HP').toBe(fromHp);
 
-    await expect(vitalVal).toContainText(String(toHp), { timeout: 10_000 });
+    await expect(hitPointsValue(page)).toHaveText(currentHpText(toHp), { timeout: 10_000 });
 
-    const hpBar = page.locator('runefoble-character-sheet .hp-bar-inner').first();
-    await expect(hpBar).toBeVisible({ timeout: 10_000 });
+    const charId = requireValue(world.characterId, 'No character id.');
+    const token = requireValue(world.currentUser?.token, 'No access token.');
+    await expect
+      .poll(async () => (await frontdoorApi.getCharacter(charId, token)).current_hp, { timeout: 10_000 })
+      .toBe(toHp);
+
+    // The Hit Points card has one bar.
+    await expect(page.locator(`${SHEET} .hp-bar-inner`)).toBeVisible({ timeout: 10_000 });
   }
 );
 
@@ -223,11 +238,7 @@ When(
 Then(
   'current HP remains {int}',
   async ({ page }, expectedHp: number) => {
-    const vitalVal = page
-      .locator('runefoble-character-sheet .vital-card:has-text("Hit Points") .vital-val, runefoble-character-sheet .vital-val')
-      .first();
-
-    await expect(vitalVal).toContainText(String(expectedHp), { timeout: 10_000 });
+    await expect(hitPointsValue(page)).toHaveText(currentHpText(expectedHp), { timeout: 10_000 });
   }
 );
 
@@ -238,36 +249,26 @@ When(
 
     // This step runs on a fresh character, so Main Hand starts empty.
     // The web-first assertion fails the scenario if a prior step filled it.
-    const mainHandSlot = page
-      .locator('runefoble-character-sheet .equip-slot')
-      .filter({ hasText: 'Main Hand' })
-      .first();
-    await expect(mainHandSlot.locator('button.unequip-btn')).toHaveCount(0, { timeout: 10_000 });
+    await expect(mainHandSlot(page).locator('button.unequip-btn')).toHaveCount(0, { timeout: 10_000 });
 
     const row = page
-      .locator('runefoble-character-sheet table.inventory-table tr.inventory-row')
-      .filter({ hasText: itemName })
-      .first();
+      .locator(`${SHEET} table.inventory-table tr.inventory-row`)
+      .filter({ hasText: itemName });
 
     await expect(row).toBeVisible({ timeout: 15_000 });
-    const equipBtn = row.locator('button.equip-btn, button:has-text("Equip")').first();
-    await equipBtn.click();
+    await row.locator('button.equip-btn').click();
 
     // Clicking Equip always opens the slot selector dialog.
-    const dialog = page.locator('runefoble-character-sheet .equip-dialog, .equip-dialog').first();
+    const dialog = page.locator(`${SHEET} .equip-dialog`);
     await expect(dialog).toBeVisible({ timeout: 10_000 });
-    const confirmBtn = dialog.locator('button.confirm-equip-btn, button:has-text("Confirm")').first();
-    await confirmBtn.click();
+    await dialog.locator('button.confirm-equip-btn').click();
   }
 );
 
 Then(
   '{string} appears in the Main Hand equipment slot',
   async ({ page }, itemName: string) => {
-    const slot = page
-      .locator('runefoble-character-sheet .equip-slot')
-      .filter({ hasText: 'Main Hand' })
-      .first();
+    const slot = mainHandSlot(page);
 
     await expect(slot).toBeVisible({ timeout: 10_000 });
     await expect(slot.locator('.slot-content')).toContainText(itemName, { timeout: 10_000 });
@@ -277,7 +278,7 @@ Then(
 Then(
   'inventory encumbrance updates',
   async ({ page }) => {
-    const encBox = page.locator('runefoble-character-sheet .encumbrance-box').first();
+    const encBox = page.locator(`${SHEET} .encumbrance-box`);
     await expect(encBox).toBeVisible({ timeout: 10_000 });
     await expect(encBox.locator('.encumbrance-header')).toContainText(/Encumbrance/i, { timeout: 10_000 });
   }
@@ -286,14 +287,7 @@ Then(
 When(
   '{word} clicks "Unequip"',
   async ({ page }, _persona: string) => {
-    const slot = page
-      .locator('runefoble-character-sheet .equip-slot')
-      .filter({ hasText: 'Main Hand' })
-      .first();
-
-    const unequipBtn = slot
-      .locator('button.unequip-btn, button[title="Unequip"], button:has-text("✕")')
-      .first();
+    const unequipBtn = mainHandSlot(page).locator('button.unequip-btn');
 
     await expect(unequipBtn).toBeVisible({ timeout: 10_000 });
     await unequipBtn.click();
@@ -303,10 +297,7 @@ When(
 Then(
   'the Main Hand slot becomes empty',
   async ({ page }) => {
-    const slot = page
-      .locator('runefoble-character-sheet .equip-slot')
-      .filter({ hasText: 'Main Hand' })
-      .first();
+    const slot = mainHandSlot(page);
 
     await expect(slot.locator('.slot-content')).toContainText(/Empty/i, { timeout: 10_000 });
     await expect(slot.locator('.slot-content')).not.toContainText('Longsword +1');
@@ -314,34 +305,28 @@ Then(
 );
 
 When(
-  '{word} sets the stand-in risk threshold to {string} and checks "Avoid Melee"',
-  async ({ page, world, auth, frontdoorApi }, _persona: string, riskLevel: string) => {
+  '{word} sets the stand-in risk threshold to {string} and checks {string}',
+  async ({ page, world, auth, frontdoorApi }, _persona: string, riskLevel: string, toggleLabel: string) => {
     await ensureOnCharacterSheet(page, world, auth, frontdoorApi);
 
-    const guardrails = page.locator('runefoble-stand-in-guardrails').first();
+    const guardrails = page.locator('runefoble-stand-in-guardrails');
     await expect(guardrails).toBeVisible({ timeout: 10_000 });
 
-    const riskSelect = guardrails.locator('select').first();
-    await riskSelect.selectOption(riskLevel);
+    await guardrails.getByRole('combobox', { name: 'Risk Appetite' }).selectOption(riskLevel);
 
-    const avoidMeleeCheckbox = guardrails
-      .locator('.toggle-row')
-      .filter({ hasText: 'Avoid Frontline Melee' })
-      .locator('input[type="checkbox"]')
-      .or(guardrails.locator('input[type="checkbox"]').first())
-      .first();
-
-    await avoidMeleeCheckbox.setChecked(true);
+    // The toggle must carry exactly the label in the feature text. No other checkbox stands in for it.
+    const toggle = guardrails.getByRole('checkbox', { name: toggleLabel, exact: true });
+    await expect(toggle).toHaveCount(1, { timeout: 10_000 });
+    await toggle.setChecked(true);
   }
 );
 
 When(
   'clicks "Save Guardrails"',
   async ({ page }) => {
-    const guardrails = page.locator('runefoble-stand-in-guardrails').first();
-    const saveBtn = guardrails
-      .locator('button:has-text("Save Guardrails"), button:has-text("Save Tactical Guardrails"), button.btn:has-text("Save")')
-      .first();
+    const saveBtn = page
+      .locator('runefoble-stand-in-guardrails')
+      .getByRole('button', { name: 'Save Tactical Guardrails', exact: true });
 
     await expect(saveBtn).toBeVisible({ timeout: 10_000 });
     await saveBtn.click();
@@ -351,10 +336,8 @@ When(
 Then(
   'a toast {string} appears',
   async ({ page }, toastMessage: string) => {
-    const toast = page
-      .locator('.toast-notification, [role="status"], runefoble-stand-in-guardrails .status-msg')
-      .filter({ hasText: toastMessage })
-      .first();
+    // The App Shell toast appears only after the guardrails reach the character service.
+    const toast = page.locator('.toast-notification').filter({ hasText: toastMessage });
 
     await expect(toast).toBeVisible({ timeout: 10_000 });
   }
@@ -366,8 +349,9 @@ Then(
     await page.reload({ waitUntil: 'domcontentloaded' });
     await page.waitForSelector('runefoble-stand-in-guardrails', { timeout: 10_000 });
 
-    const guardrails = page.locator('runefoble-stand-in-guardrails').first();
-    const riskSelect = guardrails.locator('select').first();
+    const riskSelect = page
+      .locator('runefoble-stand-in-guardrails')
+      .getByRole('combobox', { name: 'Risk Appetite' });
     await expect(riskSelect).toHaveValue(expectedStance, { timeout: 10_000 });
   }
 );

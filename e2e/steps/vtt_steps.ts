@@ -5,8 +5,29 @@
  * over real WebSockets per ADR-0004, ADR-0005, ADR-0010, ADR-0014, and Hard Invariant 7.
  */
 
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 import { Given, When, Then } from '../support/fixtures';
+import { exactText, requireValue, sessionIdFromTitle } from '../support/guards';
+import type { World } from '../support/world';
+
+function lobbyRoute(world: World, sessionTitle: string): string {
+  const campaignId = requireValue(world.campaignId, 'No campaign. Run "Evelyn is hosting session" first.');
+  return `#/campaigns/${campaignId}/lobby/${sessionIdFromTitle(sessionTitle)}`;
+}
+
+/** The lobby card of one participant. Strict mode fails the step when the name matches no card or several cards. */
+function participantCard(lobby: Locator, name: string): Locator {
+  return lobby.locator('.participant-card').filter({
+    has: lobby.page().locator('.username', { hasText: new RegExp(name, 'i') }),
+  });
+}
+
+/** The board cell whose coordinate label is exactly `x,y`. */
+function boardCell(board: Locator, x: number, y: number): Locator {
+  return board
+    .locator('.cell')
+    .filter({ has: board.page().locator('.coord-label', { hasText: exactText(`${x},${y}`) }) });
+}
 
 Given(
   'Evelyn is hosting session {string} for campaign {string}',
@@ -16,8 +37,7 @@ Given(
     world.setPage('evelyn', page);
     world.campaignId = campaignId;
 
-    const sessionIdMatch = sessionTitle.match(/\d+/);
-    const sessionId = sessionIdMatch ? sessionIdMatch[0] : '15';
+    const sessionId = sessionIdFromTitle(sessionTitle);
     world.sessionId = sessionId;
 
     await page.goto(`#/campaigns/${campaignId}/lobby/${sessionId}`);
@@ -29,9 +49,7 @@ Given(
 Given(
   'Valeros joins {string} in a separate browser',
   async ({ browser, auth, world }, sessionTitle: string) => {
-    const sessionIdMatch = sessionTitle.match(/\d+/);
-    const sessionId = sessionIdMatch ? sessionIdMatch[0] : world.sessionId || '15';
-    const campaignId = world.campaignId || '4';
+    const route = lobbyRoute(world, sessionTitle);
 
     const valerosContext = await browser.newContext({ baseURL: test.info().project.use.baseURL });
     world.extraContexts.push(valerosContext);
@@ -39,34 +57,28 @@ Given(
     world.setPage('valeros', valerosPage);
 
     await auth.signInAs('valeros', valerosPage);
-    await valerosPage.goto(`#/campaigns/${campaignId}/lobby/${sessionId}`);
+    await valerosPage.goto(route);
     await valerosPage.waitForLoadState('domcontentloaded');
     await expect(valerosPage.locator('runefoble-session-lobby')).toBeVisible({ timeout: 15_000 });
   }
 );
 
 When('Valeros checks {string}', async ({ world }, controlLabel: string) => {
-  const valerosPage = world.getPage('valeros') || world.getPage('evelyn')!;
-  const lobby = valerosPage.locator('runefoble-session-lobby');
-
-  if (controlLabel.toLowerCase().includes('ready')) {
-    const readyCheckbox = lobby.locator('.checkbox-ready').first();
-    await readyCheckbox.waitFor({ state: 'visible', timeout: 10_000 });
-    await readyCheckbox.check();
-  } else if (controlLabel.toLowerCase().includes('absent')) {
-    const absentCheckbox = lobby.locator('.checkbox-absent').first();
-    await absentCheckbox.waitFor({ state: 'visible', timeout: 10_000 });
-    await absentCheckbox.check();
-  }
+  const lobby = world.getPage('valeros').locator('runefoble-session-lobby');
+  // Valeros's own card carries the `current-user` class. Only that card has his controls.
+  const checkbox = lobby
+    .locator('.participant-card.current-user')
+    .getByRole('checkbox', { name: controlLabel, exact: true });
+  await expect(checkbox).toHaveCount(1, { timeout: 10_000 });
+  await checkbox.check();
 });
 
 Then(
   "Evelyn's lobby view updates in real time showing Valeros as {string}",
   async ({ world }, expectedStatus: string) => {
-    const evelynPage = world.getPage('evelyn')!;
-    const lobby = evelynPage.locator('runefoble-session-lobby');
+    const lobby = world.getPage('evelyn').locator('runefoble-session-lobby');
 
-    const valerosCard = lobby.locator('.participant-card').filter({ hasText: /Valeros/i }).first();
+    const valerosCard = participantCard(lobby, 'Valeros');
     await expect(valerosCard).toBeVisible({ timeout: 10_000 });
 
     const badge = valerosCard.locator('.badge-readiness');
@@ -77,9 +89,7 @@ Then(
 When(
   'Sarah opens {string} and checks {string}',
   async ({ browser, auth, world }, sessionTitle: string, controlLabel: string) => {
-    const sessionIdMatch = sessionTitle.match(/\d+/);
-    const sessionId = sessionIdMatch ? sessionIdMatch[0] : world.sessionId || '15';
-    const campaignId = world.campaignId || '4';
+    const route = lobbyRoute(world, sessionTitle);
 
     const sarahContext = await browser.newContext({ baseURL: test.info().project.use.baseURL });
     world.extraContexts.push(sarahContext);
@@ -87,54 +97,47 @@ When(
     world.setPage('sarah', sarahPage);
 
     await auth.signInAs('sarah', sarahPage);
-    await sarahPage.goto(`#/campaigns/${campaignId}/lobby/${sessionId}`);
+    await sarahPage.goto(route);
     await sarahPage.waitForLoadState('domcontentloaded');
 
     const lobby = sarahPage.locator('runefoble-session-lobby');
     await expect(lobby).toBeVisible({ timeout: 15_000 });
 
-    if (controlLabel.toLowerCase().includes('absent')) {
-      const sarahCard = lobby.locator('.participant-card').filter({ hasText: /Sarah/i }).first();
-      const absentCheckbox = (await sarahCard.isVisible())
-        ? sarahCard.locator('.checkbox-absent')
-        : lobby.locator('.checkbox-absent').first();
-      await absentCheckbox.waitFor({ state: 'visible', timeout: 10_000 });
-      await absentCheckbox.check();
-    }
+    // The control must be on Sarah's own card. A missing card fails the step.
+    const sarahCard = participantCard(lobby, 'Sarah');
+    await expect(sarahCard, "Sarah's participant card must be in the lobby").toBeVisible({ timeout: 10_000 });
+    const checkbox = sarahCard.getByRole('checkbox', { name: controlLabel, exact: true });
+    await expect(checkbox).toHaveCount(1, { timeout: 10_000 });
+    await checkbox.check();
   }
 );
 
 Then(
   'the participant card displays the {string} badge across all connected screens',
   async ({ world }, badgeName: string) => {
-    const pages = [world.getPage('evelyn'), world.getPage('valeros'), world.getPage('sarah')].filter(Boolean) as Page[];
+    const pages: Page[] = ['evelyn', 'valeros', 'sarah'].map((name) => world.getPage(name));
 
     for (const p of pages) {
-      const badge = p
-        .locator('runefoble-session-lobby .badge-readiness')
-        .filter({ hasText: badgeName })
-        .first();
-      await expect(badge).toBeVisible({ timeout: 10_000 });
-      await expect(badge).toHaveText(badgeName);
+      const sarahCard = participantCard(p.locator('runefoble-session-lobby'), 'Sarah');
+      await expect(sarahCard.locator('.badge-readiness')).toHaveText(badgeName, { timeout: 10_000 });
     }
   }
 );
 
 When('Evelyn clicks {string}', async ({ world }, buttonName: string) => {
-  const evelynPage = world.getPage('evelyn')!;
-  const btn = evelynPage
-    .locator('runefoble-session-lobby button')
-    .filter({ hasText: new RegExp(buttonName, 'i') })
-    .first();
-  await btn.waitFor({ state: 'visible', timeout: 10_000 });
+  const btn = world
+    .getPage('evelyn')
+    .locator('runefoble-session-lobby')
+    .getByRole('button', { name: buttonName });
+  await expect(btn).toHaveCount(1, { timeout: 10_000 });
   await btn.click();
 });
 
 Then(
   "both Evelyn and Valeros's browsers navigate automatically to {string}",
   async ({ world }, expectedHash: string) => {
-    const evelynPage = world.getPage('evelyn')!;
-    const valerosPage = world.getPage('valeros')!;
+    const evelynPage = world.getPage('evelyn');
+    const valerosPage = world.getPage('valeros');
 
     await expect
       .poll(async () => evelynPage.evaluate(() => window.location.hash), { timeout: 15_000 })
@@ -149,8 +152,8 @@ Then(
   'the tactical board {string} renders with dynamic grid bounds',
   async ({ world }, boardTag: string) => {
     const tagName = boardTag.replace(/[<>]/g, '');
-    const evelynPage = world.getPage('evelyn')!;
-    const valerosPage = world.getPage('valeros')!;
+    const evelynPage = world.getPage('evelyn');
+    const valerosPage = world.getPage('valeros');
 
     const evelynBoard = evelynPage.locator(tagName);
     const valerosBoard = valerosPage.locator(tagName);
@@ -172,14 +175,16 @@ When(
     const fromY = parseInt(fromYStr, 10);
     const toX = parseInt(toXStr, 10);
     const toY = parseInt(toYStr, 10);
-    const valerosPage = world.getPage('valeros')!;
-    const evelynPage = world.getPage('evelyn')!;
+    const valerosPage = world.getPage('valeros');
+    const evelynPage = world.getPage('evelyn');
 
     // Launch through the DM's visible control. Valeros's browser follows the
     // session route on its own (see "both Evelyn and Valeros's browsers navigate").
     const evelynHash = await evelynPage.evaluate(() => window.location.hash);
     if (!evelynHash.includes('/sessions/')) {
-      const launchBtn = evelynPage.locator('runefoble-session-lobby .btn-launch').first();
+      const launchBtn = evelynPage
+        .locator('runefoble-session-lobby')
+        .getByRole('button', { name: 'Launch Session' });
       await expect(launchBtn, 'Launch control must be visible to the DM').toBeVisible({
         timeout: 10_000,
       });
@@ -194,18 +199,13 @@ When(
     const grid = board.locator('.grid');
     await expect(grid).toBeVisible({ timeout: 10_000 });
 
-    const sourceCell = grid
-      .locator('.cell')
-      .filter({ has: valerosPage.locator('.coord-label', { hasText: `${fromX},${fromY}` }) })
-      .first();
-    const targetCell = grid
-      .locator('.cell')
-      .filter({ has: valerosPage.locator('.coord-label', { hasText: `${toX},${toY}` }) })
-      .first();
+    const sourceCell = boardCell(grid, fromX, fromY);
+    const targetCell = boardCell(grid, toX, toY);
     await expect(sourceCell).toBeVisible({ timeout: 10_000 });
     await expect(targetCell).toBeVisible({ timeout: 10_000 });
 
-    const token = sourceCell.locator('.token').first();
+    // A cell holds at most one token (board_state cell template).
+    const token = sourceCell.locator('.token');
     await expect(token).toBeVisible({ timeout: 10_000 });
 
     const srcBox = await token.boundingBox();
@@ -229,24 +229,23 @@ Then(
   async ({ world }, toXStr: string, toYStr: string) => {
     const toX = parseInt(toXStr, 10);
     const toY = parseInt(toYStr, 10);
-    const evelynPage = world.getPage('evelyn')!;
+    const evelynPage = world.getPage('evelyn');
     const board = evelynPage.locator('runefoble-board');
     await expect(board).toBeVisible({ timeout: 10_000 });
 
-    const targetCell = board
-      .locator('.cell')
-      .filter({ has: evelynPage.locator('.coord-label', { hasText: `${toX},${toY}` }) })
-      .first();
+    const targetCell = boardCell(board, toX, toY);
 
     await expect(targetCell.locator('.token')).toBeVisible({ timeout: 10_000 });
   }
 );
 
 Then('the chronicle feed logs the move action', async ({ world }) => {
-  const evelynPage = world.getPage('evelyn')!;
+  const evelynPage = world.getPage('evelyn');
   const watcherFeed = evelynPage.locator('runefoble-watcher-feed');
   await expect(watcherFeed).toBeVisible({ timeout: 10_000 });
 
+  // Justified .first(): the feed is append-only. A session can hold earlier move entries,
+  // and the step asserts that at least one move entry exists.
   const moveEventItem = watcherFeed
     .locator('.event-item')
     .filter({ hasText: /moved to/i })

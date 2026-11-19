@@ -10,14 +10,10 @@
 import { expect, type Page } from '@playwright/test';
 import { Given, When, Then } from '../support/fixtures';
 import { openAndRecordCapabilities, recordedCapabilities } from '../support/campaign_capabilities';
+import { requireValue } from '../support/guards';
 
 const LOBBY = 'runefoble-session-lobby';
 const LAUNCH_CONTROL = `${LOBBY} button.btn-launch`;
-
-function requireValue(value: string | null | undefined, message: string): string {
-  if (!value) throw new Error(message);
-  return value;
-}
 
 /** Waits two animation frames, so the lobby renders the state that the last reply set. */
 async function settleRender(page: Page): Promise<void> {

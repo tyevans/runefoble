@@ -218,9 +218,11 @@ test-mutation: ## Run mutation testing with mutmut on core domain modules
 	uv run mutmut run || true
 	uv run mutmut results || true
 
-test-bdd: ## Typecheck e2e steps, reject unused steps, validate Gherkin syntax
+test-bdd: ## Typecheck e2e steps, run e2e guard unit tests, reject unused steps, validate Gherkin syntax
 	@echo "==> Typechecking e2e suite..."
 	@pnpm run e2e:typecheck
+	@echo "==> Running e2e support unit tests..."
+	@node --test e2e/unit/*.test.ts
 	@echo "==> Checking for unused e2e step definitions..."
 	@uv run python scripts/check_e2e_unused_steps.py
 	@echo "==> Validating Gherkin feature syntax and step definitions..."

@@ -44,7 +44,7 @@ Then('the App Shell stores a session for {string}', async ({ page }, roleOrName:
 Then('the top navigation shows the signed-in user', async ({ page, world }) => {
   const userId = world.currentUser?.userId;
   expect(userId, 'a persona must be signed in first').toBeTruthy();
-  const userMenu = page.locator('runefoble-user-menu').first();
+  const userMenu = page.locator('runefoble-user-menu');
   await expect(userMenu).toBeVisible({ timeout: 10_000 });
   await expect(userMenu).toContainText(userId as string);
 });
@@ -55,7 +55,7 @@ When('the signed-in user signs out from the profile page', async ({ page, auth, 
   auth.forgetSignedInSession(userId as string);
   await page.goto('#/profile');
   await page.waitForLoadState('domcontentloaded');
-  await page.getByRole('button', { name: 'Sign Out' }).first().click();
+  await page.getByRole('button', { name: 'Sign Out', exact: true }).click();
   // Sign-out ends the Zitadel session, then Zitadel returns the browser to the App Shell root.
   await page.waitForURL((url) => url.href.startsWith(`${API_BASE_URL}/`), { timeout: 30_000 });
 });

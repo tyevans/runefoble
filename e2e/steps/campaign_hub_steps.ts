@@ -12,34 +12,39 @@ import { Given, When, Then } from '../support/fixtures';
 import type { AuthFixtures } from '../support/auth_fixtures';
 import type { FrontdoorApi } from '../support/frontdoor_api';
 import type { World } from '../support/world';
+import { requireValue } from '../support/guards';
+import { findPersona, resolvePersonaKey } from '../support/personas';
+
+/** The Zitadel user id of a persona named in the feature text, from the run's persona registry. */
+function personaUserId(name: string): string {
+  return findPersona(resolvePersonaKey(name)).userId;
+}
+
+/** The roster row of one member. The `data-user-id` attribute makes the match exact. */
+function memberRow(page: Page, userId: string) {
+  return page.locator(`runefoble-campaign-members .member-item[data-user-id="${userId}"]`);
+}
+
+function campaignTab(page: Page, tabName: string) {
+  return page.locator('nav.campaign-nav-tabs').getByRole('tab', { name: tabName, exact: true });
+}
 
 async function ensureOnCampaignOverview(
   page: Page,
   world: World,
-  auth?: AuthFixtures,
-  frontdoorApi?: FrontdoorApi
+  auth: AuthFixtures,
+  frontdoorApi: FrontdoorApi
 ): Promise<void> {
-  if (auth) {
-    const evelynUser = await auth.signInAs('evelyn', page);
-    world.currentUser = evelynUser;
-    world.setPage('evelyn', page);
-  }
+  const evelynUser = await auth.signInAs('evelyn', page);
+  world.currentUser = evelynUser;
+  world.setPage('evelyn', page);
 
   if (!world.campaignId) {
-    if (frontdoorApi && world.currentUser?.token) {
-      try {
-        const camp = await frontdoorApi.createCampaign('Wrath of the Lich King', {
-          setting: 'Northrend',
-          token: world.currentUser.token,
-        });
-        world.campaignId = camp.id;
-        world.campaignTitle = camp.title;
-      } catch {
-        world.campaignId = '4';
-      }
-    } else {
-      world.campaignId = '4';
-    }
+    // Setup goes through the public campaigns route. A failed call throws with the response body.
+    const token = requireValue(world.currentUser?.token, 'No access token. Sign Evelyn in before campaign setup.');
+    const camp = await frontdoorApi.createCampaign('Wrath of the Lich King', { setting: 'Northrend', token });
+    world.campaignId = requireValue(camp.id, 'The campaign reply has no id.');
+    world.campaignTitle = camp.title;
   }
 
   const campaignId = world.campaignId;
@@ -67,15 +72,14 @@ Given('Evelyn is logged in as a Dungeon Master', async ({ auth, world, page }) =
 
 When(
   'she clicks {string} and fills in title {string} and setting {string}',
-  async ({ page, world }, _buttonName: string, title: string, setting: string) => {
+  async ({ page, world }, buttonName: string, title: string, setting: string) => {
     world.campaignTitle = title;
 
+    // The dashboard header holds the button. The empty state can show a second one.
     const newCampaignBtn = page
-      .locator(
-        'button.btn-create-campaign, button:has-text("+ New Campaign"), button:has-text("New Campaign"), button:has-text("+ Create Campaign"), button:has-text("Create Campaign")'
-      )
-      .first();
-    await newCampaignBtn.waitFor({ state: 'visible', timeout: 10_000 });
+      .locator('runefoble-campaign-dashboard header.dashboard-header')
+      .getByRole('button', { name: buttonName, exact: true });
+    await expect(newCampaignBtn).toBeVisible({ timeout: 10_000 });
     await newCampaignBtn.click();
 
     const creator = page.locator('runefoble-campaign-creator');
@@ -90,7 +94,7 @@ When(
     await settingInput.waitFor({ state: 'visible', timeout: 10_000 });
     await settingInput.fill(setting);
 
-    const submitBtn = creator.locator('button.btn-submit, button[type="submit"]').first();
+    const submitBtn = creator.getByRole('button', { name: 'Create Campaign', exact: true });
     await submitBtn.click();
   }
 );
@@ -120,14 +124,11 @@ Then(
     const membersComp = page.locator('runefoble-campaign-members');
     await expect(membersComp).toBeVisible({ timeout: 15_000 });
 
-    const ownerRow = membersComp
-      .locator('.member-item')
-      .filter({ hasText: expectedRole })
-      .first();
+    const ownerRow = memberRow(page, owner.userId);
 
     await expect(ownerRow).toBeVisible({ timeout: 10_000 });
     await expect(ownerRow).toContainText(owner.username);
-    await expect(ownerRow.locator('.role-owner, .badge-role')).toContainText(expectedRole);
+    await expect(ownerRow.locator('.badge-role')).toHaveText(expectedRole);
   }
 );
 
@@ -138,58 +139,40 @@ Given(
     world.currentUser = evelynUser;
     world.setPage('evelyn', page);
 
+    const token = requireValue(world.currentUser.token, 'No access token. Sign Evelyn in before campaign setup.');
     if (!world.campaignId) {
-      const camp = await frontdoorApi.createCampaign('Wrath of the Lich King', {
-        setting: 'Northrend',
-        token: world.currentUser.token,
-      });
-      world.campaignId = camp.id;
+      const camp = await frontdoorApi.createCampaign('Wrath of the Lich King', { setting: 'Northrend', token });
+      world.campaignId = requireValue(camp.id, 'The campaign reply has no id.');
       world.campaignTitle = camp.title;
     }
 
     const campaignId = world.campaignId;
+    const member1Id = personaUserId(member1);
+    const member2Id = personaUserId(member2);
 
-    // Role setup goes through the public roles route. A failure stops the step.
-    await frontdoorApi.assignCampaignRole(
-      campaignId,
-      `user-${member1.toLowerCase()}`,
-      'player',
-      world.currentUser.token
-    );
-    await frontdoorApi.assignCampaignRole(
-      campaignId,
-      `user-${member2.toLowerCase()}`,
-      'player',
-      world.currentUser.token
-    );
+    // Role setup goes through the public roles route with the personas' real user ids. A failure stops the step.
+    await frontdoorApi.assignCampaignRole(campaignId, member1Id, 'player', token);
+    await frontdoorApi.assignCampaignRole(campaignId, member2Id, 'player', token);
 
     await page.goto(`#/campaigns/${campaignId}`);
     await page.waitForLoadState('domcontentloaded');
     await expect(page.locator('runefoble-campaign-members')).toBeVisible({ timeout: 15_000 });
 
     // The API roster must list both members. The UI must render them.
-    const members = await frontdoorApi.listCampaignMembers(campaignId, world.currentUser.token);
-    const memberIds = members.map((m: any) => String(m.user_id ?? m.username ?? ''));
-    expect(memberIds.some((id: string) => id.toLowerCase().includes(member1.toLowerCase()))).toBe(true);
-    expect(memberIds.some((id: string) => id.toLowerCase().includes(member2.toLowerCase()))).toBe(true);
+    const members = await frontdoorApi.listCampaignMembers(campaignId, token);
+    const memberIds = members.map((m: { user_id: string }) => m.user_id);
+    expect(memberIds).toContain(member1Id);
+    expect(memberIds).toContain(member2Id);
 
-    const roster = page.locator('runefoble-campaign-members');
-    await expect(roster.locator('.member-item').filter({ hasText: member1 })).toBeVisible({
-      timeout: 10_000,
-    });
-    await expect(roster.locator('.member-item').filter({ hasText: member2 })).toBeVisible({
-      timeout: 10_000,
-    });
+    await expect(memberRow(page, member1Id)).toBeVisible({ timeout: 10_000 });
+    await expect(memberRow(page, member2Id)).toBeVisible({ timeout: 10_000 });
   }
 );
 
 When(
   "Evelyn changes Marcus's role from {string} to {string}",
   async ({ page }, _fromRole: string, toRole: string) => {
-    const marcusRow = page
-      .locator('runefoble-campaign-members .member-item')
-      .filter({ hasText: /Marcus/i })
-      .first();
+    const marcusRow = memberRow(page, personaUserId('Marcus'));
     await expect(marcusRow).toBeVisible({ timeout: 10_000 });
 
     const roleSelect = marcusRow.locator('.role-select');
@@ -205,18 +188,13 @@ When(
 );
 
 Then('a toast notification {string} appears', async ({ page }, messageText: string) => {
-  const toast = page
-    .locator('.toast-notification, [role="status"]')
-    .filter({ hasText: messageText })
-    .first();
+  // The App Shell renders one toast at a time.
+  const toast = page.locator('.toast-notification').filter({ hasText: messageText });
   await expect(toast).toBeVisible({ timeout: 10_000 });
 });
 
 Then("Marcus's role dropdown shows {string}", async ({ page }, expectedRoleText: string) => {
-  const marcusRow = page
-    .locator('runefoble-campaign-members .member-item')
-    .filter({ hasText: /Marcus/i })
-    .first();
+  const marcusRow = memberRow(page, personaUserId('Marcus'));
   await expect(marcusRow).toBeVisible({ timeout: 10_000 });
 
   const roleSelect = marcusRow.locator('.role-select');
@@ -233,18 +211,16 @@ When(
   'Evelyn clicks {string}, selects role {string}, and clicks {string}',
   async (
     { auth, page, world, frontdoorApi },
-    _inviteBtnName: string,
+    inviteBtnName: string,
     roleName: string,
-    _generateBtnName: string
+    generateBtnName: string
   ) => {
     await ensureOnCampaignOverview(page, world, auth, frontdoorApi);
 
     const inviteBtn = page
-      .locator(
-        'runefoble-campaign-members .btn-invite, button:has-text("Invite Adventurers"), button:has-text("Invite Player")'
-      )
-      .first();
-    await inviteBtn.waitFor({ state: 'visible', timeout: 10_000 });
+      .locator('runefoble-campaign-members header.members-header')
+      .getByRole('button', { name: inviteBtnName, exact: true });
+    await expect(inviteBtn).toBeVisible({ timeout: 10_000 });
     await inviteBtn.click();
 
     const modal = page.locator('runefoble-campaign-members .modal-card');
@@ -254,10 +230,8 @@ When(
     const targetValue = roleName.toLowerCase().includes('spectator') ? 'spectator' : 'player';
     await roleSelect.selectOption({ value: targetValue });
 
-    const generateBtn = modal
-      .locator('.btn-generate-link, button:has-text("Generate Link")')
-      .first();
-    await generateBtn.waitFor({ state: 'visible', timeout: 10_000 });
+    const generateBtn = modal.getByRole('button', { name: generateBtnName, exact: true });
+    await expect(generateBtn).toBeVisible({ timeout: 10_000 });
     await generateBtn.click();
   }
 );
@@ -273,47 +247,20 @@ Then('a shareable invite link containing a signed token is displayed', async ({ 
 
 Then(
   'clicking {string} copies the valid join URL to the clipboard',
-  async ({ page, context }, copyBtnName: string) => {
-    try {
-      await context.grantPermissions(['clipboard-read', 'clipboard-write']);
-    } catch {
-      // Permission API optional in certain browser engines
-    }
-
-    const copyBtn = page
-      .locator(
-        `runefoble-campaign-members .btn-copy, runefoble-campaign-members button:has-text("${copyBtnName}")`
-      )
-      .first();
-    await copyBtn.waitFor({ state: 'visible', timeout: 10_000 });
+  async ({ page }, copyBtnName: string) => {
+    // playwright.config.ts grants clipboard access to each browser project. A failed read fails the step.
+    const modal = page.locator('runefoble-campaign-members .modal-card');
+    const copyBtn = modal.getByRole('button', { name: copyBtnName, exact: true });
+    await expect(copyBtn).toBeVisible({ timeout: 10_000 });
     await copyBtn.click();
 
-    const copiedIndicator = page
-      .locator(
-        'runefoble-campaign-members .copied-badge, runefoble-campaign-members .btn-copy:has-text("Copied")'
-      )
-      .first();
-    await expect(copiedIndicator).toBeVisible({ timeout: 10_000 });
+    await expect(modal.locator('.copied-badge')).toBeVisible({ timeout: 10_000 });
 
-    const inputVal = await page
-      .locator('runefoble-campaign-members .invite-link-input')
-      .inputValue();
+    const inputVal = await modal.locator('.invite-link-input').inputValue();
     expect(inputVal).toMatch(/\/join\/.+/);
 
-    const clipboardText = await page.evaluate(async () => {
-      try {
-        return (
-          (window as any).__lastCopiedInviteUrl ||
-          (await navigator.clipboard?.readText?.().catch(() => null))
-        );
-      } catch {
-        return (window as any).__lastCopiedInviteUrl || null;
-      }
-    });
-
-    if (clipboardText) {
-      expect(clipboardText).toBe(inputVal);
-    }
+    const clipboardText = await page.evaluate(() => navigator.clipboard.readText());
+    expect(clipboardText).toBe(inputVal);
   }
 );
 
@@ -322,11 +269,8 @@ When(
   async ({ auth, page, world, frontdoorApi }, tabName: string, expectedHashPattern: string) => {
     await ensureOnCampaignOverview(page, world, auth, frontdoorApi);
 
-    const tab = page
-      .locator('nav.campaign-nav-tabs a.nav-tab')
-      .filter({ hasText: tabName })
-      .first();
-    await tab.waitFor({ state: 'visible', timeout: 10_000 });
+    const tab = campaignTab(page, tabName);
+    await expect(tab).toBeVisible({ timeout: 10_000 });
     await tab.click();
 
     const expectedSuffix = expectedHashPattern.replace(/^#\/campaigns\/:id/, '');
@@ -345,11 +289,8 @@ When(
 When(
   'Evelyn clicks {string}, the URL hash becomes {string} and <runefoble-campaign-atlas> renders',
   async ({ page, world }, tabName: string, expectedHashPattern: string) => {
-    const tab = page
-      .locator('nav.campaign-nav-tabs a.nav-tab')
-      .filter({ hasText: tabName })
-      .first();
-    await tab.waitFor({ state: 'visible', timeout: 10_000 });
+    const tab = campaignTab(page, tabName);
+    await expect(tab).toBeVisible({ timeout: 10_000 });
     await tab.click();
 
     const expectedSuffix = expectedHashPattern.replace(/^#\/campaigns\/:id/, '');
@@ -367,11 +308,8 @@ When(
 When(
   'Evelyn clicks {string}, the URL hash becomes {string} and <runefoble-campaign-analytics> renders',
   async ({ page, world }, tabName: string, expectedHashPattern: string) => {
-    const tab = page
-      .locator('nav.campaign-nav-tabs a.nav-tab')
-      .filter({ hasText: tabName })
-      .first();
-    await tab.waitFor({ state: 'visible', timeout: 10_000 });
+    const tab = campaignTab(page, tabName);
+    await expect(tab).toBeVisible({ timeout: 10_000 });
     await tab.click();
 
     const expectedSuffix = expectedHashPattern.replace(/^#\/campaigns\/:id/, '');
@@ -389,11 +327,8 @@ When(
 When(
   'Evelyn clicks {string}, the URL hash returns to {string}',
   async ({ page, world }, tabName: string, _expectedHashPattern: string) => {
-    const tab = page
-      .locator('nav.campaign-nav-tabs a.nav-tab')
-      .filter({ hasText: tabName })
-      .first();
-    await tab.waitFor({ state: 'visible', timeout: 10_000 });
+    const tab = campaignTab(page, tabName);
+    await expect(tab).toBeVisible({ timeout: 10_000 });
     await tab.click();
 
     await expect

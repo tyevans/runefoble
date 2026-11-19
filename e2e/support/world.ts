@@ -21,8 +21,13 @@ export class World {
     this.userPages.set(name.toLowerCase(), page);
   }
 
-  getPage(name: string): Page | undefined {
-    return this.userPages.get(name.toLowerCase());
+  /** Returns the browser page of a persona. Throws when no step opened a page for that persona. */
+  getPage(name: string): Page {
+    const page = this.userPages.get(name.toLowerCase());
+    if (!page) {
+      throw new Error(`No browser page for "${name}". A setup step must open it first.`);
+    }
+    return page;
   }
 
   reset(): void {

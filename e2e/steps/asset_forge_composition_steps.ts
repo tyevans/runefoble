@@ -8,6 +8,7 @@
 
 import { expect } from '@playwright/test';
 import { Given, When, Then } from '../support/fixtures';
+import { requireValue } from '../support/guards';
 
 function forgeHash(campaignId: string): string {
   return `#/campaigns/${campaignId}/forge`;
@@ -24,14 +25,14 @@ When('I open the forge tab of the campaign', async ({ page, world }) => {
 });
 
 Then('the URL hash should be the forge tab of the campaign', async ({ page, world }) => {
-  const campaignId = world.campaignId;
+  const campaignId = requireValue(world.campaignId, 'No campaign is set. Run "campaign {string} exists" first.');
   await expect
     .poll(async () => page.evaluate(() => window.location.hash), { timeout: 10_000 })
-    .toBe(forgeHash(campaignId ?? ''));
+    .toBe(forgeHash(campaignId));
 });
 
 Then('the page contains the element {string}', async ({ page }, selector: string) => {
-  await expect(page.locator(selector).first()).toBeVisible({ timeout: 15_000 });
+  await expect(page.locator(selector)).toBeVisible({ timeout: 15_000 });
 });
 
 Then('I should see the button {string}', async ({ page }, label: string) => {
