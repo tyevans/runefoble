@@ -210,7 +210,7 @@ The component dispatches custom DOM events:
 
 When frontend microfrontends such as `<runefoble-soundscape-controls>` or external client SDKs interact with soundscape capabilities, requests are routed through the API Gateway at `http://localhost:8000/api/v1/soundscape/*` (governed by TASK-0436, ADR-0001, ADR-0010, ADR-0013):
 
-The soundscape service checks these schema permissions on each control route. The gateway checks its own permissions before it forwards the request.
+The soundscape service checks these schema permissions on each control route. The gateway verifies the bearer token only, then forwards the request. It does not check a permission itself.
 
 | Route | Method | Service Permission (`runefoble.zed`) | Action |
 |---|---|---|---|
@@ -224,7 +224,7 @@ The soundscape service checks these schema permissions on each control route. Th
 
 Known gap: the GET read routes do not check `session.observe` yet. The request models type `campaign_id` as a UUID, but gateway campaign ids are strings. A campaign grant cannot reach these routes until that contract changes.
 
-The gateway router (`gateway/api/src/gateway_api/routers/soundscape.py`) verifies the bearer token and forwards the request to `RUNEFOBLE_SOUNDSCAPE_URL` (no code default; the chart renders `http://soundscape:8009`). The soundscape service checks the SpiceDB Zanzibar permissions in the table. The gateway does not proxy `/stems/volume` yet (TASK-0536). The gateway forwards the caller's bearer token. If the soundscape service returns `5xx`, the gateway returns `502`. If the service is unreachable, the gateway returns `503`. It does not run soundscape code in process. See [Gateway Proxy Identity and Errors](../reference/ports-and-endpoints.md#gateway-proxy-identity-and-errors).
+The gateway router (`gateway/api/src/gateway_api/routers/soundscape.py`) verifies the bearer token and forwards the request to `RUNEFOBLE_SOUNDSCAPE_URL` (no code default; the chart renders `http://soundscape:8009`). The soundscape service checks the SpiceDB Zanzibar permissions in the table. The gateway forwards the caller's bearer token. Each control route has a gateway 403 test: `tests/test_blackbox_soundscape_gateway.py` (cue, override, tension calculate), `tests/test_blackbox_soundscape_gateway_duck.py` (duck), and `tests/test_blackbox_soundscape_gateway_stems.py` (stems volume). If the soundscape service returns `5xx`, the gateway returns `502`. If the service is unreachable, the gateway returns `503`. It does not run soundscape code in process. See [Gateway Proxy Identity and Errors](../reference/ports-and-endpoints.md#gateway-proxy-identity-and-errors).
 
 ---
 
