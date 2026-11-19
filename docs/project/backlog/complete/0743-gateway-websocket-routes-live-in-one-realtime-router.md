@@ -1,7 +1,7 @@
 ---
 id: '0743'
 title: Gateway WebSocket Routes Live in One Realtime Router
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0488
@@ -19,7 +19,7 @@ target_release: 0.9.0
 # TASK-0743: Gateway WebSocket Routes Live in One Realtime Router
 
 ## Status
-Refined. Found by the refactor audit round refactor-r1 and checked against the code on 2026-11-17.
+Complete
 
 ## Summary
 The composition root defines six WebSocket handlers inline and imports `game_session` internals inside function bodies. The root holds endpoint logic.

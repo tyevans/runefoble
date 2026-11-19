@@ -175,6 +175,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
 
 ### Changed
+- The store-outage test helper records appends (`record_appends`); six test modules drop their copied outage stubs. (TASK-0877)
+- The six gateway WebSocket handlers live in one router, `gateway_api/routers/realtime.py`. (TASK-0743)
+- The MCP gateway's tool registry, permission checks and service client pool live in one `GatewayMcpContainer` per app, not in module globals. (TASK-0746)
 - The `board_campaign` test fixture is defined once in `tests/helpers/campaign_setup.py` and used by 25 test modules. (TASK-0876)
 - The Campaign Analytics token verifier comes from the settings passed to `create_app`; the module-level settings object is removed. (TASK-0880)
 - Campaign Analytics is built through `create_app(settings, event_bus)`. Start-up tests use the public factory instead of patching module state. (TASK-0873)
@@ -1288,6 +1291,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **Documentation & Build Navigation**: Featured the Platform Showcase and Changelog in `zensical.toml` and root documentation landing page (`docs/index.md`), and enhanced `scripts/build_docs.py` to synchronize `CHANGELOG.md` to `docs/changelog.md` during documentation compilation.
 
 ### Fixed
+- A crafting combine commits its outcome on the crafting aggregate first; the character applies it once, keyed by the crafting event id. A failed character save answers 503 and the outcome stays pending; the next combine or character read applies it. The optional `attempt_id` makes a client retry safe. ADR-0011 has a "Commands across two aggregates" amendment. (TASK-0772)
 - PostgreSQL, Silo and Redis run as StatefulSets with persistent volume claims, so their data survives pod restarts. Redis writes an append-only file. (TASK-0881)
 - Lobby readiness counts players only (an owner or DM is never counted) and shows "No players have joined" for an empty session. The members view shows management controls only from the server can-manage flag. (TASK-0870)
 - SpiceDB sync retries only transient failures. A write outage raises `AuthzWriteUnavailableError`, which callers still catch as a write error and sync retries. (TASK-0853)

@@ -1,7 +1,7 @@
 ---
 id: '0746'
 title: MCP Gateway Dependencies Come From One Container, Not Module Globals
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0532
@@ -19,7 +19,7 @@ target_release: 0.9.0
 # TASK-0746: MCP Gateway Dependencies Come From One Container, Not Module Globals
 
 ## Status
-Refined. Found by the refactor audit round refactor-r1 and checked against the code on 2026-11-17.
+Complete
 
 ## Summary
 The registry, event bus, SpiceDB client, and MCP instance are module-level singletons. Tests reset them by hand. The authorization guard imports HTTP and SpiceDB concretes.
@@ -28,7 +28,7 @@ The registry, event bus, SpiceDB client, and MCP instance are module-level singl
 - `gateway/mcp/src/gateway_mcp/dynamic/registry.py:126` (`dynamic_registry = DynamicToolRegistry()`).
 - `dynamic/events.py:12,24-27` (`_event_bus` global, `set_event_bus`) and `:14` (global pending task set).
 - `dynamic/auth.py:12-26` (`_spicedb_client` global); `auth.py:8-9,70-73` imports `fastapi.HTTPException` and `runefoble_auth.spicedb` concretes in the guard.
-- `tools/orchestration.py:17,86,150-151` (`_mcp_instance` global). `registry.py:46-49,78-79` use FastMCP private `_tool_manager`.
+- `gateway/mcp/src/gateway_mcp/tools/orchestration.py:17,86,150-151` (`_mcp_instance` global). `registry.py:46-49,78-79` use FastMCP private `_tool_manager`.
 - Tests reset state by hand (`tests/test_blackbox_dynamic_mcp/conftest.py:57-62`, `tests/test_blackbox_uvtt_import/conftest.py:36-37`).
 
 ## Documentation & Architecture Review

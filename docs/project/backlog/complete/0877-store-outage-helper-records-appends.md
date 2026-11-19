@@ -1,7 +1,7 @@
 ---
 id: '0877'
 title: Store Outage Helper Records Appends and Replaces Copied Outage Stubs
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies:
 - TASK-0872
@@ -16,7 +16,7 @@ target_release: 0.9.0
 # TASK-0877: Store Outage Helper Records Appends and Replaces Copied Outage Stubs
 
 ## Status
-Refined.
+Complete
 
 ## Summary
 The seam helper `store_outage()` exists, but five test files copy the outage stub and the recording wrapper. Add a `record_appends` option to `store_outage()`. Replace the copies with it.

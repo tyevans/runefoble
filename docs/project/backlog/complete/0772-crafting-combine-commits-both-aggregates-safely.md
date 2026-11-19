@@ -1,7 +1,7 @@
 ---
 id: '0772'
 title: Crafting Combine Commits Both Aggregates Safely
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0729
@@ -16,7 +16,7 @@ target_release: 0.9.0
 # TASK-0772: Crafting Combine Commits Both Aggregates Safely
 
 ## Status
-Refined. Round-3 triage (`.audit/drafts/round3-notes.md`).
+Complete
 
 ## Summary
 Combine saves the crafting aggregate (reagents spent) and then the character aggregate (mishap damage) with no shared transaction. A failed second save leaves reagents spent and no damage applied.
