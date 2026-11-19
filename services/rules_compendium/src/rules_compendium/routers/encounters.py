@@ -5,8 +5,9 @@ from uuid import uuid4
 
 from fastapi import APIRouter, Depends
 from runefoble_auth.caller import CallerIdentity
+from runefoble_auth.mock import MockSpiceDBClient
 from runefoble_auth.permissions import require_subject
-from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
+from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_platform.event_sourcing import AggregateRepository
 
 from rules_compendium.aggregate import EncounterAggregate

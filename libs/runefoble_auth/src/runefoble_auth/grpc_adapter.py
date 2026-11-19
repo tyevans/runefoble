@@ -14,7 +14,7 @@ from runefoble_auth.errors import (
     AuthzUnavailableError,
     AuthzWriteError,
 )
-from runefoble_auth.mock_spicedb import Relationship
+from runefoble_auth.mock.client import Relationship
 
 logger = logging.getLogger(__name__)
 

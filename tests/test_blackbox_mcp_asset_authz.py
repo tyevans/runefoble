@@ -22,7 +22,7 @@ from gateway_mcp.dynamic import dynamic_registry
 from gateway_mcp.server import mcp
 from runefoble_auth.errors import AuthzError
 from runefoble_auth.factory import get_spicedb_client, set_spicedb_client
-from runefoble_auth.spicedb import MockSpiceDBClient
+from runefoble_auth.mock import MockSpiceDBClient
 
 from tests.helpers.mcp_http import call_tool_over_http, serve_mcp
 from tests.helpers.module_state import restored_seam

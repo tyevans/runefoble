@@ -60,8 +60,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Apply Zanzibar schema to SpiceDB")
     parser.add_argument(
         "--endpoint",
-        default=os.getenv("SPICEDB_ENDPOINT", "localhost:50051"),
-        help="SpiceDB gRPC endpoint (default: localhost:50051 or SPICEDB_ENDPOINT)",
+        default=os.getenv("RUNEFOBLE_SPICEDB_ENDPOINT", "localhost:50051"),
+        help="SpiceDB gRPC endpoint (default: localhost:50051 or RUNEFOBLE_SPICEDB_ENDPOINT)",
     )
     parser.add_argument(
         "--schema",

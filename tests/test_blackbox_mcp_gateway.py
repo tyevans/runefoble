@@ -17,7 +17,7 @@ import pytest
 from gateway_mcp.server import mcp
 from mcp.types import CallToolResult
 from runefoble_auth.factory import get_spicedb_client
-from runefoble_auth.spicedb import MockSpiceDBClient
+from runefoble_auth.mock import MockSpiceDBClient
 from runefoble_auth.sync import ZitadelSpiceDBSyncService
 from runefoble_auth.sync_events import handle_domain_event
 

@@ -14,7 +14,7 @@ import uuid
 from typing import Any
 
 import pytest
-from runefoble_auth.spicedb import MockSpiceDBClient
+from runefoble_auth.mock import MockSpiceDBClient
 from runefoble_auth.sync import ZitadelSpiceDBSyncService
 from runefoble_events.events import SessionCreated
 from runefoble_platform.dice import roll_d20, roll_die

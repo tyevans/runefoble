@@ -11,7 +11,7 @@ import pytest_asyncio
 from game_session.main import app as session_app
 from httpx import ASGITransport, AsyncClient
 from runefoble_auth.factory import set_spicedb_client
-from runefoble_auth.spicedb import MockSpiceDBClient
+from runefoble_auth.mock import MockSpiceDBClient
 
 from tests.helpers.ws_identity import bearer
 

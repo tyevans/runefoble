@@ -23,7 +23,7 @@ from eventsource.adapters.memory.store import InMemoryEventStore
 from fastapi.testclient import TestClient
 from runefoble_auth.errors import AuthzUnavailableError
 from runefoble_auth.factory import get_spicedb_client
-from runefoble_auth.spicedb import MockSpiceDBClient
+from runefoble_auth.mock import MockSpiceDBClient
 from runefoble_platform.event_sourcing import (
     create_aggregate_repository,
     get_event_store,

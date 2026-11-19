@@ -9,7 +9,8 @@ Governed by ADR-0001, ADR-0005, and Hard Invariant 1.
 from __future__ import annotations
 
 from fastapi import HTTPException
-from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
+from runefoble_auth.mock import MockSpiceDBClient
+from runefoble_auth.spicedb import SpiceDBClient
 
 Spicedb = SpiceDBClient | MockSpiceDBClient
 

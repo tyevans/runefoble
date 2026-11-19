@@ -15,7 +15,7 @@ from uuid import uuid4
 import pytest
 from board_state.main import app as board_app
 from fastapi.testclient import TestClient
-from runefoble_auth.spicedb import MockSpiceDBClient
+from runefoble_auth.mock import MockSpiceDBClient
 
 from tests.helpers.ws_identity import bearer
 

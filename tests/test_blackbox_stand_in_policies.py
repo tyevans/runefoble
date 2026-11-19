@@ -4,7 +4,7 @@ import pytest
 from character_sheet.main import app as character_app
 from httpx import ASGITransport, AsyncClient
 from runefoble_auth.factory import set_spicedb_client
-from runefoble_auth.spicedb import MockSpiceDBClient
+from runefoble_auth.mock import MockSpiceDBClient
 from runefoble_events.events import StandInPolicyUpdated, StandInStabilized
 from runefoble_platform.redis_bus import deserialize_event
 from runefoble_platform.stand_in_guardrails import GuardrailName, StandInGuardrailPolicy

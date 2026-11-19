@@ -1,6 +1,7 @@
 import pytest
 from runefoble_auth.bootstrap_schema import bootstrap_schema
-from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
+from runefoble_auth.mock import MockSpiceDBClient
+from runefoble_auth.spicedb import SpiceDBClient
 
 
 @pytest.mark.asyncio

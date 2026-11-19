@@ -15,7 +15,7 @@ from fastapi.testclient import TestClient
 from game_session.events import STREAM_TAVERN
 from game_session.main import app as session_app
 from gateway_api.main import app as gateway_app
-from runefoble_auth.spicedb import MockSpiceDBClient
+from runefoble_auth.mock import MockSpiceDBClient
 
 from tests.helpers.minigame_tables import open_minigame_table
 from tests.helpers.mock_redis import MockAsyncRedis

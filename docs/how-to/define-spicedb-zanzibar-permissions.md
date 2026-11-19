@@ -108,7 +108,8 @@ schema_text = await bootstrap_schema(endpoint="localhost:50051")
 The `SpiceDBClient` connects directly to live SpiceDB over gRPC without silent mock fallbacks:
 
 ```python
-from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
+from runefoble_auth.mock import MockSpiceDBClient
+from runefoble_auth.spicedb import SpiceDBClient
 
 # 1. Connect to live SpiceDB gRPC. The token comes from RUNEFOBLE_SPICEDB_PRESHARED_KEY.
 client = SpiceDBClient(

@@ -20,7 +20,7 @@ from fastapi.testclient import TestClient
 from game_session.main import app as game_session_app
 from runefoble_auth.errors import AuthzUnavailableError
 from runefoble_auth.factory import get_spicedb_client, set_spicedb_client
-from runefoble_auth.spicedb import MockSpiceDBClient
+from runefoble_auth.mock import MockSpiceDBClient
 
 from tests.helpers.module_state import restored_seam
 from tests.helpers.ws_identity import SIGNING_ISSUER

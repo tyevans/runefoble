@@ -11,7 +11,7 @@ from fastapi.testclient import TestClient
 from game_session.main import app as session_app
 from game_session.settlement import auth as sa
 from game_session.settlement.auth.tokens import get_principal
-from runefoble_auth.spicedb import MockSpiceDBClient
+from runefoble_auth.mock import MockSpiceDBClient
 from runefoble_auth.zitadel import ZitadelAuthService
 
 from tests.helpers.ws_identity import SIGNING_ISSUER

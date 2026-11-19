@@ -16,7 +16,7 @@ from gateway_mcp.dynamic import (
 )
 from gateway_mcp.identity import BearerTransportAuth
 from gateway_mcp.server import mcp
-from runefoble_auth.spicedb import MockSpiceDBClient
+from runefoble_auth.mock import MockSpiceDBClient
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 
 from tests.helpers.mcp_http import mcp_http_app, serve_mcp

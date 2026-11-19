@@ -16,7 +16,7 @@ from uuid import uuid4
 import pytest
 from campaign_analytics.main import app
 from fastapi.testclient import TestClient
-from runefoble_auth.mock_spicedb import MockSpiceDBClient
+from runefoble_auth.mock import MockSpiceDBClient
 from runefoble_events.events import (
     CharacterHealthChanged,
     SessionCreated,

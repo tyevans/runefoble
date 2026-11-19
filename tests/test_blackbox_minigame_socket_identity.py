@@ -7,7 +7,7 @@ import pytest
 from fastapi.testclient import TestClient
 from game_session.main import app as session_app
 from runefoble_auth.factory import get_spicedb_client, set_spicedb_client
-from runefoble_auth.spicedb import MockSpiceDBClient
+from runefoble_auth.mock import MockSpiceDBClient
 
 from tests.helpers.minigame_tables import open_minigame_table
 from tests.helpers.module_state import SeamRestorer

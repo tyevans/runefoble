@@ -11,7 +11,7 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 from game_session.events import STREAM_TAVERN
-from runefoble_auth.spicedb import MockSpiceDBClient
+from runefoble_auth.mock import MockSpiceDBClient
 
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.ws_identity import SIGNING_ISSUER

@@ -28,7 +28,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from game_session.main import app as game_session_app
 from runefoble_auth.errors import AuthzSchemaError, AuthzUnavailableError
-from runefoble_auth.spicedb import MockSpiceDBClient
+from runefoble_auth.mock import MockSpiceDBClient
 from the_watcher.main import app as the_watcher_app
 
 from tests.helpers.ws_identity import bearer

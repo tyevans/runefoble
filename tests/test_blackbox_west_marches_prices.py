@@ -17,7 +17,7 @@ from campaign_lore.dependencies import set_west_marches_repo
 from campaign_lore.main import app as lore_app
 from campaign_lore.west_marches_aggregate import WestMarchesAtlasAggregate
 from fastapi.testclient import TestClient
-from runefoble_auth.spicedb import MockSpiceDBClient
+from runefoble_auth.mock import MockSpiceDBClient
 from runefoble_platform.event_sourcing import create_aggregate_repository
 
 from tests.helpers.spicedb_factory import shared_spicedb_client

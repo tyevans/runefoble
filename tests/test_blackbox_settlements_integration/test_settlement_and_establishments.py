@@ -8,7 +8,7 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 from game_session.events import STREAM_WEST_MARCHES
-from runefoble_auth.spicedb import MockSpiceDBClient
+from runefoble_auth.mock import MockSpiceDBClient
 
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.stream_events import assert_stream_events

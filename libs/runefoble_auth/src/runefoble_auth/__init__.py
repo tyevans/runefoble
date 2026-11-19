@@ -8,7 +8,7 @@ from runefoble_auth.principal import (
     authenticate_authorization,
     require_principal,
 )
-from runefoble_auth.spicedb import MockSpiceDBClient, Relationship, SpiceDBClient
+from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_auth.sync import SyncResult, ZitadelSpiceDBSyncService
 from runefoble_auth.websocket import (
     WebSocketAuthError,
@@ -22,8 +22,6 @@ from runefoble_auth.zitadel import ZitadelAuthService
 
 __all__ = [
     "SpiceDBClient",
-    "MockSpiceDBClient",
-    "Relationship",
     "BearerVerifier",
     "VerifiedPrincipal",
     "ZitadelAuthService",
