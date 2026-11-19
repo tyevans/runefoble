@@ -20,6 +20,8 @@ export interface Adapters {
 }
 
 export const DATABASE_URL_VAR = 'RUNEFOBLE_DATABASE_URL';
+/** Same flag name as the Python services and the Helm gate (scripts/check_helm_event_store.py). */
+export const EVENT_STORE_BACKEND_VAR = 'RUNEFOBLE_EVENT_STORE_BACKEND';
 
 export async function createAdapters(env: NodeJS.ProcessEnv, log: Logger): Promise<Adapters> {
   const isTest = env.NODE_ENV === 'test';
@@ -29,10 +31,27 @@ export async function createAdapters(env: NodeJS.ProcessEnv, log: Logger): Promi
   };
 }
 
+/**
+ * Choose the store. An explicit flag wins. "memory" is refused outside tests. Without a flag, a
+ * database URL selects PostgreSQL, and tests fall back to memory.
+ */
 function createEventStore(env: NodeJS.ProcessEnv, isTest: boolean): EventStore {
+  const backend = env[EVENT_STORE_BACKEND_VAR];
   const databaseUrl = env[DATABASE_URL_VAR];
+  if (backend === 'memory') {
+    if (!isTest) {
+      throw new Error(`${EVENT_STORE_BACKEND_VAR}=memory is allowed only when NODE_ENV=test. Deployed processes need PostgreSQL.`);
+    }
+    return new MemoryEventStore();
+  }
+  if (backend !== undefined && backend !== 'postgresql') {
+    throw new Error(`${EVENT_STORE_BACKEND_VAR} must be "postgresql" or "memory". Got '${backend}'.`);
+  }
   if (databaseUrl) {
     return new PostgresEventStore(normalizePostgresUrl(databaseUrl));
+  }
+  if (backend === 'postgresql') {
+    throw new Error(`${DATABASE_URL_VAR} is not set. ${EVENT_STORE_BACKEND_VAR}=postgresql needs a database URL.`);
   }
   if (isTest) {
     return new MemoryEventStore();
