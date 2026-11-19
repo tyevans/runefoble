@@ -1,7 +1,7 @@
 ---
 id: '0890'
 title: Zitadel Access Tokens Carry the Username Claim
-status: Refined
+status: Complete
 created: 2026-11-19
 dependencies:
 - '0887'
@@ -19,7 +19,7 @@ target_release: 0.9.0
 
 ## Status
 
-Refined. Found by TASK-0887 (`.audit/work/0887.md`).
+Complete
 
 ## Summary
 

@@ -1,7 +1,7 @@
 ---
 id: '0902'
 title: Asset Forge Records Need a Campaign Id, Not a Random One
-status: Refined
+status: Complete
 created: 2026-11-19
 dependencies: []
 governing_adrs:
@@ -17,7 +17,7 @@ target_release: 0.9.0
 
 ## Status
 
-Refined. Found by TASK-0731 (`.audit/work/0731.md`).
+Complete
 
 ## Summary
 

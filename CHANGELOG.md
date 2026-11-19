@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Security
+The session WebSocket no longer relays `session_started`, `turn_advanced`, `dice_rolled`, `token_moved` or `dm_whisper` frames from clients. Each client frame kind has an explicit `game_session` permission. The gateway start route is the only source of `session_started`, and the App Shell follows it only for its own session with status `active`
 - The Audience Studio WebSocket sends typed error frames with fixed codes (`invalid_message`, `unknown_action`, `forbidden`, `rejected`, `internal_error`) and logs internal failures on the server; no internal message reaches the client. (TASK-0723)
 - Token roles and claims grant no SpiceDB relation. The role-to-relation mapping and the claim-driven membership and session sync are removed; memberships come only from the public invite and join routes. (TASK-0855)
 - Removing a dynamic MCP tool revokes its SpiceDB permissions first. A SpiceDB failure answers 503 `authorization_unavailable` and keeps the tool. (TASK-0847)
@@ -92,6 +93,9 @@ The MCP gateway subpackages re-export no names, and the gateway has one entrypoi
 - Campaign analytics worker `process_event` alias, tracking property wrappers, and package root re-exports. Callers use `handle_event`. (TASK-0500)
 
 ### Added
+The Watcher publishes `runefoble.events.watcher.whisper_recorded` after it saves a DM whisper. The whisper routes answer `503` when the stream is unreachable. The gateway sends each whisper as a `dm_whisper` session frame only to sockets whose caller holds `session.control` when the socket opens.
+The gateway sends the `turn_advanced` and `dice_rolled` session frames from the game_session `TurnAdvanced` and `DiceRolled` events. Each socket of the session gets one frame for each event, and a redelivered event gives no second frame. The App Shell dice tray, dice roller, initiative tracker and board get live turn and dice updates again.
+Players can take a lobby seat. `POST /api/v1/sessions/{session_id}/join` on the gateway forwards to game_session, which checks `session.participate`. The `<runefoble-session-lobby>` element shows "Take a Seat" when the campaign capabilities reply gives `play` and not `run_session`.
 Hex colour lint gate (`scripts/check_hex_literals.py`) with a per-file baseline that can only fall, run by `make lint`. Semantic status tokens `--rf-status-*` and `--rf-color-green` in every theme. The Watcher UI uses tokens only.
 ADR-0021 (Accepted): five bounded context packages inside `game_session` (campaign, play, downtime, settlement, world) and a shared kernel, a ports-only import rule enforced by `import-linter`, and the migration order (TASK-0893 to TASK-0899).
 E2E scenarios for a forge prompt that asset_forge refuses with 422, the Launch Session control by campaign capability, the empty-lobby readiness summary, and roster management controls. No `page.route` fault double of our own service.
@@ -188,6 +192,9 @@ The campaign rules tab at `#/campaigns/:campaignId/rules`. The homebrew forge re
   - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
 
 ### Changed
+`POST /api/v1/characters` stores `level` (1-20) and `portraitUrl` at creation, and the create and read replies return them. `CharacterCreated` carries `level` and `portrait_url`. A bad level or portrait returns 422
+The caravan board sends accept, dispatch and fulfil through one shared `@runefoble/ui-core` request with the shell bearer. It does not send `x-user-id`. A refused action shows distinct text: a sign-in text for `401`, a not-authorized text for `403`, `Service unavailable: <detail>` for `503`, else the server detail.
+`@runefoble/ui-core` has one shared transport, `request(path, spec, opts)`. It takes an API base (`apiBase`), the shell bearer source (`auth`) and JSON or `FormData` bodies. A non-2xx reply rejects with `HttpError { status, detail }`, which carries the FastAPI detail.
 Every Python service serves `GET /ui/manifest` through one shared `ui_manifest_router`. A missing or invalid `ui/manifest.json` fails when the app is built.
 Service code types its SpiceDB dependency against `SpiceDBPort`. No service source imports `runefoble_auth.mock`.
 The Watcher builds its engines, repositories and event bus provider in one app container (`WatcherContainer`) at start-up, and routes read them through `Depends` providers.
@@ -1327,6 +1334,19 @@ The App Shell auth service keeps JWT claim handling, session storage and session
 - **Documentation & Build Navigation**: Featured the Platform Showcase and Changelog in `zensical.toml` and root documentation landing page (`docs/index.md`), and enhanced `scripts/build_docs.py` to synchronize `CHANGELOG.md` to `docs/changelog.md` during documentation compilation.
 
 ### Fixed
+The Silo client (`SiloStorageService`) signs every S3 request with AWS Signature Version 4 through botocore. Before, Silo refused every unsigned upload, read and delete with 403, so asset flows failed on a deployed stack. New setting `RUNEFOBLE_SILO_REGION` (default `us-east-1`)
+The campaign list is in creation order, oldest first. The stand-in guardrails save sends only the policy fields, so the strict policy model no longer refuses it with 422.
+The Helm chart creates the Silo buckets (`runefoble-assets`, `runefoble-recordings`) with the post-install and post-upgrade hook Job `silo-buckets`. The Job uses the digest-pinned Chainguard MinIO client and skips a bucket that exists. The manual bucket step is gone
+The e2e fault targets `make e2e-lore-down` and `make e2e-lore-up` now scale `deployment/campaign-lore` on Kind and wait for the gateway `/healthz` report. New targets `make e2e-game-session-down` and `make e2e-game-session-up` do the same for game-session
+The caravan contract card now shows the new status after a successful accept, dispatch or fulfilment. The caravan actions return a new contract object and do not change the object in place
+The session lobby and VTT e2e scenarios now create their campaign, session, player characters and lobby seats through public gateway routes in the Background. They no longer use the invented campaign `4` and session `15`. The smoke "prepares campaign" scenario now opens the campaign that it created and checks the header title
+`GET /api/v1/campaigns` sends a fixed number of SpiceDB calls, which do not grow with the number of campaigns. These are one concurrent `LookupResources` for each permission. The service also loads campaigns concurrently, so a DM with many campaigns no longer passes the 5 s gateway timeout.
+The live session view no longer fails when the session has no board. The feed, roster and other panels render, and the board area shows "No battlemap yet". A DM also sees a hint to set up a map.
+Campaign atlas pins and territories, and West Marches discovery, outpost and fog markers, now render. Their SVG fragments use the Lit `svg` tag instead of `html`
+The Asset Forge and Print Forge elements now read the `campaign-id` attribute that the App Shell sets. Every forge request sends `campaign_id`. Without a campaign id the forge buttons are disabled, an alert says why, and the element sends no request
+Asset forge: every forge request (`battlemap`, `token`, `wardrobe`, `print-pdf`, `standees`, `stl-token`) now requires `campaign_id`. A request without it gets `422`, and the service saves nothing. The forge record goes to the campaign forge aggregate, and the service never makes a random substitute aggregate id (ADR-0015).
+E2E setup steps fail loudly. Fallback campaign, session and character ids are gone, and a missing persona page throws. Selectors name the element in the feature text.
+Zitadel access tokens now carry `preferred_username`. The `zitadel-bootstrap` Job creates the Zitadel Action `runefobleUsernameClaim` and binds it to the "Complement Token" flow, trigger "Pre access token creation". A repeated run changes nothing.
 The audio stream WebSocket requires `session_id` and `speaker_id` in the path and `campaign_id` and `speaker_name` in the query; a missing value closes the socket with 1008, with no default ids. Voice, Watcher and inference worker code catches only typed errors.
 The shared domain error handler maps only typed domain errors: `DomainRefusedError` to 400 and `DomainNotFoundError` to 404. A `ValueError` in service code answers 500 with no exception text.
 The campfire rest heals no invented names: a session with no seated characters and no ids heals an empty list. Opening a tavern table without `establishment_id` answers 422.

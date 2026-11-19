@@ -1,7 +1,7 @@
 ---
 id: '0905'
 title: "Character Sheet Stores Level and Portrait at Creation"
-status: Refined
+status: Complete
 created: 2026-11-19
 dependencies: []
 governing_adrs:
@@ -18,7 +18,7 @@ target_release: 0.9.0
 
 ## Status
 
-Refined.
+Complete
 
 ## Summary
 

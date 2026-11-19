@@ -1,7 +1,7 @@
 ---
 id: '0927'
 title: The Watcher Publishes Whispers, and the Gateway Relays Them Only to the DM
-status: Refined
+status: Complete
 created: 2026-11-19
 dependencies:
 - '0923'
@@ -19,7 +19,7 @@ target_release: 0.9.0
 
 ## Status
 
-Refined. Follow-up of TASK-0923 (`.audit/work/0923.md`).
+Complete
 
 ## Summary
 

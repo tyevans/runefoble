@@ -1,7 +1,7 @@
 ---
 id: '0907'
 title: "The Campaign List Reads Campaigns and Permissions Without N+1 Sequential Calls"
-status: Refined
+status: Complete
 created: 2026-11-19
 dependencies: []
 governing_adrs:
@@ -17,7 +17,7 @@ target_release: 0.9.0
 
 ## Status
 
-Refined.
+Complete
 
 ## Summary
 

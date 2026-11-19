@@ -1,7 +1,7 @@
 ---
 id: '0904'
 title: "Lit Template Audit: Attribute Names and SVG Templates, With a Lint Check"
-status: Refined
+status: Complete
 created: 2026-11-19
 dependencies:
 - '0903'
@@ -18,7 +18,7 @@ target_release: 0.9.0
 
 ## Status
 
-Refined.
+Complete
 
 ## Summary
 

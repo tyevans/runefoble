@@ -1,7 +1,7 @@
 ---
 id: '0909'
 title: "The E2E Harness Runs Green on Kind: Fault Injection, Locators and Ports"
-status: Refined
+status: Complete
 created: 2026-11-19
 dependencies: []
 governing_adrs:
@@ -17,7 +17,7 @@ target_release: 0.9.0
 
 ## Status
 
-Refined.
+Complete
 
 ## Summary
 
@@ -25,7 +25,7 @@ Several e2e failures come from the harness, not the product: the lore fault scri
 
 ## Problem Statement
 
-- `scripts/e2e_lore_fault.py` starts and stops a local uvicorn on :8006 (triage group E). The suite runs on Kind since TASK-0525.
+- `scripts/e2e_lore_fault.py` (removed). It moved to `scripts/e2e_service_fault.py`. starts and stops a local uvicorn on :8006 (triage group E). The suite runs on Kind since TASK-0525.
 - Smoke "signs in and reaches dashboard" expects the user id in the user menu; after TASK-0890 the menu shows the username (group I).
 - `app_shell_routing_state.feature` "empty state": `getByText('Adventurer')` also matches "Manage your adventurers" (group J).
 - `e2e/steps/caravan_board_steps.ts:28`: `page.route` fakes a 503 of game_session (ADR-0014).

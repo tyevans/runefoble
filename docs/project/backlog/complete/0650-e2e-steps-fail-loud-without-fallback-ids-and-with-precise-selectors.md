@@ -1,7 +1,7 @@
 ---
 id: '0650'
 title: E2E Steps Fail Loudly Without Fallback IDs and Use Precise Selectors and Assertions
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0649
@@ -19,7 +19,7 @@ target_release: 0.9.0
 # TASK-0650: E2E Steps Fail Loudly Without Fallback IDs and Use Precise Selectors and Assertions
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Setup steps fall back to fixed identifiers when an API call fails (`'4'`, `'char-valeros'`, the title "Tomb of the Star-Eater"). A failed precondition then lets the scenario run on an entity that may not exist. Some selectors pick the first matching element, and one clipboard assertion skips its check when the clipboard is empty. Remove each fallback. Make each selector target the element named in the feature text. Make each assertion fail when its precondition is missing.
@@ -55,7 +55,7 @@ These are regression checks on the existing scenarios, with stricter assertions:
 - `character_sheet.feature`: "Stand-in guardrail 'Avoid Melee' is saved" passes only when the toggle with the exact label is checked, and fails when the label is absent (verified with a temporary local feature edit, not committed).
 - `campaign_hub.feature`: "copies the valid join URL to the clipboard" asserts clipboard equality.
 - `session_lobby_and_vtt.feature`: Sarah's absent checkbox scenario fails if Sarah's card is removed.
-- A new negative check in `e2e/support/guards.test.ts` (unit): the fallback helper throws when the setup response is not OK.
+- A new negative check in `e2e/support/guards.test.ts` (removed). It moved to `e2e/unit/guards.test.ts`. (unit): the fallback helper throws when the setup response is not OK.
 
 ## Definition of Done
 1. `grep -rn "Tomb of the Star-Eater\|'char-valeros'\|campaignId = '4'\|first matching\|if (clipboardText)" e2e/steps` returns no match.

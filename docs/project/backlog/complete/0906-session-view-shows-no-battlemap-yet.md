@@ -1,7 +1,7 @@
 ---
 id: '0906'
 title: "The Session View Shows a No-Battlemap-Yet State When the Session Has No Board"
-status: Refined
+status: Complete
 created: 2026-11-19
 dependencies: []
 governing_adrs:
@@ -17,7 +17,7 @@ target_release: 0.9.0
 
 ## Status
 
-Refined.
+Complete
 
 ## Summary
 

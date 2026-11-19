@@ -1,7 +1,7 @@
 ---
 id: '0926'
 title: The Silo Client Signs Its Requests, and a Test Runs Against Real MinIO
-status: Refined
+status: Complete
 created: 2026-11-19
 dependencies:
 - '0924'
@@ -18,7 +18,7 @@ target_release: 0.9.0
 
 ## Status
 
-Refined. Found by TASK-0924 (`.audit/work/0924.md`, Discovered).
+Complete
 
 ## Summary
 

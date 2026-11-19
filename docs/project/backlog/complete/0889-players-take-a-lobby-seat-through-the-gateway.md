@@ -1,7 +1,7 @@
 ---
 id: '0889'
 title: Players Take a Lobby Seat Through the Gateway and the App Shell
-status: Refined
+status: Complete
 created: 2026-11-19
 dependencies: []
 governing_adrs:
@@ -19,7 +19,7 @@ target_release: 0.9.0
 
 ## Status
 
-Refined. Found by TASK-0840 (`.audit/work/0840.md`).
+Complete
 
 ## Summary
 

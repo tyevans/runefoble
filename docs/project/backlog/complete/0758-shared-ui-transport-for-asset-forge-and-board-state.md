@@ -1,7 +1,7 @@
 ---
 id: '0758'
 title: Shared UI Transport Client Replaces Per-Package Fetch Code in Forge and Board
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0757
@@ -18,7 +18,7 @@ target_release: 0.9.0
 # TASK-0758: Shared UI Transport Client Replaces Per-Package Fetch Code in Forge and Board
 
 ## Status
-Refined.
+Complete
 
 ## Summary
 Each microfrontend has its own `postJson`, error class and error text reader. Add one `request<T>()` and one `HttpError` to `libs/runefoble_ui` (created in TASK-0757). Move `asset_forge` and `board_state` to it. TASK-0759 moves the rest.

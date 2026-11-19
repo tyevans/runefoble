@@ -1,7 +1,7 @@
 ---
 id: '0910'
 title: The Session Socket Relays No Forged Server Frames, and Launch Calls the Start Route
-status: Refined
+status: Complete
 created: 2026-11-19
 dependencies: []
 governing_adrs:
@@ -21,7 +21,7 @@ target_release: 0.9.0
 # TASK-0910: The Session Socket Relays No Forged Server Frames, and Launch Calls the Start Route
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Any session participant can send a `session_started` frame on the session socket. The gateway relays it to every observer, and each App Shell then moves to the route that the frame names. The session stays in `lobby`, because the App Shell "Launch Session" button never calls `POST /api/v1/sessions/{id}/start`. The same inbound allow-list also lets a participant forge `turn_advanced`, `dice_rolled`, `token_moved` and `dm_whisper` frames. No server code sends these kinds on the session socket, so the only source of them is a client.

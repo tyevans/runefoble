@@ -1,7 +1,7 @@
 ---
 id: '0924'
 title: The Chart Creates the Silo Buckets, and Silo Failures Are Logged
-status: Refined
+status: Complete
 created: 2026-11-19
 dependencies: []
 governing_adrs:
@@ -17,7 +17,7 @@ target_release: 0.9.0
 
 ## Status
 
-Refined. Found by the full e2e run on Kind, 2026-11-19 (`.audit/work/e2e_full2.log`).
+Complete
 
 ## Summary
 

@@ -1,7 +1,7 @@
 ---
 id: '0759'
 title: Caravan and Encounter Builder Use the Shared UI Transport and Show Real Errors
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0758
@@ -19,7 +19,7 @@ target_release: 0.9.0
 # TASK-0759: Caravan and Encounter Builder Use the Shared UI Transport and Show Real Errors
 
 ## Status
-Refined.
+Complete
 
 ## Summary
 Move the caravan, encounter builder and shell data client to the shared transport. The caravan client sends `x-user-id`, not a token, and maps every failure to "Authorization failed".

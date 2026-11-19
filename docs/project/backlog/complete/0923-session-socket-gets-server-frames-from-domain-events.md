@@ -1,7 +1,7 @@
 ---
 id: '0923'
 title: The Session Socket Gets Dice, Turn and Whisper Frames From Domain Events
-status: Refined
+status: Complete
 created: 2026-11-19
 dependencies:
 - '0910'
@@ -20,7 +20,7 @@ target_release: 0.9.0
 
 ## Status
 
-Refined. Follow-up of TASK-0910 (`.audit/work/0910.md`).
+Complete
 
 ## Summary
 

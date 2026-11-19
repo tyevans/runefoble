@@ -1,7 +1,7 @@
 ---
 id: '0925'
 title: Campaign List Order, Guardrails Save Body and Caravan Notice Text
-status: Refined
+status: Complete
 created: 2026-11-19
 dependencies: []
 governing_adrs:
@@ -17,7 +17,7 @@ target_release: 0.9.0
 
 ## Status
 
-Refined. Found by the second full e2e run on Kind (`.audit/reports/e2e-triage-2.md`).
+Complete
 
 ## Summary
 

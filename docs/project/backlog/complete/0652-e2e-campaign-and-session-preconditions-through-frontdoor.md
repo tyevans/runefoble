@@ -1,7 +1,7 @@
 ---
 id: '0652'
 title: E2E Scenarios Create Their Campaign and Session Through Public Frontdoors
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0650
@@ -19,7 +19,7 @@ target_release: 0.9.0
 # TASK-0652: E2E Scenarios Create Their Campaign and Session Through Public Frontdoors
 
 ## Status
-Refined
+Complete
 
 ## Summary
 The lobby and VTT feature depends on a seeded campaign "4" and session "15" that nothing creates. The expected URL `#/campaigns/4/sessions/15` is hard-coded. The smoke scenario that "prepares a campaign" never uses the campaign it creates. Each scenario must create its own campaign and session through public routes in its Background, use the returned ids, and never hard-code an id.
