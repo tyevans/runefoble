@@ -12,7 +12,7 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import Depends
-from game_session.settlement.auth.tokens import CallerId, CallerOrService
+from game_session.shared.identity import CallerId, CallerOrService
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.permissions import require_subject
 

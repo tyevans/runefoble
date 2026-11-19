@@ -22,7 +22,7 @@ from game_session.campaign.repositories import (
     set_campaign_repositories,
 )
 from game_session.main import app as session_app
-from game_session.settlement.auth.tokens import get_zitadel_auth_service, set_zitadel_auth_service
+from game_session.shared.identity import get_zitadel_auth_service, set_zitadel_auth_service
 from runefoble_auth.mock import MockSpiceDBClient
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.event_sourcing import build_event_store, get_event_store, set_event_store

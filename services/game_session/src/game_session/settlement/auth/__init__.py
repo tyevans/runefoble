@@ -12,7 +12,6 @@ from game_session.settlement.auth.dependencies import (
 )
 from game_session.settlement.auth.permissions import (
     check_campaign_write_permission,
-    check_establishment_play_permission,
     check_establishment_read_permission,
     check_establishment_write_permission,
     check_negotiation_arbitrate_permission,
@@ -32,16 +31,11 @@ from game_session.settlement.auth.relationships import (
     write_npc_relationships,
     write_settlement_relationships,
 )
-from game_session.settlement.auth.tokens import (
-    get_zitadel_auth_service,
-    set_zitadel_auth_service,
-)
 from runefoble_auth.principal import VerifiedPrincipal
 
 __all__ = [
     "VerifiedPrincipal",
     "check_campaign_write_permission",
-    "check_establishment_play_permission",
     "check_establishment_read_permission",
     "check_establishment_write_permission",
     "check_negotiation_arbitrate_permission",
@@ -51,11 +45,9 @@ __all__ = [
     "check_npc_write_permission",
     "check_settlement_read_permission",
     "check_settlement_write_permission",
-    "get_zitadel_auth_service",
     "require_establishment_manager",
     "require_haven_builder",
     "require_haven_viewer",
-    "set_zitadel_auth_service",
     "check_settlement_permission",
     "check_world_charter_permission",
     "register_campaign_haven_discovery",

@@ -82,7 +82,7 @@ SERVICE_SEAMS: tuple[ServiceSeams, ...] = (
     ServiceSeams(
         "game_session",
         bus="game_session.dependencies",
-        verifier="game_session.settlement.auth.tokens",
+        verifier="game_session.shared.identity",
         verifier_scope="on_demand",
     ),
     ServiceSeams(

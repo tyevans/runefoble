@@ -2,11 +2,16 @@
 
 The game session service lists child aggregates under a parent. Examples are bounties under a session, and establishments under a settlement. The parent-to-child links are event-sourced. They are not kept in process memory.
 
-Source: `services/game_session/src/game_session/child_index.py` (aggregate and kinds), `services/game_session/src/game_session/queries/child_index.py` (read and write functions), and `libs/runefoble_events/src/runefoble_events/child_index.py` (event).
+Source:
+
+- `services/game_session/src/game_session/shared/child_index.py`: the aggregate and the stream id. This is the mechanism of the shared kernel (ADR-0021 D2).
+- `services/game_session/src/game_session/shared/child_index_queries.py`: `link_child`, `list_child_ids`, and the index repository.
+- The kinds and the read functions of each domain: `settlement/child_indexes.py`, `caravan/child_indexes.py`, and `contracts/child_indexes.py`.
+- `libs/runefoble_events/src/runefoble_events/child_index.py`: the event.
 
 ## Approach
 
-Each parent and kind pair has one index stream in the event store. The stream is a `ChildIndexAggregate`. It holds the child ids in link order.
+Each parent and kind pair has one index stream in the event store. The stream is a `ChildIndexAggregate`. It holds the child ids in link order. The mechanism accepts the kind as a string. It does not know the kinds of the domains.
 
 - The stream id is `uuid5` of `<kind>:<parent id>`. The id is deterministic, so no lookup table is needed.
 - Each link is one `runefoble.events.game_session.child_linked` event. Linking the same child again emits no event.
@@ -17,14 +22,14 @@ A store outage raises to the caller. The service returns `503 Service Unavailabl
 
 ## Index Kinds
 
-| Kind (`ChildIndexKind`) | Parent | Child | Read function |
-|---|---|---|---|
-| `session_bounties` | Session id | Bounty id | `list_bounties_for_session` |
-| `world_contracts` | Shared world id | Caravan contract id | `list_world_contracts_for_world` |
-| `settlement_establishments` | Settlement id | Establishment id | `list_establishments_for_settlement` |
-| `campaign_settlements` | Campaign id | Settlement id | `list_settlements_for_campaign` |
-| `establishment_workers` | Establishment id | NPC worker id | `list_workers_for_establishment` |
-| `establishment_negotiations` | Establishment id | Negotiation id | None. No list route reads it yet. |
+| Kind | Declared in | Parent | Child | Read function |
+|---|---|---|---|---|
+| `session_bounties` | `contracts/child_indexes.py` (`SESSION_BOUNTIES`) | Session id | Bounty id | `list_bounties_for_session` |
+| `world_contracts` | `caravan/child_indexes.py` (`WORLD_CONTRACTS`) | Shared world id | Caravan contract id | `list_world_contracts_for_world` |
+| `settlement_establishments` | `settlement/child_indexes.py` (`SettlementChildIndex`) | Settlement id | Establishment id | `list_establishments_for_settlement` |
+| `campaign_settlements` | `settlement/child_indexes.py` (`SettlementChildIndex`) | Campaign id | Settlement id | `list_settlements_for_campaign` |
+| `establishment_workers` | `settlement/child_indexes.py` (`SettlementChildIndex`) | Establishment id | NPC worker id | `list_workers_for_establishment` |
+| `establishment_negotiations` | `settlement/child_indexes.py` (`SettlementChildIndex`) | Establishment id | Negotiation id | None. No list route reads it yet. |
 
 ## Write Order
 

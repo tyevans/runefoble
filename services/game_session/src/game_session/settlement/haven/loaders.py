@@ -7,13 +7,13 @@ from __future__ import annotations
 
 from fastapi import HTTPException
 from game_session.dependencies import get_establishment_repository, get_settlement_repository
-from game_session.queries import list_establishments_for_settlement
 from game_session.settlement.auth import (
     check_establishment_read_permission,
     check_establishment_write_permission,
     check_settlement_read_permission,
     check_settlement_write_permission,
 )
+from game_session.settlement.child_indexes import list_establishments_for_settlement
 from game_session.settlement.establishment_aggregate import EstablishmentAggregate
 from game_session.settlement.models import (
     EstablishmentState,

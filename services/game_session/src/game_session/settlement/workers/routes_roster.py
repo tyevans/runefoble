@@ -7,9 +7,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends
 from game_session.dependencies import get_event_bus, get_worker_repository
-from game_session.events import STREAM_WEST_MARCHES
-from game_session.queries import list_workers_for_establishment
-from game_session.settlement.auth.tokens import CallerId, get_principal
+from game_session.settlement.child_indexes import list_workers_for_establishment
 from game_session.settlement.worker_graph import (
     calculate_service_quality_contribution,
     compute_worker_tension,
@@ -29,6 +27,8 @@ from game_session.settlement.workers.operations import (
     create_and_assign_worker,
     sync_establishment_operations,
 )
+from game_session.shared.identity import CallerId, get_principal
+from game_session.shared.streams import STREAM_WEST_MARCHES
 from runefoble_platform.aggregate_loading import load_if_exists
 from runefoble_platform.event_publish import publish_aggregate_events
 from runefoble_platform.identifiers import parse_uuid

@@ -18,7 +18,7 @@ from game_session.chronicle import (
 )
 from game_session.dependencies import repo
 from game_session.routers.session_auth import session_reader
-from game_session.settlement.auth.tokens import CallerOrService
+from game_session.shared.identity import CallerOrService
 from game_session.spectator import SpectatorSessionView, project_spectator_session
 from runefoble_platform.aggregate_loading import load_or_404
 

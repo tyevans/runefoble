@@ -10,14 +10,12 @@ from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException
 from game_session.dependencies import get_event_bus, get_settlement_repository
-from game_session.events import STREAM_WEST_MARCHES
 from game_session.settlement.auth import (
     check_settlement_permission,
     check_world_charter_permission,
     register_campaign_haven_discovery,
     write_settlement_relationships,
 )
-from game_session.settlement.auth.tokens import CallerId, get_principal
 from game_session.settlement.facility_prices import InsufficientSettlementResources
 from game_session.settlement.models import (
     CharterSettlementRequest,
@@ -26,6 +24,8 @@ from game_session.settlement.models import (
     UpgradeFacilityRequest,
 )
 from game_session.settlement.settlement_aggregate import SettlementAggregate
+from game_session.shared.identity import CallerId, get_principal
+from game_session.shared.streams import STREAM_WEST_MARCHES
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_platform.event_publish import publish_aggregate_events
 from runefoble_platform.identifiers import parse_uuid

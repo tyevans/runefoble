@@ -8,15 +8,15 @@ from __future__ import annotations
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException
-from game_session.child_index import ChildIndexKind
 from game_session.dependencies import get_event_bus, get_settlement_repository
-from game_session.events import STREAM_WEST_MARCHES
-from game_session.queries import link_child, list_settlements_for_campaign
 from game_session.settlement.auth import (
     check_campaign_write_permission,
     write_settlement_relationships,
 )
-from game_session.settlement.auth.tokens import CallerId, get_principal
+from game_session.settlement.child_indexes import (
+    SettlementChildIndex,
+    list_settlements_for_campaign,
+)
 from game_session.settlement.haven.loaders import (
     build_settlement_projection,
     load_settlement,
@@ -26,6 +26,9 @@ from game_session.settlement.models import (
     SettlementProjectionResponse,
 )
 from game_session.settlement.settlement_aggregate import SettlementAggregate
+from game_session.shared.child_index_queries import link_child
+from game_session.shared.identity import CallerId, get_principal
+from game_session.shared.streams import STREAM_WEST_MARCHES
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_platform.aggregate_loading import load_if_exists
 from runefoble_platform.event_publish import publish_aggregate_events
@@ -70,7 +73,7 @@ async def found_settlement(
         founder_id=caller_id,
     )
 
-    await link_child(ChildIndexKind.CAMPAIGN_SETTLEMENTS, campaign_id, str(sid))
+    await link_child(SettlementChildIndex.CAMPAIGN_SETTLEMENTS, campaign_id, str(sid))
     if bus:
         await publish_aggregate_events(bus, STREAM_WEST_MARCHES, events)
     return await build_settlement_projection(agg)

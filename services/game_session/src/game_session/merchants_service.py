@@ -12,8 +12,8 @@ from dataclasses import dataclass
 from typing import Any
 
 from game_session.dependencies import get_event_bus, get_merchant_repository
-from game_session.events import STREAM_TAVERN
 from game_session.merchants import MerchantAggregate
+from game_session.shared.streams import STREAM_TAVERN
 from runefoble_platform.aggregate_loading import load_if_exists, load_or_create
 from runefoble_platform.event_publish import publish_aggregate_events
 from runefoble_platform.identifiers import opaque_aggregate_id

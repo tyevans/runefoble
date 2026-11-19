@@ -14,8 +14,8 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 from game_session import dependencies as deps
-from game_session.events import STREAM_WEST_MARCHES
 from game_session.settlement.workers import NPCWorkerAggregate
+from game_session.shared.streams import STREAM_WEST_MARCHES
 from runefoble_auth.mock import MockSpiceDBClient
 from runefoble_platform.event_sourcing import InMemoryEventStore, create_aggregate_repository
 

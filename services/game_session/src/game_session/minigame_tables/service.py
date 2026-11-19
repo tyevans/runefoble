@@ -12,9 +12,9 @@ from collections.abc import Callable
 from typing import Any
 
 from game_session.dependencies import get_event_bus, get_tavern_repository
-from game_session.events import STREAM_TAVERN
 from game_session.minigame_tables.models import MinigameTableState
 from game_session.minigames import TavernGameAggregate
+from game_session.shared.streams import STREAM_TAVERN
 from runefoble_platform.aggregate_loading import load_if_exists
 from runefoble_platform.event_publish import publish_aggregate_events
 from runefoble_platform.identifiers import opaque_aggregate_id

@@ -127,7 +127,7 @@ def test_profile_persists_across_game_session_restart(
     for name in [n for n in sys.modules if _is_game_session(n)]:
         del sys.modules[name]
     main = importlib.import_module("game_session.main")
-    tokens = importlib.import_module("game_session.settlement.auth.tokens")
+    tokens = importlib.import_module("game_session.shared.identity")
     tokens.set_zitadel_auth_service(trusted_ws_issuer.verifier())
 
     with serve(main.app) as restarted_url:

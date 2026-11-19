@@ -7,7 +7,7 @@ the `@handles` method applies the recorded change) and Hard Invariant 7.
 from __future__ import annotations
 
 from fastapi.testclient import TestClient
-from game_session.events import STREAM_STRONGHOLD
+from game_session.shared.streams import STREAM_STRONGHOLD
 
 from tests.helpers.campaign_setup import create_owned_campaign
 from tests.helpers.ws_identity import SIGNING_ISSUER

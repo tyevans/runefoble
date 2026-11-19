@@ -9,8 +9,6 @@ from typing import Any
 
 from fastapi import APIRouter, Depends
 from game_session.dependencies import get_event_bus, get_worker_repository
-from game_session.events import STREAM_WEST_MARCHES
-from game_session.settlement.auth.tokens import CallerId, get_principal
 from game_session.settlement.worker_models import (
     FormRelationshipRequest,
     NPCWorkerState,
@@ -19,6 +17,8 @@ from game_session.settlement.worker_models import (
 )
 from game_session.settlement.workers.loaders import load_worker
 from game_session.settlement.workers.operations import sync_establishment_operations
+from game_session.shared.identity import CallerId, get_principal
+from game_session.shared.streams import STREAM_WEST_MARCHES
 from runefoble_platform.event_publish import publish_aggregate_events
 
 router = APIRouter(dependencies=[Depends(get_principal)], tags=["settlement-npc-relationships"])

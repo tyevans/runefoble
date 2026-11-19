@@ -41,7 +41,7 @@ from game_session.campaign.tuples import SpiceDB
 from game_session.dependencies import get_game_session_repository
 from game_session.profile.aggregate import UserProfileAggregate
 from game_session.profile.repository import get_profile_repository
-from game_session.settlement.auth.tokens import CallerPrincipal, get_principal
+from game_session.shared.identity import CallerPrincipal, get_principal
 from runefoble_auth.factory import get_spicedb_client
 
 router = APIRouter(

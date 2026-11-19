@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from fastapi.testclient import TestClient
-from game_session.events import STREAM_TAVERN, STREAM_WEST_MARCHES
+from game_session.shared.streams import STREAM_TAVERN, STREAM_WEST_MARCHES
 
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.signing_test_issuer import SigningTestIssuer

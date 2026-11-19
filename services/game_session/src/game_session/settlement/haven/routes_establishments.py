@@ -8,14 +8,14 @@ from __future__ import annotations
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException
-from game_session.child_index import ChildIndexKind
 from game_session.dependencies import get_establishment_repository, get_event_bus
-from game_session.events import STREAM_WEST_MARCHES
-from game_session.queries import link_child, list_establishments_for_settlement
 from game_session.settlement.auth import (
     write_establishment_relationships,
 )
-from game_session.settlement.auth.tokens import CallerId, get_principal
+from game_session.settlement.child_indexes import (
+    SettlementChildIndex,
+    list_establishments_for_settlement,
+)
 from game_session.settlement.establishment_aggregate import EstablishmentAggregate
 from game_session.settlement.haven.loaders import (
     load_establishment,
@@ -25,6 +25,9 @@ from game_session.settlement.models import (
     ConstructEstablishmentRequest,
     EstablishmentState,
 )
+from game_session.shared.child_index_queries import link_child
+from game_session.shared.identity import CallerId, get_principal
+from game_session.shared.streams import STREAM_WEST_MARCHES
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_platform.aggregate_loading import load_if_exists
 from runefoble_platform.event_publish import publish_aggregate_events
@@ -84,7 +87,7 @@ async def construct_establishment(
         owner_id=caller_id,
     )
 
-    await link_child(ChildIndexKind.SETTLEMENT_ESTABLISHMENTS, settlement_id, str(eid))
+    await link_child(SettlementChildIndex.SETTLEMENT_ESTABLISHMENTS, settlement_id, str(eid))
     if bus:
         await publish_aggregate_events(bus, STREAM_WEST_MARCHES, events)
     return est_agg.state

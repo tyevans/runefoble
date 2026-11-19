@@ -78,16 +78,6 @@ async def check_establishment_write_permission(
     await _enforce(spicedb, "establishment", establishment_id, [perm], user_id, "cannot manage")
 
 
-async def check_establishment_play_permission(
-    spicedb: Any, establishment_id: str, user_id: str
-) -> bool:
-    """Ensure user has permission to play minigames / patronize establishment."""
-    for p in ("play", "view", "manage"):
-        if await check_subject(spicedb, "establishment", establishment_id, p, user_id):
-            return True
-    return False
-
-
 async def check_npc_read_permission(spicedb: Any, npc_id: str, user_id: str) -> None:
     """Ensure user has permission to view worker profile."""
     await _enforce(spicedb, "npc", npc_id, ["view"], user_id, "cannot view")
@@ -128,7 +118,6 @@ async def check_negotiation_arbitrate_permission(
 
 __all__ = [
     "check_campaign_write_permission",
-    "check_establishment_play_permission",
     "check_establishment_read_permission",
     "check_establishment_write_permission",
     "check_negotiation_arbitrate_permission",

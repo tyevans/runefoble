@@ -16,10 +16,10 @@ from collections.abc import Iterator
 import jwt
 import pytest
 from fastapi.testclient import TestClient
-from game_session.settlement.auth.tokens import (
+from game_session.shared.identity import (
     get_zitadel_auth_service as get_session_auth,
 )
-from game_session.settlement.auth.tokens import (
+from game_session.shared.identity import (
     set_zitadel_auth_service as set_session_auth,
 )
 from gateway_api.auth import (

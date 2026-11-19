@@ -15,8 +15,8 @@ from __future__ import annotations
 
 import pytest
 from fastapi.testclient import TestClient
-from game_session.events import STREAM_WEST_MARCHES
 from game_session.main import app as session_app
+from game_session.shared.streams import STREAM_WEST_MARCHES
 from runefoble_auth.mock import MockSpiceDBClient
 
 from tests.helpers.campaign_setup import create_campaign, invite_and_join

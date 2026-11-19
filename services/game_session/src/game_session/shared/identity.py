@@ -1,6 +1,7 @@
-"""Zitadel OIDC token parsing and caller identity for settlement haven builder.
+"""Route identity for every game session router (ADR-0021 D2).
 
-Governed by ADR-0005 (Zitadel OIDC Authentication), ADR-0007, ADR-0013, and PRD-0024.
+Zitadel OIDC bearer tokens and the service credential resolve to a caller.
+Governed by ADR-0005 (Zitadel OIDC Authentication), ADR-0015 (c, e), and ADR-0021.
 """
 
 from __future__ import annotations

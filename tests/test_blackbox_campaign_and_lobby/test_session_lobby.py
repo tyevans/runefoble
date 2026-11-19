@@ -9,7 +9,7 @@ from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
-from game_session.events import STREAM_SESSION
+from game_session.shared.streams import STREAM_SESSION
 
 from tests.helpers.campaign_setup import create_owned_campaign
 from tests.helpers.ws_identity import bearer, ws_subprotocols

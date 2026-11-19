@@ -11,8 +11,6 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from game_session.dependencies import get_event_bus, get_settlement_repository
-from game_session.events import STREAM_WEST_MARCHES
-from game_session.settlement.auth.tokens import CallerId, get_principal
 from game_session.settlement.bulletin_auth import (
     check_bulletin_board_edit_permission,
     check_bulletin_board_view_permission,
@@ -28,6 +26,8 @@ from game_session.settlement.models import (
     PinBulletinNoticeRequest,
 )
 from game_session.settlement.settlement_aggregate import SettlementAggregate
+from game_session.shared.identity import CallerId, get_principal
+from game_session.shared.streams import STREAM_WEST_MARCHES
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_platform.event_publish import publish_aggregate_events
 from runefoble_platform.identifiers import parse_uuid

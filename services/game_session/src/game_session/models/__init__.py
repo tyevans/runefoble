@@ -36,15 +36,6 @@ from game_session.models.session import (
     ReadinessRequest,
     SelectLobbyCharacterRequest,
 )
-from game_session.models.settlement import (
-    DEFAULT_FACILITIES,
-    FACILITY_REST_BOONS,
-    FACILITY_TIER_NAMES,
-    CharterSettlementRequest,
-    ClaimRestBoonRequest,
-    SettlementState,
-    UpgradeFacilityRequest,
-)
 from game_session.models.transitions import GameSessionTransitionsMixin
 
 ResolveReactionResponse.model_rebuild(_types_namespace={"GameSessionState": GameSessionState})
@@ -53,18 +44,13 @@ __all__ = [
     "AtmosphereUpdateRequest",
     "AutoPilotRequest",
     "AutoPilotResponse",
-    "CharterSettlementRequest",
-    "ClaimRestBoonRequest",
     "CombatStateResponse",
     "CombatTransitionsMixin",
-    "DEFAULT_FACILITIES",
     "DeclareReactionRequest",
     "DMOverrideRequest",
     "DeclareReactionResponse",
     "EvaluateTriggersRequest",
     "EvaluateTriggersResponse",
-    "FACILITY_REST_BOONS",
-    "FACILITY_TIER_NAMES",
     "GameSessionState",
     "GameSessionTransitionsMixin",
     "HotSwapRequest",
@@ -84,7 +70,5 @@ __all__ = [
     "ResolveReactionResponse",
     "RollDiceRequest",
     "RollDiceResponse",
-    "SettlementState",
     "StartCombatRequest",
-    "UpgradeFacilityRequest",
 ]

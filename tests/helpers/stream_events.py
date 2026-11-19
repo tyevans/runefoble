@@ -8,7 +8,7 @@ Governed by ADR-0014: assertions read published events, never private state.
 
 from __future__ import annotations
 
-from game_session.events import STREAM_WEST_MARCHES
+from game_session.shared.streams import STREAM_WEST_MARCHES
 
 from tests.helpers.mock_redis import MockAsyncRedis
 

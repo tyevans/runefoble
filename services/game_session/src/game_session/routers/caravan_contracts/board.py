@@ -10,14 +10,14 @@ from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, Query
 from game_session.caravan import CaravanContractAggregate
-from game_session.child_index import ChildIndexKind
+from game_session.caravan.child_indexes import WORLD_CONTRACTS, list_world_contracts_for_world
 from game_session.dependencies import get_caravan_contract_repository, get_event_bus
-from game_session.events import STREAM_WEST_MARCHES
-from game_session.queries import link_child, list_world_contracts_for_world
 from game_session.routers.caravan_contracts.auth import (
     _check_high_tier_auth,
 )
-from game_session.settlement.auth.tokens import CallerId, get_principal
+from game_session.shared.child_index_queries import link_child
+from game_session.shared.identity import CallerId, get_principal
+from game_session.shared.streams import STREAM_WEST_MARCHES
 from game_session.west_marches_models import PostCaravanContractRequest
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.permissions import require_subject
@@ -69,7 +69,7 @@ async def post_caravan_contract(
     await contract_repo.save(contract)
 
     # Register in world notice board index and write Zanzibar relations
-    await link_child(ChildIndexKind.WORLD_CONTRACTS, str(wid), cid)
+    await link_child(WORLD_CONTRACTS, str(wid), cid)
     await spicedb.write_relationship(
         "caravan_contract", cid, "shared_world", "shared_world", str(wid)
     )
