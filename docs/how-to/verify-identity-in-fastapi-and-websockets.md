@@ -75,6 +75,7 @@ async def act(item_id: str, caller_id: CallerId):
 - Do not add a query, header, or body field for identity. A forged value never reaches the route.
 - Keep public routes (health, manifests, OpenAPI) on the app, not on a guarded router.
 - WebSocket routes do not use `require_principal`. They call `admit_websocket` (below).
+- A service that builds its app from explicit settings (`create_app(settings, ...)`) builds its verifier from those settings. It stores the verifier on `app.state.zitadel_verifier`. Its getter takes `request: Request` and returns `request.app.state.zitadel_verifier`. It passes that getter to `build_identity_dependencies`. Campaign Analytics does this (`services/campaign_analytics/src/campaign_analytics/dependencies.py`). A getter that takes no arguments also works.
 - Every service exposes the same names: `get_principal`, `CallerPrincipal`, and `CallerId`. The Watcher binds them in `services/the_watcher/src/the_watcher/identity.py`. Campaign Lore binds them in `services/campaign_lore/src/campaign_lore/identity.py`. Voice Agent binds them in `services/voice_agent/src/voice_agent/auth.py`. The gateway binds them in `gateway/api/src/gateway_api/auth.py`.
 
 ## Routes That Another Service Calls: Accept the Service Credential
