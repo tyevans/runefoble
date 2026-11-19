@@ -9,6 +9,7 @@ Use this recipe when a service must read a Redis Stream. The helpers live in `ru
 3. Acknowledge after success. The handler runs first. The message is acknowledged only when the handler returns.
 4. Dead-letter failures. A handler that raises routes the message to `{stream}.dlq`, then acknowledges it. The original message does not stay pending.
 5. Report runtime failures. A failed read loop is logged at `ERROR`. Its `status` becomes `failed`. Publish the status on `/healthz`.
+6. Reclaim abandoned messages. A consumer takes over a message that another consumer read and did not acknowledge. A reclaimed message runs its handler again, so every handler must be idempotent (see below).
 
 ## Step 1: Build and Start the Consumer Set
 
@@ -72,7 +73,31 @@ def health_check(request: Request) -> JSONResponse:
 
 A `503` tells the orchestrator that the pod lost a consumer. Liveness probes can restart the pod.
 
-## Step 3: Test Through the Frontdoor
+## Step 3: Tune Reclaim
+
+Each `StreamConsumer` reclaims stale pending messages on its read loop. Two settings in `PlatformSettings` control it:
+
+| Setting | Environment variable | Default | Meaning |
+|---|---|---|---|
+| `consumer_reclaim_min_idle_ms` | `RUNEFOBLE_CONSUMER_RECLAIM_MIN_IDLE_MS` | `60000` | A pending message is reclaimed after this idle time. |
+| `consumer_reclaim_every_polls` | `RUNEFOBLE_CONSUMER_RECLAIM_EVERY_POLLS` | `50` | A consumer checks for reclaimable messages once every this many polls. |
+
+Pass `reclaim=ReclaimPolicy(min_idle_ms=..., every_polls=...)` to `StreamConsumer` to use other values in one consumer. Without it, the consumer reads the settings. The policy cannot be turned off.
+
+**Slow-handler risk.** A message stays pending while its handler runs. If the handler runs longer than `min_idle_ms`, another consumer reclaims the message while the handler still runs. Both runs then reach the handler. Set `min_idle_ms` above the longest handler run. Keep handlers idempotent so that an overlap does no harm.
+
+**Undecodable messages.** A reclaimed message that cannot be decoded goes to `{stream}.dlq` and is acknowledged. It does not raise, and no handler runs for it.
+
+## Step 4: Write Idempotent Handlers
+
+A handler can receive the same message twice. Use one of these guards before it writes:
+
+1. **State guard.** Read the aggregate state. Skip the write when the state already holds the result. Store the source id in the state when the result alone does not identify the source. Examples: the session stores `weather_source_proposal_id`, and the board stores `forged_asset_id`.
+2. **Source ledger.** When no state guard fits, record the source event id in the aggregate in the same save as the effect. Skip an event whose id is already recorded. The soundscape aggregate does this. It keeps the last 1,000 source event ids per session, so a redelivery older than that window applies again.
+
+Save the effect and its guard in one write. A crash between two writes can apply one and lose the other.
+
+## Step 5: Test Through the Frontdoor
 
 Replace only the Redis transport. Use `MockAsyncRedis` from `tests/helpers/mock_redis.py` at the `redis.asyncio.from_url` boundary. Do not patch the consumer.
 
@@ -107,6 +132,8 @@ Publish with `RedisStreamsEventBus(client=redis_double).publish_event(...)`. Ass
 | Handler raises | `{stream}.dlq` receives the message with `error_reason`. Message acknowledged. `dead_letter_count` increases. |
 | Read raises | Error logged at `ERROR`. `status` is `failed` until a read succeeds. The loop retries with backoff. |
 | Loop task dies | `status` is `failed`. |
+| Message pending longer than `consumer_reclaim_min_idle_ms` | Reclaimed on a reclaim check. The handler runs, then the message is acknowledged. |
+| Reclaimed message cannot be decoded | Routed to `{stream}.dlq` and acknowledged. No handler runs. |
 
 ## Related
 

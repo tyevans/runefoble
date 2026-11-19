@@ -55,7 +55,12 @@ async def apply_audience_status_event(event: Any) -> None:
     if character is None:
         raise refusal(modifier, f"names unknown character {character_id}.")
     require_same_campaign(modifier, character.state.campaign_id, f"character {character_id}")
-    character.apply_condition(condition, source=f"audience:{modifier.proposal_id}")
+    source = f"audience:{modifier.proposal_id}"
+    active = character.state.conditions.get(condition)
+    if active is not None and active.source == source:
+        # A redelivery. This proposal already applied the condition, so nothing changes.
+        return
+    character.apply_condition(condition, source=source)
     await repo.save(character)
 
 

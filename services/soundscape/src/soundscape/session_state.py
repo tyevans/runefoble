@@ -6,8 +6,11 @@ write loads the aggregate, records events, saves them, and then publishes them.
 
 from __future__ import annotations
 
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from datetime import datetime
 
+from runefoble_events.soundscape import SoundscapeSourceEventHandled
 from runefoble_platform.aggregate_loading import load_if_exists, load_or_create
 from runefoble_platform.models import utc_now
 
@@ -33,11 +36,37 @@ async def load_session_aggregate(session_id: str) -> SoundscapeAggregate:
 
 
 async def save_session_aggregate(agg: SoundscapeAggregate) -> None:
-    """Save the uncommitted events, then publish them on the soundscape streams."""
+    """Save the uncommitted events, then publish them on the soundscape streams.
+
+    The source ledger entry is saved but not published. It is internal bookkeeping.
+    """
     events = list(agg.uncommitted_events)
     await get_soundscape_repo().save(agg)
     for event in events:
+        if isinstance(event, SoundscapeSourceEventHandled):
+            continue
         await publish_soundscape_event(event)
+
+
+async def source_event_handled(session_id: str, source_event_id: str) -> bool:
+    """Return True when the session already saved the effects of this source event."""
+    agg = await load_if_exists(get_soundscape_repo(), soundscape_aggregate_id(session_id))
+    return agg is not None and agg.has_handled_source_event(source_event_id)
+
+
+@asynccontextmanager
+async def session_write(
+    session_id: str, source_event_id: str
+) -> AsyncIterator[SoundscapeAggregate]:
+    """Load the session aggregate, record the source event, and save once when the block ends.
+
+    The ledger entry and every effect in the block share one save. An exception skips the save,
+    so the source event stays unrecorded and a redelivery applies it again.
+    """
+    agg = await load_session_aggregate(session_id)
+    agg.record_source_event(session_id, source_event_id)
+    yield agg
+    await save_session_aggregate(agg)
 
 
 def tension_status(

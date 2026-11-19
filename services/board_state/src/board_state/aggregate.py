@@ -196,6 +196,7 @@ class BoardAggregate(
                 "cols": event.cols,
                 "rows": event.rows,
                 "wall_segments": list(event.wall_segments),
+                "forged_asset_id": event.asset_id,
             }
         )
 

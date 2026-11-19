@@ -50,7 +50,11 @@ async def apply_audience_weather_event(event: Any) -> None:
     if session is None:
         raise refusal(modifier, f"names unknown session {session_id}.")
     require_same_campaign(modifier, session.state.campaign_id, f"session {session_id}")
-    session.apply_weather(weather=weather, source_proposal_id=str(modifier.proposal_id))
+    proposal_id = str(modifier.proposal_id)
+    if session.state.weather_source_proposal_id == proposal_id:
+        # A redelivery. This proposal already set the weather, so nothing changes.
+        return
+    session.apply_weather(weather=weather, source_proposal_id=proposal_id)
     await repo.save(session)
 
 

@@ -60,7 +60,9 @@ class DirectorHandlersMixin:
 
     @handles(WeatherChanged)
     def _on_weather_changed(self, event: WeatherChanged) -> None:
-        self._state = self.state.with_weather(event.weather)
+        self._state = self.state.with_weather(
+            event.weather, str(event.source_proposal_id) if event.source_proposal_id else None
+        )
 
     @handles(DMOverrideApplied)
     def _on_dm_override_applied(self, event: DMOverrideApplied) -> None:

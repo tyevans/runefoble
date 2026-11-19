@@ -73,6 +73,20 @@ class PlatformSettings(BaseSettings):
         default="redis://localhost:6379/0",
         description="Redis connection string",
     )
+    # Stream consumers reclaim messages left pending by a dead consumer (TASK-0854). A message
+    # is reclaimed once it has been idle for this long. Set it above the longest handler run,
+    # because a slow handler's message is reclaimed while the handler still runs.
+    consumer_reclaim_min_idle_ms: int = Field(
+        default=60000,
+        gt=0,
+        description="Idle time in ms after which a pending stream message is reclaimed",
+    )
+    # A consumer checks for reclaimable messages once every this many polls.
+    consumer_reclaim_every_polls: int = Field(
+        default=50,
+        gt=0,
+        description="Number of stream polls between reclaim checks",
+    )
 
     # Object Storage (Silo / MinIO fork)
     silo_endpoint: str = Field(default="localhost:9000", description="Silo S3 endpoint")

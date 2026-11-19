@@ -19,7 +19,7 @@ from fastapi.testclient import TestClient
 from runefoble_events.events import CombatEncounterStarted, SessionCreated
 from runefoble_platform.consumer_group import RedisConsumerGroup
 from runefoble_platform.redis_bus import RedisStreamsEventBus
-from runefoble_platform.stream_consumer import StreamConsumer
+from runefoble_platform.stream_consumer import ReclaimPolicy, StreamConsumer
 
 from tests.helpers.campaign_analytics_service import AnalyticsService
 from tests.helpers.mock_redis import MockAsyncRedis
@@ -206,3 +206,80 @@ async def test_failed_handler_routes_message_to_dead_letter_and_acknowledges() -
     dead_letters = double.streams[f"{SESSION_STREAM}.dlq"]
     assert len(dead_letters) == 1
     assert "projection write failed" in dead_letters[0][1]["error_reason"]
+
+
+@pytest.mark.asyncio
+async def test_reclaim_runs_a_message_left_pending_by_a_dead_consumer_exactly_once() -> None:
+    """A consumer that reads and never acknowledges leaves the message pending. A live consumer
+    reclaims it on its next reclaim check, runs the handler once, and acknowledges it."""
+    double = MockAsyncRedis()
+    consumer_group = RedisConsumerGroup(client=double)
+    await consumer_group.create_group(SESSION_STREAM, "reclaim_group")
+    await RedisStreamsEventBus(client=double).publish_event(
+        SESSION_STREAM,
+        SessionCreated(aggregate_id=uuid4(), session_id=str(uuid4()), campaign_id=str(uuid4())),
+    )
+    dead_reads = await consumer_group.read_group(SESSION_STREAM, "reclaim_group", "worker_dead")
+    assert len(dead_reads) == 1
+    dead_msg_id = dead_reads[0][0]
+
+    handled: list[str] = []
+
+    async def handler(message_id: str, _event: Any) -> None:
+        handled.append(message_id)
+
+    live = StreamConsumer(
+        consumer_group,
+        SESSION_STREAM,
+        "reclaim_group",
+        "worker_live",
+        handler,
+        reclaim=ReclaimPolicy(min_idle_ms=1, every_polls=1),
+    )
+    await asyncio.sleep(0.01)
+    assert await live.poll_once(block_ms=1) == 1
+    assert await live.poll_once(block_ms=1) == 0
+
+    assert handled == [dead_msg_id]
+    assert live.processed_count == 1
+    assert double.get_pending(SESSION_STREAM, "reclaim_group") == {}
+
+
+@pytest.mark.asyncio
+async def test_reclaim_routes_an_undecodable_message_to_dead_letter_without_failing() -> None:
+    """An undecodable pending message is dead-lettered and acknowledged on reclaim. It does not
+    raise, so the consumer keeps running and its handler never sees the message."""
+    double = MockAsyncRedis()
+    consumer_group = RedisConsumerGroup(client=double)
+    await consumer_group.create_group(SESSION_STREAM, "reclaim_bad_group")
+    await double.xadd(
+        SESSION_STREAM,
+        {"event_type": "runefoble.events.session.created", "payload": "{not json"},
+    )
+    await double.xreadgroup(
+        groupname="reclaim_bad_group",
+        consumername="worker_dead",
+        streams={SESSION_STREAM: ">"},
+        count=10,
+    )
+
+    handled: list[str] = []
+
+    async def handler(message_id: str, _event: Any) -> None:
+        handled.append(message_id)
+
+    live = StreamConsumer(
+        consumer_group,
+        SESSION_STREAM,
+        "reclaim_bad_group",
+        "worker_live",
+        handler,
+        reclaim=ReclaimPolicy(min_idle_ms=1, every_polls=1),
+    )
+    await asyncio.sleep(0.01)
+    assert await live.poll_once(block_ms=1) == 0
+
+    assert handled == []
+    assert live.last_error is None
+    assert double.get_pending(SESSION_STREAM, "reclaim_bad_group") == {}
+    assert len(double.streams[f"{SESSION_STREAM}.dlq"]) == 1

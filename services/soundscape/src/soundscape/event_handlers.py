@@ -30,7 +30,7 @@ from soundscape.scoring import (
     derive_stem_profile,
     enemy_cr_balance_from_combatants,
 )
-from soundscape.session_state import load_session_aggregate, save_session_aggregate
+from soundscape.session_state import session_write, source_event_handled
 from soundscape.tactical_cues import area_effect_cue, hazard_cue, impact_cue, spell_cast_cue
 
 logger = logging.getLogger("runefoble.soundscape.events")
@@ -83,66 +83,82 @@ def _retune_encounter(agg: SoundscapeAggregate, session_id: str, *, combat_round
         )
 
 
-async def _handle_combat_start(session_id: str, combatants: list[dict[str, Any]]) -> None:
-    agg = await load_session_aggregate(session_id)
-    tension, profile = _score_encounter(
-        agg,
-        session_id,
-        combat_round=1,
-        enemy_cr_balance=enemy_cr_balance_from_combatants(combatants),
-    )
-    agg.record_track_change(
-        session_id, "track-combat-01", profile, tension, 1500, active_stems=[profile]
-    )
-    await save_session_aggregate(agg)
-
-
-async def _handle_combat_end(session_id: str) -> None:
-    """Leave combat. Clear the encounter inputs and re-score the ambient tension once."""
-    agg = await load_session_aggregate(session_id)
-    old_profile = agg.state.stem_profile
-    tension, profile = _score_encounter(
-        agg, session_id, combat_round=0, enemy_cr_balance=0.0, combat_active=False
-    )
-    if profile != old_profile:
-        agg.record_track_change(
-            session_id, f"track-{profile}-01", profile, tension, 1500, active_stems=[profile]
+async def _handle_combat_start(
+    session_id: str, combatants: list[dict[str, Any]], source_id: str
+) -> None:
+    async with session_write(session_id, source_id) as agg:
+        tension, profile = _score_encounter(
+            agg,
+            session_id,
+            combat_round=1,
+            enemy_cr_balance=enemy_cr_balance_from_combatants(combatants),
         )
-    await save_session_aggregate(agg)
+        agg.record_track_change(
+            session_id, "track-combat-01", profile, tension, 1500, active_stems=[profile]
+        )
 
 
-async def _handle_combat_advance(session_id: str, round_num: int) -> None:
-    agg = await load_session_aggregate(session_id)
-    _retune_encounter(agg, session_id, combat_round=round_num)
-    await save_session_aggregate(agg)
+async def _handle_combat_end(session_id: str, source_id: str) -> None:
+    """Leave combat. Clear the encounter inputs and re-score the ambient tension once."""
+    async with session_write(session_id, source_id) as agg:
+        old_profile = agg.state.stem_profile
+        tension, profile = _score_encounter(
+            agg, session_id, combat_round=0, enemy_cr_balance=0.0, combat_active=False
+        )
+        if profile != old_profile:
+            agg.record_track_change(
+                session_id, f"track-{profile}-01", profile, tension, 1500, active_stems=[profile]
+            )
 
 
-async def _handle_health_changed(event: CharacterHealthChanged, session_id: str) -> None:
-    """Store the character's HP ratio. In combat, re-score tension with the new party minimum."""
-    if event.max_hp <= 0:
+async def _handle_combat_advance(session_id: str, round_num: int, source_id: str) -> None:
+    async with session_write(session_id, source_id) as agg:
+        _retune_encounter(agg, session_id, combat_round=round_num)
+
+
+async def _handle_health_event(
+    event: CharacterHealthChanged, session_id: str, source_id: str
+) -> None:
+    """Store the character's HP ratio, and re-score combat tension with the new party minimum.
+
+    A character at zero HP also starts the somber death leitmotif. Both writes share one save,
+    so a redelivery cannot apply one and lose the other.
+    """
+    records_health = bool(event.session_id)
+    if records_health and event.max_hp <= 0:
         logger.warning(
             "Ignoring health change with non-positive max_hp for character %s",
             event.aggregate_id,
         )
+        records_health = False
+    dies = event.current_hp <= 0
+    if not records_health and not dies:
         return
-    ratio = min(1.0, max(0.0, event.current_hp / event.max_hp))
-    agg = await load_session_aggregate(session_id)
-    agg.record_party_health(session_id, str(event.aggregate_id), ratio)
-    if agg.state.combat_active:
-        _retune_encounter(agg, session_id, combat_round=agg.state.combat_round)
-    await save_session_aggregate(agg)
+    async with session_write(session_id, source_id) as agg:
+        if records_health:
+            ratio = min(1.0, max(0.0, event.current_hp / event.max_hp))
+            agg.record_party_health(session_id, str(event.aggregate_id), ratio)
+            if agg.state.combat_active:
+                _retune_encounter(agg, session_id, combat_round=agg.state.combat_round)
+        if dies:
+            _trigger_leitmotif_on(
+                agg, session_id, str(event.aggregate_id), "Hero", "somber", "death_save"
+            )
 
 
-async def _handle_player_speech(session_id: str) -> None:
-    agg = await load_session_aggregate(session_id)
-    agg.record_ducking_engaged(session_id, reason="speech", duration_ms=SPEECH_DUCK_MS)
-    await save_session_aggregate(agg)
+async def _handle_player_speech(session_id: str, source_id: str) -> None:
+    async with session_write(session_id, source_id) as agg:
+        agg.record_ducking_engaged(session_id, reason="speech", duration_ms=SPEECH_DUCK_MS)
 
 
-async def _handle_leitmotif_trigger(
-    session_id: str, char_id: str, char_name: str, motif: str, reason: str
+def _trigger_leitmotif_on(
+    agg: SoundscapeAggregate,
+    session_id: str,
+    char_id: str,
+    char_name: str,
+    motif: str,
+    reason: str,
 ) -> None:
-    agg = await load_session_aggregate(session_id)
     engine = LeitmotifEngine.from_state(session_id, agg.state, datetime.now(UTC))
     pb = engine.trigger_leitmotif(
         character_id=char_id, motif_type=motif, trigger_reason=reason, character_name=char_name
@@ -164,7 +180,13 @@ async def _handle_leitmotif_trigger(
         playback_id=pb.playback_id,
         triggered_at=pb.triggered_at,
     )
-    await save_session_aggregate(agg)
+
+
+async def _handle_leitmotif_trigger(
+    session_id: str, char_id: str, char_name: str, motif: str, reason: str, source_id: str
+) -> None:
+    async with session_write(session_id, source_id) as agg:
+        _trigger_leitmotif_on(agg, session_id, char_id, char_name, motif, reason)
 
 
 async def _handle_tactical_board_event(
@@ -182,30 +204,40 @@ async def _handle_tactical_board_event(
         cue = spell_cast_cue(event.spell_archetype)
     else:
         cue = area_effect_cue(event.decal_type)
-    agg = await load_session_aggregate(str(event.session_id))
-    agg.record_cue(
-        session_id=str(event.session_id),
-        cue_id=f"cue-{str(event.event_id)[:8]}",
-        sound_url=cue["sound_url"],
-        cue_type=cue["cue_type"],
-        volume_gain=cue["volume_gain"],
-        duck_music=cue["duck_music"],
-    )
-    await save_session_aggregate(agg)
+    async with session_write(str(event.session_id), str(event.event_id)) as agg:
+        agg.record_cue(
+            session_id=str(event.session_id),
+            cue_id=f"cue-{str(event.event_id)[:8]}",
+            sound_url=cue["sound_url"],
+            cue_type=cue["cue_type"],
+            volume_gain=cue["volume_gain"],
+            duck_music=cue["duck_music"],
+        )
 
 
 async def handle_incoming_domain_event(event: Any) -> None:
-    """Process domain events to dynamically adjust soundscape, tension, and leitmotifs."""
+    """Process domain events to dynamically adjust soundscape, tension, and leitmotifs.
+
+    A source event whose id is already in the session ledger is skipped. Its effects were saved
+    by an earlier delivery. A value without an event id is not a domain event, so it feeds nothing.
+    """
+    source_id = getattr(event, "event_id", None)
+    if source_id is None:
+        return
+    source_key = str(source_id)
     session_id = str(getattr(event, "session_id", "default") or "default")
+    if await source_event_handled(session_id, source_key):
+        logger.info("Skipping redelivered source event %s for session %s", source_key, session_id)
+        return
 
     if isinstance(event, (CombatEncounterStarted,)):
-        await _handle_combat_start(session_id, list(event.combatants))
+        await _handle_combat_start(session_id, list(event.combatants), source_key)
     elif isinstance(event, CombatEncounterEnded):
-        await _handle_combat_end(session_id)
+        await _handle_combat_end(session_id, source_key)
     elif isinstance(event, (CombatRoundAdvanced, InitiativeTurnAdvanced)):
-        await _handle_combat_advance(session_id, getattr(event, "round_number", 1))
+        await _handle_combat_advance(session_id, getattr(event, "round_number", 1), source_key)
     elif isinstance(event, PlayerSpokeEvent):
-        await _handle_player_speech(session_id)
+        await _handle_player_speech(session_id, source_key)
     elif isinstance(event, DiceRolled) and getattr(event, "is_crit", False):
         char_id = str(
             getattr(event, "character_id", None)
@@ -216,16 +248,11 @@ async def handle_incoming_domain_event(event: Any) -> None:
             getattr(event, "character_name", None) or getattr(event, "roller_name", None) or "Hero"
         )
         await _handle_leitmotif_trigger(
-            session_id, char_id, char_name, "triumphant", "critical_hit"
+            session_id, char_id, char_name, "triumphant", "critical_hit", source_key
         )
     elif isinstance(
         event, (TokenHazardTriggered, PhysicsCollisionOccurred, SpellCast, AreaEffectExploded)
     ):
         await _handle_tactical_board_event(event)
     elif isinstance(event, CharacterHealthChanged):
-        # A health event has no session when no session is in play. Such an event feeds no tension.
-        if event.session_id:
-            await _handle_health_changed(event, event.session_id)
-        if event.current_hp <= 0:
-            char_id = str(event.aggregate_id)
-            await _handle_leitmotif_trigger(session_id, char_id, "Hero", "somber", "death_save")
+        await _handle_health_event(event, session_id, source_key)

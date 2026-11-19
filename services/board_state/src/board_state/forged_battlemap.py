@@ -42,6 +42,9 @@ async def apply_forged_battlemap_event(event: Any, bus: RedisStreamsEventBus | N
             f"Forged map {event.asset_id} belongs to campaign {event.campaign_id}, "
             f"not to the campaign of board {event.session_id}."
         )
+    if board.state.forged_asset_id == event.asset_id:
+        # A redelivery. This map already sets the board geometry, so nothing changes.
+        return
     board.apply_forged_battlemap(
         asset_id=event.asset_id,
         cols=event.width_cells,

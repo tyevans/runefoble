@@ -167,3 +167,18 @@ class LeitmotifTriggered(BaseRunefobleEvent):
     duration_ms: int = 4000
     duck_music: bool = False
     trigger_reason: str = "critical_hit"  # critical_hit, death_save, audition, manual
+
+
+@register_event("runefoble.events.soundscape.source_event_handled")
+class SoundscapeSourceEventHandled(BaseRunefobleEvent):
+    """Ledger entry: the soundscape aggregate applied the effects of one source event.
+
+    Recorded in the same save as the effects it guards. A redelivered source event is skipped
+    when its id is in the ledger. The aggregate is internal, so this event is not published.
+    """
+
+    aggregate_type: str = "Soundscape"
+    aggregate_id: UUID = Field(default_factory=uuid4)
+    event_type: str = "runefoble.events.soundscape.source_event_handled"
+    session_id: str
+    source_event_id: str
