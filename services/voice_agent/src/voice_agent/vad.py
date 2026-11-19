@@ -7,26 +7,43 @@ import math
 import struct
 from collections import deque
 
+WAV_HEADER_MIN_BYTES = 44
+AUDIO_FORMAT_INVALID = "audio_format_invalid"
+
+
+class AudioFormatError(ValueError):
+    """Audio bytes claim to be a RIFF/WAVE file but cannot be parsed as one.
+
+    `error_code` is the stable identifier that clients receive.
+    """
+
+    error_code = AUDIO_FORMAT_INVALID
+
 
 def parse_audio_data(data_bytes: bytes, default_sample_rate: int = 16000) -> tuple[bytes, int]:
-    """Extract raw PCM bytes and sample rate from PCM or WAV audio bytes."""
+    """Extract raw PCM bytes and sample rate from PCM or WAV audio bytes.
+
+    Bytes that start with `RIFF` are WAV. A WAV body that is shorter than the header, or that has
+    no `data` chunk, raises `AudioFormatError`. The bytes are never read as raw PCM.
+    Other bytes are raw PCM at `default_sample_rate`.
+    """
     if not data_bytes:
         return b"", default_sample_rate
-    if data_bytes.startswith(b"RIFF") and len(data_bytes) >= 44:
-        try:
-            sr = struct.unpack("<I", data_bytes[24:28])[0]
-            pos = 12
-            while pos < len(data_bytes) - 8:
-                chunk_id = data_bytes[pos : pos + 4]
-                chunk_size = struct.unpack("<I", data_bytes[pos + 4 : pos + 8])[0]
-                if chunk_id == b"data":
-                    pcm_bytes = data_bytes[pos + 8 : pos + 8 + chunk_size]
-                    return pcm_bytes, sr
-                pos += 8 + chunk_size
-            return data_bytes[44:], sr
-        except Exception:
-            return data_bytes[44:], default_sample_rate
-    return data_bytes, default_sample_rate
+    if not data_bytes.startswith(b"RIFF"):
+        return data_bytes, default_sample_rate
+    if len(data_bytes) < WAV_HEADER_MIN_BYTES:
+        raise AudioFormatError(
+            f"RIFF body is {len(data_bytes)} bytes, shorter than the {WAV_HEADER_MIN_BYTES}-byte header"
+        )
+    sr = struct.unpack("<I", data_bytes[24:28])[0]
+    pos = 12
+    while pos < len(data_bytes) - 8:
+        chunk_id = data_bytes[pos : pos + 4]
+        chunk_size = struct.unpack("<I", data_bytes[pos + 4 : pos + 8])[0]
+        if chunk_id == b"data":
+            return data_bytes[pos + 8 : pos + 8 + chunk_size], sr
+        pos += 8 + chunk_size
+    raise AudioFormatError("RIFF body has no data chunk")
 
 
 class AudioRingBuffer:
