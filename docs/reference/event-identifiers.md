@@ -127,6 +127,7 @@ CloudEvents exports (`to_cloudevent_dict()`) lower-case the identifier.
 | `runefoble.events.game_session.npc_mood_updated` | `NPCMoodUpdated` | `runefoble_events.settlement_workers` |
 | `runefoble.events.game_session.npc_relationship_formed` | `NPCRelationshipFormed` | `runefoble_events.settlement_workers` |
 | `runefoble.events.game_session.npc_worker_assigned` | `NPCWorkerAssigned` | `runefoble_events.settlement_workers` |
+| `runefoble.events.game_session.npc_worker_inventory_restocked` | `NPCWorkerInventoryRestocked` | `runefoble_events.settlement_workers` |
 | `runefoble.events.game_session.npc_worker_relieved` | `NPCWorkerRelieved` | `runefoble_events.settlement_workers` |
 | `runefoble.events.game_session.profile_updated` | `ProfileUpdated` | `runefoble_events.user_profile` |
 | `runefoble.events.game_session.settlement_chartered` | `SettlementCharteredEvent` | `runefoble_events.settlements` |

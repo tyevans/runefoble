@@ -97,9 +97,9 @@ async def relieve_worker(
     agg.relieve(establishment_id=establishment_id, reason=req.reason)
     events = list(agg.uncommitted_events)
     await get_worker_repository().save(agg)
+    await sync_establishment_operations(establishment_id)
     if bus := get_event_bus():
         await publish_aggregate_events(bus, STREAM_WEST_MARCHES, events)
-    await sync_establishment_operations(establishment_id)
     return agg.state
 
 

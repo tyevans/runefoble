@@ -75,6 +75,8 @@ Owned by `game_session` (ADR-0015 decision a, TASK-0742). Defined in `libs/runef
 - **`NPCWorkerRelieved`** (`runefoble.events.game_session.npc_worker_relieved`): Emitted when an NPC worker is relieved, dismissed, or fired from an establishment. Broadcast on Redis Stream `runefoble.events.west_marches`. Fields: `npc_id`, `establishment_id`, `reason`, `metadata`.
 - **`NPCMoodUpdated`** (`runefoble.events.game_session.npc_mood_updated`): Emitted when an NPC worker's mood, temperament, or patience shifts. Broadcast on Redis Stream `runefoble.events.west_marches`. Fields: `npc_id`, `mood`, `temperament`, `patience_delta`, `metadata`.
 - **`NPCRelationshipFormed`** (`runefoble.events.game_session.npc_relationship_formed`): Emitted when an interpersonal social or supply tie is established between NPCs. Broadcast on Redis Stream `runefoble.events.west_marches`. Fields: `source_npc_id`, `target_npc_id`, `relation_type`, `intensity`, `notes`, `metadata`.
+  The relationship route raises no event when the same tie already exists, so a retried call adds no second tie.
+- **`NPCWorkerInventoryRestocked`** (`runefoble.events.game_session.npc_worker_inventory_restocked`): Emitted when a manager restocks an item through `POST /api/v1/npcs/{npc_id}/inventory/restock`. Broadcast on Redis Stream `runefoble.events.west_marches`. Fields: `npc_id`, `destination` (`shelf` or `backroom`), `item`. An item with a known `item_id` gets the added quantity and the new unit price. Another `destination` value answers 422.
 
 
 ### Frontier Mercenary Bounty & Retrieval Contract Events (`aggregate_type: MercenaryBounty`)
