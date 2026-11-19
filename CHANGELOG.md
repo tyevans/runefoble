@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Security
+- Token roles and claims grant no SpiceDB relation. The role-to-relation mapping and the claim-driven membership and session sync are removed; memberships come only from the public invite and join routes. (TASK-0855)
 - Removing a dynamic MCP tool revokes its SpiceDB permissions first. A SpiceDB failure answers 503 `authorization_unavailable` and keeps the tool. (TASK-0847)
 - game_session checks `session.control` on `POST /api/v1/sessions/{id}/dm-override` and `/atmosphere`. Before, any signed-in user who called game_session directly could direct any session; only the gateway checked. (found by TASK-0845)
 - Voice signaling takes the user id and role only from the verified token and SpiceDB session permissions; a join frame cannot change either, and `/ws/voice` and `/ws/mobile-companion` ignore the `role` query parameter. (TASK-0811)
@@ -40,6 +41,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Gateway WebSocket routes admit a connection only with a verified `runefoble.bearer.<jwt>` subprotocol, checked before accept. Refused handshakes close with 1008. Removed the `?user_id=`, `?token=`, `x-user-id`, and `guest_user` identity paths on WebSocket and voice/companion signaling routes. (TASK-0522)
 
 ### Removed
+- The MCP plan runner lives in `gateway_mcp/tools/plan.py` and reads one key per step field; the `name`, `tool_name`, `arguments` and `args` aliases are removed. (TASK-0747)
 - The inference worker has no mock backend: `RUNEFOBLE_WORKER_BACKEND=mock` is refused at start-up, and a model reply that lacks a required field answers 503 instead of a heuristic result. The Helm default backend is `openai_compatible`. (TASK-0740)
 - Each HTTP route serves one path. The bare duplicates of `/api/v1` routes and other alias paths are removed, and a route inventory test keeps it so. (TASK-0857)
 - The Redis bus drops its unused consumer-group methods and the raw-field fallback. `deserialize_event` lives in `runefoble_platform.event_deserializer`. (TASK-0852)
@@ -87,6 +89,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Campaign analytics worker `process_event` alias, tracking property wrappers, and package root re-exports. Callers use `handle_event`. (TASK-0500)
 
 ### Added
+- game_session has `POST /api/v1/sessions/{session_id}/end` (`session.control`). board_state refuses a monster token from a caller without the board DM permission. Two owner routes that skipped their event publish now publish it. (TASK-0846)
+- The Watcher narrates each approved audience modifier as a private DM whisper (`audience_narration`). The DM sends it to the table, edited or not, with `POST /api/v1/watcher/whispers/{whisper_id}/dispatch`, which publishes `WatcherNarrativeDispatched`. When the inference worker fails, the DM gets a `narration_unavailable` notice and nothing reaches the players. (TASK-0838)
 - An approved audience `item_drop` modifier places a `loot` token with the item name on the board cell it names. A loot token does not block movement. (TASK-0837)
 - Stream consumers reclaim messages left pending by a dead worker (`consumer_reclaim_min_idle_ms`, `consumer_reclaim_every_polls`). Every consumer handler is idempotent; soundscape keeps a bounded ledger of handled source event ids per session. (TASK-0854)
 - An import-linter contract keeps `gateway_api` from importing service packages, and `docs/reference/` has a route ownership table generated from the gateway proxy tables. (TASK-0598)
@@ -176,6 +180,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
 
 ### Changed
+- Gateway and MCP callers take owner paths from one route table (`runefoble_platform.service_client.owner_routes`). An id with a dot segment answers 404 before any owner call. (TASK-0861)
+- The gateway overlay router is split into `gateway_api.overlay` (camera relay, frame dispatch, room). Frame types, close codes and routes are unchanged. (TASK-0860)
+- More blackbox tests set up aggregate state through public routes instead of writing aggregates directly. (TASK-0874)
 - Playwright BDD journeys sign in through the real Zitadel OIDC flow. The global setup creates persona users through the Zitadel management API; forged tokens and the dev auth mode are removed from the e2e harness. (TASK-0525)
 - The auth library (`runefoble_auth`) holds only identity and authorization code; other modules moved to their owners. (TASK-0721)
 - The store-outage test helper records appends (`record_appends`); six test modules drop their copied outage stubs. (TASK-0877)

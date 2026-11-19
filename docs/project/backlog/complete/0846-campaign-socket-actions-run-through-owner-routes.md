@@ -1,7 +1,7 @@
 ---
 id: '0846'
 title: Campaign WebSocket Actions Run Through Owner Routes
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies:
 - TASK-0845
@@ -17,7 +17,7 @@ target_release: 0.9.0
 # TASK-0846: Campaign WebSocket Actions Run Through Owner Routes
 
 ## Status
-Refined
+Complete
 
 
 Decisions (orchestrator, 2026-11-18), from the inventory in `.audit/work/0846.md`:
@@ -79,3 +79,6 @@ None. Platform quality work. The App Shell frame contract does not change.
 ## Audit Provenance
 - Severity: high
 - Source audits: `refactor-r2/gateways.md` (F1, F10, F12)
+
+## Completion Note
+Part (a) only, as decided. The gateway relay is TASK-0883.

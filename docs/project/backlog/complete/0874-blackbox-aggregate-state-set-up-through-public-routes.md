@@ -1,7 +1,7 @@
 ---
 id: '0874'
 title: Blackbox Tests Set Up Aggregate State Through Public Routes
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies:
 - TASK-0876
@@ -17,7 +17,7 @@ target_release: 0.9.0
 # TASK-0874: Blackbox Tests Set Up Aggregate State Through Public Routes
 
 ## Status
-Refined.
+Complete
 
 ## Summary
 Several blackbox tests run domain methods and call `repo.save` before the HTTP call. The HTTP path never creates the state. Round-trip checks belong in unit tests. Blackbox tests must create state through public routes and read it back through public routes.

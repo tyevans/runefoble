@@ -1,7 +1,7 @@
 ---
 id: '0855'
 title: Remove the Role-to-Relation Claim Mapping That TASK-0534 Left in the Auth Lib
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies:
 - TASK-0534
@@ -17,7 +17,7 @@ target_release: 0.9.0
 # TASK-0855: Remove the Role-to-Relation Claim Mapping That TASK-0534 Left in the Auth Lib
 
 ## Status
-Refined
+Complete
 
 Decision (orchestrator, 2026-11-18): scope confirmed. TASK-0534 step 2 was never done; this task deletes the role-to-relation claim mapping. It starts after TASK-0721, whose step 4 keeps the claim sync modules unchanged.
 

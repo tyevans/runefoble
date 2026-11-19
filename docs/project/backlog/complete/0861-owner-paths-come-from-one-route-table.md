@@ -1,7 +1,7 @@
 ---
 id: '0861'
 title: Owner Paths Come From One Route Table in the Shared Library
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies:
 - TASK-0746
@@ -15,7 +15,7 @@ target_release: 0.9.0
 # TASK-0861: Owner Paths Come From One Route Table in the Shared Library
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Owner paths are defined in three styles. `libs/runefoble_platform/src/runefoble_platform/service_client/owner_routes.py` has nine routes. The MCP `OwningServices` builds seven more paths inline. The gateway character routes build paths with a helper, `character_path` in `character_view.py`. The proxy table uses `owner_segments`. The fix adds the missing routes to `owner_routes` and makes every caller use it. Wire paths do not change.

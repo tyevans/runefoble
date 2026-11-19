@@ -1,7 +1,7 @@
 ---
 id: '0860'
 title: Overlay Router Splits Camera Relay, Frame Dispatch, and Routes
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies:
 - TASK-0743
@@ -16,7 +16,7 @@ target_release: 0.9.0
 # TASK-0860: Overlay Router Splits Camera Relay, Frame Dispatch, and Routes
 
 ## Status
-Refined
+Complete
 
 ## Summary
 `gateway/api/src/gateway_api/routers/overlay.py` (290 lines) holds HTTP routes, two camera relays, error mapping, and a frame dispatcher. The two camera relays repeat the same owner call, error mapping, and broadcast. The dispatcher is an `if`/`elif` chain on action sets. The spectator route imports the overlay endpoint inside its function body. The fix splits the module by responsibility and registers the spectator route from the same endpoint object.

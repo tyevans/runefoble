@@ -1,7 +1,7 @@
 ---
 id: '0838'
 title: The Watcher Narrates an Approved Audience Modifier
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies:
 - TASK-0843
@@ -21,7 +21,7 @@ target_release: 0.9.0
 # TASK-0838: The Watcher Narrates an Approved Audience Modifier
 
 ## Status
-Refined
+Complete
 
 Decision (user, 2026-11-18): the narration goes to the DM first, as a private whisper. The DM sends it to the table or drops it. When the AI is unavailable, the DM gets a short notice and nothing goes to the players.
 

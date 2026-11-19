@@ -1,7 +1,7 @@
 ---
 id: '0747'
 title: MCP Action Plan Runner Is Split Into Validate, Map, and Propose Steps
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0746
@@ -17,7 +17,7 @@ target_release: 0.9.0
 # TASK-0747: MCP Action Plan Runner Is Split Into Validate, Map, and Propose Steps
 
 ## Status
-Refined. Found by the refactor audit round refactor-r1 and checked against the code on 2026-11-17.
+Complete
 
 ## Summary
 `execute_agent_action_plan` is 104 lines. It mixes validation, parameter mapping, and HTTP proposing, and it finds tools through a global that can be `None`. When it is `None`, every step fails with a vague message.
@@ -35,7 +35,7 @@ Refined. Found by the refactor audit round refactor-r1 and checked against the c
 - US-0008
 
 ## Detailed Specification & Implementation Plan
-1. Add `tools/plan.py` with `plan_step(action) -> StepRequest`, `validate_step(...)`, and `run_plan(steps, propose)`.
+1. Add `gateway/mcp/src/gateway_mcp/tools/plan.py` with `plan_step(action) -> StepRequest`, `validate_step(...)`, and `run_plan(steps, propose)`.
 2. Pass a `ToolCatalog` port (callable returning tool names) from the container (TASK-0746). Pass the Watcher call as a port.
 3. Keep one parameter key per field. Keep the response shape: `tests/test_blackbox_mcp_orchestration_and_resources.py` pins it.
 
