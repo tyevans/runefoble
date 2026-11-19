@@ -1,48 +1,61 @@
 ---
 id: '0706'
-title: App Shell Receives the Session Id and the Chronicle Journey Runs End to End
+title: One Session Id From Campaign Session to Game Session Aggregate
 status: Refined
 created: 2026-11-17
 dependencies:
 - TASK-0695
 governing_adrs:
+- ADR-0011
 - ADR-0013
 - ADR-0014
-governing_prds: []
-governing_stories: []
+- ADR-0015
+governing_prds:
+- PRD-0023
+governing_stories:
+- US-0065
 target_bc: game_session
 target_release: 0.9.0
 ---
-# TASK-0706: App Shell Receives the Session Id and the Chronicle Journey Runs End to End
+# TASK-0706: One Session Id From Campaign Session to Game Session Aggregate
 
 ## Status
-Refined. Blocked part of TASK-0695.
+Refined
+
+Review 2026-11-18: rescoped to the id model. Decision (orchestrator): one id per session, option A of `.audit/work/0706.md`. The e2e web server set and the chronicle journey moved to TASK-0842.
 
 ## Summary
-The App Shell never receives the game_session aggregate id, so it cannot start combat, and the chronicle timeline journey cannot run. The e2e web server also starts only the gateway and the frontend.
+A campaign session has the id `session-<hex>` (`services/game_session/src/game_session/campaign/service_campaigns.py`, lines 132 and 217). The `GameSession` aggregate has a UUID id, and only `POST /api/v1/sessions/create` makes one. The App Shell holds the campaign session id, and the session read, start and combat routes refuse it. One session must have one id.
 
 ## Problem Statement
-- Combat start needs the session aggregate id. The lobby launch response or session read does not give it to the App Shell.
-- `playwright.config.ts` starts only the gateway and the frontend.
+The App Shell cannot read, start or run combat in the session it launched. Two id models for one thing break `docs/reference/identifiers-and-uuid-policy.md`.
 
 ## Documentation & Architecture Review
-- AGENTS.md hard invariants and DoR 9 (no compatibility shims).
-- ADR-0013, ADR-0014.
+- `docs/reference/identifiers-and-uuid-policy.md` (ADR-0015): no second id model, no random substitute ids.
+- `docs/how-to/coordinate-game-session-lobby-and-readiness.md`, `docs/how-to/orchestrate-app-shell-views-and-session-transitions.md`.
+- `docs/reference/game-session-child-indexes.md`: the campaign session list links child aggregates.
 
 ## Product & User Story References
-None. Platform quality work.
+- [`prd-0023-unified-frontend-application-shell-and-campaign-hub.md`](../../product/accepted/prd-0023-unified-frontend-application-shell-and-campaign-hub.md)
+- [`us-0065-game-session-lobby-readiness-and-launch.md`](../../user_stories/accepted/us-0065-game-session-lobby-readiness-and-launch.md)
 
 ## Detailed Specification & Implementation Plan
-1. Return the session id from the launch response (or a public session read) and pass it to the session view.
-2. Start the services the journey needs (game_session, campaign_analytics, campaign_lore) in the e2e web server.
-3. Write the chronicle timeline Gherkin scenario and steps.
+1. `POST /api/v1/campaigns/{id}/sessions` creates the `GameSession` aggregate in the same call, with a new UUID. The campaign session entry stores that UUID as its id. The same applies to the seeded first session (line 132). The `session-` prefix goes.
+2. The campaign session response and list return that UUID. The session read, start, combat and turn routes accept it.
+3. The App Shell launch and the session view use that id. No second id is stored in the client.
+4. Update every test and e2e helper that builds or asserts a `session-` id.
+5. Update the docs above.
 
 ## Frontdoor Blackbox Test Plan
-- Playwright BDD: launch a session, start combat, take a turn, open the chronicle, see the turn entry.
+- Create a campaign session through the public route. `GET /api/v1/sessions/{id}` with the returned id answers 200. Start the session, start combat and advance a turn with the same id.
+- The campaign session list shows the same id.
+- Through the gateway: the same flow answers 200 for the DM.
+
+## INVEST Criteria Evaluation
+Independent of TASK-0842. Small: one create path, call sites and tests. Testable through public routes.
 
 ## Definition of Done
-- The chronicle scenario passes in headless Playwright.
-- `uv run pytest`, `make lint` and `make health-check` pass. No file over 500 lines.
+1. The test plan passes. 2. No code builds a `session-` id. 3. Docs are current. 4. `make health-check` passes.
 
 ## Audit Provenance
 - Severity: medium

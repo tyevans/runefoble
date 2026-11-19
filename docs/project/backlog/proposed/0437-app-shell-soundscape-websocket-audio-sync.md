@@ -1,7 +1,7 @@
 ---
 id: '0437'
 title: App Shell Soundscape Real-Time WebSocket Audio Synchronization & Foley Playback
-status: Refined
+status: Proposed
 created: 2026-09-28
 dependencies:
 - TASK-0109
@@ -25,7 +25,9 @@ target_release: 0.9.0
 # TASK-0437: App Shell Soundscape Real-Time WebSocket Audio Synchronization & Foley Playback
 
 ## Status
-Refined
+Proposed
+
+Review 2026-11-18: moved back from Refined. No server sends soundscape frames to the session socket, so an App Shell handler has no producer to test against (Hard Invariant 7). Before refinement: (1) choose the session frame names for the five `runefoble.events.soundscape.*` events; (2) split into a backend bridge (soundscape publishes the frames, the gateway accepts them), the App Shell mesh events, and the `<runefoble-soundscape-controls>` listener. Also fix the stale `us-0065` link (correct file: `us-0065-game-session-lobby-readiness-and-launch.md`), the `frontend/src/runefoble-app.ts` path and the `npm run` commands. Evidence: `.audit/work/0437.md`.
 
 Audit 2026-11-17: partly done or unverified (see TASK-0667). Re-scope at verification.
 
@@ -51,7 +53,7 @@ While the `<runefoble-soundscape-controls>` Lit component provides stem volume s
 - [`prd-0023-unified-frontend-application-shell-and-campaign-hub.md`](../../product/accepted/prd-0023-unified-frontend-application-shell-and-campaign-hub.md)
 - [`us-0039-encounter-tension-adaptive-scoring-and-foley.md`](../../user_stories/accepted/us-0039-encounter-tension-adaptive-scoring-and-foley.md)
 - [`us-0053-dm-manual-soundboard-and-foley-triggers.md`](../../user_stories/accepted/us-0053-dm-manual-soundboard-and-foley-triggers.md)
-- [`us-0065-game-session-staging-lobby-and-pre-game-assembly.md`](../../user_stories/accepted/us-0039-encounter-tension-adaptive-scoring-and-foley.md)
+- [`us-0065-game-session-lobby-readiness-and-launch.md`](../../user_stories/accepted/us-0039-encounter-tension-adaptive-scoring-and-foley.md)
 
 ## Detailed Specification & Implementation Plan
 1. **App Shell WebSocket Message Handlers (`frontend/src/runefoble-app.ts`)**:
