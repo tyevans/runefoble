@@ -204,11 +204,13 @@ A dynamic tool handler is a JSON result template. The gateway runs no caller cod
 |---|---|
 | `"${name}"` | The argument `name`, type kept |
 | `"text ${name}"` | A string with argument values inserted |
-| `{"$expr": "..."}` | A number. Allowed: numbers, parameter names, `+ - * / // %`, unary signs, parentheses, `max`, `min`, `abs`, `round`. Limits: 200 characters, 64 elements |
+| `{"$expr": "..."}` | A number. Allowed: numbers, parameter names, `+ - * / // %`, unary signs, parentheses, `max`, `min`, `abs`, `round`. Limits: 200 characters, 64 elements. Each constant and each argument is a finite number from -1000000000 to 1000000000. The digit count of `round` is an integer from -15 to 15. A float result must be finite |
 | `{"$dice": "NdS+M"}` | Total of N S-sided dice plus M. Limits: 100 dice, 1000 sides |
 | object, list | Evaluated member by member. Limit: 8 levels, 200 elements |
 
-Registration returns HTTP 400 for an unknown parameter name, an unknown `$` directive, a malformed expression, or a limit breach. Execution returns HTTP 400 for an arithmetic error. Calls from one tool to another tool are not supported.
+Registration returns HTTP 400 for an unknown parameter name, an unknown `$` directive, a malformed expression, or a limit breach. Execution returns HTTP 400 for an arithmetic error, an argument outside the number limit, a `round` digit count outside the limit, or a result that is not finite. On the MCP path, the same errors are tool errors. Any other execution failure returns HTTP 500 with the fixed detail `Dynamic tool execution failed.`. The server logs the traceback. The detail never holds the cause. Calls from one tool to another tool are not supported.
+
+These limits keep every handler in bounded time and memory, so the handler runs on the event loop with no time limit and no subprocess (TASK-0737, ADR-0020). A handler cannot call an upstream service. If a handler step that calls an upstream service is added, that step must have a time limit.
 
 Parameters are validated with JSON Schema Draft-07 at registration.
 

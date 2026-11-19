@@ -7,6 +7,7 @@ compiled, evaluated, or executed (ADR-0020).
 from __future__ import annotations
 
 import ast
+import math
 import operator
 import random
 import re
@@ -19,6 +20,7 @@ MAX_CONSTANT = 10**9
 MAX_DICE = 100
 MAX_SIDES = 1000
 MAX_MODIFIER = 10**6
+MAX_ROUND_DIGITS = 15
 
 _BINARY: dict[type[ast.operator], Callable[[Any, Any], Any]] = {
     ast.Add: operator.add,
@@ -32,7 +34,26 @@ _UNARY: dict[type[ast.unaryop], Callable[[Any], Any]] = {
     ast.UAdd: operator.pos,
     ast.USub: operator.neg,
 }
-_FUNCTIONS: dict[str, Callable[..., Any]] = {"max": max, "min": min, "abs": abs, "round": round}
+
+
+def _bounded_round(value: Any, ndigits: Any = None) -> Any:
+    """Round like `round`, but refuse a digit count that would make the call slow (TASK-0737).
+
+    `round(5, -10**9)` computes `10**(10**9)`, which blocks the event loop for minutes.
+    """
+    if ndigits is not None and not (isinstance(ndigits, int) and abs(ndigits) <= MAX_ROUND_DIGITS):
+        raise HandlerError(
+            f"round digits must be an integer from -{MAX_ROUND_DIGITS} to {MAX_ROUND_DIGITS}"
+        )
+    return round(value) if ndigits is None else round(value, ndigits)
+
+
+_FUNCTIONS: dict[str, Callable[..., Any]] = {
+    "max": max,
+    "min": min,
+    "abs": abs,
+    "round": _bounded_round,
+}
 _DICE = re.compile(r"^(?P<count>\d{1,3})d(?P<sides>\d{1,4})(?P<mod>[+-]\d{1,7})?$")
 
 
@@ -79,18 +100,40 @@ def _check_node(node: ast.AST, names: frozenset[str] | None) -> None:
     elif isinstance(node, ast.Call):
         if not (isinstance(node.func, ast.Name) and node.func.id in _FUNCTIONS) or node.keywords:
             raise HandlerError("$expr may call max, min, abs, and round with positional arguments")
+        if node.func.id == "round" and len(node.args) == 2:
+            digits = _literal_number(node.args[1])
+            if digits is not None:
+                _bounded_round(0, digits)
     elif not isinstance(node, ast.Expression | ast.operator | ast.unaryop | ast.Load):
         raise HandlerError(f"$expr element {type(node).__name__} is not allowed")
 
 
+def _literal_number(node: ast.AST) -> int | float | None:
+    """Return the value of a number literal with an optional sign, else None."""
+    sign = 1
+    if isinstance(node, ast.UnaryOp) and type(node.op) in _UNARY:
+        sign = -1 if isinstance(node.op, ast.USub) else 1
+        node = node.operand
+    if isinstance(node, ast.Constant) and isinstance(node.value, int | float):
+        return sign * node.value
+    return None
+
+
 def evaluate_expression(tree: ast.Expression, arguments: Mapping[str, Any]) -> int | float:
-    """Evaluate a parsed, checked expression against tool arguments."""
+    """Evaluate a parsed, checked expression against tool arguments.
+
+    Every number in the tree is at most `MAX_CONSTANT` in size, and the tree has at most
+    `MAX_EXPRESSION_NODES` elements, so the evaluation runs in bounded time.
+    """
     try:
-        return _walk(tree.body, arguments)
+        result = _walk(tree.body, arguments)
     except ZeroDivisionError as exc:
         raise HandlerError(f"Arithmetic error: {exc}") from exc
     except (TypeError, OverflowError) as exc:
         raise HandlerError(f"Arithmetic error: {exc}") from exc
+    if isinstance(result, float) and not math.isfinite(result):
+        raise HandlerError("Arithmetic error: the result is not a finite number")
+    return result
 
 
 def _walk(node: ast.AST, arguments: Mapping[str, Any]) -> Any:
@@ -100,6 +143,10 @@ def _walk(node: ast.AST, arguments: Mapping[str, Any]) -> Any:
         value = arguments.get(node.id)
         if isinstance(value, bool) or not isinstance(value, int | float):
             raise HandlerError(f"Argument '{node.id}' must be a number in $expr")
+        if abs(value) > MAX_CONSTANT or not math.isfinite(value):
+            raise HandlerError(
+                f"Argument '{node.id}' must be a finite number from -{MAX_CONSTANT} to {MAX_CONSTANT}"
+            )
         return value
     if isinstance(node, ast.BinOp):
         return _BINARY[type(node.op)](_walk(node.left, arguments), _walk(node.right, arguments))

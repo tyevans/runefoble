@@ -158,11 +158,11 @@ print(result.content[0].text)  # {"effective_damage": 20, "drop": 10}
 A tool handler is data. The gateway never compiles or runs caller code (ADR-0020). The `handler` field is a non-empty JSON object. The tool returns this object after evaluation:
 
 - `"${name}"` gives the argument `name` with its type kept. `"${who} hits for ${base}"` gives a string with the values inserted.
-- `{"$expr": "max(0, base - dist * 2)"}` gives a number. Use numbers, parameter names, `+ - * / // %`, parentheses, and `max`, `min`, `abs`, `round`.
+- `{"$expr": "max(0, base - dist * 2)"}` gives a number. Use numbers, parameter names, `+ - * / // %`, parentheses, and `max`, `min`, `abs`, `round`. Each number and each argument must be finite and from -1000000000 to 1000000000. The digit count of `round` must be from -15 to 15.
 - `{"$dice": "2d6+3"}` gives the total of the dice plus the modifier. The limits are 100 dice and 1000 sides.
 - An object or a list holds more of these values. Nesting is limited to 8 levels.
 
-Registration refuses a handler with an unknown parameter name, an unknown `$` directive, a bad expression, or a limit breach. The response is HTTP 400 and no tool is added. A definition with no `handler`, or with the removed `handler_code` field only, returns HTTP 422. A runtime arithmetic error, such as division by zero, returns HTTP 400 at execution.
+Registration refuses a handler with an unknown parameter name, an unknown `$` directive, a bad expression, or a limit breach. The response is HTTP 400 and no tool is added. A definition with no `handler`, or with the removed `handler_code` field only, returns HTTP 422. A runtime arithmetic error, such as division by zero, returns HTTP 400 at execution. An argument outside the number limit and a result that is not finite also return HTTP 400.
 
 ---
 
