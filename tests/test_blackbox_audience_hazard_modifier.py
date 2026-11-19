@@ -97,6 +97,26 @@ def test_approved_hazard_modifier_places_a_hazard_on_the_board(shared_redis: Moc
         assert shared_redis.streams.get(AUDIENCE_DLQ, []) == []
 
 
+def test_approved_chasm_hazard_modifier_places_a_chasm_on_the_board(shared_redis: MockAsyncRedis):
+    """The forge hazard types are in the shared table, so an approved chasm is placed."""
+    campaign_id = create_dm_campaign("user-test")
+    session_id = f"sess-{uuid4().hex[:8]}"
+
+    with TestClient(board_app, headers=bearer("user-test")) as client:
+        _create_board(client, campaign_id, session_id)
+        _publish(
+            shared_redis,
+            _modifier(campaign_id, session_id, parameters={"x": 7, "y": 8, "hazard_type": "chasm"}),
+        )
+
+        assert wait_until(
+            lambda: _hazard_at(client, session_id, 7, 8) == "chasm",
+            timeout_s=10.0,
+            interval_s=0.05,
+        )
+        assert shared_redis.streams.get(AUDIENCE_DLQ, []) == []
+
+
 def test_vetoed_hazard_and_weather_modifiers_change_nothing(shared_redis: MockAsyncRedis):
     campaign_id = create_dm_campaign("user-test")
     session_id = f"sess-{uuid4().hex[:8]}"
