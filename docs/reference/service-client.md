@@ -12,9 +12,37 @@ The gateway uses this client for every proxy call. Each proxy call goes through 
 | `errors.py` | `UpstreamError`, `UpstreamUnavailableError`, `UpstreamFailureError` |
 | `headers.py` | `build_upstream_headers` |
 | `health.py` | `ProbeStatus`, `probe_health` |
+| `owners.py` | `OWNER_URL_FIELDS`: the owner service names and their settings fields |
+| `owner_routes.py` | `OwnerRoute` and one function for each shared owner route |
 | `paths.py` | `path` |
+| `replies.py` | `decode_json_body`, `error_detail` |
 
-The package exports `ServiceClient`, `UpstreamReply`, `UpstreamError`, `UpstreamUnavailableError`, `UpstreamFailureError`, `ProbeStatus`, `probe_health`, and `path`.
+The package exports `ServiceClient`, `UpstreamReply`, `UpstreamError`, `UpstreamUnavailableError`, `UpstreamFailureError`, `ProbeStatus`, `probe_health`, `path`, `OWNER_URL_FIELDS`, `OwnerRoute`, `decode_json_body`, and `error_detail`. The module `owner_routes` is imported by name.
+
+## Owner routes
+
+`owner_routes` holds one function for each owner route that more than one caller uses. Each function returns an `OwnerRoute(method, path)`. The caller sends the body. Both gateways use these functions, so a route has one definition.
+
+| Function | Route |
+|---|---|
+| `get_character(character_id)` | `GET /api/v1/characters/{id}` (character_sheet) |
+| `change_health(character_id)` | `POST /api/v1/characters/{id}/health` |
+| `apply_penalty(character_id)` | `POST /api/v1/characters/{id}/penalties` |
+| `apply_condition(character_id)` | `POST /api/v1/characters/{id}/conditions` |
+| `cast_spell(character_id)` | `POST /api/v1/characters/{id}/spells/cast` |
+| `move_token(session_id, token_id)` | `POST /api/v1/boards/{session_id}/tokens/{token_id}/move` (board_state) |
+| `get_monster(name)` | `GET /api/v1/compendium/monsters/{name}` (rules_compendium) |
+| `balance_encounter()` | `POST /api/v1/compendium/encounters/balance` (rules_compendium) |
+
+Path segments are encoded with `path()`. A value cannot change the route.
+
+## Gateway proxy table
+
+A pure pass-through route is a row of `ProxyRoute` in `gateway_api/proxy_table.py`. Each module in `gateway_api/routers/` that holds only pass-through routes lists its rows in `ROUTES` and calls `register_proxy_routes(router, ROUTES)`. A row names the method, the public path, the owner path as segments, the service, the reply mode (`json` or `bytes`), the body mode (`none`, `raw`, or `json`), the query mode, the caller check, and the timeout. The generated endpoint declares its path parameters, query defaults, and body to FastAPI, so the OpenAPI document keeps the same parameters and schemas.
+
+A route with a check, a transform, or a second owner call stays hand-written. Example: the haggling route in `downtime_proxy.py`.
+
+A row whose owner path has a segment that the owner cannot encode (`.`, `..`, or empty) returns `404`.
 
 ## `ServiceClient`
 
@@ -152,7 +180,7 @@ The probe sends no `Authorization` header. It sends the service credential and t
 - `registry.health_probe_timeout_s` is the timeout for each health probe. It comes from `RUNEFOBLE_GATEWAY_HEALTH_PROBE_TIMEOUT_S` (default `1.0`).
 - The lifespan also reads `RUNEFOBLE_SERVICE_CREDENTIAL` (through `expected_service_credential`). The gateway refuses to start when it is unset or blank. Helm injects the value from the credentials Secret into `gateway-api`.
 
-Service names and settings fields:
+Service names and settings fields. The map `OWNER_URL_FIELDS` in `runefoble_platform.service_client.owners` is the one source. Both gateways read it:
 
 | Service name | `PlatformSettings` field | Environment variable |
 |---|---|---|
@@ -173,5 +201,6 @@ Every service URL field defaults to `None`. No field has an in-cluster code defa
 ## Related
 
 - How-to: [Call Owning Services Through the Gateway](../how-to/call-owning-services-through-the-gateway.md)
+- ADR-0015 (audit remediation decisions), decision (b): the gateway holds no substitute value.
 - [Ports & Endpoints Routing Table](ports-and-endpoints.md#gateway-proxy-identity-and-errors)
 - ADR-0015 (audit remediation decisions), decision (b): one shared typed client, no substitute values.

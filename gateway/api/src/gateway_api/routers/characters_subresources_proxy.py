@@ -20,6 +20,7 @@ from gateway_api.character_models import (
     HealthChangeRequest,
 )
 from gateway_api.character_view import character_path, forward_character_state
+from runefoble_platform.service_client import owner_routes
 
 router = APIRouter(tags=["characters-subresources"])
 
@@ -35,8 +36,9 @@ async def modify_health(
     character_id: str, req: HealthChangeRequest, request: Request
 ) -> CharacterResponse:
     """Change HP. character_sheet checks `edit` (or the service credential) and stabilizes at 0 HP."""
+    route = owner_routes.change_health(character_id)
     return await forward_character_state(
-        request, "POST", character_path(character_id, "/health"), req.model_dump(exclude_unset=True)
+        request, route.method, route.path, req.model_dump(exclude_unset=True)
     )
 
 
@@ -112,11 +114,9 @@ async def apply_condition(
     character_id: str, req: ApplyConditionRequest, request: Request
 ) -> CharacterResponse:
     """Apply a tactical condition. character_sheet checks `edit` (or the service credential)."""
+    route = owner_routes.apply_condition(character_id)
     return await forward_character_state(
-        request,
-        "POST",
-        character_path(character_id, "/conditions"),
-        req.model_dump(exclude_unset=True),
+        request, route.method, route.path, req.model_dump(exclude_unset=True)
     )
 
 

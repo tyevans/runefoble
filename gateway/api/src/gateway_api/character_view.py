@@ -14,6 +14,7 @@ from __future__ import annotations
 from typing import Any
 
 from fastapi import HTTPException, Request, status
+from gateway_api.campaign_titles import campaign_titles
 from gateway_api.character_models import CharacterResponse, CreateCharacterRequest
 from gateway_api.proxy import forward_json
 
@@ -42,7 +43,17 @@ async def forward_character_state(
         json_body=body,
         params=params,
     )
-    return to_character_response(view, None)
+    return await respond_with_campaign_title(request, view)
+
+
+async def respond_with_campaign_title(request: Request, view: dict[str, Any]) -> CharacterResponse:
+    """Build the public response and attach the campaign title, read through game_session (G-12).
+
+    Every character reply carries the same title: a list, a read and a mutation alike.
+    """
+    campaign_id = view.get("campaign_id")
+    title = (await campaign_titles(request, {campaign_id}))[campaign_id] if campaign_id else None
+    return to_character_response(view, title)
 
 
 def unsupported_create_fields(req: CreateCharacterRequest) -> list[str]:

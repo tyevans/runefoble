@@ -10,10 +10,9 @@ the caller unchanged.
 
 from __future__ import annotations
 
-import json
 from typing import Any
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from gateway_api.auth import require_zanzibar_permission
 from gateway_api.character_models import (
     CastSpellRequest,
@@ -24,9 +23,15 @@ from gateway_api.character_view import (
     CHARACTER_SERVICE,
     character_path,
     forward_character_state,
-    to_character_response,
+    respond_with_campaign_title,
 )
-from gateway_api.proxy import forward_bytes, forward_json
+from gateway_api.proxy import (
+    UPSTREAM_INVALID_DETAIL,
+    decode_upstream_json,
+    forward_bytes,
+    forward_json,
+)
+from runefoble_platform.service_client import owner_routes
 
 router = APIRouter(tags=["characters-subresources"])
 
@@ -43,11 +48,9 @@ async def cast_spell(
     character_id: str, req: CastSpellRequest, request: Request
 ) -> CharacterResponse:
     """Cast a spell and deduct the slot tier. character_sheet checks `edit`."""
+    route = owner_routes.cast_spell(character_id)
     return await forward_character_state(
-        request,
-        "POST",
-        character_path(character_id, "/spells/cast"),
-        req.model_dump(exclude_unset=True),
+        request, route.method, route.path, req.model_dump(exclude_unset=True)
     )
 
 
@@ -75,13 +78,17 @@ async def prepare_spell(
 )
 async def update_guardrails(character_id: str, request: Request) -> CharacterResponse:
     """Store stand-in guardrails. The raw body reaches character_sheet, which validates it."""
+    guardrails_path = character_path(character_id, "/guardrails")
     res = await forward_bytes(
         request,
         service=CHARACTER_SERVICE,
         method="PUT",
-        path=character_path(character_id, "/guardrails"),
+        path=guardrails_path,
     )
-    return to_character_response(json.loads(res.body), None)
+    view = decode_upstream_json(CHARACTER_SERVICE, "PUT", guardrails_path, res.body)
+    if not isinstance(view, dict):
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=UPSTREAM_INVALID_DETAIL)
+    return await respond_with_campaign_title(request, view)
 
 
 @router.get("/api/v1/characters/{character_id}/guardrails", dependencies=VIEW)

@@ -18,7 +18,6 @@ body, binary routes such as PDF, PNG and STL exports, and multipart uploads.
 
 from __future__ import annotations
 
-import json
 import logging
 from collections.abc import Mapping
 from typing import Any
@@ -26,7 +25,7 @@ from typing import Any
 from fastapi import HTTPException, Request, Response, status
 from gateway_api.dependencies import get_upstreams
 from gateway_api.upstream_errors import UpstreamRejectedError
-from runefoble_platform.service_client import UpstreamReply
+from runefoble_platform.service_client import UpstreamReply, decode_json_body
 
 logger = logging.getLogger("runefoble.gateway.proxy")
 
@@ -60,9 +59,13 @@ def _decode_reply(service: str, method: str, path: str, reply: UpstreamReply) ->
     """Return the decoded JSON of a 2xx reply, or raise the mapped error."""
     if reply.status_code >= 400:
         raise UpstreamRejectedError(service, reply)
+    return decode_upstream_json(service, method, path, reply.body)
 
+
+def decode_upstream_json(service: str, method: str, path: str, body: bytes) -> Any:
+    """Decode a 2xx body from an owner. A body that is not JSON returns 502, never a 500."""
     try:
-        return json.loads(reply.body)
+        return decode_json_body(body)
     except ValueError as exc:
         logger.warning("Upstream %s returned a non-JSON body: %s %s", service, method, path)
         raise HTTPException(
