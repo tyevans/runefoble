@@ -167,3 +167,29 @@ def test_unavailable_engine_returns_503_and_publishes_nothing(
     assert detail["engine"] == "faster-whisper"
     assert FORBIDDEN_PHRASE not in resp.text
     assert _player_spoke_events(mock_redis) == []
+
+
+def test_missing_campaign_id_is_rejected_without_a_random_campaign(
+    client: TestClient, mock_redis: MockAsyncRedis
+):
+    """A request without campaign_id returns 422. No event carries an invented campaign."""
+    body = _body(transcript="advance 2 east")
+    del body["campaign_id"]
+
+    resp = client.post(TRANSCRIBE_URL, json=body)
+
+    assert resp.status_code == 422, resp.text
+    assert _player_spoke_events(mock_redis) == []
+    assert WATCHER_STREAM not in mock_redis.streams
+
+
+def test_empty_campaign_id_is_rejected_without_a_random_campaign(
+    client: TestClient, mock_redis: MockAsyncRedis
+):
+    """An empty campaign_id returns 400 and names the field (ADR-0015). Nothing is published."""
+    resp = client.post(TRANSCRIBE_URL, json=_body(transcript="advance 2 east", campaign_id=""))
+
+    assert resp.status_code == 400, resp.text
+    assert "campaign_id" in resp.text
+    assert _player_spoke_events(mock_redis) == []
+    assert WATCHER_STREAM not in mock_redis.streams

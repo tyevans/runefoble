@@ -61,3 +61,7 @@ stream_id = opaque_aggregate_id(session_id, field="session_id")  # stable for "s
   answers 400 before the load.
 - `tests/test_blackbox_chronicle_opaque_session_ids.py`: an opaque session id reuses one
   aggregate id.
+- `tests/test_identifiers_policy.py`: unit tests for UUID, text, and missing input to each helper.
+- `tests/test_blackbox_watcher_routers.py` and `tests/test_blackbox_voice_transcribe_input.py`:
+  a speech request without `campaign_id` answers 422. An empty `campaign_id` answers 400.
+  Neither request publishes an event (TASK-0731).

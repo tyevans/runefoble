@@ -177,3 +177,40 @@ def test_watcher_stand_in_frontdoor(watcher_client):
     )
     assert res_chronicle.status_code == 200
     assert res_chronicle.json()["character_name"] == "Elidor"
+
+
+WATCHER_STREAM = "runefoble.events.watcher"
+
+
+def test_watcher_speech_without_campaign_id_is_rejected(watcher_client, mock_bus):
+    """A speech request without campaign_id returns 422. No event carries a random campaign."""
+    sid, _cid = _bound_session()
+    payload = {
+        "speaker_id": "p-1",
+        "speaker_name": "Thorin",
+        "transcript": "I attack the goblin",
+        "session_id": sid,
+    }
+
+    resp = watcher_client.post("/api/v1/watcher/transcribe-and-act", json=payload)
+
+    assert resp.status_code == 422, resp.text
+    assert WATCHER_STREAM not in mock_bus.streams
+
+
+def test_watcher_speech_with_empty_campaign_id_is_rejected(watcher_client, mock_bus):
+    """An empty campaign_id returns 400 and names the field (ADR-0015). Nothing is published."""
+    sid, _cid = _bound_session()
+    payload = {
+        "speaker_id": "p-1",
+        "speaker_name": "Thorin",
+        "transcript": "I attack the goblin",
+        "session_id": sid,
+        "campaign_id": "",
+    }
+
+    resp = watcher_client.post("/api/v1/watcher/transcribe-and-act", json=payload)
+
+    assert resp.status_code == 400, resp.text
+    assert "campaign_id" in resp.text
+    assert WATCHER_STREAM not in mock_bus.streams
