@@ -122,7 +122,7 @@ Part of the [Events Schema](events-schema.md). Each event identifier in this pag
 - **`TokenPlaced`** (`runefoble.events.board.token_placed`): Emitted when a token is added to the grid.
   - `token_id`: String / UUID
   - `name`: String
-  - `token_type`: "pc" | "monster" | "npc" | "obstacle"
+  - `token_type`: "pc" | "monster" | "npc" | "obstacle" | "loot". A `loot` token is an item on the board (from an approved audience item drop). It is not a combatant and does not block movement.
   - `x`: Integer, `y`: Integer
   - `hp`: Optional[Integer]
   - `is_friendly`: Boolean
