@@ -37,7 +37,7 @@ We adopt a **Microfrontend Architecture** across the platform with **Service Com
    - Each service UI package is named `@runefoble/<bc>-ui` and defines its own `package.json` and `tsconfig.json`.
    - `frontend/package.json` depends on these packages via the `workspace:*` protocol.
    - `libs/runefoble_ui` is the shared package `@runefoble/ui-core`. It holds the `runefoble-auth` context contract (`authContext`, `AuthConsumerController`) and Storybook auth helpers. Service UI packages and `frontend` depend on it via `workspace:*`.
-   - `frontend/src/components/` provides backward-compatible forwarding re-exports so that legacy imports continue to resolve without breaking changes.
+   - `frontend/src/components/` holds App Shell components only. It contains no forwarding re-exports of `@runefoble/*-ui` symbols. Importers use the owning package directly (DoR 9).
 
 5. **Component-Driven Storybook Aggregation**:
    - Storybook stories are co-located with components inside each service bounded context (`services/<bc>/ui/src/*.stories.ts`).
