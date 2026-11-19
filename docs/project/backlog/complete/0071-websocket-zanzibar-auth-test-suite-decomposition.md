@@ -26,7 +26,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/102
 Complete
 
 ## Summary
-Decompose `tests/test_websocket_zanzibar_auth.py` (removed) (330 lines, 66.0% of limit) into two specialized test suites (`tests/test_websocket_zanzibar_connect_auth.py` and `tests/test_websocket_zanzibar_mutators.py`) to prevent breaching Hard Invariant 6 (File length limit < 500 lines) as live SpiceDB gRPC clients (TASK-0035) and spectator interactivity (TASK-0051) expand permission boundaries.
+Decompose `tests/test_websocket_zanzibar_auth.py` (removed) (330 lines, 66.0% of limit) into two specialized test suites (`tests/test_websocket_zanzibar_connect_auth.py` and `tests/test_websocket_zanzibar_mutators.py` (removed)) to prevent breaching Hard Invariant 6 (File length limit < 500 lines) as live SpiceDB gRPC clients (TASK-0035) and spectator interactivity (TASK-0051) expand permission boundaries.
 
 ## Problem Statement
 `tests/test_websocket_zanzibar_auth.py` (removed) currently spans 330 lines and covers two distinct authorization checkpoints:
@@ -50,7 +50,7 @@ As production SpiceDB gRPC connections and live spectator interaction channels a
    - Connection validation for campaign readers and viewers.
    - Rejection and disconnection (code 4003) for unauthorized subjects.
    - Dynamic permission revocation disconnecting active sessions (< 160 lines).
-2. **Game Action Mutator Auth Suite (`tests/test_websocket_zanzibar_mutators.py`)**:
+2. **Game Action Mutator Auth Suite (`tests/test_websocket_zanzibar_mutators.py` (removed))**:
    - Token movement permission checks (player ownership vs spectator denial).
    - DM-only action guards (monster spawning, scene alterations).
    - Redis Streams mutation event publication and foreign character sheet edit denials (< 190 lines).

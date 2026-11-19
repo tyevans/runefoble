@@ -25,7 +25,7 @@ Tests inject repositories through module setters and read or write private attri
 - Repository setters: `tests/test_blackbox_faction_simulation.py:62-63`, `tests/test_blackbox_faction_radar_ui.py:54-55`, `tests/test_blackbox_world_tick_durability.py:50-57`, `tests/test_blackbox_faction_resources/conftest.py:46`, `tests/test_blackbox_turf_war/conftest.py:44`, `tests/test_blackbox_west_marches_ui/conftest.py:60`, `tests/test_blackbox_west_marches.py:63`.
 - `set_event_store` is called 21 times in `tests/`, some in test bodies.
 - Private reads: `store._events` in `tests/test_blackbox_tabletop_physics.py:93,131`, `tests/test_blackbox_tabletop_3d.py:82,149`, `tests/test_blackbox_miniature_knockback/test_knockback_impulse_and_elevation.py:161,204`, `tests/test_blackbox_3d_dice_physics/test_cryptographic_dice_alignment.py:88`.
-- Private writes: `bus._client = mock_redis` in `tests/test_websocket_modular_decomposition.py:140` and `tests/test_websocket_zanzibar_mutators.py:164`. `signaling_manager._coordinator = coord` in `tests/test_blackbox_webrtc_routing.py:43,48` and `tests/test_blackbox_webrtc_auth.py:52,64`.
+- Private writes: `bus._client = mock_redis` in `tests/test_websocket_modular_decomposition.py:140` (removed) and `tests/test_websocket_zanzibar_mutators.py:164` (removed). `signaling_manager._coordinator = coord` in `tests/test_blackbox_webrtc_routing.py:43,48` and `tests/test_blackbox_webrtc_auth.py:52,64`.
 
 ## Documentation & Architecture Review
 - AGENTS.md hard invariants and DoR 9 (no compatibility shims).

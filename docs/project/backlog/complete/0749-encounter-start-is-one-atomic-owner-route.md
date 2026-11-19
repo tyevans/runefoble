@@ -1,7 +1,7 @@
 ---
 id: '0749'
 title: Encounter Start Is One Atomic Owner Route in game_session
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies: []
 governing_adrs:
@@ -18,7 +18,7 @@ target_release: 0.9.0
 # TASK-0749: Encounter Start Is One Atomic Owner Route in game_session
 
 ## Status
-Refined. Found by the refactor audit round refactor-r1 and checked against the code on 2026-11-17.
+Complete
 
 ## Summary
 The MCP `create_encounter` tool runs domain orchestration in the gateway: it starts combat, creates the board, and places each token. If placing token N fails, combat is already started and tokens 1 to N-1 remain. No compensation runs.
@@ -55,3 +55,6 @@ The MCP `create_encounter` tool runs domain orchestration in the gateway: it sta
 ## Audit Provenance
 - Severity: medium
 - Source audits: `gateway-mcp.md (F5)`
+
+## Completion Note
+Owner route and board consumer done. The MCP tool change is TASK-0885.

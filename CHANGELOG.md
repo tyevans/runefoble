@@ -91,6 +91,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Campaign analytics worker `process_event` alias, tracking property wrappers, and package root re-exports. Callers use `handle_event`. (TASK-0500)
 
 ### Added
+- `POST /api/v1/sessions/{session_id}/encounters/start` starts combat and records the token placements on one event; board_state places the tokens from that event. A failed placement is dead-lettered and combat stays started. (TASK-0749)
 - game_session has `POST /api/v1/sessions/{session_id}/end` (`session.control`). board_state refuses a monster token from a caller without the board DM permission. Two owner routes that skipped their event publish now publish it. (TASK-0846)
 - The Watcher narrates each approved audience modifier as a private DM whisper (`audience_narration`). The DM sends it to the table, edited or not, with `POST /api/v1/watcher/whispers/{whisper_id}/dispatch`, which publishes `WatcherNarrativeDispatched`. When the inference worker fails, the DM gets a `narration_unavailable` notice and nothing reaches the players. (TASK-0838)
 - An approved audience `item_drop` modifier places a `loot` token with the item name on the board cell it names. A loot token does not block movement. (TASK-0837)
@@ -182,6 +183,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
 
 ### Changed
+- The campaign WebSocket relays each action to its owner route with the caller's token. The gateway holds no action policy and publishes no events; each frame names its `session_id`, and a frame for a session of another campaign is refused. (TASK-0883)
 - The Helm standalone service templates share one platform environment template. The Redis URL is rendered only when `redis.enabled`, and the database port follows `postgres.port`. (TASK-0725)
 - Gateway and MCP callers take owner paths from one route table (`runefoble_platform.service_client.owner_routes`). An id with a dot segment answers 404 before any owner call. (TASK-0861)
 - The gateway overlay router is split into `gateway_api.overlay` (camera relay, frame dispatch, room). Frame types, close codes and routes are unchanged. (TASK-0860)
@@ -1304,6 +1306,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **Documentation & Build Navigation**: Featured the Platform Showcase and Changelog in `zensical.toml` and root documentation landing page (`docs/index.md`), and enhanced `scripts/build_docs.py` to synchronize `CHANGELOG.md` to `docs/changelog.md` during documentation compilation.
 
 ### Fixed
+- Campaign Analytics keys its rows by campaign once the session-to-campaign mapping arrives. (TASK-0756)
+- Atlas pin placement is checked once, by campaign_lore (`campaign.play`, which matches `atlas.place_pin`). The gateway no longer requires `run_session`, so players can place pins as the schema intends. (TASK-0768)
 - A crafting combine commits its outcome on the crafting aggregate first; the character applies it once, keyed by the crafting event id. A failed character save answers 503 and the outcome stays pending; the next combine or character read applies it. The optional `attempt_id` makes a client retry safe. ADR-0011 has a "Commands across two aggregates" amendment. (TASK-0772)
 - PostgreSQL, Silo and Redis run as StatefulSets with persistent volume claims, so their data survives pod restarts. Redis writes an append-only file. (TASK-0881)
 - Lobby readiness counts players only (an owner or DM is never counted) and shows "No players have joined" for an empty session. The members view shows management controls only from the server can-manage flag. (TASK-0870)

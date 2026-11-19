@@ -60,7 +60,7 @@ During past refactorings in `gateway/api`, several facade modules were retained 
    - Update `gateway/api/src/gateway_api/main.py`, sub-routers, and tests to import directly from modular sub-packages (`gateway_api.signaling`, `gateway_api.websocket`, `gateway_api.companion`).
 4. **Update Blackbox Test Suites**:
    - In `tests/test_blackbox_webrtc_auth.py`, remove `test_signaling_facade_and_submodule_backward_compatibility()`.
-   - In `tests/test_websocket_modular_decomposition.py`, remove facade parity assertions.
+   - In `tests/test_websocket_modular_decomposition.py` (removed), remove facade parity assertions.
 
 ## INVEST Criteria Evaluation
 - **Independent (I)**: Changes are isolated to `gateway/api` and direct API test suites.

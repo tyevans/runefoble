@@ -42,7 +42,7 @@ Rule: a proxy route forwards the caller token and does not check permissions; th
 
 ## Detailed Specification & Implementation Plan
 
-Refactor round 2 addendum (2026-11-18): Also: `gateway/api/src/gateway_api/websocket_validator.py:87-103` applies an action permission policy to campaign socket frames. This is a proxy-route permission check and falls under the rule in this task. TASK-0846 makes the owner the checker.
+Refactor round 2 addendum (2026-11-18): Also: `gateway/api/src/gateway_api/websocket_validator.py:87-103` (removed) applies an action permission policy to campaign socket frames. This is a proxy-route permission check and falls under the rule in this task. TASK-0846 makes the owner the checker.
 
 ## Frontdoor Test Plan
 For each route whose gateway check is removed: a caller without the permission still gets 403, now from the owner, through the gateway (existing or new test in `gateway/api/tests/`).

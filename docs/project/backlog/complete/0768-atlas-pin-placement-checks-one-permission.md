@@ -1,7 +1,7 @@
 ---
 id: '0768'
 title: Atlas Pin Placement Checks One Permission in Gateway and Service
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0695
@@ -16,7 +16,7 @@ target_release: 0.9.0
 # TASK-0768: Atlas Pin Placement Checks One Permission in Gateway and Service
 
 ## Status
-Refined. Found during the authz-int integration (`.audit/work/authz-int.md`, Discovered).
+Complete
 
 ## Summary
 The gateway atlas pin POST requires `run_session`. campaign_lore requires `play`. A player that the

@@ -1,7 +1,7 @@
 ---
 id: '0883'
 title: Campaign Socket Relays Actions to Owner Routes Without Gateway Policy
-status: Refined
+status: Complete
 created: 2026-11-19
 dependencies:
 - TASK-0846
@@ -18,7 +18,7 @@ target_release: 0.9.0
 # TASK-0883: Campaign Socket Relays Actions to Owner Routes Without Gateway Policy
 
 ## Status
-Refined
+Complete
 
 Part (b) of TASK-0846. Read the decisions in TASK-0846 first.
 

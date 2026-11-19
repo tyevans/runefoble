@@ -43,7 +43,7 @@ With upcoming real-time features including voice room signaling integrations, sp
 - **ADR-0009: Continuous Backlog Refinement and Technical Debt Management**: Preemptive modularization.
 
 ## Proposed Decomposition
-1. **Zanzibar Action Validator (`gateway/api/src/gateway_api/websocket_validator.py`)**:
+1. **Zanzibar Action Validator (`gateway/api/src/gateway_api/websocket_validator.py` (removed))**:
    - Encapsulate `WebSocketActionValidator` with permission checks against SpiceDB Zanzibar schema (< 140 lines).
 2. **Connection Hub Manager (`gateway/api/src/gateway_api/websocket_manager.py`)**:
    - Encapsulate `CampaignConnectionManager` tracking active clients and broadcasting messages (< 100 lines).

@@ -1,7 +1,7 @@
 ---
 id: '0756'
 title: Analytics Rows Are Keyed by Campaign Once the Session Mapping Arrives
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0730
@@ -17,7 +17,7 @@ target_release: 0.9.0
 # TASK-0756: Analytics Rows Are Keyed by Campaign Once the Session Mapping Arrives
 
 ## Status
-Refined. Found by the refactor audit round refactor-r1 and checked against the code on 2026-11-17.
+Complete
 
 ## Summary
 When no campaign is known, analytics rows store the session id in the campaign column. Every read then matches four id combinations, and the rows are never re-keyed.
