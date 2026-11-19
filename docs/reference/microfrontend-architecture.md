@@ -229,7 +229,7 @@ Response:
 }
 ```
 
-Every service reads its `ui/manifest.json` file at start-up through `runefoble_platform.ui_manifest.load_ui_manifest`, and `GET /ui/manifest` returns that parsed file unchanged. A missing file, an unreadable file, or invalid JSON stops the process with `UIManifestError`. No service serves a hardcoded fallback manifest (ADR-0015 4). Run `make check-ui-manifests` to check every manifest.
+Every service includes the shared router from `runefoble_platform.ui_manifest.ui_manifest_router(manifest_path, *, summary)`. No service has a local `/ui/manifest` handler. The router reads `ui/manifest.json` once, when the service builds its app, and `GET /ui/manifest` returns that parsed file unchanged. The OpenAPI spec of each service lists the operation under the `Microfrontends` tag. A missing file, an unreadable file, invalid JSON, or JSON that is not an object raises `UIManifestError` when the app is built, so the process stops at start-up. No service serves a hardcoded fallback manifest (ADR-0015 4). Run `make check-ui-manifests` to check every manifest.
 
 Container images:
 - `deployments/docker/python-service.Dockerfile` installs the service in editable mode. The module files stay under `/app/services/<bc>/src`, so `ui/manifest.json` beside `src/` resolves inside the image.

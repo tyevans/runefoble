@@ -71,18 +71,33 @@ export const Default: Story = {
 
 ## Step 4: Register in Service Frontdoor Manifest
 
-In `services/<service_name>/src/<service_name>/main.py`, include the custom element in the `/ui/manifest` endpoint:
+1. Add the custom element tag to `services/<service_name>/ui/manifest.json`:
+
+```json
+{
+  "service": "<service_name>",
+  "package": "@runefoble/<service_name>-ui",
+  "components": ["runefoble-my-feature"],
+  "version": "0.1.0"
+}
+```
+
+2. If the service does not serve `GET /ui/manifest` yet, include the shared router in `services/<service_name>/src/<service_name>/main.py`. Do not write a local handler.
 
 ```python
-@app.get("/ui/manifest")
-def get_ui_manifest():
-    return {
-        "service": "<service_name>",
-        "package": "@runefoble/<service_name>-ui",
-        "components": ["runefoble-my-feature"],
-        "version": "0.1.0",
-    }
+from pathlib import Path
+
+from runefoble_platform.ui_manifest import ui_manifest_router
+
+app.include_router(
+    ui_manifest_router(
+        Path(__file__).resolve().parents[2] / "ui" / "manifest.json",
+        summary="Advertise vendored microfrontend components for <service_name>",
+    )
+)
 ```
+
+The router reads the file once, when you call `ui_manifest_router`. A missing or invalid file raises `UIManifestError`, so the app does not build. Run `make check-ui-manifests` to check the file.
 
 ## Step 5: Verify in Storybook & Build
 

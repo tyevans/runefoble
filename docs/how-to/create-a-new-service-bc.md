@@ -32,15 +32,26 @@ dependencies = [
 ### 4. Create the Service Entrypoint
 Implement `services/<new_service_name>/src/<new_service_name>/main.py`:
 ```python
+from pathlib import Path
+
 from fastapi import FastAPI
+from runefoble_platform.ui_manifest import ui_manifest_router
 
 app = FastAPI(title="Runefoble - <New Service Name>", version="0.1.0")
+app.include_router(
+    ui_manifest_router(
+        Path(__file__).resolve().parents[2] / "ui" / "manifest.json",
+        summary="Advertise vendored microfrontend components for <new_service_name>",
+    )
+)
 
 
 @app.get("/healthz")
 async def health_check():
     return {"status": "ok", "service": "<new_service_name>"}
 ```
+
+The service must have a `ui/manifest.json` file. If the file is missing, the app does not build. To create the UI package and the manifest, see [Authoring Service Microfrontends](authoring-service-microfrontends.md).
 
 ### 5. Register with Swagger UI, Helm, and the Image Table
 In `deployments/helm/runefoble/values.yaml`:
