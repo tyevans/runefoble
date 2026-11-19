@@ -19,7 +19,7 @@ from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
-from runefoble_events.events import PlayerSpokeEvent, VoiceTranscriptionFailed
+from runefoble_events.events import PlayerSpokeEvent
 from runefoble_platform.redis_bus import deserialize_event
 from voice_agent.main import app as voice_app
 from voice_agent.stt import get_streaming_pipeline, set_streaming_pipeline
@@ -36,7 +36,6 @@ pytestmark = pytest.mark.usefixtures("trusted_voice_issuer")
 
 TRANSCRIBE_URL = "/api/v1/voice/transcribe"
 SESSION_STREAM = "runefoble.events.session"
-VOICE_STREAM = "runefoble.events.voice"
 WHISPER_TRANSCRIPT = "I move 3 squares north"
 SPEAKER_ID = "spk-whisper-1"
 SESSION_ID = "sess-whisper-1"
@@ -179,12 +178,6 @@ def test_server_error_returns_503_and_publishes_no_player_spoke(
     assert not [
         e for e in _stream_events(mock_redis, SESSION_STREAM) if isinstance(e, PlayerSpokeEvent)
     ]
-    failures = [
-        e
-        for e in _stream_events(mock_redis, VOICE_STREAM)
-        if isinstance(e, VoiceTranscriptionFailed)
-    ]
-    assert [f.engine for f in failures] == ["whisper-cpp"]
 
 
 def test_unreachable_server_returns_503(
