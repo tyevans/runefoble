@@ -24,10 +24,10 @@ target_release: 0.8.0
 Proposed
 
 ## Summary
-Decompose `tests/test_blackbox_gateway_characters.py` (284 lines, 56.8% of limit) into modular test sub-suites under `tests/test_blackbox_gateway_characters/` (`test_character_crud.py`, `test_character_zanzibar_auth.py`, `test_character_campaign_assignment.py`), keeping each test module strictly < 110 lines per Hard Invariant 6.
+Decompose `gateway/api/tests/test_blackbox_gateway_characters.py` (284 lines, 56.8% of limit) into modular test sub-suites under `tests/test_blackbox_gateway_characters/` (`test_character_crud.py`, `test_character_zanzibar_auth.py`, `test_character_campaign_assignment.py`), keeping each test module strictly < 110 lines per Hard Invariant 6.
 
 ## Problem Statement
-`tests/test_blackbox_gateway_characters.py` tests character creation, listing, Zanzibar ownership enforcement, campaign linking, and deletion through the API Gateway frontdoor. As additional character attributes, party bindings, and multi-tenant isolation rules are introduced, this test suite will approach the 500-line ceiling unless decomposed into modular test submodules.
+`gateway/api/tests/test_blackbox_gateway_characters.py` tests character creation, listing, Zanzibar ownership enforcement, campaign linking, and deletion through the API Gateway frontdoor. As additional character attributes, party bindings, and multi-tenant isolation rules are introduced, this test suite will approach the 500-line ceiling unless decomposed into modular test submodules.
 
 ## Governing Architecture & ADRs
 - **ADR-0001: SpiceDB Zanzibar Object Authorization**: Relationship verification and access control.
@@ -46,6 +46,6 @@ Decompose `tests/test_blackbox_gateway_characters.py` (284 lines, 56.8% of limit
    - Run `uv run pytest tests/test_blackbox_gateway_characters/` to ensure 100% test pass rate.
 
 ## Definition of Done
-- `tests/test_blackbox_gateway_characters.py` decomposed into `tests/test_blackbox_gateway_characters/` package.
+- `gateway/api/tests/test_blackbox_gateway_characters.py` decomposed into `tests/test_blackbox_gateway_characters/` package.
 - All extracted test modules strictly < 110 lines each per Hard Invariant 6.
 - 100% test pass rate preserved across all gateway character API checks.

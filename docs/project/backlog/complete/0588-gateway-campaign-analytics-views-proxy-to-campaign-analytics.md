@@ -56,7 +56,7 @@ Heatmap, MVP and timeline views in `hub_views.py` return canned combat data on a
 6. Update `docs/reference/ports-and-endpoints.md` rows at lines 227-249.
 
 ## Frontdoor Blackbox Test Plan
-Test file: `tests/test_blackbox_gateway_analytics_views.py`. `campaign_analytics` runs as an ASGI app. Setup: post combat telemetry through the owner's public ingestion route, or through the Redis Streams publish path the service uses.
+Test file: `gateway/api/tests/test_blackbox_gateway_analytics_views.py`. `campaign_analytics` runs as an ASGI app. Setup: post combat telemetry through the owner's public ingestion route, or through the Redis Streams publish path the service uses.
 
 | Case | Expected before fix | Expected after fix |
 |---|---|---|

@@ -53,7 +53,7 @@ As campaign handouts, audio clips, token frames, and upload chunking are introdu
    - CloudEvents 1.0 compliance and EventRegistry registration for `AssetUploaded` and `AssetDeleted`.
    - Redis Streams stream publishing (`runefoble.events.asset`) and in-memory platform bus delivery.
    - OpenAPI `/openapi.json` route schema presence and method declarations (< 170 lines).
-3. **Shared Test Fixtures & Constants (`tests/conftest.py` or `tests/helpers/silo_fixtures.py`)**:
+3. **Shared Test Fixtures & Constants (`conftest.py` or `tests/helpers/silo_fixtures.py`)**:
    - Common sample byte constants (`PNG_SAMPLE_BYTES`, `WAV_SAMPLE_BYTES`) and `clean_storage_and_bus` isolation fixture.
 
 ## INVEST Criteria Evaluation

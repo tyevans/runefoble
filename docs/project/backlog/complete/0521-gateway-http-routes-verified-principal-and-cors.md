@@ -62,7 +62,7 @@ Make the gateway HTTP layer accept identity only from a verified Zitadel bearer 
 7. **Remove `is_admin` branches** in gateway modules. Use `grep -rn is_admin gateway/api/src`.
 
 ## Frontdoor Blackbox Test Plan
-New file `tests/test_blackbox_gateway_identity_http.py`, using `TestClient(app)` and tokens from the signing issuer.
+New file `gateway/api/tests/test_blackbox_gateway_identity_http.py`, using `TestClient(app)` and tokens from the signing issuer.
 - Before: `GET /api/v1/profile` with `Authorization: Bearer not-a-real-jwt` returns 200 with `is_admin: true`. `POST /api/v1/assets/upload` with no identity returns 200.
 - After:
   - No bearer and garbage bearer return 401 on `GET /api/v1/profile`, `POST /api/v1/campaigns`, and `POST /api/v1/assets/upload`.
@@ -72,7 +72,7 @@ New file `tests/test_blackbox_gateway_identity_http.py`, using `TestClient(app)`
 
 ## Definition of Done
 1. Gateway HTTP routes have no identity path except `require_principal`. The grep in step 2 returns no matches in `gateway/api/src`.
-2. `uv run pytest tests/test_blackbox_gateway_identity_http.py` passes. Existing gateway suites are updated to use the signing issuer and pass.
+2. `uv run pytest gateway/api/tests/test_blackbox_gateway_identity_http.py` passes. Existing gateway suites are updated to use the signing issuer and pass.
 3. Integrated in one merge with TASK-0520.
 4. `uv run ruff check gateway/api` passes. No file exceeds 500 lines.
 5. `CHANGELOG.md` `[Unreleased]` notes that gateway routes require a bearer token.

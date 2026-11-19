@@ -15,7 +15,7 @@ dependencies: []
 Complete
 
 ## Summary
-Integrated fine-grained SpiceDB Zanzibar object authorization into `gateway/api` without hardcoded role strings in application logic. Added `require_zanzibar_permission` dependency checking permissions against Zanzibar relationships (`run_session`, `view`, `owner`, `dungeon_master`, `player`), protected campaign and session endpoints with structured 403 Forbidden rejection diagnostics, and created unit tests in `tests/test_gateway_auth.py`.
+Integrated fine-grained SpiceDB Zanzibar object authorization into `gateway/api` without hardcoded role strings in application logic. Added `require_zanzibar_permission` dependency checking permissions against Zanzibar relationships (`run_session`, `view`, `owner`, `dungeon_master`, `player`), protected campaign and session endpoints with structured 403 Forbidden rejection diagnostics, and created unit tests in `gateway/api/tests/test_gateway_auth.py`.
 
 ## Key Changes
 - `gateway/api/pyproject.toml`:
@@ -28,7 +28,7 @@ Integrated fine-grained SpiceDB Zanzibar object authorization into `gateway/api`
   - Protected session and board endpoints (`/api/v1/sessions/{session_id}`, `/api/v1/boards/{session_id}`) with `view` permission checks.
   - Protected turn advancement (`/api/v1/sessions/{session_id}/turns/advance`) with `run_session` permission checks.
   - Kept file clean and modular (222 lines, well below 500 limit).
-- `tests/test_gateway_auth.py`:
+- `gateway/api/tests/test_gateway_auth.py`:
   - Added unit tests verifying permission rejection, role assignment, player access, and DM turn advancement.
 
 ## Verification

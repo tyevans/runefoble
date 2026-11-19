@@ -62,7 +62,7 @@ Route the board and token reads and writes from the gateway to `board_state`. Th
 5. Update `docs/reference/ports-and-endpoints.md` and `docs/reference/events-schema.md` for the removed routes. Tell the client team in the PR that the sessionless token routes are gone.
 
 ## Frontdoor Blackbox Test Plan
-Test file: `tests/test_blackbox_gateway_board_proxy.py`. `board_state` runs as an ASGI app behind the gateway. Setup: create a board with `POST /api/v1/boards`, add a token with `POST /api/v1/boards/{session_id}/tokens`.
+Test file: `gateway/api/tests/test_blackbox_gateway_board_proxy.py`. `board_state` runs as an ASGI app behind the gateway. Setup: create a board with `POST /api/v1/boards`, add a token with `POST /api/v1/boards/{session_id}/tokens`.
 
 | Case | Expected before fix | Expected after fix |
 |---|---|---|

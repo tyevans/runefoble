@@ -53,7 +53,7 @@ Complete
 5. Update `docs/reference/ports-and-endpoints.md` for the subresource rows.
 
 ## Frontdoor Blackbox Test Plan
-Test file: `tests/test_blackbox_gateway_character_subresources.py`. `character_sheet` runs as an ASGI app. Setup: create a character through the gateway.
+Test file: `gateway/api/tests/test_blackbox_gateway_character_subresources.py`. `character_sheet` runs as an ASGI app. Setup: create a character through the gateway.
 
 | Case | Expected before fix | Expected after fix |
 |---|---|---|

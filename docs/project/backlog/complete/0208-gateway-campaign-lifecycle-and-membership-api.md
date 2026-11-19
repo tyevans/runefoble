@@ -63,4 +63,4 @@ The gateway currently only provides read proxying for single hardcoded campaigns
 1. Endpoints implemented in `gateway/api/src/gateway_api/routers/campaigns.py` (removed) (<350 lines).
 2. Pydantic models for campaign creation, invites, and member lists defined in `gateway/api/src/gateway_api/models.py`.
 3. Automated blackbox tests verify campaign creation and membership retrieval with zero backdoor manipulation.
-4. Passes `uv run pytest tests/test_blackbox_gateway_campaigns.py` and `uv run ruff check gateway/api/`.
+4. Passes `uv run pytest gateway/api/tests/test_blackbox_gateway_campaigns.py` and `uv run ruff check gateway/api/`.

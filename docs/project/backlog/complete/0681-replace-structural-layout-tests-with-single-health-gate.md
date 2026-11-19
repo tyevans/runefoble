@@ -21,7 +21,7 @@ Complete
 About a dozen test files assert their own line limits (for example 250 or 110 lines) and assert that named source files exist. These are white-box checks of code structure. They fail on correct refactors and they duplicate the 500-line rule that `make health-check` enforces. This task deletes them and keeps one gate.
 
 ## Problem Statement
-- After TASK-0640, 12 tests failed only because a file grew past a local limit, a fixture module was removed on purpose, or a test folder gained a module. Examples: `tests/test_frontend_spa_router.py:39`, `tests/test_blackbox_app_shell_test_modular_decomposition.py`, `tests/test_blackbox_gateway_decomposition.py`, `tests/test_blackbox_character_roster_binding.py` (asserts a TypeScript method signature as text).
+- After TASK-0640, 12 tests failed only because a file grew past a local limit, a fixture module was removed on purpose, or a test folder gained a module. Examples: `tests/test_frontend_spa_router.py:39`, `tests/test_blackbox_app_shell_test_modular_decomposition.py`, `gateway/api/tests/test_blackbox_gateway_decomposition.py`, `tests/test_blackbox_character_roster_binding.py` (asserts a TypeScript method signature as text).
 - Hard Invariant 6 sets one limit (~500 lines). Local, stricter limits are not a project rule.
 - Hard Invariant 7 asks for tests through public frontdoors. Text matching on source files is not a frontdoor test.
 

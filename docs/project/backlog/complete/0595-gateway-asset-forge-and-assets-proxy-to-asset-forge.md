@@ -54,7 +54,7 @@ Complete
 6. Record in the index that TASK-0348 (assets router decomposition) is superseded by this task.
 
 ## Frontdoor Blackbox Test Plan
-Test file: `tests/test_blackbox_gateway_forge_proxy.py`. `asset_forge` runs as an ASGI app.
+Test file: `gateway/api/tests/test_blackbox_gateway_forge_proxy.py`. `asset_forge` runs as an ASGI app.
 
 | Case | Expected before fix | Expected after fix |
 |---|---|---|

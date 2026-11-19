@@ -50,7 +50,7 @@ Character create, list, read and campaign assignment are served from the gateway
 5. Update `docs/reference/ports-and-endpoints.md` (the `character_sheet` row and the gateway rows at lines 250-260).
 
 ## Frontdoor Blackbox Test Plan
-Test file: `tests/test_blackbox_gateway_character_proxy.py`. `character_sheet` runs as an ASGI app. Setup: create characters with `POST /api/v1/characters` through the gateway.
+Test file: `gateway/api/tests/test_blackbox_gateway_character_proxy.py`. `character_sheet` runs as an ASGI app. Setup: create characters with `POST /api/v1/characters` through the gateway.
 
 | Case | Expected before fix | Expected after fix |
 |---|---|---|

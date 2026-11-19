@@ -63,7 +63,7 @@ After TASK-0590, `game_session` owns campaigns. This task replaces `gateway/api/
 5. Update the `docs/how-to/manage-campaign-lifecycle-and-invites.md` text for the owner name and the response shape changes, if any.
 
 ## Frontdoor Blackbox Test Plan
-Test file: `tests/test_blackbox_gateway_campaigns_proxy.py` (replaces `tests/test_blackbox_gateway_campaigns.py`, `test_blackbox_gateway_campaign_sessions.py` and `test_blackbox_gateway_campaign_store_decomposition.py` assertions that depend on the store). `game_session` runs as an ASGI app.
+Test file: `gateway/api/tests/test_blackbox_gateway_campaigns_proxy.py` (replaces `gateway/api/tests/test_blackbox_gateway_campaigns.py`, `test_blackbox_gateway_campaign_sessions.py` and `test_blackbox_gateway_campaign_store_decomposition.py` assertions that depend on the store). `game_session` runs as an ASGI app.
 
 | Case | Expected before fix | Expected after fix |
 |---|---|---|

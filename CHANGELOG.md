@@ -159,6 +159,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
 
 ### Changed
+- Gateway API tests live in `gateway/api/tests/` and run with `make test-gateway`. One root `conftest.py` sets the test environment for every test folder. A guard test fails when a gateway data route answers 200 with every owner unreachable. (TASK-0597)
 - `scripts/dev_server.py` delegates to focused modules under `scripts/dev_orchestrator/`. (TASK-0434)
 - Gateway pass-through routes are rows in one proxy table, and owner paths come from one shared owner map; the OpenAPI document is unchanged. A `.` or `..` path value now returns 404. (TASK-0822)
 - Spectator and overlay data come from the owning services: board_state removes monsters and stores the camera target (`CameraFocused`), game_session gives status, round and public chronicle. (TASK-0823)

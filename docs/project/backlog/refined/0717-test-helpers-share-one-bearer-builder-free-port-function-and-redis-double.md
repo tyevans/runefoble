@@ -20,10 +20,10 @@ Refined. Found by the refactor audit round r1 and checked against the code by th
 About 90 test modules define their own bearer-header helper. Seven helpers find a free port. Two files define `MockAsyncRedis`. A stale `collect_ignore` and a fixture alias stay in the suite.
 
 ## Problem Statement
-- Bearer copies: `tests/test_blackbox_board_state.py:14`, `tests/test_blackbox_print_forge.py:25`, `tests/test_gateway_auth.py:23`, and helpers `tests/helpers/campaign_analytics_service.py:38`, `tests/helpers/audience_server.py:38`, `tests/helpers/leitmotif_fixtures.py:21`, `tests/helpers/voice_identity.py:22`. The text `"Bearer {"` appears 515 times.
+- Bearer copies: `tests/test_blackbox_board_state.py:14`, `tests/test_blackbox_print_forge.py:25`, `gateway/api/tests/test_gateway_auth.py:23`, and helpers `tests/helpers/campaign_analytics_service.py:38`, `tests/helpers/audience_server.py:38`, `tests/helpers/leitmotif_fixtures.py:21`, `tests/helpers/voice_identity.py:22`. The text `"Bearer {"` appears 515 times.
 - Free-port copies: `tests/helpers/live_services.py:21`, `watcher_double.py:21`, `postgres.py:20`, `spicedb.py:30`, `audience_server.py:83`, `tests/test_blackbox_dev_environment.py:32`, `tests/test_blackbox_deployability_images.py:74`.
 - `tests/test_redis_streams.py:13` defines a second `MockAsyncRedis`. The canonical one is `tests/helpers/mock_redis.py:17`.
-- `tests/conftest.py:50` lists `test_blackbox_uvtt_import.py` in `collect_ignore`. That file does not exist (the module is a directory).
+- `conftest.py:50` lists `test_blackbox_uvtt_import.py` in `collect_ignore`. That file does not exist (the module is a directory).
 - `tests/test_blackbox_settlements_integration/conftest.py:83` defines `client = session_client`, an alias.
 
 ## Documentation & Architecture Review

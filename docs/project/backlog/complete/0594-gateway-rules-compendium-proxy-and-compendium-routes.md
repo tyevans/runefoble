@@ -52,7 +52,7 @@ Complete
 5. Do not change the SpiceDB check in the owner in this task. The authorization theme owns it.
 
 ## Frontdoor Blackbox Test Plan
-Test file: `tests/test_blackbox_gateway_compendium_proxy.py`. `rules_compendium` runs as an ASGI app.
+Test file: `gateway/api/tests/test_blackbox_gateway_compendium_proxy.py`. `rules_compendium` runs as an ASGI app.
 
 | Case | Expected before fix | Expected after fix |
 |---|---|---|

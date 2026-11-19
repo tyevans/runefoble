@@ -57,7 +57,7 @@ Require a verified principal on every gateway WebSocket and signaling route befo
 6. Out of scope (authorization theme): per-message checks, `player_id` taken from the payload, and broadcast scoped to a session.
 
 ## Frontdoor Blackbox Test Plan
-New file `tests/test_blackbox_gateway_ws_identity.py`, using the WebSocket test client.
+New file `gateway/api/tests/test_blackbox_gateway_ws_identity.py`, using the WebSocket test client.
 - Before: connect to `/ws/session/abc` with no token succeeds. Connect to `/ws/campaigns/c1?user_id=someone` succeeds.
 - After:
   - No token, garbage token, and forged HS256 token: handshake denied. No frame is delivered.
@@ -68,7 +68,7 @@ New file `tests/test_blackbox_gateway_ws_identity.py`, using the WebSocket test 
 ## Definition of Done
 1. Every WebSocket route in `gateway/api` calls `authenticate_websocket` before accept. Verify with `grep -rn "websocket(" gateway/api/src` and a per-route test.
 2. `grep -rn "guest_user\|user_id=\|x-user-id" gateway/api/src` returns no identity use.
-3. `uv run pytest tests/test_blackbox_gateway_ws_identity.py` passes. Existing WebSocket suites pass with the signing issuer.
+3. `uv run pytest gateway/api/tests/test_blackbox_gateway_ws_identity.py` passes. Existing WebSocket suites pass with the signing issuer.
 4. `uv run ruff check gateway/api` passes. No file exceeds 500 lines.
 5. Integrated after TASK-0520. TASK-0538 updates the clients in the same release.
 

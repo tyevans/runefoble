@@ -50,7 +50,7 @@ Complete
 5. Update `docs/reference/ports-and-endpoints.md` and `docs/reference/tavern-and-merchants-events.md` where the gateway is named as the owner.
 
 ## Frontdoor Blackbox Test Plan
-Test file: `tests/test_blackbox_gateway_settlement_proxy.py`. `game_session` runs as an ASGI app for REST and as a real uvicorn server for the WebSocket relay test.
+Test file: `gateway/api/tests/test_blackbox_gateway_settlement_proxy.py`. `game_session` runs as an ASGI app for REST and as a real uvicorn server for the WebSocket relay test.
 
 | Case | Expected before fix | Expected after fix |
 |---|---|---|

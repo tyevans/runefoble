@@ -64,7 +64,7 @@ Replace the canned session handlers in `gateway/api/src/gateway_api/routers/tabl
 5. Update `docs/reference/ports-and-endpoints.md` for the two new owner routes.
 
 ## Frontdoor Blackbox Test Plan
-Test file: `tests/test_blackbox_gateway_session_proxy.py`. The gateway and `game_session` run as ASGI apps. Setup goes through public routes: create the session with `POST /api/v1/sessions/create`, then call the gateway.
+Test file: `gateway/api/tests/test_blackbox_gateway_session_proxy.py`. The gateway and `game_session` run as ASGI apps. Setup goes through public routes: create the session with `POST /api/v1/sessions/create`, then call the gateway.
 
 | Case | Expected before fix | Expected after fix |
 |---|---|---|

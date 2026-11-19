@@ -78,4 +78,4 @@ The SpiceDB client in `libs/runefoble_auth` turns errors into silent results. A 
 
 ## Orchestrator Addenda (2026-11-17, refactor-r1)
 
-- TASK-0541: append "Also remove `contextlib.suppress(Exception)` around SpiceDB setters in `tests/conftest.py:170-183`; task 0714 owns the test side." (cross-reference only)
+- TASK-0541: append "Also remove `contextlib.suppress(Exception)` around SpiceDB setters in `conftest.py:170-183`; task 0714 owns the test side." (cross-reference only)

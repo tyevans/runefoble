@@ -61,7 +61,7 @@ Replace the canned downtime handlers in `gateway/api/src/gateway_api/routers/dow
 5. Update `docs/reference/downtime-and-crafting-events.md` and `docs/reference/tavern-and-merchants-events.md` so the table names the owner.
 
 ## Frontdoor Blackbox Test Plan
-Test file: `tests/test_blackbox_gateway_downtime_proxy.py`. `game_session` and `character_sheet` run as ASGI apps. Setup: create the campaign stronghold and the session through public routes.
+Test file: `gateway/api/tests/test_blackbox_gateway_downtime_proxy.py`. `game_session` and `character_sheet` run as ASGI apps. Setup: create the campaign stronghold and the session through public routes.
 
 | Case | Expected before fix | Expected after fix |
 |---|---|---|

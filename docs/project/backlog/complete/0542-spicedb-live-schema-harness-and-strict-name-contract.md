@@ -54,7 +54,7 @@ The test suite passes while production calls fail. `MockSpiceDBClient` accepts u
    - When `RUNEFOBLE_REQUIRE_LIVE_SPICEDB=1`, a missing Docker or a failed start raises. It does not skip.
    - Yield the endpoint and a client built with the test preshared key.
 4. Add the Make target `test-authz-live` that sets `RUNEFOBLE_REQUIRE_LIVE_SPICEDB=1` and runs `uv run pytest -m authz_live`. Register the marker in `pyproject.toml` (root).
-5. Test migration: every test that the strict mock rejects is changed in this task when it sits in `tests/helpers/` or `tests/conftest.py`. Tests in a single bounded context are migrated by that context's task (listed in the index). If the migration in this task would exceed about 15 files, move the affected tests to the owning task and say so in the index report.
+5. Test migration: every test that the strict mock rejects is changed in this task when it sits in `tests/helpers/` or `conftest.py`. Tests in a single bounded context are migrated by that context's task (listed in the index). If the migration in this task would exceed about 15 files, move the affected tests to the owning task and say so in the index report.
 6. Write `libs/runefoble_auth/tests/test_contract_names.py`:
    - Every `ACTION_PERMISSIONS` entry resolves in the parsed schema.
    - The strict mock rejects `campaign#play` as a relation write and `campaign#gm` as a relation write.
@@ -72,7 +72,7 @@ The test suite passes while production calls fail. `MockSpiceDBClient` accepts u
 2. `make test-authz-live` passes with Docker. It fails with a clear message when Docker is absent.
 3. `uv run pytest libs/runefoble_auth` passes.
 4. `uv run pytest` passes for every test file this task migrated. The index report lists the files that the owning bounded-context tasks must migrate.
-5. No test in `tests/helpers/` or `tests/conftest.py` writes a permission name as a relation.
+5. No test in `tests/helpers/` or `conftest.py` writes a permission name as a relation.
 6. `docs/how-to/define-spicedb-zanzibar-permissions.md` documents the name contract and the live command.
 7. No file in the change exceeds 500 lines.
 

@@ -1,7 +1,7 @@
 ---
 id: '0597'
 title: Gateway API Test Collection and Canned Payload Guard
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0580
@@ -22,7 +22,7 @@ target_release: 0.9.0
 # TASK-0597: Gateway API Test Collection and Canned Payload Guard
 
 ## Status
-Refined
+Complete
 
 ## Summary
 `uv run pytest gateway/api` exits with code 5 ("no tests ran"). The gateway tests live in the root `tests/` folder. Make the gateway tests collectable from the package, and add a guard that fails the build when a canned payload or in-memory fallback returns to `gateway/api/src`. Run this task after the proxy tasks merge, because those tasks rewrite the tests.
@@ -30,7 +30,7 @@ Refined
 ## Problem Statement
 - `uv run pytest gateway/api -q` exits 5 (`w1-gateway-api.md` Commands run). `gateway/api` has no `tests/` folder.
 - The tests that cover the gateway are in the root `tests/` folder. Examples: `test_gateway_api.py`, `test_gateway.py`, `test_blackbox_gateway_*.py` (13 files).
-- `tests/test_gateway_api.py:39` asserts the canned string `"Valeros stepped forward"`. `tests/test_blackbox_gateway_hub_views.py:97` asserts the fallback title `"Sunken Citadel"` (`w3-ddd-architecture.md` F21).
+- `gateway/api/tests/test_gateway_api.py:39` asserts the canned string `"Valeros stepped forward"`. `gateway/api/tests/test_blackbox_gateway_hub_views.py:97` asserts the fallback title `"Sunken Citadel"` (`w3-ddd-architecture.md` F21).
 - No test prevents a canned string from returning. The problem reached production because nothing failed.
 
 ## Documentation & Architecture Review
@@ -73,3 +73,6 @@ Refined
 
 - Severity: medium
 - Source audits: `w1-gateway-api.md`, `w3-ddd-architecture.md`, `w1-gates-python.md`
+
+## Completion Note
+The test environment and the shared pytest plugins are in the repository root `conftest.py`, because `pytest_plugins` works only in a top-level conftest. `gateway/api` has no pytest configuration of its own. The canned payload guard is a route behaviour test: with all owners unreachable, no data route answers 200. Moved-path references in the records now name `gateway/api/tests/`.

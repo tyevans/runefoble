@@ -51,7 +51,7 @@ The gateway mounts `voice_agent` routers in process and keeps its own companion 
 6. Update `docs/reference/ports-and-endpoints.md` for the voice and companion rows.
 
 ## Frontdoor Blackbox Test Plan
-Test file: `tests/test_blackbox_gateway_voice_proxy.py`. `voice_agent` runs as an ASGI app for REST and as a uvicorn server for the socket test.
+Test file: `gateway/api/tests/test_blackbox_gateway_voice_proxy.py`. `voice_agent` runs as an ASGI app for REST and as a uvicorn server for the socket test.
 
 | Case | Expected before fix | Expected after fix |
 |---|---|---|

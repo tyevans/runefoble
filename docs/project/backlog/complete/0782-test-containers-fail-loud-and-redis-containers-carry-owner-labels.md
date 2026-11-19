@@ -22,7 +22,7 @@ Complete
 The PostgreSQL fixture catches `Exception` and yields `None`, so a broken Docker setup skips tests in silence. It also never removes its temp file. The Redis test container leaks when a run is killed, in the same way the PostgreSQL containers did before TASK-0777.
 
 ## Problem Statement
-- `tests/helpers/postgres.py` (or the `postgres_service` fixture in `tests/conftest.py`): `except Exception: yield None`, and a temp file that is not removed.
+- `tests/helpers/postgres.py` (or the `postgres_service` fixture in `conftest.py`): `except Exception: yield None`, and a temp file that is not removed.
 - The Redis container helper starts containers with no `runefoble.test.owner-pid` and `runefoble.test.owner-host` labels.
 
 ## Documentation & Architecture Review

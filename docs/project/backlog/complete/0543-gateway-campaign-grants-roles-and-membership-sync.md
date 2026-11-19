@@ -75,7 +75,7 @@ Setup uses public frontdoors and the live harness (`live_spicedb_with_schema`). 
 1. The anonymous and player cases in the frontdoor plan behave as stated. Tests live in `tests/test_blackbox_campaign_grants_authz.py`.
 2. No route in `gateway/api/src/gateway_api/routers/auth/` writes `system`, `campaign#viewer`, or `campaign#gm`.
 3. `GET /api/v1/campaigns/{campaign_id}/capabilities` is in `/openapi.json`.
-4. Test setup for grants in the affected existing tests (`tests/test_gateway_auth.py`, `tests/test_blackbox_vtt_bdd_suite.py`, `tests/test_blackbox_soundscape_gateway.py`, `tests/test_blackbox_spicedb_live_grpc.py`) uses the invite or role frontdoor, not a direct tuple write.
+4. Test setup for grants in the affected existing tests (`gateway/api/tests/test_gateway_auth.py`, `tests/test_blackbox_vtt_bdd_suite.py`, `tests/test_blackbox_soundscape_gateway.py`, `tests/test_blackbox_spicedb_live_grpc.py`) uses the invite or role frontdoor, not a direct tuple write.
 5. `uv run pytest` passes for the changed files. `uv run ruff check gateway/api` passes.
 6. Docs in `docs/how-to/manage-campaign-lifecycle-and-invites.md` and `docs/reference/ports-and-endpoints.md` match the code.
 7. No file in the change exceeds 500 lines. Split `auth_sync.py` if it does.

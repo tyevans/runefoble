@@ -54,7 +54,7 @@ The atlas and codex routes in `gateway/api/src/gateway_api/routers/hub_views.py`
 5. Update `docs/reference/ports-and-endpoints.md` for the three gateway rows.
 
 ## Frontdoor Blackbox Test Plan
-Test file: `tests/test_blackbox_gateway_lore_views.py`. `campaign_lore` runs as an ASGI app. Setup: create a pin and a codex entry through the owner's public routes (`POST .../atlas/pins`, `POST .../codex/entries`).
+Test file: `gateway/api/tests/test_blackbox_gateway_lore_views.py`. `campaign_lore` runs as an ASGI app. Setup: create a pin and a codex entry through the owner's public routes (`POST .../atlas/pins`, `POST .../codex/entries`).
 
 | Case | Expected before fix | Expected after fix |
 |---|---|---|

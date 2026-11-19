@@ -56,7 +56,7 @@ The frontend session list (`<runefoble-session-list>`) and campaign view current
 3. **Gateway Router Endpoints (`gateway/api/src/gateway_api/routers/campaigns.py` (removed))**:
    - `GET /api/v1/campaigns/{campaign_id}/sessions`: Validate Zanzibar `view` permission on campaign, return list of `CampaignSessionResponse`.
    - `POST /api/v1/campaigns/{campaign_id}/sessions`: Validate Zanzibar `run_session` permission on campaign, create session record, return HTTP 201 Created.
-4. **Blackbox HTTP Tests (`tests/test_blackbox_gateway_campaign_sessions.py`)**:
+4. **Blackbox HTTP Tests (`gateway/api/tests/test_blackbox_gateway_campaign_sessions.py`)**:
    - Verify non-members cannot list campaign sessions (403 Forbidden).
    - Verify members with `player` role can list sessions but cannot create sessions (403 Forbidden on POST).
    - Verify campaign owners/DMs with `run_session` permission can create sessions and list them.
@@ -72,5 +72,5 @@ The frontend session list (`<runefoble-session-list>`) and campaign view current
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
 1. `GET` and `POST` `/api/v1/campaigns/{campaign_id}/sessions` implemented in `gateway/api/src/gateway_api/routers/campaigns.py` (removed).
 2. SpiceDB Zanzibar permissions enforced via `require_zanzibar_permission`.
-3. Blackbox frontdoor tests in `tests/test_blackbox_gateway_campaign_sessions.py` pass.
+3. Blackbox frontdoor tests in `gateway/api/tests/test_blackbox_gateway_campaign_sessions.py` pass.
 4. All modified files strictly adhere to file length limit (<500 lines).
