@@ -137,81 +137,39 @@ Given(
     world.setPage('evelyn', page);
 
     if (!world.campaignId) {
-      try {
-        const camp = await frontdoorApi.createCampaign('Wrath of the Lich King', {
-          setting: 'Northrend',
-          token: world.currentUser.token,
-        });
-        world.campaignId = camp.id;
-        world.campaignTitle = camp.title;
-      } catch {
-        world.campaignId = '4';
-        world.campaignTitle = 'Tomb of the Star-Eater';
-      }
+      const camp = await frontdoorApi.createCampaign('Wrath of the Lich King', {
+        setting: 'Northrend',
+        token: world.currentUser.token,
+      });
+      world.campaignId = camp.id;
+      world.campaignTitle = camp.title;
     }
 
     const campaignId = world.campaignId;
 
-    try {
-      await frontdoorApi.assignCampaignRole(
-        campaignId,
-        `user-${member1.toLowerCase()}`,
-        'player',
-        world.currentUser.token
-      );
-      await frontdoorApi.assignCampaignRole(
-        campaignId,
-        `user-${member2.toLowerCase()}`,
-        'player',
-        world.currentUser.token
-      );
-    } catch {
-      // In-memory fallback
-    }
+    // Role setup goes through the public roles route. A failure stops the step.
+    await frontdoorApi.assignCampaignRole(
+      campaignId,
+      `user-${member1.toLowerCase()}`,
+      'player',
+      world.currentUser.token
+    );
+    await frontdoorApi.assignCampaignRole(
+      campaignId,
+      `user-${member2.toLowerCase()}`,
+      'player',
+      world.currentUser.token
+    );
 
     await page.goto(`#/campaigns/${campaignId}`);
     await page.waitForLoadState('domcontentloaded');
     await expect(page.locator('runefoble-campaign-members')).toBeVisible({ timeout: 15_000 });
 
-    // Ensure member roster displays both members in browser UI
-    await page.evaluate(
-      ({ m1, m2 }) => {
-        const app = document.querySelector('runefoble-app') as any;
-        if (app) {
-          const list = Array.isArray(app.campaignMembers) ? [...app.campaignMembers] : [];
-          const hasM1 = list.some(
-            (m: any) =>
-              (m.username && m.username.toLowerCase().includes(m1.toLowerCase())) ||
-              (m.user_id && m.user_id.toLowerCase().includes(m1.toLowerCase()))
-          );
-          const hasM2 = list.some(
-            (m: any) =>
-              (m.username && m.username.toLowerCase().includes(m2.toLowerCase())) ||
-              (m.user_id && m.user_id.toLowerCase().includes(m2.toLowerCase()))
-          );
-
-          if (!hasM1) {
-            list.push({
-              user_id: `user-${m1.toLowerCase()}`,
-              username: m1,
-              role: 'player',
-              character_name: 'Thorin Stonehelm',
-            });
-          }
-          if (!hasM2) {
-            list.push({
-              user_id: `user-${m2.toLowerCase()}`,
-              username: m2,
-              role: 'player',
-              character_name: 'Sarah Shadowstep',
-            });
-          }
-          app.campaignMembers = list;
-          app.requestUpdate();
-        }
-      },
-      { m1: member1, m2: member2 }
-    );
+    // The API roster must list both members. The UI must render them.
+    const members = await frontdoorApi.listCampaignMembers(campaignId, world.currentUser.token);
+    const memberIds = members.map((m: any) => String(m.user_id ?? m.username ?? ''));
+    expect(memberIds.some((id: string) => id.toLowerCase().includes(member1.toLowerCase()))).toBe(true);
+    expect(memberIds.some((id: string) => id.toLowerCase().includes(member2.toLowerCase()))).toBe(true);
 
     const roster = page.locator('runefoble-campaign-members');
     await expect(roster.locator('.member-item').filter({ hasText: member1 })).toBeVisible({

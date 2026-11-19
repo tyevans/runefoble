@@ -85,6 +85,25 @@ When('I click the {string} button', async ({ page }, buttonName: string) => {
 ### Best Practices for Step Definitions
 - **Use Web-First Assertions**: Use `await expect(locator).toBeVisible()` or `expect.poll()`. Playwright then waits for async rendering.
 - **Assert Observable Output**: Check the DOM, the URL hash or a public projection. Do not spy on private component methods.
+- **Act Through Visible Controls**: A step clicks or types through a control the user sees. Do not set a component field, dispatch a synthetic `CustomEvent`, write `data-theme`, or set `window.location.hash` to skip a flow. A step that cannot find its control must fail. Governed by ADR-0014 and Hard Invariant 7.
+
+Correct pattern, from `e2e/steps/vtt_steps.ts`: launch the session through the DM's button, then drag, then assert the result on the board.
+
+```typescript
+const launchBtn = evelynPage.locator('runefoble-session-lobby .btn-launch').first();
+await expect(launchBtn, 'Launch control must be visible to the DM').toBeVisible({ timeout: 10_000 });
+await launchBtn.click();
+```
+
+Incorrect pattern. Do not write this:
+
+```typescript
+// Wrong: writes private component state and skips the launch flow.
+await page.evaluate(() => {
+  const app = document.querySelector('runefoble-app') as any;
+  app.campaignMembers = [...app.campaignMembers, { username: 'Thorin' }];
+});
+```
 - **Read the Base URL From Config**: Never write a host such as `http://localhost:5173` in a step. Use `test.info().project.use.baseURL`.
 - **Fail on Missing Setup**: A setup step that cannot create its data must throw.
 
@@ -103,6 +122,21 @@ world.setPage('valeros', page);
 ```
 
 `World` closes every context in `world.extraContexts` after the scenario. The steps in `e2e/steps/vtt_steps.ts` show the pattern for a session lobby. The step `Evelyn is hosting session {string} for campaign {string}` opens the first page. The step `Valeros joins {string} in a separate browser` opens a second context.
+
+### Personas
+
+`e2e/support/auth_fixtures.ts` resolves a persona from the name in the step. The match ignores case and punctuation:
+
+| Name in step | Persona |
+|---|---|
+| `evelyn` | Evelyn, the DM who hosts sessions |
+| `valeros` | Valeros, a player |
+| `sarah` | Sarah, a player |
+| `dm`, `master`, or `gm` | The DM persona (`gm` is an alias) |
+| `spectator` | A spectator |
+| any other name | The default player persona |
+
+The step `I am logged in as a {string}` in `e2e/steps/common_steps.ts` accepts any of these names.
 
 ---
 
