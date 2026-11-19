@@ -1,4 +1,4 @@
-.PHONY: help setup install-tools install-spec-ops cluster-up cluster-down images voice-model-cache helm-lint helm-template helm-check-event-store helm-deploy test test-authz-live test-entrypoints test-gateway test-property test-mutation test-e2e test-e2e-ui test-bdd e2e-lore-up e2e-lore-down lint lint-fix build check-ui-manifests dev-frontend dev-storybook dev-api dev-worker deploy-remote-worker pre-commit health-check clean-worktrees backlog-worker docs-build docs-serve prd-audit prd-decompose prd-create prd-sync
+.PHONY: help setup install-tools install-spec-ops cluster-up cluster-down images voice-model-cache helm-lint helm-template helm-check-event-store helm-deploy test test-authz-live test-entrypoints test-gateway test-property test-mutation test-e2e test-e2e-ui test-bdd e2e-lore-up e2e-lore-down lint lint-fix build check-ui-manifests dev dev-frontend dev-storybook dev-audience-studio dev-api dev-worker deploy-remote-worker pre-commit health-check clean-worktrees backlog-worker docs-build docs-serve visualize-project visualize-project-build prd-audit prd-decompose prd-create prd-sync
 
 
 CLUSTER_NAME ?= runefoble-local
@@ -213,10 +213,18 @@ test-property: ## Run generative invariant property tests with Hypothesis
 	@echo "==> Running Hypothesis property tests..."
 	uv run pytest tests/test_properties.py
 
-test-mutation: ## Run mutation testing with mutmut on core domain modules
+test-mutation: ## Run mutmut on core domain modules; fail when a mutant survives (ADR-0008)
 	@echo "==> Running mutation tests..."
-	uv run mutmut run || true
-	uv run mutmut results || true
+	uv run mutmut run
+	@echo "==> Surviving mutants (policy: any survivor fails the target)..."
+	@results=$$(uv run mutmut results) || exit 1; \
+	  survivors=$$(printf '%s\n' "$$results" | grep -c ': survived$$' || true); \
+	  printf '%s\n' "$$results"; \
+	  if [ "$$survivors" -gt 0 ]; then \
+	    echo "==> $$survivors mutant(s) survived. Add a test that kills each one."; \
+	    exit 1; \
+	  fi; \
+	  echo "==> No surviving mutants."
 
 test-bdd: ## Typecheck e2e steps, run e2e guard unit tests, reject unused steps, validate Gherkin syntax
 	@echo "==> Typechecking e2e suite..."
@@ -244,7 +252,7 @@ test-e2e-ui: ## Launch interactive Playwright UI mode for live debugging (needs 
 	@pnpm exec bddgen
 	@ZITADEL_ADMIN_PAT="$$(kubectl --context kind-runefoble-local get secret zitadel-admin -o jsonpath='{.data.pat}' | base64 -d)" pnpm exec playwright test --ui $(ARGS)
 
-lint: ## Check types, Ruff lint, format, and Helm
+lint: helm-lint ## Check types, Ruff lint, format, and Helm
 	@echo "==> Checking Ruff lint rules..."
 	uv run ruff check .
 	@echo "==> Checking Ruff formatting..."
@@ -259,8 +267,6 @@ lint: ## Check types, Ruff lint, format, and Helm
 	cd frontend && pnpm exec tsc --noEmit
 	@echo "==> Typechecking e2e suite..."
 	pnpm run e2e:typecheck
-	@echo "==> Linting Helm charts..."
-	helm lint $(HELM_CHART)
 
 lint-fix: ## Automatically fix Ruff lint errors and format files
 	@echo "==> Fixing lint and formatting with Ruff..."

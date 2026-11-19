@@ -23,32 +23,6 @@ SITE_DIR = ROOT_DIR / "site"
 CACHE_DIR = ROOT_DIR / ".cache"
 
 
-def check_and_prepare_inotify_env(env: dict[str, str]) -> None:
-    """Ensure inotify watch exhaustion on local development workstations does not break static builds."""
-    if sys.platform != "linux":
-        return
-
-    # Ensure inotify watch exhaustion on Linux workstations does not silently abort static site builds.
-    shim_c = ROOT_DIR / "scripts" / "fake_inotify.c"
-    if not shim_c.exists():
-        return
-
-    shim_so = ROOT_DIR / "scripts" / "fake_inotify.so"
-
-    if not shim_so.exists() or shim_so.stat().st_mtime < shim_c.stat().st_mtime:
-        gcc = shutil.which("gcc")
-        if gcc:
-            cmd = [gcc, "-shared", "-fPIC", "-O2", "-o", str(shim_so), str(shim_c), "-ldl"]
-            result = subprocess.run(cmd, capture_output=True, text=True)
-            if result.returncode != 0:
-                print(f"⚠️ Warning: Could not compile inotify shim: {result.stderr}")
-                return
-
-    if shim_so.exists():
-        existing_preload = env.get("LD_PRELOAD", "")
-        env["LD_PRELOAD"] = f"{shim_so}:{existing_preload}".strip(":")
-
-
 def sync_operating_manual() -> None:
     """Synchronize docs/operating-manual.md from root AGENTS.md, adjusting internal links."""
     agents_path = ROOT_DIR / "AGENTS.md"
@@ -200,9 +174,8 @@ def print_summary() -> None:
     print("=" * 60 + "\n")
 
 
-def main() -> None:
-    env = os.environ.copy()
-    check_and_prepare_inotify_env(env)
+def build_site(env: dict[str, str]) -> None:
+    """Run every build step in order. A failed step raises and stops the build."""
     sync_operating_manual()
     sync_changelog()
     visualizer_bundle = build_visualizer(env)
@@ -212,5 +185,20 @@ def main() -> None:
     print_summary()
 
 
+def main() -> int:
+    try:
+        build_site(os.environ.copy())
+    except subprocess.CalledProcessError as error:
+        print(
+            f"Documentation build failed: {' '.join(map(str, error.cmd))} "
+            f"exited with code {error.returncode}.\n"
+            "If the error names inotify or ENOSPC, raise fs.inotify.max_user_watches "
+            "(see docs/tutorials/01-local-development-setup.md).",
+            file=sys.stderr,
+        )
+        return error.returncode or 1
+    return 0
+
+
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

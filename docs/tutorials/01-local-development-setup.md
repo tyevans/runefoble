@@ -163,3 +163,21 @@ The Kind cluster does not expose Mailpit or Zitadel on the host. When you use `/
 Services use PostgreSQL by default (`RUNEFOBLE_EVENT_STORE_BACKEND=postgresql`). The default `make dev` run starts the gateway and the Vite server. It does not start the aggregate-owning services.
 
 To run an aggregate-owning service outside the cluster without PostgreSQL, set `RUNEFOBLE_EVENT_STORE_BACKEND=memory` for that process. The service then keeps events only in its own memory. Staging and production refuse `memory`.
+
+### Raise the inotify watch limit (Linux)
+`make dev`, `make dev-storybook`, `make docs-build` and `make docs-serve` watch files with inotify. IDE file watchers use the same per-user limit. When the limit is full, a watcher fails with `ENOSPC` or an error that names inotify. `make docs-build` then stops with a non-zero exit code. No shim hides this failure.
+
+Check the current limit:
+```bash
+sysctl fs.inotify.max_user_watches
+```
+Raise the limit for the current boot:
+```bash
+sudo sysctl -w fs.inotify.max_user_watches=524288
+```
+Keep the limit after a reboot:
+```bash
+echo 'fs.inotify.max_user_watches=524288' | sudo tee /etc/sysctl.d/60-inotify.conf
+sudo sysctl --system
+```
+Expected result: `sysctl fs.inotify.max_user_watches` prints `524288`. Then run the failed target again.

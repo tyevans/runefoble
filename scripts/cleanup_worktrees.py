@@ -26,8 +26,24 @@ class WorktreeInfo:
     is_dirty: bool = False
     dirty_count: int = 0
     is_merged: bool = False
+    # None means the process table could not be read: the guard fails closed.
     active_pids: list[int] | None = None
     pr_state: str | None = None
+
+
+@dataclass(frozen=True)
+class CleanupOptions:
+    force: bool = False
+    clean_all: bool = False
+
+
+@dataclass(frozen=True)
+class Decision:
+    remove: bool
+    reason: str
+
+
+DEFAULT_PROC_DIR = Path("/proc")
 
 
 def run_cmd(
@@ -50,25 +66,43 @@ def get_repo_root() -> Path:
     return Path(res.stdout.strip()).resolve()
 
 
-def find_active_pids_for_path(path: Path) -> list[int]:
-    """Finds any running process with current working directory in path."""
+def find_active_pids_for_path(path: Path, proc_dir: Path = DEFAULT_PROC_DIR) -> list[int] | None:
+    """Return the PIDs whose working directory is inside path.
+
+    Return None when proc_dir is absent. The caller cannot verify that the
+    worktree is idle, so it must not remove the worktree.
+    """
+    if not proc_dir.is_dir():
+        return None
+
     active_pids: list[int] = []
     resolved = path.resolve()
-    proc_dir = Path("/proc")
-    if not proc_dir.exists():
-        return active_pids
-
     for entry in proc_dir.iterdir():
         if not entry.name.isdigit():
             continue
         try:
-            cwd = os.readlink(entry / "cwd")
-            cwd_path = Path(cwd).resolve()
-            if cwd_path == resolved or resolved in cwd_path.parents:
-                active_pids.append(int(entry.name))
-        except (OSError, ValueError):
+            cwd_path = Path(os.readlink(entry / "cwd")).resolve()
+        except OSError:
+            # The process ended, or it belongs to another user.
             continue
+        if cwd_path == resolved or resolved in cwd_path.parents:
+            active_pids.append(int(entry.name))
     return active_pids
+
+
+def decide(wt: WorktreeInfo, options: CleanupOptions) -> Decision:
+    """Decide if a worktree is safe to remove. Pure: no I/O."""
+    if wt.active_pids is None:
+        return Decision(False, "cannot verify active processes (no process table)")
+    if wt.active_pids:
+        return Decision(False, f"Active process detected (PIDs: {wt.active_pids})")
+    if not wt.is_merged and not options.clean_all:
+        return Decision(False, f"Branch is unmerged ({wt.pr_state}). Use --all to clean.")
+    if wt.is_dirty and not options.force:
+        return Decision(
+            False, f"Uncommitted changes ({wt.dirty_count} files). Use --force to override."
+        )
+    return Decision(True, wt.pr_state or "eligible")
 
 
 def parse_worktrees(repo_root: Path) -> list[WorktreeInfo]:
@@ -158,13 +192,13 @@ def is_branch_merged(repo_root: Path, branch: str, head: str) -> tuple[bool, str
     return False, "Unmerged"
 
 
-def inspect_worktrees(repo_root: Path) -> list[WorktreeInfo]:
+def inspect_worktrees(repo_root: Path, proc_dir: Path = DEFAULT_PROC_DIR) -> list[WorktreeInfo]:
     worktrees = parse_worktrees(repo_root)
     for wt in worktrees:
         if wt.is_main:
             continue
 
-        wt.active_pids = find_active_pids_for_path(wt.path)
+        wt.active_pids = find_active_pids_for_path(wt.path, proc_dir)
 
         if wt.path.exists():
             st = run_cmd(["git", "status", "--porcelain"], cwd=wt.path)
@@ -183,87 +217,81 @@ def inspect_worktrees(repo_root: Path) -> list[WorktreeInfo]:
     return worktrees
 
 
+def remove_worktree(repo_root: Path, wt: WorktreeInfo, force: bool, delete_branch: bool) -> bool:
+    """Remove one worktree and, if asked, its local branch. Return True on success."""
+    rm_args = ["git", "worktree", "remove"]
+    if force or wt.is_dirty:
+        rm_args.append("--force")
+    rm_args.append(str(wt.path))
+    res_rm = run_cmd(rm_args, cwd=repo_root)
+    if res_rm.returncode != 0:
+        print(f"  ERROR: could not remove worktree: {res_rm.stderr.strip()}")
+        return False
+    print("  Worktree removed.")
+
+    if delete_branch and wt.branch:
+        del_res = run_cmd(["git", "branch", "-d", wt.branch], cwd=repo_root)
+        if del_res.returncode != 0:
+            # A squash-merged branch, or an unmerged branch with --all, needs -D.
+            del_res = run_cmd(["git", "branch", "-D", wt.branch], cwd=repo_root)
+        if del_res.returncode == 0:
+            print(f"  Deleted branch: {wt.branch}")
+        else:
+            print(f"  WARNING: could not delete branch {wt.branch}: {del_res.stderr.strip()}")
+
+    parent = wt.path.parent
+    if parent.is_dir() and not any(parent.iterdir()):
+        try:
+            parent.rmdir()
+        except OSError as error:
+            print(f"  WARNING: could not remove empty directory {parent}: {error}")
+    return True
+
+
 def cleanup_worktrees(
     repo_root: Path,
     dry_run: bool = False,
     force: bool = False,
     delete_branches: bool = True,
     clean_all: bool = False,
+    proc_dir: Path = DEFAULT_PROC_DIR,
 ) -> int:
     print(f"==> Inspecting Git worktrees for {repo_root.name}...")
-    worktrees = inspect_worktrees(repo_root)
+    options = CleanupOptions(force=force, clean_all=clean_all)
     cleaned_count = 0
+    failed_count = 0
 
-    for wt in worktrees:
+    for wt in inspect_worktrees(repo_root, proc_dir):
         if wt.is_main:
             continue
-
-        branch_desc = f"[{wt.branch or 'DETACHED'}]"
-        print(f"\nWorktree: {wt.path} {branch_desc}")
-
-        if wt.active_pids:
-            print(f"  🔒 SKIPPED: Active process detected (PIDs: {wt.active_pids})")
+        print(f"\nWorktree: {wt.path} [{wt.branch or 'DETACHED'}]")
+        decision = decide(wt, options)
+        if not decision.remove:
+            print(f"  SKIPPED: {decision.reason}")
             continue
-
-        if not wt.is_merged and not clean_all:
-            print(f"  ⏸️  SKIPPED: Branch is unmerged ({wt.pr_state}). Use --all to clean.")
-            continue
-
-        if wt.is_dirty and not force:
-            print(
-                f"  ⚠️  SKIPPED: Uncommitted changes ({wt.dirty_count} files). Use --force to override."
-            )
-            continue
-
-        # Eligible for cleanup
         if dry_run:
-            print(f"  🔍 WOULD REMOVE worktree (merged: {wt.pr_state})")
+            print(f"  WOULD REMOVE worktree ({decision.reason})")
             if delete_branches and wt.branch:
-                print(f"  🔍 WOULD DELETE local branch: {wt.branch}")
+                print(f"  WOULD DELETE local branch: {wt.branch}")
             cleaned_count += 1
             continue
+        print(f"  Removing worktree ({decision.reason})...")
+        if remove_worktree(repo_root, wt, force, delete_branches):
+            cleaned_count += 1
+        else:
+            failed_count += 1
 
-        print(f"  🧹 Removing worktree ({wt.pr_state})...")
-        rm_args = ["git", "worktree", "remove"]
-        if force or wt.is_dirty:
-            rm_args.append("--force")
-        rm_args.append(str(wt.path))
-
-        res_rm = run_cmd(rm_args, cwd=repo_root)
-        if res_rm.returncode != 0:
-            print(f"  ❌ Error removing worktree: {res_rm.stderr.strip()}")
-            continue
-
-        cleaned_count += 1
-        print("  ✅ Worktree removed.")
-
-        # Delete local branch if requested
-        if delete_branches and wt.branch:
-            del_res = run_cmd(["git", "branch", "-d", wt.branch], cwd=repo_root)
-            if del_res.returncode != 0:
-                # Force delete if squash-merged or unmerged with --all
-                del_res = run_cmd(["git", "branch", "-D", wt.branch], cwd=repo_root)
-            if del_res.returncode == 0:
-                print(f"  ✅ Deleted branch: {wt.branch}")
-            else:
-                print(f"  ⚠️  Could not delete branch {wt.branch}: {del_res.stderr.strip()}")
-
-        # Clean empty parent directories if under .worktrees or antigravity worktrees
-        try:
-            parent = wt.path.parent
-            if parent.exists() and not any(parent.iterdir()):
-                parent.rmdir()
-        except OSError:
-            pass
-
-    # Prune git worktree metadata
     if not dry_run:
-        run_cmd(["git", "worktree", "prune"], cwd=repo_root)
-        print("\n==> Pruned git worktree records.")
+        prune = run_cmd(["git", "worktree", "prune"], cwd=repo_root)
+        if prune.returncode != 0:
+            print(f"\nERROR: git worktree prune failed: {prune.stderr.strip()}")
+            failed_count += 1
+        else:
+            print("\n==> Pruned git worktree records.")
 
     action_word = "Would clean" if dry_run else "Cleaned"
     print(f"\n{action_word} {cleaned_count} worktree(s).")
-    return 0
+    return 1 if failed_count else 0
 
 
 def main() -> int:
@@ -293,6 +321,14 @@ def main() -> int:
         help="Keep local git branches after removing worktrees.",
     )
 
+    parser.add_argument(
+        "--proc-dir",
+        type=Path,
+        default=DEFAULT_PROC_DIR,
+        help="Process table to scan for processes inside a worktree (default: /proc). "
+        "When it is absent, no worktree is removed.",
+    )
+
     args = parser.parse_args()
     repo_root = get_repo_root()
     return cleanup_worktrees(
@@ -301,6 +337,7 @@ def main() -> int:
         force=args.force,
         delete_branches=not args.no_delete_branches,
         clean_all=args.all,
+        proc_dir=args.proc_dir,
     )
 
 
