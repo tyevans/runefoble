@@ -1,0 +1,12 @@
+# Copy to values.local.yaml (git-ignored). `make helm-deploy` adds it with -f when it exists.
+# Point the stack at model servers on your network.
+services:
+  campaignLore:
+    env:
+      RUNEFOBLE_EMBEDDING_BASE_URL: "http://<host>:8080/v1"
+      RUNEFOBLE_EMBEDDING_MODEL: "qwen3-embedding-0.6b"
+      RUNEFOBLE_EMBEDDING_DIMENSION: "1024"
+  inferenceWorker:
+    backend: openai_compatible
+    openaiCompatibleBaseUrl: "http://<host>:8080/v1"
+    openaiCompatibleModel: "qwen3.8-27b-txt"

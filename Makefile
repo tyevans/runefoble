@@ -155,7 +155,7 @@ helm-deploy: ## Deploy Runefoble stack to current Kubernetes context
 	@kubectl config use-context kind-$(CLUSTER_NAME) 2>/dev/null || true
 	@kubectl cluster-info >/dev/null 2>&1 || (echo "Error: Kubernetes cluster is unreachable. Run 'make cluster-up' first." && exit 1)
 	@echo "==> Deploying Runefoble Helm release..."
-	helm upgrade --install $(RELEASE_NAME) $(HELM_CHART)
+	helm upgrade --install $(RELEASE_NAME) $(HELM_CHART) $(if $(wildcard $(HELM_CHART)/values.local.yaml),-f $(HELM_CHART)/values.local.yaml)
 
 dev: ## Run API Gateway and Vite frontend concurrently with health check gating
 	@python3 scripts/dev_server.py $(ARGS)

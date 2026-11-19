@@ -30,6 +30,10 @@ spec:
               value: {{ .backend | quote }}
             - name: RUNEFOBLE_WORKER_OPENAI_BASE_URL
               value: {{ .openaiCompatibleBaseUrl | quote }}
+            {{- if .openaiCompatibleModel }}
+            - name: RUNEFOBLE_WORKER_OPENAI_MODEL
+              value: {{ .openaiCompatibleModel | quote }}
+            {{- end }}
             # The Redis Streams consumer stays off until a producer exists (ADR-0006).
             - name: RUNEFOBLE_WORKER_REDIS_ENABLED
               value: "false"

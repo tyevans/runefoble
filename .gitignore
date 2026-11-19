@@ -67,3 +67,6 @@ services/audience_studio/dist-test/
 # Generated documentation copies (written by scripts/build_docs.py)
 docs/changelog.md
 docs/operating-manual.md
+
+# Local Helm overrides (endpoints on your network). See values.local.example.yaml.
+deployments/helm/runefoble/values.local.yaml

@@ -412,6 +412,8 @@ services:
     backend: mock
     # Required when backend is openai_compatible. Empty means no base URL is set.
     openaiCompatibleBaseUrl: ""
+    # Model name on the OpenAI-compatible endpoint. Empty keeps the worker default.
+    openaiCompatibleModel: ""
   gatewayMcp:
     # MCP protocol over streamable HTTP at /mcp. ClusterIP only: no ingress path (ADR-0001).
     # Tools keep their state in memory, so run one replica. Rendered by templates/gateway-mcp.yaml
