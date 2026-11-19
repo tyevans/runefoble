@@ -19,6 +19,7 @@ from game_session.events import STREAM_TAVERN
 from game_session.main import app as session_app
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.module_state import SeamRestorer
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
@@ -129,20 +130,26 @@ def test_haggle_on_existing_merchant_does_not_create_it_again(
 
 
 def test_merchant_profile_store_outage_returns_unavailable(
-    client: TestClient, monkeypatch: pytest.MonkeyPatch
+    client: TestClient, seam_restorer: SeamRestorer
 ) -> None:
-    monkeypatch.setattr(dependencies, "merchant_repo", UnavailableRepository())
+    seam_restorer.replace(
+        dependencies.merchant_repository.get,
+        dependencies.merchant_repository.set,
+        UnavailableRepository(),
+    )
 
     res = client.get("/api/v1/merchants/merchant_any")
     assert res.status_code == 503, res.text
 
 
 def test_haggle_store_outage_returns_unavailable_and_saves_nothing(
-    client: TestClient, mock_bus: MockAsyncRedis, monkeypatch: pytest.MonkeyPatch
+    client: TestClient, mock_bus: MockAsyncRedis, seam_restorer: SeamRestorer
 ) -> None:
     session_id = _owned_session(client)
     repo = UnavailableRepository()
-    monkeypatch.setattr(dependencies, "merchant_repo", repo)
+    seam_restorer.replace(
+        dependencies.merchant_repository.get, dependencies.merchant_repository.set, repo
+    )
     events_before = len(_event_types(mock_bus))
 
     res = _haggle(client, session_id, "merchant_outage", offered=35)
@@ -152,10 +159,14 @@ def test_haggle_store_outage_returns_unavailable_and_saves_nothing(
 
 
 def test_minigame_store_outage_returns_unavailable(
-    client: TestClient, monkeypatch: pytest.MonkeyPatch
+    client: TestClient, seam_restorer: SeamRestorer
 ) -> None:
     session_id = _owned_session(client)
-    monkeypatch.setattr(dependencies, "tavern_repo", UnavailableRepository())
+    seam_restorer.replace(
+        dependencies.tavern_repository.get,
+        dependencies.tavern_repository.set,
+        UnavailableRepository(),
+    )
 
     res = client.get(f"/api/v1/sessions/{session_id}/tavern/games/game-missing1")
     assert res.status_code == 503, res.text

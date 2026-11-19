@@ -8,12 +8,12 @@ No campaign-level shortcut bypasses them.
 from typing import Annotated
 from uuid import UUID
 
-from eventsource import AggregateNotFoundError
 from fastapi import Depends, HTTPException, status
 from runefoble_auth.errors import AuthzError
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.permissions import check_subject
 from runefoble_auth.spicedb import SpiceDBClient
+from runefoble_platform.aggregate_loading import load_or_404
 from runefoble_platform.errors import ServiceUnavailableError
 from runefoble_platform.event_sourcing import AggregateRepository
 
@@ -58,10 +58,7 @@ async def load_codex_entry(
     An entry of another campaign returns 404, the same as a missing entry, so that
     entry existence is not revealed.
     """
-    try:
-        aggregate = await repo.load(entry_id)
-    except AggregateNotFoundError as exc:
-        raise HTTPException(status_code=404, detail="Codex entry not found") from exc
+    aggregate = await load_or_404(repo, entry_id, "Codex entry not found")
 
     if aggregate.state.campaign_id != campaign_id:
         raise HTTPException(status_code=404, detail="Codex entry not found")

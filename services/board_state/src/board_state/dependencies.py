@@ -5,12 +5,12 @@ from __future__ import annotations
 import logging
 
 from board_state.aggregate import BoardAggregate
-from eventsource.domain.exceptions import AggregateNotFoundError
 from runefoble_auth.wiring import (
     build_identity_dependencies,
     make_verifier_holder,
     verifier_from_settings,
 )
+from runefoble_platform.aggregate_loading import load_if_exists
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.event_bus import EventBusProvider
 from runefoble_platform.event_sourcing import (
@@ -55,7 +55,7 @@ async def get_board(session_id: str) -> BoardAggregate:
     Boards are created only through the POST /api/v1/boards command.
     """
     board_id = opaque_aggregate_id(session_id, field="session_id")
-    try:
-        return await repo.load(board_id)
-    except AggregateNotFoundError as exc:
-        raise BoardNotFoundError(session_id) from exc
+    board = await load_if_exists(repo, board_id)
+    if board is None:
+        raise BoardNotFoundError(session_id)
+    return board

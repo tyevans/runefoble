@@ -5,7 +5,6 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID
 
-from eventsource import AggregateNotFoundError
 from fastapi import APIRouter, Depends
 from game_session.caravan import CaravanContractAggregate
 from game_session.caravan.ledger import CaravanLedgerAggregate
@@ -25,6 +24,7 @@ from game_session.west_marches_models import (
     ReportAmbushRequest,
 )
 from runefoble_auth.factory import get_spicedb_client
+from runefoble_platform.aggregate_loading import load_or_create
 from runefoble_platform.identifiers import parse_uuid
 
 router = APIRouter(
@@ -43,10 +43,7 @@ async def _init(
 
 async def _ledger(wid: UUID) -> tuple[Any, CaravanLedgerAggregate]:
     repo = get_caravan_ledger_repository()
-    try:
-        return repo, await repo.load(wid)
-    except AggregateNotFoundError:
-        return repo, CaravanLedgerAggregate(wid)
+    return repo, await load_or_create(repo, wid, CaravanLedgerAggregate)
 
 
 async def _sync(

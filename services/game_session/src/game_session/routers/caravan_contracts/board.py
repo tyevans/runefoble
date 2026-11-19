@@ -8,8 +8,7 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID, uuid4
 
-from eventsource import AggregateNotFoundError
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Query
 from game_session.caravan import CaravanContractAggregate
 from game_session.child_index import ChildIndexKind
 from game_session.dependencies import get_caravan_contract_repository
@@ -22,7 +21,7 @@ from game_session.settlement.auth.tokens import CallerId, get_principal
 from game_session.west_marches_models import PostCaravanContractRequest
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.permissions import require_subject
-from runefoble_platform.aggregate_loading import load_if_exists
+from runefoble_platform.aggregate_loading import load_if_exists, load_or_404
 from runefoble_platform.identifiers import parse_uuid
 
 router = APIRouter(
@@ -128,10 +127,7 @@ async def get_caravan_contract(
     spicedb = get_spicedb_client()
     await require_subject(spicedb, "caravan_contract", str(cid), "view", caller_id)
 
-    try:
-        contract = await get_caravan_contract_repository().load(cid)
-    except AggregateNotFoundError as e:
-        raise HTTPException(status_code=404, detail="Contract not found") from e
+    contract = await load_or_404(get_caravan_contract_repository(), cid, "Contract not found")
 
     return {"shared_world_id": str(wid), "contract": contract.state.model_dump()}
 

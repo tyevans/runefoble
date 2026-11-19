@@ -9,8 +9,7 @@ from __future__ import annotations
 from typing import Any
 from uuid import uuid4
 
-from eventsource import AggregateNotFoundError
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Query
 from game_session.dependencies import get_event_bus, get_shared_world_repository
 from game_session.events import STREAM_WEST_MARCHES
 from game_session.settlement.auth.tokens import CallerId, get_principal
@@ -23,6 +22,7 @@ from game_session.west_marches_models import (
 )
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.permissions import require_subject
+from runefoble_platform.aggregate_loading import load_or_404
 from runefoble_platform.event_publish import publish_or_fail
 from runefoble_platform.identifiers import parse_uuid
 
@@ -75,11 +75,7 @@ async def get_shared_world(
     spicedb = get_spicedb_client()
     await require_subject(spicedb, "shared_world", str(wid), "view", caller_id)
 
-    repo = get_shared_world_repository()
-    try:
-        world = await repo.load(wid)
-    except AggregateNotFoundError as e:
-        raise HTTPException(status_code=404, detail="Shared world not found") from e
+    world = await load_or_404(get_shared_world_repository(), wid, "Shared world not found")
     return {"shared_world_id": str(wid), **world.state.model_dump()}
 
 

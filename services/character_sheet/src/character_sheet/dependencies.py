@@ -15,7 +15,6 @@ from character_sheet.crafting import CraftingAggregate
 from character_sheet.health_events import health_change_events
 from character_sheet.models import CharacterState
 from character_sheet.schemas import CreateCharacterRequest
-from eventsource.domain.exceptions import AggregateNotFoundError
 from fastapi import Depends, HTTPException
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.mock import MockSpiceDBClient
@@ -30,6 +29,7 @@ from runefoble_events.events import (
     CharacterAssignedToCampaign,
     StandInPolicyUpdated,
 )
+from runefoble_platform.aggregate_loading import load_or_404
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.event_bus import EventBusProvider
 from runefoble_platform.event_publish import publish_best_effort
@@ -130,10 +130,7 @@ async def load_character(
     repo: AggregateRepository[CharacterAggregate], character_id: UUID
 ) -> CharacterAggregate:
     """Load the character. Only a missing stream is a 404. A store outage answers 503."""
-    try:
-        return await repo.load(character_id)
-    except AggregateNotFoundError as e:
-        raise HTTPException(status_code=404, detail=f"Character not found: {e}") from e
+    return await load_or_404(repo, character_id, f"Character not found: {character_id}")
 
 
 async def create_new_character(

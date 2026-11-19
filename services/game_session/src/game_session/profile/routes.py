@@ -8,13 +8,13 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from eventsource.domain.exceptions import OptimisticLockError
 from fastapi import APIRouter, Depends, HTTPException, status
 from game_session.profile.aggregate import UserProfileAggregate
 from game_session.profile.repository import get_profile_repository, load_profile
 from game_session.profile.schemas import ProfileResponse, UpdateProfileRequest
 from game_session.profile.service import profile_view
 from game_session.settlement.auth.tokens import CallerPrincipal
+from runefoble_platform.aggregate_loading import save_or_conflict
 from runefoble_platform.event_sourcing import AggregateRepository
 
 router = APIRouter(tags=["User Profile"])
@@ -36,11 +36,12 @@ async def update_profile(
     """Edit the caller's profile. Only the fields sent are changed."""
     aggregate = await load_profile(repo, principal.user_id)
     aggregate.update(principal.user_id, req.changes())
-    try:
-        await repo.save(aggregate)
-    except OptimisticLockError as exc:
-        raise HTTPException(
+    await save_or_conflict(
+        repo,
+        aggregate,
+        lambda: HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="The profile changed while this request ran. Retry.",
-        ) from exc
+        ),
+    )
     return profile_view(principal, aggregate.state)

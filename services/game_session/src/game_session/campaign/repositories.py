@@ -7,10 +7,7 @@ restarted service sees the same campaigns, members, and invites (ADR-0015 f).
 from __future__ import annotations
 
 from dataclasses import dataclass
-from uuid import UUID
 
-from eventsource.domain.exceptions import AggregateNotFoundError
-from eventsource.domain.exceptions import OptimisticLockError as _OptimisticLockError
 from game_session.campaign.campaign_aggregate import CampaignAggregate
 from game_session.campaign.errors import ConcurrentUpdateError
 from game_session.campaign.invite_aggregate import InviteAggregate
@@ -56,17 +53,6 @@ def set_campaign_repositories(repos: CampaignRepositories | None) -> None:
     _repositories = repos
 
 
-async def save_aggregate[T](repo: AggregateRepository[T], aggregate: T) -> None:
-    """Save an aggregate. A version conflict becomes a 409 for the caller to retry."""
-    try:
-        await repo.save(aggregate)  # type: ignore[arg-type]
-    except _OptimisticLockError as exc:
-        raise ConcurrentUpdateError("The campaign changed while this request ran. Retry.") from exc
-
-
-async def load_or_none[T](repo: AggregateRepository[T], aggregate_id: UUID) -> T | None:
-    """Load an aggregate. Return None when its stream has no events."""
-    try:
-        return await repo.load(aggregate_id)
-    except AggregateNotFoundError:
-        return None
+def concurrent_update() -> ConcurrentUpdateError:
+    """The error for a campaign save that lost an optimistic lock. The caller retries."""
+    return ConcurrentUpdateError("The campaign changed while this request ran. Retry.")

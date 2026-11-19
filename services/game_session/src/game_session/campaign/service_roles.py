@@ -6,7 +6,7 @@ A role grant adds the member to the membership aggregate, then writes the SpiceD
 
 from __future__ import annotations
 
-from game_session.campaign.repositories import CampaignRepositories, save_aggregate
+from game_session.campaign.repositories import CampaignRepositories, concurrent_update
 from game_session.campaign.schemas import (
     AssignRoleRequest,
     CampaignCapabilitiesResponse,
@@ -18,6 +18,7 @@ from game_session.campaign.service_campaigns import (
     parse_campaign_id,
 )
 from game_session.campaign.tuples import SpiceDB, grant_member, relation_for_role
+from runefoble_platform.aggregate_loading import save_or_conflict
 
 CAPABILITY_PERMISSIONS: tuple[str, ...] = ("manage", "run_session", "play", "view")
 
@@ -32,7 +33,7 @@ async def assign_role(
     await load_campaign(repos, cid)
     memberships = await load_memberships(repos, cid)
     memberships.add_member(req.user_id, req.role)
-    await save_aggregate(repos.memberships, memberships)
+    await save_or_conflict(repos.memberships, memberships, concurrent_update)
     await grant_member(spicedb, str(cid), req.role, req.user_id)
     relation = relation_for_role(req.role)
     return RoleAssignedResponse(

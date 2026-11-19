@@ -14,8 +14,7 @@ from game_session.campaign.membership_aggregate import MembershipAggregate
 from game_session.campaign.permission_flags import campaign_permissions
 from game_session.campaign.repositories import (
     CampaignRepositories,
-    load_or_none,
-    save_aggregate,
+    concurrent_update,
 )
 from game_session.campaign.schemas import (
     CampaignPermissionsResponse,
@@ -27,6 +26,7 @@ from game_session.campaign.schemas import (
 )
 from game_session.campaign.session_aggregate import CampaignSessionsAggregate
 from game_session.campaign.tuples import SpiceDB, grant_owner, link_session
+from runefoble_platform.aggregate_loading import load_if_exists, save_or_conflict
 from runefoble_platform.identifiers import parse_uuid
 
 logger = logging.getLogger("runefoble.game_session.campaign")
@@ -46,21 +46,21 @@ def parse_campaign_id(raw: str) -> UUID:
 
 
 async def load_campaign(repos: CampaignRepositories, campaign_id: UUID) -> CampaignAggregate:
-    campaign = await load_or_none(repos.campaigns, campaign_id)
+    campaign = await load_if_exists(repos.campaigns, campaign_id)
     if campaign is None:
         raise CampaignNotFoundError(f"Campaign {campaign_id} does not exist")
     return campaign
 
 
 async def load_memberships(repos: CampaignRepositories, campaign_id: UUID) -> MembershipAggregate:
-    memberships = await load_or_none(repos.memberships, campaign_id)
+    memberships = await load_if_exists(repos.memberships, campaign_id)
     return memberships if memberships is not None else repos.memberships.create_new(campaign_id)
 
 
 async def load_sessions(
     repos: CampaignRepositories, campaign_id: UUID
 ) -> CampaignSessionsAggregate:
-    sessions = await load_or_none(repos.sessions, campaign_id)
+    sessions = await load_if_exists(repos.sessions, campaign_id)
     return sessions if sessions is not None else repos.sessions.create_new(campaign_id)
 
 
@@ -123,7 +123,7 @@ async def create_campaign(
         cover_image_url=req.cover_image_url,
         settings=req.settings,
     )
-    await save_aggregate(repos.campaigns, campaign)
+    await save_or_conflict(repos.campaigns, campaign, concurrent_update)
 
     seeded_session_id: str | None = None
     if req.seed_initial_session:
@@ -136,7 +136,7 @@ async def create_campaign(
             scheduled_at=None,
             description=SEEDED_SESSION_DESCRIPTION,
         )
-        await save_aggregate(repos.sessions, sessions)
+        await save_or_conflict(repos.sessions, sessions, concurrent_update)
 
     await grant_owner(spicedb, str(campaign_id), owner_id)
     if seeded_session_id is not None:
@@ -161,7 +161,7 @@ async def update_campaign(
 ) -> CampaignSummaryResponse:
     campaign = await load_campaign(repos, parse_campaign_id(campaign_id))
     campaign.update(req.model_dump(exclude_none=True))
-    await save_aggregate(repos.campaigns, campaign)
+    await save_or_conflict(repos.campaigns, campaign, concurrent_update)
     return await _summarize(repos, spicedb, campaign, user_id)
 
 
@@ -177,7 +177,7 @@ async def list_viewable_campaigns(
         except ValueError:
             logger.warning("SpiceDB grants view on non-UUID campaign id %s. Skipped.", raw_id)
             continue
-        campaign = await load_or_none(repos.campaigns, campaign_uuid)
+        campaign = await load_if_exists(repos.campaigns, campaign_uuid)
         if campaign is None:
             logger.warning("SpiceDB grants view on campaign %s with no campaign record", raw_id)
             continue
@@ -221,7 +221,7 @@ async def create_session(
         scheduled_at=req.scheduled_at,
         description=req.description,
     )
-    await save_aggregate(repos.sessions, sessions)
+    await save_or_conflict(repos.sessions, sessions, concurrent_update)
     await link_session(spicedb, session_id, str(cid))
     record = sessions.state.sessions[-1]
     return CampaignSessionResponse(
