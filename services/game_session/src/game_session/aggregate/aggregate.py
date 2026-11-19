@@ -102,7 +102,9 @@ class GameSessionAggregate(
         )
 
     def end(self, summary: str = "Session completed") -> None:
-        """End the session."""
+        """End the session. An ended session cannot end again."""
+        if self.state.status == "ended":
+            raise ValueError("Session already ended")
         self.create_event(
             SessionEnded,
             campaign_id=self.state.campaign_id,

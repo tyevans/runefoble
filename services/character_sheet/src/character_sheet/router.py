@@ -192,12 +192,12 @@ async def unequip_item(character_id: UUID, slot: str, repo: deps.RepoDep):
 
 @router.post("/api/v1/characters/{character_id}/conditions", response_model=CharacterState, dependencies=deps.EDIT_CHARACTER_OR_SERVICE)
 async def apply_condition(character_id: UUID, req: schemas.ApplyConditionRequest, repo: deps.RepoDep):
-    return await deps.execute_character_mutation(repo, character_id, lambda c: c.apply_condition(req.condition, req.duration_rounds, req.source))
+    return await deps.execute_condition_mutation(repo, character_id, lambda c: c.apply_condition(req.condition, req.duration_rounds, req.source))
 
 
 @router.delete("/api/v1/characters/{character_id}/conditions/{condition}", response_model=CharacterState, dependencies=deps.EDIT_CHARACTER)
 async def remove_condition(character_id: UUID, condition: str, repo: deps.RepoDep):
-    return await deps.execute_character_mutation(repo, character_id, lambda c: c.remove_condition(condition))
+    return await deps.execute_condition_mutation(repo, character_id, lambda c: c.remove_condition(condition))
 # fmt: on
 
 

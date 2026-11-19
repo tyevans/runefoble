@@ -51,6 +51,11 @@ def get_combat_state(session_id: str) -> OwnerRoute:
     return OwnerRoute("GET", _session(session_id, "combat"))
 
 
+def end_session(session_id: str) -> OwnerRoute:
+    """POST: end a session. The owner checks `control`."""
+    return OwnerRoute("POST", _session(session_id, "end"))
+
+
 # character_sheet
 
 
@@ -134,6 +139,11 @@ def update_guardrails(character_id: str) -> OwnerRoute:
     return OwnerRoute("PUT", _character(character_id, "guardrails"))
 
 
+def clear_condition(character_id: str, condition: str) -> OwnerRoute:
+    """DELETE: remove one tactical status condition."""
+    return OwnerRoute("DELETE", _character(character_id, "conditions", condition))
+
+
 # board_state
 
 
@@ -173,6 +183,16 @@ def narrate() -> OwnerRoute:
 def propose_action() -> OwnerRoute:
     """POST: propose an agent action to The Watcher. The DM can veto it."""
     return OwnerRoute("POST", path("api", "v1", "watcher", "actions", "propose"))
+
+
+def toggle_door(board_id: str, door_id: str) -> OwnerRoute:
+    """POST: toggle one interactive door or portal. The owner checks `play`."""
+    return OwnerRoute("POST", path("api", "v1", "boards", board_id, "doors", door_id, "toggle"))
+
+
+def place_light(board_id: str) -> OwnerRoute:
+    """POST: place or update a dynamic light. The owner checks `manage_traps`."""
+    return OwnerRoute("POST", path("api", "v1", "boards", board_id, "lights"))
 
 
 # rules_compendium

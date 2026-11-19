@@ -153,19 +153,25 @@ async def require_token_move(user_id: str, session_id: str, token_id: str) -> No
 
 
 async def bind_token(
-    session_id: str, token_id: str, character_id: str | None, user_id: str
+    session_id: str,
+    token_id: str,
+    character_id: str | None,
+    user_id: str,
+    token_type: str,
 ) -> None:
     """Authorize a placement, then write the `board_token` tuples. Raise 403 or 409 on refusal.
 
-    A character token needs `character.edit` and `campaign.play`. Any other token needs
-    `board.manage_traps`. An id that already belongs to another campaign or character is refused.
+    A monster token needs `board.manage_traps`, the board DM permission, even when it names a
+    character. Any other token without a character needs `board.manage_traps`. A character token
+    needs `character.edit` and `campaign.play`. An id that already belongs to another campaign or
+    character is refused.
     """
     if not TOKEN_ID_PATTERN.fullmatch(token_id):
         raise HTTPException(status_code=400, detail="token_id has characters that are not allowed")
     client = get_spicedb_client()
-    if character_id is None:
+    if character_id is None or token_type == "monster":
         await require_board_permission(user_id, session_id, MANAGE_TRAPS)
-    else:
+    if character_id is not None:
         await require_campaign_permission(user_id, session_id, PLAY)
         await require_subject(
             client,

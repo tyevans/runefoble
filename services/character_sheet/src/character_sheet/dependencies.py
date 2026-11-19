@@ -163,6 +163,28 @@ async def execute_character_mutation(
     return char.state
 
 
+async def execute_condition_mutation(
+    repo: AggregateRepository[CharacterAggregate],
+    character_id: UUID,
+    mutation_fn: Callable[[CharacterAggregate], Any],
+) -> CharacterState:
+    """Apply one condition change, save it, then publish the events it committed.
+
+    The events are read before the save, because a save clears them. A refused change raises 400
+    and publishes nothing.
+    """
+    char = await load_character(repo, character_id)
+    try:
+        mutation_fn(char)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    committed = list(char.uncommitted_events)
+    await repo.save(char)
+    for event in committed:
+        await publish_character_event(event)
+    return char.state
+
+
 async def modify_character_health(
     repo: AggregateRepository[CharacterAggregate],
     character_id: UUID,

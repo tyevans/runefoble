@@ -37,7 +37,7 @@ async def place_token(session_id: str, req: PlaceTokenRequest, user_id: CallerId
     """Place a token. A character token needs its owner. Other tokens need a board manager."""
     board = await get_board(session_id)
     token_id = req.token_id or str(uuid4())
-    await bind_token(session_id, token_id, req.character_id, user_id)
+    await bind_token(session_id, token_id, req.character_id, user_id, req.token_type)
     try:
         board.place_token(
             token_id=token_id,
@@ -49,7 +49,7 @@ async def place_token(session_id: str, req: PlaceTokenRequest, user_id: CallerId
             is_friendly=req.is_friendly,
             vision_radius=req.vision_radius,
         )
-        await repo.save(board)
+        await save_and_publish(repo, board, get_event_bus())
         return board.state.tokens[token_id]
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
