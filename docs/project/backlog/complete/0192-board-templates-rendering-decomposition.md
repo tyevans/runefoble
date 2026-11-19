@@ -25,10 +25,10 @@ pr_url: https://github.com/tyevans/runefoble/pull/253
 Complete
 
 ## Summary
-Decompose `services/board_state/ui/src/board-templates.ts` (338 lines, 67.6% of limit) into modular template components under `services/board_state/ui/src/templates/` (`kinematics.template.ts`, `cell.template.ts`, `overlays.template.ts`), keeping each template module strictly < 130 lines per Hard Invariant 6 and ADR-0013.
+Decompose `services/board_state/ui/src/board-templates.ts` (removed) (338 lines, 67.6% of limit) into modular template components under `services/board_state/ui/src/templates/` (`kinematics.template.ts`, `cell.template.ts`, `overlays.template.ts`), keeping each template module strictly < 130 lines per Hard Invariant 6 and ADR-0013.
 
 ## Problem Statement
-`services/board_state/ui/src/board-templates.ts` contains 338 lines of Lit HTML templates spanning distance rulers, vector line overlays, ghost previews, grid cell rendering with health bars, header controls, radial menu overlays, and AoE template banners in a single file. As Milestone 9 adds 3D miniature controls and elevation markers, this file will soon exceed 400 lines unless modularized into focused template files.
+`services/board_state/ui/src/board-templates.ts` (removed) contains 338 lines of Lit HTML templates spanning distance rulers, vector line overlays, ghost previews, grid cell rendering with health bars, header controls, radial menu overlays, and AoE template banners in a single file. As Milestone 9 adds 3D miniature controls and elevation markers, this file will soon exceed 400 lines unless modularized into focused template files.
 
 ## Governing Architecture & ADRs
 - **ADR-0004: Lit Web Components and Storybook UI**: Clean separation of Lit presentation templates from component state controllers.
@@ -42,7 +42,7 @@ Decompose `services/board_state/ui/src/board-templates.ts` (338 lines, 67.6% of 
    - Tactical grid cell rendering, tokens, hazard badges, terrain, active turns, and ghost tokens (< 120 lines).
 3. **Overlays Template (`services/board_state/ui/src/templates/overlays.template.ts`)**:
    - Board header, status bar with color legend, radial action menu overlay, and AoE template banners (< 130 lines).
-4. **Aggregator Facade (`services/board_state/ui/src/board-templates.ts`)**:
+4. **Aggregator Facade (`services/board_state/ui/src/board-templates.ts` (removed))**:
    - Re-export modular template renderers and interfaces to preserve full backward compatibility (< 50 lines).
 5. **Verification**:
    - Verify Storybook builds and board stories render without error.
@@ -58,7 +58,7 @@ Decompose `services/board_state/ui/src/board-templates.ts` (338 lines, 67.6% of 
 
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
 1. **Module Architecture**:
-   - `services/board_state/ui/src/board-templates.ts` reduced to strictly < 60 lines.
+   - `services/board_state/ui/src/board-templates.ts` (removed) reduced to strictly < 60 lines.
    - Submodules in `services/board_state/ui/src/templates/` strictly < 130 lines each.
 2. **Frontdoor Test Verification**:
    - `uv run pytest services/board_state/ tests/test_blackbox_board*.py` passes cleanly.
