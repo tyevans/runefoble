@@ -103,7 +103,7 @@ indent-style = "space"
 plugins = ["pydantic.mypy"]
 
 [tool.pytest.ini_options]
-pythonpath = ["."]
+pythonpath = [".", "deployments/zitadel_bootstrap/src"]
 # Docker image tests are heavy. Run them with: uv run pytest -m docker tests/test_blackbox_deployability_images.py
 addopts = "-m 'not docker'"
 timeout = 300

@@ -79,8 +79,11 @@ spec:
       containers:
         - name: bootstrap
           image: {{ .Values.services.gatewayApi.image }}
-          command: ["python", "-m", "runefoble_auth.zitadel_bootstrap_job"]
+          command: ["python", "-m", "zitadel_bootstrap.job"]
           env:
+            # The Job package lives in the image source tree, outside the uv workspace members.
+            - name: PYTHONPATH
+              value: /app/deployments/zitadel_bootstrap/src
             - name: POD_NAMESPACE
               valueFrom:
                 fieldRef:
