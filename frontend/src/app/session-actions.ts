@@ -2,7 +2,7 @@
  * App Shell Session Actions (TASK-0643).
  *
  * Handles the lobby events that seat a player, start a live session, and activate an absentee
- * stand-in.
+ * stand-in. Each lobby change that the owner records goes through an HTTP route.
  */
 
 import type { TakeSeatEventDetail } from '@runefoble/game-session-ui';
@@ -11,17 +11,25 @@ import { router } from '../router/index.ts';
 import type { RunefobleApp } from '../runefoble-app.ts';
 import { handleToggleStandIn } from '../vtt-mesh-handlers.ts';
 
-/** Tells the session socket that the session started, then opens the live tabletop. */
-export function launchSession(host: RunefobleApp, e: CustomEvent): void {
+/**
+ * Starts the session through the gateway start route, then opens the live tabletop (TASK-0910).
+ * game_session moves the session from `lobby` to `active` and checks `session.control`. The
+ * gateway then sends `session_started` to the other sockets. A refusal shows the owner's message
+ * and keeps the lobby. The shell sends no socket frame.
+ */
+export async function launchSession(host: RunefobleApp, e: CustomEvent): Promise<void> {
   const cId = e.detail?.campaignId || host.campaignId;
   const sId = e.detail?.sessionId || host.sessionId;
   if (!cId || !sId) {
     host.showToast('Session not launched. The campaign or session is not known.');
     return;
   }
-  const socket = host.sessionSocket.current;
-  if (socket?.readyState === WebSocket.OPEN) socket.send(JSON.stringify({ type: 'session_started', campaignId: cId, sessionId: sId }));
-  router.navigate(`#/campaigns/${cId}/sessions/${sId}`);
+  const started = await appDataService.startSession(sId);
+  if (!started.ok) {
+    host.showToast(`Session not launched: ${started.message}`);
+    return;
+  }
+  await router.navigate(`#/campaigns/${cId}/sessions/${sId}`);
 }
 
 /** Toggles the stand-in for a player. An absent player opens the directives drawer. */

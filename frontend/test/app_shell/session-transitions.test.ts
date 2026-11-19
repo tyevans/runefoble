@@ -3,6 +3,7 @@
  *
  * TASK-0287: Frontend App Shell Test Suite Modular Decomposition
  * TASK-0640b: Board and plugin wiring moved to board-and-plugin-slots.test.ts (line cap).
+ * TASK-0910: launch calls the start route; a session_started frame routes to the shell's own ids.
  * Governing ADRs: ADR-0004, ADR-0012, ADR-0013
  * Hard Invariants:
  * - Hard Invariant 6: File length limit (< 110 lines; limit < 130 lines)
@@ -12,10 +13,21 @@
 import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { Router } from '../../src/router/router.ts';
+import { router as shellRouter } from '../../src/router/index.ts';
+import { launchSession } from '../../src/app/session-actions.ts';
+import { sessionStartedRoute } from '../../src/app/session-messages.ts';
 import { AppDataService } from '../../src/services/app-data-service.ts';
 import { installFakeGateway, type FakeGateway } from '../support/fake-gateway.ts';
 import { FALLBACK_CHARACTERS } from '../support/app-data-service.fixtures.ts';
 import { OWNER_SESSION_STATE, OWNER_CAMPAIGN_MEMBERS, OWNER_BOARD_STATE } from '../support/owner-wire-fixtures.ts';
+
+/** The App Shell state that the launch handler reads, with a toast log. */
+function shellHost(): any {
+  return {
+    campaignId: '4', sessionId: 'session-tomb-14', toasts: [] as string[],
+    showToast(m: string) { this.toasts.push(m); },
+  };
+}
 
 /** A stateful roster behind the gateway: create, assign, and delete change what later reads return. */
 function installRosterGateway(): { gateway: FakeGateway; roster: any[] } {
@@ -52,21 +64,38 @@ describe('App Shell Session Lifecycle & Transitions', () => {
   afterEach(() => gateway.restore());
 
   it('transitions router from lobby to active VTT on launch-session event', async () => {
-    await router.navigate('#/campaigns/4/lobby/session-tomb-14');
-    await router.navigate('#/campaigns/4/sessions/session-tomb-14');
-    const target = router.getCurrentRoute();
-    assert.equal(target?.pattern, '#/campaigns/:campaignId/sessions/:sessionId');
-    assert.equal(target?.params.campaignId, '4');
-    assert.equal(target?.params.sessionId, 'session-tomb-14');
+    gateway.restore();
+    gateway = installFakeGateway({ 'POST /api/v1/sessions/session-tomb-14/start': { body: { id: 'session-tomb-14', status: 'active' } } });
+    const host = shellHost();
+    await shellRouter.navigate('#/campaigns/4/lobby/session-tomb-14');
+    await launchSession(host, new CustomEvent('launch-session', { detail: { campaignId: '4', sessionId: 'session-tomb-14' } }));
+    assert.deepEqual(gateway.calls.map((c) => `${c.method} ${c.path}`), ['POST /api/v1/sessions/session-tomb-14/start']);
+    assert.equal(shellRouter.getCurrentRoute()?.path, '#/campaigns/4/sessions/session-tomb-14');
+    assert.deepEqual(host.toasts, []);
   });
 
-  it('transitions router from lobby to active VTT upon incoming WebSocket session_started message', async () => {
-    await router.navigate('#/campaigns/4/lobby/session-tomb-14');
-    const msg = { type: 'session_started', campaignId: '4', sessionId: 'session-tomb-14' };
-    if (msg.type === 'session_started') {
-      await router.navigate(`#/campaigns/${msg.campaignId}/sessions/${msg.sessionId}`);
-    }
-    assert.equal(router.getCurrentRoute()?.path, '#/campaigns/4/sessions/session-tomb-14');
+  it('a refused launch shows the owner message and keeps the lobby', async () => {
+    gateway.restore();
+    gateway = installFakeGateway({ 'POST /api/v1/sessions/session-tomb-14/start': { status: 403, body: { detail: 'Only the DM can start the session' } } });
+    const host = shellHost();
+    await shellRouter.navigate('#/campaigns/4/lobby/session-tomb-14');
+    await launchSession(host, new CustomEvent('launch-session'));
+    assert.equal(shellRouter.getCurrentRoute()?.path, '#/campaigns/4/lobby/session-tomb-14');
+    assert.equal(host.toasts.length, 1);
+    assert.match(host.toasts[0], /^Session not launched: /);
+  });
+
+  it('transitions router from lobby to active VTT upon incoming WebSocket session_started message', () => {
+    const shell = { campaignId: '4', sessionId: 'session-tomb-14' };
+    const frame = { type: 'session_started', campaignId: 'camp-evil', sessionId: 'session-tomb-14', status: 'active' };
+    assert.equal(sessionStartedRoute(shell, frame), '#/campaigns/4/sessions/session-tomb-14');
+  });
+
+  it('ignores a session_started message for another session or without active status', () => {
+    const shell = { campaignId: '4', sessionId: 'session-tomb-14' };
+    assert.equal(sessionStartedRoute(shell, { sessionId: 'session-other', status: 'active' }), null);
+    assert.equal(sessionStartedRoute(shell, { sessionId: 'session-tomb-14' }), null);
+    assert.equal(sessionStartedRoute(shell, { sessionId: 'session-tomb-14', status: 'lobby' }), null);
   });
 
   it('dynamically populates lobby available characters from character roster with campaign priority', async () => {

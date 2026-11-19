@@ -105,9 +105,9 @@ describe('caravan board load', () => {
 });
 
 describe('launchSession', () => {
-  it('reports an unknown session as a toast', () => {
+  it('reports an unknown session as a toast', async () => {
     const h = host('session-lobby', { campaignId: '', sessionId: '' });
-    launchSession(h, new CustomEvent('launch-session'));
+    await launchSession(h, new CustomEvent('launch-session'));
     assert.equal(h.toasts.length, 1);
   });
 });

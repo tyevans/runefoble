@@ -27,6 +27,7 @@ Feature: Session Lobby and Tabletop VTT Synchronization
   Scenario: DM Launching Active Tabletop VTT
     When Evelyn clicks "Launch Session"
     Then both Evelyn and Valeros's browsers navigate automatically to "#/campaigns/{campaignId}/sessions/{sessionId}"
+    And the gateway reports the session status as "active"
     And the tactical board "<runefoble-board>" renders with dynamic grid bounds
 
   Scenario: Live Token Kinematics and Movement Sync
