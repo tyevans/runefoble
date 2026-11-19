@@ -2,6 +2,7 @@
 
 from typing import TYPE_CHECKING
 
+from gateway_mcp.container import GatewayMcpContainer
 from gateway_mcp.tools.board import (
     create_encounter,
     inspect_tactical_board,
@@ -63,10 +64,10 @@ __all__ = [
 ]
 
 
-def register_tools(mcp: "FastMCP") -> None:
-    """Register all tabletop RPG tools onto the FastMCP server."""
+def register_tools(mcp: "FastMCP", container: GatewayMcpContainer) -> None:
+    """Register all tabletop RPG tools onto the FastMCP server, bound to one container."""
     register_dice_tools(mcp)
-    register_board_tools(mcp)
-    register_character_tools(mcp)
-    register_orchestration_tools(mcp)
-    register_compendium_tools(mcp)
+    register_board_tools(mcp, container)
+    register_character_tools(mcp, container)
+    register_orchestration_tools(mcp, container)
+    register_compendium_tools(mcp, container)

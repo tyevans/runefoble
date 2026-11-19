@@ -15,7 +15,6 @@ from typing import Any
 import pytest
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-from gateway_mcp.server import mcp
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.telemetry import init_telemetry, reset_tracer_provider
@@ -83,7 +82,7 @@ def span_exporter() -> Iterator[InMemorySpanExporter]:
 @pytest.fixture(scope="module")
 def mcp_endpoint() -> Iterator[str]:
     """Serve the gateway MCP server over streamable HTTP for this module."""
-    with serve_mcp(mcp) as endpoint:
+    with serve_mcp() as endpoint:
         yield endpoint
 
 

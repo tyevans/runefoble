@@ -13,6 +13,8 @@ from gateway_mcp.dynamic.models import (
     DynamicToolRecord,
     validate_parameter_schema,
 )
+from gateway_mcp.fastmcp_tools import add_tool, find_tool, remove_tool
+from gateway_mcp.permissions import PermissionChecker
 
 if TYPE_CHECKING:
     from mcp.server.fastmcp import FastMCP
@@ -23,7 +25,8 @@ logger = logging.getLogger("runefoble.gateway_mcp.dynamic.registry")
 class DynamicToolRegistry:
     """Thread-safe registry mapping tool names to callable async functions with JSON Schema validation."""
 
-    def __init__(self, mcp_server: FastMCP | None = None) -> None:
+    def __init__(self, permissions: PermissionChecker, mcp_server: FastMCP | None = None) -> None:
+        self.permissions = permissions
         self.mcp = mcp_server
         self._tools: dict[str, DynamicToolRecord] = {}
         self._lock = threading.RLock()
@@ -42,12 +45,10 @@ class DynamicToolRegistry:
         with self._lock:
             self._tools[record.name] = record
             if self.mcp is not None:
-                if self.mcp._tool_manager.get_tool(record.name):
-                    self.mcp._tool_manager.remove_tool(record.name)
+                if find_tool(self.mcp, record.name) is not None:
+                    remove_tool(self.mcp, record.name)
                 runner = make_dynamic_tool_callable(record, self)
-                self.mcp._tool_manager.add_tool(
-                    runner, name=record.name, description=record.description
-                )
+                add_tool(self.mcp, runner, name=record.name, description=record.description)
         return record
 
     def update_tool(self, name: str, definition: DynamicToolDefinition) -> DynamicToolRecord:
@@ -64,8 +65,8 @@ class DynamicToolRegistry:
             if name not in self._tools:
                 return False
             self._tools.pop(name)
-            if self.mcp is not None and self.mcp._tool_manager.get_tool(name):
-                self.mcp._tool_manager.remove_tool(name)
+            if self.mcp is not None and find_tool(self.mcp, name) is not None:
+                remove_tool(self.mcp, name)
         return True
 
     def get_tool(self, name: str) -> DynamicToolRecord | None:
@@ -82,5 +83,3 @@ class DynamicToolRegistry:
             raise ValueError(f"Dynamic tool '{name}' not found")
         return evaluate_handler(tool_def.handler, arguments)
 
-
-dynamic_registry = DynamicToolRegistry()

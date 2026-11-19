@@ -1,79 +1,54 @@
-"""SpiceDB Zanzibar authorization guard for dynamic MCP tools."""
+"""SpiceDB Zanzibar authorization for dynamic MCP tools (ADR-0001, ADR-0015 a).
+
+The functions take the `PermissionChecker` port. They raise domain errors, never HTTP errors.
+The admin router maps `PermissionDenied` to 403 and `AuthorizationUnavailable` to 503.
+"""
 
 from __future__ import annotations
 
 import logging
-from typing import Any
 
-from fastapi import HTTPException
-from runefoble_auth.errors import AuthzError
-from runefoble_auth.factory import get_spicedb_client
+from gateway_mcp.permissions import PermissionChecker, PermissionDenied
 
 logger = logging.getLogger("runefoble.gateway_mcp.dynamic.auth")
 
 
-def authorization_unavailable() -> HTTPException:
-    """The 503 for a SpiceDB failure. A failed check or write is never a success."""
-    return HTTPException(
-        status_code=503,
-        detail={"error": "authorization_unavailable", "message": "Authorization service failed."},
-    )
-
-
 async def grant_tool_permissions(
-    author_id: str, tool_name: str, campaign_id: str | None = None, client: Any = None
+    permissions: PermissionChecker, author_id: str, tool_name: str, campaign_id: str | None = None
 ) -> None:
-    """Register SpiceDB author and campaign relationships for dynamic tool."""
-    spicedb = client or get_spicedb_client()
-    try:
-        await spicedb.write_relationship("mcp_tool", tool_name, "author", "user", author_id)
-        if campaign_id:
-            await spicedb.write_relationship(
-                "mcp_tool", tool_name, "campaign", "campaign", campaign_id
-            )
-    except AuthzError as exc:
-        raise authorization_unavailable() from exc
+    """Write the author and campaign relationships of a dynamic tool."""
+    await permissions.grant("mcp_tool", tool_name, "author", "user", author_id)
+    if campaign_id:
+        await permissions.grant("mcp_tool", tool_name, "campaign", "campaign", campaign_id)
 
 
 async def revoke_tool_permissions(
-    author_id: str, tool_name: str, campaign_id: str | None = None, client: Any = None
+    permissions: PermissionChecker, author_id: str, tool_name: str, campaign_id: str | None = None
 ) -> None:
-    """Revoke Zanzibar relationships upon dynamic tool deregistration.
+    """Delete the author and campaign relationships of a dynamic tool.
 
-    A failed revoke raises the same 503 as a failed grant, so the caller can retry.
+    A failed revoke raises `AuthorizationUnavailable`, so the caller can retry.
     """
-    spicedb = client or get_spicedb_client()
-    try:
-        await spicedb.delete_relationship("mcp_tool", tool_name, "author", "user", author_id)
-        if campaign_id:
-            await spicedb.delete_relationship(
-                "mcp_tool", tool_name, "campaign", "campaign", campaign_id
-            )
-    except AuthzError as exc:
-        raise authorization_unavailable() from exc
+    await permissions.revoke("mcp_tool", tool_name, "author", "user", author_id)
+    if campaign_id:
+        await permissions.revoke("mcp_tool", tool_name, "campaign", "campaign", campaign_id)
 
 
 async def check_tool_permission(
-    user_id: str, tool_name: str, permission: str = "manage", client: Any = None
+    permissions: PermissionChecker, user_id: str, tool_name: str, permission: str = "manage"
 ) -> bool:
-    """Check fine-grained Zanzibar permission on a dynamic tool."""
-    spicedb = client or get_spicedb_client()
-    try:
-        return await spicedb.check_permission("mcp_tool", tool_name, permission, "user", user_id)
-    except AuthzError as exc:
-        raise authorization_unavailable() from exc
+    """Return whether the user holds `permission` on the dynamic tool."""
+    return await permissions.check("mcp_tool", tool_name, permission, user_id)
 
 
 async def enforce_tool_auth(
-    user_id: str, tool_name: str, permission: str = "manage", client: Any = None
+    permissions: PermissionChecker, user_id: str, tool_name: str, permission: str = "manage"
 ) -> None:
-    """Enforce authorization, raising HTTP 403 if permission check fails."""
-    allowed = await check_tool_permission(user_id, tool_name, permission, client=client)
-    if not allowed:
+    """Raise `PermissionDenied` unless the user holds `permission` on the dynamic tool."""
+    if not await check_tool_permission(permissions, user_id, tool_name, permission):
         logger.warning(
             "SpiceDB auth denied: user '%s' lacks '%s' on '%s'", user_id, permission, tool_name
         )
-        raise HTTPException(
-            status_code=403,
-            detail=f"Permission denied: user '{user_id}' lacks '{permission}' on tool '{tool_name}'",
+        raise PermissionDenied(
+            f"Permission denied: user '{user_id}' lacks '{permission}' on tool '{tool_name}'"
         )

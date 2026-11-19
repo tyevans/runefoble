@@ -2,6 +2,9 @@
 
 Exposes Runefoble tactical tools, board state, spells, conditions,
 and AI DM controls to MCP-compliant agents and LLMs.
+
+`build_mcp` builds one FastMCP app from one `GatewayMcpContainer` (TASK-0746). The module
+keeps no app instance of its own, so two apps never share a registry.
 """
 
 import uvicorn
@@ -13,95 +16,42 @@ from runefoble_platform.telemetry import init_telemetry
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
-from gateway_mcp.dynamic import dynamic_registry
+from gateway_mcp.container import GatewayMcpContainer
 from gateway_mcp.identity import BearerTransportAuth, get_verifier
-from gateway_mcp.prompts import (
-    dm_narrative_guidance,
-    register_prompts,
-    tactical_action_adviser,
-)
-from gateway_mcp.resources import (
-    get_encounter_state,
-    get_session_state,
-    register_resources,
-)
+from gateway_mcp.prompts import register_prompts
+from gateway_mcp.resources import register_resources
 from gateway_mcp.routers import mount_tools_registry
 from gateway_mcp.settings import load_listen_settings, load_settings
-from gateway_mcp.tools import (
-    add_condition,
-    apply_absentee_penalty,
-    apply_condition,
-    calculate_encounter_balance,
-    cast_spell,
-    create_encounter,
-    execute_agent_action_plan,
-    get_character_sheet,
-    inspect_inventory,
-    inspect_tactical_board,
-    modify_character_hp,
-    move_board_token,
-    narrate_with_the_watcher,
-    query_encounter_state,
-    query_monster_stat_block,
-    register_tools,
-    roll_dice,
-)
-
-mcp = FastMCP("Runefoble MCP Gateway")
-
-# Mount tool, resource, and prompt registration hooks
-register_tools(mcp)
-register_resources(mcp)
-register_prompts(mcp)
-
-# Wire dynamic tool registry
-dynamic_registry.set_mcp_server(mcp)
+from gateway_mcp.tools import register_tools
 
 
-def build_http_app() -> BearerTransportAuth:
+def build_mcp(container: GatewayMcpContainer) -> FastMCP:
+    """Return a FastMCP app whose tools, resources, and registry all use `container`."""
+    mcp = FastMCP("Runefoble MCP Gateway")
+    container.registry.set_mcp_server(mcp)
+    register_tools(mcp, container)
+    register_resources(mcp, container)
+    register_prompts(mcp)
+
+    @mcp.custom_route("/healthz", methods=["GET"])
+    async def healthz(_request: Request) -> JSONResponse:
+        """Report liveness and the count of publish failures seen by this process."""
+        return JSONResponse(
+            {
+                "status": "ok",
+                "service": "gateway_mcp",
+                "event_publish_failures": event_publish_failures(),
+            }
+        )
+
+    return mcp
+
+
+def build_http_app(container: GatewayMcpContainer) -> BearerTransportAuth:
     """Return the MCP app with the tool admin routes. Every request needs a verified bearer (ADR-0015 c)."""
-    app = mcp.streamable_http_app()
-    mount_tools_registry(app, require_principal(get_verifier))
+    app = build_mcp(container).streamable_http_app()
+    mount_tools_registry(app, require_principal(get_verifier), container)
     return BearerTransportAuth(app)
-
-
-@mcp.custom_route("/healthz", methods=["GET"])
-async def healthz(_request: Request) -> JSONResponse:
-    """Report liveness and the count of publish failures seen by this process."""
-    return JSONResponse(
-        {
-            "status": "ok",
-            "service": "gateway_mcp",
-            "event_publish_failures": event_publish_failures(),
-        }
-    )
-
-
-__all__ = [
-    "add_condition",
-    "apply_absentee_penalty",
-    "apply_condition",
-    "calculate_encounter_balance",
-    "cast_spell",
-    "create_encounter",
-    "dm_narrative_guidance",
-    "execute_agent_action_plan",
-    "get_character_sheet",
-    "get_encounter_state",
-    "get_session_state",
-    "inspect_inventory",
-    "inspect_tactical_board",
-    "build_http_app",
-    "main",
-    "mcp",
-    "modify_character_hp",
-    "move_board_token",
-    "narrate_with_the_watcher",
-    "query_encounter_state",
-    "query_monster_stat_block",
-    "roll_dice",
-    "tactical_action_adviser",
-]
 
 
 def main() -> None:
@@ -115,7 +65,12 @@ def main() -> None:
     platform_settings = PlatformSettings()
     init_telemetry("gateway-mcp", settings=platform_settings)
     listen = load_listen_settings()
-    uvicorn.run(build_http_app(), host=listen.host, port=listen.port, log_level="info")
+    uvicorn.run(
+        build_http_app(GatewayMcpContainer.default()),
+        host=listen.host,
+        port=listen.port,
+        log_level="info",
+    )
 
 
 if __name__ == "__main__":

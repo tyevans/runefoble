@@ -14,7 +14,6 @@ from uuid import uuid4
 import httpx
 import pytest
 from character_sheet.main import app as character_app
-from gateway_mcp.server import mcp
 from mcp.types import CallToolResult
 
 from tests.helpers.live_services import closed_port_url, serve, unavailable_app
@@ -36,7 +35,7 @@ def character_service() -> Iterator[str]:
 @pytest.fixture(scope="module", autouse=True)
 def mcp_endpoint() -> Iterator[None]:
     """Serve the gateway MCP server over HTTP so that each call carries the caller bearer."""
-    with serve_mcp(mcp) as endpoint:
+    with serve_mcp() as endpoint:
         _MCP["url"] = endpoint
         yield
     _MCP.clear()

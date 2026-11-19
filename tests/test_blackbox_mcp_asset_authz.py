@@ -18,8 +18,7 @@ import httpx
 import pytest
 from fastapi.testclient import TestClient
 from gateway_api.main import app
-from gateway_mcp.dynamic import dynamic_registry
-from gateway_mcp.server import mcp
+from gateway_mcp.container import GatewayMcpContainer
 from runefoble_auth.errors import AuthzError
 from runefoble_auth.factory import get_spicedb_client, set_spicedb_client
 from runefoble_auth.mock import MockSpiceDBClient
@@ -39,9 +38,15 @@ DEFINITION = {
 
 
 @pytest.fixture(scope="module")
-def mcp_endpoint() -> Iterator[str]:
+def gateway_container() -> GatewayMcpContainer:
+    """The one container of this module's gateway app."""
+    return GatewayMcpContainer.default()
+
+
+@pytest.fixture(scope="module")
+def mcp_endpoint(gateway_container: GatewayMcpContainer) -> Iterator[str]:
     """Serve the MCP gateway over HTTP. The endpoint trusts the shared signing issuer."""
-    with serve_mcp(mcp) as endpoint:
+    with serve_mcp(gateway_container) as endpoint:
         yield endpoint
 
 
@@ -53,12 +58,12 @@ def gateway(character_sheet_upstream, game_session_upstream, asset_forge_upstrea
 
 
 @pytest.fixture
-def registry(mcp_endpoint: str) -> Iterator[httpx.Client]:
+def registry(mcp_endpoint: str, gateway_container: GatewayMcpContainer) -> Iterator[httpx.Client]:
     """Call the tool admin routes on the MCP process, where the registry lives."""
     with httpx.Client(base_url=mcp_endpoint.removesuffix("/mcp")) as client:
         yield client
-    if dynamic_registry.get_tool(TOOL_NAME):
-        dynamic_registry.deregister_tool(TOOL_NAME)
+    if gateway_container.registry.get_tool(TOOL_NAME):
+        gateway_container.registry.deregister_tool(TOOL_NAME)
 
 
 def auth(sub: str) -> dict[str, str]:
@@ -134,7 +139,8 @@ def test_register_fails_closed_when_authorization_is_down(registry):
     with restored_seam(get_spicedb_client, set_spicedb_client, DownSpiceDB(), replace=True):
         response = registry.post("/mcp/tools/register", json=DEFINITION, headers=auth("alice"))
     assert response.status_code == 503, response.text
-    assert dynamic_registry.get_tool(TOOL_NAME) is None
+    lookup = registry.get(f"/mcp/tools/{TOOL_NAME}", headers=auth("alice"))
+    assert lookup.status_code == 404
 
 
 def test_execute_needs_the_execute_permission_over_http_and_mcp(registry, mcp_endpoint):

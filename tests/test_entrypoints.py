@@ -93,10 +93,8 @@ def test_microservice_entrypoint_initialization(monkeypatch, tmp_path, seam_rest
 
 def test_mcp_gateway_tool_registry():
     """Verify that the Model Context Protocol (MCP) server registers all required game tools."""
-    from gateway_mcp.server import mcp
-
     # Inspect registered tools on FastMCP server
-    with serve_mcp(mcp) as endpoint:
+    with serve_mcp() as endpoint:
         registered_tools = list(listed_tools_sync(endpoint))
     expected_tools = [
         "roll_dice",

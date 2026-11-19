@@ -10,6 +10,8 @@ from typing import TYPE_CHECKING, Any, Literal
 from mcp.server.fastmcp import Context
 
 from gateway_mcp.caller import caller_bearer
+from gateway_mcp.fastmcp_tools import find_tool
+from gateway_mcp.container import GatewayMcpContainer, bind_container
 from gateway_mcp.owning_services import OwningServices, ServiceError
 from gateway_mcp.tool_authz import (
     ToolAuthzError,
@@ -21,12 +23,11 @@ from gateway_mcp.tool_authz import (
 if TYPE_CHECKING:
     from mcp.server.fastmcp import FastMCP
 
-_mcp_instance: Any = None
-
 Tone = Literal["dark_fantasy", "epic_heroic", "tense_mystery", "whimsical", "gritty"]
 
 
 async def narrate_with_the_watcher(
+    container: GatewayMcpContainer,
     campaign_id: str,
     session_id: str,
     scene_prompt: str,
@@ -43,10 +44,11 @@ async def narrate_with_the_watcher(
         "scene_environment": scene_environment,
         "tone": tone,
     }
-    return await OwningServices(bearer=caller_bearer(ctx)).narrate(request)
+    return await OwningServices(container.service_clients, bearer=caller_bearer(ctx)).narrate(request)
 
 
 async def execute_agent_action_plan(
+    container: GatewayMcpContainer,
     session_id: str,
     campaign_id: str,
     actions: list[dict[str, Any]],
@@ -58,7 +60,7 @@ async def execute_agent_action_plan(
     effect. Planning stops at the first step that fails, and later steps do not run.
     """
     caller_id = require_caller_id(ctx)
-    client = OwningServices(bearer=caller_bearer(ctx))
+    client = OwningServices(container.service_clients, bearer=caller_bearer(ctx))
     step_results: list[dict[str, Any]] = []
     total_duration_ms: float = 0.0
 
@@ -91,7 +93,9 @@ async def execute_agent_action_plan(
             return _fail("Action missing 'tool' specification", idx, "unknown")
 
         tool = (
-            _mcp_instance._tool_manager.get_tool(tool_name) if _mcp_instance is not None else None
+            find_tool(container.registry.mcp, tool_name)
+            if container.registry.mcp is not None
+            else None
         )
         if tool is None:
             return _fail(f"Invalid tool: '{tool_name}' not found", idx, tool_name)
@@ -112,9 +116,9 @@ async def execute_agent_action_plan(
         )
         target = params.get("target", params.get("token_id"))
         try:
-            requirement = step_requirement(tool_name, {"session_id": session_id, **params})
+            requirement = step_requirement(container.registry, tool_name, {"session_id": session_id, **params})
             if requirement is not None:
-                await check_requirement(caller_id, requirement)
+                await check_requirement(container.permissions, caller_id, requirement)
         except ToolAuthzError as exc:
             return _fail(str(exc), idx, tool_name)
 
@@ -159,9 +163,7 @@ async def execute_agent_action_plan(
     }
 
 
-def register_orchestration_tools(mcp: "FastMCP") -> None:
+def register_orchestration_tools(mcp: "FastMCP", container: GatewayMcpContainer) -> None:
     """Register orchestration and Watcher DM tools on the FastMCP application."""
-    global _mcp_instance
-    _mcp_instance = mcp
-    mcp.tool()(narrate_with_the_watcher)
-    mcp.tool()(execute_agent_action_plan)
+    mcp.tool()(bind_container(narrate_with_the_watcher, container))
+    mcp.tool()(bind_container(execute_agent_action_plan, container))

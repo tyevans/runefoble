@@ -6,7 +6,7 @@ tests/test_blackbox_mcp_orchestration_and_resources.py.
 """
 
 import pytest
-from gateway_mcp.server import mcp, roll_dice
+from gateway_mcp.tools.dice import roll_dice
 from runefoble_platform.dice import parse_and_roll
 
 from tests.helpers.mcp_http import listed_tools_sync, serve_mcp
@@ -14,7 +14,7 @@ from tests.helpers.mcp_http import listed_tools_sync, serve_mcp
 
 def test_mcp_registered_tools():
     """Verify that every expected tool is listed by the MCP server over `tools/list`."""
-    with serve_mcp(mcp) as endpoint:
+    with serve_mcp() as endpoint:
         tool_names = list(listed_tools_sync(endpoint))
     expected = [
         "roll_dice",

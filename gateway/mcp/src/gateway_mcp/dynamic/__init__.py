@@ -13,7 +13,7 @@ from gateway_mcp.dynamic.models import (
     DynamicToolExecutionRequest,
     validate_parameter_schema,
 )
-from gateway_mcp.dynamic.registry import DynamicToolRegistry, dynamic_registry
+from gateway_mcp.dynamic.registry import DynamicToolRegistry
 
 __all__ = [
     "TYPE_MAP",
@@ -21,7 +21,6 @@ __all__ = [
     "DynamicToolExecutionRequest",
     "DynamicToolRegistry",
     "check_tool_permission",
-    "dynamic_registry",
     "enforce_tool_auth",
     "grant_tool_permissions",
     "make_dynamic_tool_callable",

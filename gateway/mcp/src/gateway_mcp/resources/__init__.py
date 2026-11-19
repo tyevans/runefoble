@@ -2,6 +2,7 @@
 
 from typing import TYPE_CHECKING
 
+from gateway_mcp.container import GatewayMcpContainer
 from gateway_mcp.resources.session import (
     get_encounter_state,
     get_session_state,
@@ -19,6 +20,6 @@ __all__ = [
 ]
 
 
-def register_resources(mcp: "FastMCP") -> None:
+def register_resources(mcp: "FastMCP", container: GatewayMcpContainer) -> None:
     """Register all resource providers onto the FastMCP server."""
-    register_session_resources(mcp)
+    register_session_resources(mcp, container)

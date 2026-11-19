@@ -14,8 +14,10 @@ from contextlib import asynccontextmanager, contextmanager
 from typing import Any
 
 import httpx
+from gateway_mcp.container import GatewayMcpContainer
 from gateway_mcp.identity import BearerTransportAuth
 from gateway_mcp.routers import mount_tools_registry
+from gateway_mcp.server import build_mcp
 from mcp.client.session import ClientSession
 from mcp.client.streamable_http import streamable_http_client
 from mcp.server.fastmcp import FastMCP
@@ -32,13 +34,14 @@ from tests.helpers.live_services import serve
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 
-def mcp_http_app(server: FastMCP) -> BearerTransportAuth:
-    """Return the production shape of the MCP app: the bearer check over `/mcp` and the tool routes.
+def mcp_http_app(container: GatewayMcpContainer) -> BearerTransportAuth:
+    """Return the production shape of the MCP app built from `container`.
 
-    It trusts the shared test issuer, so each tool and each admin route sees the verified caller.
+    It is the bearer check over `/mcp` and the tool routes. It trusts the shared test issuer,
+    so each tool and each admin route sees the verified caller.
     """
-    app = _mcp_http_app(server)
-    mount_tools_registry(app, require_principal(SIGNING_ISSUER.verifier))
+    app = _mcp_http_app(build_mcp(container))
+    mount_tools_registry(app, require_principal(SIGNING_ISSUER.verifier), container)
     return BearerTransportAuth(app, verifier=SIGNING_ISSUER.verifier)
 
 
@@ -62,13 +65,16 @@ def _mcp_http_app(server: FastMCP) -> Starlette:
 
 
 @contextmanager
-def serve_mcp(server: FastMCP) -> Iterator[str]:
-    """Serve `server` on a free loopback port and yield its MCP endpoint URL.
+def serve_mcp(container: GatewayMcpContainer | None = None) -> Iterator[str]:
+    """Serve one gateway app on a free loopback port and yield its MCP endpoint URL.
 
-    The endpoint verifies the bearer like production does (TASK-0532). It trusts the shared
-    test issuer, so each tool sees the verified caller of its request.
+    With no container, the app gets a fresh one. The endpoint verifies the bearer like
+    production does (TASK-0532). It trusts the shared test issuer, so each tool sees the
+    verified caller of its request.
     """
-    with serve(mcp_http_app(server), lifespan="on") as base_url:
+    with serve(
+        mcp_http_app(container or GatewayMcpContainer.default()), lifespan="on"
+    ) as base_url:
         yield f"{base_url}/mcp"
 
 

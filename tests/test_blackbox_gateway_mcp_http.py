@@ -20,7 +20,8 @@ from pathlib import Path
 
 import httpx
 import pytest
-from gateway_mcp.dynamic import DynamicToolDefinition, dynamic_registry
+from gateway_mcp.container import GatewayMcpContainer
+from gateway_mcp.dynamic import DynamicToolDefinition
 from gateway_mcp.dynamic.auth import grant_tool_permissions
 from gateway_mcp.identity import get_verifier, set_verifier
 from gateway_mcp.server import build_http_app
@@ -175,11 +176,17 @@ def test_entrypoint_keeps_health_check_public(gateway_process: str):
 
 
 @pytest.fixture(scope="module")
-def authenticated_endpoint() -> Iterator[str]:
+def gateway_container() -> GatewayMcpContainer:
+    """The one container of this module's gateway app."""
+    return GatewayMcpContainer.default()
+
+
+@pytest.fixture(scope="module")
+def authenticated_endpoint(gateway_container: GatewayMcpContainer) -> Iterator[str]:
     """Serve the public MCP ASGI app in-process, trusting the shared signing issuer."""
     with (
         restored_seam(get_verifier, set_verifier, SIGNING_ISSUER.verifier(), replace=True),
-        serve(build_http_app(), lifespan="on") as base_url,
+        serve(build_http_app(gateway_container), lifespan="on") as base_url,
     ):
         yield f"{base_url}/mcp"
 
@@ -214,10 +221,12 @@ def test_tool_call_without_bearer_is_refused_before_dispatch(authenticated_endpo
     assert response.status_code == 401
 
 
-def test_dynamic_tool_call_over_http_runs_for_the_granted_caller(authenticated_endpoint: str):
+def test_dynamic_tool_call_over_http_runs_for_the_granted_caller(
+    authenticated_endpoint: str, gateway_container: GatewayMcpContainer
+):
     """A dynamic tool runs over MCP for the token subject that holds `mcp_tool.execute`."""
     name = "transport_identity_probe"
-    dynamic_registry.register_tool(
+    gateway_container.registry.register_tool(
         DynamicToolDefinition(
             name=name,
             parameters={"type": "object", "properties": {"charge": {"type": "integer"}}},
@@ -225,7 +234,7 @@ def test_dynamic_tool_call_over_http_runs_for_the_granted_caller(authenticated_e
         ),
         author_id="mallory",
     )
-    asyncio.run(grant_tool_permissions("mallory", name))
+    asyncio.run(grant_tool_permissions(gateway_container.permissions, "mallory", name))
     try:
         result = asyncio.run(
             call_tool_over_http(
@@ -237,7 +246,7 @@ def test_dynamic_tool_call_over_http_runs_for_the_granted_caller(authenticated_e
         )
         assert not result.isError
     finally:
-        dynamic_registry.deregister_tool(name)
+        gateway_container.registry.deregister_tool(name)
 
 
 def test_entrypoint_refuses_to_start_without_upstream_urls():

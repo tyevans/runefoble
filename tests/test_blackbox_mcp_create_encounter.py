@@ -12,7 +12,6 @@ from uuid import uuid4
 
 import httpx
 import pytest
-from gateway_mcp.server import mcp
 from mcp.types import CallToolResult
 
 from tests.helpers.game_session_setup import start_session_with_player
@@ -28,7 +27,7 @@ _MCP: dict[str, str] = {}
 @pytest.fixture(scope="module", autouse=True)
 def mcp_endpoint() -> Iterator[None]:
     """Serve the gateway MCP server over HTTP so each call carries the caller bearer."""
-    with serve_mcp(mcp) as endpoint:
+    with serve_mcp() as endpoint:
         _MCP["url"] = endpoint
         yield
     _MCP.clear()
