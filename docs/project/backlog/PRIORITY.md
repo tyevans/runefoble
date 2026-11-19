@@ -915,3 +915,4 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 909. **TASK-0929 (Complete)**: [`0929-game-session-is-ready-only-when-its-dependencies-answer.md`](complete/0929-game-session-is-ready-only-when-its-dependencies-answer.md) — game_session Reports Ready Only When It Can Serve Writes
 910. **TASK-0930 (Complete)**: [`0930-every-service-has-a-readiness-probe.md`](complete/0930-every-service-has-a-readiness-probe.md) — Every Service Has a Readiness Probe That Reflects Its Dependencies
 911. **TASK-0931 (Refined)**: [`0931-remaining-services-gate-readiness-on-their-dependencies.md`](refined/0931-remaining-services-gate-readiness-on-their-dependencies.md) — The Remaining Services Gate Readiness on Their Dependencies
+912. **TASK-0932 (Refined)**: [`0932-board-drag-sends-one-move-and-shows-refusals.md`](refined/0932-board-drag-sends-one-move-and-shows-refusals.md) — The Board Drag Sends One Move and Shows Refusals
