@@ -23,7 +23,7 @@ Complete
 ## Problem Statement
 - `libs/runefoble_platform/src/runefoble_platform/config.py:37`: `use_postgres_event_store` defaults to `False`.
 - `libs/runefoble_platform/src/runefoble_platform/event_sourcing.py:71` takes the PostgreSQL branch only when the flag is true. The last lines of `get_event_store` assign `InMemoryEventStore()` for every other case, including `environment="production"`.
-- `PlatformSettings.is_deployed` (`config.py:67`) has one reader (`services/game_session/src/game_session/dependencies.py:39`).
+- `PlatformSettings.is_deployed` (`config.py:67`) has one reader (`services/game_session/src/game_session/dependencies.py:39` (removed)).
 - Only four Helm templates set the flag: `soundscape.yaml:44`, `services.yaml:59`, `campaign-analytics.yaml:41`, `asset-forge.yaml:45`.
 - `get_event_store` is 55 lines and mixes URL normalization, a reachability probe, engine creation and the store choice.
 

@@ -24,7 +24,7 @@ Complete
 Cross-service URLs are read from environment variables that the Helm chart never sets. In the cluster, voice-agent falls back to `localhost:8001`, game-session never calls The Watcher, the-watcher never calls the inference worker, and gateway proxies use defaults that do not match the chart. Set every service URL in the chart from values, and replace code defaults that point at `localhost` or a wrong port.
 
 ## Problem Statement
-- `RUNEFOBLE_WATCHER_URL` is read at `services/game_session/src/game_session/dependencies.py:30` (None means autopilot skips The Watcher, `routers/autopilot.py:79`). `services/voice_agent/src/voice_agent/dependencies.py:19` and `stt.py:108` default to `http://localhost:8001`. No Helm key sets it (`w1-gates-infra.md` F2).
+- `RUNEFOBLE_WATCHER_URL` is read at `services/game_session/src/game_session/dependencies.py:30` (removed) (None means autopilot skips The Watcher, `routers/autopilot.py:79`). `services/voice_agent/src/voice_agent/dependencies.py:19` and `stt.py:108` default to `http://localhost:8001`. No Helm key sets it (`w1-gates-infra.md` F2).
 - `RUNEFOBLE_INFERENCE_URL` is read at `services/the_watcher/src/the_watcher/dependencies.py:28`; not set in Helm (`w1-the-watcher.md` F2).
 - Gateway: `SOUNDSCAPE_SERVICE_URL` (`routers/soundscape.py:21`, default port 8010 which is audience-studio; soundscape listens on 8009), `CAMPAIGN_LORE_URL`, `CAMPAIGN_ANALYTICS_URL` (`routers/hub_views.py:12-13`), and `CHARACTER_SHEET_URL` (`routers/character_subresources.py:26`, no default) are not set in `deployments/` (`w1-gateway-api.md` F14, F15).
 - Campaign analytics `CAMPAIGN_ANALYTICS_URL` default is correct (8011); it is only unset in Helm.

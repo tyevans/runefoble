@@ -25,7 +25,7 @@ Many fixtures restore module globals to a new object or to `None`. After a `None
 - `conftest.py:170-176` and `:181-183`: `contextlib.suppress(Exception)` around `importlib.import_module` and `set_spicedb_client`.
 - `tests/test_blackbox_vocal_modulator_ui/test_vocal_modulator_ui.py:36-43`: fixture mutates the voice coordinator with no `yield` and no teardown.
 - Teardown sets `SpiceDBClient()`: `tests/test_blackbox_dm_traps_ui/conftest.py:51`, `tests/test_blackbox_faction_resources/conftest.py:48`, `tests/test_blackbox_uvtt_doors_lights/conftest.py:40`, `tests/test_blackbox_webrtc_routing.py:50`, `tests/test_blackbox_webrtc_auth.py:66`, and six more files.
-- Teardown sets `None` in 26 files, for example `tests/test_blackbox_settlement_haven/conftest.py:36`. `services/game_session/src/game_session/dependencies.py:138-147` builds a real `SpiceDBClient` when the global is `None`.
+- Teardown sets `None` in 26 files, for example `tests/test_blackbox_settlement_haven/conftest.py:36`. `services/game_session/src/game_session/dependencies.py:138-147` (removed) builds a real `SpiceDBClient` when the global is `None`.
 - `conftest.py:245-247` resets `game_session_upstream` to `None`.
 
 ## Documentation & Architecture Review

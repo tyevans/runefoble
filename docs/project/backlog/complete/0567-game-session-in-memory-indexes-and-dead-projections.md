@@ -28,7 +28,7 @@ Complete
 Game session keeps several index dicts at module level that map a parent id to child ids (bounties, world contracts, settlements, establishments, negotiations). After a restart the aggregates survive but the lists are empty. Separately, `SessionReadProjection`, `PresenceProjection`, and `InitiativeProjection` are never constructed. This task replaces the index dicts with durable queries and deletes the dead projections.
 
 ## Problem Statement
-- `services/game_session/src/game_session/dependencies.py:122-127` defines `_session_bounties_index`, `_world_contracts_index`, `_settlement_establishments_index`, `_campaign_settlements_index`, `_establishment_workers_index`, and `_establishment_negotiations_index` as dicts.
+- `services/game_session/src/game_session/dependencies.py:122-127` (removed) defines `_session_bounties_index`, `_world_contracts_index`, `_settlement_establishments_index`, `_campaign_settlements_index`, `_establishment_workers_index`, and `_establishment_negotiations_index` as dicts.
 - `services/game_session/src/game_session/routers/bounties.py:74` writes the index after save. `:90-91` reads it and suppresses load errors (w1-game-session F3).
 - `services/game_session/src/game_session/projections/presence.py:21` (removed) and `projections/session.py:29-44` hold in-memory state. Grep finds no construction site (w1-game-session F10).
 

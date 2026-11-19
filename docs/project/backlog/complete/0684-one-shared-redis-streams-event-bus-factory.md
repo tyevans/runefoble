@@ -23,7 +23,7 @@ Complete
 Six services each define their own `get_event_bus()` that builds a `RedisStreamsEventBus`. `libs/runefoble_platform` also has a `get_event_bus()` that reads an undefined flag `use_redis_event_bus` and so always returns `InMemoryEventBus`; it has no callers. This task makes one shared factory in `libs/runefoble_platform`, connects it in each service's FastAPI lifespan, fails start-up when Redis is configured and unreachable, and deletes the copies and the dead in-memory path.
 
 ## Problem Statement
-- Copies: `services/voice_agent/src/voice_agent/dependencies.py:28` and `main.py:72`, `services/voice_agent/src/voice_agent/stt.py:110`, `services/the_watcher/src/the_watcher/dependencies.py:154`, `services/game_session/src/game_session/dependencies.py:166`, `services/asset_forge/src/asset_forge/dependencies.py:55`, `services/board_state/src/board_state/dependencies.py:43`.
+- Copies: `services/voice_agent/src/voice_agent/dependencies.py:28` and `main.py:72`, `services/voice_agent/src/voice_agent/stt.py:110`, `services/the_watcher/src/the_watcher/dependencies.py:154`, `services/game_session/src/game_session/dependencies.py:166` (removed), `services/asset_forge/src/asset_forge/dependencies.py:55`, `services/board_state/src/board_state/dependencies.py:43`.
 - `libs/runefoble_platform/src/runefoble_platform/event_sourcing.py:133-150`: dead factory with a silent in-memory fallback (DoR 9 and ADR-0015 conflict).
 - TASK-0672 report: board_state has no lifespan and the bus connects lazily, so a Redis outage shows up only at the first publish.
 

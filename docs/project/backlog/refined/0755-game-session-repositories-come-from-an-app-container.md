@@ -24,7 +24,7 @@ Refined. Found by the refactor audit round refactor-r1 and checked against the c
 `dependencies.py` builds 12 `AggregateRepository` objects at import time and reads the event store and settings at import time. The service cannot fail fast at start-up, and the package split in the ADR needs a container.
 
 ## Problem Statement
-- `services/game_session/src/game_session/dependencies.py:51-87` builds 12 repositories at import time. The getters (`:90-125`) return those globals. `:33-48` reads the event store and settings at import time.
+- `services/game_session/src/game_session/dependencies.py:51-87` (removed) builds 12 repositories at import time. The getters (`:90-125`) return those globals. `:33-48` reads the event store and settings at import time.
 - TASK-0567 removes the index dicts at `:122-127`. TASK-0566 covers `ws_manager` memory.
 
 ## Documentation & Architecture Review

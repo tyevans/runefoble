@@ -24,7 +24,7 @@ Three start-up and read paths hide a broken setup. A broken manifest file falls 
 ## Problem Statement
 - `services/character_sheet/src/character_sheet/main.py:52-60`: an unreadable `ui/manifest.json` falls back to a hardcoded manifest. The `except Exception: pass` hides the cause.
 - `services/soundscape/src/soundscape/main.py:88-93`: the same pattern in `get_ui_manifest`.
-- `services/game_session/src/game_session/dependencies.py:31`: `WATCHER_SERVICE_URL` reads `RUNEFOBLE_WATCHER_URL` with no default. `routers/autopilot.py:74` skips The Watcher when it is unset, with no log entry.
+- `services/game_session/src/game_session/dependencies.py:31` (removed): `WATCHER_SERVICE_URL` reads `RUNEFOBLE_WATCHER_URL` with no default. `routers/autopilot.py:74` skips The Watcher when it is unset, with no log entry.
 
 ## Documentation & Architecture Review
 - ADR-0015 (4): fallbacks hide failures. A failed dependency must look failed.

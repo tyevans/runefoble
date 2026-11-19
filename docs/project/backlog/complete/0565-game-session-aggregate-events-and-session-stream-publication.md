@@ -27,7 +27,7 @@ Complete
 Game session state is event-sourced, but several session actions bypass the aggregate or never reach the stream. Session create, join, leave, and next-turn save events but do not publish them. Dice rolls and lobby readiness are not aggregate state at all. This task makes the repository publish every committed event, and moves dice rolls and lobby readiness into the session aggregate.
 
 ## Problem Statement
-- `services/game_session/src/game_session/dependencies.py:41-44` builds repositories without `event_bus`, so `AggregateRepository.event_publisher` is `None` (w3-event-wiring F13).
+- `services/game_session/src/game_session/dependencies.py:41-44` (removed) builds repositories without `event_bus`, so `AggregateRepository.event_publisher` is `None` (w3-event-wiring F13).
 - `services/game_session/src/game_session/routers/session.py:36-52` (create), `:80-94` (join), `:96-106` (leave), and `:173-182` (advance turn) call `repo.save` and never publish. `docs/reference/events-schema.md` says `TurnAdvanced`, `PlayerJoinedSession`, `PlayerLeftSession`, and `SessionEnded` are emitted (w1-game-session F5).
 - `routers/session.py:185-219` evaluates a dice roll, builds `DiceRolled` directly, does not load a session, and suppresses the publish at `:205-207`. A roll for an unknown session succeeds (w1-game-session F6).
 - `frontend/src/vtt-mesh-handlers.ts:78-85` keeps lobby readiness in client memory. `gateway/api/src/gateway_api/main.py:101-120` relays readiness frames to all clients without persistence. No readiness field exists in the aggregate (w1-game-session F9).
