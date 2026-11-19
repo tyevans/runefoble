@@ -83,8 +83,10 @@ The following services verify only user tokens. They pass `None` for the service
 ## 3. Subject
 
 - The token `sub` claim is the user id. The verifier returns it as `VerifiedPrincipal.user_id` (`zitadel.py`, `_principal_from_claims`).
-- `username` comes from `preferred_username`. When that claim is absent or empty, `username` is `None`. The verifier does not make a name from `sub` (ADR-0015, TASK-0887).
-- Zitadel JWT access tokens do not carry `preferred_username` or `email`. Zitadel puts these claims only in the ID token, the userinfo response, and the introspection response (Zitadel claims reference). The App Shell sends the access token, so a real Zitadel sign-in gives `username = None` until an action adds the claim to the access token.
+- `username` comes from `preferred_username`. When that claim is absent or empty, `username` is `None`. The verifier does not make a name from `sub` (ADR-0015, TASK-0887). The TypeScript verifier in `audience_studio` (`services/audience_studio/src/identity/zitadelVerifier.ts`) follows the same rule: `username` is `null` when the claim is absent or empty (TASK-0890).
+- By default, Zitadel JWT access tokens do not carry `preferred_username` or `email`. Zitadel puts these claims only in the ID token, the userinfo response, and the introspection response (Zitadel claims reference). The App Shell sends the access token.
+- Source of `preferred_username` in the access token: the Zitadel Action `runefobleUsernameClaim`. The bootstrap Job binds it to the flow "Complement Token", trigger "Pre access token creation" (`deployments/zitadel_bootstrap/src/zitadel_bootstrap/token_claims.py`, TASK-0890). The value is the Zitadel username (`ctx.v1.getUser().username`). The Action applies to users of the default organization. See [Authenticate with Zitadel OIDC](../how-to/authenticate-with-zitadel-oidc.md#the-username-claim-action).
+- The access token still carries no `email` claim. `VerifiedPrincipal.email` is `None` for a real sign-in.
 - `email` comes from the `email` claim. It is `None` when the claim is absent.
 - `VerifiedPrincipal` has three fields: `user_id`, `username`, and `email` (`principal.py`). It has no roles and no admin flag.
 - Roles and admin flags in a token grant nothing. No code reads them for authorization. Authorization uses only SpiceDB relations in `libs/runefoble_auth/schema/runefoble.zed` (ADR-0015 d, Hard Invariant 1).
