@@ -151,15 +151,20 @@ class OwningServices:
         return await self._json("game_session", route.method, route.path)
 
     async def start_encounter(
-        self, session_id: str, *, enemies: list[dict[str, Any]]
+        self, session_id: str, *, campaign_id: str | None, enemies: list[dict[str, Any]]
     ) -> dict[str, Any]:
         """Start combat and record the enemy placements in one game_session write.
 
-        board_state places the tokens later, from the session event. The reply holds the
-        combat state and the placements that game_session accepted.
+        game_session reads each missing challenge rating from rules_compendium, with the
+        homebrew monsters of `campaign_id`. board_state places the tokens later, from the
+        session event. The reply holds the combat state and the placements that game_session
+        accepted.
         """
         route = owner_routes.start_encounter(session_id)
-        return await self._json("game_session", route.method, route.path, {"enemies": enemies})
+        body: dict[str, Any] = {"enemies": enemies}
+        if campaign_id is not None:
+            body["campaign_id"] = campaign_id
+        return await self._json("game_session", route.method, route.path, body)
 
     async def get_combat_state(self, session_id: str) -> dict[str, Any]:
         """Read the combat round, active combatant, and initiative order from game_session."""
@@ -241,11 +246,10 @@ class OwningServices:
             {"to_x": to_x, "to_y": to_y, "initiated_by": initiated_by},
         )
 
-    async def get_monster(self, name: str, *, campaign_id: str | None = None) -> dict[str, Any]:
-        """Read a monster stat block from rules_compendium. `campaign_id` adds that campaign's homebrew."""
-        params = {"campaign_id": campaign_id} if campaign_id else None
+    async def get_monster(self, name: str) -> dict[str, Any]:
+        """Read a monster stat block from rules_compendium."""
         route = owner_routes.get_monster(name)
-        return await self._json("rules_compendium", route.method, route.path, params=params)
+        return await self._json("rules_compendium", route.method, route.path)
 
     async def narrate(self, request: dict[str, Any]) -> dict[str, Any]:
         """Ask The Watcher for DM narration. The response is returned as The Watcher sent it."""

@@ -67,6 +67,8 @@ EXPECTED_SERVICE_URLS: dict[str, dict[str, str]] = {
         "campaign-lore": "http://game-session:8004",
     },
     "RUNEFOBLE_RULES_COMPENDIUM_URL": {
+        # Encounter start reads enemy challenge ratings in game_session (TASK-0918).
+        "game-session": "http://rules-compendium:8007",
         "gateway-api": "http://rules-compendium:8007",
         "gateway-mcp": "http://rules-compendium:8007",
     },
