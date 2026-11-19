@@ -105,7 +105,7 @@ def assemble_container(
         repositories=repositories,
         engines=engines,
         copilot=CopilotEngine(pending_repo=repositories.pending_actions),
-        whispers=WhisperService(whisper_repo=repositories.whispers),
+        whispers=WhisperService(whisper_repo=repositories.whispers, event_bus=event_bus),
         disambiguations=DisambiguationStore(repositories.disambiguations, engines.disambiguation),
     )
 

@@ -128,6 +128,9 @@ Part of the [Events Schema](events-schema.md). Each event identifier in this pag
   - `whisper_id`: String (the whisper the DM sent)
   - `text`: String (the narration as sent, after any DM edit)
   - `source_proposal_id`: String (the approved audience modifier that asked for the narration)
+- **`WhisperRecorded`** (`runefoble.events.watcher.whisper_recorded`): Emitted on `runefoble.events.watcher` after The Watcher saves a DM whisper (TASK-0927). The whisper routes (`POST /api/v1/watcher/whispers`, `POST /api/v1/watcher/whispers/generate`, and the default whispers that the first `GET` of an empty log records) publish it with `publish_or_fail`. A failed publish answers `503`. The audience narration consumer also publishes it. The gateway sends it as a `dm_whisper` frame to the DM session sockets only. The event carries DM secrets: a consumer must never show it to players or spectators.
+  - `aggregate_id`: UUID (the whisper log of the session and recipient)
+  - `whisper`: Object (the `WhisperSuggestion`: `whisper_id`, `session_id`, `campaign_id`, `whisper_type`, `content`, `recipient_role`, `timestamp`, `metadata`)
 - **`DiceRolled`**: Emitted when dice are rolled through `POST /api/v1/sessions/{session_id}/roll`. The session aggregate records the roll, so the session must exist (404 otherwise). The session repository publishes it to `runefoble.events.session` (`runefoble.events.dice.rolled`).
   - `session_id`: String
   - `roller_id`: String
