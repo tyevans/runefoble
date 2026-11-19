@@ -118,7 +118,6 @@ export class RunefobleRulesCompendium extends LitElement {
       <runefoble-homebrew-creator
         .apiBaseUrl=${this.apiBaseUrl}
         .campaignId=${this.campaignId}
-        .userId=${this.userId}
         .isDM=${this.isDM}
       ></runefoble-homebrew-creator>
     `;

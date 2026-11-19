@@ -8,7 +8,8 @@ import { LitElement, html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { AuthConsumerController } from '@runefoble/ui-core';
 import { compendiumStyles } from './runefoble-rules-compendium.styles.ts';
-import type { HomebrewCreateRequest, HomebrewResponse } from './types.ts';
+import type { HomebrewCreateRequest } from './types.ts';
+import { postHomebrewRule } from './homebrew-api.ts';
 
 @customElement('runefoble-homebrew-creator')
 export class RunefobleHomebrewCreator extends LitElement {
@@ -16,7 +17,6 @@ export class RunefobleHomebrewCreator extends LitElement {
 
   @property({ type: String }) apiBaseUrl = '';
   @property({ type: String }) campaignId: string | null = null;
-  @property({ type: String }) userId: string | null = null;
   @property({ type: Boolean }) isDM = false;
 
   private readonly auth = new AuthConsumerController(this);
@@ -36,6 +36,10 @@ export class RunefobleHomebrewCreator extends LitElement {
 
   public async submitHomebrew(e: Event) {
     e.preventDefault();
+    if (!this.apiBaseUrl) {
+      this.hbError = 'Homebrew registration is not configured: the API base URL is missing.';
+      return;
+    }
     if (!this.hbTitle.trim()) {
       this.hbError = 'Rule title is required';
       return;
@@ -61,44 +65,18 @@ export class RunefobleHomebrewCreator extends LitElement {
     };
 
     try {
-      if (this.apiBaseUrl) {
-        const headers: Record<string, string> = { 'Content-Type': 'application/json', ...(await this.auth.authHeaders()) };
-
-        const res = await fetch(`${this.apiBaseUrl}/api/v1/compendium/homebrew`, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify(payload),
-        });
-
-        if (!res.ok) {
-          const errData = await res.json().catch(() => ({ detail: 'Registration failed' }));
-          this.hbError = errData.detail || `Server error (${res.status})`;
-          return;
-        }
-
-        const data: HomebrewResponse = await res.json();
-        this.hbMessage = `Registered "${data.title}" successfully!`;
-        this.dispatchEvent(new CustomEvent('homebrew-created', { detail: data, bubbles: true, composed: true }));
-        this.hbTitle = '';
-        this.hbDescription = '';
-      } else {
-        this.hbMessage = `Homebrew rule "${this.hbTitle}" validated.`;
-        this.dispatchEvent(new CustomEvent('homebrew-created', {
-          detail: {
-            rule_id: 'mock-hb-' + Date.now(),
-            campaign_id: this.campaignId,
-            rule_type: this.hbRuleType,
-            title: this.hbTitle,
-            content,
-            author_id: this.userId || 'anonymous',
-            status: 'registered',
-          },
-          bubbles: true,
-          composed: true,
-        }));
+      const result = await postHomebrewRule(
+        { apiBase: this.apiBaseUrl, authHeaders: () => this.auth.authHeaders() },
+        payload,
+      );
+      if (!result.ok) {
+        this.hbError = result.message;
+        return;
       }
-    } catch (err: any) {
-      this.hbError = err.message || 'Network error registering homebrew rule';
+      this.hbMessage = `Registered "${result.rule.title}" successfully!`;
+      this.dispatchEvent(new CustomEvent('homebrew-created', { detail: result.rule, bubbles: true, composed: true }));
+      this.hbTitle = '';
+      this.hbDescription = '';
     } finally {
       this.hbSubmitting = false;
     }

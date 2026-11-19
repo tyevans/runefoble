@@ -154,7 +154,6 @@ export const DedicatedHomebrewCreator: Story = {
   render: () => html`
     <runefoble-homebrew-creator
       .campaignId=${'campaign-homebrew-lab'}
-      .userId=${'dm-evelyn'}
       .isDM=${true}
     ></runefoble-homebrew-creator>
   `,
@@ -196,5 +195,72 @@ export const HomebrewCreatorNoAuthProviderShowsError: Story = {
   render: () => {
     installTokenCheckingFetch('story-token', { rule_id: 'hb-1', title: 'Story Rule', status: 'registered' });
     return html`<runefoble-homebrew-creator apiBaseUrl="http://story.invalid" .campaignId=${'campaign-homebrew-lab'}></runefoble-homebrew-creator>`;
+  },
+};
+
+/** Replaces window.fetch for one story. Returns a restore function and the requests seen. */
+function stubHomebrewFetch(status: number, body: unknown) {
+  const original = window.fetch;
+  const requests: { url: string; auth: string | null }[] = [];
+  window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+    requests.push({ url: String(input), auth: new Headers(init?.headers).get('Authorization') });
+    return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
+  };
+  return { requests, restore: () => { window.fetch = original; } };
+}
+
+async function waitForText(root: ShadowRoot | null, text: string): Promise<void> {
+  for (let i = 0; i < 100; i++) {
+    if (root?.textContent?.includes(text)) return;
+    await new Promise((resolve) => setTimeout(resolve, 20));
+  }
+  throw new Error(`Expected the form to show "${text}"`);
+}
+
+/** Fills the title, submits the form, and returns the element's shadow root. */
+async function submitHomebrewTitle(canvasElement: HTMLElement, title: string): Promise<ShadowRoot> {
+  const el = canvasElement.querySelector('runefoble-homebrew-creator') as HTMLElement;
+  const root = el.shadowRoot as ShadowRoot;
+  const input = root.querySelector('input.form-input') as HTMLInputElement;
+  input.value = title;
+  input.dispatchEvent(new Event('input'));
+  (root.querySelector('form') as HTMLFormElement).requestSubmit();
+  return root;
+}
+
+export const HomebrewRegisteredState: Story = {
+  render: () => html`
+    <runefoble-story-auth-provider token="story-token">
+      <runefoble-homebrew-creator apiBaseUrl="http://story.invalid" .campaignId=${'campaign-homebrew-lab'}></runefoble-homebrew-creator>
+    </runefoble-story-auth-provider>
+  `,
+  play: async ({ canvasElement }) => {
+    const stub = stubHomebrewFetch(200, { rule_id: 'hb-7', campaign_id: 'campaign-homebrew-lab', author_id: 'dm-evelyn', rule_type: 'monster', title: 'Abyssal Stalker', content: {}, status: 'registered' });
+    try {
+      const root = await submitHomebrewTitle(canvasElement, 'Abyssal Stalker');
+      await waitForText(root, 'Registered "Abyssal Stalker" successfully!');
+      if (stub.requests[0]?.url !== 'http://story.invalid/api/v1/compendium/homebrew') throw new Error(`Wrong URL: ${stub.requests[0]?.url}`);
+      if (stub.requests[0]?.auth !== 'Bearer story-token') throw new Error(`Missing bearer: ${stub.requests[0]?.auth}`);
+    } finally {
+      stub.restore();
+    }
+  },
+};
+
+export const HomebrewServerErrorState: Story = {
+  render: () => html`
+    <runefoble-story-auth-provider token="story-token">
+      <runefoble-homebrew-creator apiBaseUrl="http://story.invalid" .campaignId=${'campaign-homebrew-lab'}></runefoble-homebrew-creator>
+    </runefoble-story-auth-provider>
+  `,
+  play: async ({ canvasElement }) => {
+    const stub = stubHomebrewFetch(503, { detail: 'Registration is unavailable. Try again later.' });
+    try {
+      const root = await submitHomebrewTitle(canvasElement, 'Abyssal Stalker');
+      await waitForText(root, 'Registration is unavailable. Try again later.');
+      if (root.textContent?.includes('successfully')) throw new Error('A failed registration must not report success');
+    } finally {
+      stub.restore();
+    }
   },
 };
