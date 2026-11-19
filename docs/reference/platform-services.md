@@ -58,6 +58,7 @@ Runefoble is designed around a Kubernetes-first microservices topology deployed 
 - **Datastore Migrations**: Uses `spicedb datastore migrate head` executed via initContainers in the deployment and Helm schema job before serving or writing schemas.
 - **Schema**: `libs/runefoble_auth/schema/runefoble.zed`.
 - **Shared Factory**: `runefoble_auth.factory.get_spicedb_client()` is the only constructor for services and the gateway. It caches one client built from `PlatformSettings`. It raises `ConfigurationError` when the preshared key is missing.
+- **Test seam**: `runefoble_auth.factory.set_spicedb_client(client)` replaces the shared client. Pass `None` to build a fresh one. Tests restore the previous client with `tests/helpers/module_state.restored_seam`. No service exposes its own SpiceDB seam.
 - **Fail-Closed Errors**: `check_permission` returns `False` only for a definitive `NO_PERMISSION`. Other failures raise a typed error from `runefoble_auth.errors`:
   - `AuthzUnavailableError`: gRPC `UNAVAILABLE` or `DEADLINE_EXCEEDED`, or a socket error. The gateway maps it to `503`.
   - `AuthzSchemaError`: gRPC `INVALID_ARGUMENT` or `FAILED_PRECONDITION`. The name (type, relation, or permission) is not in `runefoble.zed`.
