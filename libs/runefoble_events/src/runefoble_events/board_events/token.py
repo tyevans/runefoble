@@ -15,7 +15,7 @@ class TokenPlaced(BaseRunefobleEvent):
     aggregate_type: str = "BoardState"
     token_id: str = Field(default_factory=lambda: str(uuid4()))
     name: str
-    token_type: Literal["pc", "monster", "npc", "obstacle"]
+    token_type: Literal["pc", "monster", "npc", "obstacle", "loot"]
     x: int
     y: int
     hp: int | None = None

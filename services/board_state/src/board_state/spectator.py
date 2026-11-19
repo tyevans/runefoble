@@ -21,7 +21,7 @@ class SpectatorToken(BaseModel):
     name: str
     x: int
     y: int
-    token_type: Literal["pc", "npc", "obstacle"]
+    token_type: Literal["pc", "npc", "obstacle", "loot"]
 
 
 class SpectatorPartyMember(BaseModel):

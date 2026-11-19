@@ -17,6 +17,7 @@ When dragging a miniature or token across the tactical board:
 
 The tactical board automatically evaluates terrain conditions along the movement trajectory:
 - **Difficult Terrain**: Highlighted with an amber diagonal hatch and badge (`▲ +5ft`). Each difficult terrain cell adds a +5-foot movement penalty (costing 2 points of movement budget).
+- **Loot Tokens**: An approved audience item drop places a loot token (`token_type: "loot"`) on its cell. The token shows the item name. It is not a combatant, and it does not block movement. A player token can move onto its cell.
 - **Hazard Cells**: Highlighted with a warning border and flashing red background. A route that crosses a hazard cell alerts the player and Dungeon Master, even when the token lands on a cell without a hazard (e.g. `⚠️ Lava (2d10)`). The dice match the dice that the move applies. The board table gives acid `2d6`, spikes `2d4`, poison `1d4`, lava `2d10`, fire `1d6`, deep_water `1d6`, chasm `3d6`, and arcane_void `2d8`.
 
 ```typescript

@@ -36,7 +36,7 @@ class TokensHandlerMixin(ActionsHandlerMixin):
         self,
         token_id: str,
         name: str,
-        token_type: Literal["pc", "monster", "npc", "obstacle"],
+        token_type: Literal["pc", "monster", "npc", "obstacle", "loot"],
         x: int,
         y: int,
         hp: int | None = None,
