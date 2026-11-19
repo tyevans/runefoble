@@ -7,10 +7,10 @@ from typing import Any
 
 import pytest
 from pydantic import BaseModel
-from runefoble_events.events import SessionCreated, TokenMoved
-from runefoble_platform.event_deserializer import EventDecodeError, UnknownEvent
+from runefoble_events.events import SessionCreated
+from runefoble_platform.event_deserializer import EventDecodeError, UnknownEvent, deserialize_event
 from runefoble_platform.event_fields import EventTypeMissingError
-from runefoble_platform.redis_bus import RedisStreamsEventBus, deserialize_event
+from runefoble_platform.redis_bus import RedisStreamsEventBus
 
 
 class MockAsyncRedis:
@@ -18,7 +18,6 @@ class MockAsyncRedis:
 
     def __init__(self) -> None:
         self.streams: dict[str, list[tuple[str, dict[str, Any]]]] = {}
-        self.groups: dict[tuple[str, str], int] = {}
         self.counter: int = 0
         self.closed: bool = False
 
@@ -29,40 +28,6 @@ class MockAsyncRedis:
             self.streams[stream] = []
         self.streams[stream].append((entry_id, fields))
         return entry_id
-
-    async def xgroup_create(
-        self, stream: str, group_name: str, id: str = "0", mkstream: bool = True
-    ) -> bool:
-        if stream not in self.streams and mkstream:
-            self.streams[stream] = []
-        key = (stream, group_name)
-        if key in self.groups:
-            raise Exception("BUSYGROUP Consumer Group name already exists")
-        self.groups[key] = 0
-        return True
-
-    async def xreadgroup(
-        self,
-        groupname: str,
-        consumername: str,
-        streams: dict[str, str],
-        count: int = 10,
-        block: int | None = None,
-    ) -> list[tuple[str, list[tuple[str, dict[str, Any]]]]]:
-        results: list[tuple[str, list[tuple[str, dict[str, Any]]]]] = []
-        for stream_name, _start_id in streams.items():
-            if stream_name not in self.streams:
-                continue
-            key = (stream_name, groupname)
-            idx = self.groups.get(key, 0)
-            available = self.streams[stream_name][idx : idx + count]
-            self.groups[key] = idx + len(available)
-            if available:
-                results.append((stream_name, available))
-        return results
-
-    async def xack(self, stream: str, group_name: str, *message_ids: str) -> int:
-        return len(message_ids)
 
     async def aclose(self) -> None:
         self.closed = True
@@ -153,77 +118,6 @@ async def test_publish_dict_with_uuid_and_datetime(
     assert fields["event_type"] == "CustomLogEvent"
     assert fields["event_id"] == str(event_id)
     assert "Underdark" in fields["payload"]
-
-
-@pytest.mark.asyncio
-async def test_create_consumer_group(event_bus: RedisStreamsEventBus) -> None:
-    # First creation should succeed
-    await event_bus.create_consumer_group("runefoble.events.board", "board_workers")
-
-    # Second creation should gracefully catch BUSYGROUP
-    await event_bus.create_consumer_group("runefoble.events.board", "board_workers")
-
-
-@pytest.mark.asyncio
-async def test_read_group_and_acknowledge(
-    event_bus: RedisStreamsEventBus, mock_redis: MockAsyncRedis
-) -> None:
-    stream = "runefoble.events.board"
-    group = "board_group"
-    consumer = "worker_1"
-
-    await event_bus.create_consumer_group(stream, group)
-
-    event = TokenMoved(
-        aggregate_id=uuid.uuid4(),
-        token_id="token-42",
-        name="Goblin Scout",
-        from_x=0,
-        from_y=0,
-        to_x=3,
-        to_y=5,
-    )
-    await event_bus.publish_event(stream, event)
-
-    # Read messages without auto_deserialize
-    messages = await event_bus.read_group(stream, group, consumer, count=5)
-    assert len(messages) == 1
-    msg_id, payload = messages[0]
-    assert isinstance(payload, dict)
-    assert payload["token_id"] == "token-42"
-    assert payload["to_x"] == 3
-
-    # Acknowledge message
-    acked = await event_bus.acknowledge(stream, group, msg_id)
-    assert acked == 1
-
-    # Empty read after consumption
-    empty = await event_bus.read_group(stream, group, consumer, count=5)
-    assert empty == []
-
-
-@pytest.mark.asyncio
-async def test_read_group_auto_deserialize(event_bus: RedisStreamsEventBus) -> None:
-    stream = "runefoble.events.session"
-    group = "session_group"
-    consumer = "worker_2"
-
-    await event_bus.create_consumer_group(stream, group)
-
-    session_id = uuid.uuid4()
-    event = SessionCreated(
-        aggregate_id=session_id,
-        title="Epic Quest",
-    )
-    await event_bus.publish_event(stream, event)
-
-    # Read with auto_deserialize=True
-    messages = await event_bus.read_group(stream, group, consumer, count=5, auto_deserialize=True)
-    assert len(messages) == 1
-    _msg_id, deserialized = messages[0]
-    assert isinstance(deserialized, SessionCreated)
-    assert deserialized.aggregate_id == session_id
-    assert deserialized.title == "Epic Quest"
 
 
 def test_deserialize_event_helper() -> None:

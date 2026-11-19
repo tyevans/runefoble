@@ -12,7 +12,7 @@ import pytest
 from game_session.main import app as session_app
 from httpx import ASGITransport, AsyncClient
 from runefoble_events.events import AbsencePenaltyApplied, StandInActionDecided
-from runefoble_platform.redis_bus import deserialize_event
+from runefoble_platform.event_deserializer import deserialize_event
 from the_watcher.main import app as watcher_app
 
 from tests.helpers.campaign_setup import create_owned_campaign_async

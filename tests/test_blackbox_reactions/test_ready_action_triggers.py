@@ -5,7 +5,7 @@ from __future__ import annotations
 from uuid import uuid4
 
 from fastapi.testclient import TestClient
-from runefoble_platform.redis_bus import deserialize_event
+from runefoble_platform.event_deserializer import deserialize_event
 
 from tests.helpers.campaign_setup import create_owned_campaign
 from tests.helpers.mock_redis import MockAsyncRedis

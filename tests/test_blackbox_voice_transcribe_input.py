@@ -15,7 +15,7 @@ from collections.abc import Generator
 import pytest
 from fastapi.testclient import TestClient
 from runefoble_events.events import PlayerSpokeEvent
-from runefoble_platform.redis_bus import deserialize_event
+from runefoble_platform.event_deserializer import deserialize_event
 from voice_agent.main import app as voice_app
 from voice_agent.stt import get_streaming_pipeline, set_streaming_pipeline
 

@@ -17,7 +17,7 @@ from runefoble_events.events import (
     PlayerSpokeEvent,
     SpeechIntentParsed,
 )
-from runefoble_platform.redis_bus import deserialize_event
+from runefoble_platform.event_deserializer import deserialize_event
 
 from tests.helpers.audio_synth import (
     generate_pcm_silence,
