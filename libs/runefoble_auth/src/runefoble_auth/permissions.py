@@ -52,7 +52,11 @@ async def check_subject(
 ) -> bool:
     """Return whether `user_id` holds `permission` on the resource. A failure raises."""
     return await spicedb.check_permission(
-        resource_type, str(resource_id), permission, "user", str(user_id)
+        resource_type=resource_type,
+        resource_id=str(resource_id),
+        permission=permission,
+        subject_type="user",
+        subject_id=str(user_id),
     )
 
 

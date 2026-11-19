@@ -11,6 +11,7 @@ import re
 
 from fastapi import HTTPException, status
 from runefoble_auth.factory import get_spicedb_client
+from runefoble_auth.permissions import check_subject, require_subject
 from runefoble_platform.identifiers import opaque_aggregate_id
 
 MANAGE_TRAPS = "manage_traps"
@@ -30,38 +31,33 @@ async def can_on_board(user_id: str | None, session_id: str, permission: str) ->
     """Return whether the user holds a board permission. A service call has no user and holds none."""
     if user_id is None:
         return False
-    return await get_spicedb_client().check_permission(
-        resource_type="board",
-        resource_id=board_resource_id(session_id),
-        permission=permission,
-        subject_type="user",
-        subject_id=user_id,
+    return await check_subject(
+        get_spicedb_client(), "board", board_resource_id(session_id), permission, user_id
     )
 
 
 async def require_board_permission(user_id: str, session_id: str, permission: str) -> None:
     """Raise 403 unless the user holds `board.<permission>`."""
-    if not await can_on_board(user_id, session_id, permission):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"Forbidden: the board permission '{permission}' is required",
-        )
+    await require_subject(
+        get_spicedb_client(),
+        "board",
+        board_resource_id(session_id),
+        permission,
+        user_id,
+        detail=f"Forbidden: the board permission '{permission}' is required",
+    )
 
 
 async def require_campaign_run_session(user_id: str, campaign_id: str) -> None:
     """Raise 403 unless the user holds `campaign.run_session` on the campaign."""
-    allowed = await get_spicedb_client().check_permission(
-        resource_type="campaign",
-        resource_id=campaign_id,
-        permission="run_session",
-        subject_type="user",
-        subject_id=user_id,
+    await require_subject(
+        get_spicedb_client(),
+        "campaign",
+        campaign_id,
+        "run_session",
+        user_id,
+        detail="Forbidden: run_session on the campaign is required to create a board",
     )
-    if not allowed:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Forbidden: run_session on the campaign is required to create a board",
-        )
 
 
 async def bind_board_to_campaign(session_id: str, campaign_id: str) -> None:
@@ -115,37 +111,27 @@ async def can_on_campaign(user_id: str | None, session_id: str, permission: str)
     campaign_id = await board_campaign_id(session_id)
     if campaign_id is None:
         return False
-    return await get_spicedb_client().check_permission(
-        resource_type="campaign",
-        resource_id=campaign_id,
-        permission=permission,
-        subject_type="user",
-        subject_id=user_id,
-    )
+    return await check_subject(get_spicedb_client(), "campaign", campaign_id, permission, user_id)
 
 
 async def can_move_token(user_id: str | None, session_id: str, token_id: str) -> bool:
     """Return whether the user holds `board_token.move` on the token, or runs the board."""
     if user_id is None:
         return False
-    if await get_spicedb_client().check_permission(
-        resource_type="board_token",
-        resource_id=token_id,
-        permission="move",
-        subject_type="user",
-        subject_id=user_id,
-    ):
+    if await check_subject(get_spicedb_client(), "board_token", token_id, "move", user_id):
         return True
     return await can_on_board(user_id, session_id, MANAGE_TRAPS)
 
 
 async def require_campaign_permission(user_id: str, session_id: str, permission: str) -> None:
     """Raise 403 unless the user holds `campaign.<permission>` on the board campaign."""
-    if not await can_on_campaign(user_id, session_id, permission):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"Forbidden: the campaign permission '{permission}' is required",
-        )
+    detail = f"Forbidden: the campaign permission '{permission}' is required"
+    campaign_id = await board_campaign_id(session_id)
+    if campaign_id is None:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=detail)
+    await require_subject(
+        get_spicedb_client(), "campaign", campaign_id, permission, user_id, detail=detail
+    )
 
 
 async def require_token_move(user_id: str, session_id: str, token_id: str) -> None:
@@ -172,17 +158,14 @@ async def bind_token(
         await require_board_permission(user_id, session_id, MANAGE_TRAPS)
     else:
         await require_campaign_permission(user_id, session_id, PLAY)
-        if not await client.check_permission(
-            resource_type="character",
-            resource_id=character_id,
-            permission="edit",
-            subject_type="user",
-            subject_id=user_id,
-        ):
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Forbidden: placing a character token requires character.edit",
-            )
+        await require_subject(
+            client,
+            "character",
+            character_id,
+            "edit",
+            user_id,
+            detail="Forbidden: placing a character token requires character.edit",
+        )
     campaign_id = await board_campaign_id(session_id)
     if campaign_id is None:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Board has no campaign")
