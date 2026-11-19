@@ -5,9 +5,8 @@ from typing import Any, Literal
 from pydantic import BaseModel, Field
 from runefoble_platform.stand_in_guardrails import GuardrailName, StandInGuardrailPolicy
 
-# Provenance of a response: llm (model output), heuristic (regex rules after
-# model output was unusable), or mock (canned output, explicit mock backend only).
-ResponseSource = Literal["llm", "heuristic", "mock"]
+# Provenance of a response. Every result comes from a model engine. No path substitutes output.
+ResponseSource = Literal["llm"]
 TensionLevel = Literal["calm", "rising", "climax", "aftermath"]
 
 
@@ -68,7 +67,10 @@ class IntentParseResponse(BaseModel):
     action: ParsedAction
     execution_time_ms: float = 0.0
     source: ResponseSource
-    degraded: bool = Field(..., description="True when a fallback path produced the result")
+    degraded: bool = Field(
+        default=False,
+        description="Always false. No path sets it true. Kept in the published response shape.",
+    )
 
 
 class DMNarrationRequest(BaseModel):
@@ -100,7 +102,10 @@ class DMNarrationResponse(BaseModel):
     suggested_dm_prompts: list[str] = Field(default_factory=list)
     tension_level: TensionLevel = "rising"
     source: ResponseSource
-    degraded: bool = Field(..., description="True when a fallback path produced the result")
+    degraded: bool = Field(
+        default=False,
+        description="Always false. No path sets it true. Kept in the published response shape.",
+    )
 
 
 class StandInActionRequest(BaseModel):
@@ -141,4 +146,7 @@ class StandInActionResponse(BaseModel):
         description="Active guardrail names that the decision enforced",
     )
     source: ResponseSource
-    degraded: bool = Field(..., description="True when a fallback path produced the result")
+    degraded: bool = Field(
+        default=False,
+        description="Always false. No path sets it true. Kept in the published response shape.",
+    )

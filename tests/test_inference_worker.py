@@ -1,5 +1,6 @@
 """Unit and integration tests for Runefoble AI Inference Worker and LangGraph workflows."""
 
+import json
 import os
 
 import pytest
@@ -10,10 +11,11 @@ from inference_worker.graphs import (
     build_narration_graph,
     build_stand_in_graph,
 )
-from inference_worker.mock import MockLLM
+from inference_worker.llm_factory import build_llm_port
 from runefoble_platform.service_credential import SERVICE_CREDENTIAL_HEADER
 from the_watcher.main import app as watcher_app
 
+from tests.helpers.fake_openai_server import FakeOpenAI
 from tests.helpers.inference_worker_port import install_worker_port
 from tests.helpers.spicedb_factory import make_table_runner
 from tests.helpers.ws_identity import SIGNING_ISSUER
@@ -24,14 +26,19 @@ pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
 @pytest.fixture
-def mock_port():
-    return MockLLM()
+def llm_port(fake_llm: FakeOpenAI):
+    """The openai_compatible port, pointed at the loopback fake. The test sets the reply text."""
+    return build_llm_port(fake_llm.settings())
 
 
 @pytest.fixture
-def mock_api(monkeypatch: pytest.MonkeyPatch):
-    """Select the explicit mock backend for the worker app. Graphs rebuild for that port."""
-    install_worker_port(monkeypatch, MockLLM())
+def worker_api(monkeypatch: pytest.MonkeyPatch, llm_port):
+    """Install the fake-backed port into the worker app. Graphs rebuild for that port."""
+    install_worker_port(monkeypatch, llm_port)
+
+
+def _reply(fake: FakeOpenAI, document: dict) -> None:
+    fake.content = json.dumps(document)
 
 
 @pytest.mark.asyncio
@@ -47,8 +54,18 @@ async def test_health_endpoint():
 
 
 @pytest.mark.asyncio
-async def test_intent_graph_spell_casting(mock_port):
-    graph = build_intent_graph(mock_port)
+async def test_intent_graph_spell_casting(fake_llm, llm_port):
+    _reply(
+        fake_llm,
+        {
+            "action_type": "cast_spell",
+            "spell_or_ability": "magic missile",
+            "target_name": "Goblin Archer",
+            "dice_check_required": "1d20+spell",
+            "narrative_flavor": "Valeros weaves arcane energy.",
+        },
+    )
+    graph = build_intent_graph(llm_port)
     state = await graph.ainvoke(
         {
             "request": {
@@ -76,11 +93,13 @@ async def test_intent_graph_spell_casting(mock_port):
     assert action["target_token_name"] == "Goblin Archer"
     assert action["target_x"] == 8
     assert action["target_y"] == 12
+    assert "Visible grid tokens" in fake_llm.user_prompts()[0]
 
 
 @pytest.mark.asyncio
-async def test_intent_graph_movement_coordinates(mock_port):
-    graph = build_intent_graph(mock_port)
+async def test_intent_graph_movement_coordinates(fake_llm, llm_port):
+    _reply(fake_llm, {"action_type": "move"})
+    graph = build_intent_graph(llm_port)
     state = await graph.ainvoke(
         {
             "request": {
@@ -100,7 +119,8 @@ async def test_intent_graph_movement_coordinates(mock_port):
 
 
 @pytest.mark.asyncio
-async def test_intent_api_endpoint(mock_api):
+async def test_intent_api_endpoint(fake_llm, worker_api):
+    _reply(fake_llm, {"action_type": "attack", "target_name": "Skeleton"})
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test", headers=WORKER_AUTH
     ) as ac:
@@ -127,13 +147,19 @@ async def test_intent_api_endpoint(mock_api):
         assert data["action"]["action_type"] == "attack"
         assert data["action"]["target_token_id"] == "tok-skel-1"
         assert data["execution_time_ms"] >= 0
-        assert data["source"] == "mock"
+        assert data["source"] == "llm"
         assert data["degraded"] is False
 
 
 @pytest.mark.asyncio
-async def test_narration_graph_and_api(mock_port, mock_api):
-    graph = build_narration_graph(mock_port)
+async def test_narration_graph_and_api(fake_llm, llm_port, worker_api):
+    narration = {
+        "narration": "Dust hangs in the still air of the crypt.",
+        "sensory_details": ["Cold stone under the fingers"],
+        "suggested_dm_prompts": ["Ask for a Perception check"],
+    }
+    _reply(fake_llm, narration)
+    graph = build_narration_graph(llm_port)
     state = await graph.ainvoke(
         {
             "request": {
@@ -147,11 +173,11 @@ async def test_narration_graph_and_api(mock_port, mock_api):
         }
     )
     final = state.get("final_response", {})
-    assert (
-        "Crypt of the Shadow King" in final["narration"] or "silence" in final["narration"].lower()
-    )
-    assert len(final["sensory_details"]) >= 1
-    assert len(final["suggested_dm_prompts"]) >= 1
+    assert final["narration"] == narration["narration"]
+    assert final["sensory_details"] == narration["sensory_details"]
+    assert final["suggested_dm_prompts"] == narration["suggested_dm_prompts"]
+    assert final["source"] == "llm"
+    assert "Crypt of the Shadow King" in fake_llm.user_prompts()[0]
 
     # Also test via API
     async with AsyncClient(
@@ -169,15 +195,25 @@ async def test_narration_graph_and_api(mock_port, mock_api):
         )
         assert resp.status_code == 200
         data = resp.json()
-        assert "narration" in data
-        assert len(data["sensory_details"]) > 0
+        assert data["narration"] == narration["narration"]
+        assert data["source"] == "llm"
 
 
 @pytest.mark.asyncio
-async def test_stand_in_graph_with_penalties(mock_port):
-    graph = build_stand_in_graph(mock_port)
+async def test_stand_in_graph_with_penalties(fake_llm, llm_port):
+    graph = build_stand_in_graph(llm_port)
 
-    # Test "drunk" penalty
+    # The DM penalty reaches the model prompt. The model's decision reaches the response.
+    _reply(
+        fake_llm,
+        {
+            "action_type": "attack",
+            "target": "Orc Chieftain",
+            "dialogue": "*Hic* 'Stand shtill!'",
+            "narrative_flavor": "Seoni sways on one boot.",
+            "mechanics": {"penalty": "drunk"},
+        },
+    )
     state_drunk = await graph.ainvoke(
         {
             "request": {
@@ -194,13 +230,13 @@ async def test_stand_in_graph_with_penalties(mock_port):
     )
     drunk_resp = state_drunk.get("final_response", {})
     assert "drunk" in [p.lower() for p in drunk_resp["penalties_applied"]]
-    assert (
-        "*hic*" in drunk_resp["dialogue"].lower()
-        or "sways" in drunk_resp["narrative_flavor"].lower()
-    )
+    assert "DM Penalties: drunk" in fake_llm.user_prompts()[-1]
+    assert "Slurred speech" in fake_llm.user_prompts()[-1]
     assert drunk_resp["mechanics"]["penalty"] == "drunk"
+    assert drunk_resp["source"] == "llm"
 
     # Test "foolishness" penalty
+    _reply(fake_llm, {"action_type": "foolish_act", "target": "Red Dragon"})
     state_fool = await graph.ainvoke(
         {
             "request": {

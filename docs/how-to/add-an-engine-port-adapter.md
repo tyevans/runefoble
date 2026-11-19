@@ -27,7 +27,7 @@ Current engine ports:
 | `asset_forge` | `RUNEFOBLE_ASSET_FORGE_MAP_GENERATOR` | `MapGenerator` | `deterministic` | `map_generation_unavailable` | `generator` |
 | `asset_forge` | `RUNEFOBLE_WARDROBE_GENERATOR` | `WardrobeGenerator` | `placeholder` | none (no failure path) | none |
 | `rules_compendium` | `RUNEFOBLE_RULES_EMBEDDING` | `redstring.EmbeddingProvider` | `lexical`, `openai_compatible` | none (see Known Gaps) | none |
-| `inference_worker` | `RUNEFOBLE_WORKER_BACKEND` | `LLMPort` | `openai_compatible`, `ollama`, `mock` | `backend_unavailable` | `backend` (flat body, see Known Gaps) |
+| `inference_worker` | `RUNEFOBLE_WORKER_BACKEND` | `LLMPort` | `openai_compatible`, `ollama` | `backend_unavailable` | `backend` (flat body, see Known Gaps) |
 | `the_watcher` | `RUNEFOBLE_WATCHER_ENGINE` | `IntentParser`, `StandInDecider`, `SceneNarrator` (one setting selects all three) | `inference_worker`, `heuristic` | `backend_unavailable` | `backend` |
 
 ## Steps
@@ -128,6 +128,8 @@ Tests inject a fixture adapter at the composition root. Use the service setter, 
 
 Put the fixture under `tests/helpers/`. Write a failure test that sets the fixture to raise `EngineUnavailableError`. Assert the `503` status and the body keys.
 
+When a test needs canned model output, do not add a canned adapter. Serve a loopback OpenAI-compatible endpoint instead. `tests/helpers/fake_openai_server.py` does this. The worker reaches it through its public `openai_compatible` setting. This is a true process boundary, so no code under test is replaced. The fixture `fake_llm` sets the reply text and records each request.
+
 ### 8. Write the frontdoor tests
 
 Write a test for the public route. Assert:
@@ -152,6 +154,7 @@ uv run pytest -q -p no:randomly tests/test_engine_port_adapters.py tests/test_bl
 - The rules compendium embedding provider does not map its errors to `503` yet. A provider failure returns `500`. Map it when the embedding port gets its own error contract.
 - The wardrobe generator has no failure path. It has no `503`. Add the mapping when a generator can fail.
 - The inference worker keeps its published flat body, `{"error": "backend_unavailable", "backend": "<name>"}`, with no `detail` wrapper and no `message` key. It registers its own handler in `api.py`. Its contract is `docs/reference/inference-worker-response-contract.md`. The worker also checks its engine once in the lifespan (`LLMPort.check_ready`). A port that fails that check stops start-up.
+- The inference worker has no canned adapter. A `mock` value is refused, and the worker adds no keyword or template path. ADR-0015 decision 4 forbids those fallbacks in every environment.
 - `campaign_lore` builds its ports with a `match` and `assert_never`. It is not yet on `build_adapter`.
 - The Watcher builds its ports from the environment on each request (`load_watcher_ports` in `the_watcher/engine_selection.py`), not once as a singleton. The lifespan runs the same build once, so a bad setting stops start-up. Tests set the environment with `monkeypatch`.
 - The Watcher routes `compound.py` (speech parse) and the stand-in recap still call the local engine directly. They do not yet go through a port. The recap has no worker path.

@@ -32,14 +32,11 @@ Each successful response includes these fields.
 
 | Field | Type | Meaning |
 |---|---|---|
-| `source` | `"llm"`, `"heuristic"`, or `"mock"` | The path that produced the result. |
-| `degraded` | boolean | `true` when a fallback path produced the result. |
+| `source` | `"llm"` | The engine that produced the result. Only a model engine produces results. |
+| `degraded` | boolean | Always `false`. No path sets it to `true`. The field stays in the published shape. |
 
-Values of `source`:
-
-- `llm`: A real model backend returned usable output.
-- `heuristic`: The model returned output with no action. The worker used regex keyword rules instead. `degraded` is `true`. Only the intent endpoint uses this value.
-- `mock`: The operator selected the `mock` backend. The output is canned. `degraded` is `false`.
+`source` is always `llm`. The worker has no keyword rules and no canned output. Each route returns
+model output or `503`.
 
 ## Backend Failure
 
@@ -51,7 +48,15 @@ The worker never returns substitute text for a failed backend. A failure returns
 
 The `backend` value is the name of the selected backend, `openai_compatible` or `ollama`. The selected server failed or returned no usable output.
 
-A narration or stand-in response also returns 503 when the model output has no usable JSON. An intent response does not. For intent, the worker uses the regex heuristic and sets `source` to `heuristic`.
+A route also returns 503 when the model output has no usable JSON, or when the output lacks a required field. The required fields are:
+
+| Route | Required field |
+|---|---|
+| `/inference/v1/intent` | `action_type` |
+| `/inference/v1/dm-narration` | `narration` |
+| `/inference/v1/stand-in-action` | `action_type` |
+
+The worker checks each field with `require_field` (`inference_worker/model_output.py`). It never fills a missing field with a default or a keyword rule.
 
 ## Backend Selection
 
@@ -61,26 +66,14 @@ Set the backend with `RUNEFOBLE_WORKER_BACKEND`. The worker reads the value once
 |---|---|
 | `openai_compatible` | Calls the configured OpenAI-compatible endpoint. The default. |
 | `ollama` | Calls the local Ollama endpoint. |
-| `mock` | Returns canned output. Use only for tests and offline checks. |
+
+The value `mock` is refused in every environment. The worker has no canned engine. Tests use a loopback OpenAI-compatible server instead (`tests/helpers/fake_openai_server.py`).
 
 At start-up the worker calls the selected server once. `openai_compatible` calls `GET {base_url}/models`. `ollama` calls `GET {base_url}/api/tags`. When the server does not answer with HTTP 200, the worker refuses to start. A value outside the table also stops start-up, and the error names the allowed values. No request path probes a backend.
 
-## Redis Streams Results
+## Redis Streams
 
-The Redis consumer publishes one result entry for each message to `RUNEFOBLE_WORKER_REDIS_STREAM_OUT`. Every entry has these fields:
-
-- `correlation_id`: the request `correlation_id`. The message ID is used when the request has none.
-- `task_type`: the request `type`. The value is `unknown` when the request has no type.
-- `status`: `ok` or `error`.
-
-When `status` is `ok`, the `result` field holds a JSON object:
-
-- `parse_intent`: `{"action": <ParsedAction>, "source": ..., "degraded": ...}`
-- `generate_narration` and `stand_in_action`: the same shape as the HTTP response body.
-
-When `status` is `error`, the `error` field holds the failure text. The failure can be an unknown task type, a missing `type` or `payload` field, or a backend failure.
-
-The consumer acknowledges each message after it publishes the result. A message stays pending only when the Redis write fails. That failure is logged.
+The worker has no Redis Streams consumer in this release. Its Helm Deployment sets `RUNEFOBLE_WORKER_REDIS_ENABLED` to `false`. The Watcher calls the worker over HTTP only.
 
 ## Stand-In Guardrails
 
@@ -89,13 +82,9 @@ The consumer acknowledges each message after it publishes the result. A message 
 - Unknown fields return HTTP 422. Both the worker and The Watcher apply this rule.
 - `guardrails_applied` holds only `GuardrailName` values: `preserve_spell_slots`, `protect_allies`, `avoid_melee`, and `custom_priorities`. The local Watcher engine and the worker report the same names.
 - A field that is omitted has no effect. A missing `guardrails` object means that no policy is active.
-- The worker sets `guardrails_applied` to the names of the guardrails that the decision enforced. The response never echoes the input list.
-- In `mock` mode, the worker enforces four rules, and a name is listed only when its rule changes the decision:
-  - `protect_allies`: heals the first ally when the scene names an ally or mentions healing.
-  - `preserve_spell_slots`: a `cast_spell` decision sets `mechanics.spell_level` to `0`, so no slot is spent.
-  - `custom_priorities`: the target is the first priority that matches a visible enemy, in priority order.
-  - `avoid_melee`: a caster chooses a ranged action.
-- In `llm` mode, the model declares the guardrails it followed in `guardrails_applied`. The worker keeps only the names that the request activated.
+- The worker tells the model which guardrails are active. The prompt lists one note for each active guardrail. The note names the policy value, for example `Protect allies: Marcus`.
+- The model declares the guardrails it followed in `guardrails_applied`. The worker keeps only the names that the request activated. The response never echoes the input list.
+- The worker does not enforce a guardrail in code. Enforcement depends on the model's output. A name that the model omits is not reported.
 
 The Watcher returns the worker's `guardrails_applied` list in its `StandInAction` response.
 

@@ -19,5 +19,5 @@ class StandInAction(BaseModel):
     penalties_applied: list[str] = Field(default_factory=list)
     guardrails_applied: list[GuardrailName] = Field(default_factory=list)
     flavor_text: str = ""
-    source: str = "watcher_rules"  # "llm" | "heuristic" | "mock" from the worker
+    source: str = "watcher_rules"  # "llm" from the worker
     degraded: bool = False

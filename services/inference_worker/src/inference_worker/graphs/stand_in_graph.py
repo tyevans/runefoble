@@ -5,10 +5,9 @@ from typing import Any, TypedDict
 from langgraph.graph import END, START, StateGraph
 from runefoble_platform.stand_in_guardrails import GuardrailName, StandInGuardrailPolicy
 
-from inference_worker.graphs.stand_in_mock_rules import mock_stand_in_decision
-from inference_worker.model_output import parse_json_object
+from inference_worker.model_output import parse_json_object, require_field
 from inference_worker.models import ResponseSource, StandInActionResponse
-from inference_worker.ports import LLMPort, backend_unavailable
+from inference_worker.ports import Completion, LLMPort
 
 
 class StandInGraphState(TypedDict, total=False):
@@ -16,7 +15,6 @@ class StandInGraphState(TypedDict, total=False):
     penalty_effects: list[str]
     action_decision: dict[str, Any]
     source: ResponseSource
-    degraded: bool
     guardrails_applied: list[GuardrailName]
     final_response: dict[str, Any]
 
@@ -62,31 +60,27 @@ def _prompt_guardrail_notes(policy: StandInGuardrailPolicy) -> dict[GuardrailNam
     return notes
 
 
-async def generate_stand_in_decision_node(
-    state: StandInGraphState,
-    llm_port: LLMPort,
-) -> StandInGraphState:
-    req = state["request"]
+STAND_IN_SYSTEM_PROMPT = (
+    "You are Runefoble's Absent Player Stand-in AI. "
+    "A player is missing from game night, so you autonomously pilot their character. "
+    "Faithfully reflect their class and personality, BUT you MUST comically and mechanically "
+    "incorporate any DM-inflicted penalties (like 'drunk' or 'foolishness') and MUST respect "
+    "any player-configured tactical guardrails (e.g. preserving high level slots, protecting allies).\n"
+    "Return a JSON object with: action_type, target, dialogue, narrative_flavor, mechanics, "
+    "guardrails_applied (the names of the guardrails you followed)."
+)
+
+
+def _stand_in_user_prompt(
+    req: dict[str, Any], penalty_effects: list[str], guardrail_notes: dict[GuardrailName, str]
+) -> str:
     char_name = req.get("character_name", "Hero")
     char_class = req.get("character_class", "Fighter")
     traits = req.get("personality_traits", ["brave"])
     penalties = req.get("penalties", [])
-    penalty_effects = state.get("penalty_effects", [])
     scene_context = req.get("scene_context", "In combat")
     enemies = req.get("visible_enemies", [])
-    policy = StandInGuardrailPolicy.model_validate(req.get("guardrails") or {})
-    guardrail_notes = _prompt_guardrail_notes(policy)
-
-    system_prompt = (
-        "You are Runefoble's Absent Player Stand-in AI. "
-        "A player is missing from game night, so you autonomously pilot their character. "
-        "Faithfully reflect their class and personality, BUT you MUST comically and mechanically "
-        "incorporate any DM-inflicted penalties (like 'drunk' or 'foolishness') and MUST respect "
-        "any player-configured tactical guardrails (e.g. preserving high level slots, protecting allies).\n"
-        "Return a JSON object with: action_type, target, dialogue, narrative_flavor, mechanics, "
-        "guardrails_applied (the names of the guardrails you followed)."
-    )
-    user_prompt = (
+    return (
         f"Character: {char_name} ({char_class})\n"
         f"Traits: {', '.join(traits)}\n"
         f"DM Penalties: {', '.join(penalties) if penalties else 'None'}\n"
@@ -97,34 +91,33 @@ async def generate_stand_in_decision_node(
         "Generate their turn action and in-character spoken dialogue."
     )
 
-    # Raises EngineUnavailableError when a real engine fails. No silent fallback.
-    completion = await llm_port.complete(system_prompt, user_prompt)
-    decision: dict[str, Any] = {}
-    applied: list[GuardrailName] = []
-    if completion.source == "llm":
-        decision = parse_json_object(completion.content)
-        if not decision.get("action_type"):
-            raise backend_unavailable(completion.backend, "model output had no action_type")
-        # The model declares what it followed. Only active guardrail names are reported.
-        declared = decision.get("guardrails_applied")
-        if isinstance(declared, list):
-            applied = [g for g in declared if g in guardrail_notes]
 
-    # Canned rules run only for the explicit mock backend
-    if completion.source == "mock":
-        decision, applied = mock_stand_in_decision(
-            char_name=char_name,
-            char_class=char_class,
-            penalties=penalties,
-            enemies=enemies,
-            scene_context=scene_context,
-            policy=policy,
-        )
+def _decision_from_completion(
+    completion: Completion, guardrail_notes: dict[GuardrailName, str]
+) -> tuple[dict[str, Any], list[GuardrailName]]:
+    """Read the decision. Keep only the guardrail names that the request activated."""
+    decision = parse_json_object(completion.content)
+    require_field(decision, "action_type", completion.backend)
+    declared = decision.get("guardrails_applied")
+    applied = [g for g in declared if g in guardrail_notes] if isinstance(declared, list) else []
+    return decision, applied
 
+
+async def generate_stand_in_decision_node(
+    state: StandInGraphState,
+    llm_port: LLMPort,
+) -> StandInGraphState:
+    req = state["request"]
+    policy = StandInGuardrailPolicy.model_validate(req.get("guardrails") or {})
+    guardrail_notes = _prompt_guardrail_notes(policy)
+    user_prompt = _stand_in_user_prompt(req, state.get("penalty_effects", []), guardrail_notes)
+
+    # Raises EngineUnavailableError when the engine fails or the output has no action_type.
+    completion = await llm_port.complete(STAND_IN_SYSTEM_PROMPT, user_prompt)
+    decision, applied = _decision_from_completion(completion, guardrail_notes)
     return {
         "action_decision": decision,
-        "source": completion.source,
-        "degraded": False,
+        "source": "llm",
         "guardrails_applied": applied,
     }
 
@@ -148,7 +141,6 @@ def compile_stand_in_response_node(state: StandInGraphState) -> StandInGraphStat
         mechanics=dec.get("mechanics", {}),
         guardrails_applied=state.get("guardrails_applied", []),
         source=state["source"],
-        degraded=state["degraded"],
     )
     return {"final_response": resp.model_dump()}
 

@@ -426,13 +426,14 @@ services:
     ownTemplate: true
     urlEnv: RUNEFOBLE_INFERENCE_URL
     consumers: [the-watcher]
-    # Explicit inference backend: mock (canned output, labelled source "mock"), openai_compatible, or ollama.
+    # Explicit inference backend: openai_compatible or ollama. The worker has no canned engine.
     # The worker checks the selected engine at start-up and refuses to start when it does not answer.
     image: runefoble/inference-worker:0.1.0
     replicas: 1
     port: 8100
-    backend: mock
-    # Required when backend is openai_compatible. Empty means no base URL is set.
+    backend: openai_compatible
+    # Required when backend is openai_compatible. Empty means no base URL is set, so the worker
+    # refuses to start until an endpoint is configured.
     openaiCompatibleBaseUrl: ""
     # Model name on the OpenAI-compatible endpoint. Empty keeps the worker default.
     openaiCompatibleModel: ""

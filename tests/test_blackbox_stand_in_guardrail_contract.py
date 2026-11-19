@@ -2,14 +2,13 @@
 
 The Watcher and the inference worker run as real HTTP servers in this process. The LLM backend
 is a fake OpenAI-compatible server, which is a true process boundary. No code under test is
-mocked. Guardrail policy is set through the public Watcher route only.
+mocked. Guardrail policy is set through the public Watcher route only. The worker tells the
+model which guardrails are active, and it reports only the names that the model declares and
+the request activated.
 """
 
 import json
 import os
-import threading
-from collections.abc import Iterator
-from http.server import ThreadingHTTPServer
 from typing import Any
 
 import pytest
@@ -21,12 +20,12 @@ from runefoble_platform.service_credential import SERVICE_CREDENTIAL_HEADER
 from runefoble_platform.stand_in_guardrails import StandInGuardrailPolicy
 from the_watcher.main import app as watcher_app
 
+from tests.helpers.fake_openai_server import FakeOpenAI
 from tests.helpers.inference_worker_port import install_worker_port
 from tests.helpers.live_services import serve
 from tests.helpers.spicedb_factory import make_table_runner
 from tests.helpers.watcher_engine import select_worker_engine
 from tests.helpers.ws_identity import SIGNING_ISSUER
-from tests.test_inference_worker_failure_contract import _FakeLLMHandler, _llm_settings
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
@@ -79,24 +78,28 @@ def worker_backend(monkeypatch: pytest.MonkeyPatch):
     return _use
 
 
-@pytest.fixture
-def fake_llm_server() -> Iterator[ThreadingHTTPServer]:
-    server = ThreadingHTTPServer(("127.0.0.1", 0), _FakeLLMHandler)
-    server.reply = {"status": 200, "content": "{}"}  # type: ignore[attr-defined]
-    thread = threading.Thread(target=server.serve_forever, daemon=True)
-    thread.start()
-    try:
-        yield server
-    finally:
-        server.shutdown()
-        server.server_close()
+def _decision(**overrides: Any) -> str:
+    """A model decision as JSON text. The test sets the guardrails the model declares."""
+    document: dict[str, Any] = {
+        "action_type": "cast_spell",
+        "target": "Marcus",
+        "dialogue": "Hold on, Marcus!",
+        "narrative_flavor": "Seoni channels healing light.",
+        "mechanics": {},
+        "guardrails_applied": [],
+    }
+    document.update(overrides)
+    return json.dumps(document)
 
 
 @pytest.mark.asyncio
-async def test_watcher_returns_guardrails_the_worker_applied(worker_backend, monkeypatch):
-    """The worker enforces protect_allies, so The Watcher reports it as applied."""
+async def test_watcher_returns_guardrails_the_worker_applied(
+    worker_backend, monkeypatch, fake_llm: FakeOpenAI
+):
+    """The model declares protect_allies, and the policy activated it, so The Watcher reports it."""
     await make_table_runner("test-user", "sess-1", "camp-1")
-    worker_backend(WorkerSettings(backend="mock"))
+    fake_llm.content = _decision(guardrails_applied=["protect_allies"])
+    worker_backend(fake_llm.settings())
 
     with serve(api.app) as worker_url:
         select_worker_engine(monkeypatch, worker_url)
@@ -109,13 +112,17 @@ async def test_watcher_returns_guardrails_the_worker_applied(worker_backend, mon
 
     assert resp.status_code == 200
     assert resp.json()["guardrails_applied"] == ["protect_allies"]
+    assert "Protect allies: Marcus" in fake_llm.user_prompts()[-1]
 
 
 @pytest.mark.asyncio
-async def test_watcher_reports_no_guardrail_when_none_was_enforced(worker_backend, monkeypatch):
-    """A fighter with avoid_melee and no wounded ally enforces nothing. The list stays empty."""
+async def test_watcher_reports_no_guardrail_when_none_was_enforced(
+    worker_backend, monkeypatch, fake_llm: FakeOpenAI
+):
+    """A fighter with avoid_melee whose model declares nothing reports an empty list."""
     await make_table_runner("test-user", "sess-1", "camp-1")
-    worker_backend(WorkerSettings(backend="mock"))
+    fake_llm.content = _decision(action_type="attack", guardrails_applied=[])
+    worker_backend(fake_llm.settings())
     payload = _watcher_act_payload(
         character_class="Fighter",
         scene_context="Orcs in the hall",
@@ -151,8 +158,8 @@ async def test_watcher_rejects_unknown_guardrail_name_with_422():
 
 
 @pytest.mark.asyncio
-async def test_worker_rejects_unknown_guardrail_name_with_422(worker_backend):
-    worker_backend(WorkerSettings(backend="mock"))
+async def test_worker_rejects_unknown_guardrail_name_with_422(worker_backend, fake_llm):
+    worker_backend(fake_llm.settings())
     payload = _worker_payload(guardrails={"protect_allys": ["Marcus"]})
 
     async with AsyncClient(
@@ -161,27 +168,14 @@ async def test_worker_rejects_unknown_guardrail_name_with_422(worker_backend):
         resp = await ac.post(WORKER_PATH, json=payload)
 
     assert resp.status_code == 422
+    assert fake_llm.requests == []
 
 
 @pytest.mark.asyncio
-async def test_llm_reported_guardrails_are_filtered_to_active_policy(
-    worker_backend, fake_llm_server
-):
+async def test_llm_reported_guardrails_are_filtered_to_active_policy(worker_backend, fake_llm):
     """The model may name guardrails. Only names the request activated are reported."""
-    fake_llm_server.reply = {  # type: ignore[attr-defined]
-        "status": 200,
-        "content": json.dumps(
-            {
-                "action_type": "cast_spell",
-                "target": "Marcus",
-                "dialogue": "Hold on, Marcus!",
-                "narrative_flavor": "Seoni channels healing light.",
-                "mechanics": {},
-                "guardrails_applied": ["protect_allies", "avoid_melee"],
-            }
-        ),
-    }
-    worker_backend(_llm_settings(fake_llm_server))
+    fake_llm.content = _decision(guardrails_applied=["protect_allies", "avoid_melee"])
+    worker_backend(fake_llm.settings())
     # avoid_melee is off here, so the model's naming of it must be filtered out.
     payload = _worker_payload(guardrails={"protect_allies": ["Marcus"], "avoid_melee": False})
 
@@ -197,9 +191,11 @@ async def test_llm_reported_guardrails_are_filtered_to_active_policy(
 
 
 @pytest.mark.asyncio
-async def test_worker_omitted_policy_applies_the_shared_default(worker_backend):
-    """An omitted policy takes the shared default. The default enables avoid_melee."""
-    worker_backend(WorkerSettings(backend="mock"))
+async def test_worker_omitted_policy_applies_the_shared_default(worker_backend, fake_llm):
+    """An omitted policy takes the shared default. The default enables avoid_melee, so the
+    model is told to keep out of melee."""
+    fake_llm.content = _decision()
+    worker_backend(fake_llm.settings())
     payload = _worker_payload(guardrails=None)
 
     async with AsyncClient(
@@ -208,7 +204,7 @@ async def test_worker_omitted_policy_applies_the_shared_default(worker_backend):
         resp = await ac.post(WORKER_PATH, json=payload)
 
     assert resp.status_code == 200
-    assert resp.json()["guardrails_applied"] == ["avoid_melee"]
+    assert "Avoid frontline melee engagement" in fake_llm.user_prompts()[-1]
 
 
 def test_shared_guardrail_policy_declares_every_character_sheet_field():
@@ -220,9 +216,11 @@ def test_shared_guardrail_policy_declares_every_character_sheet_field():
 
 
 @pytest.mark.asyncio
-async def test_worker_mock_reserves_spell_slots_by_casting_a_cantrip(worker_backend):
-    """preserve_spell_slots in mock mode turns a spell into a cantrip. No slot is spent."""
-    worker_backend(WorkerSettings(backend="mock"))
+async def test_worker_tells_the_model_to_preserve_spell_slots(worker_backend, fake_llm):
+    """preserve_spell_slots reaches the model prompt. The worker reports it only when the model
+    declares it."""
+    fake_llm.content = _decision(guardrails_applied=["preserve_spell_slots"])
+    worker_backend(fake_llm.settings())
     payload = _worker_payload(
         guardrails={"preserve_spell_slots": {"3": 1}, "avoid_melee": False},
         scene_context="Orcs close in",
@@ -236,36 +234,16 @@ async def test_worker_mock_reserves_spell_slots_by_casting_a_cantrip(worker_back
 
     assert resp.status_code == 200
     body = resp.json()
-    assert body["source"] == "mock"
     assert body["action_type"] == "cast_spell"
-    assert body["mechanics"]["spell_level"] == 0
     assert body["guardrails_applied"] == ["preserve_spell_slots"]
+    assert "Preserve spell slots:" in fake_llm.user_prompts()[-1]
 
 
 @pytest.mark.asyncio
-async def test_worker_mock_without_slot_reserve_casts_at_default_level(worker_backend):
-    """With no reserve policy, the mock casts without the cantrip rule and reports nothing."""
-    worker_backend(WorkerSettings(backend="mock"))
-    payload = _worker_payload(
-        guardrails={"avoid_melee": False}, scene_context="Orcs close in", visible_allies=[]
-    )
-
-    async with AsyncClient(
-        transport=ASGITransport(app=api.app), base_url="http://test", headers=WORKER_AUTH
-    ) as ac:
-        resp = await ac.post(WORKER_PATH, json=payload)
-
-    assert resp.status_code == 200
-    body = resp.json()
-    assert body["action_type"] == "cast_spell"
-    assert "spell_level" not in body["mechanics"]
-    assert body["guardrails_applied"] == []
-
-
-@pytest.mark.asyncio
-async def test_worker_mock_targets_the_first_prioritized_enemy(worker_backend):
-    """custom_priorities orders the targets. The first priority that names a visible enemy wins."""
-    worker_backend(WorkerSettings(backend="mock"))
+async def test_worker_tells_the_model_the_custom_priorities(worker_backend, fake_llm):
+    """custom_priorities reach the model prompt in priority order."""
+    fake_llm.content = _decision(target="Goblin Archer", guardrails_applied=["custom_priorities"])
+    worker_backend(fake_llm.settings())
     payload = _worker_payload(
         guardrails={"custom_priorities": ["Goblin Archer", "orc chieftain"], "avoid_melee": False},
         visible_enemies=["Orc Chieftain", "Goblin Archer"],
@@ -282,24 +260,4 @@ async def test_worker_mock_targets_the_first_prioritized_enemy(worker_backend):
     body = resp.json()
     assert body["target"] == "Goblin Archer"
     assert body["guardrails_applied"] == ["custom_priorities"]
-
-
-@pytest.mark.asyncio
-async def test_worker_mock_ignores_priorities_that_name_no_enemy(worker_backend):
-    worker_backend(WorkerSettings(backend="mock"))
-    payload = _worker_payload(
-        guardrails={"custom_priorities": ["Dragon"], "avoid_melee": False},
-        visible_enemies=["Orc Chieftain", "Goblin Archer"],
-        scene_context="Orcs close in",
-        visible_allies=[],
-    )
-
-    async with AsyncClient(
-        transport=ASGITransport(app=api.app), base_url="http://test", headers=WORKER_AUTH
-    ) as ac:
-        resp = await ac.post(WORKER_PATH, json=payload)
-
-    assert resp.status_code == 200
-    body = resp.json()
-    assert body["target"] == "Orc Chieftain"
-    assert body["guardrails_applied"] == []
+    assert "Custom priorities: Goblin Archer; orc chieftain" in fake_llm.user_prompts()[-1]

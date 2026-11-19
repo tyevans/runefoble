@@ -98,27 +98,12 @@ async def test_unreachable_engine_stops_start_up(monkeypatch, settings):
     assert info.value.engine == settings.backend
 
 
-@pytest.mark.asyncio
-async def test_explicit_mock_backend_starts_and_serves_every_route(monkeypatch):
-    monkeypatch.setattr(api, "settings", WorkerSettings(backend="mock"))
-    for name in ("llm_port", "intent_graph", "narration_graph", "stand_in_graph"):
-        monkeypatch.setattr(api, name, getattr(api, name))
+def test_mock_backend_is_refused_in_every_environment():
+    """The worker has no canned engine. `mock` stops start-up before any adapter is built."""
+    with pytest.raises(ValidationError) as info:
+        WorkerSettings(backend="mock")
 
-    async with (
-        api.lifespan(api.app),
-        AsyncClient(
-            transport=ASGITransport(app=api.app), base_url="http://test", headers=WORKER_AUTH
-        ) as ac,
-    ):
-        intent = await ac.post("/inference/v1/intent", json=INTENT_PAYLOAD)
-        narration = await ac.post("/inference/v1/dm-narration", json=NARRATION_PAYLOAD)
-        stand_in = await ac.post("/inference/v1/stand-in-action", json=STAND_IN_PAYLOAD)
-        health = await ac.get("/healthz")
-
-    for resp in (intent, narration, stand_in):
-        assert resp.status_code == 200
-        assert resp.json()["source"] == "mock"
-    assert health.json()["backend"] == "mock"
+    assert "RUNEFOBLE_WORKER_BACKEND=mock is refused" in str(info.value)
 
 
 def test_unknown_backend_value_fails_start_up_and_names_allowed_values():
@@ -126,5 +111,5 @@ def test_unknown_backend_value_fails_start_up_and_names_allowed_values():
         WorkerSettings(backend="auto")
 
     message = str(info.value)
-    for allowed in ("openai_compatible", "ollama", "mock"):
+    for allowed in ("openai_compatible", "ollama"):
         assert allowed in message

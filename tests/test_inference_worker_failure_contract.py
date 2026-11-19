@@ -2,13 +2,10 @@
 
 The worker and The Watcher run as real HTTP servers in this process. The LLM backend is a
 fake OpenAI-compatible server, which is a true process boundary. No code under test is mocked.
+Model output that is unusable fails the request with 503. No substitute output is returned.
 """
 
-import json
 import os
-import threading
-from collections.abc import Iterator
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
 
 import pytest
@@ -69,69 +66,6 @@ def use_worker_backend(monkeypatch: pytest.MonkeyPatch):
     return _use
 
 
-class _FakeLLMHandler(BaseHTTPRequestHandler):
-    """Minimal OpenAI-compatible chat endpoint. Reply content comes from the server state."""
-
-    def do_POST(self) -> None:  # noqa: N802 - http.server naming
-        length = int(self.headers.get("Content-Length", "0"))
-        self.rfile.read(length)
-        state = self.server.reply  # type: ignore[attr-defined]
-        if state.get("status", 200) != 200:
-            body = json.dumps({"error": {"message": "fake failure", "type": "invalid"}})
-            self._send(state["status"], body)
-            return
-        body = json.dumps(
-            {
-                "id": "fake-1",
-                "object": "chat.completion",
-                "created": 0,
-                "model": "fake",
-                "choices": [
-                    {
-                        "index": 0,
-                        "message": {"role": "assistant", "content": state["content"]},
-                        "finish_reason": "stop",
-                    }
-                ],
-                "usage": {"prompt_tokens": 1, "completion_tokens": 1, "total_tokens": 2},
-            }
-        )
-        self._send(200, body)
-
-    def _send(self, status: int, body: str) -> None:
-        payload = body.encode()
-        self.send_response(status)
-        self.send_header("Content-Type", "application/json")
-        self.send_header("Content-Length", str(len(payload)))
-        self.end_headers()
-        self.wfile.write(payload)
-
-    def log_message(self, format: str, *args: Any) -> None:  # noqa: A002
-        return
-
-
-@pytest.fixture
-def fake_llm() -> Iterator[ThreadingHTTPServer]:
-    server = ThreadingHTTPServer(("127.0.0.1", 0), _FakeLLMHandler)
-    server.reply = {"status": 200, "content": "{}"}  # type: ignore[attr-defined]
-    thread = threading.Thread(target=server.serve_forever, daemon=True)
-    thread.start()
-    try:
-        yield server
-    finally:
-        server.shutdown()
-        server.server_close()
-
-
-def _llm_settings(server: ThreadingHTTPServer) -> WorkerSettings:
-    port = server.server_address[1]
-    return WorkerSettings(
-        backend="openai_compatible",
-        openai_base_url=f"http://127.0.0.1:{port}/v1",
-        timeout_seconds=5.0,
-    )
-
-
 @pytest.mark.asyncio
 @pytest.mark.parametrize(("path", "payload"), ENDPOINTS)
 async def test_unreachable_backend_returns_explicit_503(use_worker_backend, path, payload):
@@ -153,30 +87,9 @@ async def test_unreachable_backend_returns_explicit_503(use_worker_backend, path
 
 
 @pytest.mark.asyncio
-async def test_explicit_mock_backend_reports_mock_source(use_worker_backend):
-    use_worker_backend(WorkerSettings(backend="mock"))
-
-    async with AsyncClient(
-        transport=ASGITransport(app=api.app), base_url="http://test", headers=WORKER_AUTH
-    ) as ac:
-        intent = await ac.post("/inference/v1/intent", json=INTENT_PAYLOAD)
-        narration = await ac.post("/inference/v1/dm-narration", json=NARRATION_PAYLOAD)
-        stand_in = await ac.post("/inference/v1/stand-in-action", json=STAND_IN_PAYLOAD)
-
-    for resp in (intent, narration, stand_in):
-        assert resp.status_code == 200
-        assert resp.json()["source"] == "mock"
-        assert resp.json()["degraded"] is False
-    assert intent.json()["action"]["action_type"] == "attack"
-
-
-@pytest.mark.asyncio
 async def test_model_output_with_action_reports_llm_source(use_worker_backend, fake_llm):
-    fake_llm.reply = {  # type: ignore[attr-defined]
-        "status": 200,
-        "content": '{"action_type": "dodge", "narrative_flavor": "Merisiel ducks low."}',
-    }
-    use_worker_backend(_llm_settings(fake_llm))
+    fake_llm.content = '{"action_type": "dodge", "narrative_flavor": "Merisiel ducks low."}'
+    use_worker_backend(fake_llm.settings())
 
     async with AsyncClient(
         transport=ASGITransport(app=api.app), base_url="http://test", headers=WORKER_AUTH
@@ -191,28 +104,24 @@ async def test_model_output_with_action_reports_llm_source(use_worker_backend, f
 
 
 @pytest.mark.asyncio
-async def test_unusable_model_output_uses_regex_heuristic_and_is_degraded(
-    use_worker_backend, fake_llm
-):
-    fake_llm.reply = {"status": 200, "content": "I cannot comply."}  # type: ignore[attr-defined]
-    use_worker_backend(_llm_settings(fake_llm))
+async def test_unusable_intent_output_is_503_not_a_heuristic_action(use_worker_backend, fake_llm):
+    """Prose without an action_type fails the request. No keyword rule supplies an action."""
+    fake_llm.content = "I cannot comply."
+    use_worker_backend(fake_llm.settings())
 
     async with AsyncClient(
         transport=ASGITransport(app=api.app), base_url="http://test", headers=WORKER_AUTH
     ) as ac:
         resp = await ac.post("/inference/v1/intent", json=INTENT_PAYLOAD)
 
-    assert resp.status_code == 200
-    body = resp.json()
-    assert body["source"] == "heuristic"
-    assert body["degraded"] is True
-    assert body["action"]["action_type"] == "attack"
+    assert resp.status_code == 503
+    assert resp.json() == {"error": "backend_unavailable", "backend": "openai_compatible"}
 
 
 @pytest.mark.asyncio
 async def test_unusable_narration_output_is_503_not_canned_text(use_worker_backend, fake_llm):
-    fake_llm.reply = {"status": 200, "content": "no json here"}  # type: ignore[attr-defined]
-    use_worker_backend(_llm_settings(fake_llm))
+    fake_llm.content = "no json here"
+    use_worker_backend(fake_llm.settings())
 
     async with AsyncClient(
         transport=ASGITransport(app=api.app), base_url="http://test", headers=WORKER_AUTH
@@ -225,8 +134,8 @@ async def test_unusable_narration_output_is_503_not_canned_text(use_worker_backe
 
 @pytest.mark.asyncio
 async def test_failing_model_server_returns_503(use_worker_backend, fake_llm):
-    fake_llm.reply = {"status": 400, "content": ""}  # type: ignore[attr-defined]
-    use_worker_backend(_llm_settings(fake_llm))
+    fake_llm.status = 400
+    use_worker_backend(fake_llm.settings())
 
     async with AsyncClient(
         transport=ASGITransport(app=api.app), base_url="http://test", headers=WORKER_AUTH
@@ -241,8 +150,8 @@ async def test_failing_model_server_returns_503(use_worker_backend, fake_llm):
 async def test_watcher_speech_surfaces_worker_503(use_worker_backend, monkeypatch, fake_llm):
     """The Watcher returns its own 503 when the worker reports backend_unavailable."""
     await make_table_runner("user-1", "sess-1", "camp-1")
-    fake_llm.reply = {"status": 400, "content": ""}  # type: ignore[attr-defined]
-    use_worker_backend(_llm_settings(fake_llm))
+    fake_llm.status = 400
+    use_worker_backend(fake_llm.settings())
     speech_payload = {
         "speaker_id": "user-1",
         "speaker_name": "Valeros",
