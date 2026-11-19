@@ -25,10 +25,6 @@ class FogHandlerMixin:
     aggregate_id: Any
     create_event: Any
 
-    def calculate_chebyshev_cells(self, cx: int, cy: int, radius: int) -> list[list[int]]:
-        """Calculate all bounded grid coordinates within Chebyshev distance radius."""
-        return calculate_chebyshev_cells(cx, cy, radius, self.state.cols, self.state.rows)
-
     def compute_party_visibility(self) -> list[list[int]]:
         """Compute the union of all cells currently visible by friendly/party tokens."""
         return compute_party_visibility(
@@ -38,7 +34,8 @@ class FogHandlerMixin:
     def _sync_revealed_fog(self, token_id: str, cx: int, cy: int, radius: int) -> None:
         """Evaluate newly seen cells and emit FogOfWarRevealed event if uncharted cells found."""
         new_cells = find_uncharted_cells(
-            self.state.revealed_cells, self.calculate_chebyshev_cells(cx, cy, radius)
+            self.state.revealed_cells,
+            calculate_chebyshev_cells(cx, cy, radius, self.state.cols, self.state.rows),
         )
         if new_cells:
             self.create_event(

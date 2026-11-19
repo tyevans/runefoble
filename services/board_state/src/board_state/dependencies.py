@@ -43,7 +43,7 @@ get_zitadel_auth_service, set_zitadel_auth_service = make_verifier_holder(
     lambda: verifier_from_settings(platform_settings)
 )
 SERVICE_CREDENTIAL = expected_service_credential()
-get_principal, CallerPrincipal, CallerId, get_caller_or_service, CallerOrService = (
+get_principal, _caller_principal, CallerId, _caller_or_service, CallerOrService = (
     build_identity_dependencies(get_zitadel_auth_service, SERVICE_CREDENTIAL)
 )
 
