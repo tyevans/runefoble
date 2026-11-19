@@ -7,6 +7,7 @@
 
 import type { AtlasPin, AtlasTerritory, LoreEntry } from '@runefoble/campaign-lore-ui';
 import type { CampaignHeatmapResponse, CampaignMvpResponse, CampaignTimelineResponse } from '@runefoble/campaign-analytics-ui';
+import type { RequestSpec } from '@runefoble/ui-core';
 import { dataFailure, dataOk, UNREADABLE_RESPONSE_MESSAGE, type DataResult } from './data-result.ts';
 
 export interface CampaignAtlasView { pins: AtlasPin[]; territories: AtlasTerritory[] }
@@ -16,7 +17,7 @@ export interface CampaignAnalyticsView { heatmap: CampaignHeatmapResponse; mvp: 
 export type GatewayRequest = <T>(path: string) => Promise<DataResult<T>>;
 
 /** The write method of AppDataService. The caller binds it, so the generic is kept. */
-export type GatewayWrite = <T>(path: string, init: RequestInit) => Promise<DataResult<T>>;
+export type GatewayWrite = <T>(path: string, spec: RequestSpec) => Promise<DataResult<T>>;
 
 export interface CodexEntryPayload { title: string; content: string; privacy: string }
 
