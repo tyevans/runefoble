@@ -98,8 +98,8 @@ async def forge_battlemap(
     geometry_payload = build_board_geometry_payload(wall_segments, hazard_cells, doors)
 
     # 5. Event-sourced aggregate persistence
-    agg_id = request.campaign_id or uuid4()
-    forge_agg = await load_or_create(repo, agg_id, AssetForgeAggregate)
+    # The campaign id is the forge aggregate id. The campaign record list reads it back.
+    forge_agg = await load_or_create(repo, campaign_id, AssetForgeAggregate)
 
     forge_agg.record_battlemap_forged(
         asset_id=asset_id,

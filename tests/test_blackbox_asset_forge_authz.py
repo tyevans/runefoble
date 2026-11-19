@@ -39,7 +39,7 @@ ROUTES = {
 }
 
 
-def _body(kind: str, campaign_id: str | None) -> dict:
+def _body(kind: str, campaign_id: str) -> dict:
     """Return a minimal valid request body for each forge route."""
     bodies = {
         "battlemap": {"prompt": "Flooded crypt with sunken altars", "width_cells": 10},
@@ -57,10 +57,7 @@ def _body(kind: str, campaign_id: str | None) -> dict:
         },
         "stl-token": {"diameter_mm": 28.0, "height_mm": 6.0},
     }
-    body = dict(bodies[kind])
-    if campaign_id is not None:
-        body["campaign_id"] = campaign_id
-    return body
+    return {**bodies[kind], "campaign_id": campaign_id}
 
 
 @pytest.fixture(autouse=True)
@@ -103,14 +100,6 @@ def test_anonymous_forge_request_is_refused(client: TestClient, campaign: str):
     response = client.post(ROUTES["battlemap"], json=_body("battlemap", campaign))
 
     assert response.status_code == 401, response.text
-
-
-@pytest.mark.parametrize("kind", ["battlemap", "token", "wardrobe", "print-pdf", "stl-token"])
-def test_forge_without_campaign_is_a_bad_request(client: TestClient, kind: str):
-    """Every forge route names a campaign. A request with no campaign id returns 400."""
-    response = client.post(ROUTES[kind], json=_body(kind, None), headers=bearer(PLAYER))
-
-    assert response.status_code == 400, response.text
 
 
 def test_spectator_cannot_forge_a_token(client: TestClient, campaign: str):

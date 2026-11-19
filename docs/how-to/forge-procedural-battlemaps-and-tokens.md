@@ -140,7 +140,31 @@ The payload is layout only. It holds hazard types, wall segments, and doors. It 
 
 ## 4. SpiceDB Zanzibar Campaign Access Control
 
-Every forge request names a campaign. Send `campaign_id` in the body. Without it the service returns `400`. The caller needs the `campaign.play` permission on that campaign (players and DMs). Spectators get `403`. The service writes the `creator` and `campaign` relations of each new asset before it stores the asset. If SpiceDB cannot write them, the service returns `503` and stores nothing. Reads of a forged asset need `forged_asset.view`: the creator, or a campaign member with view rights. The check uses `campaign.play` on the campaign object in SpiceDB (`play` includes `run_session`).
+Every forge request names a campaign. Send `campaign_id` (a UUID) in the body. The field is required. Without it the request fails validation with `422`, and the service saves nothing. The service never makes a substitute id (ADR-0015). The caller needs the `campaign.play` permission on that campaign (players and DMs). Spectators get `403`. The service writes the `creator` and `campaign` relations of each new asset before it stores the asset. If SpiceDB cannot write them, the service returns `503` and stores nothing. Reads of a forged asset need `forged_asset.view`: the creator, or a campaign member with view rights. The check uses `campaign.play` on the campaign object in SpiceDB (`play` includes `run_session`).
+
+
+### Campaign Forge Records
+
+The campaign id is the id of the campaign forge aggregate. Each battlemap, token, print PDF, standee sheet and STL token request saves one record in that aggregate. Wardrobe variants save no forge record.
+
+To list the records of a campaign, send `GET /api/v1/forge/campaigns/{campaign_id}/records` with a bearer token. The caller needs `campaign.view` (players, DMs and spectators). Other callers get `403`. A campaign id that is not a UUID gets `422`. A campaign with no forge request returns an empty list.
+
+```json
+{
+  "campaign_id": "6f1c2a4e-0d3b-4c55-9f7e-1a2b3c4d5e6f",
+  "records": [
+    {
+      "kind": "battlemap",
+      "asset_id": "map-1a2b3c4d5e6f",
+      "campaign_id": "6f1c2a4e-0d3b-4c55-9f7e-1a2b3c4d5e6f",
+      "creator_id": "player-marcus",
+      "details": {"theme": "crypt", "width_cells": 20, "height_cells": 20}
+    }
+  ]
+}
+```
+
+`kind` is one of `battlemap`, `token`, `print_pdf`, `standees` and `stl_token`. `details` holds the other fields of the record.
 
 ---
 

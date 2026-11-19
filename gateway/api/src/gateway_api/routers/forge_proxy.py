@@ -124,6 +124,17 @@ ROUTES = (
         body="raw",
         timeout=FORGE_TIMEOUT_S,
     ),
+    ProxyRoute(
+        "GET",
+        "/api/v1/forge/campaigns/{campaign_id}/records",
+        ("api", "v1", "forge", "campaigns", "{campaign_id}", "records"),
+        FORGE_SERVICE,
+        name="list_campaign_forge_records",
+        doc="List the forge records of a campaign. asset_forge checks `campaign.view`.",
+        reply="bytes",
+        returns="response",
+        timeout=FORGE_TIMEOUT_S,
+    ),
 )
 
 register_proxy_routes(router, ROUTES)
