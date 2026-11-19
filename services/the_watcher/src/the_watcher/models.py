@@ -2,7 +2,7 @@
 
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from runefoble_platform.stand_in_guardrails import StandInGuardrailPolicy
 
 
@@ -131,6 +131,21 @@ class WhisperCreateRequest(BaseModel):
     whisper_type: str = "atmospheric_hint"
     content: str
     metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class WhisperDispatchRequest(BaseModel):
+    """The DM sends an audience narration to the table. `text` replaces the narration when set."""
+
+    session_id: str
+    campaign_id: str = ""
+    text: str | None = None
+
+    @field_validator("text")
+    @classmethod
+    def _text_is_not_blank(cls, value: str | None) -> str | None:
+        if value is not None and not value.strip():
+            raise ValueError("text must not be blank; omit it to send the narration as written")
+        return value
 
 
 class WhisperGenerateRequest(BaseModel):

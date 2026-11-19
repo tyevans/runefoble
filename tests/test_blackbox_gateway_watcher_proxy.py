@@ -47,6 +47,7 @@ WATCHER_ROUTES: tuple[tuple[str, str], ...] = (
     ("GET", "/api/v1/watcher/whispers"),
     ("POST", "/api/v1/watcher/whispers"),
     ("POST", "/api/v1/watcher/whispers/generate"),
+    ("POST", "/api/v1/watcher/whispers/{whisper_id}/dispatch"),
     ("POST", "/api/v1/campaigns/{campaign_id}/world-tick"),
     ("POST", "/api/v1/campaigns/{campaign_id}/factions"),
     ("GET", "/api/v1/campaigns/{campaign_id}/factions"),
@@ -93,6 +94,7 @@ def _concrete(template: str, campaign_id: str, faction_id: str = MISSING_FACTION
         template.replace("{campaign_id}", campaign_id)
         .replace("{faction_id}", faction_id)
         .replace("{region_id}", "region-north")
+        .replace("{whisper_id}", "whisp-missing")
     )
 
 

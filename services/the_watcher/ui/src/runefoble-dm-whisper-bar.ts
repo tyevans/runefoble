@@ -1,6 +1,7 @@
 import { LitElement, html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { dmWhisperBarStyles } from './runefoble-dm-whisper-bar.styles.ts';
+import { whisperAction } from './whisper-actions.ts';
 
 export interface WhisperItem {
   whisper_id: string;
@@ -139,6 +140,47 @@ export class RunefobleDmWhisperBar extends LitElement {
         composed: true,
       })
     );
+  }
+
+  /** Ask the host to send an audience narration to the table (TASK-0838). The host posts the DM route. */
+  private handleSendNarration(w: WhisperItem) {
+    this.dispatchEvent(
+      new CustomEvent('narration-send', {
+        detail: {
+          whisperId: w.whisper_id,
+          text: w.content,
+          sessionId: this.sessionId,
+          campaignId: this.campaignId,
+        },
+        bubbles: true,
+        composed: true,
+      })
+    );
+  }
+
+  private renderWhisper(w: WhisperItem) {
+    const action = whisperAction(w);
+    return html`
+      <div class="whisper-card">
+        <div class="whisper-header">
+          <span class="badge badge-whisper-type">${w.whisper_type.replace('_', ' ')}</span>
+        </div>
+        ${action === 'notice'
+          ? html`<div class="whisper-notice" role="status">${w.content}</div>`
+          : html`<div class="whisper-content">${w.content}</div>`}
+        ${action === 'send'
+          ? html`
+              <div class="whisper-actions">
+                <button class="rf-btn btn-approve" @click=${() => this.handleSendNarration(w)}>
+                  Send to table
+                </button>
+              </div>
+            `
+          : action === 'sent'
+            ? html`<div class="whisper-actions"><span class="sent-badge">Sent to table</span></div>`
+            : ''}
+      </div>
+    `;
   }
 
   private handleStartEdit() {
@@ -291,14 +333,7 @@ export class RunefobleDmWhisperBar extends LitElement {
           ${filteredWhispers.length === 0
             ? html`<div class="empty-state">No whispers in this category.</div>`
             : filteredWhispers.map(
-                (w) => html`
-                  <div class="whisper-card">
-                    <div class="whisper-header">
-                      <span class="badge badge-whisper-type">${w.whisper_type.replace('_', ' ')}</span>
-                    </div>
-                    <div class="whisper-content">${w.content}</div>
-                  </div>
-                `
+                (w) => this.renderWhisper(w)
               )}
         </div>
       </div>

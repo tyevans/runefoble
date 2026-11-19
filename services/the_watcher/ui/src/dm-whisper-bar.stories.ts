@@ -90,3 +90,54 @@ export const BossEncounterSecrets: Story = {
     ></runefoble-dm-whisper-bar>
   `,
 };
+
+export const AudienceNarrationToSend: Story = {
+  render: () => html`
+    <runefoble-dm-whisper-bar
+      sessionId="sess-101"
+      campaignId="camp-202"
+      .whispers=${[
+        {
+          whisper_id: 'whisp-aud-1',
+          whisper_type: 'audience_narration',
+          content: 'Fog rolls over the crypt steps and swallows the torchlight.',
+          metadata: { dispatched: false, source_proposal_id: 'prop-fog', sensory_details: ['cold damp air'] },
+        },
+      ]}
+    ></runefoble-dm-whisper-bar>
+  `,
+};
+
+export const AudienceNarrationSent: Story = {
+  render: () => html`
+    <runefoble-dm-whisper-bar
+      sessionId="sess-101"
+      campaignId="camp-202"
+      .whispers=${[
+        {
+          whisper_id: 'whisp-aud-2',
+          whisper_type: 'audience_narration',
+          content: 'The bell tolls once. Every torch in the crypt gutters.',
+          metadata: { dispatched: true, source_proposal_id: 'prop-bell' },
+        },
+      ]}
+    ></runefoble-dm-whisper-bar>
+  `,
+};
+
+export const NarrationUnavailable: Story = {
+  render: () => html`
+    <runefoble-dm-whisper-bar
+      sessionId="sess-101"
+      campaignId="camp-202"
+      .whispers=${[
+        {
+          whisper_id: 'whisp-unavail-1',
+          whisper_type: 'narration_unavailable',
+          content: 'The inference worker did not return narration for this modifier.',
+          metadata: { source_proposal_id: 'prop-storm', modifier_type: 'weather_change' },
+        },
+      ]}
+    ></runefoble-dm-whisper-bar>
+  `,
+};

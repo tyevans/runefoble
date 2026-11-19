@@ -123,6 +123,27 @@ GET /api/v1/watcher/whispers?session_id=sess-101&campaign_id=camp-202&page=1&lim
 Authorization: Bearer <dm_evelyn access token>
 ```
 
+### Send an Audience Narration to the Table
+An approved audience modifier leads The Watcher to record one whisper of type `audience_narration` for the DM. The whisper stays pending until the DM acts. The DM sends it to the table with:
+```http
+POST /api/v1/watcher/whispers/{whisper_id}/dispatch
+Authorization: Bearer <dm_evelyn access token>
+Content-Type: application/json
+
+{
+  "session_id": "sess-101",
+  "campaign_id": "camp-202",
+  "text": "The bell tolls once. Every torch in the crypt gutters."
+}
+```
+- `text` is optional. Without it, the recorded narration is sent as written.
+- The route requires `session.control` (DM). A player gets `403`.
+- The route publishes `runefoble.events.watcher.narrative_dispatched` on `runefoble.events.watcher`, then marks the whisper with `metadata.dispatched: true`. The event is published first, so a failed publish returns `503` and the whisper stays pending.
+- A second dispatch of the same whisper returns `409`. A whisper of another type returns `409`. An unknown whisper returns `404`.
+
+### Audience Narration Failures
+When the inference worker cannot narrate an approved modifier, The Watcher records a whisper of type `narration_unavailable`. Its `content` holds a short reason. It never holds narration text, and it cannot be dispatched. The same happens when the worker answers with `degraded: true`, or when the Watcher runs on the `heuristic` engine. Nothing is sent to the table. The DM decides what to do next.
+
 ---
 
 ## 4. Using the `<runefoble-dm-whisper-bar>` Microfrontend
@@ -138,7 +159,10 @@ The `<runefoble-dm-whisper-bar>` Lit component is vendored by `@runefoble/the-wa
   @action-approved="${(e) => approveAction(e.detail.actionId)}"
   @action-vetoed="${(e) => vetoAction(e.detail.actionId, e.detail.reason)}"
   @action-modified="${(e) => modifyAction(e.detail)}"
+  @narration-send="${(e) => sendNarration(e.detail)}"
 ></runefoble-dm-whisper-bar>
 ```
+
+An `audience_narration` whisper that is not yet sent shows a **Send to table** button. The button fires `narration-send` with `detail.whisperId`, `detail.text`, `detail.sessionId` and `detail.campaignId`. The host posts to the dispatch route above and then sets `metadata.dispatched` on that whisper. A sent narration shows **Sent to table**. A `narration_unavailable` whisper shows a notice with its reason, and no button.
 
 ---

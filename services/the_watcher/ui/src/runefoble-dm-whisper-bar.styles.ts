@@ -254,6 +254,27 @@ export const dmWhisperBarStyles = css`
     line-height: 1.4;
   }
 
+  .whisper-notice {
+    margin-top: 6px;
+    padding: 6px 8px;
+    border: 1px dashed var(--rf-border-color, #111827);
+    font-size: 0.8rem;
+    color: #6b7280;
+  }
+
+  .whisper-actions {
+    margin-top: 6px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .sent-badge {
+    font-size: 0.75rem;
+    color: #065f46;
+    font-weight: 600;
+  }
+
   .empty-state {
     font-size: 0.85rem;
     color: #6b7280;

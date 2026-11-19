@@ -24,16 +24,27 @@ def refusal(modifier: AudienceModifierApproved, detail: str) -> AudienceModifier
     )
 
 
+def approved_audience_modifier(event: Any) -> AudienceModifierApproved | None:
+    """Return the event when the DM approved it, whatever its type. Otherwise None.
+
+    A rejected proposal and a message that is not a modifier return None.
+    """
+    if not isinstance(event, AudienceModifierApproved):
+        return None
+    if event.approved is not True:
+        return None
+    return event
+
+
 def approved_modifier(event: Any, modifier_type: str) -> AudienceModifierApproved | None:
     """Return the event when it is an approved modifier of `modifier_type`, otherwise None.
 
     A rejected proposal and a modifier of another type belong to other steps, so they return None.
     """
-    if not isinstance(event, AudienceModifierApproved):
+    modifier = approved_audience_modifier(event)
+    if modifier is None or modifier.modifier_type != modifier_type:
         return None
-    if event.approved is not True or event.modifier_type != modifier_type:
-        return None
-    return event
+    return modifier
 
 
 def parameter(modifier: AudienceModifierApproved, name: str) -> Any:

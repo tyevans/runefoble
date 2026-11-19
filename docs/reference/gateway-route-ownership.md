@@ -180,6 +180,7 @@ each route, and the mode in which the gateway serves it.
 | GET | `/api/v1/watcher/whispers` | the_watcher | proxy | `gateway_api.routers.watcher_proxy_dm` |
 | POST | `/api/v1/watcher/whispers` | the_watcher | proxy | `gateway_api.routers.watcher_proxy_dm` |
 | POST | `/api/v1/watcher/whispers/generate` | the_watcher | proxy | `gateway_api.routers.watcher_proxy_dm` |
+| POST | `/api/v1/watcher/whispers/{whisper_id}/dispatch` | the_watcher | proxy | `gateway_api.routers.watcher_proxy_dm` |
 | GET | `/healthz` | gateway_api | local | `gateway_api.routers.health` |
 | GET | `/overlay/party-vitals/{session_id}` | game_session, board_state | proxy | `gateway_api.routers.overlay` |
 | GET | `/readyz` | gateway_api | local | `gateway_api.routers.health` |

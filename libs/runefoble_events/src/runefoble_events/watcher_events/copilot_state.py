@@ -74,6 +74,15 @@ class WhisperRecorded(BaseRunefobleEvent):
     whisper: dict[str, Any]
 
 
+@register_event("runefoble.events.watcher.whisper_dispatched")
+class WhisperDispatched(BaseRunefobleEvent):
+    aggregate_type: str = WHISPERS_AGGREGATE
+    aggregate_id: UUID = Field(default_factory=uuid4)
+    event_type: str = "runefoble.events.watcher.whisper_dispatched"
+    whisper_id: str
+    text: str
+
+
 @register_event("runefoble.events.watcher.disambiguation_opened")
 class DisambiguationOpened(BaseRunefobleEvent):
     aggregate_type: str = DISAMBIGUATIONS_AGGREGATE
@@ -102,5 +111,6 @@ __all__ = [
     "PendingActionModified",
     "PendingActionProposed",
     "PendingActionVetoed",
+    "WhisperDispatched",
     "WhisperRecorded",
 ]

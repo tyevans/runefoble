@@ -3,14 +3,21 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Query
-from the_watcher.dependencies import get_whisper_service, require_dm
+from the_watcher.dependencies import (
+    get_event_bus,
+    get_whisper_repo,
+    get_whisper_service,
+    require_dm,
+)
 from the_watcher.identity import CallerId, get_principal
 from the_watcher.models import (
     WhisperCreateRequest,
+    WhisperDispatchRequest,
     WhisperGenerateRequest,
     WhisperListResponse,
     WhisperSuggestion,
 )
+from the_watcher.narrative_dispatch import dispatch_audience_narration
 
 router = APIRouter(dependencies=[Depends(get_principal)], tags=["copilot"])
 
@@ -70,4 +77,28 @@ async def generate_whispers(
         scene_context=req.scene_context,
         location_type=req.location_type,
         threat_level=req.threat_level,
+    )
+
+
+@router.post(
+    "/api/v1/watcher/whispers/{whisper_id}/dispatch",
+    response_model=WhisperSuggestion,
+)
+async def dispatch_whisper(
+    caller_id: CallerId,
+    whisper_id: str,
+    req: WhisperDispatchRequest,
+) -> WhisperSuggestion:
+    """Send an audience narration to the table. Restricted to the session controller (DM).
+
+    The DM may send edited text. A second dispatch of the same whisper answers 409.
+    """
+    await require_dm(caller_id, req.campaign_id or None, req.session_id)
+    return await dispatch_audience_narration(
+        bus=get_event_bus(),
+        whisper_repo=get_whisper_repo(),
+        session_id=req.session_id,
+        campaign_id=req.campaign_id,
+        whisper_id=whisper_id,
+        text=req.text,
     )
