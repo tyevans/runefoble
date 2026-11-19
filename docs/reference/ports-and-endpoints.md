@@ -49,6 +49,8 @@ When running the local development environment via `make dev`, Vite proxies requ
 
 ## Key Microservice Endpoints
 
+The table below lists owner service routes. The gateway mounts its own public routes. For each gateway route, the owner and the mode (`proxy`, `relay`, or `local`) are listed in [Gateway route ownership](gateway-route-ownership.md).
+
 Campaign Lore routes require a verified bearer token, except `/health`, `/healthz`, `/openapi.json`, and `/ui/manifest`. The service never reads the caller from a body field or an identity header (TASK-0531).
 
 | Service | Method | Route | Description |
