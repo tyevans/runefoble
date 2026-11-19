@@ -49,7 +49,7 @@ Decompose `services/game_session/src/game_session/settlement/auth/` (385 lines, 
   - [`us-0073-customizable-establishments-and-assignable-npc-workers.md`](../../user_stories/accepted/us-0073-customizable-establishments-and-assignable-npc-workers.md)
 
 ## Detailed Specification & Implementation Plan
-1. **Token Extraction & User Context Submodule (`services/game_session/src/game_session/settlement/auth/tokens.py`)**:
+1. **Token Extraction & User Context Submodule (`services/game_session/src/game_session/settlement/auth/tokens.py` (removed))**:
    - Extract Zitadel header parsing, bearer token decoding, and local test mock user context (< 110 lines).
 2. **Zanzibar Permission Checks Submodule (`services/game_session/src/game_session/settlement/auth/permissions.py`)**:
    - Extract SpiceDB client helpers for checking haven viewer, builder, DM, and tenant permissions (< 120 lines).

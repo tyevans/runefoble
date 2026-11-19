@@ -25,7 +25,7 @@ Complete
 The audience studio service (TypeScript) lets any caller write a DM role tuple and then approve a chaos proposal with it. It takes the acting user from the request body or an `x-user-id` header with a `dm-user` fallback. Verify Zitadel tokens in the service, use the token subject as the actor, and remove the public tuple write route.
 
 ## Problem Statement
-- `services/audience_studio/src/routes.ts:213-237` (`POST /auth/tuples`) has no authentication. It writes to the in-memory tuple set. Audit w2-audience-studio F1 (critical).
+- `services/audience_studio/src/routes.ts:213-237` (removed) (`POST /auth/tuples`) has no authentication. It writes to the in-memory tuple set. Audit w2-audience-studio F1 (critical).
 - Live audit run: `POST /auth/tuples` with `relation: dungeon_master` for `mallory` returned 201, then `POST /proposals/{id}/approve` with `dm_user_id: mallory` returned 200.
 - `routes.ts:168-171` and `:195-198` take the acting user from `dm_user_id` in the body or `x-user-id`, with fallback `dm-user`.
 - The service has no JWT verification (audit w2-audience-studio F1 and F2).

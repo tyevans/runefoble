@@ -29,7 +29,7 @@ Complete
 The audience studio is a TypeScript service. Any caller can write a `dungeon_master` tuple for itself through a public route, then approve chaos modifiers. Votes, reads, and WebSocket actions have no check. The acting user comes from the request body or a header, with a `dm-user` fallback. The service keeps its own copy of the role hierarchy and never calls SpiceDB in deployment. This task removes the public tuple write, binds each action to the `audience_poll` permissions in the schema, and uses one real SpiceDB client.
 
 ## Problem Statement
-- `services/audience_studio/src/routes.ts:213-237` (`POST /auth/tuples`): no authentication. Live run: a caller granted `mallory` `dungeon_master` (201). Then `POST /proposals/{id}/approve` with `dm_user_id: mallory` returned 200 (`w2-audience-studio.md` F1).
+- `services/audience_studio/src/routes.ts:213-237` (removed) (`POST /auth/tuples`): no authentication. Live run: a caller granted `mallory` `dungeon_master` (201). Then `POST /proposals/{id}/approve` with `dm_user_id: mallory` returned 200 (`w2-audience-studio.md` F1).
 - `routes.ts:168-171` and `:195-198`: the acting user comes from the body (`dm_user_id`) or the `x-user-id` header, with a `'dm-user'` fallback.
 - `routes.ts:92-124` (`POST /polls/:id/votes`): no check. `voter_id` is client-supplied and dedupes ballots (`src/pollEngine.ts:131-135`).
 - `routes.ts:67-89` and `:143-156` (`GET /polls`, `GET /proposals`): no check. Proposal parameters are visible to anyone.

@@ -19,10 +19,10 @@ pr_url: https://github.com/tyevans/runefoble/pull/235
 Complete
 
 ## Summary
-Decompose `services/game_session/src/game_session/models.py` (382 lines, 76.4% of limit) into modular submodules under `services/game_session/src/game_session/models/` (`session.py`, `turn_order.py`, `initiative.py`, `reactions.py`, `settlement.py`), keeping all model definitions strictly < 150 lines per Hard Invariant 6.
+Decompose `services/game_session/src/game_session/models.py` (removed) (382 lines, 76.4% of limit) into modular submodules under `services/game_session/src/game_session/models/` (`session.py`, `turn_order.py`, `initiative.py`, `reactions.py`, `settlement.py`), keeping all model definitions strictly < 150 lines per Hard Invariant 6.
 
 ## Problem Statement
-`services/game_session/src/game_session/models.py` has grown to 382 lines as session models, combat turns, initiative mechanics, reaction states, and settlement data transfer objects have accumulated in a single file. Decomposing it into domain-focused submodules maintains maintainability and prevents file length invariant violations.
+`services/game_session/src/game_session/models.py` (removed) has grown to 382 lines as session models, combat turns, initiative mechanics, reaction states, and settlement data transfer objects have accumulated in a single file. Decomposing it into domain-focused submodules maintains maintainability and prevents file length invariant violations.
 
 ## Governing Architecture & ADRs
 - **ADR-0003: UV Monorepo Workspace for Python BCs**: Clean module layout in `services/game_session/`.
