@@ -9,7 +9,7 @@ check.
 A failed probe is logged at warning level with the dependency name and the error, and
 `/readyz` answers 503 with the same detail (ADR-0015: failures are visible).
 
-`event_store_probe` and `redis_probe` are the shared probes. A service registers only the
+`event_store_probe`, `redis_probe` and `silo_probe` are the shared probes. A service registers only the
 dependencies that it uses (`runefoble_auth.readiness.spicedb_probe` for SpiceDB).
 """
 
@@ -25,6 +25,7 @@ from fastapi.responses import JSONResponse
 
 from runefoble_platform.event_sourcing import get_event_store
 from runefoble_platform.redis_bus import RedisStreamsEventBus
+from runefoble_platform.storage import get_storage_service
 
 logger = logging.getLogger("runefoble.readiness")
 
@@ -54,6 +55,19 @@ def redis_probe(bus: Callable[[], RedisStreamsEventBus]) -> ReadinessProbe:
     async def probe() -> None:
         client = await bus().get_client()
         await client.ping()
+
+    return probe
+
+
+def silo_probe() -> ReadinessProbe:
+    """Probe Silo with one signed HEAD on the default asset bucket.
+
+    The probe reads the client through `get_storage_service` on each call, so it uses the
+    same client as the upload routes. The client is synchronous, so the call runs in a thread.
+    """
+
+    async def probe() -> None:
+        await asyncio.to_thread(get_storage_service().check_bucket)
 
     return probe
 
@@ -131,4 +145,5 @@ __all__ = [
     "event_store_probe",
     "redis_probe",
     "set_readiness_gate",
+    "silo_probe",
 ]

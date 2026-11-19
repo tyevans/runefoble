@@ -1,4 +1,4 @@
-"""Blackbox Helm test: every app pod has a readiness probe (TASK-0929, TASK-0930).
+"""Blackbox Helm test: every app pod has a readiness probe (TASK-0929, TASK-0930, TASK-0931).
 
 The rendered chart is the public output of the deployment. Kubernetes sends traffic to a pod
 only when its readiness probe passes. A pod without a probe is Ready when its container
@@ -31,7 +31,17 @@ APP_DEPLOYMENTS = (
     "inference-worker",
     "gateway-mcp",
 )
-GATED = {"gateway-api": 8000, "game-session": 8004, "audience-studio": 8010}
+GATED = {
+    "gateway-api": 8000,
+    "the-watcher": 8001,
+    "board-state": 8002,
+    "character-sheet": 8003,
+    "game-session": 8004,
+    "campaign-lore": 8006,
+    "asset-forge": 8008,
+    "soundscape": 8009,
+    "audience-studio": 8010,
+}
 
 
 def _containers() -> dict[str, dict]:

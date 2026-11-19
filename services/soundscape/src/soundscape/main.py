@@ -12,14 +12,22 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from runefoble_auth.authz_http import install_authz_error_handlers
+from runefoble_auth.readiness import spicedb_probe
 from runefoble_platform.aggregate_loading import register_store_unavailable_handlers
 from runefoble_platform.event_publish import event_publish_failures
 from runefoble_platform.event_sourcing import get_event_store
+from runefoble_platform.readiness import (
+    ReadinessGate,
+    add_readiness_route,
+    event_store_probe,
+    redis_probe,
+    set_readiness_gate,
+)
 from runefoble_platform.stream_consumer import consumer_statuses
 from runefoble_platform.ui_manifest import ui_manifest_router
 
 from soundscape.consumer import start_soundscape_consumers
-from soundscape.dependencies import event_bus_provider
+from soundscape.dependencies import event_bus_provider, get_event_bus
 from soundscape.routers.cue import router as cue_router
 from soundscape.routers.leitmotif import router as leitmotif_router
 from soundscape.routers.stems import router as stems_router
@@ -29,6 +37,12 @@ from soundscape.routers.tension import router as tension_router
 @contextlib.asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Bootstrap the Redis Streams bus and the soundscape consumer."""
+    readiness = {
+        "event_store": event_store_probe(),
+        "spicedb": spicedb_probe(),
+        "redis": redis_probe(get_event_bus),
+    }
+    set_readiness_gate(app, ReadinessGate(readiness))
     bus = await event_bus_provider.connect()
     consumers = await start_soundscape_consumers(bus)
     app.state.consumers = {"soundscape": consumers}
@@ -91,6 +105,9 @@ def health_check(request: Request) -> JSONResponse:
             "consumers": statuses,
         },
     )
+
+
+add_readiness_route(app, "soundscape")
 
 
 def main() -> None:

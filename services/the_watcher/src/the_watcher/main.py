@@ -8,11 +8,19 @@ from pathlib import Path
 
 from fastapi import FastAPI, Request
 from runefoble_auth.authz_http import install_authz_error_handlers
+from runefoble_auth.readiness import spicedb_probe
 from runefoble_platform.aggregate_loading import register_store_unavailable_handlers
 from runefoble_platform.engine_ports import EngineUnavailableError, engine_unavailable_handler
 from runefoble_platform.event_publish import (
     event_publish_failures,
     install_publish_failure_handler,
+)
+from runefoble_platform.readiness import (
+    ReadinessGate,
+    add_readiness_route,
+    event_store_probe,
+    redis_probe,
+    set_readiness_gate,
 )
 from runefoble_platform.stream_consumer import consumer_statuses
 from runefoble_platform.ui_manifest import ui_manifest_router
@@ -44,6 +52,12 @@ def _lifespan_for(build: ContainerBuilder):
         """
         container = build()
         app.state.container = container
+        readiness = {
+            "event_store": event_store_probe(),
+            "spicedb": spicedb_probe(),
+            "redis": redis_probe(container.event_bus.get),
+        }
+        set_readiness_gate(app, ReadinessGate(readiness))
         bus = await container.event_bus.connect()
         consumers = await start_audience_narration_consumers(bus, container.repositories.whispers)
         app.state.consumers = {CONSUMER_NAME: consumers}
@@ -100,6 +114,7 @@ def create_app(build: ContainerBuilder = build_container) -> FastAPI:
             "consumers": consumer_statuses(getattr(request.app.state, "consumers", {})),
         }
 
+    add_readiness_route(app, "the_watcher")
     return app
 
 
