@@ -65,6 +65,7 @@ class LocalHttpServer:
             do_POST = _serve
             do_PUT = _serve
             do_PATCH = _serve
+            do_DELETE = _serve
 
             def log_message(self, format: str, *args: object) -> None:  # noqa: A002
                 return

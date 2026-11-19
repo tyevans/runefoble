@@ -7,6 +7,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 from runefoble_platform.config import PlatformSettings
+from runefoble_platform.email.errors import EmailTransportError
 from runefoble_platform.email.models import OutboundEmail
 
 logger = logging.getLogger("runefoble.platform.email.smtp")
@@ -33,26 +34,29 @@ class SmtpTransport:
         smtp_host: str | None = None,
         smtp_port: int | None = None,
         timeout: float = 3.0,
-        fallback_in_memory: bool = True,
     ) -> None:
         settings = PlatformSettings()
         self.smtp_host = smtp_host or settings.mailpit_smtp_host
         self.smtp_port = smtp_port or settings.mailpit_smtp_port
         self.timeout = timeout
-        self.fallback_in_memory = fallback_in_memory
-        self.sent_emails: list[OutboundEmail] = []
 
-    def probe(self, timeout: float = 2.0) -> bool:
-        """Probe SMTP server readiness via NOOP command."""
+    def probe(self, timeout: float = 2.0) -> None:
+        """Probe SMTP server readiness via NOOP. Raises EmailTransportError when not ready."""
         try:
             with smtplib.SMTP(self.smtp_host, self.smtp_port, timeout=timeout) as server:
-                return server.noop()[0] == 250
-        except Exception:
-            return False
+                code, reply = server.noop()
+        except (OSError, smtplib.SMTPException) as exc:
+            raise EmailTransportError(
+                f"SMTP at {self.smtp_host}:{self.smtp_port} unreachable: {exc}"
+            ) from exc
+        if code != 250:
+            raise EmailTransportError(
+                f"SMTP at {self.smtp_host}:{self.smtp_port} answered NOOP with {code}: {reply!r}"
+            )
 
-    async def probe_async(self, timeout: float = 2.0) -> bool:
-        """Asynchronously probe SMTP server availability."""
-        return await asyncio.to_thread(self.probe, timeout)
+    async def probe_async(self, timeout: float = 2.0) -> None:
+        """Asynchronously probe SMTP server availability. Raises EmailTransportError."""
+        await asyncio.to_thread(self.probe, timeout)
 
     def send_email_sync(
         self,
@@ -62,7 +66,7 @@ class SmtpTransport:
         body_html: str | None = None,
         from_addr: str = "noreply@runefoble.local",
     ) -> OutboundEmail:
-        """Send email synchronously via SMTP with in-memory fallback buffer."""
+        """Send email synchronously via SMTP. Raises EmailTransportError when delivery fails."""
         recipients = [to] if isinstance(to, str) else list(to)
         outbound = OutboundEmail(
             to=recipients,
@@ -75,18 +79,12 @@ class SmtpTransport:
         try:
             with smtplib.SMTP(self.smtp_host, self.smtp_port, timeout=self.timeout) as server:
                 server.sendmail(from_addr, recipients, msg.as_string())
-            logger.info("Sent email '%s' to %s via SMTP", subject, recipients)
-        except Exception as exc:
-            if self.fallback_in_memory:
-                logger.warning(
-                    "SMTP at %s:%s unreachable (%s); recorded in memory.",
-                    self.smtp_host,
-                    self.smtp_port,
-                    exc,
-                )
-            else:
-                raise
-        self.sent_emails.append(outbound)
+        except (OSError, smtplib.SMTPException) as exc:
+            raise EmailTransportError(
+                f"Email '{subject}' not delivered; SMTP at {self.smtp_host}:{self.smtp_port} "
+                f"unreachable or refused it: {exc}"
+            ) from exc
+        logger.info("Sent email '%s' to %s via SMTP", subject, recipients)
         return outbound
 
     async def send_email(

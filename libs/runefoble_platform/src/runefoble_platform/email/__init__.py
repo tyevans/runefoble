@@ -3,6 +3,7 @@
 Provides transactional email models, SMTP transport, and Mailpit testing integration.
 """
 
+from runefoble_platform.email.errors import EmailTransportError
 from runefoble_platform.email.mailpit import MailpitClient
 from runefoble_platform.email.models import (
     EmailMessage,
@@ -18,6 +19,7 @@ from runefoble_platform.email.smtp import SmtpTransport, build_mime_message
 
 __all__ = [
     "EmailMessage",
+    "EmailTransportError",
     "EmailRecipient",
     "EmailVerificationPayload",
     "MailpitClient",
