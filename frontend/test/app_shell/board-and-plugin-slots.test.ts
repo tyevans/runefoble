@@ -13,7 +13,7 @@ import assert from 'node:assert/strict';
 import { AppDataService } from '../../src/services/app-data-service.ts';
 import { registerDefaultPlugins, pluginRegistry } from '../../src/components/plugins/plugin_registry.ts';
 import { installFakeGateway, type FakeGateway } from '../support/fake-gateway.ts';
-import { FALLBACK_BOARD_TOKENS } from '../support/app-data-service.fixtures.ts';
+import { OWNER_BOARD_STATE } from '../support/owner-wire-fixtures.ts';
 
 describe('App Shell Board State & Plugin Slot Wiring', () => {
   let dataService: AppDataService;
@@ -22,7 +22,7 @@ describe('App Shell Board State & Plugin Slot Wiring', () => {
   beforeEach(() => {
     dataService = new AppDataService();
     gateway = installFakeGateway({
-      'GET /api/v1/boards/session-tomb-14': { body: { cols: 12, rows: 10, tokens: FALLBACK_BOARD_TOKENS } },
+      'GET /api/v1/boards/session-tomb-14': { body: OWNER_BOARD_STATE },
     });
   });
 

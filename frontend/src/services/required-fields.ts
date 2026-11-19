@@ -19,9 +19,15 @@ export const isPositiveInteger: FieldCheck = (value) => Number.isInteger(value) 
 
 export const isArray: FieldCheck = (value) => Array.isArray(value);
 
+export const isBoolean: FieldCheck = (value) => typeof value === 'boolean';
+
+export const isInteger: FieldCheck = (value) => Number.isInteger(value);
+
+export const isPlainObject: FieldCheck = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
+
 /** Returns the names of required fields that are absent or fail their check. */
 export function missingRequiredFields(source: unknown, required: RequiredFields): string[] {
-  const record = source !== null && typeof source === 'object' ? source as Record<string, unknown> : {};
+  const record = isPlainObject(source) ? source as Record<string, unknown> : {};
   return Object.entries(required)
     .filter(([name, check]) => !check(record[name]))
     .map(([name]) => name);

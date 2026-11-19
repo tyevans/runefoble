@@ -1,4 +1,4 @@
-import type { CampaignItem, CampaignMember, CreateCampaignPayload, UpdateCampaignPayload, LobbyParticipant, LobbyCharacterOption } from '@runefoble/game-session-ui';
+import type { CampaignItem, CampaignMember, CreateCampaignPayload, UpdateCampaignPayload, LobbyCharacterOption, LobbyParticipant } from '@runefoble/game-session-ui';
 import type { CharacterItem, RosterCampaignOption, CreateCharacterPayload } from '@runefoble/character-sheet-ui';
 import type { BoardToken } from '@runefoble/board-state-ui';
 import type { CaravanContractItem } from '@runefoble/game-session-ui';
@@ -12,9 +12,10 @@ import type { CampaignCapabilities } from './campaign-capabilities.ts';
 import {
   dataFailure, dataOk, NETWORK_FAILURE_MESSAGE, UNREADABLE_RESPONSE_MESSAGE, type DataResult,
 } from './data-result.ts';
+import { isArray, malformedResponse, requireFields } from './required-fields.ts';
 import {
-  isArray, isNonEmptyString, isPositiveInteger, isString, malformedResponse, requireFields, type RequiredFields,
-} from './required-fields.ts';
+  SESSION_REQUIRED_FIELDS, sessionFromOwner, lobbyParticipantsFromOwner, boardFromOwner,
+} from './owner-wire-mappers.ts';
 import { errorMessageFromBody } from '@runefoble/ui-core';
 import {
   mutateCharacterHealth, mutateCharacterEquip, mutateCharacterUnequip, mutateCharacterAddInventory,
@@ -124,16 +125,7 @@ export class AppDataService {
   async fetchSession(sessionId: string): Promise<DataResult<CampaignSessionItem>> {
     const res = await this.request<any>(`${this.apiBase}/sessions/${sessionId}`);
     if (!res.ok) return res;
-    const data = res.data;
-    // `id` echoes the requested session id, the identifier the caller already holds.
-    return requireFields({
-      id: data.id || sessionId,
-      campaignId: data.campaign_id || data.campaignId,
-      title: data.title,
-      status: data.status,
-      round: data.round,
-      participantsCount: Array.isArray(data.participants) ? data.participants.length : (data.participantsCount || 0),
-    }, SESSION_REQUIRED_FIELDS);
+    return sessionFromOwner(res.data);
   }
 
   private toSessionItem(item: any): DataResult<CampaignSessionItem> {
@@ -182,18 +174,19 @@ export class AppDataService {
   async fetchLobbyState(campaignId: string, sessionId: string): Promise<DataResult<{ participants: LobbyParticipant[]; availableCharacters: LobbyCharacterOption[] }>> {
     const session = await this.request<any>(`${this.apiBase}/sessions/${sessionId}`);
     if (!session.ok) return session;
+    const members = await this.fetchCampaignMembers(campaignId);
+    if (!members.ok) return members;
     const characters = await this.fetchCharacters();
     if (!characters.ok) return characters;
-    const participants = session.data?.participants;
-    if (!isArray(participants)) return malformedResponse('the session participants are not a list');
-    return dataOk({ participants: participants as LobbyParticipant[], availableCharacters: resolveLobbyAvailableCharacters(characters.data, campaignId) });
+    const roster = lobbyParticipantsFromOwner(session.data, members.data);
+    if (!roster.ok) return roster;
+    return dataOk({ participants: roster.data, availableCharacters: resolveLobbyAvailableCharacters(characters.data, campaignId) });
   }
 
   async fetchBoardState(sessionId: string): Promise<DataResult<{ cols: number; rows: number; tokens: BoardToken[] }>> {
     const res = await this.request<any>(`${this.apiBase}/boards/${sessionId}`);
     if (!res.ok) return res;
-    // `tokens` is optional: an absent list reads as no tokens on the board.
-    return requireFields({ cols: res.data?.cols, rows: res.data?.rows, tokens: res.data?.tokens || [] }, BOARD_REQUIRED_FIELDS);
+    return boardFromOwner(res.data);
   }
 
   async fetchBoardTokens(sessionId: string): Promise<DataResult<BoardToken[]>> {
@@ -237,23 +230,5 @@ export class AppDataService {
 }
 
 export interface UpdateProfilePayload { displayName?: string; avatarUrl?: string; bio?: string; email?: string; }
-
-/**
- * Required fields of a session as the App Shell maps it (TASK-0867).
- * `participantsCount` is not listed: its read belongs to TASK-0771.
- */
-const SESSION_REQUIRED_FIELDS: RequiredFields = {
-  id: isNonEmptyString,
-  campaignId: isNonEmptyString,
-  title: isString,
-  status: isNonEmptyString,
-  round: isPositiveInteger,
-};
-
-/** Required fields of a board state. `tokens` is optional and defaults to an empty list. */
-const BOARD_REQUIRED_FIELDS: RequiredFields = {
-  cols: isPositiveInteger,
-  rows: isPositiveInteger,
-};
 
 export const appDataService = AppDataService.getInstance();
