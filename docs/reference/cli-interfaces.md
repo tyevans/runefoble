@@ -8,17 +8,17 @@
 | `make setup` | Installs Python UV workspace dependencies and frontend packages |
 | `make health-check` | Gate. Runs `spec-ops health` (file length <500 lines in `libs/`, `services/`, `gateway/`, `frontend/`, `tests/`, `scripts/`, `e2e/`, `tools/`; numbering; backlog state) `spec-ops schema check` (frontmatter and Markdown grammar in `docs/project/`); then `scripts/check_backlog_links.py` (dead links in refined and proposed tasks, stale PRD links, complete-record body status, unresolved cited paths (a folder holding only `__pycache__` counts as missing), missing governance keys; all must be zero). It also prints curation warnings for the refined buffer band (6 to 12) and for refined tasks that wait on incomplete tasks. Warnings never fail the gate |
 | `make install-spec-ops` | Installs the pinned spec-ops CLI with `uv tool install`. The pin is the `SPEC_OPS_SOURCE` variable in the `Makefile`, the only pin source. CI and AGENTS.md use this target. A command-line override is ignored |
-| `make clean-worktrees` | Cleans up merged and stale git worktrees safely (`ARGS="--dry-run"`) |
+| `make clean-worktrees` | Removes merged, idle, clean git worktrees and their local branches (`ARGS="--dry-run"`). It skips a worktree that a process uses as its working directory. When the process table (`/proc`, or `--proc-dir`) is absent, it reports `cannot verify` and skips every worktree. `--all` also removes unmerged worktrees. `--force` also removes dirty worktrees. It exits with code 1 when a removal or `git worktree prune` fails |
 | `make backlog-worker` | Runs autonomous backlog execution engine (`ARGS="--drain --concurrency 2"`). Local tool, kept. See the parity record below |
 | `make visualize-project` | Launches dynamic docs/project content visualizer web application on port 8787. Local tool, kept. See the parity record below |
 | `make visualize-project-build` | Builds standalone HTML bundle (`dist/project-visualizer.html`). Local tool, kept. See the parity record below |
-| `make docs-build` | Compiles documentation static site via Zensical with integrated project visualizer |
+| `make docs-build` | Compiles documentation static site via Zensical with integrated project visualizer. A failed build step stops the build with a non-zero exit code. On Linux, a full inotify watch limit makes the build fail. See "Raise the inotify watch limit" in `docs/tutorials/01-local-development-setup.md` |
 | `make docs-serve` | Builds the docs with `scripts/build_docs.py`, then serves the site with `zensical serve` on port 8000 (the Zensical default, verified by running the target) |
 | `make cluster-up` | Launches local Kind Kubernetes cluster with port mapping and Traefik |
 | `make cluster-down` | Deletes the local Kind cluster and every volume in it (PostgreSQL, Silo, and Redis data) |
 | `make install-tools` | Checks that `kind`, `uv`, `pnpm`, `helm`, and `docker` are on `PATH`. Installs `kind` v0.27.0 into `~/.local/bin` when `kind` is missing |
 | `make images` | Builds every service image (`runefoble/<service>:0.1.0`). Python services use `deployments/docker/python-service.Dockerfile` and load into the `runefoble-local` Kind cluster. The Node `audience-studio` image uses `services/audience_studio/Dockerfile` (Node 22, pnpm 11.22.0 from the frozen lockfile, runs `dist/index.js` as the `node` user on port 8010) and is loaded the same way. The App Shell `frontend` image uses `frontend/Dockerfile`. Build it from the repository root (`docker build -f frontend/Dockerfile .`). Its context comes from `frontend/Dockerfile.dockerignore`, which keeps the pnpm workspace and `services/*/ui`. It serves the built App Shell with nginx on port 80 and is loaded the same way. |
-| `make helm-lint` | Validates Helm chart syntax |
+| `make helm-lint` | Validates Helm chart syntax. `make lint` runs it as a prerequisite |
 | `make helm-template` | Renders and inspects Kubernetes manifests |
 | `make helm-check-event-store` | Runs `scripts/check_helm_event_store.py`. Finds aggregate owners in Python (`AggregateRepository`) and TypeScript (`AudienceEventRepository`) non-test source. Fails when an owner has no PostgreSQL event store in the Helm chart |
 | `make helm-deploy` | Deploys the full Runefoble stack to the active Kubernetes cluster |
@@ -34,7 +34,7 @@
 | `make test-entrypoints` | Runs `tests/test_entrypoints.py`. Covers developer entrypoints, CLI tools, and microservice start-up |
 | `make test-gateway` | Runs `uv run pytest gateway/api`, the gateway API test package in `gateway/api/tests/`. Its tests use the root shared helpers. The canned-payload behaviour guard is `tests/test_canned_payload_guard.py` and runs in `make test` |
 | `make test-property` | Runs the Hypothesis property tests in `tests/test_properties.py` |
-| `make test-mutation` | Runs `mutmut` on the core domain modules and prints the results. A failed run does not stop the target |
+| `make test-mutation` | Runs `mutmut` on the core domain modules (`source_paths` in `[tool.mutmut]`), then prints the mutants that were not killed. Policy: the target fails when `mutmut run` fails or when one or more mutants survive. Mutants with other statuses (for example `no tests`) are printed but do not fail the target |
 | `make test-e2e` | Runs `bddgen`, then the headless Playwright BDD suite. Passes `ARGS` to `playwright test` |
 | `make test-e2e-ui` | Runs `bddgen`, then opens the Playwright UI mode for live debugging. Passes `ARGS` to `playwright test` |
 | `make e2e-lore-up` | Starts campaign_lore for the gateway-down e2e journey. Records its process group in `.e2e/campaign_lore.pid` |
@@ -74,7 +74,7 @@ Tasks 0235, 0291, 0328, 0335 and 0346 stay open. They wait on the visualizer par
 | Script | Purpose |
 |---|---|
 | `./scripts/dev_server.py` | Unified local development orchestrator (requires Redis; see `make dev`) running gateway, Vite frontend, and optional AI inference worker concurrently |
-| `make clean-worktrees` | Audits and removes merged git worktrees, cleans up branches, and prunes records (`ARGS="--dry-run"`) |
+| `make clean-worktrees` | Runs `scripts/cleanup_worktrees.py`. Audits and removes merged, idle worktrees, deletes their branches, and prunes records (`ARGS="--dry-run"`). It fails closed: when it cannot read the process table, it removes nothing |
 | `./scripts/curate-backlog.sh` | Invokes the `backlog-curator` skill for JIT backlog triage and roadmap alignment |
 | `make backlog-worker` | Orchestrates autonomous end-to-end task execution, worktrees, PRs, and CI watching (`ARGS="--concurrency 3"`) |
 | `make visualize-project` | Starts dynamic project content visualizer web application on port 8787 |

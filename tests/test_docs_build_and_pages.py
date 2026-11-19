@@ -268,3 +268,55 @@ def test_marketing_showcase_page_and_navigation():
 
     changelog_html = SITE_DIR / "changelog" / "index.html"
     assert changelog_html.exists()
+
+
+FAKE_UV_WITH_FAILING_INOTIFY = """#!{python}
+import ctypes
+import os
+import sys
+
+libc = ctypes.CDLL(None, use_errno=True)
+fd = libc.inotify_init()
+watch = libc.inotify_add_watch(fd, b"{missing}", 0x00000002)
+if watch < 0:
+    print("inotify_add_watch failed: " + os.strerror(ctypes.get_errno()), file=sys.stderr)
+    sys.exit(1)
+sys.exit(0)
+"""
+
+
+def test_docs_build_exits_non_zero_when_an_inotify_call_fails(tmp_path: Path):
+    """A failed inotify call in the site generator fails the build. No shim hides it."""
+    import os
+    import subprocess
+    import sys
+
+    import pytest
+
+    if not sys.platform.startswith("linux"):
+        pytest.skip("inotify is a Linux interface")
+
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir()
+    fake_uv = fake_bin / "uv"
+    fake_uv.write_text(
+        FAKE_UV_WITH_FAILING_INOTIFY.format(
+            python=sys.executable, missing=tmp_path / "missing-watch-target"
+        ),
+        encoding="utf-8",
+    )
+    fake_uv.chmod(0o755)
+    env = {**os.environ, "PATH": f"{fake_bin}:/usr/bin:/bin"}
+    env.pop("LD_PRELOAD", None)
+
+    result = subprocess.run(
+        [sys.executable, "scripts/build_docs.py"],
+        cwd=str(REPO_ROOT),
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=120.0,
+    )
+
+    assert result.returncode != 0, result.stdout + result.stderr
+    assert "inotify_add_watch failed" in result.stderr

@@ -131,6 +131,5 @@ source_modules = ["gateway_api"]
 forbidden_modules = ["the_watcher", "game_session", "board_state", "character_sheet", "voice_agent", "campaign_lore", "inference_worker", "rules_compendium", "asset_forge", "soundscape", "campaign_analytics"]
 
 [tool.mutmut]
-paths_to_mutate = "libs/runefoble_platform/src/,services/the_watcher/src/"
-tests_dir = "tests/"
-runner = "pytest"
+source_paths = ["libs/runefoble_platform/src/", "services/the_watcher/src/"]
+pytest_add_cli_args_test_selection = ["tests/"]
