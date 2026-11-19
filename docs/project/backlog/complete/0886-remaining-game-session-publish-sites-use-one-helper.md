@@ -1,7 +1,7 @@
 ---
 id: '0886'
 title: Remaining Game Session Publish Sites Use One Helper
-status: Refined
+status: Complete
 created: 2026-11-19
 dependencies:
 - '0858'
@@ -18,7 +18,7 @@ target_release: 0.9.0
 
 ## Status
 
-Refined. Follow-up of TASK-0858.
+Complete
 
 ## Summary
 

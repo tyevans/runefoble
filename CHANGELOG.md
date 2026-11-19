@@ -184,6 +184,7 @@ The campaign rules tab at `#/campaigns/:campaignId/rules`. The homebrew forge re
   - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
 
 ### Changed
+Settlement haven, establishment and NPC worker routes return HTTP 503 (not 200 or 201) when the event stream is unreachable. The state change is saved. Create routes write their SpiceDB relationships and index links before they publish.
 Game session routes publish the events of one aggregate through `publish_aggregate_events`. The autopilot penalty publish returns HTTP 503 when the stream is unreachable. TASK-0886 converts the remaining sites.
 MCP `create_encounter` makes one call to game_session, and board_state places the enemy tokens from that event. The reply lists the accepted placements in `enemies_spawned` and no longer returns `grid`.
 The App Shell auth service keeps JWT claim handling, session storage and session state in separate modules. The public API and the sign-in flow are unchanged.
