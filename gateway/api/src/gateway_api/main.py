@@ -29,6 +29,7 @@ from gateway_api.routers import (
     voice_proxy_router,
 )
 from gateway_api.routers.assets_proxy import router as assets_router
+from gateway_api.routers.audience import router as audience_router
 from gateway_api.routers.caravan_proxy import router as caravan_router
 from gateway_api.routers.characters_wardrobe_proxy import router as wardrobe_router
 from gateway_api.routers.forge_proxy import router as forge_router
@@ -100,6 +101,7 @@ app.include_router(soundscape_router)
 app.include_router(assets_router)
 app.include_router(forge_router)
 app.include_router(caravan_router)
+app.include_router(audience_router)
 app.include_router(auth_sync_router, prefix="/api/v1/auth/sync", tags=["Auth Sync"])
 app.include_router(voice_proxy_router)
 app.include_router(watcher_speech_router)
