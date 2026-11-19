@@ -1,7 +1,7 @@
 ---
 id: '0439'
 title: Gateway Audience Studio API Routing & Zanzibar Authorization Proxy
-status: Refined
+status: Complete
 created: 2026-09-29
 dependencies:
 - TASK-0008
@@ -24,7 +24,7 @@ target_release: 0.9.0
 # TASK-0439: Gateway Audience Studio API Routing & Zanzibar Authorization Proxy
 
 ## Status
-Refined
+Complete
 
 Audit 2026-11-17: permission names corrected to the relations in `runefoble.zed`. The names `can_manage_audience_polls` and `can_approve_audience_chaos` do not exist. Port 8010 is correct for audience-studio.
 
@@ -66,7 +66,7 @@ The TypeScript `audience_studio` microservice provides high-concurrency chaos po
      - `WS /ws/audience/{campaign_id}` proxying frames bidirectionally between client and audience studio.
 2. **Mount in Gateway API (`gateway/api/src/gateway_api/main.py`)**:
    - Register `audience.router` under tags `["Audience"]`.
-3. **Blackbox Tests (`tests/test_blackbox_gateway_audience_proxy.py`)**:
+3. **Blackbox Tests (`gateway/api/tests/test_blackbox_gateway_audience_proxy.py`)**:
    - Assert all proxy routes, status forwarding, headers, and Zanzibar permission gating.
 
 ## INVEST Criteria Evaluation
@@ -80,5 +80,8 @@ The TypeScript `audience_studio` microservice provides high-concurrency chaos po
 ## Definition of Done
 1. `gateway/api/src/gateway_api/routers/audience.py` implemented with file length strictly < 200 lines.
 2. Gateway routes `/api/v1/audience/*` forward to `audience-studio` and enforce Zanzibar permissions.
-3. Frontdoor blackbox tests `tests/test_blackbox_gateway_audience_proxy.py` pass with 100% assertions using HTTP client.
+3. Frontdoor blackbox tests `gateway/api/tests/test_blackbox_gateway_audience_proxy.py` pass with 100% assertions using HTTP client.
 4. Code passes `uv run ruff check .` and `uv run ruff format --check .`.
+
+## Completion Note
+Owner 5xx maps to 502 through the shared service client contract (`docs/reference/service-client.md`); the owner 401, 403 and 404 pass through. The Zanzibar checks stay in audience_studio.

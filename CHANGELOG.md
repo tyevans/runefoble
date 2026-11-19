@@ -80,6 +80,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Campaign analytics worker `process_event` alias, tracking property wrappers, and package root re-exports. Callers use `handle_event`. (TASK-0500)
 
 ### Added
+- An approved audience `weather_change` modifier changes the session weather (`runefoble.events.session.weather_changed`); the session read shows `weather`. A vetoed modifier, a modifier of another campaign, or one without a weather value changes nothing. (TASK-0441)
+- Gateway routes for audience polls, spectator votes, modifier proposals and the live audience socket (`/api/v1/audience/*`, `/ws/audience/{campaign_id}`) proxy to audience_studio, which checks each permission. Helm gives the gateway `RUNEFOBLE_AUDIENCE_STUDIO_URL`. (TASK-0439)
 - Gateway routes for character wardrobe variants (`GET` and `POST /api/v1/characters/{character_id}/wardrobe`) and the active portrait (`POST /api/v1/characters/{character_id}/portrait/active`) proxy to character_sheet, which checks `view` or `edit`. (TASK-0444)
 - Gateway proxies 30 public Watcher routes to the_watcher through the shared proxy table. (TASK-0596)
 - Gateway proxies `POST /api/v1/soundscape/stems/volume` to the soundscape owner. (TASK-0436)
@@ -162,6 +164,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
 
 ### Changed
+- Settlement and haven blackbox tests create campaigns and join members through the public campaign routes, not by writing SpiceDB tuples. (TASK-0716)
 - Playwright BDD steps act only through visible controls and public routes: no injected component state, no synthetic DOM events, no hash jumps, no direct theme writes. (TASK-0649)
 - Audience Studio reads `RUNEFOBLE_EVENT_STORE_BACKEND` and refuses `memory` outside tests. Helm turns its PostgreSQL event store on, and the Helm event-store gate also finds TypeScript owners. (TASK-0709)
 - Gateway API tests live in `gateway/api/tests/` and run with `make test-gateway`. One root `conftest.py` sets the test environment for every test folder. A guard test fails when a gateway data route answers 200 with every owner unreachable. (TASK-0597)

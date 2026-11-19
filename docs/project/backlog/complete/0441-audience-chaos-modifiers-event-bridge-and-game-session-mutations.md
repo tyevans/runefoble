@@ -1,7 +1,7 @@
 ---
 id: '0441'
 title: Approved Audience Weather Modifier Changes the Game Session Weather
-status: Refined
+status: Complete
 created: 2026-09-29
 dependencies:
 - TASK-0051
@@ -23,7 +23,7 @@ target_release: 0.9.0
 # TASK-0441: Approved Audience Weather Modifier Changes the Game Session Weather
 
 ## Status
-Refined
+Complete
 
 Audit 2026-11-17: event corrected to `AudienceModifierApproved` (`runefoble.events.audience.modifier_approved`, `libs/runefoble_events/src/runefoble_events/audience.py:75-89`) with the field `parameters`. The earlier name and field were not in the code. The subscriber work stays in this task.
 

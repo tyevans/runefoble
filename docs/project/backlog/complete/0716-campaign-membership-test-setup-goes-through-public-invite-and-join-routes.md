@@ -1,7 +1,7 @@
 ---
 id: '0716'
 title: Campaign Membership Test Setup Goes Through Public Invite and Join Routes
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0697
@@ -16,7 +16,7 @@ target_release: 0.9.0
 # TASK-0716: Campaign Membership Test Setup Goes Through Public Invite and Join Routes
 
 ## Status
-Refined. Found by the refactor audit round r1 and checked against the code by the orchestrator.
+Complete
 
 ## Summary
 `write_relationship` is called in 98 test files to seed SpiceDB tuples. This is backdoor setup. One frontdoor fixture must create a campaign and its members through public routes. This task builds the fixture and migrates the first group of files.
@@ -52,3 +52,6 @@ None. Platform quality work.
 ## Audit Provenance
 - Severity: medium
 - Source audits: `refactor-r1/tests.md`
+
+## Completion Note
+The three named directories are done. The repository-wide remainder (132 files that call `write_relationship`) is TASK-0841.
