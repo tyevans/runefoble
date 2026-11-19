@@ -69,6 +69,10 @@ negotiation_repository = LazyRepository(lambda: create_aggregate_repository(Nego
 child_index_repository = LazyRepository(lambda: create_aggregate_repository(ChildIndexAggregate))
 
 
+def get_game_session_repository() -> AggregateRepository[GameSessionAggregate]:
+    return repo
+
+
 def get_stronghold_repository() -> AggregateRepository[StrongholdAggregate]:
     return stronghold_repository.get()
 

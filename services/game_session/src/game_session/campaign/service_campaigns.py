@@ -8,6 +8,8 @@ from __future__ import annotations
 import logging
 from uuid import UUID, uuid4
 
+from eventsource.application.aggregates.repository import AggregateRepository
+from game_session.aggregate import GameSessionAggregate
 from game_session.campaign.campaign_aggregate import CampaignAggregate, CampaignState
 from game_session.campaign.errors import CampaignNotFoundError
 from game_session.campaign.membership_aggregate import MembershipAggregate
@@ -25,7 +27,8 @@ from game_session.campaign.schemas import (
     UpdateCampaignRequest,
 )
 from game_session.campaign.session_aggregate import CampaignSessionsAggregate
-from game_session.campaign.tuples import SpiceDB, grant_owner, link_session
+from game_session.campaign.session_bootstrap import open_game_session
+from game_session.campaign.tuples import SpiceDB, grant_owner
 from runefoble_auth.permissions import check_subject
 from runefoble_platform.aggregate_loading import load_if_exists, save_or_conflict
 from runefoble_platform.identifiers import parse_uuid
@@ -112,6 +115,7 @@ async def create_campaign(
     spicedb: SpiceDB,
     owner_id: str,
     req: CreateCampaignRequest,
+    game_sessions: AggregateRepository[GameSessionAggregate],
 ) -> CampaignSummaryResponse:
     campaign_id = uuid4()
     campaign = repos.campaigns.create_new(campaign_id)
@@ -126,12 +130,17 @@ async def create_campaign(
     )
     await save_or_conflict(repos.campaigns, campaign, concurrent_update)
 
-    seeded_session_id: str | None = None
     if req.seed_initial_session:
+        seeded = await open_game_session(
+            game_sessions,
+            spicedb,
+            campaign_id,
+            title=SEEDED_SESSION_TITLE,
+            dm_id=owner_id,
+        )
         sessions = repos.sessions.create_new(campaign_id)
-        seeded_session_id = f"session-{uuid4().hex}"
         sessions.add_session(
-            session_id=seeded_session_id,
+            session_id=str(seeded.aggregate_id),
             title=SEEDED_SESSION_TITLE,
             status="lobby",
             scheduled_at=None,
@@ -140,8 +149,6 @@ async def create_campaign(
         await save_or_conflict(repos.sessions, sessions, concurrent_update)
 
     await grant_owner(spicedb, str(campaign_id), owner_id)
-    if seeded_session_id is not None:
-        await link_session(spicedb, seeded_session_id, str(campaign_id))
     permissions = await campaign_permissions(spicedb, str(campaign_id), owner_id)
     return summary_from_state(campaign.state, "owner", 1, permissions)
 
@@ -210,20 +217,24 @@ async def create_session(
     spicedb: SpiceDB,
     campaign_id: str,
     req: CreateCampaignSessionRequest,
+    game_sessions: AggregateRepository[GameSessionAggregate],
+    caller_id: str,
 ) -> CampaignSessionResponse:
+    """Create the campaign session entry and its game session under one id (TASK-0706)."""
     cid = parse_campaign_id(campaign_id)
     await load_campaign(repos, cid)
     sessions = await load_sessions(repos, cid)
-    session_id = f"session-{uuid4().hex}"
+    game_session = await open_game_session(
+        game_sessions, spicedb, cid, title=req.title, dm_id=caller_id
+    )
     sessions.add_session(
-        session_id=session_id,
+        session_id=str(game_session.aggregate_id),
         title=req.title,
         status=req.status,
         scheduled_at=req.scheduled_at,
         description=req.description,
     )
     await save_or_conflict(repos.sessions, sessions, concurrent_update)
-    await link_session(spicedb, session_id, str(cid))
     record = sessions.state.sessions[-1]
     return CampaignSessionResponse(
         id=record.id,

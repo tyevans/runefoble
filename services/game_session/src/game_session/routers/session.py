@@ -8,11 +8,11 @@ from __future__ import annotations
 
 from collections.abc import Awaitable
 from typing import Annotated
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from fastapi import APIRouter, Header, HTTPException
 from game_session.aggregate import GameSessionAggregate, GameSessionState
-from game_session.campaign.tuples import link_session
+from game_session.campaign.session_bootstrap import open_game_session
 from game_session.character_client import (
     CharacterSheetUnavailableError,
     activate_stand_in,
@@ -71,12 +71,9 @@ async def create_session(req: CreateSessionRequest, caller_id: CallerId) -> Game
         caller_id,
         detail=f"User '{caller_id}' lacks 'run_session' on campaign '{req.campaign_id}'",
     )
-    session_id = uuid4()
-    session = GameSessionAggregate(session_id)
-    session.create(campaign_id=req.campaign_id, title=req.title, dm_id=req.dm_id)
-    await repo.save(session)
-    # Link after the save (ADR-0001). The gateway's observe and control checks read this link.
-    await link_session(spicedb, str(session_id), str(req.campaign_id))
+    session = await open_game_session(
+        repo, spicedb, req.campaign_id, title=req.title, dm_id=req.dm_id
+    )
     return session.state
 
 
