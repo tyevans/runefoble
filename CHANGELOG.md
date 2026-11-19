@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Security
-- The Audience Studio WebSocket sends typed error frames with fixed codes (`invalid_frame`, `unknown_action`, `forbidden`, `rejected`, `internal_error`) and logs internal failures on the server; no internal message reaches the client. (TASK-0723)
+- The Audience Studio WebSocket sends typed error frames with fixed codes (`invalid_message`, `unknown_action`, `forbidden`, `rejected`, `internal_error`) and logs internal failures on the server; no internal message reaches the client. (TASK-0723)
 - Token roles and claims grant no SpiceDB relation. The role-to-relation mapping and the claim-driven membership and session sync are removed; memberships come only from the public invite and join routes. (TASK-0855)
 - Removing a dynamic MCP tool revokes its SpiceDB permissions first. A SpiceDB failure answers 503 `authorization_unavailable` and keeps the tool. (TASK-0847)
 - game_session checks `session.control` on `POST /api/v1/sessions/{id}/dm-override` and `/atmosphere`. Before, any signed-in user who called game_session directly could direct any session; only the gateway checked. (found by TASK-0845)
