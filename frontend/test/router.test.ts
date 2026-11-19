@@ -31,6 +31,7 @@ describe('Router Pattern Matcher & Parameter Extraction', () => {
       '#/campaigns/:campaignId/codex',
       '#/campaigns/:campaignId/analytics',
       '#/campaigns/:campaignId/forge',
+      '#/campaigns/:campaignId/rules',
       '#/campaigns/:campaignId/lobby/:sessionId',
       '#/campaigns/:campaignId/sessions/:sessionId',
       '#/characters',

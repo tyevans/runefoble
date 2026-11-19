@@ -21,12 +21,13 @@ The client router (`frontend/src/router/router.ts`) supports standard deep-linka
 | `#/campaigns/:campaignId/codex` | Campaign world atlas & lore codex | `http://localhost/#/campaigns/4/codex` |
 | `#/campaigns/:campaignId/analytics` | Campaign chronicle timeline & telemetry | `http://localhost/#/campaigns/4/analytics` |
 | `#/campaigns/:campaignId/forge` | Asset Forge: battlemaps, tokens, and print exports | `http://localhost/#/campaigns/4/forge` |
+| `#/campaigns/:campaignId/rules` | Campaign rules: SRD search, encounter builder, and the homebrew forge | `http://localhost/#/campaigns/4/rules` |
 | `#/campaigns/:campaignId/lobby/:sessionId` | Pre-game assembly lobby | `http://localhost/#/campaigns/4/lobby/15` |
 | `#/campaigns/:campaignId/sessions/:sessionId` | Active live VTT session | `http://localhost/#/campaigns/4/sessions/14` |
 | `#/characters` | Personal character roster | `http://localhost/#/characters` |
 | `#/characters/:characterId` | Character Sheet inspector & inventory | `http://localhost/#/characters/char-valeros` |
 | `#/profile` | User profile & security settings | `http://localhost/#/profile` |
-| `#/rules` | Rules compendium: rules search, encounter builder, homebrew | `http://localhost/#/rules` |
+| `#/rules` | Rules compendium: SRD search and encounter builder (no homebrew) | `http://localhost/#/rules` |
 | `#/caravans/:sharedWorldId` | Caravan board for a shared world | `http://localhost/#/caravans/frontier-1` |
 | `#/overlay/party-vitals/:sessionId` | OBS party vitals overlay | `http://localhost/#/overlay/party-vitals/14` |
 

@@ -124,4 +124,4 @@ The `e2e-playwright` job in `.github/workflows/ci.yml` runs the suite on each pu
 
 ## Feature Files
 
-The feature files live in `e2e/features/`. They cover the campaign hub, the character sheet, the session lobby and VTT, the session chronicle feed, asset forge, the caravan board, the app shell routes, identity negative paths and smoke checks. Read the files for the scenarios. This page does not repeat them.
+The feature files live in `e2e/features/`. They cover the campaign hub, the campaign rules tab and its homebrew forge, the character sheet, the session lobby and VTT, the session chronicle feed, asset forge, the caravan board, the app shell routes, identity negative paths and smoke checks. Read the files for the scenarios. This page does not repeat them.
