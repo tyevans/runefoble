@@ -5,7 +5,7 @@ export { AssetImageController, AssetImageSet, isAuthorizedAssetPath } from './as
 export { websocketProtocols, RUNEFOBLE_SOCKET_PROTOCOL, RUNEFOBLE_BEARER_PREFIX } from './websocket-protocols.ts';
 export { PORTRAIT_PLACEHOLDERS, type PortraitPlaceholderId } from './portrait-placeholders.ts';
 export {
-  HttpError, apiUrl, bearerHeaders, errorDetailFromBody, errorMessageFromBody, isRecord, postForm, postJson,
-  request, requestFailureMessage, wsUrl, type ActionResult, type AuthSource, type FetchLike, type RequestOptions,
+  HttpError, actionFailureMessage, apiUrl, bearerHeaders, errorDetailFromBody, isRecord, postForm, postJson,
+  request, requestFailureMessage, UnreadableResponseError, wsUrl, type ActionResult, type AuthSource, type FetchLike, type RequestOptions,
   type RequestSpec,
 } from './http.ts';

@@ -8,7 +8,6 @@ import assert from 'node:assert/strict';
 import {
   HttpError,
   bearerHeaders,
-  errorMessageFromBody,
   postJson,
   requestFailureMessage,
   request,
@@ -138,19 +137,5 @@ describe('wsUrl', () => {
   it('uses wss on an https page and ws on an http page', () => {
     assert.equal(wsUrl('/ws/session/s1', { protocol: 'https:', host: 'app.example' }), 'wss://app.example/ws/session/s1');
     assert.equal(wsUrl('/ws/boards/b1', { protocol: 'http:', host: 'localhost:8000' }), 'ws://localhost:8000/ws/boards/b1');
-  });
-});
-
-describe('errorMessageFromBody', () => {
-  it('prefers the detail string, then message, then error', () => {
-    assert.equal(errorMessageFromBody({ detail: 'Campaign title is required' }, 422), 'Campaign title is required');
-    assert.equal(errorMessageFromBody({ message: 'Rate limited' }, 429), 'Rate limited');
-    assert.equal(errorMessageFromBody({ error: 'Forbidden here' }, 403), 'Forbidden here');
-  });
-
-  it('falls back to a status message for a blank detail or an unreadable body', () => {
-    assert.equal(errorMessageFromBody({ detail: '   ' }, 500), 'The request failed with status 500.');
-    assert.equal(errorMessageFromBody(null, 404), 'The requested item was not found.');
-    assert.equal(errorMessageFromBody('<html>', 502), 'The request failed with status 502.');
   });
 });
