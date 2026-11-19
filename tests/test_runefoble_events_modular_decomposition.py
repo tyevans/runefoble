@@ -17,7 +17,6 @@ from runefoble_events.events import (
     CaravanDispatched,
     SessionCreated,
     TokenMoved,
-    WatcherNarrationGenerated,
 )
 
 
@@ -42,12 +41,6 @@ def test_domain_event_instantiation_and_cloudevent_compliance() -> None:
     )
     assert token_ev.token_id == "tok-0177"
     assert token_ev.to_x == 5
-
-    watcher_ev = WatcherNarrationGenerated(
-        aggregate_id=aggregate_id,
-        narrative_text="The ancient stone door grinds open.",
-    )
-    assert "stone door" in watcher_ev.narrative_text
 
     caravan_ev = CaravanDispatched(
         aggregate_id=uuid4(),

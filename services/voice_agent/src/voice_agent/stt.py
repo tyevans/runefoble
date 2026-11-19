@@ -12,10 +12,9 @@ from typing import Any
 
 import httpx
 from pydantic import BaseModel
-from runefoble_events.events import PlayerSpokeEvent, VoiceTranscriptionFailed
+from runefoble_events.events import PlayerSpokeEvent
 from runefoble_platform.config import PlatformSettings
-from runefoble_platform.engine_ports import EngineUnavailableError
-from runefoble_platform.event_publish import publish_best_effort, publish_or_fail
+from runefoble_platform.event_publish import publish_or_fail
 from runefoble_platform.identifiers import opaque_aggregate_id
 from voice_agent.auth import caller_headers
 from voice_agent.event_bus import get_event_bus
@@ -122,22 +121,6 @@ class StreamingAudioPipeline:
     def reset_all(self) -> None:
         self.participants.clear()
 
-    async def publish_transcription_failed(
-        self,
-        session_id: str,
-        speaker_id: str,
-        speaker_name: str,
-        exc: EngineUnavailableError,
-    ) -> None:
-        event = VoiceTranscriptionFailed(
-            session_id=session_id,
-            speaker_id=speaker_id,
-            speaker_name=speaker_name,
-            engine=self.transcriber.engine_name,
-            reason=str(exc),
-        )
-        await publish_best_effort(get_event_bus(), STREAM_VOICE, event)
-
     async def process_chunk(
         self,
         session_id: str,
@@ -185,11 +168,7 @@ class StreamingAudioPipeline:
                 buffer_duration_ms=buf_dur,
             )
 
-        try:
-            transcript = await self.transcriber.transcribe(utterance_audio, sample_rate=sr)
-        except EngineUnavailableError as exc:
-            await self.publish_transcription_failed(session_id, speaker_id, speaker_name, exc)
-            raise
+        transcript = await self.transcriber.transcribe(utterance_audio, sample_rate=sr)
 
         session_uuid = opaque_aggregate_id(session_id, field="session_id")
         campaign_uuid = (

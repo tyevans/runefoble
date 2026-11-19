@@ -21,7 +21,6 @@ from runefoble_platform.telemetry import (
 )
 
 from tests.helpers.mock_redis import MockAsyncRedis
-from tests.helpers.ws_identity import ws_subprotocols
 
 
 @pytest.fixture(autouse=True)
@@ -112,60 +111,6 @@ async def test_blackbox_w3c_incoming_trace_propagation():
 
 
 @pytest.mark.asyncio
-async def test_blackbox_trace_propagation_across_redis_streams(
-    mock_bus, board_gateway, board_table
-):
-    """Verify trace context injection into Redis Streams and child span extraction.
-
-    The gateway publishes the spectator connection event when a spectator socket is admitted.
-    The WebSocket server span carries the socket target in `http.target`.
-    """
-    memory_exporter = InMemorySpanExporter()
-    settings = PlatformSettings(environment="test")
-
-    provider = init_telemetry(
-        service_name="gateway-api",
-        settings=settings,
-        app=gateway_app,
-        span_exporter=memory_exporter,
-        force=True,
-    )
-
-    _, session_id = board_table("dm_dora", {"spectator_sol": "spectator"})
-    stream_name = "runefoble.events.spectator"
-    with board_gateway.websocket_connect(
-        f"/ws/spectator/{session_id}", subprotocols=ws_subprotocols("spectator_sol")
-    ) as ws:
-        assert ws.receive_json()["type"] == "overlay_connected"
-
-    # Verify event was published to mock Redis stream
-    assert stream_name in mock_bus.streams
-    assert len(mock_bus.streams[stream_name]) == 1
-
-    _msg_id, fields = mock_bus.streams[stream_name][0]
-    assert "traceparent" in fields, "Stream entry fields must include injected traceparent"
-
-    # Extract trace context and verify child span inherits parent trace ID
-    extracted_ctx = extract_trace_context(fields)
-    tracer = trace.get_tracer("test-consumer", tracer_provider=provider)
-
-    with tracer.start_as_current_span(
-        "process_spectator_event", context=extracted_ctx
-    ) as child_span:
-        child_trace_id = format(child_span.get_span_context().trace_id, "032x")
-
-    spans = memory_exporter.get_finished_spans()
-    server_spans = [
-        s
-        for s in spans
-        if str(s.attributes.get("http.target", "")).startswith(f"/ws/spectator/{session_id}")
-    ]
-    assert len(server_spans) == 1
-
-    root_trace_id = format(server_spans[0].get_span_context().trace_id, "032x")
-    assert child_trace_id == root_trace_id, "Child span must share trace ID with gateway span"
-
-
 @pytest.mark.asyncio
 async def test_blackbox_trace_injection_and_deserialization_roundtrip():
     """Verify inject_trace_context and extract_trace_context across DomainEvent roundtrips."""

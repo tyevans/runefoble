@@ -4,7 +4,7 @@ import uuid
 
 import pytest
 from httpx import ASGITransport, AsyncClient
-from runefoble_events.events import SpeechIntentParsed, WatcherNarrationGenerated
+from runefoble_events.events import SpeechIntentParsed
 from runefoble_platform.redis_bus import deserialize_event
 from the_watcher.main import app as watcher_app
 
@@ -84,13 +84,10 @@ async def test_blackbox_coordinate_movement_frontdoor(
 
     # Verify observable domain events on Redis Streams frontdoor
     watcher_entries = mock_redis.streams.get("runefoble.events.watcher", [])
-    assert len(watcher_entries) == 2
+    assert len(watcher_entries) == 1
     evt1 = deserialize_event(watcher_entries[0][1])
     assert isinstance(evt1, SpeechIntentParsed)
     assert evt1.action_type == "move"
-
-    evt2 = deserialize_event(watcher_entries[1][1])
-    assert isinstance(evt2, WatcherNarrationGenerated)
 
     # The proposal to (6, 8) stages a preview. The token stays at (2, 2) until confirm.
     assert token_position(board_state_upstream, sid, "tok-valeros", "test-user") == (2, 2)

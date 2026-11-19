@@ -7,14 +7,8 @@ import logging
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
-from runefoble_events.events import (
-    NeuralSpeechBargeInDetectedEvent,
-    TTSStreamAttenuatedEvent,
-)
-from runefoble_platform.event_publish import publish_best_effort
 from voice_agent.auth import CallerPrincipal, get_principal
 from voice_agent.authz import require_speaker
-from voice_agent.dependencies import STREAM_SESSION, STREAM_VOICE, get_event_bus
 from voice_agent.dsp.barge_in_filter import BargeInOnsetFilter
 from voice_agent.dsp.cosine_crossfade import CosineCrossfadeAttenuator
 
@@ -77,28 +71,6 @@ async def evaluate_barge_in(
     atten_res = attenuator.attenuate(tts_pcm)
     atten_b64 = base64.b64encode(atten_res.faded_audio).decode("ascii")
     halt_lat = round(result.onset_latency_ms + req.fade_duration_ms, 2)
-
-    b_ev = NeuralSpeechBargeInDetectedEvent(
-        session_id=req.session_id,
-        speaker_id=req.speaker_id,
-        speaker_name=req.speaker_name,
-        onset_latency_ms=result.onset_latency_ms,
-        confidence=result.confidence,
-        rms_energy=result.rms_energy,
-    )
-    a_ev = TTSStreamAttenuatedEvent(
-        session_id=req.session_id,
-        stream_id="tts_stream",
-        fade_duration_ms=req.fade_duration_ms,
-        attenuated_samples_count=atten_res.attenuated_samples_count,
-        peak_tail_amplitude=atten_res.peak_tail_amplitude,
-        cutoff_position_ms=result.onset_latency_ms,
-    )
-
-    bus = get_event_bus()
-    for stream in (STREAM_VOICE, STREAM_SESSION):
-        for ev in (b_ev, a_ev):
-            await publish_best_effort(bus, stream, ev)
 
     return BargeInEvaluationResponse(
         session_id=req.session_id,

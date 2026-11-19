@@ -99,23 +99,6 @@ def test_spectate_publishes_no_event_on_get(gateway, table, mock_bus):
     assert mock_bus.streams.get(SPECTATOR_EVENT_STREAM, []) == []
 
 
-def test_spectator_connection_event_is_published_when_the_socket_is_admitted(
-    gateway, table, mock_bus
-):
-    _, session_id = table
-    with gateway.websocket_connect(
-        f"/ws/spectator/{session_id}", subprotocols=ws_subprotocols(SPECTATOR)
-    ) as ws:
-        assert ws.receive_json()["type"] == "overlay_connected"
-
-    events = mock_bus.streams.get(SPECTATOR_EVENT_STREAM, [])
-    assert len(events) == 1
-    _event_id, payload = events[0]
-    assert payload["event_type"] == "runefoble.events.spectator.connected"
-    assert session_id in payload["payload"]
-    assert SPECTATOR in payload["payload"]
-
-
 def test_spectator_websocket_sends_the_owner_party_without_monsters(gateway, table):
     _, session_id = table
     with gateway.websocket_connect(

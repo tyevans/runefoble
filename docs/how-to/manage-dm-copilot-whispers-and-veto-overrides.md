@@ -38,12 +38,12 @@ curl -X POST "http://localhost:8001/api/v1/watcher/veto" \
 
 When The Watcher proposes an AI game action (e.g., monster movement, offensive spellcast, or tactical ambush):
 1. **Pause Window**: The action is registered with a configurable pre-execution pause window (default `2000ms`, `pause_window_ms`).
-2. **Action Intercepted**: The action enters `pending` state and emits `runefoble.events.watcher.action_proposed` over Redis Streams (`runefoble.events.watcher`).
+2. **Action Intercepted**: The action enters `pending` state. The pending-action aggregate stores it. Read it with `GET /api/v1/watcher/actions/pending`.
 3. **DM Adjudication**:
-   - **Veto**: The DM halts execution immediately. The action is cancelled, `runefoble.events.watcher.action_vetoed` is published, and board state remains unchanged.
-   - **Approve**: The DM bypasses the remaining pause timer to commit the action immediately (`runefoble.events.watcher.action_approved`).
-   - **Modify**: The DM edits the description, target, or parameters before committing (`runefoble.events.watcher.action_modified`).
-   - **Timeout Expiry**: If the DM does not decide within the pause window, the action automatically commits and executes. `runefoble.events.watcher.action_expired` is published with the original action.
+   - **Veto**: The DM halts execution immediately. The action is cancelled, the pending-action aggregate records the veto, and board state remains unchanged.
+   - **Approve**: The DM bypasses the remaining pause timer to commit the action immediately. The aggregate records the approval.
+   - **Modify**: The DM edits the description, target, or parameters before committing. The aggregate records the modification.
+   - **Timeout Expiry**: If the DM does not decide within the pause window, the action automatically commits and executes. The aggregate records the expiry.
 
 Pending actions, whispers, and open disambiguations are event-sourced aggregates (`WatcherPendingActions`, `WatcherWhispers`, `WatcherDisambiguations`). A service restart keeps them. At start-up, the service re-arms the expiry timer of every open action from its stored deadline, so an action whose window elapsed during the outage expires at start-up.
 

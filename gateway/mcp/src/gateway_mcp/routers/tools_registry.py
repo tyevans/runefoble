@@ -71,7 +71,7 @@ def build_tools_registry_router(
                 await grant_tool_permissions(caller.user_id, payload.name, payload.campaign_id)
             except HTTPException:
                 # Without an author tuple nobody could manage the tool. Undo the registration.
-                dynamic_registry.deregister_tool(payload.name, unregistered_by=caller.user_id)
+                dynamic_registry.deregister_tool(payload.name)
                 raise
         return {"status": "registered", "tool": registered.model_dump()}
 
@@ -109,7 +109,7 @@ def build_tools_registry_router(
         if record is None:
             raise HTTPException(status_code=404, detail=f"Tool '{tool_name}' not found")
         await enforce_tool_auth(caller.user_id, tool_name, "manage")
-        dynamic_registry.deregister_tool(tool_name, unregistered_by=caller.user_id)
+        dynamic_registry.deregister_tool(tool_name)
         if record.author_id is not None:
             await revoke_tool_permissions(record.author_id, tool_name, record.campaign_id)
         return {"status": "deregistered", "name": tool_name}
@@ -123,9 +123,7 @@ def build_tools_registry_router(
         """Evaluate the dynamic tool handler with supplied arguments, as the verified caller."""
         await enforce_tool_auth(caller.user_id, name, "execute")
         try:
-            result = dynamic_registry.execute_tool(
-                name, req.arguments, user_id=caller.user_id, session_id=req.session_id
-            )
+            result = dynamic_registry.execute_tool(name, req.arguments)
             return {"status": "success", "tool": name, "result": result}
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc

@@ -21,12 +21,10 @@ from fastapi.testclient import TestClient
 from httpx import ASGITransport, AsyncClient
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_platform.event_sourcing import create_aggregate_repository
-from runefoble_platform.redis_bus import deserialize_event
 from the_watcher.copilot_state.disambiguations import DisambiguationAggregate
 from the_watcher.copilot_state.pending_actions import PendingActionAggregate
 from the_watcher.copilot_state.whispers import WhisperAggregate
 from the_watcher.dependencies import (
-    STREAM_WATCHER,
     build_copilot_engine,
     get_copilot_engine,
     get_disambiguation_repo,
@@ -46,12 +44,20 @@ from tests.helpers.ws_identity import SIGNING_ISSUER
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
-VETOED = "runefoble.events.watcher.action_vetoed"
-EXPIRED = "runefoble.events.watcher.action_expired"
-
 
 def _headers(user: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(user)}"}
+
+
+def _listed_status(sess_id: str, camp_id: str, user: str, action_id: str, status: str) -> bool:
+    """Return True when the pending list shows the action with the given status."""
+    res = TestClient(app).get(
+        f"/api/v1/watcher/actions/pending?session_id={sess_id}&campaign_id={camp_id}",
+        headers=_headers(user),
+    )
+    return res.status_code == 200 and any(
+        a["action_id"] == action_id and a["status"] == status for a in res.json()
+    )
 
 
 @pytest.fixture
@@ -117,14 +123,9 @@ def _propose(client: TestClient, sess_id: str, camp_id: str, dm: str, **kwargs: 
     return res.json()["action_id"]
 
 
-def _stream_events(mock_redis: MockAsyncRedis, event_type: str) -> list[Any]:
-    events = [deserialize_event(fields) for _, fields in mock_redis.streams.get(STREAM_WATCHER, [])]
-    return [e for e in events if getattr(e, "event_type", None) == event_type]
-
-
 @pytest.mark.asyncio
 async def test_pending_action_survives_restart_and_is_vetoed_by_dm(mock_redis: MockAsyncRedis):
-    """Propose, restart, then veto through HTTP. The veto event carries the proposed action."""
+    """Propose, restart, then veto through HTTP. The pending list then shows the veto."""
     dm = f"dm-{uuid4().hex[:6]}"
     camp_id, sess_id = await _setup_dm(dm)
     client = TestClient(app)
@@ -153,10 +154,14 @@ async def test_pending_action_survives_restart_and_is_vetoed_by_dm(mock_redis: M
     assert veto.status_code == 200, veto.text
     assert veto.json()["status"] == "vetoed"
 
-    vetoed = _stream_events(mock_redis, VETOED)
-    assert len(vetoed) == 1
-    assert vetoed[0].action_id == action_id
-    assert vetoed[0].original_action["actor_name"] == "Goblin"
+    after = client.get(
+        f"/api/v1/watcher/actions/pending?session_id={sess_id}&campaign_id={camp_id}",
+        headers=_headers(dm),
+    )
+    assert after.status_code == 200, after.text
+    vetoed = [a for a in after.json() if a["action_id"] == action_id]
+    assert [a["status"] for a in vetoed] == ["vetoed"]
+    assert vetoed[0]["actor_name"] == "Goblin"
 
 
 @pytest.mark.asyncio
@@ -177,14 +182,13 @@ async def test_unknown_action_veto_is_not_found(mock_redis: MockAsyncRedis):
         headers=_headers(dm),
     )
     assert res.status_code == 404
-    assert _stream_events(mock_redis, VETOED) == []
 
 
 @pytest.mark.asyncio
 async def test_pending_action_expires_after_restart_without_dm_decision(
     mock_redis: MockAsyncRedis,
 ):
-    """An action with a 1-second window expires after a restart. The stream shows the expiry.
+    """An action with a 1-second window expires after a restart. The pending list shows it.
 
     The lifespan re-arms timers from the stored deadline. The timer that propose started
     belonged to the previous process, so only the restart can expire this action.
@@ -196,12 +200,12 @@ async def test_pending_action_expires_after_restart_without_dm_decision(
     _restart()
     with TestClient(app, headers=_headers(dm)):
         deadline = time.monotonic() + 10
-        while time.monotonic() < deadline and not _stream_events(mock_redis, EXPIRED):
+        while time.monotonic() < deadline and not _listed_status(
+            sess_id, camp_id, dm, action_id, "executed"
+        ):
             time.sleep(0.1)
 
-    expired = [e for e in _stream_events(mock_redis, EXPIRED) if e.action_id == action_id]
-    assert len(expired) == 1
-    assert expired[0].original_action["status"] == "executed"
+    assert _listed_status(sess_id, camp_id, dm, action_id, "executed")
 
 
 @pytest.mark.asyncio

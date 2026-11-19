@@ -14,8 +14,6 @@ from runefoble_events.events import (
     CombatEncounterEnded,
     CombatEncounterStarted,
     CombatRoundAdvanced,
-    CriticalHitScored,
-    DeathSaveStarted,
     DiceRolled,
     InitiativeTurnAdvanced,
     PlayerSpokeEvent,
@@ -176,9 +174,7 @@ async def handle_incoming_domain_event(event: Any) -> None:
         await _handle_combat_advance(session_id, getattr(event, "round_number", 1))
     elif isinstance(event, PlayerSpokeEvent):
         await _handle_player_speech(session_id)
-    elif isinstance(event, (CriticalHitScored,)) or (
-        isinstance(event, DiceRolled) and getattr(event, "is_crit", False)
-    ):
+    elif isinstance(event, DiceRolled) and getattr(event, "is_crit", False):
         char_id = str(
             getattr(event, "character_id", None)
             or getattr(event, "roller_id", None)
@@ -197,7 +193,3 @@ async def handle_incoming_domain_event(event: Any) -> None:
         if event.current_hp <= 0:
             char_id = str(event.aggregate_id)
             await _handle_leitmotif_trigger(session_id, char_id, "Hero", "somber", "death_save")
-    elif isinstance(event, (DeathSaveStarted,)):
-        char_id = str(getattr(event, "character_id", None) or "char-player")
-        char_name = str(getattr(event, "character_name", None) or "Hero")
-        await _handle_leitmotif_trigger(session_id, char_id, char_name, "somber", "death_save")

@@ -10,7 +10,6 @@ the protocol result. No private state is touched.
 from __future__ import annotations
 
 import asyncio
-import json
 import os
 import shutil
 import socket
@@ -23,21 +22,14 @@ from pathlib import Path
 import httpx
 import pytest
 import yaml
-from gateway_mcp.dynamic import (
-    DynamicToolDefinition,
-    dynamic_registry,
-    get_event_bus,
-    set_event_bus,
-)
+from gateway_mcp.dynamic import DynamicToolDefinition, dynamic_registry
 from gateway_mcp.dynamic.auth import grant_tool_permissions
 from gateway_mcp.identity import get_verifier, set_verifier
 from gateway_mcp.server import build_http_app
-from runefoble_platform.redis_bus import RedisStreamsEventBus
 
 from tests.helpers.live_services import serve
 from tests.helpers.mcp_http import call_tool_over_http, mcp_session
-from tests.helpers.mock_redis import MockAsyncRedis
-from tests.helpers.module_state import SeamRestorer, restored_seam
+from tests.helpers.module_state import restored_seam
 from tests.helpers.polling import wait_until
 from tests.helpers.process import run_command
 from tests.helpers.ws_identity import SIGNING_ISSUER
@@ -224,13 +216,9 @@ def test_tool_call_without_bearer_is_refused_before_dispatch(authenticated_endpo
     assert response.status_code == 401
 
 
-def test_dynamic_tool_call_over_http_records_the_verified_caller(
-    authenticated_endpoint: str, seam_restorer: SeamRestorer
-):
-    """A dynamic tool called over MCP reports the token subject, who needs `mcp_tool.execute`."""
+def test_dynamic_tool_call_over_http_runs_for_the_granted_caller(authenticated_endpoint: str):
+    """A dynamic tool runs over MCP for the token subject that holds `mcp_tool.execute`."""
     name = "transport_identity_probe"
-    bus_client = MockAsyncRedis()
-    seam_restorer.replace(get_event_bus, set_event_bus, RedisStreamsEventBus(client=bus_client))
     dynamic_registry.register_tool(
         DynamicToolDefinition(
             name=name,
@@ -250,12 +238,6 @@ def test_dynamic_tool_call_over_http_records_the_verified_caller(
             )
         )
         assert not result.isError
-        invoked = [
-            json.loads(fields["payload"])
-            for _, fields in bus_client.streams.get("runefoble.events.system", [])
-            if fields.get("event_type") == "runefoble.events.mcp_tools.dynamic_tool_invoked"
-        ]
-        assert invoked and invoked[-1]["user_id"] == "mallory"
     finally:
         dynamic_registry.deregister_tool(name)
 

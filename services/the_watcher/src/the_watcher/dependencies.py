@@ -182,17 +182,11 @@ set_disambiguation_repo = _disambiguation.set
 
 def build_copilot_engine() -> CopilotEngine:
     """Build a copilot engine over the current repositories and event bus."""
-    return CopilotEngine(
-        bus=get_event_bus,
-        watcher_stream=STREAM_WATCHER,
-        pending_repo=get_pending_action_repo,
-    )
+    return CopilotEngine(pending_repo=get_pending_action_repo)
 
 
 copilot_engine = build_copilot_engine()
-whisper_service = WhisperService(
-    bus=get_event_bus, watcher_stream=STREAM_WATCHER, whisper_repo=get_whisper_repo
-)
+whisper_service = WhisperService(whisper_repo=get_whisper_repo)
 disambiguation_store = DisambiguationStore(get_disambiguation_repo, disambiguation_engine)
 
 

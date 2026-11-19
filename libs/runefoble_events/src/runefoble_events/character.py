@@ -199,34 +199,6 @@ class StandInReleased(BaseRunefobleEvent):
     character_id: UUID | str
 
 
-@register_event("runefoble.events.character.critical_hit_scored")
-class CriticalHitScored(BaseRunefobleEvent):
-    """Emitted when a character scores a critical hit or natural 20."""
-
-    aggregate_type: str = "CharacterSheet"
-    aggregate_id: UUID = Field(default_factory=uuid4)
-    event_type: str = "runefoble.events.character.critical_hit_scored"
-    session_id: str
-    character_id: str
-    character_name: str = ""
-    target_id: str | None = None
-    target_name: str | None = None
-    roll_total: int = 20
-
-
-@register_event("runefoble.events.character.death_save_started")
-class DeathSaveStarted(BaseRunefobleEvent):
-    """Emitted when a character drops to 0 HP and begins death saves."""
-
-    aggregate_type: str = "CharacterSheet"
-    aggregate_id: UUID = Field(default_factory=uuid4)
-    event_type: str = "runefoble.events.character.death_save_started"
-    session_id: str
-    character_id: str
-    character_name: str = ""
-    current_hp: int = 0
-
-
 @register_event("runefoble.events.character.damaged")
 class CharacterDamaged(BaseRunefobleEvent):
     """Emitted when a character takes damage, reducing hit points."""

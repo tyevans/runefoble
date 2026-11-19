@@ -1,7 +1,7 @@
 """Blackbox TDD frontdoor suite for SpiceDB resource ownership and edge cases.
 
 Verifies:
-1. Domain event stream synchronization (SessionCreated, ParticipantJoined, CharacterCreated).
+1. Domain event stream synchronization (SessionCreated, CharacterCreated).
 2. Character ownership written by the character frontdoor on create.
 3. Removed public sync routes return 404. Error handling for malformed event payloads.
 """
@@ -13,7 +13,7 @@ from fastapi.testclient import TestClient
 from gateway_api.auth import get_spicedb_client
 from gateway_api.main import app
 from runefoble_auth.sync import ZitadelSpiceDBSyncService
-from runefoble_events.events import CharacterCreated, ParticipantJoined, SessionCreated
+from runefoble_events.events import CharacterCreated, SessionCreated
 
 
 def _auth(issuer, sub: str) -> dict[str, str]:
@@ -42,18 +42,6 @@ async def test_domain_events_provision_spicedb_relationships() -> None:
     )
     await sync_service.handle_session_created(session_event)
     assert await spicedb.check_permission("campaign", campaign_id, "run_session", "user", dm_id)
-
-    # Publish ParticipantJoined -> player play & view permissions
-    participant_event = ParticipantJoined(
-        aggregate_id=uuid4(),
-        campaign_id=campaign_id,
-        user_id=player_id,
-        role="player",
-        character_id=char_id,
-    )
-    await sync_service.handle_participant_joined(participant_event)
-    assert await spicedb.check_permission("campaign", campaign_id, "play", "user", player_id)
-    assert await spicedb.check_permission("campaign", campaign_id, "view", "user", player_id)
 
     # Publish CharacterCreated -> character owner edit permission
     char_event = CharacterCreated(

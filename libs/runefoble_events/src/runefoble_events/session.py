@@ -20,18 +20,6 @@ class SessionCreated(BaseRunefobleEvent):
     created_by: str = "system"
 
 
-@register_event("runefoble.events.session.participant_joined")
-class ParticipantJoined(BaseRunefobleEvent):
-    event_type: str = "runefoble.events.session.participant_joined"
-
-    aggregate_type: str = "GameSession"
-    session_id: UUID | str = ""
-    campaign_id: UUID | str = ""
-    user_id: str
-    role: str = "player"
-    character_id: UUID | str | None = None
-
-
 @register_event("runefoble.events.session.started")
 class SessionStarted(BaseRunefobleEvent):
     event_type: str = "runefoble.events.session.started"
@@ -89,17 +77,6 @@ class SessionEnded(BaseRunefobleEvent):
 
     aggregate_type: str = "GameSession"
     summary: str = "Session completed"
-
-
-@register_event("runefoble.events.spectator.connected")
-class SpectatorSessionConnected(BaseRunefobleEvent):
-    aggregate_type: str = "Spectator"
-    aggregate_id: UUID = Field(default_factory=uuid4)
-    event_type: str = "runefoble.events.spectator.connected"
-    session_id: str
-    viewer_id: str
-    viewer_name: str
-    connected_at: str
 
 
 @register_event("runefoble.events.session.combat_encounter_started")

@@ -11,7 +11,6 @@ from fastapi import APIRouter, Depends
 from voice_agent.auth import CallerPrincipal, get_principal
 from voice_agent.authz import require_speaker
 from voice_agent.dependencies import (
-    _dispatch_voice_audio_conditioned,
     dsp_pipeline,
 )
 from voice_agent.filters import apply_audio_filters
@@ -69,15 +68,6 @@ async def synthesize_voice(req: TTSRequest, principal: CallerPrincipal):
     dsp_params: dict[str, Any] = processed.dsp_config.model_dump()
     dsp_params.update(audio_meta)
     total_latency = round(filter_latency + processed.latency_ms, 2)
-
-    await _dispatch_voice_audio_conditioned(
-        session_id=req.session_id,
-        speaker_id=req.speaker_id,
-        speaker_name=req.speaker_name,
-        filters_applied=filters,
-        latency_ms=total_latency,
-        audio_bytes_length=len(filtered_pcm),
-    )
 
     return TTSResponse(
         duration_ms=clip.duration_ms,

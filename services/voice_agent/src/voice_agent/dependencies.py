@@ -6,7 +6,6 @@ import logging
 from typing import Any
 
 import httpx
-from runefoble_events.events import VoiceAudioConditioned
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.event_publish import publish_best_effort
 from runefoble_platform.redis_bus import RedisStreamsEventBus
@@ -26,28 +25,6 @@ def set_watcher_client(client: httpx.AsyncClient | None) -> None:
     get_streaming_pipeline().set_watcher_client(client)
 
 
-async def _dispatch_voice_audio_conditioned(
-    session_id: str,
-    speaker_id: str,
-    speaker_name: str,
-    filters_applied: list[str],
-    latency_ms: float,
-    audio_bytes_length: int,
-) -> None:
-    """Publish VoiceAudioConditioned domain event to session and voice event streams."""
-    event = VoiceAudioConditioned(
-        session_id=session_id,
-        speaker_id=speaker_id,
-        speaker_name=speaker_name,
-        filters_applied=filters_applied,
-        latency_ms=latency_ms,
-        audio_bytes_length=audio_bytes_length,
-    )
-    bus = get_event_bus()
-    for stream in (STREAM_SESSION, STREAM_VOICE):
-        await publish_best_effort(bus, stream, event)
-
-
 async def publish_voice_event(event: Any, bus: RedisStreamsEventBus | None = None) -> None:
     """Publish a notification event to session and voice Redis Streams (best effort, counted)."""
     active_bus = bus or get_event_bus()
@@ -58,7 +35,6 @@ async def publish_voice_event(event: Any, bus: RedisStreamsEventBus | None = Non
 __all__ = [
     "STREAM_SESSION",
     "STREAM_VOICE",
-    "_dispatch_voice_audio_conditioned",
     "dsp_pipeline",
     "get_event_bus",
     "logger",

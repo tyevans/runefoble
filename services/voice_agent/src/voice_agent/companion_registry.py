@@ -4,13 +4,9 @@ from __future__ import annotations
 
 import contextlib
 import logging
-from datetime import UTC, datetime
 from typing import Any
 
 from fastapi import WebSocket
-from runefoble_events.events import MobileHapticPingDispatched
-from runefoble_platform.event_publish import publish_best_effort
-from voice_agent.dependencies import get_event_bus
 from voice_agent.mobile import (
     HapticVibrationPattern,
     MobileAudioProfileTier,
@@ -20,11 +16,6 @@ from voice_agent.mobile import (
 )
 
 logger = logging.getLogger("runefoble.voice_agent.companion_registry")
-
-
-async def publish_companion_event(stream: str, event: Any) -> None:
-    if bus := get_event_bus():
-        await publish_best_effort(bus, stream, event)
 
 
 class MobileCompanionManager:
@@ -108,18 +99,6 @@ class MobileCompanionManager:
         )
         await self.send_to_user(session_id, recipient_id, haptic_frame)
 
-        event = MobileHapticPingDispatched(
-            session_id=session_id,
-            recipient_id=recipient_id,
-            alert_type="secret_whisper",
-            vibration_pattern=HapticVibrationPattern.SECRET_WHISPER,
-            whisper_content=content,
-            notification_title=notification["title"],
-            notification_body=notification["body"],
-            diegetic=True,
-            dispatched_at=datetime.now(UTC).isoformat(),
-        )
-        await publish_companion_event("runefoble.events.voice", event)
         return haptic_frame
 
     async def dispatch_turn_alert(
@@ -143,18 +122,6 @@ class MobileCompanionManager:
         )
         await self.send_to_user(session_id, recipient_id, haptic_frame)
 
-        event = MobileHapticPingDispatched(
-            session_id=session_id,
-            recipient_id=recipient_id,
-            alert_type="turn_alert",
-            vibration_pattern=HapticVibrationPattern.TURN_ALERT,
-            whisper_content=None,
-            notification_title=notification["title"],
-            notification_body=notification["body"],
-            diegetic=True,
-            dispatched_at=datetime.now(UTC).isoformat(),
-        )
-        await publish_companion_event("runefoble.events.voice", event)
         return haptic_frame
 
 
@@ -163,5 +130,4 @@ mobile_companion_manager = MobileCompanionManager()
 __all__ = [
     "MobileCompanionManager",
     "mobile_companion_manager",
-    "publish_companion_event",
 ]

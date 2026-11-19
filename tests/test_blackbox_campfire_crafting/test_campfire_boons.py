@@ -6,7 +6,7 @@ Governed by ADR-0003, ADR-0006, ADR-0007, ADR-0011, and Hard Invariant 7.
 from __future__ import annotations
 
 from fastapi.testclient import TestClient
-from game_session.events import STREAM_SESSION, STREAM_STRONGHOLD
+from game_session.events import STREAM_STRONGHOLD
 
 from tests.helpers.campaign_setup import create_owned_campaign
 
@@ -114,9 +114,3 @@ def test_blackbox_campfire_rest_interlude_with_boons(session_client: TestClient,
     assert any("Full HP Restored" in b for b in boons)
     assert any("Campfire Camaraderie" in b for b in boons)
     assert any("Passive Perception" in b for b in boons)
-
-    entries = mock_bus.streams.get(STREAM_SESSION, [])
-    assert any(
-        "runefoble.events.downtime.campfire_rest_completed" in entry[1].get("event_type", "")
-        for entry in entries
-    )

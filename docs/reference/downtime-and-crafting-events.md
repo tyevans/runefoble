@@ -51,17 +51,6 @@ A mishap that deals damage publishes the standard health events on the character
 
 These events publish after the character and the crafting history are saved. A mishap with no damage publishes no health event.
 
-### 4. `runefoble.events.downtime.campfire_rest_completed`
-- **Topic**: `runefoble.events.session`
-- **Aggregate Type**: `GameSession`
-- **Payload Fields**:
-  - `session_id`: UUID | str — Session identifier.
-  - `campaign_id`: Optional[UUID] — Campaign identifier.
-  - `rest_type`: str — `short` or `long`.
-  - `storytelling_prompt`: str — Collaborative roleplay prompt posed to participants.
-  - `boons_applied`: List[str] — All rest boons granted (including active stronghold buffs).
-  - `participants_healed`: List[str] — Character names or IDs recovering HP and spell slots.
-
 ### 5. `runefoble.events.downtime.stronghold_created`
 - **Topic**: `runefoble.events.stronghold`
 - **Aggregate Type**: `Stronghold`

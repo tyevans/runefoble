@@ -9,13 +9,12 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from datetime import UTC, datetime
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, WebSocket
 from fastapi.responses import JSONResponse
 from gateway_api.auth import require_zanzibar_permission
-from gateway_api.dependencies import get_event_bus, get_upstreams
+from gateway_api.dependencies import get_upstreams
 from gateway_api.overlay_frames import (
     ROLL_ACTIONS,
     TOKEN_MOVED_ACTIONS,
@@ -43,8 +42,6 @@ from runefoble_auth.websocket import (
     send_socket_error,
     serve_authorized_socket,
 )
-from runefoble_events.events import SpectatorSessionConnected
-from runefoble_platform.event_publish import publish_best_effort
 from runefoble_platform.service_client import UpstreamError
 from runefoble_platform.ws_groups import WebSocketGroups
 
@@ -102,19 +99,6 @@ def _bearer_header(websocket: WebSocket) -> str | None:
     return f"Bearer {bearer}" if bearer else None
 
 
-async def _publish_spectator_connected(session_id: str, principal: VerifiedPrincipal) -> None:
-    """Publish the connection event once, when the socket is admitted. No GET publishes it."""
-    event = SpectatorSessionConnected(
-        session_id=session_id,
-        viewer_id=principal.user_id,
-        viewer_name=principal.username,
-        connected_at=datetime.now(UTC).isoformat(),
-    )
-    bus = get_event_bus()
-    if bus is not None:
-        await publish_best_effort(bus, "runefoble.events.spectator", event)
-
-
 @dataclass
 class _OverlayFeed:
     """Per-socket state: the caller's bearer, forwarded to the owners on each relay."""
@@ -139,7 +123,6 @@ async def _open_overlay(
         await websocket.close(code=WS_UPSTREAM_UNAVAILABLE)
         return False
     ws_overlay_manager.register(session_id, websocket)
-    await _publish_spectator_connected(session_id, principal)
     vitals = compose_party_vitals(session, board)
     await websocket.send_json(
         {

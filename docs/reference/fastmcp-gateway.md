@@ -167,8 +167,8 @@ Every route above requires a verified bearer token. Without one, the route retur
 - A new tool's author is the token subject that registered it. The gateway writes the SpiceDB `author` relation for that subject.
 - `PUT` keeps the recorded author. The caller needs `manage` on the tool.
 - `DELETE` requires `manage` and revokes the recorded author relation.
-- `POST .../execute` requires `execute`. The `runefoble.events.mcp_tools.dynamic_tool_invoked` event records the token subject as `user_id`.
-- A tool called through the MCP protocol records the token subject of that MCP request as `user_id`. The transport check runs first, so a call without a token never reaches the tool.
+- `POST .../execute` requires `execute`.
+- A tool called through the MCP protocol runs for the token subject of that MCP request. The transport check runs first, so a call without a token never reaches the tool.
 
 ### SpiceDB Zanzibar Object-Level Authorization
 
@@ -187,17 +187,6 @@ definition mcp_tool {
 
 - **Tool Management (`manage`)**: Creating, updating, or deleting custom tools requires the tool author (`author: user`) or campaign DM/GM/Owner (`campaign->run_session`).
 - **Tool Execution (`execute`)**: Invoking tools requires campaign players (`campaign->play`), DM/GMs (`campaign->run_session`), or the author.
-
-### Redis Streams Event Notifications
-
-Dynamic tool lifecycle events are published to Redis Streams topic `runefoble.events.system`:
-- **`DynamicToolRegisteredEvent`** (`runefoble.events.mcp_tools.dynamic_tool_registered`): Emitted when a dynamic tool is registered or hot-reloaded.
-- **`DynamicToolUnregisteredEvent`** (`runefoble.events.mcp_tools.dynamic_tool_unregistered`): Emitted when a dynamic tool is retired or removed.
-- **`DynamicToolInvokedEvent`** (`runefoble.events.mcp_tools.dynamic_tool_invoked`): Emitted upon dynamic tool execution with execution duration and telemetry.
-
-The gateway MCP process injects the Redis Streams bus at start-up (`configure_dynamic_event_bus` in `gateway/mcp/src/gateway_mcp/server.py`) from `REDIS_URL`. Startup fails when `REDIS_URL` is empty. The gateway MCP package has no in-memory fallback bus.
-
-A failed publish is not silent. The gateway logs an `ERROR` record that names the event type and the cause. It also adds a `dynamic_tool_event_dropped` event to the active OpenTelemetry span. This applies to a missing bus, a Redis error, and a dispatch with no running event loop.
 
 ### Declarative Handlers (ADR-0020)
 

@@ -10,23 +10,6 @@ from pydantic import Field
 from runefoble_events.base import BaseRunefobleEvent, register_event
 
 
-@register_event("runefoble.events.voice.stream_quality_degraded")
-class VoiceStreamQualityDegradedEvent(BaseRunefobleEvent):
-    """Emitted when RTCP receiver reports detect packet loss or delay spikes exceeding limits."""
-
-    aggregate_type: str = "VoiceRoom"
-    aggregate_id: UUID = Field(default_factory=uuid4)
-    event_type: str = "runefoble.events.voice.stream_quality_degraded"
-    session_id: str
-    peer_id: str
-    user_id: str | None = None
-    packet_loss: float = 0.0
-    round_trip_time_ms: float = 0.0
-    jitter_ms: float = 0.0
-    severity: str = "degraded"
-    detected_at: str = Field(default_factory=lambda: datetime.now(UTC).isoformat())
-
-
 @register_event("runefoble.events.voice.stream_quality_measured")
 class VoiceStreamQualityMeasured(BaseRunefobleEvent):
     """Emitted for every RTCP receiver report. It records the measured stream quality."""
@@ -70,6 +53,5 @@ class VoiceStreamCodecAdaptedEvent(BaseRunefobleEvent):
 
 __all__ = [
     "VoiceStreamCodecAdaptedEvent",
-    "VoiceStreamQualityDegradedEvent",
     "VoiceStreamQualityMeasured",
 ]

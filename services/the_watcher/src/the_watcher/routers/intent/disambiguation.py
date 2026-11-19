@@ -5,21 +5,11 @@ from __future__ import annotations
 import time
 
 from fastapi import APIRouter, Depends, HTTPException
-from runefoble_events.events import (
-    CandidateGhostPreviewEmitted,
-    CompoundActionResolved,
-    IntentDisambiguationRequested,
-)
-from runefoble_platform.event_publish import publish_best_effort
-from runefoble_platform.identifiers import opaque_aggregate_id
 from the_watcher.copilot_state.disambiguations import DisambiguationNotFoundError
 from the_watcher.dependencies import (
-    STREAM_BOARD,
-    STREAM_WATCHER,
     compound_action_engine,
     disambiguation_engine,
     disambiguation_store,
-    get_event_bus,
     require_session_permission,
 )
 from the_watcher.identity import CallerId, get_principal
@@ -33,10 +23,6 @@ from the_watcher.models import (
 )
 
 router = APIRouter(dependencies=[Depends(get_principal)], tags=["intent"])
-
-
-async def _safe_publish(bus, stream: str, event) -> None:
-    await publish_best_effort(bus, stream, event)
 
 
 def evaluate_target_ambiguity(
@@ -76,7 +62,7 @@ async def dispatch_disambiguation(
     is_compound: bool,
     latency_ms: float,
 ) -> IntentParseResponse:
-    """Generate clarification prompt, register pending state, and dispatch preview events."""
+    """Generate clarification prompt, register pending state, and return the choices."""
     prompt = disambiguation_engine.generate_clarification_prompt(ambig_target, ambig_candidates)
     pending = await disambiguation_store.register(
         session_id=req.session_id,
@@ -90,43 +76,6 @@ async def dispatch_disambiguation(
         clarification_prompt=prompt,
         actions=nodes,
     )
-    bus, s_uuid = get_event_bus(), opaque_aggregate_id(req.session_id, field="session_id")
-    c_uuid = (
-        str(opaque_aggregate_id(req.campaign_id, field="campaign_id")) if req.campaign_id else None
-    )
-    await _safe_publish(
-        bus,
-        STREAM_WATCHER,
-        IntentDisambiguationRequested(
-            aggregate_id=s_uuid,
-            session_id=str(s_uuid),
-            campaign_id=c_uuid,
-            speaker_id=req.speaker_id,
-            speaker_name=req.speaker_name,
-            original_transcript=req.transcript,
-            disambiguation_id=pending.disambiguation_id,
-            action_type=ambig_node.action_type,
-            ambiguous_target=ambig_target,
-            candidates=[c.model_dump() for c in ambig_candidates],
-            clarification_prompt=prompt,
-        ),
-    )
-    for c in ambig_candidates:
-        await _safe_publish(
-            bus,
-            STREAM_BOARD,
-            CandidateGhostPreviewEmitted(
-                aggregate_id=s_uuid,
-                session_id=str(s_uuid),
-                disambiguation_id=pending.disambiguation_id,
-                candidate_id=c.id,
-                token_id=c.id,
-                target_x=c.x,
-                target_y=c.y,
-                descriptor=c.descriptor,
-            ),
-        )
-
     return IntentParseResponse(
         session_id=req.session_id,
         speaker_name=req.speaker_name,
@@ -170,27 +119,6 @@ async def resolve_intent_disambiguation(
             speaker_name=pending.speaker_name,
             step_results=req.step_results,
         )
-
-    bus, s_uuid = get_event_bus(), opaque_aggregate_id(req.session_id, field="session_id")
-    campaign_id = req.campaign_id or pending.campaign_id
-    c_uuid = str(opaque_aggregate_id(campaign_id, field="campaign_id")) if campaign_id else None
-    await _safe_publish(
-        bus,
-        STREAM_WATCHER,
-        CompoundActionResolved(
-            aggregate_id=s_uuid,
-            session_id=str(s_uuid),
-            campaign_id=c_uuid,
-            speaker_id=req.speaker_id or pending.speaker_id,
-            speaker_name=req.speaker_name or pending.speaker_name,
-            original_transcript=pending.transcript,
-            disambiguation_id=req.disambiguation_id,
-            resolved_target=m.descriptor or m.name,
-            actions=[a.model_dump() for a in actions],
-            status=status,
-            narrative_summary=narrative,
-        ),
-    )
 
     return IntentResolveResponse(
         session_id=req.session_id,

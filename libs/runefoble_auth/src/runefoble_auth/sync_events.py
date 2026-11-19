@@ -33,7 +33,7 @@ async def handle_session_created(sync_service: Any, event: Any) -> list[str]:
 
 
 async def handle_participant_joined(sync_service: Any, event: Any) -> list[str]:
-    """Handle ParticipantJoined or PlayerJoinedSession domain events."""
+    """Handle PlayerJoinedSession domain events."""
     campaign_id = (
         event_field(event, "campaign_id")
         or event_field(event, "session_id")
@@ -89,10 +89,7 @@ async def handle_domain_event(
     event_type = event_type_of(event)
     if event_type == "runefoble.events.session.created":
         return await handle_session_created(sync_service, event)
-    if event_type in (
-        "runefoble.events.session.participant_joined",
-        "runefoble.events.session.player_joined_session",
-    ):
+    if event_type == "runefoble.events.session.player_joined_session":
         return await handle_participant_joined(sync_service, event)
     if event_type == "runefoble.events.character.created":
         return await handle_character_created(sync_service, event)

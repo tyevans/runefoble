@@ -17,8 +17,6 @@ from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
-from runefoble_events.events import VoiceSpeechInterrupted
-from runefoble_platform.redis_bus import deserialize_event
 from voice_agent.main import app as voice_app
 
 from tests.helpers.audio_synth import generate_pcm_sine
@@ -89,10 +87,3 @@ def test_duplex_websocket_protocol_frontdoor_integration(
 
         f3 = ws.receive_json()
         assert f3["type"] == "playback_canceled"
-
-    # Verify domain event published to Redis
-    mock_redis = clean_voice_bus["redis"]
-    assert "runefoble.events.voice" in mock_redis.streams
-    event = deserialize_event(mock_redis.streams["runefoble.events.voice"][0][1])
-    assert isinstance(event, VoiceSpeechInterrupted)
-    assert event.session_id == session_id

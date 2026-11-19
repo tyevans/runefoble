@@ -7,15 +7,10 @@ from datetime import UTC, datetime
 
 from fastapi import WebSocket, WebSocketDisconnect
 from runefoble_auth.websocket import action_authorizer, admit_websocket
-from runefoble_events.events import (
-    MobileAudioProfileAdapted,
-    MobileCompanionConnected,
-)
 from voice_agent.auth import get_voice_verifier
 from voice_agent.companion_registry import (
     MobileCompanionManager,
     mobile_companion_manager,
-    publish_companion_event,
 )
 from voice_agent.mobile import (
     PROFILES,
@@ -50,19 +45,7 @@ async def mobile_companion_websocket_endpoint(
 
     await comp_manager.connect(session_id, user_id, peer_id, websocket)
 
-    # 2. Publish MobileCompanionConnected domain event
-    conn_event = MobileCompanionConnected(
-        session_id=session_id,
-        peer_id=peer_id,
-        user_id=user_id,
-        device_type="mobile",
-        audio_profile_tier=MobileAudioProfileTier.MOBILE_OPTIMIZED,
-        haptic_supported=True,
-        connected_at=datetime.now(UTC).isoformat(),
-    )
-    await publish_companion_event("runefoble.events.voice", conn_event)
-
-    # 3. Send initial connected confirmation frame
+    # 2. Send initial connected confirmation frame
     init_profile = PROFILES[MobileAudioProfileTier.MOBILE_OPTIMIZED]
     await websocket.send_json(
         {
@@ -113,19 +96,6 @@ async def mobile_companion_websocket_endpoint(
                     "reason": reason,
                 }
                 await websocket.send_json(response)
-
-                adapt_event = MobileAudioProfileAdapted(
-                    session_id=session_id,
-                    peer_id=peer_id,
-                    user_id=user_id,
-                    previous_tier=prev_tier,
-                    current_tier=new_profile.tier,
-                    sample_rate=new_profile.sample_rate,
-                    bitrate_kbps=new_profile.bitrate_kbps,
-                    packet_loss=loss,
-                    reason=reason,
-                )
-                await publish_companion_event("runefoble.events.voice", adapt_event)
 
             elif msg_type == "send_whisper":
                 target_user = data.get("target_user_id") or data.get("recipient_id") or user_id

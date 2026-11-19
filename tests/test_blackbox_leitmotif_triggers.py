@@ -14,8 +14,7 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 from runefoble_events.events import (
-    CriticalHitScored,
-    DeathSaveStarted,
+    CharacterHealthChanged,
     DiceRolled,
     LeitmotifTriggered,
     PlayerSpokeEvent,
@@ -55,11 +54,14 @@ async def test_clutch_critical_hit_triggers_triumphant_leitmotif(
         "lute",
         tempo=1.05,
     )
-    crit_event = CriticalHitScored(
+    crit_event = DiceRolled(
         session_id=leitmotif_session_id,
-        character_id="char-nadia",
-        character_name="Nadia",
-        roll_total=20,
+        roller_id="char-nadia",
+        roller_name="Nadia",
+        formula="1d20+5",
+        total=25,
+        rolls=[20],
+        is_crit=True,
     )
     await handle_incoming_domain_event(crit_event)
 
@@ -108,26 +110,28 @@ async def test_dice_rolled_crit_triggers_triumphant_stinger(leitmotif_session_id
 async def test_near_death_triggers_somber_cello_leitmotif(
     client: TestClient, leitmotif_session_id: str
 ) -> None:
-    """Scenario 2: Near-Death Tension & Somber Theme on DeathSaveStarted (US-0046)."""
+    """Scenario 2: Near-Death Tension & Somber Theme on a health change to 0 HP (US-0046)."""
+    kyra_uuid = uuid4()
     setup_leitmotif_profile(
         client,
         leitmotif_session_id,
-        "char-kyra",
+        str(kyra_uuid),
         "Kyra",
         "strings",
         tempo=0.95,
     )
-    death_event = DeathSaveStarted(
+    death_event = CharacterHealthChanged(
+        aggregate_id=kyra_uuid,
         session_id=leitmotif_session_id,
-        character_id="char-kyra",
-        character_name="Kyra",
+        delta=-9,
         current_hp=0,
+        max_hp=9,
     )
     await handle_incoming_domain_event(death_event)
 
     engine = await _engine(leitmotif_session_id)
     playback = engine.get_active_status()
-    assert playback is not None and playback.character_id == "char-kyra"
+    assert playback is not None and playback.character_id == str(kyra_uuid)
     assert playback.motif_type == "somber" and playback.instrument_timbre == "strings"
     assert "strings_somber.ogg" in playback.stem_url
 

@@ -5,7 +5,6 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException, Request
 from runefoble_events.events import (
     SpeechIntentParsed,
-    WatcherNarrationGenerated,
 )
 from runefoble_platform.event_publish import publish_best_effort
 from runefoble_platform.identifiers import opaque_aggregate_id
@@ -58,16 +57,7 @@ async def process_speech_action(
         raw_transcript=req.transcript,
     )
 
-    narration_event = WatcherNarrationGenerated(
-        aggregate_id=session_uuid,
-        session_id=session_uuid,
-        campaign_id=campaign_uuid,
-        narrative_text=intent.watcher_reply,
-        tone="tactical" if intent.action_type in ("move", "attack") else "dark_fantasy",
-    )
-
     await publish_best_effort(bus, STREAM_WATCHER, speech_intent_event)
-    await publish_best_effort(bus, STREAM_WATCHER, narration_event)
 
     if intent.action_type == "move":
         await _propose_move(request, req, intent, engine)
