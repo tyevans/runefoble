@@ -39,14 +39,10 @@ export class RunefobleRulesCompendium extends LitElement {
 
   private handleMonsterAddedFromLookup(e: CustomEvent<{ monster: DraftMonsterEntry }>) {
     const m = e.detail.monster;
-    const existing = this.draftMonsters.find((item) => item.name === m.name);
-    if (existing) {
-      existing.count += 1;
-      this.draftMonsters = [...this.draftMonsters];
-    } else {
-      this.draftMonsters = [...this.draftMonsters, { ...m, count: 1 }];
-    }
-    this.requestUpdate();
+    const exists = this.draftMonsters.some((item) => item.name === m.name);
+    this.draftMonsters = exists
+      ? this.draftMonsters.map((item) => (item.name === m.name ? { ...item, count: item.count + 1 } : item))
+      : [...this.draftMonsters, { ...m, count: 1 }];
   }
 
   render() {

@@ -14,7 +14,6 @@ export interface PhysicsBridgeHost {
   /** API base for the physics routes. Empty or absent means the page origin. */
   apiBaseUrl?: string;
   dispatchEvent(event: Event): boolean;
-  requestUpdate?(): void;
 }
 
 export class PhysicsBridge {
@@ -80,10 +79,8 @@ export class PhysicsBridge {
           impactEnergy: kb.impact_energy,
         });
         if (this.host.tokens) {
-          const tok = this.host.tokens.find((t) => t.id === kb.token_id);
-          if (tok) { tok.x = kb.to_x; tok.y = kb.to_y; }
+          this.host.tokens = this.host.tokens.map((t) => (t.id === kb.token_id ? { ...t, x: kb.to_x, y: kb.to_y } : t));
         }
-        this.host.requestUpdate?.();
         this.host.dispatchEvent(new CustomEvent('token-knockback', {
           detail: kb, bubbles: true, composed: true,
         }));

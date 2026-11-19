@@ -19,6 +19,24 @@ export interface BoardActionsHost {
   requestUpdate(): void;
 }
 
+/**
+ * Puts a new token list with a new token object on the host. The old list and token stay
+ * as they were, so `changedProperties.has('tokens')` is true on the next update.
+ */
+export function replaceToken(
+  host: { tokens: BoardToken[] },
+  tokenId: string,
+  patch: Partial<BoardToken>,
+): BoardToken | undefined {
+  let updated: BoardToken | undefined;
+  host.tokens = host.tokens.map((t) => {
+    if (t.id !== tokenId) return t;
+    updated = { ...t, ...patch };
+    return updated;
+  });
+  return updated;
+}
+
 /** Ask the server to evaluate the active template. The result arrives as aoe_preview. */
 export function requestAoEPreview(host: BoardActionsHost, config: AoETemplateConfig): void {
   if (host.ws && host.ws.readyState === WebSocket.OPEN) {
@@ -31,8 +49,7 @@ export function executeRadialAction(
   action: RadialActionType,
   tokenId: string
 ): void {
-  const tok = host.tokens.find((t) => t.id === tokenId);
-  if (tok) tok.activeAction = action;
+  const tok = replaceToken(host, tokenId, { activeAction: action });
 
   host.dispatchEvent(
     new CustomEvent('token-action', {
@@ -127,19 +144,12 @@ export function handleBoardSocketMessage(
   } else if (action === 'token_moved' || action === 'preview_cancelled') {
     host.ghostEngine?.cancel();
     if (action === 'token_moved') {
-      const movedToken = host.tokens.find((t) => t.id === data.token_id);
-      if (movedToken && typeof data.x === 'number' && typeof data.y === 'number') {
-        movedToken.x = data.x;
-        movedToken.y = data.y;
-        host.requestUpdate();
+      if (typeof data.x === 'number' && typeof data.y === 'number') {
+        replaceToken(host, data.token_id, { x: data.x, y: data.y });
       }
     }
-  } else if (action === 'token_action_executed') {
-    const targetToken = host.tokens.find((t) => t.id === data.token_id);
-    if (targetToken) {
-      targetToken.activeAction = data.action;
-      host.requestUpdate();
-    }
+  } else if (data.type === 'token_action_executed') {
+    replaceToken(host, data.token_id, { activeAction: data.action });
   } else if (action === 'aoe_preview') {
     const active = host.activeAoE;
     const preview = data.template;
