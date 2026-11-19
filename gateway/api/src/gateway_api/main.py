@@ -11,9 +11,9 @@ check are listed in the call-owning-services how-to guide (TASK-0845).
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, WebSocket
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi import FastAPI
 from gateway_api.auth_sync import router as auth_sync_router
+from gateway_api.cors import install_cors
 from gateway_api.dependencies import event_bus_provider, platform_settings
 from gateway_api.routers import (
     analytics_views_router,
@@ -36,16 +36,14 @@ from gateway_api.routers.audience import router as audience_router
 from gateway_api.routers.caravan_proxy import router as caravan_router
 from gateway_api.routers.characters_wardrobe_proxy import router as wardrobe_router
 from gateway_api.routers.forge_proxy import router as forge_router
+from gateway_api.routers.realtime import router as realtime_router
 from gateway_api.routers.settlements_proxy import router as settlements_router
 from gateway_api.routers.watcher_proxy_dm import router as watcher_dm_router
 from gateway_api.routers.watcher_proxy_factions import router as watcher_factions_router
 from gateway_api.routers.watcher_proxy_intent import router as watcher_intent_router
 from gateway_api.routers.watcher_speech_proxy import router as watcher_speech_router
-from gateway_api.session_websocket import session_websocket_endpoint
 from gateway_api.upstream_errors import register_upstream_error_handlers
 from gateway_api.upstreams import UpstreamRegistry
-from gateway_api.websocket_endpoint import campaign_websocket_endpoint
-from gateway_api.websocket_relay import relay_websocket
 from runefoble_auth.authz_http import install_authz_error_handlers
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.telemetry import init_telemetry
@@ -74,17 +72,7 @@ app = FastAPI(
 register_upstream_error_handlers(app)
 install_authz_error_handlers(app)
 
-_cors_origins = [o.strip() for o in platform_settings.cors_origins.split(",") if o.strip()]
-if "*" in _cors_origins:
-    raise RuntimeError("RUNEFOBLE_CORS_ORIGINS must list explicit origins. '*' is refused.")
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=_cors_origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+install_cors(app, platform_settings.cors_origins)
 
 app.include_router(health_router)
 app.include_router(auth_router)
@@ -111,58 +99,10 @@ app.include_router(watcher_speech_router)
 app.include_router(watcher_intent_router)
 app.include_router(watcher_dm_router)
 app.include_router(watcher_factions_router)
+app.include_router(realtime_router)
 
 
 init_telemetry("gateway-api", settings=platform_settings, app=app)
-
-
-@app.websocket("/ws/campaigns/{campaign_id}")
-async def campaign_websocket(websocket: WebSocket, campaign_id: str) -> None:
-    """Zanzibar-protected real-time WebSocket stream for campaign mutations."""
-    await campaign_websocket_endpoint(websocket, campaign_id)
-
-
-@app.websocket("/ws/session/{session_id}")
-async def session_websocket(websocket: WebSocket, session_id: str) -> None:
-    """Realtime stream connecting board, voice, and Watcher chronicle."""
-    await session_websocket_endpoint(websocket, session_id)
-
-
-@app.websocket("/ws/voice/{session_id}")
-async def voice_websocket(websocket: WebSocket, session_id: str) -> None:
-    """WebRTC live voice room signaling. Relayed to voice_agent, which checks session.observe."""
-    await relay_websocket(websocket, service="voice_agent", segments=("ws", "voice", session_id))
-
-
-@app.websocket("/ws/mobile-companion/{session_id}")
-async def mobile_companion_websocket(websocket: WebSocket, session_id: str) -> None:
-    """Mobile companion and haptic channel. Relayed to voice_agent, which checks session.observe."""
-    await relay_websocket(
-        websocket, service="voice_agent", segments=("ws", "mobile-companion", session_id)
-    )
-
-
-@app.websocket("/ws/establishments/{establishment_id}/tables/{table_id}")
-async def gateway_establishment_table_ws(
-    websocket: WebSocket,
-    establishment_id: str,
-    table_id: str,
-) -> None:
-    """Establishment-scoped minigame table socket. game_session owns it; the gateway relays frames."""
-    await relay_websocket(
-        websocket,
-        service="game_session",
-        segments=("ws", "establishments", establishment_id, "tables", table_id),
-    )
-
-
-@app.websocket("/ws/minigames/{table_id}")
-async def gateway_standalone_minigame_ws(
-    websocket: WebSocket,
-    table_id: str,
-) -> None:
-    """Standalone minigame table socket. game_session owns it; the gateway relays frames."""
-    await relay_websocket(websocket, service="game_session", segments=("ws", "minigames", table_id))
 
 
 def main() -> None:
@@ -177,8 +117,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
-__all__ = [
-    "app",
-    "platform_settings",
-]

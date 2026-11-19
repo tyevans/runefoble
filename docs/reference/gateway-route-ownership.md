@@ -184,11 +184,11 @@ each route, and the mode in which the gateway serves it.
 | GET | `/overlay/party-vitals/{session_id}` | game_session, board_state | proxy | `gateway_api.routers.overlay` |
 | GET | `/readyz` | gateway_api | local | `gateway_api.routers.health` |
 | WS | `/ws/audience/{campaign_id}` | audience_studio | relay | `gateway_api.routers.audience` |
-| WS | `/ws/campaigns/{campaign_id}` | gateway_api | local | `gateway_api.main` |
-| WS | `/ws/establishments/{establishment_id}/tables/{table_id}` | game_session | relay | `gateway_api.main` |
-| WS | `/ws/minigames/{table_id}` | game_session | relay | `gateway_api.main` |
-| WS | `/ws/mobile-companion/{session_id}` | voice_agent | relay | `gateway_api.main` |
+| WS | `/ws/campaigns/{campaign_id}` | gateway_api | local | `gateway_api.routers.realtime` |
+| WS | `/ws/establishments/{establishment_id}/tables/{table_id}` | game_session | relay | `gateway_api.routers.realtime` |
+| WS | `/ws/minigames/{table_id}` | game_session | relay | `gateway_api.routers.realtime` |
+| WS | `/ws/mobile-companion/{session_id}` | voice_agent | relay | `gateway_api.routers.realtime` |
 | WS | `/ws/overlay/{session_id}` | game_session, board_state | relay | `gateway_api.routers.overlay` |
-| WS | `/ws/session/{session_id}` | board_state, voice_agent, the_watcher | relay | `gateway_api.main` |
+| WS | `/ws/session/{session_id}` | board_state, voice_agent, the_watcher | relay | `gateway_api.routers.realtime` |
 | WS | `/ws/spectator/{session_id}` | game_session, board_state | relay | `gateway_api.routers.spectator` |
-| WS | `/ws/voice/{session_id}` | voice_agent | relay | `gateway_api.main` |
+| WS | `/ws/voice/{session_id}` | voice_agent | relay | `gateway_api.routers.realtime` |
