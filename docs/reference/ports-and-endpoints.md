@@ -388,7 +388,7 @@ Campaign Lore routes require a verified bearer token, except `/healthz`, `/opena
 | `gateway-api` | POST | `/api/v1/characters/{character_id}/wardrobe` | Proxies to `character_sheet`: adds a wardrobe variant (the owner checks `edit`). Body fields as in the owner route |
 | `gateway-api` | POST | `/api/v1/characters/{character_id}/portrait/active` | Proxies to `character_sheet`: switches the active portrait to a wardrobe variant or a custom image (the owner checks `edit`) |
 | `gateway-api` | GET | `/api/v1/auth/sync/health` | Reports Zanzibar synchronization service health and SpiceDB connectivity |
-| `gateway-api` | POST | `/api/v1/sessions/{session_id}/start` | Transitions session from lobby to active and broadcasts launch event over WebSockets (requires `control`, checked by the owner) |
+| `gateway-api` | POST | `/api/v1/sessions/{session_id}/start` | Transitions session from lobby to active and broadcasts `session_started` over the session socket (requires `control`, checked by the owner). It is the only source of that frame. An owner reply without `status` returns `502` |
 | `gateway-api` | POST | `/api/v1/sessions/{session_id}/hot-swap` | Hands off character control from AI stand-in to returning player mid-session. The gateway checks `observe`. The owner checks `participate` and `character.edit` |
 | `gateway-api` | POST | `/api/v1/sessions/{session_id}/dm-override` | Executes DM narrative or encounter rule override. The gateway checks `control`. The owner checks only the token (open gap, TASK-0845) |
 | `gateway-api` | POST | `/api/v1/sessions/{session_id}/atmosphere` | Updates campaign sensory atmosphere, lighting, and ambient audio. The gateway checks `control`. The owner checks only the token (open gap, TASK-0845) |
@@ -493,15 +493,36 @@ Frames and replies:
 | `UPSTREAM_UNAVAILABLE` | The owner is unreachable, or it answered `5xx`. The gateway sends no substitute value |
 | `AUTHORIZATION_UNAVAILABLE` | SpiceDB could not read the session link |
 
-### Session WebSocket inbound frames (TASK-0810)
+### Session WebSocket inbound frames (TASK-0810, TASK-0910)
 
 `/ws/session/{id}` admits every `session.observe` caller. Observers receive frames only. Each inbound frame is checked in this order:
 
 1. The text must be a JSON object with a kind. The kind is `type`, or `action` when there is no `type`. Otherwise the gateway sends `INVALID_FRAME` and keeps the socket open.
-2. The kind must be one of: `session_started`, `player_readiness`, `player_stand_in`, `token_action`, `aoe_placed`, `spell_vfx`, `confirm_ghost`, `token_moved`, `dice_rolled`, `turn_advanced`, `dm_whisper`. Otherwise the gateway sends `UNKNOWN_FRAME` and does not relay the frame.
-3. The caller must hold `session.participate` on the session. Otherwise the gateway sends `PERMISSION_DENIED` (with the `action` field set to the kind) and does not relay the frame. A SpiceDB outage sends `AUTHZ_UNAVAILABLE` and does not relay the frame.
+2. The kind must be a client kind in the table below. Otherwise the gateway sends `UNKNOWN_FRAME` and does not relay the frame.
+3. The caller must hold the permission that the table names for the kind. Otherwise the gateway sends `PERMISSION_DENIED` (with the `action` field set to the kind) and does not relay the frame. A SpiceDB outage sends `AUTHZ_UNAVAILABLE` and does not relay the frame.
 
-A frame that passes all three checks goes to every socket of the session, sender included. The overlay socket (`/ws/overlay/{id}`) uses the same participate check (`may_publish_frame` in `gateway_api/session_access.py`).
+| Client kind | Required `game_session` permission |
+|---|---|
+| `player_readiness` | `participate` |
+| `player_stand_in` | `participate` |
+| `token_action` | `participate` |
+| `aoe_placed` | `participate` |
+| `spell_vfx` | `participate` |
+| `confirm_ghost` | `participate` |
+
+The table is `CLIENT_FRAME_PERMISSIONS` in `gateway_api/session_frames.py`. A frame that passes all three checks goes to every socket of the session, sender included.
+
+Server kinds are not client kinds. A client frame of a server kind gets `UNKNOWN_FRAME`, also from the DM:
+
+| Server kind | Decision (TASK-0910) |
+|---|---|
+| `session_started` | The gateway start route `POST /api/v1/sessions/{id}/start` is the only source. It sends `{"type": "session_started", "sessionId", "status"}` after game_session moves the session to `active`. An owner reply without `status` returns `502`. |
+| `turn_advanced` | Removed from the inbound table. The owner route is `POST /api/v1/sessions/{id}/turns/advance` (game_session checks `control`). No server code sends this kind on the session socket. |
+| `dice_rolled` | Removed from the inbound table. game_session owns dice rolls. No server code sends this kind on the session socket. The overlay socket keeps its own `dice_rolled` frame. |
+| `token_moved` | Removed from the inbound table. board_state sends `token_moved` on its own board socket after it saves the move. |
+| `dm_whisper` | Removed from the inbound table. A broadcast reaches every socket of the session, players included, so a whisper on this socket is never private (US-0017). Whispers go through the DM copilot and mobile companion routes. |
+
+The overlay socket (`/ws/overlay/{id}`) uses the same check, `may_publish_frame` in `gateway_api/session_access.py`, with the permission `participate` for every overlay frame.
 
 ## Voice Agent Identity (TASK-0530)
 
