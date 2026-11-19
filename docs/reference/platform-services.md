@@ -19,7 +19,7 @@ Runefoble is designed around a Kubernetes-first microservices topology deployed 
 | **Grafana** | `grafana/grafana:11.0.0` | `grafana:3001` | None (Port-forward) | ADR-0005 | Local metrics console |
 | **OpenPanel** | `lindesvard/openpanel-dashboard:2.3.0` | `openpanel:3000` | `/analytics` | ADR-0005 | Mock Event Buffer |
 | **Swagger UI** | `swaggerapi/swagger-ui:v5.17.14` | `swagger-ui:8080` | `/docs`, `/swagger-ui` | ADR-0005 | Service `/openapi.json` direct endpoints |
-| **Mailpit (Mock SMTP & UI)** | `axllent/mailpit:v1.21.8` | `mailpit:1025` (SMTP), `8025` (HTTP) | `/mail`, `/mailpit` | ADR-0005 | In-Memory `MailpitClient` Buffer (local and test only) |
+| **Mailpit (Mock SMTP & UI)** | `axllent/mailpit:v1.21.8` | `mailpit:1025` (SMTP), `8025` (HTTP) | `/mail`, `/mailpit` | ADR-0005 | None. An unreachable Mailpit raises `EmailTransportError` (HTTP 503) |
 | **Inference Worker (LLM, internal)** | First-party `services/inference_worker` | `inference-worker:8100` (HTTP, Helm `inference-worker` Deployment and Service) | Service credential `RUNEFOBLE_SERVICE_CREDENTIAL`, header `X-Runefoble-Service-Credential` (ADR-0015 e) | ADR-0007 | Chart default `backend: mock` (`RUNEFOBLE_WORKER_BACKEND=mock`, explicit, labelled `source: mock`); no silent fallback |
 
 ---
@@ -108,7 +108,7 @@ Runefoble is designed around a Kubernetes-first microservices topology deployed 
 - **SMTP Server**: Listens on port 1025 internally for RFC-822 email transmission.
 - **Zitadel Integration**: Zitadel is configured via `ZITADEL_DEFAULTINSTANCE_SMTPCONFIGURATION_SMTP_HOST=mailpit:1025` to route all account verification emails directly into Mailpit.
 - **Environment Variables**: `RUNEFOBLE_MAILPIT_SMTP_HOST`, `RUNEFOBLE_MAILPIT_SMTP_PORT`, `RUNEFOBLE_MAILPIT_HTTP_URL`, `RUNEFOBLE_MAILPIT_ENABLED`.
-- **Graceful Fallback**: `MailpitClient` has built-in `fallback_in_memory=True` storing emails in a local memory buffer for offline test execution when Mailpit is not running.
+- **No Fallback**: `MailpitClient` keeps no sent mail in memory. When the SMTP server or the Mailpit HTTP API is down, `send_email` and the read methods raise `EmailTransportError`. `check_health` reports the failure cause in `http_error` and `smtp_error`.
 - **How-To Guide**: [Test Email Signups with Mailpit](../how-to/test-email-signups-with-mailpit.md).
 
 ---

@@ -87,9 +87,9 @@ link = MailpitClient.extract_verification_link(latest.text)
 
 Test setup must not write Zitadel state directly. Drive sign-up through the Zitadel frontdoor (ADR-0014). Use Mailpit only to read the result.
 
-### Offline fallback
+### Mailpit is down
 
-When no Mailpit container runs, `MailpitClient` uses an in-memory buffer (`fallback_in_memory=True`). The buffer records sent messages for unit tests. Deployed environments must not use this fallback.
+`MailpitClient` has no in-memory fallback. When the SMTP server or the Mailpit HTTP API is unreachable, `send_email` and the read methods raise `EmailTransportError`. A failed purge also raises. Start Mailpit before you run tests that send or read mail. Use `await mailpit.check_health()` to see which service failed; its `http_error` and `smtp_error` fields give the cause.
 
 ---
 
