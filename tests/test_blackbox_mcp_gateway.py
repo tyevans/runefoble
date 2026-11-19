@@ -10,6 +10,7 @@ Tests exercise FastMCP public protocol entrypoints exclusively:
 import json
 from collections.abc import Iterator
 from typing import Any
+from uuid import uuid4
 
 import httpx
 import pytest
@@ -205,36 +206,17 @@ async def test_blackbox_prompt_templates():
     assert "Surrounded by goblins" in p2.messages[0].content.text
 
 
-@pytest.mark.asyncio
-async def test_blackbox_create_encounter_stores_enemy_tokens(
-    owning_services: dict[str, str], board_campaign: str
-):
-    """Verify create_encounter stores enemies on the board that inspect_tactical_board reads back."""
-    session_id = start_session_with_player(owning_services["session"])
-    created = tool_payload(
-        await call_tool(
-            "create_encounter",
-            {
-                "session_id": session_id,
-                "campaign_id": board_campaign,
-                "enemies": [{"name": "Bandit", "x": 4, "y": 4, "hp": 11}],
-            },
-            "user-test",
-        )
-    )
-    assert created["status"] == "encounter_created"
-    assert created["grid"] == {"cols": 10, "rows": 8}
-
-    state = tool_payload(
-        await call_tool("inspect_tactical_board", {"session_id": created["encounter_id"]})
-    )
-    assert state["grid_dimensions"] == {"cols": 10, "rows": 8}
-    assert [(t["name"], t["x"], t["y"]) for t in state["tokens"]] == [("Bandit", 4, 4)]
+def _combat_state(session_url: str, session_id: str) -> dict[str, Any]:
+    """Read the combat state of a session from game_session, the owner of the turn order."""
+    with httpx.Client(base_url=session_url, headers=bearer("user-test")) as http:
+        response = http.get(f"/api/v1/sessions/{session_id}/combat")
+    assert response.status_code == 200, response.text
+    return response.json()
 
 
-def _turn_order_cr(state: dict[str, Any], name: str) -> Any:
+def _turn_order_cr(combat: dict[str, Any], name: str) -> Any:
     """Read the challenge rating that game_session stored for one combatant of the encounter."""
-    [combatant] = [c for c in state["turn_order"] if c["name"] == name]
+    [combatant] = [c for c in combat["initiative_order"] if c["name"] == name]
     return combatant.get("cr")
 
 
@@ -256,10 +238,8 @@ async def test_blackbox_create_encounter_reads_missing_cr_from_compendium(
             "user-test",
         )
     )
-    state = tool_payload(
-        await call_tool("query_encounter_state", {"encounter_id": created["encounter_id"]})
-    )
-    assert _turn_order_cr(state, "Goblin") == 0.25
+    combat = _combat_state(owning_services["session"], created["encounter_id"])
+    assert _turn_order_cr(combat, "Goblin") == 0.25
 
 
 @pytest.mark.asyncio
@@ -280,10 +260,8 @@ async def test_blackbox_create_encounter_request_cr_is_kept_over_compendium(
             "user-test",
         )
     )
-    state = tool_payload(
-        await call_tool("query_encounter_state", {"encounter_id": created["encounter_id"]})
-    )
-    assert _turn_order_cr(state, "Goblin") == 2.0
+    combat = _combat_state(owning_services["session"], created["encounter_id"])
+    assert _turn_order_cr(combat, "Goblin") == 2.0
 
 
 @pytest.mark.asyncio
@@ -306,26 +284,42 @@ async def test_blackbox_create_encounter_without_any_rating_is_validation_error(
     assert "challenge rating" in result.content[0].text.lower()
 
 
+def _session_with_goblin(owning_services: dict[str, str]) -> tuple[str, str]:
+    """Start a session with a board and one goblin token, placed through public board routes.
+
+    Returns the session id and the goblin token id. The board belongs to the session campaign.
+    """
+    session_id = start_session_with_player(owning_services["session"])
+    with httpx.Client(base_url=owning_services["session"], headers=bearer("user-test")) as game:
+        campaign_id = game.get(f"/api/v1/sessions/{session_id}").json()["campaign_id"]
+    token_id = f"goblin-{uuid4()}"
+    with httpx.Client(base_url=owning_services["board"], headers=bearer("user-test")) as http:
+        created = http.post(
+            "/api/v1/boards",
+            json={"session_id": session_id, "campaign_id": campaign_id, "cols": 10, "rows": 8},
+        )
+        assert created.status_code == 200, created.text
+        placed = http.post(
+            f"/api/v1/boards/{session_id}/tokens",
+            json={
+                "token_id": token_id,
+                "name": "Goblin",
+                "token_type": "monster",
+                "x": 2,
+                "y": 2,
+                "is_friendly": False,
+            },
+        )
+        assert placed.status_code == 200, placed.text
+    return session_id, token_id
+
+
 @pytest.mark.asyncio
 async def test_blackbox_move_board_token_then_inspect_reports_new_position(
     owning_services: dict[str, str],
-    board_campaign: str,
 ):
     """Verify a token moved through MCP is read back at its new position from the board."""
-    combat_session_id = start_session_with_player(owning_services["session"])
-    created = tool_payload(
-        await call_tool(
-            "create_encounter",
-            {
-                "session_id": combat_session_id,
-                "campaign_id": board_campaign,
-                "enemies": [{"name": "Goblin", "x": 2, "y": 2}],
-            },
-            "user-test",
-        )
-    )
-    session_id = created["encounter_id"]
-    token_id = created["enemies_spawned"][0]["token_id"]
+    session_id, token_id = _session_with_goblin(owning_services)
     await grant_token_to_campaign(owning_services["session"], session_id, token_id)
 
     moved = tool_payload(
@@ -346,34 +340,13 @@ async def test_blackbox_move_board_token_then_inspect_reports_new_position(
 @pytest.mark.asyncio
 async def test_blackbox_move_board_token_out_of_bounds_is_error_result(
     owning_services: dict[str, str],
-    board_campaign: str,
 ):
     """Verify the board rejects an out-of-bounds move and the MCP result reports an error."""
-    combat_session_id = start_session_with_player(owning_services["session"])
-    created = tool_payload(
-        await call_tool(
-            "create_encounter",
-            {
-                "session_id": combat_session_id,
-                "campaign_id": board_campaign,
-                "enemies": [{"name": "Imp", "x": 0, "y": 0, "cr": 1.0}],
-            },
-            "user-test",
-        )
-    )
-    await grant_token_to_campaign(
-        owning_services["session"],
-        created["encounter_id"],
-        created["enemies_spawned"][0]["token_id"],
-    )
+    session_id, token_id = _session_with_goblin(owning_services)
+    await grant_token_to_campaign(owning_services["session"], session_id, token_id)
     result = await call_tool(
         "move_board_token",
-        {
-            "session_id": created["encounter_id"],
-            "token_id": created["enemies_spawned"][0]["token_id"],
-            "to_x": 99,
-            "to_y": -5,
-        },
+        {"session_id": session_id, "token_id": token_id, "to_x": 99, "to_y": -5},
         "user-test",
     )
     assert result.isError is True

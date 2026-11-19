@@ -62,7 +62,7 @@ On the session route, the App Shell calls `GET /api/v1/boards/<session id>`. No 
 
 Status: `Not yet available`. Blocker: no backlog task exists yet for an App Shell route that creates a board or places tokens.
 
-The board service creates a board only through `POST /api/v1/boards`. The MCP tool `create_encounter` calls that route. No App Shell view calls it. No App Shell view places a token either.
+The board service creates a board through `POST /api/v1/boards`, or when `board_state` consumes a combat start that has placements. The MCP tool `create_encounter` makes one call to `POST /api/v1/sessions/<session id>/encounters/start`. No App Shell view calls it. No App Shell view places a token either.
 
 When a board exists, the table shows the tokens that `GET /api/v1/boards/<session id>` returns. The App Shell does not add or change token data. Do not expect a fixed set of tokens.
 

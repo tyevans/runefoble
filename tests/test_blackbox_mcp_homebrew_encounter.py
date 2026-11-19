@@ -130,9 +130,9 @@ def tool_payload(result: CallToolResult) -> dict[str, Any]:
     return data
 
 
-def _turn_order_cr(state: dict[str, Any], name: str) -> Any:
+def _turn_order_cr(combat: dict[str, Any], name: str) -> Any:
     """Read the challenge rating that game_session stored for one combatant of the encounter."""
-    [combatant] = [c for c in state["turn_order"] if c["name"] == name]
+    [combatant] = [c for c in combat["initiative_order"] if c["name"] == name]
     return combatant.get("cr")
 
 
@@ -152,10 +152,11 @@ async def test_blackbox_create_encounter_reads_homebrew_cr_of_its_campaign(
             },
         )
     )
-    state = tool_payload(
-        await call_tool("query_encounter_state", {"encounter_id": created["encounter_id"]})
-    )
-    assert _turn_order_cr(state, HOMEBREW_MONSTER) == HOMEBREW_CR
+    assert created["encounter_id"] == session_id
+    with httpx.Client(base_url=homebrew_upstreams["session"], headers=bearer("user-test")) as http:
+        combat = http.get(f"/api/v1/sessions/{session_id}/combat")
+    assert combat.status_code == 200, combat.text
+    assert _turn_order_cr(combat.json(), HOMEBREW_MONSTER) == HOMEBREW_CR
 
 
 @pytest.mark.asyncio

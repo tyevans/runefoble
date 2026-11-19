@@ -17,9 +17,6 @@ from gateway_mcp.tool_authz import authorize_tool_call, session_control, token_m
 if TYPE_CHECKING:
     from mcp.server.fastmcp import FastMCP
 
-ENCOUNTER_COLS = 10
-ENCOUNTER_ROWS = 8
-
 
 class EnemyPlacement(BaseModel):
     """An enemy token to place when an encounter starts.
@@ -52,23 +49,6 @@ def _combat_view(combat: dict[str, Any]) -> dict[str, Any]:
         "active_combatant_id": combat["combat_active_id"],
         "turn_order": combat["initiative_order"],
     }
-
-
-async def _fetch_or_create_board(
-    client: OwningServices, session_id: str, campaign_id: str | None
-) -> dict[str, Any]:
-    """Return the session board, creating it when board_state has none for the session.
-
-    Only a 404 from board_state means "no board yet". Every other error propagates.
-    """
-    try:
-        return await client.get_board(session_id)
-    except ServiceRejectedError as exc:
-        if exc.status_code != 404:
-            raise
-    return await client.create_board(
-        session_id=session_id, campaign_id=campaign_id, cols=ENCOUNTER_COLS, rows=ENCOUNTER_ROWS
-    )
 
 
 async def _challenge_rating(
@@ -157,48 +137,30 @@ async def create_encounter(
 ) -> dict[str, Any]:
     """Start combat in a game session and place the enemy tokens on its board.
 
-    A new board needs `campaign_id`. The caller must run that campaign.
+    The session id is the encounter id. `campaign_id` names the campaign whose homebrew
+    monsters resolve by name. Each enemy rating is read before the start, so a refused
+    enemy starts no combat.
 
-    The session id is the encounter id. game_session starts combat first, so an
-    unknown or unavailable session creates no board.
+    One write to game_session starts combat and records the placements. board_state creates
+    the board if needed and places the tokens after that write. The reply lists the placements
+    that game_session accepted. Read `query_encounter_state` to see the placed tokens.
     """
     await authorize_tool_call(ctx, container.permissions, session_control(session_id))
     client = OwningServices(container.service_clients, bearer=caller_bearer(ctx))
     enemy_list = enemies or []
-    # Resolve every rating before combat starts, so a refused enemy leaves no combat behind.
     ratings = [await _challenge_rating(client, enemy, campaign_id) for enemy in enemy_list]
-    combat = await client.start_combat(
+    started = await client.start_encounter(
         session_id,
-        combatants=[
-            {
-                "combatant_id": f"enemy-{index}",
-                "name": enemy.name,
-                "hp": enemy.hp,
-                "is_npc": True,
-                "cr": rating,
-            }
-            for index, (enemy, rating) in enumerate(zip(enemy_list, ratings, strict=True), start=1)
+        enemies=[
+            {"name": enemy.name, "x": enemy.x, "y": enemy.y, "hp": enemy.hp, "cr": rating}
+            for enemy, rating in zip(enemy_list, ratings, strict=True)
         ],
     )
-    board = await _fetch_or_create_board(client, session_id, campaign_id)
-    spawned: list[dict[str, Any]] = []
-    for enemy in enemy_list:
-        token = await client.place_token(
-            session_id,
-            name=enemy.name,
-            token_type="monster",
-            x=enemy.x,
-            y=enemy.y,
-            hp=enemy.hp,
-            is_friendly=False,
-        )
-        spawned.append(token)
     return {
         "status": "encounter_created",
         "encounter_id": session_id,
-        "grid": {"cols": board["cols"], "rows": board["rows"]},
-        "enemies_spawned": spawned,
-        **_combat_view(combat),
+        "enemies_spawned": started["placements"],
+        **_combat_view(started),
     }
 
 
