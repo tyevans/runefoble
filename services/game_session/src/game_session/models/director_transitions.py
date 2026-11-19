@@ -20,5 +20,9 @@ class DirectorTransitionsMixin:
     def with_atmosphere(self: GameSessionState, atmosphere: dict[str, Any]) -> GameSessionState:
         return self.model_copy(update={"atmosphere": atmosphere})
 
-    def with_weather(self: GameSessionState, weather: str) -> GameSessionState:
-        return self.model_copy(update={"weather": weather})
+    def with_weather(
+        self: GameSessionState, weather: str, source_proposal_id: str | None
+    ) -> GameSessionState:
+        return self.model_copy(
+            update={"weather": weather, "weather_source_proposal_id": source_proposal_id}
+        )

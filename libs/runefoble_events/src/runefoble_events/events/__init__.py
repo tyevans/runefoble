@@ -205,6 +205,7 @@ from runefoble_events.soundscape import (
     MasterVolumeChanged,
     SoundscapeCueTriggered,
     SoundscapePartyHealthRecorded,
+    SoundscapeSourceEventHandled,
     SoundscapeTensionUpdated,
     SoundscapeTrackChanged,
     StemProfileOverridden,

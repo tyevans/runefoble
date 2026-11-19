@@ -60,6 +60,9 @@ async def apply_audience_hazard_event(event: Any, bus: RedisStreamsEventBus | No
     owner = await board_campaign_id(session_id)
     require_same_campaign(modifier, owner, f"board {session_id}")
     current = board.get_terrain(x, y)
+    if current.hazard == hazard_type:
+        # A redelivery, or the cell already carries this hazard. Nothing changes.
+        return
     board.configure_terrain(
         x=x,
         y=y,

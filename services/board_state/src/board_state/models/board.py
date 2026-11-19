@@ -28,6 +28,8 @@ class BoardState(BaseModel, BoardTransitionsMixin):
     revealed_cells: list[list[int]] = Field(default_factory=list)
     background_asset_id: str | None = None
     background_image_url: str | None = None
+    # The forged battlemap that last set the geometry. A redelivery of it changes nothing.
+    forged_asset_id: str | None = None
     wall_segments: list[dict[str, Any]] = Field(default_factory=list)
     portals: list[dict[str, Any]] = Field(default_factory=list)
     doors: dict[str, Any] = Field(default_factory=dict)

@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field
 from soundscape.handlers import (
     FoleyHandlersMixin,
     LeitmotifHandlersMixin,
+    SourceLedgerHandlersMixin,
     StemHandlersMixin,
     TensionHandlersMixin,
 )
@@ -52,6 +53,8 @@ class SoundscapeState(BaseModel):
     enemy_cr_balance: float = 0.0
     # Latest HP ratio per character that reported a health change in this session.
     party_health_ratios: dict[str, float] = Field(default_factory=dict)
+    # Ids of the source events whose effects are saved. Bounded by SOURCE_LEDGER_LIMIT.
+    handled_source_event_ids: list[str] = Field(default_factory=list)
 
     @property
     def lowest_party_health_ratio(self) -> float:
@@ -79,6 +82,7 @@ class SoundscapeAggregate(
     FoleyHandlersMixin,
     TensionHandlersMixin,
     LeitmotifHandlersMixin,
+    SourceLedgerHandlersMixin,
     DeclarativeAggregate[SoundscapeState],
 ):
     """Event-sourced aggregate managing background music stems, tension, and foley cues."""

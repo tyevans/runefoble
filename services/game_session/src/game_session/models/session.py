@@ -41,6 +41,8 @@ class GameSessionState(BaseModel, GameSessionTransitionsMixin):
     lobby_characters: dict[str, UUID] = Field(default_factory=dict)
     atmosphere: dict[str, Any] | None = None
     weather: str | None = None
+    # The approved audience proposal that set the weather. A redelivery of it changes nothing.
+    weather_source_proposal_id: str | None = None
     dm_overrides: list[dict[str, Any]] = Field(default_factory=list)
 
 

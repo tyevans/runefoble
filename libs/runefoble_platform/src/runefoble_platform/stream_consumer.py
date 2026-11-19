@@ -12,8 +12,10 @@ import asyncio
 import contextlib
 import logging
 from collections.abc import Awaitable, Callable, Iterable, Mapping
+from dataclasses import dataclass
 from typing import Any
 
+from runefoble_platform.config import PlatformSettings
 from runefoble_platform.consumer_group import RedisConsumerGroup
 
 logger = logging.getLogger("runefoble.platform.stream_consumer")
@@ -30,8 +32,30 @@ FAILED = "failed"
 _MAX_BACKOFF_S = 5.0
 
 
+@dataclass(frozen=True)
+class ReclaimPolicy:
+    """When a consumer takes over messages that another consumer left pending."""
+
+    min_idle_ms: int
+    every_polls: int
+
+    @classmethod
+    def from_settings(cls, settings: PlatformSettings | None = None) -> ReclaimPolicy:
+        """Read the reclaim policy from the platform settings. Settings are never skipped."""
+        active = settings if settings is not None else PlatformSettings()
+        return cls(
+            min_idle_ms=active.consumer_reclaim_min_idle_ms,
+            every_polls=active.consumer_reclaim_every_polls,
+        )
+
+
 class StreamConsumer:
-    """Reads one stream for one consumer group and acknowledges handled messages."""
+    """Reads one stream for one consumer group and acknowledges handled messages.
+
+    Every ``reclaim.every_polls`` polls, the consumer also takes over messages that stayed
+    pending for ``reclaim.min_idle_ms``. A reclaimed message can run a second time, so handlers
+    must be idempotent.
+    """
 
     def __init__(
         self,
@@ -42,6 +66,7 @@ class StreamConsumer:
         handler: EventHandler,
         poll_interval_s: float = 0.1,
         resume_position: ResumePosition | None = None,
+        reclaim: ReclaimPolicy | None = None,
     ) -> None:
         self.consumer_group = consumer_group
         self.stream = stream
@@ -50,6 +75,8 @@ class StreamConsumer:
         self.handler = handler
         self.poll_interval_s = poll_interval_s
         self.resume_position = resume_position
+        self.reclaim = reclaim if reclaim is not None else ReclaimPolicy.from_settings()
+        self._polls_since_reclaim = 0
         self.processed_count = 0
         self.dead_letter_count = 0
         self.last_error: str | None = None
@@ -73,7 +100,11 @@ class StreamConsumer:
             await self.consumer_group.set_group_position(self.stream, self.group_name, position)
 
     async def poll_once(self, count: int = 10, block_ms: int = 100) -> int:
-        """Read one batch, run the handler on each message, and acknowledge the results."""
+        """Read one batch, run the handler on each message, and acknowledge the results.
+
+        Every ``reclaim.every_polls`` polls, the batch also includes messages that stayed
+        pending for ``reclaim.min_idle_ms``. They take the same handle-and-acknowledge path.
+        """
         entries = await self.consumer_group.read_group(
             stream=self.stream,
             group_name=self.group_name,
@@ -81,6 +112,23 @@ class StreamConsumer:
             count=count,
             block_ms=block_ms,
         )
+        handled = await self._handle_entries(entries)
+        self._polls_since_reclaim += 1
+        if self._polls_since_reclaim >= self.reclaim.every_polls:
+            self._polls_since_reclaim = 0
+            reclaimed = await self.consumer_group.auto_claim_pending(
+                stream=self.stream,
+                group_name=self.group_name,
+                consumer_name=self.consumer_name,
+                min_idle_ms=self.reclaim.min_idle_ms,
+                count=count,
+            )
+            if reclaimed:
+                logger.info("Reclaimed %d pending message(s) on %s", len(reclaimed), self.stream)
+            handled += await self._handle_entries(reclaimed)
+        return handled
+
+    async def _handle_entries(self, entries: list[tuple[str, Any]]) -> int:
         handled = 0
         for msg_id, payload in entries:
             try:
@@ -190,6 +238,7 @@ __all__ = [
     "FAILED",
     "RUNNING",
     "EventHandler",
+    "ReclaimPolicy",
     "StreamConsumer",
     "SupervisedStreamConsumers",
     "consumer_statuses",

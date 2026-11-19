@@ -239,6 +239,7 @@ claimed = await consumer_group.auto_claim_pending(
 ```
 - Scans PEL using `XAUTOCLAIM` for messages unacknowledged longer than `min_idle_ms`.
 - Automatically transfers ownership to the claiming consumer, preventing stuck messages when a worker pod crashes.
+- The live `StreamConsumer` calls this method every `consumer_reclaim_every_polls` polls, with `min_idle_ms=consumer_reclaim_min_idle_ms`. A reclaimed message runs the same handler path as a new message, so handlers must be idempotent. See [Run Supervised Redis Stream Consumers](../how-to/run-supervised-redis-stream-consumers.md).
 
 ### Dead Letter Queue (DLQ) Fallback
 ```python
