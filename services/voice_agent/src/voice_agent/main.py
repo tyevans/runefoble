@@ -17,7 +17,7 @@ from runefoble_platform.aggregate_loading import register_store_unavailable_hand
 from runefoble_platform.engine_ports import EngineUnavailableError, engine_unavailable_handler
 from runefoble_platform.event_publish import event_publish_failures, install_publish_failure_handler
 from runefoble_platform.event_sourcing import get_event_store
-from runefoble_platform.ui_manifest import load_ui_manifest
+from runefoble_platform.ui_manifest import ui_manifest_router
 from voice_agent.companion_routes import router as companion_router
 from voice_agent.companion_socket_routes import router as companion_socket_router
 from voice_agent.dependencies import (
@@ -60,12 +60,6 @@ async def audio_format_error_handler(_request: Request, exc: AudioFormatError) -
     return JSONResponse({"error": exc.error_code, "message": str(exc)}, status_code=400)
 
 
-# Start-up fails when the manifest is missing or invalid. No fallback manifest exists (ADR-0015 4).
-UI_MANIFEST = load_ui_manifest(
-    Path(__file__).resolve().parent.parent.parent / "ui" / "manifest.json"
-)
-
-
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     """Build the configured speech engines and connect Redis at start-up. A bad engine setting stops the service."""
@@ -102,6 +96,12 @@ app.include_router(companion_router)
 app.include_router(companion_socket_router)
 app.include_router(audio_filters_router)
 app.include_router(aec_diagnostics_router)
+app.include_router(
+    ui_manifest_router(
+        Path(__file__).resolve().parents[2] / "ui" / "manifest.json",
+        summary="Advertise vendored microfrontend components for voice agent",
+    )
+)
 
 
 @app.get("/healthz")
@@ -120,12 +120,6 @@ async def health_check():
         body["problems"] = problems
         return JSONResponse(body, status_code=503)
     return body
-
-
-@app.get("/ui/manifest")
-def get_ui_manifest():
-    """Advertise vendored microfrontend components for voice agent."""
-    return UI_MANIFEST
 
 
 def main():

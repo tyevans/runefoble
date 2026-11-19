@@ -7,7 +7,6 @@ Manages encounter tension scoring, tactical foley sound effects, and -12dB audio
 import contextlib
 from collections.abc import AsyncIterator
 from pathlib import Path
-from typing import Any
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -17,7 +16,7 @@ from runefoble_platform.aggregate_loading import register_store_unavailable_hand
 from runefoble_platform.event_publish import event_publish_failures
 from runefoble_platform.event_sourcing import get_event_store
 from runefoble_platform.stream_consumer import consumer_statuses
-from runefoble_platform.ui_manifest import load_ui_manifest
+from runefoble_platform.ui_manifest import ui_manifest_router
 
 from soundscape.consumer import start_soundscape_consumers
 from soundscape.dependencies import event_bus_provider
@@ -25,11 +24,6 @@ from soundscape.routers.cue import router as cue_router
 from soundscape.routers.leitmotif import router as leitmotif_router
 from soundscape.routers.stems import router as stems_router
 from soundscape.routers.tension import router as tension_router
-
-# Start-up fails when the manifest is missing or invalid. No fallback manifest exists (ADR-0015 4).
-UI_MANIFEST = load_ui_manifest(
-    Path(__file__).resolve().parent.parent.parent / "ui" / "manifest.json"
-)
 
 
 @contextlib.asynccontextmanager
@@ -75,6 +69,12 @@ app.include_router(cue_router)
 app.include_router(tension_router)
 app.include_router(stems_router)
 app.include_router(leitmotif_router)
+app.include_router(
+    ui_manifest_router(
+        Path(__file__).resolve().parents[2] / "ui" / "manifest.json",
+        summary="Advertise vendored microfrontend components for soundscape controls",
+    )
+)
 
 
 @app.get("/healthz", tags=["Health"])
@@ -91,12 +91,6 @@ def health_check(request: Request) -> JSONResponse:
             "consumers": statuses,
         },
     )
-
-
-@app.get("/ui/manifest", tags=["Microfrontends"])
-def get_ui_manifest() -> dict[str, Any]:
-    """Advertise vendored microfrontend components for soundscape controls."""
-    return UI_MANIFEST
 
 
 def main() -> None:

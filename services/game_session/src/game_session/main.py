@@ -43,12 +43,7 @@ from runefoble_platform.event_publish import (
 )
 from runefoble_platform.event_sourcing import event_store_kind
 from runefoble_platform.stream_consumer import consumer_statuses
-from runefoble_platform.ui_manifest import load_ui_manifest
-
-# Start-up fails when the manifest is missing or invalid. No fallback manifest exists (ADR-0015 4).
-UI_MANIFEST = load_ui_manifest(
-    Path(__file__).resolve().parent.parent.parent / "ui" / "manifest.json"
-)
+from runefoble_platform.ui_manifest import ui_manifest_router
 
 ContainerBuilder = Callable[[], GameSessionContainer]
 
@@ -110,11 +105,6 @@ async def health_check(request: Request):
     }
 
 
-def get_ui_manifest():
-    """Advertise vendored microfrontend components for game session."""
-    return UI_MANIFEST
-
-
 def create_app(build: ContainerBuilder = build_container) -> FastAPI:
     """Create the app. The lifespan calls `build` at start-up (ADR-0021 D6).
 
@@ -131,7 +121,12 @@ def create_app(build: ContainerBuilder = build_container) -> FastAPI:
     )
     _include_routers(app)
     app.add_api_route("/healthz", health_check, methods=["GET"])
-    app.add_api_route("/ui/manifest", get_ui_manifest, methods=["GET"])
+    app.include_router(
+        ui_manifest_router(
+            Path(__file__).resolve().parents[2] / "ui" / "manifest.json",
+            summary="Advertise vendored microfrontend components for game session",
+        )
+    )
     return app
 
 

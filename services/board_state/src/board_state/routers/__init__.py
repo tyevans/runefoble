@@ -3,7 +3,6 @@
 from board_state.routers.actions import router as actions_router
 from board_state.routers.aoe import router as aoe_router
 from board_state.routers.boards import router as boards_router
-from board_state.routers.boards import ui_manifest_router
 from board_state.routers.camera import router as camera_router
 from board_state.routers.physics import router as physics_router
 from board_state.routers.previews_http import router as previews_http_router
@@ -20,7 +19,6 @@ __all__ = [
     "aoe_router",
     "boards_router",
     "camera_router",
-    "ui_manifest_router",
     "physics_router",
     "previews_http_router",
     "previews_ws_router",

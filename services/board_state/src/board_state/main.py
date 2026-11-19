@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import contextlib
 from collections.abc import AsyncIterator
+from pathlib import Path
 
 from board_state.dependencies import event_bus_provider
 from board_state.forged_battlemap import start_board_consumers
@@ -22,7 +23,6 @@ from board_state.routers import (
     terrain_router,
     tokens_router,
     traps_router,
-    ui_manifest_router,
     uvtt_import_router,
     vfx_router,
 )
@@ -36,6 +36,7 @@ from runefoble_platform.event_publish import (
 )
 from runefoble_platform.event_sourcing import event_store_kind, get_event_store
 from runefoble_platform.stream_consumer import consumer_statuses
+from runefoble_platform.ui_manifest import ui_manifest_router
 
 
 @contextlib.asynccontextmanager
@@ -62,7 +63,12 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-app.include_router(ui_manifest_router)
+app.include_router(
+    ui_manifest_router(
+        Path(__file__).resolve().parents[2] / "ui" / "manifest.json",
+        summary="Advertise vendored microfrontend components for board state",
+    )
+)
 app.include_router(boards_router)
 app.include_router(spectator_router)
 app.include_router(camera_router)

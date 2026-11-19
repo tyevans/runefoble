@@ -24,7 +24,7 @@ from runefoble_platform.config import (
 from runefoble_platform.errors import ServiceUnavailableError
 from runefoble_platform.event_publish import event_publish_failures, install_publish_failure_handler
 from runefoble_platform.event_sourcing import PostgreSQLEventStore, get_event_store
-from runefoble_platform.ui_manifest import load_ui_manifest
+from runefoble_platform.ui_manifest import ui_manifest_router
 
 from campaign_lore.codex import CodexCrossReferencer
 from campaign_lore.dependencies import event_bus_provider
@@ -38,11 +38,6 @@ from campaign_lore.routers.handouts import router as handouts_router
 from campaign_lore.routers.relics import router as relics_router
 from campaign_lore.routers.search import router as search_router
 from campaign_lore.routers.west_marches import router as west_marches_router
-
-# Start-up fails when the manifest is missing or invalid. No fallback manifest exists (ADR-0015 4).
-UI_MANIFEST = load_ui_manifest(
-    Path(__file__).resolve().parent.parent.parent / "ui" / "manifest.json"
-)
 
 logger = logging.getLogger(__name__)
 
@@ -105,6 +100,12 @@ def create_app() -> FastAPI:
     app.include_router(atlas_router)
     app.include_router(codex_router)
     app.include_router(west_marches_router)
+    app.include_router(
+        ui_manifest_router(
+            Path(__file__).resolve().parents[2] / "ui" / "manifest.json",
+            summary="Advertise vendored microfrontend components for campaign lore and codex",
+        )
+    )
     app.add_exception_handler(ServiceUnavailableError, _service_unavailable_handler)
     register_store_unavailable_handlers(app)
     install_authz_error_handlers(app)
@@ -128,11 +129,6 @@ def _register_routes(app: FastAPI) -> None:
             "service": "campaign_lore",
             "event_publish_failures": event_publish_failures(),
         }
-
-    @app.get("/ui/manifest", tags=["Microfrontends"])
-    def get_ui_manifest() -> dict[str, Any]:
-        """Advertise vendored microfrontend components for campaign lore and codex."""
-        return UI_MANIFEST
 
 
 # Build the event store now. A deployed service without a reachable store refuses to start (TASK-0707).

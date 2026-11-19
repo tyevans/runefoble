@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-from pathlib import Path
 from uuid import uuid4
 
 from board_state.aggregate import BoardAggregate
@@ -26,22 +25,10 @@ from board_state.projection import project_board
 from fastapi import APIRouter, HTTPException
 from runefoble_platform.aggregate_loading import save_or_conflict
 from runefoble_platform.identifiers import opaque_aggregate_id
-from runefoble_platform.ui_manifest import load_ui_manifest
-
-# Start-up fails when the manifest is missing or invalid. No fallback manifest exists (ADR-0015 4).
-UI_MANIFEST = load_ui_manifest(Path(__file__).resolve().parents[3] / "ui" / "manifest.json")
 
 logger = logging.getLogger("runefoble.board_state.routers.boards")
 
 router = APIRouter(tags=["boards"])
-# Microfrontend discovery stays public. It carries no board data.
-ui_manifest_router = APIRouter(tags=["boards"])
-
-
-@ui_manifest_router.get("/ui/manifest")
-def get_ui_manifest():
-    """Advertise vendored microfrontend components for board state."""
-    return UI_MANIFEST
 
 
 @router.post("/api/v1/boards", response_model=BoardState)
