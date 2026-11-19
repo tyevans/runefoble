@@ -232,7 +232,7 @@ export class FrontdoorApi {
     campaignId: string,
     title: string,
     token?: string
-  ): Promise<{ session_id: string; title: string }> {
+  ): Promise<{ id: string; title: string }> {
     const res = await this.request.post(`${this.baseUrl}/api/v1/campaigns/${campaignId}/sessions`, {
       headers: { 'Content-Type': 'application/json', ...this.authHeaders(token) },
       data: { title },

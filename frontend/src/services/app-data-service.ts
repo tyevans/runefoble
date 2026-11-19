@@ -163,10 +163,7 @@ export class AppDataService {
     return this.request<void>(`${this.apiBase}/characters/${characterId}`, { method: 'DELETE' });
   }
 
-  async fetchLobbyState(arg1: string, arg2?: string): Promise<DataResult<{ participants: LobbyParticipant[]; availableCharacters: LobbyCharacterOption[] }>> {
-    const isArg1Session = arg1.startsWith('session-') || arg1.startsWith('lobby-');
-    const sessionId = arg2 !== undefined ? (isArg1Session ? arg1 : arg2) : arg1;
-    const campaignId = arg2 !== undefined ? (isArg1Session ? arg2 : arg1) : undefined;
+  async fetchLobbyState(campaignId: string, sessionId: string): Promise<DataResult<{ participants: LobbyParticipant[]; availableCharacters: LobbyCharacterOption[] }>> {
     const session = await this.request<any>(`${this.apiBase}/sessions/${sessionId}`);
     if (!session.ok) return session;
     const characters = await this.fetchCharacters();

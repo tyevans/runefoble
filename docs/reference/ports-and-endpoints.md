@@ -146,7 +146,7 @@ Campaign Lore routes require a verified bearer token, except `/health`, `/health
 | `game-session` | GET | `/api/v1/campaigns/{campaign_id}/members` | Lists the owner and members (Zanzibar `view`) |
 | `game-session` | DELETE | `/api/v1/campaigns/{campaign_id}/members/{user_id}` | Removes a member and revokes campaign tuples. The owner cannot be removed (Zanzibar `manage`) |
 | `game-session` | GET | `/api/v1/campaigns/{campaign_id}/sessions` | Lists sessions and lobbies of a campaign (Zanzibar `view`) |
-| `game-session` | POST | `/api/v1/campaigns/{campaign_id}/sessions` | Creates a session or staging lobby (Zanzibar `run_session`) |
+| `game-session` | POST | `/api/v1/campaigns/{campaign_id}/sessions` | Creates a session or staging lobby and its game session aggregate under one UUID (Zanzibar `run_session`) |
 | `game-session` | POST | `/api/v1/campaigns/{campaign_id}/roles` | Grants `dungeon_master`, `game_master`, `player`, or `spectator` and records the membership (Zanzibar `manage`). `owner` returns `422`. A failed write returns `503` |
 | `game-session` | GET | `/api/v1/campaigns/{campaign_id}/capabilities` | Returns the caller's `manage`, `run_session`, `play`, and `view` flags. Non-members receive all `false` |
 | `game-session` | GET | `/api/v1/profile` | Reads the caller's profile. Unedited fields show the verified token's username and email (owner: game_session, ADR-0015 a) |
@@ -315,7 +315,7 @@ Campaign Lore routes require a verified bearer token, except `/health`, `/health
 | `gateway-api` | PATCH | `/api/v1/profile` | Proxies to `game_session`: edits the caller's profile fields (TASK-0742) |
 | `gateway-api` | GET | `/api/v1/campaigns/{campaign_id}/capabilities` | Proxies to `game_session`: the caller's `manage`, `run_session`, `play`, and `view` flags. Non-members get all `false` |
 | `gateway-api` | GET | `/api/v1/campaigns/{campaign_id}/sessions` | Proxies to `game_session`: sessions and staging lobbies of a campaign (requires `view`) |
-| `gateway-api` | POST | `/api/v1/campaigns/{campaign_id}/sessions` | Proxies to `game_session`: creates a session or staging lobby (requires `run_session`). Returns `201` |
+| `gateway-api` | POST | `/api/v1/campaigns/{campaign_id}/sessions` | Proxies to `game_session`: creates a session or staging lobby and its game session under one UUID (requires `run_session`). Returns `201` |
 | `gateway-api` | POST | `/api/v1/campaigns/{campaign_id}/roles` | Proxies to `game_session`: grants `dungeon_master`, `game_master`, `player`, or `spectator` (requires `manage`). `owner` returns `422`. A failed SpiceDB write returns `502` through the gateway |
 | `gateway-api` | GET | `/api/v1/sessions/{session_id}` | Proxies to `game_session`: session state (requires `observe`) |
 | `gateway-api` | POST | `/api/v1/sessions/{session_id}/start` | Proxies to `game_session`: moves a lobby to `active` (requires `control`) |

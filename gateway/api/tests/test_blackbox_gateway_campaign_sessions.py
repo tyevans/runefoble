@@ -12,6 +12,7 @@ Verifies:
 """
 
 import os
+from uuid import UUID
 
 import pytest
 from fastapi.testclient import TestClient
@@ -203,7 +204,10 @@ async def test_owner_and_dm_create_and_list_sessions(trusted_ws_issuer, client):
     assert s1_data["campaign_id"] == campaign_id
     assert s1_data["round"] == 1
     assert s1_data["participants_count"] == 0
-    assert s1_data["id"].startswith("session-")
+    assert str(UUID(s1_data["id"])) == s1_data["id"]
+    state = client.get(f"/api/v1/sessions/{s1_data['id']}", headers=headers_owner)
+    assert state.status_code == 200, state.text
+    assert state.json()["session_id"] == s1_data["id"]
     assert "created_at" in s1_data
 
     # 4. DM Arthur creates Session 2 (upcoming scheduled)

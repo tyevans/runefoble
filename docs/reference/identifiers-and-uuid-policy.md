@@ -17,7 +17,7 @@ Choose the kind that the domain defines for the id.
 |---|---|---|---|
 | Strict UUID | `parse_uuid(value, field=...)` | Ids the domain creates as UUIDs: campaigns, settlements, bounties, shared worlds, establishments, workers, caravan contracts | HTTP 400, detail names the field |
 | Strict UUID, optional | `parse_optional_uuid(value, field=...)` | An optional UUID field. `None` and `""` return `None` | HTTP 400 for a malformed value |
-| Opaque key | `opaque_aggregate_id(value, field=...)` | String keys the domain stores as text: session ids, game ids, faction ids, The Watcher and voice session keys | `""` or `None`: HTTP 400. Any other string maps to a stable id |
+| Opaque key | `opaque_aggregate_id(value, field=...)` | String keys the domain stores as text: board, soundscape, and chronicle session keys, game ids, faction ids, The Watcher and voice session keys. Game session ids are strict UUIDs (TASK-0706) | `""` or `None`: HTTP 400. Any other string maps to a stable id |
 | Opaque key, optional | `opaque_optional_aggregate_id(value, field=...)` | Optional string keys. `None` and `""` return `None` | Same as above |
 
 ### Opaque key mapping

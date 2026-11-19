@@ -8,7 +8,9 @@ from __future__ import annotations
 
 from typing import Annotated
 
+from eventsource.application.aggregates.repository import AggregateRepository
 from fastapi import APIRouter, Depends, status
+from game_session.aggregate import GameSessionAggregate
 from game_session.campaign import service_campaigns as campaigns
 from game_session.campaign import service_membership as membership
 from game_session.campaign import service_roles as roles
@@ -35,6 +37,7 @@ from game_session.campaign.schemas import (
     UpdateCampaignRequest,
 )
 from game_session.campaign.tuples import SpiceDB
+from game_session.dependencies import get_game_session_repository
 from game_session.settlement.auth.tokens import CallerPrincipal, get_principal
 from runefoble_auth.factory import get_spicedb_client
 
@@ -46,6 +49,9 @@ router = APIRouter(
 
 Repos = Annotated[CampaignRepositories, Depends(get_campaign_repositories)]
 Spicedb = Annotated[SpiceDB, Depends(get_spicedb_client)]
+GameSessions = Annotated[
+    AggregateRepository[GameSessionAggregate], Depends(get_game_session_repository)
+]
 
 
 @router.get("", response_model=list[CampaignSummaryResponse])
@@ -62,9 +68,10 @@ async def create_campaign(
     principal: CallerPrincipal,
     repos: Repos,
     spicedb: Spicedb,
+    game_sessions: GameSessions,
 ) -> CampaignSummaryResponse:
     """Create a campaign. The caller becomes its owner."""
-    return await campaigns.create_campaign(repos, spicedb, principal.user_id, req)
+    return await campaigns.create_campaign(repos, spicedb, principal.user_id, req, game_sessions)
 
 
 @router.get("/{campaign_id}", response_model=CampaignSummaryResponse)
@@ -159,9 +166,12 @@ async def create_session(
     principal: RunSessionCampaign,
     repos: Repos,
     spicedb: Spicedb,
+    game_sessions: GameSessions,
 ) -> CampaignSessionResponse:
     """Create a session or staging lobby. Requires `run_session`."""
-    return await campaigns.create_session(repos, spicedb, campaign_id, req)
+    return await campaigns.create_session(
+        repos, spicedb, campaign_id, req, game_sessions, principal.user_id
+    )
 
 
 @router.post(
