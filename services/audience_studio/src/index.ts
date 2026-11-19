@@ -1,5 +1,6 @@
 /**
- * Entrypoint for services/audience_studio service.
+ * Entrypoint for services/audience_studio service. `main()` reads every setting, not module load,
+ * so a missing value fails start-up with one error.
  */
 
 import { createAdapters } from './adapters.js';
@@ -7,19 +8,20 @@ import { readSpicedbEndpoint, readSpicedbPresharedKey, readStoreSettings, readZi
 import { createSpiceDbClient } from './spicedb/spicedbClient.js';
 import { buildServer } from './server.js';
 
-const PORT = parseInt(process.env.PORT || '8010', 10);
-const HOST = process.env.HOST || '0.0.0.0';
-const SPICEDB_ENDPOINT = readSpicedbEndpoint(process.env);
-const SPICEDB_TOKEN = readSpicedbPresharedKey(process.env);
-const ZITADEL = readZitadelSettings(process.env);
-const STORES = readStoreSettings(process.env);
-
 async function main() {
+  const env = process.env;
+  const port = parseInt(env.PORT || '8010', 10);
+  const host = env.HOST || '0.0.0.0';
+  const spicedbEndpoint = readSpicedbEndpoint(env);
+  const spicedbKey = readSpicedbPresharedKey(env);
+  const zitadel = readZitadelSettings(env);
+  const stores = readStoreSettings(env);
+
   const { server } = await buildServer({
-    spicedb: createSpiceDbClient({ endpoint: SPICEDB_ENDPOINT, presharedKey: SPICEDB_TOKEN }),
-    zitadel: ZITADEL,
+    spicedb: createSpiceDbClient({ endpoint: spicedbEndpoint, presharedKey: spicedbKey }),
+    zitadel,
     logger: true,
-    createAdapters: (log) => createAdapters(STORES, log),
+    createAdapters: (log) => createAdapters(stores, log),
   });
 
   const shutdown = async () => {
@@ -35,7 +37,7 @@ async function main() {
   process.on('SIGINT', shutdown);
 
   try {
-    await server.listen({ port: PORT, host: HOST });
+    await server.listen({ port, host });
   } catch (err) {
     server.log.error(err);
     process.exit(1);

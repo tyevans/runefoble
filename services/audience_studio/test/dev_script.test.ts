@@ -77,3 +77,35 @@ test('the dev script runs the TypeScript start-up checks and refuses to start wi
   );
   assert.equal(health, 'refused');
 });
+
+// `tsx watch` stays alive after the child fails, so this test reads stderr. The built-process test in
+// tests/test_blackbox_audience_studio_startup.py checks the exit code.
+test('the dev script refuses to start without the SpiceDB key, also when NODE_ENV is test', async () => {
+  const port = await freePort();
+  const { RUNEFOBLE_SPICEDB_PRESHARED_KEY: _unset, ...inherited } = process.env;
+  const child = spawn('pnpm', ['run', 'dev'], {
+    cwd: PACKAGE_ROOT,
+    detached: true,
+    stdio: ['ignore', 'ignore', 'pipe'],
+    env: {
+      ...inherited,
+      NODE_ENV: 'test',
+      PORT: String(port),
+      HOST: '127.0.0.1',
+      RUNEFOBLE_DATABASE_URL: 'postgresql://runefoble:secret@127.0.0.1:1/runefoble',
+      RUNEFOBLE_REDIS_URL: 'redis://127.0.0.1:1/0',
+      RUNEFOBLE_ZITADEL_ISSUER: 'http://zitadel.test',
+      RUNEFOBLE_ZITADEL_AUDIENCE: 'runefoble-api',
+      RUNEFOBLE_SPICEDB_ENDPOINT: '127.0.0.1:50051',
+    },
+  });
+  children.push(child);
+
+  const stderr = await waitForStderr(child, /RUNEFOBLE_SPICEDB_PRESHARED_KEY is not set/, 60_000);
+  assert.match(stderr, /Failed to start Audience Studio/);
+  const health = await fetch(`http://127.0.0.1:${port}/healthz`).then(
+    () => 'answered',
+    () => 'refused'
+  );
+  assert.equal(health, 'refused');
+});
