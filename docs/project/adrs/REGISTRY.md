@@ -24,6 +24,7 @@ This registry records every architectural decision in Runefoble. Numbers are all
 | ADR-0018 | Worktree Isolation for Backlog Work | Accepted | 2026-11-17 | [`adr-0018-worktree-and-backlog-isolation.md`](accepted/adr-0018-worktree-and-backlog-isolation.md) |
 | ADR-0019 | Agent Constitution and Diataxis Documentation | Accepted | 2026-11-17 | [`adr-0019-agent-constitution-and-diataxis-documentation.md`](accepted/adr-0019-agent-constitution-and-diataxis-documentation.md) |
 | ADR-0020 | Declarative Dynamic Tool Handlers | Accepted | 2026-11-17 | [`adr-0020-declarative-dynamic-tool-handlers.md`](accepted/adr-0020-declarative-dynamic-tool-handlers.md) |
+| ADR-0021 | Bounded Context Packages Inside game_session | Accepted | 2026-11-19 | [`adr-0021-game-session-internal-bounded-contexts.md`](accepted/adr-0021-game-session-internal-bounded-contexts.md) |
 
 ## spec-ops Baseline Mapping
 
