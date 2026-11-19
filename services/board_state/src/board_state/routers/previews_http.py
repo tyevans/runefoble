@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 from board_state.authz import VIEW, require_board_permission
-from board_state.dependencies import CallerId, get_board, get_principal
+from board_state.dependencies import BoardNotFoundError, CallerId, get_board, get_principal
+from board_state.ghost_staging import GhostStageRequest, UnknownGhostToken, stage_ghost_preview
 from board_state.preview import (
     PreviewMoveRequest,
     PreviewMoveResponse,
@@ -50,4 +51,22 @@ async def preview_move(session_id: str, req: PreviewMoveRequest, user_id: Caller
     return await preview_token_move(session_id, req.token_id, req, user_id)
 
 
-__all__ = ["preview_move", "preview_token_move", "router"]
+@router.post("/api/v1/boards/{session_id}/ghost-previews")
+async def propose_ghost_preview(session_id: str, req: GhostStageRequest, user_id: CallerId):
+    """Stage a proposed move as a ghost preview on the session's board sockets.
+
+    The proposal never moves a token. Only the player's `confirm_move` commits it. The caller
+    needs `board.view`. The Watcher calls this route with the speaker's own bearer token.
+    """
+    await require_board_permission(user_id, session_id, VIEW)
+    try:
+        return await stage_ghost_preview(session_id, req)
+    except BoardNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=f"No board for session '{session_id}'") from exc
+    except UnknownGhostToken as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+__all__ = ["preview_move", "preview_token_move", "propose_ghost_preview", "router"]

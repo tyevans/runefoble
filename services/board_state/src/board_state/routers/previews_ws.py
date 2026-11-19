@@ -12,7 +12,7 @@ from board_state.dependencies import (
     get_zitadel_auth_service,
     repo,
 )
-from board_state.preview import compute_kinematic_route_preview
+from board_state.ghost_staging import GhostStageRequest, UnknownGhostToken, stage_ghost_preview
 from board_state.realtime import board_ws_manager
 from board_state.routers.previews_ws_actions import handle_ws_action
 from board_state.routers.previews_ws_authz import BoardActionDenied, authorize_message
@@ -38,41 +38,14 @@ class UnknownBoardAction(ValueError):
     """Raised for a message type that the board does not define."""
 
 
-def _find_token_id(board: Any, token_id: str | None, speaker_name: str | None) -> str | None:
-    if token_id:
-        return token_id
-    if speaker_name:
-        for tok in board.state.tokens.values():
-            if tok.name.lower() == speaker_name.lower():
-                return tok.token_id
-    return None
-
-
 async def _handle_ghost_preview(session_id: str, data: dict[str, Any]) -> None:
-    board = await get_board(session_id)
-    token_id = _find_token_id(board, data.get("token_id"), data.get("speaker_name"))
-    to_x, to_y = data.get("to_x"), data.get("to_y")
-    if token_id and to_x is not None and to_y is not None:
-        preview = compute_kinematic_route_preview(
-            board_aggregate=board,
-            token_id=token_id,
-            to_x=int(to_x),
-            to_y=int(to_y),
-            from_x=data.get("from_x"),
-            from_y=data.get("from_y"),
-            movement_budget=data.get("movement_budget"),
-        )
-        msg = {
-            "type": "ghost_preview",
-            "action": "ghost_preview",
-            "status": "staged",
-            "session_id": session_id,
-            "speaker_name": data.get("speaker_name"),
-            "raw_transcript": data.get("raw_transcript"),
-            "preview": preview.model_dump(),
-            "timeout_seconds": data.get("timeout_seconds", 15),
-        }
-        await board_ws_manager.broadcast(session_id, msg)
+    """Stage a preview from a socket frame. A frame that names no token stages nothing."""
+    if data.get("to_x") is None or data.get("to_y") is None:
+        return
+    try:
+        await stage_ghost_preview(session_id, GhostStageRequest.model_validate(data))
+    except UnknownGhostToken:
+        return
 
 
 async def _handle_confirm_move(session_id: str, data: dict[str, Any]) -> None:
