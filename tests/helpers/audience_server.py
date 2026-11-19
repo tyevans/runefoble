@@ -41,6 +41,9 @@ def bearer_for(sub: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {shared_issuer().mint(sub)}"}
 
 
+STARTUP_TIMEOUT_S = 30.0
+
+
 class _JwksServer:
     """Serves OIDC discovery and one JWK set on 127.0.0.1. Answers only the issuer host."""
 
@@ -142,7 +145,9 @@ class AudienceStudioProcess:
             stderr=subprocess.PIPE,
         )
         if wait_healthy:
-            self.wait_for_status("/healthz", 200, timeout=10.0)
+            # Node start-up under a loaded parallel run can take longer than 10 s. This wait checks
+            # readiness only; no test asserts the start-up time.
+            self.wait_for_status("/healthz", 200, timeout=STARTUP_TIMEOUT_S)
         return self.base_url
 
     def wait_for_status(self, path: str, status: int, timeout: float) -> None:
