@@ -150,7 +150,7 @@ Part of the [Events Schema](events-schema.md). Each event identifier in this pag
   - `theme`: String
   - `wall_segments`: List of objects (`x1`, `y1`, `x2`, `y2`, `is_door`, `wall_type`). The layout that board_state applies.
   - `hazard_cells`: List of objects (`x`, `y`, `hazard_type`, `terrain_type`). The hazard layout. board_state owns the damage table.
-- Consumed by: board_state (`forged_battlemap` consumer). It applies the layout to the board of `session_id`. A map without a `session_id` has no board and is not applied. A map whose `campaign_id` does not own that board goes to `runefoble.events.asset.dlq`.
+- Consumed by: board_state (`forged_battlemap` consumer). It applies the layout to the board of `session_id`. A map without a `session_id` has no board and is not applied. A map whose `campaign_id` does not own that board goes to the dead-letter stream of the asset stream.
 - **`TokenAssetForged`**: Emitted when a character or creature token portrait is procedurally synthesized with alpha transparency (`runefoble.events.asset.token_forged`).
   - `asset_id`: String
   - `campaign_id`: Optional[UUID]

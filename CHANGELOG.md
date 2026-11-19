@@ -78,6 +78,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Campaign analytics worker `process_event` alias, tracking property wrappers, and package root re-exports. Callers use `handle_event`. (TASK-0500)
 
 ### Added
+- Gateway proxies `POST /api/v1/soundscape/stems/volume` to the soundscape owner. (TASK-0436)
+- A battlemap forged with a session id becomes that session's board geometry: `BattlemapForged` carries the walls and hazards, and board_state applies them (`ForgedBattlemapApplied`). (TASK-0704)
+- Board spell casts publish `SpellCast` and `AreaEffectExploded`; soundscape records `cast_<archetype>` and `burst_<decal>` cues. (TASK-0834)
 - Soundscape reacts to board hazards and collisions (`TokenHazardTriggered`, `PhysicsCollisionOccurred`). (TASK-0438)
 - App Shell route `#/rules` mounts the rules compendium; `pnpm lint` in frontend/ reports components that no view mounts. (TASK-0648)
 - Voice agent speech engine `whisper-cpp`: posts each utterance to a whisper.cpp server (`RUNEFOBLE_VOICE_STT_BASE_URL`); an unreachable server is 503 and `/healthz` reports not ready. Helm `voiceAgent.sttEngine` and `sttBaseUrl`; the model cache volume exists only for `faster-whisper`. (TASK-0833)

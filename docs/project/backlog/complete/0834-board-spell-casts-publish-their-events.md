@@ -1,7 +1,7 @@
 ---
 id: '0834'
 title: "Board Spell Casts Publish Their Events and Soundscape Reacts"
-status: Refined
+status: Complete
 created: 2026-11-19
 dependencies:
 - TASK-0814
@@ -18,7 +18,7 @@ target_release: 0.9.0
 # TASK-0834: Board Spell Casts Publish Their Events and Soundscape Reacts
 
 ## Status
-Refined
+Complete
 
 ## Summary
 The board cast paths save the board but never publish `SpellCast` or `AreaEffectExploded`, so no other bounded context can react to a spell.

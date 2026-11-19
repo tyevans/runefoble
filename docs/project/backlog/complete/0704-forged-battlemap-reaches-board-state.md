@@ -1,7 +1,7 @@
 ---
 id: '0704'
 title: Forged Battlemap Reaches Board State
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0579
@@ -16,7 +16,7 @@ target_release: 0.9.0
 # TASK-0704: Forged Battlemap Reaches Board State
 
 ## Status
-Refined. Slice of TASK-0579 (Follow-ups item 3).
+Complete
 
 ## Summary
 `BattlemapForged` is published by asset_forge, but board_state does not consume it, so a forged map never becomes board geometry.

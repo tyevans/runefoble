@@ -1,7 +1,7 @@
 ---
 id: '0436'
 title: Gateway Soundscape API Routing & Zanzibar Authorization Proxy
-status: Refined
+status: Complete
 created: 2026-09-28
 dependencies:
 - TASK-0050
@@ -25,7 +25,7 @@ target_release: 0.9.0
 # TASK-0436: Gateway Soundscape API Routing & Zanzibar Authorization Proxy
 
 ## Status
-Refined
+Complete
 
 Audit 2026-11-17: implementation present in code; verify and close.
 
@@ -86,3 +86,6 @@ The dynamic soundscape service (`services/soundscape`) implements encounter tens
 3. SpiceDB Zanzibar permissions enforced on `/cue`, `/stems/override`, `/stems/volume`, and `/duck`.
 4. Frontdoor blackbox test suite `tests/test_blackbox_soundscape_gateway.py` authored and 100% passing.
 5. Code passes `uv run ruff check .` and `uv run ruff format --check .`.
+
+## Completion Note
+Decision (orchestrator): the Zanzibar check stays in the owning soundscape service. The gateway proxies the call and passes the owner 401, 403 and 503 to the caller. This follows the thin-gateway rule.
