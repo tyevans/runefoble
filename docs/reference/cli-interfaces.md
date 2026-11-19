@@ -15,7 +15,7 @@
 | `make docs-build` | Compiles documentation static site via Zensical with integrated project visualizer |
 | `make docs-serve` | Builds the docs with `scripts/build_docs.py`, then serves the site with `zensical serve` on port 8000 (the Zensical default, verified by running the target) |
 | `make cluster-up` | Launches local Kind Kubernetes cluster with port mapping and Traefik |
-| `make cluster-down` | Deletes the local Kind cluster |
+| `make cluster-down` | Deletes the local Kind cluster and every volume in it (PostgreSQL, Silo, and Redis data) |
 | `make install-tools` | Checks that `kind`, `uv`, `pnpm`, `helm`, and `docker` are on `PATH`. Installs `kind` v0.27.0 into `~/.local/bin` when `kind` is missing |
 | `make images` | Builds every service image (`runefoble/<service>:0.1.0`). Python services use `deployments/docker/python-service.Dockerfile` and load into the `runefoble-local` Kind cluster. The Node `audience-studio` image uses `services/audience_studio/Dockerfile` (Node 22, pnpm 11.22.0 from the frozen lockfile, runs `dist/index.js` as the `node` user on port 8010) and is loaded the same way. The App Shell `frontend` image uses `frontend/Dockerfile`. Build it from the repository root (`docker build -f frontend/Dockerfile .`). Its context comes from `frontend/Dockerfile.dockerignore`, which keeps the pnpm workspace and `services/*/ui`. It serves the built App Shell with nginx on port 80 and is loaded the same way. |
 | `make helm-lint` | Validates Helm chart syntax |

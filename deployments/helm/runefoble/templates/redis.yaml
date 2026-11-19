@@ -1,11 +1,12 @@
 {{- if .Values.redis.enabled -}}
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: runefoble-redis
   labels:
     app: runefoble-redis
 spec:
+  serviceName: runefoble-redis
   replicas: 1
   selector:
     matchLabels:
@@ -18,6 +19,8 @@ spec:
       containers:
         - name: redis
           image: {{ .Values.redis.image }}
+          # Append-only file on the data claim. Consumer groups and the stream entries survive a restart.
+          args: ["redis-server", "--appendonly", "yes"]
           ports:
             - containerPort: {{ .Values.redis.port }}
           resources:
@@ -32,6 +35,11 @@ spec:
               port: {{ .Values.redis.port }}
             initialDelaySeconds: 15
             periodSeconds: 20
+          volumeMounts:
+            - name: data
+              mountPath: /data
+  volumeClaimTemplates:
+    {{- include "runefoble.dataClaimTemplate" (dict "persistence" .Values.redis.persistence) | nindent 4 }}
 ---
 apiVersion: v1
 kind: Service

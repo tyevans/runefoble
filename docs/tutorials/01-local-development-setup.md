@@ -40,6 +40,8 @@ This command:
 
 The command stops at the first failed step and exits with a non-zero status. Fix the error and run `make cluster-up` again.
 
+Data lives in volumes. PostgreSQL, Silo, and Redis each keep their data on a PersistentVolumeClaim. A pod restart keeps the data. `make cluster-down` deletes the cluster and every volume in it. Use it only when you want an empty stack. It deletes every event store, the Zitadel and SpiceDB data, the stored assets, and the Redis streams.
+
 Check Traefik:
 ```bash
 kubectl -n kube-system rollout status deploy/traefik

@@ -263,11 +263,11 @@ def test_postgres_allows_enough_connections_for_every_service():
         (
             d
             for d in docs
-            if d.get("kind") == "Deployment" and d.get("metadata", {}).get("name") == "postgres"
+            if d.get("kind") == "StatefulSet" and d.get("metadata", {}).get("name") == "postgres"
         ),
         None,
     )
-    assert deploy is not None, "postgres Deployment not found"
+    assert deploy is not None, "postgres StatefulSet not found"
     args = deploy["spec"]["template"]["spec"]["containers"][0]["args"]
     limit = int(next(a for a in args if a.startswith("max_connections=")).split("=")[1])
     assert limit >= 200
