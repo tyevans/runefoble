@@ -94,16 +94,6 @@ export function getFallbackCampaignSessions(campaignId: string): CampaignSession
   return [...FALLBACK_CAMPAIGN_SESSIONS_MAP[campaignId]];
 }
 
-export function getFallbackSession(sessionId: string): CampaignSessionItem {
-  for (const list of Object.values(FALLBACK_CAMPAIGN_SESSIONS_MAP)) {
-    const found = list.find((s) => s.id === sessionId);
-    if (found) return found;
-  }
-  if (sessionId === '14' || sessionId === 'session-tomb-14') return { id: sessionId, campaignId: '4', title: 'Session #14: Tomb of the Star-Eater', status: 'active', round: 3, participantsCount: 4 };
-  if (sessionId === '15' || sessionId === 'lobby-4-2') return { id: sessionId, campaignId: '4', title: 'Session #15: Chamber of Horrors', status: 'lobby', participantsCount: 3 };
-  return { id: sessionId, campaignId: '', title: `Session #${sessionId}`, status: 'active', round: 1, participantsCount: 3 };
-}
-
 export function createFallbackCampaign(campaignId: string): CampaignItem {
   return { id: campaignId, title: `Campaign #${campaignId}`, role: 'player', permissions: PLAYER_PERMISSIONS, player_count: 3, has_active_session: false };
 }

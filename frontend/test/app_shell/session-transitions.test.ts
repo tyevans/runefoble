@@ -14,7 +14,8 @@ import assert from 'node:assert/strict';
 import { Router } from '../../src/router/router.ts';
 import { AppDataService } from '../../src/services/app-data-service.ts';
 import { installFakeGateway, type FakeGateway } from '../support/fake-gateway.ts';
-import { FALLBACK_CHARACTERS, FALLBACK_PARTICIPANTS, FALLBACK_BOARD_TOKENS } from '../support/app-data-service.fixtures.ts';
+import { FALLBACK_CHARACTERS } from '../support/app-data-service.fixtures.ts';
+import { OWNER_SESSION_STATE, OWNER_CAMPAIGN_MEMBERS, OWNER_BOARD_STATE } from '../support/owner-wire-fixtures.ts';
 
 /** A stateful roster behind the gateway: create, assign, and delete change what later reads return. */
 function installRosterGateway(): { gateway: FakeGateway; roster: any[] } {
@@ -29,8 +30,9 @@ function installRosterGateway(): { gateway: FakeGateway; roster: any[] } {
     },
     'PATCH /api/v1/characters/char-ezren/campaign': (req) => { roster.find((c) => c.id === 'char-ezren').campaignId = (req.body as any).campaignId; return { status: 204 }; },
     'DELETE /api/v1/characters/char-kyra': () => { roster.splice(roster.findIndex((c) => c.id === 'char-kyra'), 1); return { status: 204 }; },
-    'GET /api/v1/sessions/session-tomb-14': { body: { id: 'session-tomb-14', campaign_id: '4', title: 'Session #14', status: 'active', participants: FALLBACK_PARTICIPANTS } },
-    'GET /api/v1/boards/session-tomb-14': { body: { cols: 12, rows: 10, tokens: FALLBACK_BOARD_TOKENS } },
+    'GET /api/v1/sessions/session-tomb-14': { body: OWNER_SESSION_STATE },
+    'GET /api/v1/campaigns/4/members': { body: OWNER_CAMPAIGN_MEMBERS },
+    'GET /api/v1/boards/session-tomb-14': { body: OWNER_BOARD_STATE },
   });
   return { gateway, roster };
 }

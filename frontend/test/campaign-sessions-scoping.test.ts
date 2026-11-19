@@ -29,7 +29,10 @@ function installSessionGateway(initial: Record<string, any[]>): { gateway: FakeG
       const single = /^\/api\/v1\/sessions\/([^/]+)$/.exec(req.path);
       if (single && req.method === 'GET') {
         const found = Object.values(rosters).flat().find((s: any) => s.id === single[1]);
-        return found ? { body: found } : { status: 404, body: { detail: 'Session not found' } };
+        // GameSessionState field names (services/game_session/src/game_session/models/session.py:22).
+        if (!found) return { status: 404, body: { detail: 'Session not found' } };
+        const f = found as any;
+        return { body: { session_id: f.id, campaign_id: f.campaign_id, title: f.title, status: f.status, combat_round: f.round, participants: {}, lobby_readiness: {} } };
       }
       return { status: 500, body: { detail: `No fake route for ${req.method} ${req.path}` } };
     },

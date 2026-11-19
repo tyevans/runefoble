@@ -1,4 +1,4 @@
-import type { CampaignItem, CampaignMember, CreateCampaignPayload, UpdateCampaignPayload, LobbyParticipant, LobbyCharacterOption } from '@runefoble/game-session-ui';
+import type { CampaignItem, CampaignMember, CreateCampaignPayload, UpdateCampaignPayload, LobbyCharacterOption, LobbyParticipant } from '@runefoble/game-session-ui';
 import type { CharacterItem, RosterCampaignOption, CreateCharacterPayload } from '@runefoble/character-sheet-ui';
 import type { BoardToken } from '@runefoble/board-state-ui';
 import type { CaravanContractItem } from '@runefoble/game-session-ui';
@@ -12,6 +12,10 @@ import type { CampaignCapabilities } from './campaign-capabilities.ts';
 import {
   dataFailure, dataOk, NETWORK_FAILURE_MESSAGE, UNREADABLE_RESPONSE_MESSAGE, type DataResult,
 } from './data-result.ts';
+import { isArray, malformedResponse, requireFields } from './required-fields.ts';
+import {
+  SESSION_REQUIRED_FIELDS, sessionFromOwner, lobbyParticipantsFromOwner, boardFromOwner,
+} from './owner-wire-mappers.ts';
 import { errorMessageFromBody } from '@runefoble/ui-core';
 import {
   mutateCharacterHealth, mutateCharacterEquip, mutateCharacterUnequip, mutateCharacterAddInventory,
@@ -100,32 +104,36 @@ export class AppDataService {
   async fetchCampaignSessions(campaignId: string): Promise<DataResult<CampaignSessionItem[]>> {
     const res = await this.request<any[]>(`${this.apiBase}/campaigns/${campaignId}/sessions`);
     if (!res.ok) return res;
-    return dataOk(res.data.map((item) => this.toSessionItem(item)));
+    if (!isArray(res.data)) return malformedResponse('the session list is not a list');
+    const items: CampaignSessionItem[] = [];
+    for (const item of res.data) {
+      const mapped = this.toSessionItem(item);
+      if (!mapped.ok) return mapped;
+      items.push(mapped.data);
+    }
+    return dataOk(items);
   }
 
   /** Reads the caravan notice board of a shared world through the gateway (TASK-0807). */
   async fetchCaravanContracts(sharedWorldId: string): Promise<DataResult<CaravanContractItem[]>> {
-    const res = await this.request<{ contracts?: CaravanContractItem[] }>(`${this.apiBase}/shared-worlds/${sharedWorldId}/caravans/contracts`);
+    const res = await this.request<{ contracts: CaravanContractItem[] }>(`${this.apiBase}/shared-worlds/${sharedWorldId}/caravans/contracts`);
     if (!res.ok) return res;
-    return dataOk(res.data.contracts ?? []);
+    if (!isArray(res.data.contracts)) return malformedResponse('contracts is not a list');
+    return dataOk(res.data.contracts);
   }
 
   async fetchSession(sessionId: string): Promise<DataResult<CampaignSessionItem>> {
     const res = await this.request<any>(`${this.apiBase}/sessions/${sessionId}`);
     if (!res.ok) return res;
-    const data = res.data;
-    return dataOk({
-      id: data.id || sessionId,
-      campaignId: data.campaign_id || data.campaignId || '',
-      title: data.title || '',
-      status: data.status || 'active',
-      round: data.round || 1,
-      participantsCount: Array.isArray(data.participants) ? data.participants.length : (data.participantsCount || 0),
-    });
+    return sessionFromOwner(res.data);
   }
 
-  private toSessionItem(item: any): CampaignSessionItem {
-    return { ...item, campaignId: item.campaign_id || item.campaignId, participantsCount: item.participants_count ?? item.participantsCount ?? 0 };
+  private toSessionItem(item: any): DataResult<CampaignSessionItem> {
+    return requireFields({
+      ...item,
+      campaignId: item?.campaign_id || item?.campaignId,
+      participantsCount: item?.participants_count ?? item?.participantsCount ?? 0,
+    }, SESSION_REQUIRED_FIELDS);
   }
 
   async fetchCharacters(): Promise<DataResult<CharacterItem[]>> { return this.request<CharacterItem[]>(`${this.apiBase}/characters`); }
@@ -166,16 +174,19 @@ export class AppDataService {
   async fetchLobbyState(campaignId: string, sessionId: string): Promise<DataResult<{ participants: LobbyParticipant[]; availableCharacters: LobbyCharacterOption[] }>> {
     const session = await this.request<any>(`${this.apiBase}/sessions/${sessionId}`);
     if (!session.ok) return session;
+    const members = await this.fetchCampaignMembers(campaignId);
+    if (!members.ok) return members;
     const characters = await this.fetchCharacters();
     if (!characters.ok) return characters;
-    const participants: LobbyParticipant[] = Array.isArray(session.data?.participants) ? session.data.participants : [];
-    return dataOk({ participants, availableCharacters: resolveLobbyAvailableCharacters(characters.data, campaignId) });
+    const roster = lobbyParticipantsFromOwner(session.data, members.data);
+    if (!roster.ok) return roster;
+    return dataOk({ participants: roster.data, availableCharacters: resolveLobbyAvailableCharacters(characters.data, campaignId) });
   }
 
   async fetchBoardState(sessionId: string): Promise<DataResult<{ cols: number; rows: number; tokens: BoardToken[] }>> {
     const res = await this.request<any>(`${this.apiBase}/boards/${sessionId}`);
     if (!res.ok) return res;
-    return dataOk({ cols: res.data?.cols ?? 10, rows: res.data?.rows ?? 10, tokens: res.data?.tokens || [] });
+    return boardFromOwner(res.data);
   }
 
   async fetchBoardTokens(sessionId: string): Promise<DataResult<BoardToken[]>> {
@@ -191,7 +202,7 @@ export class AppDataService {
 
   async createCampaignSession(campaignId: string, payload: { title: string; status?: string; scheduled_at?: string; scheduledAt?: string; description?: string }): Promise<DataResult<CampaignSessionItem>> {
     const res = await this.request<any>(`${this.apiBase}/campaigns/${campaignId}/sessions`, { method: 'POST', body: JSON.stringify(payload) });
-    return res.ok ? dataOk(this.toSessionItem(res.data)) : res;
+    return res.ok ? this.toSessionItem(res.data) : res;
   }
 
   async createCampaign(payload: CreateCampaignPayload): Promise<DataResult<CampaignItem>> {

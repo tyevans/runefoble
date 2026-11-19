@@ -15,7 +15,8 @@ import type { CharacterItem, InspectCharacterEventDetail } from '../../../servic
 import type { LobbyParticipant } from '../../../services/game_session/ui/src/campaigns/types.ts';
 import { installFakeGateway } from '../support/fake-gateway.ts';
 import { readAppShellSource } from '../support/app-shell-source.ts';
-import { FALLBACK_CHARACTERS, FALLBACK_PARTICIPANTS } from '../support/app-data-service.fixtures.ts';
+import { FALLBACK_CHARACTERS } from '../support/app-data-service.fixtures.ts';
+import { OWNER_SESSION_STATE, OWNER_CAMPAIGN_MEMBERS } from '../support/owner-wire-fixtures.ts';
 
 
 describe('Character Roster & Deep Route Navigation (US-0064, US-0069, TASK-0288)', () => {
@@ -66,7 +67,8 @@ describe('Character Roster & Deep Route Navigation (US-0064, US-0069, TASK-0288)
 
   it('test_lobby_selection_and_active_card_binding: syncs lobby participant and card vitals', async () => {
     const gateway = installFakeGateway({
-      'GET /api/v1/sessions/session-tomb-14': { body: { id: 'session-tomb-14', campaign_id: '4', participants: FALLBACK_PARTICIPANTS } },
+      'GET /api/v1/sessions/session-tomb-14': { body: OWNER_SESSION_STATE },
+      'GET /api/v1/campaigns/4/members': { body: OWNER_CAMPAIGN_MEMBERS },
       'GET /api/v1/characters': { body: FALLBACK_CHARACTERS },
     });
     try {

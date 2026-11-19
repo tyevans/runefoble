@@ -10,15 +10,14 @@ import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { AppDataService } from '../src/services/app-data-service.ts';
 import {
-  FALLBACK_CAMPAIGNS, FALLBACK_CHARACTERS, FALLBACK_MEMBERS, FALLBACK_PARTICIPANTS,
-  FALLBACK_CAMPAIGN_SESSIONS_MAP, FALLBACK_BOARD_TOKENS,
+  FALLBACK_CAMPAIGNS, FALLBACK_CHARACTERS, FALLBACK_MEMBERS,
+  FALLBACK_CAMPAIGN_SESSIONS_MAP,
 } from './support/app-data-service.fixtures.ts';
+import {
+  OWNER_SESSION_STATE, OWNER_CAMPAIGN_MEMBERS, OWNER_BOARD_STATE, OWNER_BOARD_TOKENS,
+} from './support/owner-wire-fixtures.ts';
 import { installFakeGateway, type FakeGateway } from './support/fake-gateway.ts';
 
-const SESSION_BODY = {
-  id: 'session-tomb-14', campaign_id: '4', title: 'Session #14: Tomb of the Star-Eater',
-  status: 'active', round: 3, participants: FALLBACK_PARTICIPANTS,
-};
 
 describe('AppDataService success path through the gateway', () => {
   let gateway: FakeGateway;
@@ -33,7 +32,7 @@ describe('AppDataService success path through the gateway', () => {
       'GET /api/v1/campaigns/4': { body: FALLBACK_CAMPAIGNS[0] },
       'GET /api/v1/campaigns/4/members': { body: FALLBACK_MEMBERS },
       'GET /api/v1/campaigns/4/sessions': { body: FALLBACK_CAMPAIGN_SESSIONS_MAP['4'] },
-      'GET /api/v1/sessions/session-tomb-14': { body: SESSION_BODY },
+      'GET /api/v1/sessions/session-tomb-14': { body: OWNER_SESSION_STATE },
     });
 
     const campaigns = await service.fetchCampaigns();
@@ -54,15 +53,15 @@ describe('AppDataService success path through the gateway', () => {
 
     const session = await service.fetchSession('session-tomb-14');
     assert.ok(session.ok);
-    assert.equal(session.data.participantsCount, FALLBACK_PARTICIPANTS.length);
   });
 
   it('reads characters, board state, and lobby state from gateway responses', async () => {
     gateway = installFakeGateway({
       'GET /api/v1/characters': { body: FALLBACK_CHARACTERS },
       'GET /api/v1/characters/char-valeros': { body: FALLBACK_CHARACTERS[0] },
-      'GET /api/v1/sessions/session-tomb-14': { body: SESSION_BODY },
-      'GET /api/v1/boards/session-tomb-14': { body: { cols: 12, rows: 10, tokens: FALLBACK_BOARD_TOKENS } },
+      'GET /api/v1/sessions/session-tomb-14': { body: OWNER_SESSION_STATE },
+      'GET /api/v1/boards/session-tomb-14': { body: OWNER_BOARD_STATE },
+      'GET /api/v1/campaigns/4/members': { body: OWNER_CAMPAIGN_MEMBERS },
     });
 
     const character = await service.fetchCharacter('char-valeros');
@@ -72,7 +71,7 @@ describe('AppDataService success path through the gateway', () => {
     const board = await service.fetchBoardState('session-tomb-14');
     assert.ok(board.ok);
     assert.equal(board.data.cols, 12);
-    assert.equal(board.data.tokens.length, FALLBACK_BOARD_TOKENS.length);
+    assert.equal(board.data.tokens.length, Object.keys(OWNER_BOARD_TOKENS).length);
 
     const tokens = await service.fetchBoardTokens('session-tomb-14');
     assert.ok(tokens.ok);

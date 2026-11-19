@@ -114,7 +114,7 @@ describe('Dynamic Title Resolution & Breadcrumbs Audit (TASK-0251)', () => {
     dataService = new AppDataService();
     gateway = installFakeGateway({
       'GET /api/v1/campaigns/4': { body: FALLBACK_CAMPAIGNS[0] },
-      'GET /api/v1/sessions/session-tomb-14': { body: { id: 'session-tomb-14', campaign_id: '4', title: FALLBACK_CAMPAIGN_SESSIONS_MAP['4'][0].title, status: 'active' } },
+      'GET /api/v1/sessions/session-tomb-14': { body: { session_id: 'session-tomb-14', campaign_id: '4', title: FALLBACK_CAMPAIGN_SESSIONS_MAP['4'][0].title, status: 'active', combat_round: 3 } },
       'GET /api/v1/characters/char-valeros': { body: FALLBACK_CHARACTERS[0] },
     });
   });
