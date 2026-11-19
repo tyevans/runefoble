@@ -29,7 +29,8 @@ e2e/
 | `e2e/support/frontdoor_api.ts` | The `FrontdoorApi` class. Calls public REST routes through the ingress. |
 | `e2e/support/campaign_capabilities.ts` | `openAndRecordCapabilities` opens an App Shell route and records the `GET /api/v1/campaigns/{campaign_id}/capabilities` reply. `recordedCapabilities` returns it. Steps compare a role-gated control with the server flag. |
 | `e2e/support/world.ts` | Scenario context: the current user, campaign and session ids, one page per persona, and extra browser contexts. `getPage(name)` throws when no step opened a page for that persona. |
-| `e2e/support/guards.ts` | Fail-loud guards. `requireValue` throws when a setup value is missing. `assertOk` throws with the status and body of a failed response. `sessionIdFromTitle` reads the session number from a title such as "Lobby 15". `exactText` builds a whole-text match for `hasText`. |
+| `e2e/support/lobby_session.ts` | Lobby setup state. `rememberLobbySession` and `lobbySessionId` keep the session id with the title that the feature uses. `lobbyRoute` builds the lobby route from the stored ids. `personaToken` returns the bearer token of a persona that setup signed in. |
+| `e2e/support/guards.ts` | Fail-loud guards. `requireValue` throws when a setup value is missing. `assertOk` throws with the status and body of a failed response. `fillRouteTemplate` puts the ids from `world` into a route shape such as `#/campaigns/{campaignId}/sessions/{sessionId}`, and throws when an id is missing. `exactText` builds a whole-text match for `hasText`. |
 
 ## Global Setup and Personas
 
@@ -81,7 +82,7 @@ The token for a negative scenario, such as a token signed by an unknown key, is 
 `FrontdoorApi` (`e2e/support/frontdoor_api.ts`) sends HTTP requests to public routes such as `POST /api/v1/campaigns`. It sends the bearer token when the caller passes one. The `bearerHeader(token)` helper in the same file builds the `Authorization` header. Every e2e request that carries a token uses it. Its methods include:
 
 - Health and reads: `checkHealth`, `listCampaigns`, `getCampaign`, `listCharacters`, `getCharacter`, `listCampaignMembers`, `getAtlas`, `getCodex`.
-- Writes: `createCampaign`, `createCharacter`, `assignCampaignRole`, `createCampaignInvite`, `publishCodexEntry`, `createCampaignSession`, `startSession`.
+- Writes: `createCampaign`, `createCharacter`, `assignCampaignRole`, `createCampaignInvite`, `joinCampaign`, `publishCodexEntry`, `createCampaignSession`, `joinSession`, `startSession`.
 
 A setup step must throw when the request fails. It must not fall back to a fixed id.
 
