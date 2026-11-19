@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import asdict, dataclass
 from typing import Any, Literal
 
 from pydantic import BaseModel
@@ -73,19 +74,16 @@ class MoveTokenResponse(BaseModel):
     movement_paused: bool = False
 
 
-class MoveResult(tuple):
-    def __new__(
-        cls,
-        cost: int,
-        hazard_triggered: str | None,
-        damage_dice: str | None,
-        trap_triggered: str | None = None,
-        movement_paused: bool = False,
-    ):
-        inst = super().__new__(cls, (cost, hazard_triggered, damage_dice))
-        inst.cost = cost
-        inst.hazard_triggered = hazard_triggered
-        inst.damage_dice = damage_dice
-        inst.trap_triggered = trap_triggered
-        inst.movement_paused = movement_paused
-        return inst
+@dataclass(frozen=True)
+class MoveOutcome:
+    """The result of one token move. HTTP and WebSocket moves send these same fields."""
+
+    movement_cost: int
+    hazard_triggered: str | None = None
+    damage_dice: str | None = None
+    trap_triggered: str | None = None
+    movement_paused: bool = False
+
+    def as_wire(self) -> dict[str, Any]:
+        """Return the move fields for a response body or a socket frame."""
+        return asdict(self)

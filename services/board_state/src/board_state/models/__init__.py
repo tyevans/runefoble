@@ -33,7 +33,7 @@ from board_state.models.terrain import (
     VisibilityResponse,
 )
 from board_state.models.tokens import (
-    MoveResult,
+    MoveOutcome,
     MoveTokenRequest,
     MoveTokenResponse,
     PlacedTokenState,
@@ -76,7 +76,7 @@ __all__ = [
     "FogOfWarUpdateRequest",
     "KnockbackRequest",
     "KnockbackResponse",
-    "MoveResult",
+    "MoveOutcome",
     "MoveTokenRequest",
     "MoveTokenResponse",
     "PhysicsCollisionState",

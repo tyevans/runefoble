@@ -121,6 +121,7 @@ Token ids are global in SpiceDB. A token id must use only letters, digits, and `
 
 - Offer the subprotocols `runefoble.v1` and `runefoble.bearer.<jwt>`. A missing or invalid token closes the handshake with `1008`. A user without `board.view` closes with `4403`, the code of the gateway session sockets. Both closes happen before accept.
 - `confirm_move`, `token_action`, and `radial_action` need `board_token.move` on `token_id`.
+- A confirmed move broadcasts a `token_moved` frame. The frame has the same move fields as the HTTP move response: `movement_cost`, `hazard_triggered`, `damage_dice`, `trap_triggered`, and `movement_paused`. A move onto a trap stops at the trap cell and sets `movement_paused` to `true`.
 - `aoe_place`, `cast_spell`, `spell_vfx`, `SpellCast`, and spoken spell intents need `campaign.play`.
 - Every other defined message (previews, `aoe_preview`, `aoe_evaluate`, `cancel_preview`) needs `board.view`.
 - A denied message returns `{"type": "error", "code": "PERMISSION_DENIED", "status": 403, "session_id": "..."}`. The socket stays open.

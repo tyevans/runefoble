@@ -102,6 +102,7 @@ Content-Type: application/json
 If a step trap is armed at `(4, 4)`:
 1. Token traversal pauses at `(4, 4)`.
 2. `MoveTokenResponse` returns `x: 4`, `y: 4`, `trap_triggered: "trap-c93f01ab"`, and `movement_paused: true`.
+   A `confirm_move` on the board socket (`/ws/boards/{session_id}`) broadcasts a `token_moved` frame with the same `trap_triggered` and `movement_paused` fields. The sprung trap is revealed, so its id is not secret. Its name, description, and effect payload stay on the DM layer.
 3. `TrapSprungEvent` is emitted to the event store and published over Redis Streams (`runefoble.events.board`).
 
 ---

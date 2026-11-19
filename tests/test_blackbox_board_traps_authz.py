@@ -404,7 +404,7 @@ def test_secret_doors_and_portals_reach_only_the_dm(client: TestClient, board: s
 def test_board_websocket_broadcasts_never_carry_the_secret_layer(
     client: TestClient, board: str, secret_trap: str, player_character: str
 ):
-    """A player socket that sees a trap spring receives no secret trap data in any frame."""
+    """A player socket that sees a trap spring receives no unrevealed trap data in any frame."""
     placed = client.post(
         f"/api/v1/boards/{board}/tokens",
         json={
@@ -434,7 +434,12 @@ def test_board_websocket_broadcasts_never_carry_the_secret_layer(
         frames.append(player_socket.receive_json())
 
     assert [f["type"] for f in frames][:2] == ["connected", "token_moved"]
-    _assert_no_secret(json.dumps(frames), secret_trap)
+    # A sprung trap is revealed. The move frame names it, as the HTTP move does.
+    assert frames[1]["trap_triggered"] == secret_trap
+    assert frames[1]["movement_paused"] is True
+    text = json.dumps(frames)
+    for secret in (SECRET_NAME, SECRET_TEXT, SECRET_PAYLOAD_KEY):
+        assert secret not in text, f"secret layer data '{secret}' reached a non-DM caller"
 
 
 # --- SpiceDB failure --------------------------------------------------------------------------

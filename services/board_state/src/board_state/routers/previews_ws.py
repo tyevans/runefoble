@@ -55,7 +55,7 @@ async def _handle_confirm_move(session_id: str, data: dict[str, Any]) -> None:
     if not (token_id and to_x is not None and to_y is not None):
         return
     board = await get_board(session_id)
-    cost, hazard, dice = board.move_token(
+    outcome = board.move_token(
         token_id=token_id,
         to_x=int(to_x),
         to_y=int(to_y),
@@ -73,10 +73,8 @@ async def _handle_confirm_move(session_id: str, data: dict[str, Any]) -> None:
         "name": tok.name,
         "x": tok.x,
         "y": tok.y,
-        "movement_cost": cost,
-        "hazard_triggered": hazard,
-        "damage_dice": dice,
         "active_hazard": tok.active_hazard,
+        **outcome.as_wire(),
     }
     await board_ws_manager.broadcast(session_id, msg)
 
