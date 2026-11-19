@@ -1,6 +1,5 @@
 """Blackbox tests for real-time WebSocket speech VFX triggers and domain event persistence."""
 
-import asyncio
 import time
 from uuid import uuid4
 
@@ -10,16 +9,19 @@ from board_state.dependencies import repo
 from fastapi.testclient import TestClient
 from runefoble_platform.identifiers import opaque_aggregate_id
 
+from tests.helpers.campaign_setup import create_dm_campaign
 from tests.helpers.ws_identity import ws_subprotocols
 
 
-def test_websocket_realtime_speech_spell_trigger_sub_150ms(client: TestClient) -> None:
+def test_websocket_realtime_speech_spell_trigger_sub_150ms(
+    client: TestClient, board_campaign: str
+) -> None:
     """Verify WebSocket real-time stream handles spoken spellcast and broadcasts VFX in <150ms."""
     board_id = f"board-{uuid4().hex[:8]}"
 
     client.post(
         "/api/v1/boards",
-        json={"campaign_id": BOARD_CAMPAIGN, "board_id": board_id, "cols": 10, "rows": 10},
+        json={"campaign_id": board_campaign, "board_id": board_id, "cols": 10, "rows": 10},
     )
     client.post(
         f"/api/v1/boards/{board_id}/tokens",
@@ -94,18 +96,7 @@ async def test_event_sourcing_domain_events_persistence() -> None:
     assert len(loaded_board.state.active_decals) > 0
 
 
-BOARD_CAMPAIGN = "camp-board-fixture"
-
-
 @pytest.fixture(autouse=True)
-def _board_campaign_dm(spicedb):
-    """Make `user-test` the DM of the campaign that every board in this module belongs to."""
-    asyncio.run(
-        spicedb.write_relationship(
-            resource_type="campaign",
-            resource_id=BOARD_CAMPAIGN,
-            relation="dungeon_master",
-            subject_type="user",
-            subject_id="user-test",
-        )
-    )
+def board_campaign(trusted_ws_issuer) -> str:
+    """The campaign that every board in this module belongs to. `user-test` runs it."""
+    return create_dm_campaign("user-test")

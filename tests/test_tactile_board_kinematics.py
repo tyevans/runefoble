@@ -4,17 +4,17 @@ Governed by Hard Invariant 7 (Blackbox TDD with Frontdoor Setup).
 Interacts strictly through public HTTP routes and WebSockets.
 """
 
-import asyncio
 from uuid import uuid4
 
 import pytest
 from board_state.main import app
 from fastapi.testclient import TestClient
 
+from tests.helpers.campaign_setup import create_dm_campaign
 from tests.helpers.ws_identity import bearer, ws_subprotocols
 
 
-def test_tactile_kinematics_route_previews():
+def test_tactile_kinematics_route_previews(board_campaign: str):
     """Verify route preview calculations via HTTP frontdoors."""
     client = TestClient(app, headers=bearer("user-test"))
     board_id = f"board-{uuid4().hex[:8]}"
@@ -22,7 +22,7 @@ def test_tactile_kinematics_route_previews():
     # Create board
     res = client.post(
         "/api/v1/boards",
-        json={"campaign_id": BOARD_CAMPAIGN, "board_id": board_id, "cols": 10, "rows": 10},
+        json={"campaign_id": board_campaign, "board_id": board_id, "cols": 10, "rows": 10},
     )
     assert res.status_code == 200
 
@@ -67,14 +67,14 @@ def test_tactile_kinematics_route_previews():
     assert res_preview_alias.json()["total_distance_ft"] == 15
 
 
-def test_tactile_kinematics_websocket_flow():
+def test_tactile_kinematics_websocket_flow(board_campaign: str):
     """Verify WebSocket live kinematics stream and ghost preview staging."""
     client = TestClient(app, headers=bearer("user-test"))
     board_id = f"board-{uuid4().hex[:8]}"
 
     client.post(
         "/api/v1/boards",
-        json={"campaign_id": BOARD_CAMPAIGN, "board_id": board_id, "cols": 10, "rows": 10},
+        json={"campaign_id": board_campaign, "board_id": board_id, "cols": 10, "rows": 10},
     )
     client.post(
         f"/api/v1/boards/{board_id}/tokens",
@@ -120,18 +120,7 @@ def test_tactile_kinematics_websocket_flow():
     assert board["tokens"]["merisiel"]["x"] == 4
 
 
-BOARD_CAMPAIGN = "camp-board-fixture"
-
-
 @pytest.fixture(autouse=True)
-def _board_campaign_dm(spicedb):
-    """Make `user-test` the DM of the campaign that every board in this module belongs to."""
-    asyncio.run(
-        spicedb.write_relationship(
-            resource_type="campaign",
-            resource_id=BOARD_CAMPAIGN,
-            relation="dungeon_master",
-            subject_type="user",
-            subject_id="user-test",
-        )
-    )
+def board_campaign(trusted_ws_issuer) -> str:
+    """The campaign that every board in this module belongs to. `user-test` runs it."""
+    return create_dm_campaign("user-test")

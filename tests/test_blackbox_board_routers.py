@@ -4,13 +4,13 @@ Ensures zero contract regressions, public HTTP frontdoor reachability, OpenAPI s
 and strict compliance with Hard Invariant 6 (file length < 500 lines).
 """
 
-import asyncio
 from uuid import uuid4
 
 import pytest
 from board_state.main import app as board_app
 from fastapi.testclient import TestClient
 
+from tests.helpers.campaign_setup import create_dm_campaign
 from tests.helpers.ws_identity import bearer, ws_subprotocols
 
 
@@ -46,7 +46,7 @@ def test_board_state_openapi_routes_completeness(board_client):
         assert route in paths, f"Route '{route}' missing from Board State OpenAPI schema"
 
 
-def test_board_state_spatial_frontdoor(board_client):
+def test_board_state_spatial_frontdoor(board_client, board_campaign: str):
     """Verify board creation and spatial retrieval frontdoors."""
     assert board_client.get("/healthz").status_code == 200
     assert board_client.get("/ui/manifest").status_code == 200
@@ -54,7 +54,7 @@ def test_board_state_spatial_frontdoor(board_client):
     board_id = f"board-{uuid4().hex[:8]}"
     create_res = board_client.post(
         "/api/v1/boards",
-        json={"campaign_id": BOARD_CAMPAIGN, "board_id": board_id, "cols": 12, "rows": 12},
+        json={"campaign_id": board_campaign, "board_id": board_id, "cols": 12, "rows": 12},
     )
     assert create_res.status_code == 200
     get_res = board_client.get(f"/api/v1/boards/{board_id}")
@@ -62,12 +62,12 @@ def test_board_state_spatial_frontdoor(board_client):
     assert get_res.json()["cols"] == 12
 
 
-def test_board_state_tokens_frontdoor(board_client):
+def test_board_state_tokens_frontdoor(board_client, board_campaign: str):
     """Verify token placement, movement, trajectory previews, and removal frontdoors."""
     board_id = f"board-{uuid4().hex[:8]}"
     board_client.post(
         "/api/v1/boards",
-        json={"campaign_id": BOARD_CAMPAIGN, "board_id": board_id, "cols": 12, "rows": 12},
+        json={"campaign_id": board_campaign, "board_id": board_id, "cols": 12, "rows": 12},
     )
 
     tok_res = board_client.post(
@@ -93,12 +93,12 @@ def test_board_state_tokens_frontdoor(board_client):
     assert del_res.status_code == 200
 
 
-def test_board_state_terrain_frontdoor(board_client):
+def test_board_state_terrain_frontdoor(board_client, board_campaign: str):
     """Verify terrain hazards and fog-of-war visibility frontdoors."""
     board_id = f"board-{uuid4().hex[:8]}"
     board_client.post(
         "/api/v1/boards",
-        json={"campaign_id": BOARD_CAMPAIGN, "board_id": board_id, "cols": 12, "rows": 12},
+        json={"campaign_id": board_campaign, "board_id": board_id, "cols": 12, "rows": 12},
     )
 
     terrain_res = board_client.post(
@@ -123,12 +123,12 @@ def test_board_state_terrain_frontdoor(board_client):
     assert shroud_res.status_code == 200
 
 
-def test_board_state_previews_modular_frontdoors(board_client):
+def test_board_state_previews_modular_frontdoors(board_client, board_campaign: str):
     """Verify previews REST and WebSocket frontdoors after modular router decomposition."""
     board_id = f"board-{uuid4().hex[:8]}"
     board_client.post(
         "/api/v1/boards",
-        json={"campaign_id": BOARD_CAMPAIGN, "board_id": board_id, "cols": 10, "rows": 10},
+        json={"campaign_id": board_campaign, "board_id": board_id, "cols": 10, "rows": 10},
     )
     board_client.post(
         f"/api/v1/boards/{board_id}/tokens",
@@ -204,18 +204,7 @@ def test_board_state_previews_modular_frontdoors(board_client):
         assert cancel_msg["token_id"] == "valeros"
 
 
-BOARD_CAMPAIGN = "camp-board-fixture"
-
-
 @pytest.fixture(autouse=True)
-def _board_campaign_dm(spicedb):
-    """Make `user-test` the DM of the campaign that every board in this module belongs to."""
-    asyncio.run(
-        spicedb.write_relationship(
-            resource_type="campaign",
-            resource_id=BOARD_CAMPAIGN,
-            relation="dungeon_master",
-            subject_type="user",
-            subject_id="user-test",
-        )
-    )
+def board_campaign(trusted_ws_issuer) -> str:
+    """The campaign that every board in this module belongs to. `user-test` runs it."""
+    return create_dm_campaign("user-test")

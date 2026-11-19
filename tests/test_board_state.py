@@ -1,6 +1,5 @@
 """Tests for Board State microservice and spatial fog-of-war visibility."""
 
-import asyncio
 from uuid import uuid4
 
 import pytest
@@ -8,14 +7,17 @@ from board_state.aggregate import BoardAggregate
 from board_state.main import app as board_app
 from httpx import ASGITransport, AsyncClient
 
+from tests.helpers.campaign_setup import add_member, create_dm_campaign
 from tests.helpers.ws_identity import bearer
 
 
-async def _create_seeded_party_board(client: AsyncClient, session_id: str) -> None:
+async def _create_seeded_party_board(
+    client: AsyncClient, session_id: str, board_campaign: str
+) -> None:
     """Create a board and place the party and one hostile through public routes."""
     created = await client.post(
         "/api/v1/boards",
-        json={"campaign_id": BOARD_CAMPAIGN, "session_id": session_id, "cols": 12, "rows": 12},
+        json={"campaign_id": board_campaign, "session_id": session_id, "cols": 12, "rows": 12},
     )
     assert created.status_code == 200, created.text
     tokens = [
@@ -36,12 +38,12 @@ async def _create_seeded_party_board(client: AsyncClient, session_id: str) -> No
 
 
 @pytest.mark.asyncio
-async def test_board_get_and_move():
+async def test_board_get_and_move(board_campaign: str):
     transport = ASGITransport(app=board_app)
     async with AsyncClient(
         transport=transport, base_url="http://test", headers=bearer("user-test")
     ) as client:
-        await _create_seeded_party_board(client, "session-test-1")
+        await _create_seeded_party_board(client, "session-test-1", board_campaign)
         # Get board
         res = await client.get("/api/v1/boards/session-test-1")
         assert res.status_code == 200
@@ -88,13 +90,13 @@ async def test_board_fog_of_war_eventsourcing():
 
 
 @pytest.mark.asyncio
-async def test_board_visibility_api_filtering():
+async def test_board_visibility_api_filtering(board_campaign: str):
     """Verify visibility endpoint filters shrouded hostile tokens for players."""
     transport = ASGITransport(app=board_app)
     async with AsyncClient(
         transport=transport, base_url="http://test", headers=bearer("user-test")
     ) as client:
-        await _create_seeded_party_board(client, "session-vis-test")
+        await _create_seeded_party_board(client, "session-vis-test", board_campaign)
         # Player perspective (is_dm=False): hostile token t3 at (8, 8) is outside initial party vision at (2, 3)/(3, 3)
         vis_player = await client.get(
             "/api/v1/boards/session-vis-test/visibility", headers=bearer("player-viewer")
@@ -114,27 +116,9 @@ async def test_board_visibility_api_filtering():
         assert "Goblin Scout" in token_names_dm
 
 
-BOARD_CAMPAIGN = "camp-board-fixture"
-
-
 @pytest.fixture(autouse=True)
-def _board_campaign_dm(spicedb):
-    """Make `user-test` the DM of the campaign that every board in this module belongs to."""
-    asyncio.run(
-        spicedb.write_relationship(
-            resource_type="campaign",
-            resource_id=BOARD_CAMPAIGN,
-            relation="dungeon_master",
-            subject_type="user",
-            subject_id="user-test",
-        )
-    )
-    asyncio.run(
-        spicedb.write_relationship(
-            resource_type="campaign",
-            resource_id=BOARD_CAMPAIGN,
-            relation="player",
-            subject_type="user",
-            subject_id="player-viewer",
-        )
-    )
+def board_campaign(trusted_ws_issuer) -> str:
+    """The campaign that every board in this module belongs to. `user-test` runs it."""
+    campaign_id = create_dm_campaign("user-test")
+    add_member(campaign_id, "user-test", "player-viewer", "player")
+    return campaign_id

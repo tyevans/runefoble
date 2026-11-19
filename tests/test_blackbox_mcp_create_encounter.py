@@ -5,7 +5,6 @@ session id. Setup and assertions use public HTTP routes of game_session and
 board_state, and the MCP tools are called over streamable HTTP with a signed caller bearer.
 """
 
-import asyncio
 import json
 from collections.abc import Iterator
 from typing import Any
@@ -16,6 +15,7 @@ import pytest
 from gateway_mcp.server import mcp
 from mcp.types import CallToolResult
 
+from tests.helpers.campaign_setup import create_dm_campaign
 from tests.helpers.game_session_setup import start_session_with_player
 from tests.helpers.live_services import serve, unavailable_app
 from tests.helpers.mcp_http import call_tool_over_http, serve_mcp
@@ -66,12 +66,14 @@ def board_status(board_url: str, session_id: str) -> int:
         return http.get(f"/api/v1/boards/{session_id}").status_code
 
 
-async def call_create_encounter(session_id: str, enemies: list[dict[str, Any]]) -> CallToolResult:
+async def call_create_encounter(
+    session_id: str, enemies: list[dict[str, Any]], board_campaign: str
+) -> CallToolResult:
     """Call create_encounter over MCP HTTP as the DM of the started session (`user-test`)."""
     return await call_tool_over_http(
         _MCP["url"],
         "create_encounter",
-        {"session_id": session_id, "campaign_id": BOARD_CAMPAIGN, "enemies": enemies},
+        {"session_id": session_id, "campaign_id": board_campaign, "enemies": enemies},
         SIGNING_ISSUER.mint("user-test"),
     )
 
@@ -92,7 +94,9 @@ def tool_text(result: CallToolResult) -> str:
 
 
 @pytest.mark.asyncio
-async def test_blackbox_create_encounter_round_trips_to_query_encounter_state(wired):
+async def test_blackbox_create_encounter_round_trips_to_query_encounter_state(
+    wired, board_campaign: str
+):
     """Verify create_encounter starts combat in the session and query_encounter_state reads it back."""
     session_id = start_session_with_player(wired["session"])
 
@@ -102,6 +106,7 @@ async def test_blackbox_create_encounter_round_trips_to_query_encounter_state(wi
             {"name": "Goblin Archer", "x": 3, "y": 4, "hp": 7, "cr": 0.25},
             {"name": "Orc", "x": 6, "y": 2, "hp": 15, "cr": 2.0},
         ],
+        board_campaign,
     )
     assert not created.isError, tool_text(created)
     payload: dict[str, Any] = json.loads(tool_text(created))
@@ -127,18 +132,20 @@ async def test_blackbox_create_encounter_round_trips_to_query_encounter_state(wi
 
 
 @pytest.mark.asyncio
-async def test_blackbox_create_encounter_reuses_existing_board_of_session(wired):
+async def test_blackbox_create_encounter_reuses_existing_board_of_session(
+    wired, board_campaign: str
+):
     """Verify create_encounter places enemies on the board the session already has."""
     session_id = start_session_with_player(wired["session"])
     with httpx.Client(base_url=wired["board"], headers=bearer("user-test")) as http:
         existing = http.post(
             "/api/v1/boards",
-            json={"campaign_id": BOARD_CAMPAIGN, "session_id": session_id, "cols": 12, "rows": 9},
+            json={"campaign_id": board_campaign, "session_id": session_id, "cols": 12, "rows": 9},
         )
         assert existing.status_code == 200, existing.text
 
     created = await call_create_encounter(
-        session_id, [{"name": "Bandit", "x": 1, "y": 1, "cr": 0.125}]
+        session_id, [{"name": "Bandit", "x": 1, "y": 1, "cr": 0.125}], board_campaign
     )
 
     assert not created.isError, tool_text(created)
@@ -148,12 +155,14 @@ async def test_blackbox_create_encounter_reuses_existing_board_of_session(wired)
 
 
 @pytest.mark.asyncio
-async def test_blackbox_create_encounter_unknown_session_is_error_and_creates_no_board(wired):
+async def test_blackbox_create_encounter_unknown_session_is_error_and_creates_no_board(
+    wired, board_campaign: str
+):
     """Verify an unknown session id yields a tool error and no board is created for it."""
     unknown_session = str(uuid4())
 
     result = await call_create_encounter(
-        unknown_session, [{"name": "Imp", "x": 0, "y": 0, "cr": 1.0}]
+        unknown_session, [{"name": "Imp", "x": 0, "y": 0, "cr": 1.0}], board_campaign
     )
 
     assert result.isError is True
@@ -162,14 +171,14 @@ async def test_blackbox_create_encounter_unknown_session_is_error_and_creates_no
 
 @pytest.mark.asyncio
 async def test_blackbox_create_encounter_game_session_503_is_error_not_board_id(
-    wired: dict[str, str], monkeypatch: pytest.MonkeyPatch
+    wired: dict[str, str], monkeypatch: pytest.MonkeyPatch, board_campaign: str
 ):
     """Verify a game_session 503 yields an MCP error and no encounter id or board is returned."""
     session_id = start_session_with_player(wired["session"])
     with serve(unavailable_app(503)) as down_url:
         monkeypatch.setenv("RUNEFOBLE_GAME_SESSION_URL", down_url)
         result = await call_create_encounter(
-            session_id, [{"name": "Imp", "x": 0, "y": 0, "cr": 1.0}]
+            session_id, [{"name": "Imp", "x": 0, "y": 0, "cr": 1.0}], board_campaign
         )
 
     assert result.isError is True
@@ -179,27 +188,7 @@ async def test_blackbox_create_encounter_game_session_503_is_error_not_board_id(
     assert board_status(wired["board"], session_id) == 404
 
 
-BOARD_CAMPAIGN = "5f0c7a0e-6b1d-4c8e-9a2b-3d4e5f607182"
-
-
 @pytest.fixture(autouse=True)
-def _board_campaign_dm(spicedb):
-    """Make `user-test` the DM of the campaign that every board in this module belongs to."""
-    asyncio.run(
-        spicedb.write_relationship(
-            resource_type="campaign",
-            resource_id=BOARD_CAMPAIGN,
-            relation="dungeon_master",
-            subject_type="user",
-            subject_id="user-test",
-        )
-    )
-    asyncio.run(
-        spicedb.write_relationship(
-            resource_type="campaign",
-            resource_id=BOARD_CAMPAIGN,
-            relation="dungeon_master",
-            subject_type="user",
-            subject_id="user-test",
-        )
-    )
+def board_campaign(trusted_ws_issuer) -> str:
+    """The campaign that every board in this module belongs to. `user-test` runs it."""
+    return create_dm_campaign("user-test")

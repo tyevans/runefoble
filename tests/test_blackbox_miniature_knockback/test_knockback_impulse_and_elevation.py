@@ -9,22 +9,24 @@ Governed by:
 
 from __future__ import annotations
 
-import asyncio
 from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
 
+from tests.helpers.campaign_setup import create_dm_campaign
 from tests.helpers.mock_redis import MockAsyncRedis
 
 
-def _create_board(client: TestClient, cols: int = 10, rows: int = 10) -> str:
+def _create_board(
+    client: TestClient, cols: int = 10, rows: int = 10, *, board_campaign: str
+) -> str:
     """Helper to create a fresh tactical board via public frontdoor."""
     resp = client.post(
         "/api/v1/boards",
         json={
-            "campaign_id": BOARD_CAMPAIGN,
+            "campaign_id": board_campaign,
             "cols": cols,
             "rows": rows,
             "session_id": f"session-knockback-{uuid4()}",
@@ -78,9 +80,10 @@ def _set_terrain_elevation(
 def test_directional_knockback_impulse_and_mass_scaling(
     client: TestClient,
     mock_bus: MockAsyncRedis,
+    board_campaign: str,
 ) -> None:
     """Verify directional knockback displaces miniatures with mass scaling and grid snapping."""
-    board_id = _create_board(client, cols=10, rows=10)
+    board_id = _create_board(client, cols=10, rows=10, board_campaign=board_campaign)
     _place_token(client, board_id, "token-light", "LightToken", 2, 2)
     _place_token(client, board_id, "token-heavy", "HeavyToken", 2, 5)
 
@@ -126,9 +129,10 @@ def test_directional_knockback_impulse_and_mass_scaling(
 def test_knockback_elevation_step_fall(
     client: TestClient,
     mock_bus: MockAsyncRedis,
+    board_campaign: str,
 ) -> None:
     """Verify miniature knocked over an elevation ledge falls down to ground level."""
-    board_id = _create_board(client, cols=10, rows=10)
+    board_id = _create_board(client, cols=10, rows=10, board_campaign=board_campaign)
 
     # Cell (2, 3) is a raised plateau at elevation 2
     _set_terrain_elevation(client, board_id, 2, 3, elevation=2)
@@ -170,9 +174,10 @@ def test_knockback_elevation_step_fall(
 def test_knockback_obstacle_wall_collision_and_impact_energy(
     client: TestClient,
     mock_bus: MockAsyncRedis,
+    board_campaign: str,
 ) -> None:
     """Verify knockback halts on high-elevation wall/cliff and records impact collision energy."""
-    board_id = _create_board(client, cols=8, rows=8)
+    board_id = _create_board(client, cols=8, rows=8, board_campaign=board_campaign)
     _place_token(client, board_id, "victim-1", "Goblin", 1, 2)
     # Configure high wall at (3, 2) with elevation 3 (blocking uphill step)
     _set_terrain_elevation(client, board_id, 3, 2, elevation=3)
@@ -210,9 +215,10 @@ def test_knockback_obstacle_wall_collision_and_impact_energy(
 def test_knockback_grid_boundary_snapping(
     client: TestClient,
     mock_bus: MockAsyncRedis,
+    board_campaign: str,
 ) -> None:
     """Verify excessive knockback distance stops cleanly at board boundaries and snaps to discrete cells."""
-    board_id = _create_board(client, cols=6, rows=6)
+    board_id = _create_board(client, cols=6, rows=6, board_campaign=board_campaign)
     _place_token(client, board_id, "edge-tok", "Rogue", 4, 3)
 
     # Shove token east towards edge by 30 feet (6 cells)
@@ -239,9 +245,10 @@ def test_knockback_grid_boundary_snapping(
 def test_knockback_websocket_broadcast(
     client: TestClient,
     mock_bus: MockAsyncRedis,
+    board_campaign: str,
 ) -> None:
     """Verify token_knockback WebSocket message broadcast on physics settlement."""
-    board_id = _create_board(client)
+    board_id = _create_board(client, board_campaign=board_campaign)
     _place_token(client, board_id, "broadcast-tok", "Paladin", 1, 1)
 
     with patch(
@@ -269,18 +276,7 @@ def test_knockback_websocket_broadcast(
         assert payload["knockback"]["to_y"] == 3
 
 
-BOARD_CAMPAIGN = "camp-board-fixture"
-
-
 @pytest.fixture(autouse=True)
-def _board_campaign_dm(spicedb):
-    """Make `user-test` the DM of the campaign that every board in this module belongs to."""
-    asyncio.run(
-        spicedb.write_relationship(
-            resource_type="campaign",
-            resource_id=BOARD_CAMPAIGN,
-            relation="dungeon_master",
-            subject_type="user",
-            subject_id="user-test",
-        )
-    )
+def board_campaign(trusted_ws_issuer) -> str:
+    """The campaign that every board in this module belongs to. `user-test` runs it."""
+    return create_dm_campaign("user-test")

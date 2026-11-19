@@ -5,7 +5,6 @@ routes served on loopback ports. The MCP tool reads round and turn order from
 GET /api/v1/sessions/{session_id}/combat and tokens from board_state.
 """
 
-import asyncio
 import json
 from collections.abc import Iterator
 from typing import Any
@@ -16,6 +15,7 @@ import pytest
 from gateway_mcp.server import mcp
 from mcp.types import CallToolResult
 
+from tests.helpers.campaign_setup import create_dm_campaign
 from tests.helpers.live_services import serve, unavailable_app
 from tests.helpers.mcp_http import call_tool_over_http, serve_mcp
 from tests.helpers.ws_identity import SIGNING_ISSUER, bearer
@@ -52,7 +52,9 @@ def upstreams() -> Iterator[dict[str, str]]:
 
 
 @pytest.fixture
-def encounter(upstreams: dict[str, str], monkeypatch: pytest.MonkeyPatch) -> str:
+def encounter(
+    upstreams: dict[str, str], monkeypatch: pytest.MonkeyPatch, board_campaign: str
+) -> str:
     """Start combat through game_session, advance one turn, and place a board token."""
     monkeypatch.setenv("RUNEFOBLE_BOARD_STATE_URL", upstreams["board"])
     monkeypatch.setenv("RUNEFOBLE_GAME_SESSION_URL", upstreams["session"])
@@ -112,7 +114,7 @@ def encounter(upstreams: dict[str, str], monkeypatch: pytest.MonkeyPatch) -> str
     with httpx.Client(base_url=upstreams["board"], headers=bearer("user-test")) as http:
         created_board = http.post(
             "/api/v1/boards",
-            json={"campaign_id": BOARD_CAMPAIGN, "session_id": session_id, "cols": 10, "rows": 8},
+            json={"campaign_id": board_campaign, "session_id": session_id, "cols": 10, "rows": 8},
         )
         assert created_board.status_code == 200, created_board.text
         placed = http.post(
@@ -160,14 +162,14 @@ async def test_blackbox_query_encounter_state_returns_round_and_turn_order(encou
 
 @pytest.mark.asyncio
 async def test_blackbox_query_encounter_state_upstream_unavailable_returns_error(
-    upstreams: dict[str, str], monkeypatch: pytest.MonkeyPatch
+    upstreams: dict[str, str], monkeypatch: pytest.MonkeyPatch, board_campaign: str
 ):
     """Verify a game_session 503 yields an MCP error result, not canned round or order data."""
     with httpx.Client(base_url=upstreams["board"], headers=bearer("user-test")) as http:
         session_id = str(uuid4())
         created_board = http.post(
             "/api/v1/boards",
-            json={"campaign_id": BOARD_CAMPAIGN, "session_id": session_id, "cols": 10, "rows": 8},
+            json={"campaign_id": board_campaign, "session_id": session_id, "cols": 10, "rows": 8},
         )
         assert created_board.status_code == 200, created_board.text
 
@@ -212,18 +214,7 @@ def _owned_campaign(client) -> str:
     return res.json()["id"]
 
 
-BOARD_CAMPAIGN = "camp-board-fixture"
-
-
 @pytest.fixture(autouse=True)
-def _board_campaign_dm(spicedb):
-    """Make `user-test` the DM of the campaign that every board in this module belongs to."""
-    asyncio.run(
-        spicedb.write_relationship(
-            resource_type="campaign",
-            resource_id=BOARD_CAMPAIGN,
-            relation="dungeon_master",
-            subject_type="user",
-            subject_id="user-test",
-        )
-    )
+def board_campaign(trusted_ws_issuer) -> str:
+    """The campaign that every board in this module belongs to. `user-test` runs it."""
+    return create_dm_campaign("user-test")

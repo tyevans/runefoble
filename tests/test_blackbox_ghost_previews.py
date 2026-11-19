@@ -4,7 +4,6 @@ Governed by Hard Invariant 7 (Blackbox TDD with Frontdoor Setup).
 Interacts strictly through public HTTP routes and WebSockets.
 """
 
-import asyncio
 import time
 from uuid import uuid4
 
@@ -14,6 +13,7 @@ from fastapi.testclient import TestClient
 from gateway_api.main import app as gateway_app
 from runefoble_auth.factory import get_spicedb_client
 
+from tests.helpers.campaign_setup import create_dm_campaign
 from tests.helpers.ws_identity import bearer, ws_subprotocols
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
@@ -24,7 +24,7 @@ def reset_spicedb_state():
     yield
 
 
-def test_http_preview_endpoint_waypoint_measuring_and_terrain_hazards():
+def test_http_preview_endpoint_waypoint_measuring_and_terrain_hazards(board_campaign: str):
     """Verify HTTP preview endpoint calculates 5-ft increments, terrain penalties, and hazard warnings."""
     client = TestClient(board_app, headers=bearer("user-test"))
     board_id = f"board-{uuid4().hex[:8]}"
@@ -32,7 +32,7 @@ def test_http_preview_endpoint_waypoint_measuring_and_terrain_hazards():
     # 1. Create 10x10 tactical board
     res = client.post(
         "/api/v1/boards",
-        json={"campaign_id": BOARD_CAMPAIGN, "board_id": board_id, "cols": 10, "rows": 10},
+        json={"campaign_id": board_campaign, "board_id": board_id, "cols": 10, "rows": 10},
     )
     assert res.status_code == 200, res.text
 
@@ -109,7 +109,7 @@ def test_http_preview_endpoint_waypoint_measuring_and_terrain_hazards():
     ],
 )
 def test_preview_and_move_report_the_same_hazard_dice_for_every_hazard_type(
-    hazard: str, expected_dice: str
+    hazard: str, expected_dice: str, board_campaign: str
 ):
     """Verify the preview and the move report the same hazard dice for each hazard type."""
     client = TestClient(board_app, headers=bearer("user-test"))
@@ -117,7 +117,7 @@ def test_preview_and_move_report_the_same_hazard_dice_for_every_hazard_type(
 
     client.post(
         "/api/v1/boards",
-        json={"campaign_id": BOARD_CAMPAIGN, "board_id": board_id, "cols": 10, "rows": 10},
+        json={"campaign_id": board_campaign, "board_id": board_id, "cols": 10, "rows": 10},
     )
     client.post(
         f"/api/v1/boards/{board_id}/tokens",
@@ -143,14 +143,16 @@ def test_preview_and_move_report_the_same_hazard_dice_for_every_hazard_type(
     assert moved.json()["damage_dice"] == expected_dice
 
 
-def test_preview_reports_the_hazard_a_move_crosses_when_the_token_lands_elsewhere():
+def test_preview_reports_the_hazard_a_move_crosses_when_the_token_lands_elsewhere(
+    board_campaign: str,
+):
     """Verify the preview names the same hazard as the move when the route crosses a hazard."""
     client = TestClient(board_app, headers=bearer("user-test"))
     board_id = f"board-{uuid4().hex[:8]}"
 
     client.post(
         "/api/v1/boards",
-        json={"campaign_id": BOARD_CAMPAIGN, "board_id": board_id, "cols": 10, "rows": 10},
+        json={"campaign_id": board_campaign, "board_id": board_id, "cols": 10, "rows": 10},
     )
     client.post(
         f"/api/v1/boards/{board_id}/tokens",
@@ -175,14 +177,14 @@ def test_preview_reports_the_hazard_a_move_crosses_when_the_token_lands_elsewher
     assert preview.json()["damage_dice"] == "2d10"
 
 
-def test_websocket_spoken_ghost_preview_and_instant_confirmation():
+def test_websocket_spoken_ghost_preview_and_instant_confirmation(board_campaign: str):
     """Verify spoken ghost preview stages over WebSocket (<200ms) and commits upon confirmation."""
     client = TestClient(board_app, headers=bearer("user-test"))
     board_id = f"board-{uuid4().hex[:8]}"
 
     client.post(
         "/api/v1/boards",
-        json={"campaign_id": BOARD_CAMPAIGN, "board_id": board_id, "cols": 10, "rows": 10},
+        json={"campaign_id": board_campaign, "board_id": board_id, "cols": 10, "rows": 10},
     )
     client.post(
         f"/api/v1/boards/{board_id}/tokens",
@@ -249,14 +251,14 @@ def test_websocket_spoken_ghost_preview_and_instant_confirmation():
         assert board_after["tokens"]["kyra"]["y"] == 2
 
 
-def test_websocket_ghost_preview_cancellation_preserves_original_state():
+def test_websocket_ghost_preview_cancellation_preserves_original_state(board_campaign: str):
     """Verify cancelling a ghost preview rolls back staging and leaves token intact."""
     client = TestClient(board_app, headers=bearer("user-test"))
     board_id = f"board-{uuid4().hex[:8]}"
 
     client.post(
         "/api/v1/boards",
-        json={"campaign_id": BOARD_CAMPAIGN, "board_id": board_id, "cols": 10, "rows": 10},
+        json={"campaign_id": board_campaign, "board_id": board_id, "cols": 10, "rows": 10},
     )
     client.post(
         f"/api/v1/boards/{board_id}/tokens",
@@ -358,18 +360,7 @@ def test_gateway_campaign_websocket_ghost_preview_authorization():
         assert err["action"] == "ghost_preview"
 
 
-BOARD_CAMPAIGN = "camp-board-fixture"
-
-
 @pytest.fixture(autouse=True)
-def _board_campaign_dm(spicedb):
-    """Make `user-test` the DM of the campaign that every board in this module belongs to."""
-    asyncio.run(
-        spicedb.write_relationship(
-            resource_type="campaign",
-            resource_id=BOARD_CAMPAIGN,
-            relation="dungeon_master",
-            subject_type="user",
-            subject_id="user-test",
-        )
-    )
+def board_campaign(trusted_ws_issuer) -> str:
+    """The campaign that every board in this module belongs to. `user-test` runs it."""
+    return create_dm_campaign("user-test")

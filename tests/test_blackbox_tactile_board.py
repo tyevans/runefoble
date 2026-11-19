@@ -5,7 +5,6 @@ Tests token placement, movement, hazards, radial actions, fog, and VFX
 through public HTTP frontdoors and event-sourced aggregate reconstitution.
 """
 
-import asyncio
 from uuid import uuid4
 
 import pytest
@@ -14,6 +13,7 @@ from board_state.main import app
 from fastapi.testclient import TestClient
 from runefoble_platform.event_sourcing import AggregateRepository, InMemoryEventStore
 
+from tests.helpers.campaign_setup import create_dm_campaign
 from tests.helpers.ws_identity import bearer
 
 client = TestClient(app, headers=bearer("user-test"))
@@ -100,14 +100,14 @@ async def test_board_aggregate_event_sourcing_and_modular_handlers():
     assert "valeros" not in reconstituted.state.tokens
 
 
-def test_blackbox_tactile_board_http_frontdoor_lifecycle():
+def test_blackbox_tactile_board_http_frontdoor_lifecycle(board_campaign: str):
     """Verify tactile board lifecycle strictly through public REST frontdoors."""
     board_id = f"board-{uuid4().hex[:8]}"
 
     # Create tactical board
     res_create = client.post(
         "/api/v1/boards",
-        json={"campaign_id": BOARD_CAMPAIGN, "board_id": board_id, "cols": 12, "rows": 12},
+        json={"campaign_id": board_campaign, "board_id": board_id, "cols": 12, "rows": 12},
     )
     assert res_create.status_code == 200
 
@@ -149,18 +149,7 @@ def test_blackbox_tactile_board_http_frontdoor_lifecycle():
     assert res_remove.status_code == 200
 
 
-BOARD_CAMPAIGN = "camp-board-fixture"
-
-
 @pytest.fixture(autouse=True)
-def _board_campaign_dm(spicedb):
-    """Make `user-test` the DM of the campaign that every board in this module belongs to."""
-    asyncio.run(
-        spicedb.write_relationship(
-            resource_type="campaign",
-            resource_id=BOARD_CAMPAIGN,
-            relation="dungeon_master",
-            subject_type="user",
-            subject_id="user-test",
-        )
-    )
+def board_campaign(trusted_ws_issuer) -> str:
+    """The campaign that every board in this module belongs to. `user-test` runs it."""
+    return create_dm_campaign("user-test")

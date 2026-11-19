@@ -5,13 +5,13 @@ Governed by:
 - Hard Invariant 7: Blackbox TDD with frontdoor setup (HTTP only)
 """
 
-import asyncio
 from typing import Any
 from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
 
+from tests.helpers.campaign_setup import create_dm_campaign
 from tests.helpers.ws_identity import ws_subprotocols
 
 BOARD_COLS = 20
@@ -19,12 +19,12 @@ BOARD_ROWS = 20
 
 
 @pytest.fixture
-def board_id(client: TestClient) -> str:
+def board_id(client: TestClient, board_campaign: str) -> str:
     board = f"board-{uuid4().hex[:8]}"
     res = client.post(
         "/api/v1/boards",
         json={
-            "campaign_id": BOARD_CAMPAIGN,
+            "campaign_id": board_campaign,
             "board_id": board,
             "cols": BOARD_COLS,
             "rows": BOARD_ROWS,
@@ -109,18 +109,7 @@ def test_socket_aoe_evaluate_rejects_fractional_origin(client: TestClient, board
     assert frame["status"] == 422
 
 
-BOARD_CAMPAIGN = "camp-board-fixture"
-
-
 @pytest.fixture(autouse=True)
-def _board_campaign_dm(spicedb):
-    """Make `user-test` the DM of the campaign that every board in this module belongs to."""
-    asyncio.run(
-        spicedb.write_relationship(
-            resource_type="campaign",
-            resource_id=BOARD_CAMPAIGN,
-            relation="dungeon_master",
-            subject_type="user",
-            subject_id="user-test",
-        )
-    )
+def board_campaign(trusted_ws_issuer) -> str:
+    """The campaign that every board in this module belongs to. `user-test` runs it."""
+    return create_dm_campaign("user-test")

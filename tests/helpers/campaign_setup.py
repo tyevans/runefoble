@@ -12,6 +12,7 @@ from __future__ import annotations
 from uuid import uuid4
 
 import httpx
+from fastapi.testclient import TestClient
 
 from tests.helpers.ws_identity import bearer
 
@@ -58,3 +59,24 @@ def invite_and_join(
         headers=bearer(member_id),
     )
     assert joined.status_code == 200, joined.text
+
+
+def _game_session_client() -> TestClient:
+    """Return a client for the game_session app. It shares the test SpiceDB client by factory."""
+    from game_session.main import app as session_app
+
+    return TestClient(session_app)
+
+
+def create_dm_campaign(dm_id: str = "user-test") -> str:
+    """Create a campaign that `dm_id` owns through `POST /api/v1/campaigns` and return its id.
+
+    The owner holds `run_session`, so the owner runs the boards of the campaign. Board tests call
+    this instead of writing a `dungeon_master` tuple by hand.
+    """
+    return create_campaign(_game_session_client(), dm_id)
+
+
+def add_member(campaign_id: str, owner_id: str, member_id: str, role: str) -> None:
+    """Invite `member_id` as `role` through the public invite and join routes."""
+    invite_and_join(_game_session_client(), campaign_id, owner_id, member_id, role)

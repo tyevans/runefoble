@@ -5,16 +5,15 @@ All setup and verification are performed strictly through public HTTP API endpoi
 using TestClient(app, headers=bearer("user-test")) from board_state.main.
 """
 
-import asyncio
-
 import pytest
 from board_state.main import app
 from fastapi.testclient import TestClient
 
+from tests.helpers.campaign_setup import create_dm_campaign
 from tests.helpers.ws_identity import bearer
 
 
-def test_board_terrain_elevation_difficult_movement_and_hazard_flow():
+def test_board_terrain_elevation_difficult_movement_and_hazard_flow(board_campaign: str):
     """Verify end-to-end tactical board terrain, elevation, difficult terrain movement, and hazards."""
     client = TestClient(app, headers=bearer("user-test"))
 
@@ -22,7 +21,7 @@ def test_board_terrain_elevation_difficult_movement_and_hazard_flow():
     create_resp = client.post(
         "/api/v1/boards",
         json={
-            "campaign_id": BOARD_CAMPAIGN,
+            "campaign_id": board_campaign,
             "cols": 10,
             "rows": 10,
             "session_id": "session-terrain-bb-1",
@@ -159,13 +158,13 @@ def test_board_terrain_elevation_difficult_movement_and_hazard_flow():
     assert "lava" in board_state["active_hazards"]
 
 
-def test_board_terrain_multi_cell_path_cost():
+def test_board_terrain_multi_cell_path_cost(board_campaign: str):
     """Verify multi-cell movement traversing normal and difficult terrain calculates correct cost."""
     client = TestClient(app, headers=bearer("user-test"))
 
     # Create board
     res = client.post(
-        "/api/v1/boards", json={"campaign_id": BOARD_CAMPAIGN, "cols": 10, "rows": 10}
+        "/api/v1/boards", json={"campaign_id": board_campaign, "cols": 10, "rows": 10}
     )
     board_id = res.json()["board_id"]
 
@@ -205,12 +204,12 @@ def test_board_terrain_multi_cell_path_cost():
     assert succ_res.json()["y"] == 3
 
 
-def test_board_token_leaves_hazard_clears_hazard_status():
+def test_board_token_leaves_hazard_clears_hazard_status(board_campaign: str):
     """Verify token moving off hazard cell clears active hazard status."""
     client = TestClient(app, headers=bearer("user-test"))
 
     res = client.post(
-        "/api/v1/boards", json={"campaign_id": BOARD_CAMPAIGN, "cols": 10, "rows": 10}
+        "/api/v1/boards", json={"campaign_id": board_campaign, "cols": 10, "rows": 10}
     )
     board_id = res.json()["board_id"]
 
@@ -243,18 +242,7 @@ def test_board_token_leaves_hazard_clears_hazard_status():
     assert monk["hazard_status"] is None
 
 
-BOARD_CAMPAIGN = "camp-board-fixture"
-
-
 @pytest.fixture(autouse=True)
-def _board_campaign_dm(spicedb):
-    """Make `user-test` the DM of the campaign that every board in this module belongs to."""
-    asyncio.run(
-        spicedb.write_relationship(
-            resource_type="campaign",
-            resource_id=BOARD_CAMPAIGN,
-            relation="dungeon_master",
-            subject_type="user",
-            subject_id="user-test",
-        )
-    )
+def board_campaign(trusted_ws_issuer) -> str:
+    """The campaign that every board in this module belongs to. `user-test` runs it."""
+    return create_dm_campaign("user-test")

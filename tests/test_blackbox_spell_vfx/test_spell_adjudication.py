@@ -1,6 +1,5 @@
 """Blackbox tests for REST spellcasting adjudication and archetype VFX generation."""
 
-import asyncio
 import time
 from typing import Any
 from uuid import uuid4
@@ -8,9 +7,11 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 
+from tests.helpers.campaign_setup import create_dm_campaign
+
 
 def test_evocation_fireball_spell_vfx_frontdoor_and_scorched_decals(
-    client: TestClient, fireball_payload: dict[str, Any]
+    client: TestClient, fireball_payload: dict[str, Any], board_campaign: str
 ) -> None:
     """Verify Evocation Fireball spellcast generates trajectory, radius, and scorched decals."""
     board_id = f"board-{uuid4().hex[:8]}"
@@ -18,7 +19,7 @@ def test_evocation_fireball_spell_vfx_frontdoor_and_scorched_decals(
     # 1. Create board
     res = client.post(
         "/api/v1/boards",
-        json={"campaign_id": BOARD_CAMPAIGN, "board_id": board_id, "cols": 10, "rows": 10},
+        json={"campaign_id": board_campaign, "board_id": board_id, "cols": 10, "rows": 10},
     )
     assert res.status_code == 200, res.text
 
@@ -73,13 +74,15 @@ def test_evocation_fireball_spell_vfx_frontdoor_and_scorched_decals(
     assert any(d["decal_type"] == "scorched_earth" and d["x"] == 6 and d["y"] == 5 for d in decals)
 
 
-def test_abjuration_shield_and_conjuration_portal_archetypes(client: TestClient) -> None:
+def test_abjuration_shield_and_conjuration_portal_archetypes(
+    client: TestClient, board_campaign: str
+) -> None:
     """Verify Abjuration Shield (reaction ward) and Conjuration Portal archetypes."""
     board_id = f"board-{uuid4().hex[:8]}"
 
     client.post(
         "/api/v1/boards",
-        json={"campaign_id": BOARD_CAMPAIGN, "board_id": board_id, "cols": 8, "rows": 8},
+        json={"campaign_id": board_campaign, "board_id": board_id, "cols": 8, "rows": 8},
     )
     client.post(
         f"/api/v1/boards/{board_id}/tokens",
@@ -122,18 +125,7 @@ def test_abjuration_shield_and_conjuration_portal_archetypes(client: TestClient)
     assert portal_data["audio_stinger"] == "conjuration_portal_drone"
 
 
-BOARD_CAMPAIGN = "camp-board-fixture"
-
-
 @pytest.fixture(autouse=True)
-def _board_campaign_dm(spicedb):
-    """Make `user-test` the DM of the campaign that every board in this module belongs to."""
-    asyncio.run(
-        spicedb.write_relationship(
-            resource_type="campaign",
-            resource_id=BOARD_CAMPAIGN,
-            relation="dungeon_master",
-            subject_type="user",
-            subject_id="user-test",
-        )
-    )
+def board_campaign(trusted_ws_issuer) -> str:
+    """The campaign that every board in this module belongs to. `user-test` runs it."""
+    return create_dm_campaign("user-test")

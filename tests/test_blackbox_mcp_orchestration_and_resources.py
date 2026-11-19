@@ -6,7 +6,6 @@ an external process boundary. Setup runs through public routes only. Assertions 
 MCP tool or resource output, or a public service route.
 """
 
-import asyncio
 import json
 from collections.abc import Iterator
 from typing import Any
@@ -25,6 +24,7 @@ from runefoble_auth.sync import ZitadelSpiceDBSyncService
 from runefoble_auth.sync_events import handle_domain_event
 from the_watcher.main import app as watcher_app
 
+from tests.helpers.campaign_setup import create_dm_campaign
 from tests.helpers.live_services import closed_port_url, serve, unavailable_app
 from tests.helpers.mcp_http import call_tool_over_http, read_resource_over_http, serve_mcp
 from tests.helpers.watcher_engine import select_worker_engine
@@ -226,13 +226,14 @@ async def test_blackbox_session_resource_unknown_session_is_error(services: dict
 @pytest.mark.asyncio
 async def test_blackbox_encounter_resource_returns_tokens_from_board_state(
     services: dict[str, str],
+    board_campaign: str,
 ):
     """Verify encounter://{id}/current returns the tokens that board_state stores for the id."""
     session_id = _create_session(services["session"], "Red Larch Encounter")
     with httpx.Client(base_url=services["board"], headers=bearer("user-test")) as http:
         created = http.post(
             "/api/v1/boards",
-            json={"campaign_id": BOARD_CAMPAIGN, "session_id": session_id, "cols": 10, "rows": 8},
+            json={"campaign_id": board_campaign, "session_id": session_id, "cols": 10, "rows": 8},
         )
         assert created.status_code == 200, created.text
         placed = http.post(
@@ -439,18 +440,7 @@ def _owned_campaign(client) -> str:
     return res.json()["id"]
 
 
-BOARD_CAMPAIGN = "camp-board-fixture"
-
-
 @pytest.fixture(autouse=True)
-def _board_campaign_dm(spicedb):
-    """Make `user-test` the DM of the campaign that every board in this module belongs to."""
-    asyncio.run(
-        spicedb.write_relationship(
-            resource_type="campaign",
-            resource_id=BOARD_CAMPAIGN,
-            relation="dungeon_master",
-            subject_type="user",
-            subject_id="user-test",
-        )
-    )
+def board_campaign(trusted_ws_issuer) -> str:
+    """The campaign that every board in this module belongs to. `user-test` runs it."""
+    return create_dm_campaign("user-test")

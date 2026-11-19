@@ -1,21 +1,22 @@
 """Blackbox tests for ephemeral decal decay, animation finished lifecycle, and particle contracts."""
 
-import asyncio
 from typing import Any
 from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
 
+from tests.helpers.campaign_setup import create_dm_campaign
+
 
 def test_ephemeral_decal_decay_over_two_rounds(
-    client: TestClient, fireball_payload: dict[str, Any]
+    client: TestClient, fireball_payload: dict[str, Any], board_campaign: str
 ) -> None:
     """Verify ephemeral scorched earth decals decay and naturally fade after 2 rounds."""
     board_id = f"board-{uuid4().hex[:8]}"
     client.post(
         "/api/v1/boards",
-        json={"campaign_id": BOARD_CAMPAIGN, "board_id": board_id, "cols": 10, "rows": 10},
+        json={"campaign_id": board_campaign, "board_id": board_id, "cols": 10, "rows": 10},
     )
     client.post(
         f"/api/v1/boards/{board_id}/spells/cast",
@@ -36,12 +37,12 @@ def test_ephemeral_decal_decay_over_two_rounds(
     assert len(decay_r2) == 0, f"Expected 0 decals after 2 rounds, got {len(decay_r2)}"
 
 
-def test_vfx_animation_finished_endpoint(client: TestClient) -> None:
+def test_vfx_animation_finished_endpoint(client: TestClient, board_campaign: str) -> None:
     """Verify POST /api/v1/boards/{session_id}/vfx/finish persists and acknowledges completion."""
     board_id = f"board-{uuid4().hex[:8]}"
     client.post(
         "/api/v1/boards",
-        json={"campaign_id": BOARD_CAMPAIGN, "board_id": board_id, "cols": 8, "rows": 8},
+        json={"campaign_id": board_campaign, "board_id": board_id, "cols": 8, "rows": 8},
     )
 
     res = client.post(
@@ -59,18 +60,7 @@ def test_vfx_animation_finished_endpoint(client: TestClient) -> None:
     assert res.json()["animation_id"] == "vfx-test-1234"
 
 
-BOARD_CAMPAIGN = "camp-board-fixture"
-
-
 @pytest.fixture(autouse=True)
-def _board_campaign_dm(spicedb):
-    """Make `user-test` the DM of the campaign that every board in this module belongs to."""
-    asyncio.run(
-        spicedb.write_relationship(
-            resource_type="campaign",
-            resource_id=BOARD_CAMPAIGN,
-            relation="dungeon_master",
-            subject_type="user",
-            subject_id="user-test",
-        )
-    )
+def board_campaign(trusted_ws_issuer) -> str:
+    """The campaign that every board in this module belongs to. `user-test` runs it."""
+    return create_dm_campaign("user-test")

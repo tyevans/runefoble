@@ -5,7 +5,6 @@ Governed by TASK-0193, ADR-0007, and ADR-0010.
 
 from __future__ import annotations
 
-import asyncio
 import json
 from uuid import uuid4
 
@@ -14,24 +13,25 @@ from asset_forge.main import app as asset_app
 from fastapi.testclient import TestClient
 from runefoble_platform.storage import get_storage_service
 
+from tests.helpers.campaign_setup import create_dm_campaign
 from tests.helpers.silo_fixtures import PNG_SAMPLE_BYTES
 from tests.helpers.ws_identity import bearer
 from tests.test_blackbox_uvtt_import.conftest import build_sample_dd2vtt_dict
 
 
-def _create_board(client: TestClient, board_id: str) -> None:
+def _create_board(client: TestClient, board_id: str, board_campaign: str) -> None:
     """Create a board through the public POST frontdoor before importing a map into it."""
     res = client.post(
         "/api/v1/boards",
-        json={"campaign_id": BOARD_CAMPAIGN, "session_id": board_id, "cols": 4, "rows": 4},
+        json={"campaign_id": board_campaign, "session_id": board_id, "cols": 4, "rows": 4},
     )
     assert res.status_code == 200, res.text
 
 
-def test_blackbox_uvtt_multipart_file_upload(board_client: TestClient):
+def test_blackbox_uvtt_multipart_file_upload(board_client: TestClient, board_campaign: str):
     """Verify importing a .dd2vtt file via multipart/form-data frontdoor."""
     board_id = f"camp-uvtt-{uuid4().hex[:8]}"
-    _create_board(board_client, board_id)
+    _create_board(board_client, board_id, board_campaign)
     uvtt_data = build_sample_dd2vtt_dict(cols=18, rows=14, pixels_per_grid=100)
     file_bytes = json.dumps(uvtt_data).encode("utf-8")
 
@@ -88,11 +88,11 @@ def test_blackbox_uvtt_multipart_file_upload(board_client: TestClient):
     assert (1, 1) in coords or (6, 1) in coords
 
 
-def test_blackbox_uvtt_json_direct_payload(board_client: TestClient):
+def test_blackbox_uvtt_json_direct_payload(board_client: TestClient, board_campaign: str):
     """Verify importing a .dd2vtt map via raw JSON payload frontdoor."""
     board_id = f"board-{uuid4().hex[:8]}"
     uvtt_data = build_sample_dd2vtt_dict(cols=24, rows=18, pixels_per_grid=70)
-    _create_board(board_client, board_id)
+    _create_board(board_client, board_id, board_campaign)
 
     # Plural route alias frontdoor: POST /api/v1/boards/{id}/import/uvtt
     response = board_client.post(
@@ -113,10 +113,10 @@ def test_blackbox_uvtt_json_direct_payload(board_client: TestClient):
     assert get_res.json()["cols"] == 24
 
 
-def test_blackbox_uvtt_invalid_payload_error(board_client: TestClient):
+def test_blackbox_uvtt_invalid_payload_error(board_client: TestClient, board_campaign: str):
     """Verify error handling on malformed UVTT data."""
     board_id = f"board-{uuid4().hex[:8]}"
-    _create_board(board_client, board_id)
+    _create_board(board_client, board_id, board_campaign)
     response = board_client.post(
         f"/api/v1/board/{board_id}/import/uvtt",
         content=b"not-valid-json-file-content",
@@ -126,13 +126,15 @@ def test_blackbox_uvtt_invalid_payload_error(board_client: TestClient):
     assert "Invalid Universal VTT format" in response.json()["detail"]
 
 
-def test_blackbox_uvtt_background_is_an_authorized_asset_path(board_client: TestClient):
+def test_blackbox_uvtt_background_is_an_authorized_asset_path(
+    board_client: TestClient, board_campaign: str
+):
     """The imported background names the authorized asset path. No Silo URL reaches the reply.
 
     The importer and the campaign read it through the asset route. A stranger gets 403.
     """
     board_id = f"camp-uvtt-{uuid4().hex[:8]}"
-    _create_board(board_client, board_id)
+    _create_board(board_client, board_id, board_campaign)
     file_bytes = json.dumps(build_sample_dd2vtt_dict(cols=8, rows=8)).encode("utf-8")
     response = board_client.post(
         f"/api/v1/board/{board_id}/import/uvtt",
@@ -156,18 +158,7 @@ def test_blackbox_uvtt_background_is_an_authorized_asset_path(board_client: Test
     assert stranger.get(path).status_code == 403
 
 
-BOARD_CAMPAIGN = "camp-board-fixture"
-
-
 @pytest.fixture(autouse=True)
-def _board_campaign_dm(spicedb):
-    """Make `user-test` the DM of the campaign that every board in this module belongs to."""
-    asyncio.run(
-        spicedb.write_relationship(
-            resource_type="campaign",
-            resource_id=BOARD_CAMPAIGN,
-            relation="dungeon_master",
-            subject_type="user",
-            subject_id="user-test",
-        )
-    )
+def board_campaign(trusted_ws_issuer) -> str:
+    """The campaign that every board in this module belongs to. `user-test` runs it."""
+    return create_dm_campaign("user-test")

@@ -7,12 +7,11 @@ Governed by:
 - Hard Invariant 7: Blackbox TDD with Frontdoor Setup
 """
 
-import asyncio
-
 import pytest
 from board_state.main import app
 from fastapi.testclient import TestClient
 
+from tests.helpers.campaign_setup import create_dm_campaign
 from tests.helpers.ws_identity import bearer
 
 
@@ -29,7 +28,7 @@ def test_board_state_microfrontend_manifest_3d_components():
     assert "runefoble-tabletop-3d" in manifest["components"]
 
 
-def test_3d_tabletop_physical_dice_simulation_and_settlement():
+def test_3d_tabletop_physical_dice_simulation_and_settlement(board_campaign: str):
     """Verify 3D polyhedral dice toss resolves with physical bounces and settles reliably."""
     client = TestClient(app, headers=bearer("user-test"))
 
@@ -37,7 +36,7 @@ def test_3d_tabletop_physical_dice_simulation_and_settlement():
     create_resp = client.post(
         "/api/v1/boards",
         json={
-            "campaign_id": BOARD_CAMPAIGN,
+            "campaign_id": board_campaign,
             "cols": 10,
             "rows": 10,
             "session_id": "session-3d-physics-dice",
@@ -84,7 +83,7 @@ def test_3d_tabletop_physical_dice_simulation_and_settlement():
     assert settled["face_value"] == throw_data["face_value"]
 
 
-def test_3d_miniature_knockback_impulse_and_wall_collision():
+def test_3d_miniature_knockback_impulse_and_wall_collision(board_campaign: str):
     """Verify miniature knockback momentum halts before high-elevation cliff walls."""
     client = TestClient(app, headers=bearer("user-test"))
 
@@ -92,7 +91,7 @@ def test_3d_miniature_knockback_impulse_and_wall_collision():
     board_resp = client.post(
         "/api/v1/boards",
         json={
-            "campaign_id": BOARD_CAMPAIGN,
+            "campaign_id": board_campaign,
             "cols": 12,
             "rows": 12,
             "session_id": "session-3d-mini-knockback",
@@ -152,18 +151,7 @@ def test_3d_miniature_knockback_impulse_and_wall_collision():
     assert board["last_collision"]["entity_id"] == "mini-valeros"
 
 
-BOARD_CAMPAIGN = "camp-board-fixture"
-
-
 @pytest.fixture(autouse=True)
-def _board_campaign_dm(spicedb):
-    """Make `user-test` the DM of the campaign that every board in this module belongs to."""
-    asyncio.run(
-        spicedb.write_relationship(
-            resource_type="campaign",
-            resource_id=BOARD_CAMPAIGN,
-            relation="dungeon_master",
-            subject_type="user",
-            subject_id="user-test",
-        )
-    )
+def board_campaign(trusted_ws_issuer) -> str:
+    """The campaign that every board in this module belongs to. `user-test` runs it."""
+    return create_dm_campaign("user-test")

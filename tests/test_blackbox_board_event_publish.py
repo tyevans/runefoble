@@ -12,16 +12,15 @@ The Redis double (MockAsyncRedis) sits behind RedisStreamsEventBus, which expose
 
 from __future__ import annotations
 
-import asyncio
 import json
 from uuid import uuid4
 
 import pytest
 from board_state.main import app as board_app
 from fastapi.testclient import TestClient
-from runefoble_auth.factory import get_spicedb_client
 from the_watcher.main import app as watcher_app
 
+from tests.helpers.campaign_setup import create_dm_campaign
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.ws_identity import SIGNING_ISSUER, bearer
 from tests.test_blackbox_uvtt_import.conftest import build_sample_dd2vtt_dict
@@ -50,20 +49,22 @@ def watcher_redis(mock_bus):
     yield mock_bus
 
 
-def _create_board(client: TestClient, board_id: str) -> None:
+def _create_board(client: TestClient, board_id: str, board_campaign: str) -> None:
     """Create a board through the public POST frontdoor before any board write."""
     res = client.post(
         "/api/v1/boards",
-        json={"campaign_id": BOARD_CAMPAIGN, "session_id": board_id, "cols": 18, "rows": 14},
+        json={"campaign_id": board_campaign, "session_id": board_id, "cols": 18, "rows": 14},
     )
     assert res.status_code == 200, res.text
 
 
-def test_aoe_placement_publishes_template_placed_event(board_redis: MockAsyncRedis):
+def test_aoe_placement_publishes_template_placed_event(
+    board_redis: MockAsyncRedis, board_campaign: str
+):
     """Placing an AoE template writes one AoETemplatePlaced entry to the board stream."""
     client = TestClient(board_app, headers=bearer("user-test"))
     board_id = f"board-aoe-{uuid4().hex[:8]}"
-    _create_board(client, board_id)
+    _create_board(client, board_id, board_campaign)
 
     res = client.post(
         f"/api/v1/boards/{board_id}/aoe",
@@ -82,11 +83,13 @@ def test_aoe_placement_publishes_template_placed_event(board_redis: MockAsyncRed
     assert json.loads(placed[0]["payload"])["spell_name"] == "Fireball"
 
 
-def test_uvtt_import_publishes_every_uncommitted_event_in_order(board_redis: MockAsyncRedis):
+def test_uvtt_import_publishes_every_uncommitted_event_in_order(
+    board_redis: MockAsyncRedis, board_campaign: str
+):
     """A UVTT import writes all of its uncommitted events to the board stream, not only the last."""
     client = TestClient(board_app, headers=bearer("user-test"))
     board_id = f"board-uvtt-{uuid4().hex[:8]}"
-    _create_board(client, board_id)
+    _create_board(client, board_id, board_campaign)
     uvtt_data = build_sample_dd2vtt_dict(cols=18, rows=14, pixels_per_grid=100)
     file_bytes = json.dumps(uvtt_data).encode("utf-8")
 
@@ -104,21 +107,14 @@ def test_uvtt_import_publishes_every_uncommitted_event_in_order(board_redis: Moc
 
 @pytest.mark.asyncio
 async def test_world_tick_publishes_world_tick_executed_to_watcher_stream(
-    watcher_redis: MockAsyncRedis,
+    watcher_redis: MockAsyncRedis, trusted_ws_issuer
 ):
     """Executing a world tick writes a world_tick_executed entry to the watcher stream."""
     client = TestClient(
         watcher_app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"}
     )
-    camp_id = f"camp-tick-{uuid4().hex[:8]}"
     dm_user = f"dm-{uuid4().hex[:6]}"
-    await get_spicedb_client().write_relationship(
-        resource_type="campaign",
-        resource_id=camp_id,
-        relation="dungeon_master",
-        subject_type="user",
-        subject_id=dm_user,
-    )
+    camp_id = create_dm_campaign(dm_user)
 
     res = client.post(
         f"/api/v1/campaigns/{camp_id}/world-tick",
@@ -133,18 +129,7 @@ async def test_world_tick_publishes_world_tick_executed_to_watcher_stream(
     assert len(ticks) == 1
 
 
-BOARD_CAMPAIGN = "camp-board-fixture"
-
-
 @pytest.fixture(autouse=True)
-def _board_campaign_dm(spicedb):
-    """Make `user-test` the DM of the campaign that every board in this module belongs to."""
-    asyncio.run(
-        spicedb.write_relationship(
-            resource_type="campaign",
-            resource_id=BOARD_CAMPAIGN,
-            relation="dungeon_master",
-            subject_type="user",
-            subject_id="user-test",
-        )
-    )
+def board_campaign(trusted_ws_issuer) -> str:
+    """The campaign that every board in this module belongs to. `user-test` runs it."""
+    return create_dm_campaign("user-test")

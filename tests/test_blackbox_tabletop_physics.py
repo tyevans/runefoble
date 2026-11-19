@@ -5,16 +5,15 @@ All setup and verification are performed strictly through public HTTP API endpoi
 using TestClient(app, headers=bearer("user-test")) from board_state.main and checking emitted domain events.
 """
 
-import asyncio
-
 import pytest
 from board_state.main import app
 from fastapi.testclient import TestClient
 
+from tests.helpers.campaign_setup import create_dm_campaign
 from tests.helpers.ws_identity import bearer
 
 
-def test_tabletop_physics_dice_throw_and_wall_collision_knockback():
+def test_tabletop_physics_dice_throw_and_wall_collision_knockback(board_campaign: str):
     """Verify 3D physical dice toss settling and miniature knockback collision with high walls."""
     client = TestClient(app, headers=bearer("user-test"))
 
@@ -22,7 +21,7 @@ def test_tabletop_physics_dice_throw_and_wall_collision_knockback():
     create_resp = client.post(
         "/api/v1/boards",
         json={
-            "campaign_id": BOARD_CAMPAIGN,
+            "campaign_id": board_campaign,
             "cols": 12,
             "rows": 12,
             "session_id": "session-physics-e2e-1",
@@ -130,18 +129,7 @@ def test_tabletop_physics_dice_throw_and_wall_collision_knockback():
     assert board_state["last_collision"]["impact_energy"] > 0
 
 
-BOARD_CAMPAIGN = "camp-board-fixture"
-
-
 @pytest.fixture(autouse=True)
-def _board_campaign_dm(spicedb):
-    """Make `user-test` the DM of the campaign that every board in this module belongs to."""
-    asyncio.run(
-        spicedb.write_relationship(
-            resource_type="campaign",
-            resource_id=BOARD_CAMPAIGN,
-            relation="dungeon_master",
-            subject_type="user",
-            subject_id="user-test",
-        )
-    )
+def board_campaign(trusted_ws_issuer) -> str:
+    """The campaign that every board in this module belongs to. `user-test` runs it."""
+    return create_dm_campaign("user-test")
