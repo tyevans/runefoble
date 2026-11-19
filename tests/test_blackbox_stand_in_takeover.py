@@ -9,7 +9,7 @@ from character_sheet.main import app as character_app
 from game_session.character_client import CHARACTER_SHEET_URL_ENV
 from game_session.main import app as session_app
 from httpx import ASGITransport, AsyncClient
-from runefoble_auth.factory import set_spicedb_client
+from runefoble_auth.factory import get_spicedb_client, set_spicedb_client
 from runefoble_auth.mock import MockSpiceDBClient
 from runefoble_events.events import CharacterControlTransferred
 from runefoble_platform.redis_bus import deserialize_event
@@ -54,12 +54,12 @@ def _create_stand_in_character(character_url: str, owner: str) -> str:
 
 @pytest.mark.asyncio
 async def test_mid_session_hot_swap_takeover_and_turn_continuity(
-    mock_redis: MockAsyncRedis, character_service: str, use_redis_client
+    mock_redis: MockAsyncRedis, character_service: str, use_redis_client, seam_restorer
 ):
     """POST /api/v1/sessions/{id}/hot-swap smoothly transfers control in <100ms, preserving combat order."""
     use_redis_client(mock_redis)
     spicedb = MockSpiceDBClient()
-    set_spicedb_client(spicedb)
+    seam_restorer.replace(get_spicedb_client, set_spicedb_client, spicedb)
 
     async with AsyncClient(
         transport=ASGITransport(app=session_app),
@@ -151,12 +151,12 @@ async def test_mid_session_hot_swap_takeover_and_turn_continuity(
 
 @pytest.mark.asyncio
 async def test_hot_swap_unauthorized_user_rejected_by_spicedb(
-    mock_redis: MockAsyncRedis, use_redis_client
+    mock_redis: MockAsyncRedis, use_redis_client, seam_restorer
 ):
     """A player who does not own the character cannot hot-swap into its stand-in."""
     use_redis_client(mock_redis)
     spicedb = MockSpiceDBClient()
-    set_spicedb_client(spicedb)
+    seam_restorer.replace(get_spicedb_client, set_spicedb_client, spicedb)
 
     async with AsyncClient(
         transport=ASGITransport(app=session_app),
@@ -190,13 +190,13 @@ async def test_hot_swap_unauthorized_user_rejected_by_spicedb(
 
 @pytest.mark.asyncio
 async def test_hot_swap_returns_502_when_character_sheet_is_not_configured(
-    mock_redis: MockAsyncRedis, monkeypatch: pytest.MonkeyPatch, use_redis_client
+    mock_redis: MockAsyncRedis, monkeypatch: pytest.MonkeyPatch, use_redis_client, seam_restorer
 ):
     """Hot-swap fails loudly and leaves the session unchanged when character_sheet is unset."""
     monkeypatch.delenv(CHARACTER_SHEET_URL_ENV, raising=False)
     use_redis_client(mock_redis)
     spicedb = MockSpiceDBClient()
-    set_spicedb_client(spicedb)
+    seam_restorer.replace(get_spicedb_client, set_spicedb_client, spicedb)
 
     async with AsyncClient(
         transport=ASGITransport(app=session_app),

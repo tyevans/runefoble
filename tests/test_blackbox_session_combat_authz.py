@@ -10,9 +10,9 @@ import pytest
 import pytest_asyncio
 from game_session.main import app as session_app
 from httpx import ASGITransport, AsyncClient
-from runefoble_auth.factory import set_spicedb_client
 from runefoble_auth.mock import MockSpiceDBClient
 
+from tests.helpers.spicedb_factory import shared_spicedb_client
 from tests.helpers.ws_identity import bearer
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
@@ -22,8 +22,8 @@ DM, PLAYER, SPECTATOR, STRANGER = "dm-user", "player-user", "spectator-user", "s
 
 @pytest.fixture
 def spicedb() -> Iterator[None]:
-    set_spicedb_client(MockSpiceDBClient())
-    yield
+    with shared_spicedb_client(MockSpiceDBClient()):
+        yield
 
 
 @pytest_asyncio.fixture
