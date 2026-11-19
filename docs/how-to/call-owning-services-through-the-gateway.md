@@ -157,8 +157,10 @@ Use `relay_websocket` from `gateway_api.websocket_relay` when the owner serves a
 3. Accepts the client with the subprotocol that the owner chose, then relays text and binary frames both ways.
 4. Passes a close from either side to the other side with the same code and reason.
 
+Add the handler to the `router` in `gateway_api/routers/realtime.py`. The composition root (`gateway_api/main.py`) includes that router once. It defines no socket handler itself.
+
 ```python
-@app.websocket("/ws/minigames/{table_id}")
+@router.websocket("/ws/minigames/{table_id}")
 async def gateway_standalone_minigame_ws(websocket: WebSocket, table_id: str) -> None:
     await relay_websocket(websocket, service="game_session", segments=("ws", "minigames", table_id))
 ```
