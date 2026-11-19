@@ -10,6 +10,7 @@ import logging
 from uuid import UUID
 
 from runefoble_auth.permissions import check_subject
+from runefoble_auth.settings import load_spicedb_settings
 from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_auth.wiring import (
     build_identity_dependencies,
@@ -26,6 +27,8 @@ from soundscape.aggregate import SoundscapeAggregate
 
 logger = logging.getLogger("runefoble.soundscape")
 settings = PlatformSettings()
+# This service checks SpiceDB permissions. Fail fast at start-up without the key (TASK-0720).
+load_spicedb_settings()
 
 
 def get_soundscape_repo() -> AggregateRepository[SoundscapeAggregate]:

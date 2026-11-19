@@ -3,6 +3,7 @@
 from eventsource.domain.aggregate import DeclarativeAggregate
 from eventsource.ports.store import FullEventStore
 from fastapi import Request
+from runefoble_auth.settings import load_spicedb_settings
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.errors import ServiceUnavailableError
 from runefoble_platform.event_bus import EventBusProvider
@@ -21,8 +22,9 @@ from campaign_lore.handouts_aggregate import DiegeticHandoutAggregate, RelicAggr
 from campaign_lore.retrieval import LoreRetrievalEngine
 from campaign_lore.west_marches_aggregate import WestMarchesAtlasAggregate
 
-# Fail fast at import when a required platform setting (the SpiceDB key) is missing (TASK-0625).
 settings = PlatformSettings()
+# This service checks SpiceDB permissions. Fail fast at start-up without the key (TASK-0720).
+load_spicedb_settings()
 
 event_bus_provider = EventBusProvider(settings)
 get_event_bus = event_bus_provider.get

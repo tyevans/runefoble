@@ -133,17 +133,6 @@ class PlatformSettings(BaseSettings):
         description="Service credential shared by services and the MCP gateway (Kubernetes Secret)",
     )
 
-    # Authorization & Zanzibar (SpiceDB)
-    spicedb_endpoint: str = Field(
-        default="localhost:50051",
-        validation_alias=AliasChoices("RUNEFOBLE_SPICEDB_ENDPOINT", "SPICEDB_ENDPOINT"),
-        description="SpiceDB gRPC endpoint",
-    )
-    spicedb_preshared_key: str = Field(
-        validation_alias=AliasChoices("RUNEFOBLE_SPICEDB_PRESHARED_KEY"),
-        description="SpiceDB preshared key (operator secret). No default; required at startup",
-    )
-
     # Analytics (OpenPanel)
     openpanel_endpoint: str = Field(
         default="http://localhost:3000/api",

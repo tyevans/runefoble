@@ -1,16 +1,13 @@
 """The single shared SpiceDB client factory for every bounded context and the gateway.
 
-Settings come from `PlatformSettings`. The preshared key has no default (TASK-0625).
+Settings come from `SpiceDBSettings` (TASK-0720). The preshared key has no default (TASK-0625).
 Tests swap the client with `set_spicedb_client` (TASK-0818). No caller keeps its own copy.
 """
 
 from __future__ import annotations
 
-from pydantic import ValidationError
-from runefoble_platform.config import PlatformSettings
-from runefoble_platform.errors import ConfigurationError
-
 from runefoble_auth.mock.client import MockSpiceDBClient
+from runefoble_auth.settings import load_spicedb_settings
 from runefoble_auth.spicedb import SpiceDBClient
 
 _client: SpiceDBClient | MockSpiceDBClient | None = None
@@ -24,17 +21,10 @@ def get_spicedb_client() -> SpiceDBClient:
     """
     global _client
     if _client is None:
-        try:
-            settings = PlatformSettings()
-        except ValidationError as exc:
-            raise ConfigurationError(
-                "SpiceDB client settings are invalid. "
-                "RUNEFOBLE_SPICEDB_PRESHARED_KEY is required and has no default. "
-                f"{exc}"
-            ) from exc
+        settings = load_spicedb_settings()
         _client = SpiceDBClient(
-            endpoint=settings.spicedb_endpoint,
-            token=settings.spicedb_preshared_key,
+            endpoint=settings.endpoint,
+            token=settings.preshared_key.get_secret_value(),
         )
     return _client
 

@@ -106,7 +106,7 @@ def test_dynamic_permission_revocation_rejects_reconnect():
 
 def test_spicedb_client_mock_and_grpc_handling():
     """Verify SpiceDBClient instantiates a live gRPC client and the mock evaluates locally."""
-    default_client = SpiceDBClient()
+    default_client = SpiceDBClient(endpoint="localhost:50051", token="test-only-key")
     assert default_client._grpc_client is not None
 
     mock_client = MockSpiceDBClient()

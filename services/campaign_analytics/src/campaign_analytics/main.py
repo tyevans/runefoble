@@ -20,6 +20,7 @@ from fastapi import APIRouter, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from runefoble_auth.authz_http import install_authz_error_handlers
+from runefoble_auth.settings import load_spicedb_settings
 from runefoble_auth.wiring import verifier_from_settings
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.consumer_group import RedisConsumerGroup
@@ -171,6 +172,8 @@ def create_app(settings: PlatformSettings, event_bus: EventBusProvider) -> FastA
 
 def create_app_from_environment() -> FastAPI:
     """Build the app with settings read from the environment at the time of the call."""
+    # This service checks SpiceDB permissions. Fail fast at start-up without the key (TASK-0720).
+    load_spicedb_settings()
     settings = PlatformSettings()
     return create_app(settings, EventBusProvider(settings))
 

@@ -8,6 +8,7 @@ from fastapi import HTTPException
 from runefoble_auth.contract import permission_for_action
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.permissions import check_subject
+from runefoble_auth.settings import load_spicedb_settings
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.event_bus import EventBusProvider
 from runefoble_platform.event_sourcing import create_aggregate_repository
@@ -41,6 +42,8 @@ disambiguation_engine = DisambiguationEngine()
 compound_action_engine = CompoundActionEngine()
 
 platform_settings = PlatformSettings()
+# This service checks SpiceDB permissions. Fail fast at start-up without the key (TASK-0720).
+load_spicedb_settings()
 
 _faction_simulation_engine = FactionSimulationEngine()
 

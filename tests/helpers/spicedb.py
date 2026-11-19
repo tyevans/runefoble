@@ -31,7 +31,8 @@ from typing import Any
 import pytest
 import yaml
 from runefoble_auth.bootstrap_schema import bootstrap_schema
-from runefoble_auth.spicedb import SpiceDBClient, preshared_key_from_env
+from runefoble_auth.settings import load_spicedb_settings
+from runefoble_auth.spicedb import SpiceDBClient
 
 from tests.helpers.container_owner import owner_label_args, remove_orphaned_test_containers
 from tests.helpers.docker import DOCKER_TIMEOUT_SECONDS, require_docker_bin, run_docker
@@ -155,14 +156,17 @@ def run_spicedb_container(image: str, token: str) -> Iterator[str]:
         run_docker(docker, ["kill", container_id], timeout=DOCKER_TIMEOUT_SECONDS)
 
 
+def _preshared_key() -> str:
+    """Return the preshared key from the SpiceDB settings. Test mode sets a throwaway value."""
+    return load_spicedb_settings().preshared_key.get_secret_value()
+
+
 @pytest.fixture(scope="module")
 def live_spicedb_endpoint() -> Generator[str | None]:
     """Spin up an isolated in-memory SpiceDB container. Yield None when Docker is unavailable."""
     with ExitStack() as stack:
         try:
-            endpoint = stack.enter_context(
-                run_spicedb_container(spicedb_image(), preshared_key_from_env())
-            )
+            endpoint = stack.enter_context(run_spicedb_container(spicedb_image(), _preshared_key()))
         except RuntimeError:
             if require_live_spicedb():
                 raise
@@ -177,7 +181,7 @@ def live_spicedb_with_schema() -> Generator[LiveSpiceDB]:
 
     A failed schema write means the schema is invalid, so the fixture errors.
     """
-    token = preshared_key_from_env()
+    token = _preshared_key()
     with ExitStack() as stack:
         try:
             endpoint = stack.enter_context(run_spicedb_container(spicedb_image(), token))

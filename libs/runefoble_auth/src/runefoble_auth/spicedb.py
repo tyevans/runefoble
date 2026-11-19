@@ -5,7 +5,6 @@ from __future__ import annotations
 import asyncio
 import inspect
 import logging
-import os
 from typing import Any
 
 from runefoble_auth.errors import AuthzUnavailableError
@@ -25,37 +24,19 @@ logger = logging.getLogger(__name__)
 
 __all__ = ["SpiceDBClient"]
 
-DEFAULT_SPICEDB_ENDPOINT = os.getenv("RUNEFOBLE_SPICEDB_ENDPOINT", "localhost:50051")
-SPICEDB_PRESHARED_KEY_VAR = "RUNEFOBLE_SPICEDB_PRESHARED_KEY"
-
-
-def preshared_key_from_env() -> str:
-    """Return the SpiceDB preshared key from the environment. It has no default.
-
-    Raises:
-        RuntimeError: The key variable is unset or empty.
-    """
-    key = os.getenv(SPICEDB_PRESHARED_KEY_VAR)
-    if not key:
-        raise RuntimeError(
-            f"{SPICEDB_PRESHARED_KEY_VAR} is not set. "
-            "The SpiceDB preshared key is an operator secret and has no default."
-        )
-    return key
-
 
 class SpiceDBClient:
     """Client for querying and writing permissions to SpiceDB Zanzibar engine over live gRPC."""
 
     def __init__(
         self,
-        endpoint: str = DEFAULT_SPICEDB_ENDPOINT,
-        token: str | None = None,
+        endpoint: str,
+        token: str,
         insecure: bool = True,
         grpc_client: Any = None,
     ):
         self.endpoint = endpoint
-        self.token = token if token is not None else preshared_key_from_env()
+        self.token = token
         self.insecure = insecure
         self._grpc_client = grpc_client
         if self._grpc_client is None:

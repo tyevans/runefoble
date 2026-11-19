@@ -59,7 +59,7 @@ Runefoble is designed around a Kubernetes-first microservices topology deployed 
 - **Role**: Object-level access control enforcing who can view, run, mutate, or roll within campaigns, characters, and boards.
 - **Datastore Migrations**: Uses `spicedb datastore migrate head` executed via initContainers in the deployment and Helm schema job before serving or writing schemas.
 - **Schema**: `libs/runefoble_auth/schema/runefoble.zed`.
-- **Shared Factory**: `runefoble_auth.factory.get_spicedb_client()` is the only constructor for services and the gateway. It caches one client built from `PlatformSettings`. It raises `ConfigurationError` when the preshared key is missing.
+- **Shared Factory**: `runefoble_auth.factory.get_spicedb_client()` is the only constructor for services and the gateway. It caches one client built from `runefoble_auth.settings.SpiceDBSettings`, not from `PlatformSettings`. It raises `ConfigurationError` when the preshared key is missing.
 - **Test seam**: `runefoble_auth.factory.set_spicedb_client(client)` replaces the shared client. Pass `None` to build a fresh one. Tests restore the previous client with `tests/helpers/module_state.restored_seam`. No service exposes its own SpiceDB seam.
 - **Fail-Closed Errors**: `check_permission` returns `False` only for a definitive `NO_PERMISSION`. Other failures raise a typed error from `runefoble_auth.errors`:
   - `AuthzUnavailableError`: gRPC `UNAVAILABLE` or `DEADLINE_EXCEEDED`, or a socket error. The gateway maps it to `503`.
@@ -67,7 +67,7 @@ Runefoble is designed around a Kubernetes-first microservices topology deployed 
   - `AuthzWriteError`: any other failed write, delete, or schema write.
   - `AuthzError`: the base class of all three.
 - **Schema Names Only**: Callers pass names from `runefoble.zed`. The client sends them unchanged. For example, `game_master` is valid and `gm` is not.
-- **Environment Variables**: `RUNEFOBLE_SPICEDB_ENDPOINT`, `RUNEFOBLE_SPICEDB_PRESHARED_KEY`. The preshared key is an operator secret with no default outside tests. A process that cannot read it exits at startup and names the variable. Helm reads it from the `runefoble-credentials` Secret, key `spicedb-preshared-key`, and passes it as `SPICEDB_GRPC_PRESHARED_KEY` to the SpiceDB server. See [Chart Credentials](#chart-credentials).
+- **Environment Variables**: `RUNEFOBLE_SPICEDB_ENDPOINT` (or `SPICEDB_ENDPOINT`), `RUNEFOBLE_SPICEDB_PRESHARED_KEY`. `SpiceDBSettings` reads them. The preshared key is an operator secret with no default outside tests. A service that checks permissions calls `load_spicedb_settings()` at startup. Without the key, it exits with `ConfigurationError` and names the variable. A process that only builds `PlatformSettings` starts without the key. Helm reads it from the `runefoble-credentials` Secret, key `spicedb-preshared-key`, and passes it as `SPICEDB_GRPC_PRESHARED_KEY` to the SpiceDB server. See [Chart Credentials](#chart-credentials).
 - **Direct gRPC Enforcement**: `SpiceDBClient` connects directly over gRPC without silent mock fallbacks; errors fail fast to prevent authorization drift. Offline unit tests explicitly instantiate `MockSpiceDBClient`. Exception: the sync service (`libs/runefoble_auth/src/runefoble_auth/sync.py`) accepts a `MockSpiceDBClient` through its constructor and reports `backend: mock` when it does.
 - **How-To Guide**: [Define and Check SpiceDB Zanzibar Permissions](../how-to/define-spicedb-zanzibar-permissions.md).
 

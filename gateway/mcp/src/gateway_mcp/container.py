@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from runefoble_auth.factory import get_spicedb_client
+from runefoble_auth.settings import load_spicedb_settings
 
 from gateway_mcp.dynamic.registry import DynamicToolRegistry
 from gateway_mcp.permissions import PermissionChecker, SpiceDBPermissionChecker
@@ -29,7 +30,12 @@ class GatewayMcpContainer:
 
     @classmethod
     def default(cls) -> GatewayMcpContainer:
-        """Build the production wiring. The SpiceDB client is resolved on each use."""
+        """Build the production wiring. The SpiceDB client is resolved on each use.
+
+        Raises:
+            ConfigurationError: The SpiceDB preshared key is missing (TASK-0720).
+        """
+        load_spicedb_settings()
         permissions = SpiceDBPermissionChecker(get_spicedb_client)
         return cls(
             registry=DynamicToolRegistry(permissions),

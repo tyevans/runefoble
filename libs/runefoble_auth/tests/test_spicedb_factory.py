@@ -33,6 +33,24 @@ def test_factory_builds_client_from_the_preshared_key_setting(
     assert client.endpoint == "spicedb.test:50051"
 
 
+def test_factory_reads_the_legacy_endpoint_name(monkeypatch: pytest.MonkeyPatch) -> None:
+    """SPICEDB_ENDPOINT stays a valid name for the endpoint (TASK-0720)."""
+    monkeypatch.setenv(KEY_VAR, "key-from-setting")
+    monkeypatch.delenv("RUNEFOBLE_SPICEDB_ENDPOINT", raising=False)
+    monkeypatch.setenv("SPICEDB_ENDPOINT", "legacy.test:50051")
+
+    assert get_spicedb_client().endpoint == "legacy.test:50051"
+
+
+def test_factory_raises_configuration_error_when_key_is_empty(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv(KEY_VAR, "")
+
+    with pytest.raises(ConfigurationError, match=KEY_VAR):
+        get_spicedb_client()
+
+
 def test_factory_returns_one_cached_client(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv(KEY_VAR, "key-from-setting")
 
