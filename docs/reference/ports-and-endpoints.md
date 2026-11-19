@@ -370,6 +370,7 @@ Campaign Lore routes require a verified bearer token, except `/health`, `/health
 | `gateway-api` | GET | `/api/v1/soundscape/tension` | Retrieves current session encounter tension score and active stems (proxies to soundscape) |
 | `gateway-api` | POST | `/api/v1/soundscape/tension/calculate` | Calculates encounter tension and adapts music stems (proxies to soundscape) |
 | `gateway-api` | POST | `/api/v1/soundscape/stems/override` | DM manual mood override forcing stem profile (Zanzibar `run_session`/`manage` required, checked by the owner) |
+| `gateway-api` | POST | `/api/v1/soundscape/stems/volume` | Sets stem channel volumes (proxies to soundscape; the owner checks `session.control` or `campaign.run_session`) |
 | `gateway-api` | POST | `/api/v1/soundscape/duck` | Engages or releases WebAudio -12dB ducking (proxies to soundscape; the owner checks `session.control`) |
 | `gateway-api` | GET | `/api/v1/soundscape/leitmotif/{character_id}` | Retrieves character musical leitmotif timbre configuration (proxies to the owner's `/api/v1/soundscape/leitmotif/profile/{character_id}`) |
 | `gateway-api` | POST | `/api/v1/assets/upload` | Proxies to `asset-forge`, which stores binary or base64 assets (battlemap, avatar, audio) to Silo S3. Needs a bearer. The uploader becomes the `forged_asset` creator. An optional `campaign_id` needs `campaign.play` |
