@@ -27,6 +27,7 @@ The package exports `ServiceClient`, `UpstreamReply`, `UpstreamError`, `Upstream
 |---|---|
 | `get_campaign(campaign_id)` | `GET /api/v1/campaigns/{id}` (game_session) |
 | `get_session(session_id)` | `GET /api/v1/sessions/{id}` (game_session) |
+| `join_session(session_id)` | `POST /api/v1/sessions/{id}/join` (game_session) |
 | `start_encounter(session_id)` | `POST /api/v1/sessions/{id}/encounters/start` (game_session) |
 | `get_combat_state(session_id)` | `GET /api/v1/sessions/{id}/combat` (game_session) |
 | `list_characters()` | `GET /api/v1/characters` (character_sheet) |

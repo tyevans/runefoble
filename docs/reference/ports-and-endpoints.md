@@ -323,6 +323,7 @@ Campaign Lore routes require a verified bearer token, except `/healthz`, `/opena
 | `gateway-api` | POST | `/api/v1/campaigns/{campaign_id}/roles` | Proxies to `game_session`: grants `dungeon_master`, `game_master`, `player`, or `spectator` (requires `manage`). `owner` returns `422`. A failed SpiceDB write returns `502` through the gateway |
 | `gateway-api` | GET | `/api/v1/sessions/{session_id}` | Proxies to `game_session`: session state (requires `observe`) |
 | `gateway-api` | POST | `/api/v1/sessions/{session_id}/start` | Proxies to `game_session`: moves a lobby to `active` (requires `control`) |
+| `gateway-api` | POST | `/api/v1/sessions/{session_id}/join` | Proxies to `game_session`: seats the verified caller in the lobby. Body `{character_id, character_name, character_class}`. The gateway forwards the bearer and the body. The owner checks `participate` and answers `403` for a caller outside the campaign. `503` when game_session is unreachable (TASK-0889) |
 | `gateway-api` | POST | `/api/v1/sessions/{session_id}/hot-swap` | Proxies to `game_session`: hands turn control to a player. Body `{characterId}`. The caller is the player. The owner releases the stand-in in `character_sheet` (requires `observe`) |
 | `gateway-api` | POST | `/api/v1/sessions/{session_id}/turns/advance` | Proxies to `game_session` `next-turn`: advances the turn (requires `control`) |
 | `gateway-api` | POST | `/api/v1/sessions/{session_id}/dm-override` | Proxies to `game_session`: records a DM override (requires `control`) |

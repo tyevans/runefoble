@@ -8,7 +8,8 @@ in `upstream_errors.py`: 503 when unreachable, 502 on upstream 5xx, upstream 4xx
 `hot-swap` keeps a gateway check because game_session does not check the same permission for
 the same caller: it needs `observe` here, and the owner checks `participate` and
 `character.edit`. `dm-override` and `atmosphere` have no gateway check: game_session checks
-`session.control`. `events` and `absentee-recap` keep their
+`session.control`. `join` has no gateway check: game_session checks `participate` and seats
+the verified caller (TASK-0889). `events` and `absentee-recap` keep their
 gateway check because game_session answers 404 for an unknown session before it checks
 `observe`. Without the gateway check, a caller could tell a session that exists from one that
 does not.
@@ -22,7 +23,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Request
 from gateway_api.auth import get_principal, require_zanzibar_permission
 from gateway_api.dependencies import ws_manager
-from gateway_api.models import AtmosphereUpdateRequest, DMOverrideRequest
+from gateway_api.models import AtmosphereUpdateRequest, DMOverrideRequest, JoinSessionRequest
 from gateway_api.proxy import forward_json, owner_route
 from pydantic import BaseModel, ConfigDict, Field
 from runefoble_platform.service_client import owner_routes
@@ -46,6 +47,19 @@ async def get_session_proxy(session_id: str, request: Request) -> Any:
     """Read session state, participants, and turn index (requires 'observe'; game_session)."""
     route = owner_route(owner_routes.get_session, session_id)
     return await forward_json(request, service=SERVICE, method=route.method, path=route.path)
+
+
+@router.post("/api/v1/sessions/{session_id}/join", dependencies=_VERIFIED)
+async def join_session_proxy(session_id: str, req: JoinSessionRequest, request: Request) -> Any:
+    """Seat the verified caller in the lobby with one character (game_session checks 'participate')."""
+    route = owner_route(owner_routes.join_session, session_id)
+    return await forward_json(
+        request,
+        service=SERVICE,
+        method=route.method,
+        path=route.path,
+        json_body=req.model_dump(mode="json"),
+    )
 
 
 @router.post("/api/v1/sessions/{session_id}/start", dependencies=_VERIFIED)

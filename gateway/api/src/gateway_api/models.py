@@ -107,6 +107,14 @@ class JoinCampaignRequest(BaseModel):
     invite_token: str
 
 
+class JoinSessionRequest(BaseModel):
+    """Take a lobby seat with one character. game_session checks `session.participate`."""
+
+    character_id: str = Field(..., min_length=1)
+    character_name: str = Field(..., min_length=1)
+    character_class: str = Field(..., min_length=1)
+
+
 class CreateCampaignSessionRequest(BaseModel):
     title: str = Field(..., min_length=1, max_length=120)
     scheduled_at: str | None = None
