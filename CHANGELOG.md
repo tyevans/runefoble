@@ -86,6 +86,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Campaign analytics worker `process_event` alias, tracking property wrappers, and package root re-exports. Callers use `handle_event`. (TASK-0500)
 
 ### Added
+- An approved audience `item_drop` modifier places a `loot` token with the item name on the board cell it names. A loot token does not block movement. (TASK-0837)
 - Stream consumers reclaim messages left pending by a dead worker (`consumer_reclaim_min_idle_ms`, `consumer_reclaim_every_polls`). Every consumer handler is idempotent; soundscape keeps a bounded ledger of handled source event ids per session. (TASK-0854)
 - An import-linter contract keeps `gateway_api` from importing service packages, and `docs/reference/` has a route ownership table generated from the gateway proxy tables. (TASK-0598)
 - An approved audience `status_buff` modifier gives a character the `blessed` or `inspired` condition. (TASK-0836)

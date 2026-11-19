@@ -1,7 +1,7 @@
 ---
 id: '0837'
 title: Approved Audience Item Drop Modifier Places a Loot Token on the Board
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies:
 - TASK-0835
@@ -20,7 +20,7 @@ target_release: 0.9.0
 # TASK-0837: Approved Audience Item Drop Modifier Places a Loot Token on the Board
 
 ## Status
-Refined
+Complete
 
 Decision (user, 2026-11-18): the dropped item becomes a loot token on the board. Pick-up into a character inventory is a later task.
 
