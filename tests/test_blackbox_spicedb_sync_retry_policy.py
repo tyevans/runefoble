@@ -23,6 +23,8 @@ from runefoble_auth.errors import (
 from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_auth.sync import ZitadelSpiceDBSyncService
 
+from tests.helpers.sync_verifier import sync_test_verifier
+
 
 class FakeRpcError(grpc.RpcError):
     """A gRPC failure with a status code, as the authzed stub raises it."""
@@ -61,6 +63,7 @@ def _grpc_service(stub: WriteStub, max_retries: int = 3) -> ZitadelSpiceDBSyncSe
     client = SpiceDBClient(endpoint="spicedb.test:50051", token="test-token", grpc_client=stub)
     return ZitadelSpiceDBSyncService(
         spicedb_client=client,
+        zitadel_auth=sync_test_verifier(),
         max_retries=max_retries,
         retry_delay_seconds=0.001,
     )
@@ -94,6 +97,7 @@ class RecoveringSpiceDB:
 def _service(spicedb: Any, max_retries: int = 3) -> ZitadelSpiceDBSyncService:
     return ZitadelSpiceDBSyncService(
         spicedb_client=spicedb,
+        zitadel_auth=sync_test_verifier(),
         max_retries=max_retries,
         retry_delay_seconds=0.001,
     )

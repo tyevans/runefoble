@@ -12,7 +12,6 @@ import pytest
 from fastapi import Depends, FastAPI, WebSocket
 from fastapi.testclient import TestClient
 from runefoble_auth.principal import VerifiedPrincipal, require_principal
-from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
 from runefoble_auth.websocket import (
     RUNEFOBLE_SUBPROTOCOL,
     WebSocketAuthError,
@@ -20,6 +19,8 @@ from runefoble_auth.websocket import (
 )
 from runefoble_auth.zitadel import ZitadelAuthService
 from starlette.websockets import WebSocketDisconnect
+
+from tests.helpers.signing_test_issuer import SigningTestIssuer
 
 KNOWN_SECRET = "attacker-known-secret-value-32-bytes!"
 

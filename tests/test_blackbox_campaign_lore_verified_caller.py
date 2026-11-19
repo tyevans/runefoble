@@ -16,8 +16,8 @@ from campaign_lore.main import app
 from fastapi.testclient import TestClient
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.spicedb import SpiceDBClient
-from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
 
+from tests.helpers.signing_test_issuer import SigningTestIssuer
 from tests.helpers.ws_identity import bearer
 
 PUBLIC_PATHS = {

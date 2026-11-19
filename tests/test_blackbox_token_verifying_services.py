@@ -18,8 +18,8 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from rules_compendium.dependencies import get_spicedb_client
 from rules_compendium.main import app as compendium_app
-from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
 
+from tests.helpers.signing_test_issuer import SigningTestIssuer
 from tests.helpers.ws_identity import SIGNING_ISSUER
 from tests.helpers.zitadel_stand_in import zitadel_stand_in
 

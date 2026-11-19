@@ -191,7 +191,7 @@ The paths in this table are absent from `/openapi.json` of `gateway-api`. Use th
 | game_session, The Watcher, and inference worker | `tests/test_blackbox_service_identity.py` |
 | Negative matrix for every surface | `tests/test_blackbox_identity_negative.py` (Gherkin mirror: `e2e/features/identity-negative.feature`) |
 | Retired routes are absent | `tests/test_blackbox_auth_routes_retired.py` |
-| Signed test tokens | `libs/runefoble_auth/src/runefoble_auth/testing/signing_test_issuer.py` |
+| Signed test tokens | `libs/runefoble_auth/src/tests.helpers.signing_test_issuer.py` |
 
 ---
 

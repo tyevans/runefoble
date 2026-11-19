@@ -12,8 +12,8 @@ from typing import Any
 
 import pytest
 from helpers.local_http_server import LocalHttpServer, RecordedRequest
-from runefoble_auth import zitadel_bootstrap
-from runefoble_auth.zitadel_bootstrap_job import BootstrapConfigError, main
+from zitadel_bootstrap import provisioning
+from zitadel_bootstrap.job import BootstrapConfigError, main
 
 ISSUER = "http://auth.localhost"
 ADMIN_PAT = "pat-bootstrap-admin"
@@ -175,7 +175,7 @@ def test_job_waits_while_zitadel_is_still_starting(
     kubernetes, service_account: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     fake_zitadel = FakeZitadel(starting_checks=2)
-    monkeypatch.setattr(zitadel_bootstrap, "READY_POLL_SECONDS", 0)
+    monkeypatch.setattr(provisioning, "READY_POLL_SECONDS", 0)
     _, kube_server = kubernetes
     with LocalHttpServer(fake_zitadel) as zitadel_server:
         assert main(job_env(zitadel_server.url, kube_server.url), service_account) == 0

@@ -10,10 +10,10 @@ from __future__ import annotations
 from collections.abc import Iterator
 
 import pytest
-from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
 from voice_agent.auth import get_voice_verifier, set_voice_verifier
 
 from tests.helpers.module_state import SeamRestorer
+from tests.helpers.signing_test_issuer import SigningTestIssuer
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 # One shared test issuer. The gateway mounts the voice room routes, so both verifiers must trust it.

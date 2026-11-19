@@ -17,14 +17,14 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 import httpx
-from runefoble_auth.testing.signing_test_issuer import (
+
+from tests.helpers.polling import wait_until
+from tests.helpers.ports import free_port
+from tests.helpers.signing_test_issuer import (
     DEFAULT_AUDIENCE,
     DEFAULT_ISSUER,
     SigningTestIssuer,
 )
-
-from tests.helpers.polling import wait_until
-from tests.helpers.ports import free_port
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 SERVICE_DIR = REPO_ROOT / "services" / "audience_studio"

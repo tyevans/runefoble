@@ -10,6 +10,8 @@ from runefoble_auth.mock import MockSpiceDBClient, Relationship
 from runefoble_auth.sync import ZitadelSpiceDBSyncService
 from runefoble_events.events import CharacterCreated, SessionCreated
 
+from tests.helpers.sync_verifier import sync_test_verifier
+
 
 @pytest.mark.asyncio
 async def test_token_roles_grant_no_campaign_relations(
@@ -37,7 +39,7 @@ async def test_token_roles_grant_no_campaign_relations(
 async def test_auth_sync_membership_lifecycle() -> None:
     """Verify granting and revoking campaign memberships."""
     spicedb = MockSpiceDBClient()
-    service = ZitadelSpiceDBSyncService(spicedb_client=spicedb)
+    service = ZitadelSpiceDBSyncService(spicedb_client=spicedb, zitadel_auth=sync_test_verifier())
     campaign_id = f"camp-{uuid4().hex[:6]}"
     dm_id = f"dm-{uuid4().hex[:6]}"
 
@@ -54,7 +56,7 @@ async def test_auth_sync_membership_lifecycle() -> None:
 async def test_auth_sync_domain_event_orchestration() -> None:
     """Verify domain events emit appropriate authorization tuples."""
     spicedb = MockSpiceDBClient()
-    service = ZitadelSpiceDBSyncService(spicedb_client=spicedb)
+    service = ZitadelSpiceDBSyncService(spicedb_client=spicedb, zitadel_auth=sync_test_verifier())
 
     camp_id = f"camp-{uuid4().hex[:6]}"
     dm_id = f"dm-{uuid4().hex[:6]}"
@@ -99,7 +101,7 @@ async def test_auth_sync_domain_event_orchestration() -> None:
 async def test_auth_sync_batch_reconcile() -> None:
     """Verify batch writes and reconciliation."""
     spicedb = MockSpiceDBClient()
-    service = ZitadelSpiceDBSyncService(spicedb_client=spicedb)
+    service = ZitadelSpiceDBSyncService(spicedb_client=spicedb, zitadel_auth=sync_test_verifier())
 
     rels = [
         Relationship("campaign", "c_sync", "player", "user", "u1"),

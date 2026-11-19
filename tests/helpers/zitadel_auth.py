@@ -21,10 +21,10 @@ from game_session.settlement.auth.tokens import get_zitadel_auth_service as get_
 from game_session.settlement.auth.tokens import set_zitadel_auth_service as set_session_auth
 from gateway_api.auth import get_zitadel_auth_service, set_zitadel_auth_service
 from gateway_api.main import app
-from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
 from runefoble_auth.zitadel import ZitadelAuthService
 
 from tests.helpers.module_state import SeamRestorer
+from tests.helpers.signing_test_issuer import SigningTestIssuer
 
 
 def generate_rsa_key() -> rsa.RSAPrivateKey:

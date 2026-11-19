@@ -11,9 +11,8 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from urllib.parse import urlsplit
 
-from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
-
 from tests.helpers.local_http_server import LocalHttpServer, RecordedRequest
+from tests.helpers.signing_test_issuer import SigningTestIssuer
 
 
 @contextmanager

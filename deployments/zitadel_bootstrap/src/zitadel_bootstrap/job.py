@@ -1,4 +1,4 @@
-"""Entry point for the Zitadel bootstrap Job (`python -m runefoble_auth.zitadel_bootstrap_job`).
+"""Entry point for the Zitadel bootstrap Job (`python -m zitadel_bootstrap.job`).
 
 The Job reads its settings from the environment, provisions the OIDC project and web
 application, and server-side applies the Kubernetes Secret that the workloads read:
@@ -23,7 +23,8 @@ from runefoble_auth.kubernetes_secret import (
     read_service_account_token,
     service_account_ca_file,
 )
-from runefoble_auth.zitadel_bootstrap import (
+
+from zitadel_bootstrap.provisioning import (
     ApplicationSpec,
     Provisioned,
     ZitadelManagement,

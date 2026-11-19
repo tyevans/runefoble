@@ -13,11 +13,11 @@ from collections.abc import Callable
 import pytest
 from fastapi.testclient import TestClient
 from runefoble_auth.factory import get_spicedb_client
-from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
 from starlette.websockets import WebSocketDisconnect
 from voice_agent.main import app as voice_app
 
 from tests.helpers.audio_synth import generate_synthetic_audio
+from tests.helpers.signing_test_issuer import SigningTestIssuer
 from tests.helpers.spicedb_factory import grant_voice_session
 from tests.helpers.voice_identity import VOICE_SIGNING_ISSUER, voice_auth_headers
 

@@ -7,11 +7,12 @@ Tokens come from the signing test issuer, so every verification is real RS256.
 import pytest
 from fastapi import Depends, FastAPI
 from fastapi.testclient import TestClient
-from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
 from runefoble_auth.wiring import build_identity_dependencies, make_verifier_holder
 from runefoble_auth.zitadel import ZitadelAuthService
 from runefoble_platform.errors import ConfigurationError
 from runefoble_platform.service_credential import SERVICE_CREDENTIAL_HEADER
+
+from tests.helpers.signing_test_issuer import SigningTestIssuer
 
 SERVICE_TOKEN = "wiring-test-service-credential"
 
