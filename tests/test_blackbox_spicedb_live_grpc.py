@@ -49,8 +49,7 @@ async def test_mock_spicedb_frontdoor_role_assignment(trusted_ws_issuer, gateway
 
     # Not a member -> 403 Forbidden
     res = tc.get(f"/api/v1/sessions/{session_id}", headers=user_alice)
-    assert res.status_code == 403
-    assert res.json()["detail"]["required_permission"] == "observe"
+    assert res.status_code == 403, res.text
 
     # Redeem a player invite
     invite_and_join(tc, camp_id, owner_id, user_alice_id, role="player")

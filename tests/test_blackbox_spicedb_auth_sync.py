@@ -10,19 +10,21 @@ from runefoble_auth.mock import MockSpiceDBClient, Relationship
 from runefoble_auth.sync import ZitadelSpiceDBSyncService
 from runefoble_events.events import CharacterCreated, SessionCreated
 
-client = TestClient(app)
-
 
 @pytest.mark.asyncio
-async def test_token_roles_grant_no_campaign_relations(signing_issuer) -> None:
+async def test_token_roles_grant_no_campaign_relations(
+    trusted_ws_issuer, game_session_upstream
+) -> None:
     """A verified token that carries owner and GM roles grants no campaign relation (TASK-0534)."""
     campaign_id = f"camp-{uuid4().hex[:6]}"
     user_id = f"user-{uuid4().hex[:6]}"
-    token = signing_issuer.mint(user_id, extra_claims={"roles": ["owner", "dungeon_master"]})
+    token = trusted_ws_issuer.mint(user_id, extra_claims={"roles": ["owner", "dungeon_master"]})
     headers = {"Authorization": f"Bearer {token}"}
 
-    res = client.get(f"/api/v1/sessions/{campaign_id}", headers=headers)
-    assert res.status_code == 403
+    # game_session checks `session.observe`; the token roles grant nothing (TASK-0845 rule).
+    with TestClient(app) as client:
+        res = client.get(f"/api/v1/sessions/{uuid4()}", headers=headers)
+    assert res.status_code == 403, res.text
 
     spicedb = get_spicedb_client()
     for permission in ("manage", "run_session", "play", "view"):

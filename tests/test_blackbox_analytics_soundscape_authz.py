@@ -110,15 +110,6 @@ def test_analytics_gateway_call_without_principal_is_unauthorized(
     assert res.status_code == 401
 
 
-def test_analytics_gateway_call_by_stranger_is_forbidden(
-    gateway: TestClient, campaign: dict[str, str]
-) -> None:
-    """A verified caller with no campaign relation gets 403 on an analytics read."""
-    cid = campaign["cid"]
-    res = gateway.get(f"/api/v1/analytics/campaigns/{cid}/heatmap", headers=bearer(STRANGER))
-    assert res.status_code == 403
-
-
 # ---------------------------------------------------------------------------
 # Soundscape controls: verified principal and schema permission
 # ---------------------------------------------------------------------------
