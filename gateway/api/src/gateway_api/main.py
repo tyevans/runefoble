@@ -30,6 +30,7 @@ from gateway_api.routers import (
 )
 from gateway_api.routers.assets_proxy import router as assets_router
 from gateway_api.routers.caravan_proxy import router as caravan_router
+from gateway_api.routers.characters_wardrobe_proxy import router as wardrobe_router
 from gateway_api.routers.forge_proxy import router as forge_router
 from gateway_api.routers.settlements_proxy import router as settlements_router
 from gateway_api.routers.watcher_proxy_dm import router as watcher_dm_router
@@ -89,6 +90,7 @@ app.include_router(sessions_router)
 app.include_router(analytics_views_router)
 app.include_router(lore_views_router)
 app.include_router(characters_router)
+app.include_router(wardrobe_router)
 app.include_router(compendium_router)
 app.include_router(downtime_router)
 app.include_router(settlements_router)
