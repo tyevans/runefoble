@@ -19,6 +19,22 @@ target_release: 0.9.0
 ## Status
 Refined
 
+
+Decisions (orchestrator, 2026-11-18), from the inventory in `.audit/work/0846.md`:
+1. Each campaign socket frame carries its `session_id`. The gateway refuses a frame whose session is not linked to the socket campaign (`game_session#campaign`). No "active session" lookup.
+2. The owner check is authoritative. DM actions use `session.control` at the owner (today the same people as `campaign.run_session`).
+3. `end_session`: new game_session route `POST /api/v1/sessions/{session_id}/end` (`session.control`), event `runefoble.events.session.ended` if none exists. `spawn_monster`: board_state token placement with `token_type: "monster"`, which requires `session.control` (or the board DM permission) for monster tokens.
+4. Lights: the owner rule `manage_traps` is correct. `toggle_light` has no owner and is refused.
+5. Owners emit their own domain events. The gateway publishes none.
+
+Split: this task is part (a), the owner side. Part (b), the gateway relay, is TASK-0883.
+
+## Scope of this task (part a)
+1. Add `POST /api/v1/sessions/{session_id}/end` in game_session, with its event, and the `owner_routes` entry.
+2. Monster tokens: board_state token placement refuses `token_type: "monster"` for a caller without the DM permission.
+3. Add `owner_routes` entries for `clear_condition`, the door toggle, and light placement.
+4. Frontdoor tests for each owner route: the DM succeeds; a player gets 403; the owner emits its event.
+
 ## Summary
 The campaign WebSocket in the gateway builds owner event names from client input, publishes them to Redis itself, and holds the action permission policy. ADR-0015 (b) keeps the gateway thin. Hard Invariant 2 says domain events come from owners. The fix moves each action to the owner route that owns it. The owner checks permission and publishes its own events. The gateway admits the caller, forwards the action, and relays the owner result.
 

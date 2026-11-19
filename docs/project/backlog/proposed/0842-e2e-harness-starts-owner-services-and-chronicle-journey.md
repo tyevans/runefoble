@@ -26,5 +26,7 @@ Split from TASK-0706. `playwright.config.ts` starts only the gateway and the fro
 1. Which services does the e2e harness start, and where do their settings (PostgreSQL, Redis, SpiceDB, embeddings) come from? The CI script should provide them, not the config file.
 2. Does `e2e/features/session_chronicle_feed.feature` (TASK-0641) pass after TASK-0706?
 
+3. Since TASK-0525, the global setup creates persona users in Zitadel on each run, and nothing deletes them. Add a global teardown that deletes the users that the run created, through the Zitadel management API.
+
 ## Product & User Story References
 - [`prd-0023-unified-frontend-application-shell-and-campaign-hub.md`](../../product/accepted/prd-0023-unified-frontend-application-shell-and-campaign-hub.md)
