@@ -46,6 +46,9 @@ export async function domTestConfig(packageDir: string, options: DomTestOptions 
     root: packageDir,
     test: {
       include: ['test-dom/**/*.test.ts'],
+      // The loopback upstream is one server for the whole run. Its reply and request log are
+      // shared, so test files that use it must run one after another (TASK-0922).
+      fileParallelism: options.commands === undefined,
       browser: {
         enabled: true,
         headless: true,

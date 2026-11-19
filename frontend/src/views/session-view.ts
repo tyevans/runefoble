@@ -7,6 +7,7 @@ import type { RunefobleApp } from '../runefoble-app.ts';
 import { handleBoardAoEPlace, handleBoardConfirmGhost, handleBoardSpellVFX, handleBoardTokenAction } from '../vtt-mesh-handlers.ts';
 import { switchDmCharacter } from '../app/character-actions.ts';
 import { recordBoardMoveTarget, resolveBoardDmAccess } from '../app/board-dm-controls.ts';
+import { handleBoardSetUp } from '../app/board-setup-actions.ts';
 
 /**
  * The DM trap controls and the map switcher for the board. The session id is the board id.
@@ -22,10 +23,11 @@ function renderBoardDmControls(app: RunefobleApp) {
 
 /**
  * The board, or the no-battlemap state while the session has no board (TASK-0906).
+ * The DM sets up the board from the no-battlemap state (TASK-0922).
  * The DM board controls act on a board, so they show only when the board exists.
  */
 function renderBoardArea(app: RunefobleApp, canRunSession: boolean) {
-  if (app.boardKind === 'no_board') return html`<runefoble-board-empty ?can-set-up-map=${canRunSession}></runefoble-board-empty>`;
+  if (app.boardKind === 'no_board') return html`<runefoble-board-empty ?can-set-up-map=${canRunSession} .campaignId=${app.campaignId} .sessionId=${app.sessionId} .seats=${app.sessionSeats} @board-set-up=${(e: CustomEvent) => handleBoardSetUp(app, e)}></runefoble-board-empty>`;
   return html`<runefoble-board .cols=${app.boardCols} .rows=${app.boardRows} .tokens=${app.tokens} .fogOfWar=${true} .websocketUrl=${app.getWebSocketUrl()} @token-action=${(e: CustomEvent) => handleBoardTokenAction(e, app.sessionSocket.current)} @aoe-place=${(e: CustomEvent) => handleBoardAoEPlace(e, app.sessionSocket.current)} @spell-vfx-triggered=${(e: CustomEvent) => handleBoardSpellVFX(e, app.sessionSocket.current)} @confirm-ghost=${(e: CustomEvent) => handleBoardConfirmGhost(e, app.sessionSocket.current)} @move-token=${(e: CustomEvent) => recordBoardMoveTarget(app, e)}></runefoble-board>
       ${renderBoardDmControls(app)}`;
 }

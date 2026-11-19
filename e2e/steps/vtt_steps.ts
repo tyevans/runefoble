@@ -8,7 +8,8 @@
 
 import { expect, type Locator, type Page } from '@playwright/test';
 import { When, Then } from '../support/fixtures';
-import { exactText, fillRouteTemplate, requireValue } from '../support/guards';
+import { fillRouteTemplate, requireValue } from '../support/guards';
+import { boardCell } from '../support/board_cells';
 import { lobbyRoute, personaToken } from '../support/lobby_session';
 
 /** The lobby card of one participant. Strict mode fails the step when the name matches no card or several cards. */
@@ -18,12 +19,6 @@ function participantCard(lobby: Locator, name: string): Locator {
   });
 }
 
-/** The board cell whose coordinate label is exactly `x,y`. */
-function boardCell(board: Locator, x: number, y: number): Locator {
-  return board
-    .locator('.cell')
-    .filter({ has: board.page().locator('.coord-label', { hasText: exactText(`${x},${y}`) }) });
-}
 
 When('Valeros checks {string}', async ({ world }, controlLabel: string) => {
   const lobby = world.getPage('valeros').locator('runefoble-session-lobby');
@@ -138,62 +133,6 @@ Then(
     await expect(evelynGrid).toBeVisible({ timeout: 10_000 });
     const cellsCount = await evelynGrid.locator('.cell').count();
     expect(cellsCount).toBeGreaterThanOrEqual(16);
-  }
-);
-
-When(
-  /Valeros drags his token from coordinate \((\d+), (\d+)\) to \((\d+), (\d+)\)/,
-  async ({ world }, fromXStr: string, fromYStr: string, toXStr: string, toYStr: string) => {
-    const fromX = parseInt(fromXStr, 10);
-    const fromY = parseInt(fromYStr, 10);
-    const toX = parseInt(toXStr, 10);
-    const toY = parseInt(toYStr, 10);
-    const valerosPage = world.getPage('valeros');
-    const evelynPage = world.getPage('evelyn');
-
-    // Launch through the DM's visible control. Valeros's browser follows the
-    // session route on its own (see "both Evelyn and Valeros's browsers navigate").
-    const evelynHash = await evelynPage.evaluate(() => window.location.hash);
-    if (!evelynHash.includes('/sessions/')) {
-      const launchBtn = evelynPage
-        .locator('runefoble-session-lobby')
-        .getByRole('button', { name: 'Launch Session' });
-      await expect(launchBtn, 'Launch control must be visible to the DM').toBeVisible({
-        timeout: 10_000,
-      });
-      await launchBtn.click();
-    }
-
-    await expect(valerosPage.locator('runefoble-board')).toBeVisible({ timeout: 15_000 });
-    await expect(evelynPage.locator('runefoble-board')).toBeVisible({ timeout: 15_000 });
-    await expect(evelynPage.locator('runefoble-watcher-feed')).toBeVisible({ timeout: 15_000 });
-
-    const board = valerosPage.locator('runefoble-board');
-    const grid = board.locator('.grid');
-    await expect(grid).toBeVisible({ timeout: 10_000 });
-
-    const sourceCell = boardCell(grid, fromX, fromY);
-    const targetCell = boardCell(grid, toX, toY);
-    await expect(sourceCell).toBeVisible({ timeout: 10_000 });
-    await expect(targetCell).toBeVisible({ timeout: 10_000 });
-
-    // A cell holds at most one token (board_state cell template).
-    const token = sourceCell.locator('.token');
-    await expect(token).toBeVisible({ timeout: 10_000 });
-
-    const srcBox = await token.boundingBox();
-    const destBox = await targetCell.boundingBox();
-    expect(srcBox, 'Source token must have a layout box').not.toBeNull();
-    expect(destBox, 'Target cell must have a layout box').not.toBeNull();
-    await valerosPage.mouse.move(srcBox!.x + srcBox!.width / 2, srcBox!.y + srcBox!.height / 2);
-    await valerosPage.mouse.down();
-    await valerosPage.mouse.move(destBox!.x + destBox!.width / 2, destBox!.y + destBox!.height / 2, {
-      steps: 5,
-    });
-    await valerosPage.mouse.up();
-
-    // The drag is the only action. Its success is checked through the board.
-    await expect(targetCell.locator('.token')).toBeVisible({ timeout: 10_000 });
   }
 );
 

@@ -1,6 +1,8 @@
 # TASK-0652: Each scenario creates its own campaign, session, characters and seats through public
 # gateway routes in the Background. Campaign, session and character names are labels only. The
 # steps keep the ids from the setup replies, and route assertions use those ids.
+# TASK-0922: The DM sets up the battlemap through the "Set up battlemap" control. It creates the
+# board and places one token for each seated character. No step creates a board through the API.
 # Governing ADRs: ADR-0007, ADR-0014, ADR-0015. PRD: PRD-0023. User stories: US-0063, US-0065.
 
 Feature: Session Lobby and Tabletop VTT Synchronization
@@ -28,9 +30,13 @@ Feature: Session Lobby and Tabletop VTT Synchronization
     When Evelyn clicks "Launch Session"
     Then both Evelyn and Valeros's browsers navigate automatically to "#/campaigns/{campaignId}/sessions/{sessionId}"
     And the gateway reports the session status as "active"
-    And the tactical board "<runefoble-board>" renders with dynamic grid bounds
+    And Valeros sees "No battlemap yet" with no set-up control
+    When Evelyn clicks "Set up battlemap" on the empty board
+    Then the tactical board "<runefoble-board>" renders with dynamic grid bounds
+    And the board on both screens shows the tokens "Valeros the Bold" and "Sarah of the Mists"
 
   Scenario: Live Token Kinematics and Movement Sync
-    When Valeros drags his token from coordinate (2, 2) to (3, 3)
+    Given Evelyn launches the session and sets up the battlemap
+    When Valeros drags his token "Valeros the Bold" to coordinate (3, 3)
     Then the token coordinate on Evelyn's screen smoothly moves to (3, 3)
     And the chronicle feed logs the move action

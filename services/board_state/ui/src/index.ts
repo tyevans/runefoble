@@ -8,6 +8,7 @@ export * from './particle_projectiles.ts';
 export * from './particle_decals.ts';
 export * from './runefoble-board.ts';
 export * from './runefoble-board-empty.ts';
+export * from './board-setup.ts';
 export * from './runefoble-map-dropzone.ts';
 export * from './runefoble-map-grid-config.ts';
 export * from './runefoble-map-uploader.ts';
