@@ -12,6 +12,7 @@ the restart seams. They never read or write private aggregate state.
 from __future__ import annotations
 
 import time
+from collections.abc import Iterator
 from typing import Any
 from uuid import uuid4
 
@@ -68,9 +69,14 @@ def mock_redis() -> MockAsyncRedis:
 @pytest.fixture(autouse=True)
 def durable_copilot_store(
     use_redis_client, mock_redis: MockAsyncRedis, seam_restorer: SeamRestorer
-):
-    """Give each test one event store that survives engine restarts, and a Redis double."""
+) -> Iterator[None]:
+    """Give each test one event store that survives engine restarts, and a Redis double.
+
+    A test that restarts the engine leaves its new engine in the process seam. Teardown stops
+    that engine's timers first, then restores the engine that was in place before the test.
+    """
     use_redis_client(mock_redis)
+    seam_restorer.keep(get_copilot_engine, set_copilot_engine)
     store = InMemoryEventStore()
     seam_restorer.replace(
         get_pending_action_repo,
@@ -88,6 +94,7 @@ def durable_copilot_store(
         create_aggregate_repository(DisambiguationAggregate, event_store=store),
     )
     yield
+    get_copilot_engine().shutdown()
 
 
 def _restart() -> None:

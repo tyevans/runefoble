@@ -16,7 +16,7 @@ from collections.abc import Iterator
 from uuid import uuid4
 
 import pytest
-from campaign_lore.dependencies import set_west_marches_repo
+from campaign_lore.dependencies import get_west_marches_repo, set_west_marches_repo
 from campaign_lore.main import app as lore_app
 from campaign_lore.models import WestMarchesState
 from campaign_lore.west_marches_aggregate import WestMarchesAtlasAggregate
@@ -30,6 +30,7 @@ from fastapi.testclient import TestClient
 from runefoble_auth.mock import MockSpiceDBClient
 from runefoble_platform.event_sourcing import create_aggregate_repository
 
+from tests.helpers.module_state import SeamRestorer
 from tests.helpers.spicedb_factory import shared_spicedb_client
 from tests.helpers.ws_identity import bearer
 
@@ -44,9 +45,11 @@ def spicedb_client() -> Iterator[MockSpiceDBClient]:
 
 
 @pytest.fixture
-def client(spicedb_client: MockSpiceDBClient, lore_backends) -> Iterator[TestClient]:
+def client(
+    spicedb_client: MockSpiceDBClient, lore_backends, seam_restorer: SeamRestorer
+) -> Iterator[TestClient]:
     fresh_repo = create_aggregate_repository(WestMarchesAtlasAggregate)
-    set_west_marches_repo(fresh_repo)
+    seam_restorer.replace(get_west_marches_repo, set_west_marches_repo, fresh_repo)
     with TestClient(lore_app, headers=bearer(VISITOR_SUBJECT)) as lore_client:
         yield lore_client
 
