@@ -45,6 +45,7 @@ The "Live Token Kinematics and Movement Sync" scenario failed. The e2e drag step
 2. A drag sends exactly one `confirm_move`.
 3. The board shows a refusal from the server in an alert line. Error frames name `action` and `token_id`.
 4. board_state answers a move with no target cell with an error frame.
+5. The board socket `connected` frame carries the current tokens, and `<runefoble-board>` applies them, so a socket that opens after a move shows the current board. The App Shell mounts no board element (and opens no board socket) until the board read answers, and a reload uses the server cells (`.audit/work/vtt-sync.md`).
 
 ## Frontdoor Blackbox Test Plan
 
