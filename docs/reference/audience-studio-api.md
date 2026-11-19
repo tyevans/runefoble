@@ -88,6 +88,7 @@ Server frames: `connected`, `subscribed`, `poll_started`, `vote_cast`, `poll_com
 | `RUNEFOBLE_ZITADEL_INTERNAL_URL` | No | In-cluster Zitadel origin. Discovery and JWKS requests go here with `Host` set to the issuer host. When unset, the service reads discovery from the issuer at start-up. |
 | `RUNEFOBLE_SPICEDB_ENDPOINT` | Yes | SpiceDB gRPC address. Use `host:port` (plaintext gRPC, the in-cluster form), `grpc://host:port` (plaintext), or `https://host:port` (TLS). Any other scheme stops start-up. The service exits at start-up when unset. |
 | `RUNEFOBLE_SPICEDB_PRESHARED_KEY` | Yes outside tests | Operator secret. Sent as the bearer token on every SpiceDB call. No default. |
+| `RUNEFOBLE_EVENT_STORE_BACKEND` | No | `postgresql` (the Helm default) or `memory`. `memory` is refused unless `NODE_ENV=test`. Unset selects PostgreSQL when `RUNEFOBLE_DATABASE_URL` is set. Same flag name as the Python services. |
 | `RUNEFOBLE_DATABASE_URL`, `REDIS_URL` | Yes outside tests | Event store and Redis Streams. |
 
 The Helm chart sets the Zitadel variables from `services.audienceStudio` and the Zitadel values. Governing docs: [How-To: Orchestrate Audience Chaos Polls](../how-to/orchestrate-audience-chaos-polls.md), [How-To: Verify Identity in FastAPI and WebSockets](../how-to/verify-identity-in-fastapi-and-websockets.md).

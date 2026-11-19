@@ -1,9 +1,10 @@
 """Fail when a service that owns AggregateRepository state lacks the PostgreSQL event store.
 
 Owners are found in source: a service owns state when its non-test code calls
-create_aggregate_repository or constructs AggregateRepository. Each owner must
-render as a Kubernetes Deployment with RUNEFOBLE_EVENT_STORE_BACKEND set
-to "postgresql" and a RUNEFOBLE_DATABASE_URL.
+create_aggregate_repository or constructs AggregateRepository (Python), or constructs
+AudienceEventRepository (TypeScript). Each owner must render as a Kubernetes
+Deployment with RUNEFOBLE_EVENT_STORE_BACKEND set to "postgresql" and a
+RUNEFOBLE_DATABASE_URL.
 
 Usage: python3 scripts/check_helm_event_store.py [CHART_DIR]
 """
@@ -20,22 +21,34 @@ import yaml
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SERVICES_DIR = REPO_ROOT / "services"
 DEFAULT_CHART = REPO_ROOT / "deployments" / "helm" / "runefoble"
-OWNER_PATTERN = re.compile(r"create_aggregate_repository\(|AggregateRepository\(")
+# Each owner pattern applies only to the source suffix of its language.
+OWNER_PATTERNS = (
+    (".py", re.compile(r"create_aggregate_repository\(|AggregateRepository\(")),
+    (".ts", re.compile(r"new AudienceEventRepository\(")),
+)
 
 
-def discover_owners() -> list[str]:
-    """Return deployment names for services whose source creates aggregate repositories."""
+def is_test_source(path: Path, src: Path) -> bool:
+    """Return True for test code under src, which never makes a service an owner."""
+    relative = path.relative_to(src)
+    return "tests" in relative.parts or "test" in relative.parts or path.name.endswith(".test.ts")
+
+
+def discover_owners(services_dir: Path = SERVICES_DIR) -> list[str]:
+    """Return deployment names for services whose non-test source creates aggregate repositories."""
     owners: list[str] = []
-    for service_dir in sorted(SERVICES_DIR.iterdir()):
+    for service_dir in sorted(services_dir.iterdir()):
         src = service_dir / "src"
         if not src.is_dir():
             continue
-        for path in src.rglob("*.py"):
-            if "tests" in path.parts:
-                continue
-            if OWNER_PATTERN.search(path.read_text(encoding="utf-8")):
-                owners.append(service_dir.name.replace("_", "-"))
-                break
+        if any(
+            pattern.search(path.read_text(encoding="utf-8"))
+            for path in src.rglob("*")
+            if path.is_file() and not is_test_source(path, src)
+            for suffix, pattern in OWNER_PATTERNS
+            if path.suffix == suffix
+        ):
+            owners.append(service_dir.name.replace("_", "-"))
     return owners
 
 
