@@ -15,7 +15,7 @@ from uuid import uuid4
 import pytest
 from httpx import ASGITransport, AsyncClient
 from runefoble_events.events import StandInActionDecided
-from runefoble_platform.redis_bus import deserialize_event
+from runefoble_platform.event_deserializer import deserialize_event
 from runefoble_platform.stand_in_guardrails import GuardrailName
 from the_watcher.main import app as watcher_app
 

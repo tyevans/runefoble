@@ -21,7 +21,7 @@ from fastapi.testclient import TestClient
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_events.events import BattlemapForged, TokenAssetForged
-from runefoble_platform.redis_bus import deserialize_event
+from runefoble_platform.event_deserializer import deserialize_event
 
 from tests.helpers.ws_identity import bearer
 

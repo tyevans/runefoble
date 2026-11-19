@@ -87,6 +87,27 @@ async def test_competing_consumers_divide_messages(
 
 
 @pytest.mark.asyncio
+async def test_read_group_returns_registered_event_types(
+    consumer_group: RedisConsumerGroup,
+    event_bus: RedisStreamsEventBus,
+) -> None:
+    stream = "runefoble.events.session"
+    group = "typed_group"
+    await consumer_group.create_group(stream, group)
+
+    aggregate_id = uuid4()
+    await event_bus.publish_event(stream, SessionCreated(aggregate_id=aggregate_id, title="Typed"))
+
+    messages = await consumer_group.read_group(stream, group, "typed_worker", count=5)
+
+    assert len(messages) == 1
+    _msg_id, decoded = messages[0]
+    assert isinstance(decoded, SessionCreated)
+    assert decoded.aggregate_id == aggregate_id
+    assert decoded.title == "Typed"
+
+
+@pytest.mark.asyncio
 async def test_ack_acknowledgment_and_pending_removal(
     consumer_group: RedisConsumerGroup,
     mock_redis: MockAsyncRedis,

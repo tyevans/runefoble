@@ -24,8 +24,8 @@ import pytest
 from fastapi.testclient import TestClient
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_platform.config import PlatformSettings
+from runefoble_platform.event_deserializer import deserialize_event
 from runefoble_platform.event_sourcing import build_event_store, set_event_store
-from runefoble_platform.redis_bus import deserialize_event
 from soundscape.main import app
 
 from tests.helpers.process import run_command

@@ -19,8 +19,8 @@ from runefoble_events.events import (
     LeitmotifTriggered,
     PlayerSpokeEvent,
 )
+from runefoble_platform.event_deserializer import deserialize_event
 from runefoble_platform.models import utc_now
-from runefoble_platform.redis_bus import deserialize_event
 from soundscape.event_handlers import handle_incoming_domain_event
 from soundscape.leitmotif import LeitmotifEngine, calculate_envelope_gain
 from soundscape.mixer import DUCKING_ATTENUATION_DB, DUCKING_LINEAR_MULTIPLIER

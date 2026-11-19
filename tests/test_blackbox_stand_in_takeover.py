@@ -12,7 +12,7 @@ from httpx import ASGITransport, AsyncClient
 from runefoble_auth.factory import get_spicedb_client, set_spicedb_client
 from runefoble_auth.mock import MockSpiceDBClient
 from runefoble_events.events import CharacterControlTransferred
-from runefoble_platform.redis_bus import deserialize_event
+from runefoble_platform.event_deserializer import deserialize_event
 
 from tests.helpers.campaign_setup import create_owned_campaign_async
 from tests.helpers.live_services import serve

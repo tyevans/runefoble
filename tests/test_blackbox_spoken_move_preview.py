@@ -17,7 +17,7 @@ from board_state.main import app as board_app
 from fastapi.testclient import TestClient
 from gateway_api.main import app as gateway_app
 from runefoble_events.events import TokenMoved
-from runefoble_platform.redis_bus import deserialize_event
+from runefoble_platform.event_deserializer import deserialize_event
 from the_watcher.main import app as watcher_app
 
 from tests.helpers.live_services import closed_port_url, serve
