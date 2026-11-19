@@ -115,6 +115,16 @@ describe('guardrail and hot-swap handlers never show success after an error', ()
     assert.deepEqual(host.toasts, ['Tactical Guardrails Saved!']);
   });
 
+  it('a guardrail save sends only the policy fields, without the character id', async () => {
+    gateway = installFakeGateway({ 'PUT /api/v1/characters/char-1/guardrails': { body: {} } });
+    const host = makeHost();
+
+    await handleGuardrailsSaved(host, 'char-1', event({ characterId: 'char-1', avoid_melee: true }));
+
+    assert.deepEqual(gateway.calls.map((c) => c.body), [{ avoid_melee: true }]);
+    assert.deepEqual(host.selectedCharacter.stand_in_guardrails, { avoid_melee: true });
+  });
+
   it('a refused hot-swap shows the error and no success text', async () => {
     gateway = installFakeGateway({ 'POST /api/v1/sessions/session-1/hot-swap': { status: 403, body: { detail: 'Forbidden' } } });
     const host = makeHost();

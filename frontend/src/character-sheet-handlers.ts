@@ -125,9 +125,11 @@ export async function handleSheetRemoveCondition(host: SheetAppHost, charId: str
 }
 
 /** Saves stand-in guardrails. Shows success and the new guardrails only after the gateway confirms. */
+/** Saves the stand-in guardrails. The body holds only the policy fields: the character is in the path. */
 export async function handleGuardrailsSaved(host: SheetAppHost, charId: string, e: CustomEvent) {
-  if (!(await commit(host, appDataService.updateCharacterGuardrails(charId, e.detail)))) return;
-  patchSelected(host, () => ({ stand_in_guardrails: e.detail, standInGuardrails: e.detail }));
+  const { characterId: _characterId, ...policy } = e.detail ?? {};
+  if (!(await commit(host, appDataService.updateCharacterGuardrails(charId, policy)))) return;
+  patchSelected(host, () => ({ stand_in_guardrails: policy, standInGuardrails: policy }));
   host.showToast('Tactical Guardrails Saved!');
 }
 

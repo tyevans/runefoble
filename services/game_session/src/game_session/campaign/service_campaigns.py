@@ -201,7 +201,11 @@ async def list_viewable_campaigns(
                 return await _load_summary(repos, raw_id, granted[raw_id])
 
         results = await asyncio.gather(*(summarize(raw_id) for raw_id in sorted(granted)))
-        summaries = [summary for summary in results if summary is not None]
+        # Oldest first. The ids are random UUIDs, so an id order changes between callers.
+        summaries = sorted(
+            (summary for summary in results if summary is not None),
+            key=lambda summary: (summary.created_at or "", summary.id),
+        )
         span.set_attribute("runefoble.campaign.listed_count", len(summaries))
         return summaries
 

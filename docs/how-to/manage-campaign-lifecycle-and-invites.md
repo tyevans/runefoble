@@ -62,7 +62,7 @@ curl -X POST "http://localhost:8000/api/v1/campaigns" \
 
 ## 2. Listing Viewable Campaigns
 
-`GET /api/v1/campaigns` lists only campaigns where the requesting user has the Zanzibar `view` permission (granted to owners, DMs, players, and spectators).
+`GET /api/v1/campaigns` lists only campaigns where the requesting user has the Zanzibar `view` permission (granted to owners, DMs, players, and spectators). The list is in creation order, oldest first (TASK-0925).
 
 ```bash
 curl -X GET "http://localhost:8000/api/v1/campaigns" \
