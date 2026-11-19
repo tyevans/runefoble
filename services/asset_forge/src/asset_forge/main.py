@@ -17,6 +17,7 @@ from runefoble_platform.aggregate_loading import register_store_unavailable_hand
 from runefoble_platform.engine_ports import EngineUnavailableError, engine_unavailable_handler
 from runefoble_platform.event_publish import event_publish_failures
 from runefoble_platform.event_sourcing import get_event_store
+from runefoble_platform.storage import get_storage_service
 from runefoble_platform.ui_manifest import load_ui_manifest
 
 from asset_forge.dependencies import event_bus_provider, get_wardrobe_generator
@@ -39,6 +40,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Build the configured generators at start-up. A bad generator setting stops the service."""
     get_map_generator()
     get_wardrobe_generator()
+    # A deployed service without the Silo keys refuses to start (TASK-0926).
+    get_storage_service()
     async with event_bus_provider.lifespan(app):
         yield
 

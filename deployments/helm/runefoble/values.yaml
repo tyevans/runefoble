@@ -305,6 +305,8 @@ services:
     urlEnv: RUNEFOBLE_BOARD_STATE_URL
     consumers: [gateway-api, gateway-mcp]
     serviceCredential: true
+    # The UVTT import stores map images in Silo with signed requests (TASK-0926).
+    siloCredentials: true
   characterSheet:
     swaggerName: "Character Sheet Service"
     image: runefoble/character-sheet:0.1.0

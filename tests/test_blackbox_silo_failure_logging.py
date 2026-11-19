@@ -17,9 +17,13 @@ import pytest
 from asset_forge.main import app as asset_forge_app
 from board_state.main import app as board_app
 from fastapi.testclient import TestClient
-from runefoble_platform.config import PlatformSettings
 
-from tests.helpers.silo_fixtures import PNG_SAMPLE_BYTES, FakeSilo
+from tests.helpers.silo_fixtures import (
+    PNG_SAMPLE_BYTES,
+    SILO_TEST_ACCESS_KEY,
+    SILO_TEST_SECRET_KEY,
+    FakeSilo,
+)
 from tests.helpers.ws_identity import bearer
 from tests.test_blackbox_uvtt_import.conftest import build_sample_dd2vtt_dict
 
@@ -60,10 +64,9 @@ def _assert_logged_failure(caplog: pytest.LogCaptureFixture, key_prefix: str) ->
     assert f"object_key={key_prefix}" in message, message
     assert str(SILO_REFUSES_WRITE) in message, message
 
-    settings = PlatformSettings()
     full_log = "\n".join(r.getMessage() for r in caplog.records)
-    assert settings.silo_secret_key not in full_log
-    assert settings.silo_access_key not in full_log
+    assert SILO_TEST_SECRET_KEY not in full_log
+    assert SILO_TEST_ACCESS_KEY not in full_log
     assert repr(PNG_SAMPLE_BYTES) not in full_log
     assert "IHDR" not in full_log
 

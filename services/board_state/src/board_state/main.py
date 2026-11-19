@@ -35,12 +35,15 @@ from runefoble_platform.event_publish import (
     install_publish_failure_handler,
 )
 from runefoble_platform.event_sourcing import event_store_kind, get_event_store
+from runefoble_platform.storage import get_storage_service
 from runefoble_platform.stream_consumer import consumer_statuses
 
 
 @contextlib.asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Open the Redis Streams bus and start the forged battlemap consumer."""
+    # A deployed service without the Silo keys refuses to start (TASK-0926).
+    get_storage_service()
     bus = await event_bus_provider.connect()
     consumers = await start_board_consumers(bus)
     app.state.consumers = {"board_state": consumers}

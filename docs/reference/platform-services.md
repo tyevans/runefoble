@@ -13,7 +13,7 @@ Runefoble is designed around a Kubernetes-first microservices topology deployed 
 | **Redis Streams** | `redis:7.2-alpine` | `runefoble-redis:6379` | None (Internal) | ADR-0006 | None. Services fail start-up when Redis is unreachable. Tests use a Redis test double (`MockAsyncRedis`). |
 | **SpiceDB (Zanzibar)** | `authzed/spicedb:v1.34.0` | `spicedb:50051` (gRPC), `8443` (HTTP) | None (Internal) | ADR-0001 | None in services. Tests swap the factory client for `MockSpiceDBClient`. |
 | **Zitadel (OIDC/AuthN)** | `ghcr.io/zitadel/zitadel:v2.54.0` | `zitadel:8080` | `auth.localhost` (own host, root path) | ADR-0005 | `ZitadelAuthService` (PyJWKClient RS256 verification of signature, `iss`, `aud`, `exp`, `sub`; no bypass) |
-| **Silo (S3 Storage)** | `cgr.dev/chainguard/minio@sha256:7618b82...` (MinIO build; `minio/minio` no longer publishes to Docker Hub) | `silo:9000` (S3), `9001` (UI) | None (Proxy via Gateway) | ADR-0005 | `FakeSilo` HTTP transport (tests only, no production fallback) |
+| **Silo (S3 Storage)** | `cgr.dev/chainguard/minio@sha256:7618b82...` (MinIO build; `minio/minio` no longer publishes to Docker Hub) | `silo:9000` (S3), `9001` (UI) | None (Proxy via Gateway) | ADR-0005 | `FakeSilo` HTTP transport that refuses unsigned requests, and a real Silo container (`tests/helpers/minio_container.py`). Tests only, no production fallback |
 | **OpenTelemetry Collector** | `otel/opentelemetry-collector-contrib` | `otel-collector:4317` (gRPC), `4318` (HTTP) | None (Internal) | ADR-0005 | Null Tracer / No-op Span Processor |
 | **Loki** | `grafana/loki:3.0.0` | `loki:3100` | None (Internal) | ADR-0005 | Standard Python logging stdout |
 | **Grafana** | `grafana/grafana:11.0.0` | `grafana:3001` | None (Port-forward) | ADR-0005 | Local metrics console |
@@ -89,7 +89,9 @@ Runefoble is designed around a Kubernetes-first microservices topology deployed 
 - **Role**: S3-compatible media asset storage for character avatars, map images, audio chronicles, and rule compendiums.
 - **Buckets**: `runefoble-assets`, `runefoble-recordings`.
 - **Storage**: The chart runs Silo as a StatefulSet named `silo`. Its data claim `data` mounts at `/data`, the server data path. Size and storage class come from `silo.persistence.size` (default `10Gi`) and `silo.persistence.storageClass` (default empty). A pod restart keeps every object. Deleting the claim deletes every object.
-- **Environment Variables**: `RUNEFOBLE_SILO_ENDPOINT`, `RUNEFOBLE_SILO_ACCESS_KEY`, `RUNEFOBLE_SILO_SECRET_KEY`, `RUNEFOBLE_SILO_BUCKET_ASSETS`.
+- **Environment Variables**: `RUNEFOBLE_SILO_ENDPOINT`, `RUNEFOBLE_SILO_ACCESS_KEY`, `RUNEFOBLE_SILO_SECRET_KEY`, `RUNEFOBLE_SILO_BUCKET_ASSETS`, `RUNEFOBLE_SILO_REGION` (default `us-east-1`).
+- **Request Signing**: `SiloStorageService` signs every request with AWS Signature Version 4 (service `s3`, region `RUNEFOBLE_SILO_REGION`). The signature comes from botocore (`runefoble_platform.silo_signing`). Silo refuses an unsigned request or a wrong key with `403`, and the client raises `AssetStorageError`.
+- **Keys**: The access key and the secret key have no default. In a deployed environment (`staging`, `production`), a client without both keys raises `ConfigurationError`, and Asset Forge and Board State refuse to start. In other environments, each Silo request without the keys raises `AssetStorageError` that names the missing variable. For a local run outside Kind, set both variables to the values of `credentials.silo` in the chart.
 - **Bucket Job**: the Helm hook Job `silo-buckets` runs after install and upgrade. It creates every bucket in `silo.buckets` (default `runefoble-assets`, `runefoble-recordings`) with `mc mb --ignore-existing`, so an existing bucket is not an error. No manual step is needed. The image is `silo.bucketJob.image`, the Chainguard MinIO client, pinned by digest. The image has no shell. While Silo is not ready, the Job restarts its pod, up to `silo.bucketJob.backoffLimit` (default `10`). The Job reads the Silo keys from the credentials Secret and expands them into `MC_HOST_silo`, so the keys must be URL-safe. Asset Forge stores its objects in `runefoble-assets`.
 - **Failure Behaviour**: Every write, read, and delete goes to Silo. A transport error or a non-2xx status raises `AssetStorageError`. Forge and gateway routes return `503 Service Unavailable`. The owning service logs the failure at error level with the bucket and the object key (`runefoble_platform.storage.log_storage_failure`). The log record never holds the object bytes or the Silo keys. No object is stored and no asset id is issued. Nothing is written to process memory.
 - **Asset Index**: The metadata for each stored object is an event-sourced `AssetIndexAggregate` (`runefoble_platform.asset_index`). Its events are `AssetUploaded` and `AssetDeleted`. Its aggregate id is derived from the asset id. The index is written only after Silo confirms a write. It survives restarts and replicas when the event store is PostgreSQL.
@@ -123,8 +125,8 @@ The chart stores every credential in one Kubernetes Secret and reads it with `se
 | Secret key | Values path | Read by |
 |---|---|---|
 | `postgres-password` | `credentials.postgres.password` | Every service with a database URL, SpiceDB, OpenPanel, Zitadel, Postgres |
-| `silo-access-key` | `credentials.silo.accessKey` | Silo, Silo bucket Job, Soundscape, Asset Forge |
-| `silo-secret-key` | `credentials.silo.secretKey` | Silo, Silo bucket Job, Soundscape, Asset Forge |
+| `silo-access-key` | `credentials.silo.accessKey` | Silo, Silo bucket Job, Soundscape, Asset Forge, Board State |
+| `silo-secret-key` | `credentials.silo.secretKey` | Silo, Silo bucket Job, Soundscape, Asset Forge, Board State |
 | `spicedb-preshared-key` | `credentials.spicedb.presharedKey` | SpiceDB, schema job, all services that call SpiceDB |
 | `zitadel-masterkey` | `credentials.zitadel.masterKey` | Zitadel |
 | `zitadel-admin-password` | `credentials.zitadel.adminPassword` | Zitadel |
