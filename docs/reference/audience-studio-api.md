@@ -83,6 +83,16 @@ Client actions: `subscribe`, `ping`, `cast_vote` (`pollId`, `optionId`, optional
 
 Server frames: `connected`, `subscribed`, `poll_started`, `vote_cast`, `poll_completed`, `proposal_queued`, `proposal_approved`, `proposal_vetoed`, `error`, `pong`.
 
+**Error frames.** A failed client frame gets one `error` frame with a fixed `code` and a `message`. The socket stays open.
+
+| `code` | When | `message` |
+|---|---|---|
+| `invalid_message` | The frame is not JSON, has no string `action`, or lacks a field the action needs. | Names the problem. |
+| `unknown_action` | The `action` is not in the client action list. | Names the action. |
+| `forbidden` | The principal lacks the schema permission (`403`). | The permission message, as the HTTP route shows it. |
+| `rejected` | A domain rule or the identity check refused the command (`400`, `401`, `404` or `409`). | The domain message, as the HTTP route shows it. |
+| `internal_error` | Any other failure, including a SpiceDB or Redis fault. | A fixed text. No internal detail. The server logs the cause. |
+
 ## Configuration
 
 | Variable | Required | Notes |

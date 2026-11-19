@@ -2,6 +2,8 @@
  * Core type definitions for services/audience_studio
  */
 
+import type { VerifiedPrincipal } from './identity/zitadelVerifier.js';
+
 export interface PollOption {
   id: string;
   label: string;
@@ -81,6 +83,9 @@ export interface WSClientMessage {
   channel?: string;
 }
 
+/** Fixed codes for `error` frames. The message text is client-safe; internal detail is logged on the server. */
+export type WSErrorCode = 'invalid_message' | 'unknown_action' | 'forbidden' | 'rejected' | 'internal_error';
+
 export interface WSServerMessage {
   type:
     | 'connected'
@@ -95,4 +100,11 @@ export interface WSServerMessage {
     | 'pong';
   data?: unknown;
   message?: string;
+  code?: WSErrorCode;
+}
+
+/** A verified socket principal, fixed at the handshake. Every action acts as this principal. */
+export interface ClientContext {
+  campaignId: string;
+  principal: VerifiedPrincipal;
 }
