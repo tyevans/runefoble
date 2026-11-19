@@ -50,7 +50,7 @@ def test_chart_renders_inference_worker_deployment_with_probe_and_env():
     env = {item["name"]: item.get("value") for item in container["env"]}
     assert env["RUNEFOBLE_WORKER_HOST"] == "0.0.0.0"
     assert env["RUNEFOBLE_WORKER_PORT"] == str(WORKER_PORT)
-    assert env["RUNEFOBLE_WORKER_BACKEND"] == "mock"
+    assert env["RUNEFOBLE_WORKER_BACKEND"] == "openai_compatible"
     assert "RUNEFOBLE_WORKER_OPENAI_BASE_URL" in env
     assert env["RUNEFOBLE_WORKER_REDIS_ENABLED"] == "false"
     credential = next(
@@ -86,5 +86,5 @@ def test_values_declare_inference_worker_service():
     assert worker["image"] == "runefoble/inference-worker:0.1.0"
     assert worker["port"] == WORKER_PORT
     assert worker["replicas"] == 1
-    assert worker["backend"] == "mock"
+    assert worker["backend"] == "openai_compatible"
     assert worker["openaiCompatibleBaseUrl"] == ""

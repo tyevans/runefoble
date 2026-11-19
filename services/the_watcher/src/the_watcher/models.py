@@ -13,7 +13,7 @@ class IntentResult(BaseModel):
     watcher_reply: str
     target: str | None = None
     details: str | None = None
-    source: str = "watcher_rules"  # "llm" | "heuristic" | "mock" from the worker
+    source: str = "watcher_rules"  # "llm" from the worker
     degraded: bool = False
 
 

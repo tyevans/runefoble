@@ -5,7 +5,7 @@ from typing import Literal
 from pydantic import AliasChoices, Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-BackendName = Literal["openai_compatible", "ollama", "mock"]
+BackendName = Literal["openai_compatible", "ollama"]
 
 
 class WorkerSettings(BaseSettings):
@@ -30,7 +30,7 @@ class WorkerSettings(BaseSettings):
 
     backend: BackendName = Field(
         default="openai_compatible",
-        description="Inference engine, selected once at start-up: openai_compatible, ollama, or mock",
+        description="Inference engine, selected once at start-up: openai_compatible or ollama",
     )
 
     # OpenAI-compatible backend (llama-swap, vLLM, llama.cpp, etc.)
@@ -70,6 +70,17 @@ class WorkerSettings(BaseSettings):
         type checker cannot see it. Validation still raises when it is absent.
         """
         return cls()  # type: ignore[call-arg]
+
+    @field_validator("backend", mode="before")
+    @classmethod
+    def _mock_is_not_an_engine(cls, value: object) -> object:
+        """Refuse `mock` in every environment. The worker has no canned engine (ADR-0015 decision 4)."""
+        if value == "mock":
+            raise ValueError(
+                "RUNEFOBLE_WORKER_BACKEND=mock is refused in every environment. The worker has no "
+                "canned engine. Use openai_compatible or ollama, or a test double at a process boundary."
+            )
+        return value
 
     @field_validator("service_credential")
     @classmethod

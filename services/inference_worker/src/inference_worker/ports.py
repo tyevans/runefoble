@@ -8,22 +8,19 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import ClassVar, Literal
+from typing import ClassVar
 
 from runefoble_platform.engine_ports import EngineUnavailableError
 
 BACKEND_UNAVAILABLE = "backend_unavailable"
 
-CompletionSource = Literal["llm", "mock"]
-
 
 @dataclass(frozen=True)
 class Completion:
-    """One model result. `source` is "llm" for a real engine and "mock" for canned output."""
+    """One model result: the raw model text and the name of the engine that produced it."""
 
     content: str
     backend: str
-    source: CompletionSource
 
 
 def backend_unavailable(backend: str, message: str) -> EngineUnavailableError:

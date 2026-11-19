@@ -60,4 +60,4 @@ class OpenAICompatibleLLM(LLMPort):
             raise backend_unavailable(self.engine_name, str(e)) from e
         if not isinstance(response.content, str):
             raise backend_unavailable(self.engine_name, "model returned non-text content")
-        return Completion(content=response.content, backend=self.engine_name, source="llm")
+        return Completion(content=response.content, backend=self.engine_name)

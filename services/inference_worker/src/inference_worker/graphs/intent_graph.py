@@ -1,17 +1,14 @@
 """LangGraph workflow for Natural Speech/Text to Game Intent parsing."""
 
 import json
-import logging
 import re
 from typing import Any, TypedDict
 
 from langgraph.graph import END, START, StateGraph
 
-from inference_worker.model_output import parse_json_object
+from inference_worker.model_output import parse_json_object, require_field
 from inference_worker.models import ParsedAction, ResponseSource
 from inference_worker.ports import LLMPort
-
-logger = logging.getLogger("runefoble.inference.intent_graph")
 
 
 class IntentGraphState(TypedDict, total=False):
@@ -21,7 +18,6 @@ class IntentGraphState(TypedDict, total=False):
     raw_intent: dict[str, Any]
     parsed_action: dict[str, Any]
     source: ResponseSource
-    degraded: bool
     error: str | None
 
 
@@ -38,43 +34,6 @@ def normalize_transcript_node(state: IntentGraphState) -> IntentGraphState:
     return {
         "normalized_transcript": cleaned,
         "target_tokens": req.get("visible_tokens", []),
-    }
-
-
-def _heuristic_intent(transcript: str, speaker_name: str) -> dict[str, Any]:
-    """Keyword rules. Used by the mock backend and when model output has no action."""
-    lower = transcript.lower()
-    if any(w in lower for w in ["cast", "fireball", "missile", "cure", "heal", "spell"]):
-        spell = (
-            "magic missile"
-            if "magic missile" in lower
-            else "fireball"
-            if "fireball" in lower
-            else "spell"
-        )
-        return {
-            "action_type": "cast_spell",
-            "spell_or_ability": spell,
-            "dice_check_required": "1d20+spell",
-            "narrative_flavor": f"{speaker_name} weaves arcane energy into a somatic glyph.",
-        }
-    if any(w in lower for w in ["attack", "strike", "slash", "shoot", "hit"]):
-        return {
-            "action_type": "attack",
-            "spell_or_ability": "weapon_attack",
-            "dice_check_required": "1d20+bonus",
-            "narrative_flavor": f"{speaker_name} steps forward with weapon drawn.",
-        }
-    if any(w in lower for w in ["move", "run", "step", "dash", "walk"]):
-        return {
-            "action_type": "move",
-            "narrative_flavor": f"{speaker_name} advances across the stone tiles.",
-        }
-    return {
-        "action_type": "dialogue"
-        if any(w in lower for w in ["say", "tell", "whisper", "ask"])
-        else "unknown",
-        "narrative_flavor": f"{speaker_name}: '{transcript}'",
     }
 
 
@@ -99,26 +58,11 @@ async def extract_candidate_action_node(
         "Return valid JSON only."
     )
 
-    # Raises EngineUnavailableError when a real engine fails. No silent fallback.
+    # Raises EngineUnavailableError when the engine fails or the output has no action_type.
     completion = await llm_port.complete(system_prompt, user_prompt)
-
-    if completion.source == "mock":
-        return {
-            "raw_intent": _heuristic_intent(transcript, speaker_name),
-            "source": "mock",
-            "degraded": False,
-        }
-
     extracted = parse_json_object(completion.content)
-    if extracted.get("action_type"):
-        return {"raw_intent": extracted, "source": "llm", "degraded": False}
-
-    logger.warning("Model output had no action_type. Using regex heuristic (degraded).")
-    return {
-        "raw_intent": _heuristic_intent(transcript, speaker_name),
-        "source": "heuristic",
-        "degraded": True,
-    }
+    require_field(extracted, "action_type", completion.backend)
+    return {"raw_intent": extracted, "source": "llm"}
 
 
 def resolve_spatial_and_targets_node(state: IntentGraphState) -> IntentGraphState:

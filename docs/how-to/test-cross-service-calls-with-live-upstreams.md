@@ -231,7 +231,7 @@ These tests still stub an upstream with `monkeypatch` or `patch`. Each gap needs
 |---|---|---|
 | `tests/test_blackbox_print_forge.py::test_blackbox_print_forge_spicedb_authorization` | `monkeypatch.setattr(SpiceDBClient, "check_permission", ...)` | No SpiceDB test server runs in the test environment. Needs a live SpiceDB or a process-boundary fake. |
 | `tests/test_inference_worker_failure_contract.py::test_watcher_speech_surfaces_worker_503` and `::test_watcher_speech_unreachable_worker_is_503_not_template` | `select_worker_engine(monkeypatch, url)` from `tests/helpers/watcher_engine.py` | The Watcher reads `RUNEFOBLE_WATCHER_ENGINE` and `RUNEFOBLE_INFERENCE_URL` on each request (`the_watcher/engine_selection.py`). The helper sets both through `monkeypatch`. |
-| `tests/test_inference_worker_failure_contract.py::use_worker_backend` fixture and `tests/test_inference_worker.py::mock_api` fixture | `monkeypatch.setattr(api, "llm_client", ...)` | `llm_client` is built at import time (`inference_worker/api.py`). Needs a call-time or env-driven backend selection. |
+| `tests/test_inference_worker_failure_contract.py::use_worker_backend` fixture and `tests/test_inference_worker.py::worker_api` fixture | `install_worker_port` in `tests/helpers/inference_worker_port.py`, which sets the module globals of `inference_worker/api.py` through `api.set_llm_port` | The worker builds its port in the app lifespan, and the lifespan runs only when the app starts. The helper restores the globals when the test ends. |
 
 Tests in `tests/test_blackbox_mcp_*.py`, `tests/test_blackbox_gateway_*.py`, and settlement tests contain no stub of this kind. Their `monkeypatch` use is limited to environment variables.
 

@@ -17,7 +17,6 @@ from fastapi.testclient import TestClient
 from game_session.main import app as session_app
 from httpx import ASGITransport, AsyncClient
 from inference_worker import api as worker_api
-from inference_worker.config import WorkerSettings
 from inference_worker.llm_factory import build_llm_port
 from runefoble_platform.service_credential import SERVICE_CREDENTIAL_HEADER
 from the_watcher import dependencies as watcher_dependencies
@@ -149,8 +148,9 @@ async def test_worker_refuses_user_bearer_token():
 
 
 @pytest.mark.asyncio
-async def test_worker_accepts_the_service_credential(monkeypatch):
-    install_worker_port(monkeypatch, build_llm_port(WorkerSettings(backend="mock")))
+async def test_worker_accepts_the_service_credential(monkeypatch, fake_llm):
+    fake_llm.content = '{"action_type": "attack"}'
+    install_worker_port(monkeypatch, build_llm_port(fake_llm.settings()))
     headers = {SERVICE_CREDENTIAL_HEADER: WORKER_TOKEN}
     async with AsyncClient(
         transport=ASGITransport(app=worker_api.app), base_url="http://test", headers=headers

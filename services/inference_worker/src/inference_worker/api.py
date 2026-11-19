@@ -114,7 +114,6 @@ async def parse_intent(req: IntentParseRequest):
         action=action,
         execution_time_ms=round(elapsed_ms, 2),
         source=state["source"],
-        degraded=state["degraded"],
     )
 
 

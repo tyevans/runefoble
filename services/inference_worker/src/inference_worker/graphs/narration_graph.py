@@ -4,9 +4,9 @@ from typing import Any, TypedDict
 
 from langgraph.graph import END, START, StateGraph
 
-from inference_worker.model_output import parse_json_object
+from inference_worker.model_output import parse_json_object, require_field
 from inference_worker.models import DMNarrationResponse, ResponseSource, TensionLevel
-from inference_worker.ports import LLMPort, backend_unavailable
+from inference_worker.ports import LLMPort
 
 
 class NarrationGraphState(TypedDict, total=False):
@@ -17,7 +17,6 @@ class NarrationGraphState(TypedDict, total=False):
     suggested_prompts: list[str]
     tension_level: TensionLevel
     source: ResponseSource
-    degraded: bool
     final_response: dict[str, Any]
 
 
@@ -46,26 +45,6 @@ def analyze_context_node(state: NarrationGraphState) -> NarrationGraphState:
     }
 
 
-def _canned_narration(env: str, prompt: str) -> NarrationGraphState:
-    """Canned scene text. Used only by the explicit mock backend."""
-    return {
-        "narration_text": (
-            f"A heavy silence settles over the {env.lower()}. "
-            f"{prompt}. Shadows dance along the jagged walls as unseen draughts stir the stale air."
-        ),
-        "sensory_details": [
-            "The metallic tang of ozone and old blood",
-            "The distant, rhythmic drip of subterranean water",
-            "A sudden draft extinguishing torch flames",
-        ],
-        "suggested_prompts": [
-            "Ask players to make a DC 13 Perception check",
-            "Introduce an echoing skittering from the northern passage",
-            "Reveal a concealed inscription glowing faintly on the altar",
-        ],
-    }
-
-
 async def generate_narration_node(
     state: NarrationGraphState,
     llm_port: LLMPort,
@@ -90,23 +69,16 @@ async def generate_narration_node(
         "Generate evocative scene narration."
     )
 
-    # Raises EngineUnavailableError when a real engine fails. No silent fallback.
+    # Raises EngineUnavailableError when the engine fails or the output has no narration.
     completion = await llm_port.complete(system_prompt, user_prompt)
-
-    if completion.source == "mock":
-        return {**_canned_narration(env, prompt), "source": "mock", "degraded": False}
-
     data = parse_json_object(completion.content)
-    narration = data.get("narration", "")
-    if not narration:
-        raise backend_unavailable(completion.backend, "model output had no narration")
+    narration = require_field(data, "narration", completion.backend)
 
     return {
         "narration_text": narration,
         "sensory_details": data.get("sensory_details", []),
         "suggested_prompts": data.get("suggested_dm_prompts", []),
         "source": "llm",
-        "degraded": False,
     }
 
 
@@ -119,7 +91,6 @@ def compile_narration_node(state: NarrationGraphState) -> NarrationGraphState:
         suggested_dm_prompts=state.get("suggested_prompts", []),
         tension_level=state.get("tension_level", "rising"),
         source=state["source"],
-        degraded=state["degraded"],
     )
     return {"final_response": resp.model_dump()}
 
