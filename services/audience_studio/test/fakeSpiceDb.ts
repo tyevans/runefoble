@@ -33,6 +33,7 @@ export class FakeSpiceDb implements SpiceDbPort {
   private readonly campaignRoles = new Set<string>();
   private readonly pollCampaign = new Map<string, string>();
   private unavailable = false;
+  private writesUnavailable = false;
   /** Calls the service made, by kind. A listing must use `bulk` and never `single`. */
   readonly calls = { single: 0, bulk: 0 };
 
@@ -47,6 +48,11 @@ export class FakeSpiceDb implements SpiceDbPort {
   /** While set, every check fails the way an unreachable SpiceDB does. */
   setUnavailable(value: boolean): void {
     this.unavailable = value;
+  }
+
+  /** While set, every relationship write fails the way an unreachable SpiceDB does. Checks still answer. */
+  setWritesUnavailable(value: boolean): void {
+    this.writesUnavailable = value;
   }
 
   async checkPermission(query: PermissionQuery): Promise<boolean> {
@@ -66,6 +72,9 @@ export class FakeSpiceDb implements SpiceDbPort {
   }
 
   async writeRelationship(write: RelationshipWrite): Promise<void> {
+    if (this.writesUnavailable) {
+      throw new DependencyUnavailableError('SpiceDB is unavailable for writes (fake outage)');
+    }
     const { resource, relation, subject } = write;
     if (subject.objectType !== 'campaign' && subject.objectType !== 'user') {
       throw new Error(`Subject type '${subject.objectType}' is not defined in the fake`);
