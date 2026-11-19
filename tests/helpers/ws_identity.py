@@ -2,7 +2,7 @@
 
 Governed by TASK-0520 and TASK-0522 and ADR-0015 (c). Tests mint RS256 tokens
 with one shared SigningTestIssuer and offer them in the bearer subprotocol.
-The `trusted_ws_issuer` fixture in tests/conftest.py trusts that issuer in the
+The `trusted_ws_issuer` fixture in tests/helpers/service_harness.py trusts that issuer in the
 gateway and game_session verifiers for one test.
 """
 

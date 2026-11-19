@@ -1,8 +1,13 @@
-"""Root pytest configuration and global fixtures for Runefoble test suite."""
+"""Top-level pytest configuration for every test folder in the repository.
+
+It lives at the repository root, so `pytest_plugins` applies to `tests/`, `gateway/api/tests/`
+and the package test folders, whichever folder a run starts from.
+"""
 
 import os
 
 import pytest
+from runefoble_platform.service_client import OWNER_URL_FIELDS
 
 from tests.helpers.container_owner import remove_orphaned_test_containers
 
@@ -11,14 +16,8 @@ from tests.helpers.container_owner import remove_orphaned_test_containers
 os.environ.setdefault("RUNEFOBLE_SPICEDB_PRESHARED_KEY", "test-only-spicedb-key")
 # Service URLs have no code defaults. Unless a test sets one itself, these point at a closed
 # loopback port, so no test reaches a real service by accident.
-for _upstream in (
-    "RUNEFOBLE_BOARD_STATE_URL",
-    "RUNEFOBLE_CHARACTER_SHEET_URL",
-    "RUNEFOBLE_GAME_SESSION_URL",
-    "RUNEFOBLE_RULES_COMPENDIUM_URL",
-    "RUNEFOBLE_WATCHER_URL",
-):
-    os.environ.setdefault(_upstream, "http://127.0.0.1:9")
+for _field in OWNER_URL_FIELDS.values():
+    os.environ.setdefault("RUNEFOBLE_" + _field.upper(), "http://127.0.0.1:9")
 # The inference worker refuses to start without its service token (ADR-0015 e). Tests use a
 # throwaway value. Process-level tests remove it from the child environment on purpose.
 os.environ.setdefault("RUNEFOBLE_SERVICE_CREDENTIAL", "test-only-service-credential")
