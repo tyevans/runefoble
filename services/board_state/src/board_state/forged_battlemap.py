@@ -11,6 +11,7 @@ from typing import Any
 from board_state.audience_stream import build_audience_consumer
 from board_state.authz import board_campaign_id
 from board_state.dependencies import get_board, repo
+from board_state.encounter_consumer import build_encounter_consumer
 from board_state.events import save_and_publish
 from runefoble_events.asset import BattlemapForged
 from runefoble_platform.consumer_group import RedisConsumerGroup
@@ -56,7 +57,7 @@ async def apply_forged_battlemap_event(event: Any, bus: RedisStreamsEventBus | N
 
 
 async def start_board_consumers(bus: RedisStreamsEventBus) -> SupervisedStreamConsumers:
-    """Start the board_state consumers: the forge asset stream and the audience stream.
+    """Start the board_state consumers: the forge asset, audience, and encounter streams.
 
     Raises when the consumer group cannot be created, so the service does not start.
     """
@@ -76,6 +77,7 @@ async def start_board_consumers(bus: RedisStreamsEventBus) -> SupervisedStreamCo
                 handler=_handle,
             ),
             build_audience_consumer(consumer_group, bus),
+            build_encounter_consumer(consumer_group, bus),
         ],
     )
     await consumers.start()

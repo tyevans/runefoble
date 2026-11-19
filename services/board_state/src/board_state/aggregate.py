@@ -20,10 +20,13 @@ from eventsource.domain.decorators import handles
 from runefoble_events.events import (
     BoardGridInitialized,
     CameraFocused,
+    EncounterPlacementsApplied,
     ForgedBattlemapApplied,
     TerrainCellModified,
     UniversalVTTImported,
 )
+
+APPLIED_ENCOUNTER_LEDGER_SIZE = 1000
 
 __all__ = [
     "BoardAggregate",
@@ -128,6 +131,15 @@ class BoardAggregate(
 
         self._place_wall_obstacles(walls, cols, rows)
 
+    def record_encounter_applied(self, source_event_id: str, token_ids: list[str]) -> None:
+        """Record that one combat start's placements were applied (TASK-0749)."""
+        self.create_event(
+            EncounterPlacementsApplied,
+            session_id=str(self.state.session_id),
+            source_event_id=source_event_id,
+            token_ids=token_ids,
+        )
+
     def apply_forged_battlemap(
         self,
         asset_id: str,
@@ -198,6 +210,14 @@ class BoardAggregate(
                 "wall_segments": list(event.wall_segments),
                 "forged_asset_id": event.asset_id,
             }
+        )
+
+    @handles(EncounterPlacementsApplied)
+    def _on_encounter_placements_applied(self, event: EncounterPlacementsApplied) -> None:
+        """Keep the last applied combat start ids, so a redelivery is a no-op (TASK-0749)."""
+        ledger = [*self.state.applied_encounter_event_ids, event.source_event_id]
+        self._state = self.state.model_copy(
+            update={"applied_encounter_event_ids": ledger[-APPLIED_ENCOUNTER_LEDGER_SIZE:]}
         )
 
     @handles(CameraFocused)
