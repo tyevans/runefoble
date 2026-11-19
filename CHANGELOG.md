@@ -38,6 +38,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Gateway WebSocket routes admit a connection only with a verified `runefoble.bearer.<jwt>` subprotocol, checked before accept. Refused handshakes close with 1008. Removed the `?user_id=`, `?token=`, `x-user-id`, and `guest_user` identity paths on WebSocket and voice/companion signaling routes. (TASK-0522)
 
 ### Removed
+- The Redis URL has one environment name, `RUNEFOBLE_REDIS_URL`; the `REDIS_URL` alias is removed from the platform settings, Audience Studio, the dev orchestrator, CI and Helm. Audience Studio no longer rewrites `postgresql+asyncpg://` URLs. (TASK-0839)
 - Audience Studio has no compatibility shims or re-exports left (checked; no code change). (TASK-0499)
 - The soundscape package root exports only its aggregate; the re-exports are removed. (TASK-0498)
 - The gateway OBS overlay HTML, camera math, redaction rules and duplicate spectator and overlay paths. (TASK-0823)
@@ -80,6 +81,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Campaign analytics worker `process_event` alias, tracking property wrappers, and package root re-exports. Callers use `handle_event`. (TASK-0500)
 
 ### Added
+- An import-linter contract keeps `gateway_api` from importing service packages, and `docs/reference/` has a route ownership table generated from the gateway proxy tables. (TASK-0598)
 - An approved audience `status_buff` modifier gives a character the `blessed` or `inspired` condition. (TASK-0836)
 - An approved audience `hazard_spawn` modifier places a hazard on the board cell it names. The board hazard table adds `deep_water` (1d6), `chasm` (3d6) and `arcane_void` (2d8), the types the forge emits. (TASK-0835)
 - An approved audience `weather_change` modifier changes the session weather (`runefoble.events.session.weather_changed`); the session read shows `weather`. A vetoed modifier, a modifier of another campaign, or one without a weather value changes nothing. (TASK-0441)
@@ -166,6 +168,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
 
 ### Changed
+- A campaign session and its game session share one UUID id. Creating a campaign session also creates the game session, so the App Shell can read, start and run combat in the session it launched. The `session-` id prefix is removed. (TASK-0706)
 - Settlement and haven blackbox tests create campaigns and join members through the public campaign routes, not by writing SpiceDB tuples. (TASK-0716)
 - Playwright BDD steps act only through visible controls and public routes: no injected component state, no synthetic DOM events, no hash jumps, no direct theme writes. (TASK-0649)
 - Audience Studio reads `RUNEFOBLE_EVENT_STORE_BACKEND` and refuses `memory` outside tests. Helm turns its PostgreSQL event store on, and the Helm event-store gate also finds TypeScript owners. (TASK-0709)

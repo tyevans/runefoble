@@ -1,7 +1,7 @@
 ---
 id: '0706'
 title: One Session Id From Campaign Session to Game Session Aggregate
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0695
@@ -20,7 +20,7 @@ target_release: 0.9.0
 # TASK-0706: One Session Id From Campaign Session to Game Session Aggregate
 
 ## Status
-Refined
+Complete
 
 Review 2026-11-18: rescoped to the id model. Decision (orchestrator): one id per session, option A of `.audit/work/0706.md`. The e2e web server set and the chronicle journey moved to TASK-0842.
 

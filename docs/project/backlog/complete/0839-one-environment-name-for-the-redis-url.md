@@ -1,7 +1,7 @@
 ---
 id: '0839'
 title: One Environment Name for the Redis URL
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies: []
 governing_adrs:
@@ -17,7 +17,7 @@ target_release: 0.9.0
 # TASK-0839: One Environment Name for the Redis URL
 
 ## Status
-Refined
+Complete
 
 ## Summary
 The Redis URL has two environment names. `PlatformSettings.redis_url` accepts `RUNEFOBLE_REDIS_URL` and `REDIS_URL` (`libs/runefoble_platform/src/runefoble_platform/config.py`, `AliasChoices`). Audience Studio reads `REDIS_URL || RUNEFOBLE_REDIS_URL` (`services/audience_studio/src/adapters.ts`). Helm sets both (`deployments/helm/runefoble/templates/services.yaml`). Two names for one setting is a compatibility alias (DoR 9). Keep `RUNEFOBLE_REDIS_URL` only, like every other platform setting.

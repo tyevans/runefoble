@@ -1,7 +1,7 @@
 ---
 id: '0598'
 title: Gateway Import Boundary Contract and Route Ownership Reference
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0589
@@ -23,7 +23,7 @@ target_release: 0.9.0
 # TASK-0598: Gateway Import Boundary Contract and Route Ownership Reference
 
 ## Status
-Refined
+Complete
 
 ## Summary
 After the proxy tasks merge, `gateway/api` must import only `libs/*` and its own package. Enforce that with an import-linter contract in the uv workspace, so the rule holds in CI. Add one reference table that names the owning bounded context for every public gateway route. Update the architecture overview to match.
