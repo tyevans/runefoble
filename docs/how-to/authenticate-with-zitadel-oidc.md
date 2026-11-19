@@ -118,7 +118,7 @@ Every gateway WebSocket route calls `admit_websocket` before accept (TASK-0522).
 
 After admission, each session socket checks a permission that `runefoble.zed` defines on the `game_session` object. `/ws/session/{id}`, `/ws/voice/{id}`, `/ws/mobile-companion/{id}`, `/ws/overlay/{id}`, and `/ws/spectator/{id}` need `session.observe`. The gateway closes a refused socket with code `4403`. It closes with `1011` when SpiceDB is unavailable. These checks use `runefoble_auth.websocket.action_authorizer("session.observe", session_id)` with `admit_websocket`.
 
-On `/ws/campaigns/{id}`, an action name that the server does not define returns an `UNKNOWN_ACTION` error frame. The client never chooses a permission name.
+On `/ws/campaigns/{id}`, an action name that has no owner route returns an `UNKNOWN_ACTION` error frame. The client never chooses a permission name. The owner checks the permission for each action. See [Campaign socket actions](../reference/ports-and-endpoints.md#campaign-socket-actions-task-0883).
 
 ---
 

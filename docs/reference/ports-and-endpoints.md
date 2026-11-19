@@ -394,7 +394,7 @@ Campaign Lore routes require a verified bearer token, except `/healthz`, `/opena
 | `gateway-api` | POST | `/api/v1/boards/{session_id}/tokens/{token_id}/move` | Proxies to `board_state`: moves a token. Needs `board_token.move` on the token or `board.manage_traps`. The sessionless `/api/v1/boards/tokens/...` routes were removed (`404`) |
 | `gateway-api` | WS | `/ws/voice/{session_id}` | Live bidirectional WebRTC voice signaling. Relayed to `voice-agent`, which checks `session.observe` (close `4403` on refusal) |
 | `gateway-api` | WS | `/ws/mobile-companion/{session_id}` | Low-bandwidth mobile companion and haptic channel. Relayed to `voice-agent`, which checks `session.observe` (close `4403` on refusal) |
-| `gateway-api` | WS | `/ws/campaigns/{campaign_id}` | Real-time Zanzibar-protected campaign WebSocket stream for party state synchronization |
+| `gateway-api` | WS | `/ws/campaigns/{campaign_id}` | Real-time campaign socket. Admits the caller with `campaign.view`. Relays each action frame to its owner route. See [Campaign socket actions](#campaign-socket-actions-task-0883) |
 | `gateway-api` | GET | `/api/v1/voice/rooms/{session_id}` | Proxies to `voice-agent`. Retrieves active WebRTC voice room participants, roles, and audio telemetry. Returns `503` when `voice-agent` is unreachable and `502` on an upstream `5xx`. The owner checks the bearer token and `session.observe` |
 | `gateway-api` | POST | `/api/v1/voice/rooms/{session_id}/kick` | Proxies to `voice-agent`. The owner checks `session.control` |
 | `gateway-api` | GET, POST | `/api/v1/voice/streams/{session_id}/quality`, `/api/v1/voice/streams/{session_id}/report` | Proxies stream diagnostics to `voice-agent`. The owner checks `session.control` |
@@ -459,6 +459,36 @@ The gateway reads one variable for each probed service. The Helm chart renders t
 ## Gateway WebSocket Authentication
 
 Close codes on every WebSocket route: `1008` means a missing or invalid token. `4403` means an authorization refusal (the token is valid but lacks the object permission). Every gateway WebSocket route (`/ws/*`) takes the caller's identity only from the `runefoble.bearer.<jwt>` subprotocol. The client offers `runefoble.v1` and `runefoble.bearer.<jwt>`. The gateway accepts the handshake with `runefoble.v1`. A handshake without a verified token closes with code `1008` before accept. Identity in the query string (`user_id`, `token`) or in headers (`X-User-Id`, `Authorization`) is refused. A token that is valid but lacks the object permission is refused. `/ws/campaigns/{id}` admits it, sends a `PERMISSION_DENIED` frame, and closes with `4403`. The session sockets (`/ws/session`, `/ws/voice`, `/ws/mobile-companion`, `/ws/overlay`, `/ws/spectator`) need `session.observe` and close with `4403` before accept. They close with `1011` when SpiceDB is unavailable. Overlay and spectator clients that send frames need `session.participate`. The `/ws/voice` and `/ws/mobile-companion` sockets set the room role from the session permissions. `session.control` gives `dungeon_master`, `session.participate` gives `player`, and `session.observe` gives `spectator`. A `role` query parameter does not change it. A `webrtc_join` frame that asks for another role receives `{"type": "error", "code": "ROLE_MISMATCH"}`. A `user_id` in a frame is ignored. `POST /api/v1/mobile/companion/{id}/whisper` and `/turn-alert` need `session.control`. `POST /api/v1/watcher/speak-and-act` needs `session.participate`. All of these return `403` when refused.
+
+### Campaign socket actions (TASK-0883)
+
+`/ws/campaigns/{campaign_id}` admits the caller with `campaign.view`. Each action frame names its session in `session_id`. The gateway checks that `game_session#campaign` links the session to the campaign. It then calls the owner route below with the caller's bearer token. The owner checks the permission and publishes its own event. The gateway publishes no event.
+
+| Action | Owner route | Owner | Owner permission |
+|---|---|---|---|
+| `move_token` | `POST /api/v1/boards/{session_id}/tokens/{token_id}/move` | `board_state` | `board_token.move` |
+| `modify_hp` | `POST /api/v1/characters/{character_id}/health` | `character_sheet` | `character.edit` |
+| `apply_condition` | `POST /api/v1/characters/{character_id}/conditions` | `character_sheet` | `character.edit` |
+| `clear_condition` | `DELETE /api/v1/characters/{character_id}/conditions/{condition}` | `character_sheet` | `character.edit` |
+| `spawn_monster` | `POST /api/v1/boards/{session_id}/tokens` with `token_type: "monster"` | `board_state` | `board.manage_traps` |
+| `end_session` | `POST /api/v1/sessions/{session_id}/end` | `game_session` | `session.control` |
+| `toggle_door` | `POST /api/v1/boards/{session_id}/doors/{door_id}/toggle` | `board_state` | `campaign.play` |
+| `place_light` | `POST /api/v1/boards/{session_id}/lights` | `board_state` | `board.manage_traps` |
+
+Frames and replies:
+
+- A `2xx` owner answer broadcasts the frame to the campaign with `"status": "applied"`. The broadcast keeps the frame fields.
+- An error frame has `type: "error"`, `code`, `message`, and `action`. An owner refusal adds `status_code`.
+
+| Code | Cause |
+|---|---|
+| `UNKNOWN_ACTION` | The action has no owner route. This includes `toggle_light` and the actions that the socket no longer relays (`ghost_preview`, `set_scene`, `advance_turn`, and others) |
+| `INVALID_FRAME` | The frame has no `session_id`, or it lacks a value that the owner path needs |
+| `PERMISSION_DENIED` | The owner answered `403`, or the session is not linked to the campaign |
+| `NOT_FOUND` | The owner answered `404` |
+| `REJECTED` | The owner answered another `4xx`, such as `422`. The message carries the owner detail |
+| `UPSTREAM_UNAVAILABLE` | The owner is unreachable, or it answered `5xx`. The gateway sends no substitute value |
+| `AUTHORIZATION_UNAVAILABLE` | SpiceDB could not read the session link |
 
 ### Session WebSocket inbound frames (TASK-0810)
 
