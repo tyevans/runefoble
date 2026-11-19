@@ -1,7 +1,7 @@
 ---
 id: '0732'
 title: Voice STT Pipeline Reports Watcher Forwarding Failures Through a Port
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies: []
 governing_adrs:
@@ -16,7 +16,7 @@ target_release: 0.9.0
 # TASK-0732: Voice STT Pipeline Reports Watcher Forwarding Failures Through a Port
 
 ## Status
-Refined. Found by the refactor audit round refactor-r1 and checked against the code on 2026-11-17.
+Complete
 
 ## Summary
 The STT pipeline logs a warning and returns no intent when it fails to reach The Watcher. The chunk result has no failure field. The client cannot tell that forwarding failed. The pipeline also builds a new HTTP client for each chunk.

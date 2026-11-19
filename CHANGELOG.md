@@ -1315,6 +1315,8 @@ The App Shell auth service keeps JWT claim handling, session storage and session
 - **Documentation & Build Navigation**: Featured the Platform Showcase and Changelog in `zensical.toml` and root documentation landing page (`docs/index.md`), and enhanced `scripts/build_docs.py` to synchronize `CHANGELOG.md` to `docs/changelog.md` during documentation compilation.
 
 ### Fixed
+An NPC worker restock raises `NPCWorkerInventoryRestocked`, so the stock survives a reload. A `destination` other than `shelf` or `backroom` answers 422. Worker routes save the establishment summary before they publish, and a repeated relationship call adds no second tie.
+Voice streaming chunks, stream WebSocket frames and `POST /api/v1/voice/transcribe` report a failed forward to The Watcher in a `watcher_error` field. The transcript and `PlayerSpokeEvent` are kept. `voice-agent` receives `RUNEFOBLE_SERVICE_CREDENTIAL`.
 Campaign member lists show the member's edited profile display name or the username from the member's verified token, never a name made from the user id. `CampaignCreated` records `owner_username` and `CampaignMemberAdded` records `username`.
 Dynamic MCP tool handlers bound `round` digits to -15..15 and `$expr` arguments to finite values within +/-10**9, so one call cannot block the MCP event loop. A non-finite result answers 400, and an internal error answers a fixed 500 detail.
 A board socket `confirm_move` onto a trapped path sends `trap_triggered` and `movement_paused` in its `token_moved` frame. HTTP and WebSocket moves send the same typed `MoveOutcome` fields.

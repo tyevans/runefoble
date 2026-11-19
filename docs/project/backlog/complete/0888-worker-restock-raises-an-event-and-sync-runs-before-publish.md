@@ -1,7 +1,7 @@
 ---
 id: '0888'
 title: Worker Restock Raises an Event, and the Establishment Sync Runs Before the Publish
-status: Refined
+status: Complete
 created: 2026-11-19
 dependencies: []
 governing_adrs:
@@ -17,7 +17,7 @@ target_release: 0.9.0
 
 ## Status
 
-Refined. Found by TASK-0886 (`.audit/work/0886.md`).
+Complete
 
 ## Summary
 
