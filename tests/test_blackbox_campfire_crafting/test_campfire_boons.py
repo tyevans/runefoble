@@ -5,6 +5,8 @@ Governed by ADR-0003, ADR-0006, ADR-0007, ADR-0011, and Hard Invariant 7.
 
 from __future__ import annotations
 
+from uuid import uuid4
+
 from fastapi.testclient import TestClient
 from game_session.shared.streams import STREAM_STRONGHOLD
 
@@ -110,3 +112,39 @@ def test_blackbox_campfire_rest_interlude_with_boons(session_client: TestClient,
     assert any("Full HP Restored" in b for b in boons)
     assert any("Campfire Camaraderie" in b for b in boons)
     assert any("Passive Perception" in b for b in boons)
+
+
+CANNED_NAMES = {"Bram the Tinkerer", "Valeros", "Kyra"}
+
+
+def _campaign_session(client: TestClient) -> str:
+    camp_id = create_owned_campaign(client)
+    res = client.post(f"/api/v1/campaigns/{camp_id}/sessions", json={"title": "Quiet Camp"})
+    assert res.status_code == 201, res.text
+    return res.json()["id"]
+
+
+def test_campfire_rest_with_no_participants_heals_nobody(session_client: TestClient) -> None:
+    """A session with no seated characters and no ids in the body heals an empty list."""
+    session_id = _campaign_session(session_client)
+
+    res = session_client.post(f"/api/v1/sessions/{session_id}/rest/campfire", json={})
+
+    assert res.status_code == 200, res.text
+    healed = res.json()["participants_healed"]
+    assert healed == []
+    assert not CANNED_NAMES & set(healed)
+
+
+def test_campfire_rest_heals_the_named_characters(session_client: TestClient) -> None:
+    """Character ids in the body are the healed list, in request order."""
+    session_id = _campaign_session(session_client)
+    ids = [str(uuid4()), str(uuid4())]
+
+    res = session_client.post(
+        f"/api/v1/sessions/{session_id}/rest/campfire",
+        json={"rest_type": "short", "participating_character_ids": ids},
+    )
+
+    assert res.status_code == 200, res.text
+    assert res.json()["participants_healed"] == ids
