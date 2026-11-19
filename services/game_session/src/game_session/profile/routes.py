@@ -13,7 +13,7 @@ from game_session.profile.aggregate import UserProfileAggregate
 from game_session.profile.repository import get_profile_repository, load_profile
 from game_session.profile.schemas import ProfileResponse, UpdateProfileRequest
 from game_session.profile.service import profile_view
-from game_session.settlement.auth.tokens import CallerPrincipal
+from game_session.shared.identity import CallerPrincipal
 from runefoble_platform.aggregate_loading import save_or_conflict
 from runefoble_platform.event_sourcing import AggregateRepository
 

@@ -8,7 +8,7 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 from game_session.main import app as session_app
-from game_session.settlement import auth as settlement_auth
+from game_session.shared import identity
 from gateway_api.auth import get_zitadel_auth_service as get_gw_verifier
 from gateway_api.auth import set_zitadel_auth_service as set_gw_verifier
 from gateway_api.main import app as gateway_app
@@ -28,7 +28,7 @@ def settlement_issuer(seam_restorer: SeamRestorer) -> Generator[SigningTestIssue
     issuer = SigningTestIssuer()
     verifier = issuer.verifier()
     seam_restorer.replace(
-        settlement_auth.get_zitadel_auth_service, settlement_auth.set_zitadel_auth_service, verifier
+        identity.get_zitadel_auth_service, identity.set_zitadel_auth_service, verifier
     )
     seam_restorer.replace(get_gw_verifier, set_gw_verifier, verifier)
     yield issuer

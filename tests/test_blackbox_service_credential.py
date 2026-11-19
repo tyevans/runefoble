@@ -150,7 +150,7 @@ def _run_import(
     "module",
     [
         "character_sheet.dependencies",
-        "game_session.settlement.auth.tokens",
+        "game_session.shared.identity",
         "board_state.dependencies",
         "rules_compendium.dependencies",
     ],

@@ -12,7 +12,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException
 from game_session.auth import check_session_participation
 from game_session.dependencies import get_stronghold_repository, repo
-from game_session.settlement.auth.tokens import CallerId, get_principal
+from game_session.shared.identity import CallerId, get_principal
 from pydantic import BaseModel, Field
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_platform.aggregate_loading import load_if_exists

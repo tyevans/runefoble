@@ -14,7 +14,7 @@ from game_session.settlement.auth.permissions import (
     check_settlement_read_permission,
     check_settlement_write_permission,
 )
-from game_session.settlement.auth.tokens import CallerPrincipal
+from game_session.shared.identity import CallerPrincipal
 from runefoble_auth.principal import VerifiedPrincipal
 
 

@@ -8,8 +8,8 @@ from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
-from game_session.events import STREAM_TAVERN
 from game_session.main import app as session_app
+from game_session.shared.streams import STREAM_TAVERN
 from gateway_api.main import app as gateway_app
 from voice_agent.main import app as voice_app
 

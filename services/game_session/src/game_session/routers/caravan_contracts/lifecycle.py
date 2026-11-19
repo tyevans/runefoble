@@ -13,14 +13,14 @@ from game_session.dependencies import (
     get_caravan_ledger_repository,
     get_event_bus,
 )
-from game_session.events import STREAM_WEST_MARCHES
 from game_session.routers.caravan_contracts.auth import (
     _check_high_tier_auth,
     _load_contract,
     _set_contractor,
     _val_err,
 )
-from game_session.settlement.auth.tokens import CallerId, get_principal
+from game_session.shared.identity import CallerId, get_principal
+from game_session.shared.streams import STREAM_WEST_MARCHES
 from game_session.west_marches_models import (
     AcceptCaravanContractRequest,
     DispatchContractCaravanRequest,

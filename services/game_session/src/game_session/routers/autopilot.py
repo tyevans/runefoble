@@ -9,9 +9,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from game_session.aggregate import ParticipantState
 from game_session.character_client import CharacterSheetUnavailableError, fetch_stand_in_policy
 from game_session.dependencies import get_event_bus, logger, repo, watcher_service_url
-from game_session.events import STREAM_WATCHER
 from game_session.models import AutoPilotRequest, AutoPilotResponse
 from game_session.routers.session_auth import session_permission
+from game_session.shared.streams import STREAM_WATCHER
 from runefoble_events.events import AbsencePenaltyApplied
 from runefoble_platform.event_publish import publish_aggregate_events
 from runefoble_platform.stand_in_action import StandInAction

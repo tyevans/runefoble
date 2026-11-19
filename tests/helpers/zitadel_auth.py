@@ -17,8 +17,8 @@ import jwt
 import pytest
 from cryptography.hazmat.primitives.asymmetric import rsa
 from fastapi.testclient import TestClient
-from game_session.settlement.auth.tokens import get_zitadel_auth_service as get_session_auth
-from game_session.settlement.auth.tokens import set_zitadel_auth_service as set_session_auth
+from game_session.shared.identity import get_zitadel_auth_service as get_session_auth
+from game_session.shared.identity import set_zitadel_auth_service as set_session_auth
 from gateway_api.auth import get_zitadel_auth_service, set_zitadel_auth_service
 from gateway_api.main import app
 from runefoble_auth.zitadel import ZitadelAuthService

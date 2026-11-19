@@ -52,7 +52,7 @@ def homebrew_upstreams() -> Iterator[dict[str, str]]:
     """Run game_session, board_state, and rules_compendium as real HTTP services for the gateway."""
     from board_state.main import app as board_app
     from game_session.main import app as session_app
-    from game_session.settlement.auth.tokens import (
+    from game_session.shared.identity import (
         get_zitadel_auth_service,
         set_zitadel_auth_service,
     )

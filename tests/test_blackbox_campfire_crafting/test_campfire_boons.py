@@ -6,7 +6,7 @@ Governed by ADR-0003, ADR-0006, ADR-0007, ADR-0011, and Hard Invariant 7.
 from __future__ import annotations
 
 from fastapi.testclient import TestClient
-from game_session.events import STREAM_STRONGHOLD
+from game_session.shared.streams import STREAM_STRONGHOLD
 
 from tests.helpers.campaign_setup import create_owned_campaign
 

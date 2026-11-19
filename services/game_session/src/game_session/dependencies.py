@@ -8,7 +8,6 @@ import os
 from game_session.aggregate import GameSessionAggregate
 from game_session.caravan import CaravanContractAggregate
 from game_session.caravan.ledger import CaravanLedgerAggregate
-from game_session.child_index import ChildIndexAggregate
 from game_session.contracts.engine import MercenaryBountyAggregate
 from game_session.events import SessionEventPublisher
 from game_session.merchants import MerchantAggregate
@@ -69,7 +68,6 @@ bounty_contract_repository = LazyRepository(
 )
 worker_repository = LazyRepository(lambda: create_aggregate_repository(NPCWorkerAggregate))
 negotiation_repository = LazyRepository(lambda: create_aggregate_repository(NegotiationAggregate))
-child_index_repository = LazyRepository(lambda: create_aggregate_repository(ChildIndexAggregate))
 
 
 def get_game_session_repository() -> AggregateRepository[GameSessionAggregate]:
@@ -118,10 +116,6 @@ def get_worker_repository() -> AggregateRepository[NPCWorkerAggregate]:
 
 def get_negotiation_repository() -> AggregateRepository[NegotiationAggregate]:
     return negotiation_repository.get()
-
-
-def get_child_index_repository() -> AggregateRepository[ChildIndexAggregate]:
-    return child_index_repository.get()
 
 
 event_bus_provider = EventBusProvider(platform_settings)

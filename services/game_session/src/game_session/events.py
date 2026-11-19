@@ -1,4 +1,4 @@
-"""Stream names and the session event-to-stream mapping for the game session repository.
+"""The session event-to-stream mapping for the game session repository.
 
 Every event that the session aggregate commits is published by the repository itself.
 The mapping below is the only place that chooses the stream for a session event family.
@@ -10,6 +10,7 @@ from collections.abc import Callable, Sequence
 from typing import Any
 
 from eventsource.domain.event import DomainEvent
+from game_session.shared.streams import STREAM_SESSION, STREAM_WATCHER
 from runefoble_events.events import (
     AtmosphereUpdated,
     CharacterControlTransferred,
@@ -37,12 +38,6 @@ from runefoble_events.events import (
     WeatherChanged,
 )
 from runefoble_platform.event_publish import publish_or_fail
-
-STREAM_WATCHER = "runefoble.events.watcher"
-STREAM_SESSION = "runefoble.events.session"
-STREAM_STRONGHOLD = "runefoble.events.stronghold"
-STREAM_TAVERN = "runefoble.events.tavern"
-STREAM_WEST_MARCHES = "runefoble.events.west_marches"
 
 SESSION_EVENT_STREAMS: dict[type[DomainEvent], str] = {
     SessionCreated: STREAM_SESSION,

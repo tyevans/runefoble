@@ -203,11 +203,14 @@ definition settlement {
 - Non-participating outsider subjects are denied with `403 Forbidden`.
 
 Per ADR-0001, ADR-0005, and ADR-0013, authorization logic in `services/game_session/src/game_session/settlement/auth/` is decomposed into dedicated submodules strictly under 130 lines:
-- **`tokens.py`**: Zitadel OIDC Bearer token decoding, header parsing, and dev-mode fallback.
-- **`permissions.py`**: SpiceDB Zanzibar object authorization helpers for havens, establishments, and workers.
+- **`permissions.py`**: SpiceDB Zanzibar object authorization helpers for havens, establishments, workers, and negotiations.
 - **`relationships.py`**: Zanzibar relationship tuple writers.
 - **`dependencies.py`**: FastAPI route dependency injectors (`require_haven_builder`, `require_establishment_manager`).
 - **`auth/` / `__init__.py`**: Authorization package. The former `auth.py` facade is removed (TASK-0793).
+
+The shared kernel `services/game_session/src/game_session/shared/` holds the code that two or more domains use (ADR-0021 D2):
+- **`identity.py`**: Route identity (`get_principal`, `CallerId`, `CallerPrincipal`). Zitadel OIDC bearer tokens and the service credential resolve to a caller.
+- **`permissions.py`**: `check_establishment_play_permission`. The tavern, the minigame tables, and haggling call it.
 
 ---
 

@@ -13,7 +13,7 @@ from game_session.aggregate import GameSessionAggregate
 from game_session.dependencies import repo
 from game_session.models import AtmosphereUpdateRequest, DMOverrideRequest, GameSessionState
 from game_session.routers.session_auth import SessionController
-from game_session.settlement.auth.tokens import get_principal
+from game_session.shared.identity import get_principal
 from runefoble_platform.aggregate_loading import load_or_404
 
 router = APIRouter(dependencies=[Depends(get_principal)], tags=["session"])

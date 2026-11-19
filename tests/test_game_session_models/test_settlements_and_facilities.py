@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import pytest
-from game_session.models import (
+from game_session.settlement.models import (
     DEFAULT_FACILITIES,
     FACILITY_REST_BOONS,
     FACILITY_TIER_NAMES,

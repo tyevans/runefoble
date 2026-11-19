@@ -38,7 +38,7 @@ def upstreams() -> Iterator[dict[str, str]]:
     """Run game_session and board_state as real HTTP services. game_session trusts the test issuer."""
     from board_state.main import app as board_app
     from game_session.main import app as session_app
-    from game_session.settlement.auth.tokens import (
+    from game_session.shared.identity import (
         get_zitadel_auth_service,
         set_zitadel_auth_service,
     )

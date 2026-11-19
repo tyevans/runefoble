@@ -9,7 +9,6 @@ from typing import Any
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from game_session.child_index import ChildIndexKind
 from game_session.contracts.auth import (
     check_bounty_claim,
     check_bounty_disburse,
@@ -18,6 +17,7 @@ from game_session.contracts.auth import (
     write_bounty_relationships,
     write_claimant_relationship,
 )
+from game_session.contracts.child_indexes import SESSION_BOUNTIES, list_bounties_for_session
 from game_session.contracts.engine import MercenaryBountyAggregate
 from game_session.contracts.models import (
     ClaimBountyRequest,
@@ -25,9 +25,9 @@ from game_session.contracts.models import (
     PostBountyRequest,
 )
 from game_session.dependencies import get_bounty_contract_repository, get_event_bus
-from game_session.events import STREAM_SESSION
-from game_session.queries import link_child, list_bounties_for_session
-from game_session.settlement.auth.tokens import CallerId, get_principal
+from game_session.shared.child_index_queries import link_child
+from game_session.shared.identity import CallerId, get_principal
+from game_session.shared.streams import STREAM_SESSION
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_platform.aggregate_loading import load_if_exists
 from runefoble_platform.event_publish import publish_aggregate_events
@@ -65,7 +65,7 @@ async def post_bounty(
     await get_bounty_contract_repository().save(agg)
     if bus := get_event_bus():
         await publish_aggregate_events(bus, STREAM_SESSION, events)
-    await link_child(ChildIndexKind.SESSION_BOUNTIES, str(sid), str(bid))
+    await link_child(SESSION_BOUNTIES, str(sid), str(bid))
     await write_bounty_relationships(spicedb, str(bid), str(sid), req.campaign_id, caller_id)
     return {"session_id": str(sid), "bounty": agg.state.model_dump()}
 

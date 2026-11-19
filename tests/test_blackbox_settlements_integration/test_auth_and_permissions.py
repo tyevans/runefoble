@@ -9,7 +9,8 @@ from fastapi import APIRouter, Depends
 from fastapi.testclient import TestClient
 from game_session.main import app as session_app
 from game_session.settlement import auth as sa
-from game_session.settlement.auth.tokens import get_principal
+from game_session.shared import identity
+from game_session.shared.identity import get_principal
 from runefoble_auth.zitadel import ZitadelAuthService
 
 from tests.helpers.campaign_setup import create_campaign
@@ -34,7 +35,7 @@ def test_missing_bearer_token_is_refused_without_fallback():
         issuer="http://zitadel.test", audience="runefoble-api", internal_url=None
     )
     with restored_seam(
-        sa.get_zitadel_auth_service, sa.set_zitadel_auth_service, service, replace=True
+        identity.get_zitadel_auth_service, identity.set_zitadel_auth_service, service, replace=True
     ):
         response = TestClient(session_app).get("/api/v1/test_auth_missing/whoami")
         assert response.status_code == 401

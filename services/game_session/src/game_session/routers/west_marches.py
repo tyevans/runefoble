@@ -11,8 +11,8 @@ from uuid import uuid4
 
 from fastapi import APIRouter, Depends, Query
 from game_session.dependencies import get_event_bus, get_shared_world_repository
-from game_session.events import STREAM_WEST_MARCHES
-from game_session.settlement.auth.tokens import CallerId, get_principal
+from game_session.shared.identity import CallerId, get_principal
+from game_session.shared.streams import STREAM_WEST_MARCHES
 from game_session.west_marches_models import (
     CreateSharedWorldRequest,
     EstablishOutpostRequest,

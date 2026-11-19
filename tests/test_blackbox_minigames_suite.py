@@ -12,8 +12,8 @@ from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
-from game_session.events import STREAM_TAVERN
 from game_session.main import app as session_app
+from game_session.shared.streams import STREAM_TAVERN
 from gateway_api.main import app as gateway_app
 from runefoble_auth.mock import MockSpiceDBClient
 

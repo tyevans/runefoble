@@ -9,24 +9,23 @@ from __future__ import annotations
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException
-from game_session.child_index import ChildIndexKind
 from game_session.dependencies import (
     get_establishment_repository,
     get_event_bus,
     get_negotiation_repository,
     get_worker_repository,
 )
-from game_session.events import STREAM_TAVERN, STREAM_WEST_MARCHES
-from game_session.queries import link_child, list_workers_for_establishment
 from game_session.settlement.auth import (
-    check_establishment_play_permission,
     check_establishment_read_permission,
     check_negotiation_arbitrate_permission,
     check_negotiation_participate_permission,
     check_negotiation_read_permission,
     write_negotiation_relationships,
 )
-from game_session.settlement.auth.tokens import CallerId, get_principal
+from game_session.settlement.child_indexes import (
+    SettlementChildIndex,
+    list_workers_for_establishment,
+)
 from game_session.settlement.haggling import NegotiationAggregate
 from game_session.settlement.haggling_models import (
     ExecuteGambitRequest,
@@ -34,6 +33,10 @@ from game_session.settlement.haggling_models import (
     NegotiationSessionState,
     StartNegotiationRequest,
 )
+from game_session.shared.child_index_queries import link_child
+from game_session.shared.identity import CallerId, get_principal
+from game_session.shared.permissions import check_establishment_play_permission
+from game_session.shared.streams import STREAM_TAVERN, STREAM_WEST_MARCHES
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_platform.aggregate_loading import load_if_exists
 from runefoble_platform.event_publish import publish_aggregate_events
@@ -135,7 +138,7 @@ async def haggle_establishment(
         participant_id=caller_id,
     )
 
-    await link_child(ChildIndexKind.ESTABLISHMENT_NEGOTIATIONS, establishment_id, str(nid))
+    await link_child(SettlementChildIndex.ESTABLISHMENT_NEGOTIATIONS, establishment_id, str(nid))
     return neg_agg.state
 
 

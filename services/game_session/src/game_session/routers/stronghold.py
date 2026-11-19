@@ -9,8 +9,8 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
 from game_session.dependencies import get_event_bus, get_stronghold_repository
-from game_session.events import STREAM_STRONGHOLD
-from game_session.settlement.auth.tokens import CallerId, get_principal
+from game_session.shared.identity import CallerId, get_principal
+from game_session.shared.streams import STREAM_STRONGHOLD
 from game_session.stronghold import (
     FACILITY_TIERS,
     InsufficientStrongholdResources,

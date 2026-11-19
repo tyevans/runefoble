@@ -62,7 +62,7 @@ Service credential receivers (routes that accept `get_caller_or_service`):
 |---|---|
 | `board_state` | `services/board_state/src/board_state/dependencies.py`, `routers/boards.py` |
 | `character_sheet` | `services/character_sheet/src/character_sheet/dependencies.py` |
-| `game_session` | `services/game_session/src/game_session/settlement/auth/tokens.py`, `routers/session_auth.py`, `routers/chronicle.py` |
+| `game_session` | `services/game_session/src/game_session/shared/identity.py`, `routers/session_auth.py`, `routers/chronicle.py` |
 | `rules_compendium` | `services/rules_compendium/src/rules_compendium/dependencies.py`, `routers/rules.py`, `routers/encounters.py` |
 | `inference_worker` | `services/inference_worker/src/inference_worker/auth.py` (its own guard) |
 

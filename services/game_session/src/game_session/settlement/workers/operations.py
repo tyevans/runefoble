@@ -8,15 +8,16 @@ from __future__ import annotations
 from typing import Any
 from uuid import uuid4
 
-from game_session.child_index import ChildIndexKind
 from game_session.dependencies import (
     get_establishment_repository,
     get_event_bus,
     get_worker_repository,
 )
-from game_session.events import STREAM_WEST_MARCHES
-from game_session.queries import link_child, list_workers_for_establishment
 from game_session.settlement.auth import write_npc_relationships
+from game_session.settlement.child_indexes import (
+    SettlementChildIndex,
+    list_workers_for_establishment,
+)
 from game_session.settlement.establishment_aggregate import EstablishmentAggregate
 from game_session.settlement.worker_aggregate import NPCWorkerAggregate
 from game_session.settlement.worker_graph import calculate_establishment_operations
@@ -27,6 +28,8 @@ from game_session.settlement.worker_models import (
     WorkerInventoryItem,
     WorkerRelationship,
 )
+from game_session.shared.child_index_queries import link_child
+from game_session.shared.streams import STREAM_WEST_MARCHES
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_platform.aggregate_loading import load_if_exists
 from runefoble_platform.event_publish import publish_aggregate_events
@@ -115,7 +118,9 @@ async def create_and_assign_worker(
     events = list(agg.uncommitted_events)
     await worker_repo.save(agg)
 
-    await link_child(ChildIndexKind.ESTABLISHMENT_WORKERS, establishment_id, str(agg.aggregate_id))
+    await link_child(
+        SettlementChildIndex.ESTABLISHMENT_WORKERS, establishment_id, str(agg.aggregate_id)
+    )
 
     await write_npc_relationships(
         spicedb,

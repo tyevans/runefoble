@@ -11,8 +11,6 @@ from game_session.dependencies import (
     get_event_bus,
     get_settlement_repository,
 )
-from game_session.events import STREAM_WEST_MARCHES
-from game_session.settlement.auth.tokens import CallerId, get_principal
 from game_session.settlement.haven.loaders import (
     build_settlement_projection,
     load_establishment,
@@ -24,6 +22,8 @@ from game_session.settlement.models import (
     UpgradeEstablishmentRequest,
     UpgradeSettlementTierRequest,
 )
+from game_session.shared.identity import CallerId, get_principal
+from game_session.shared.streams import STREAM_WEST_MARCHES
 from runefoble_platform.event_publish import publish_aggregate_events
 
 router = APIRouter(dependencies=[Depends(get_principal)])

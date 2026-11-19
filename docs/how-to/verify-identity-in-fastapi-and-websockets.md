@@ -61,7 +61,7 @@ Bounded contexts that serve many routes apply the principal dependency at router
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
-from game_session.settlement.auth.tokens import CallerId, get_principal
+from game_session.shared.identity import CallerId, get_principal
 
 router = APIRouter(dependencies=[Depends(get_principal)])
 
