@@ -109,6 +109,7 @@ each route, and the mode in which the gateway serves it.
 | POST | `/api/v1/factions/{faction_id}/resources/adjust` | the_watcher | proxy | `gateway_api.routers.watcher_proxy_factions` |
 | POST | `/api/v1/forge/battlemap` | asset_forge | proxy | `gateway_api.routers.forge_proxy` |
 | GET | `/api/v1/forge/battlemap/{asset_id}` | asset_forge | proxy | `gateway_api.routers.forge_proxy` |
+| GET | `/api/v1/forge/campaigns/{campaign_id}/records` | asset_forge | proxy | `gateway_api.routers.forge_proxy` |
 | POST | `/api/v1/forge/print-pdf` | asset_forge | proxy | `gateway_api.routers.forge_proxy` |
 | POST | `/api/v1/forge/standees` | asset_forge | proxy | `gateway_api.routers.forge_proxy` |
 | POST | `/api/v1/forge/stl-token` | asset_forge | proxy | `gateway_api.routers.forge_proxy` |

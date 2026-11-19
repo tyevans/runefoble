@@ -276,6 +276,7 @@ Campaign Lore routes require a verified bearer token, except `/healthz`, `/opena
 | `gateway-api` | POST | `/api/v1/forge/print-pdf` | Proxies to `asset-forge`. Slices battlemaps into multi-page print-ready PDFs calibrated to 1-inch grid with crosshairs. Requires `campaign_id` and `campaign.play` |
 | `gateway-api` | POST | `/api/v1/forge/standees` | Proxies to `asset-forge`. Generates folding papercraft miniature sheets with mirrored artwork, nameplates, and base tabs. Requires `campaign_id` and `campaign.play` |
 | `gateway-api` | POST | `/api/v1/forge/stl-token` | Proxies to `asset-forge`. Procedurally generates watertight 3D printable STL miniature bases with condition clips. Requires `campaign_id` and `campaign.play` |
+| `gateway-api` | GET | `/api/v1/forge/campaigns/{campaign_id}/records` | Proxies to `asset-forge`. Lists the forge records of a campaign from its forge aggregate. Needs a bearer and `campaign.view`. A campaign id that is not a UUID gets `422` |
 | `asset-forge` | GET | `/ui/manifest` | Discovers vendored microfrontends (`runefoble-asset-forge`, `runefoble-print-forge`) |
 | `soundscape` | POST | `/api/v1/soundscape/cue` | Triggers tactical foley sound effects or acoustic stingers (fireball, sword slash, etc.) |
 | `soundscape` | GET | `/api/v1/soundscape/tension` | Retrieves current session encounter tension score (0-100) and active stem weights |
