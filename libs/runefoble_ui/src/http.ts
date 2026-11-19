@@ -43,6 +43,17 @@ export class HttpError extends Error {
   }
 }
 
+/** A 2xx response whose body is not JSON. `status` is the status of that response. */
+export class UnreadableResponseError extends Error {
+  readonly status: number;
+
+  constructor(status: number) {
+    super('The server sent a response that could not be read.');
+    this.name = 'UnreadableResponseError';
+    this.status = status;
+  }
+}
+
 export function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
@@ -66,20 +77,14 @@ export function errorDetailFromBody(body: unknown): string | undefined {
   return undefined;
 }
 
-/** Pulls a human-readable message from an error body, or falls back to the status code. */
-export function errorMessageFromBody(body: unknown, status: number): string {
-  const detail = errorDetailFromBody(body);
-  if (detail) return detail;
-  if (isRecord(body)) {
-    if (typeof body.message === 'string' && body.message.trim()) return body.message;
-    if (typeof body.error === 'string' && body.error.trim()) return body.error;
-  }
-  return status === 404 ? 'The requested item was not found.' : `The request failed with status ${status}.`;
+/** The detail of an error reply that has no server message. */
+function statusOnlyDetail(status: number): string {
+  return `Request failed with status ${status}`;
 }
 
 /** The FastAPI `detail`, else the `message` of an engine-unavailable body, else the status. */
 async function readErrorDetail(res: Response): Promise<string> {
-  const fallback = `Request failed with status ${res.status}`;
+  const fallback = statusOnlyDetail(res.status);
   let parsed: unknown;
   try {
     parsed = JSON.parse(await res.text());
@@ -105,8 +110,8 @@ function contentTypeHeader(body: RequestSpec['body']): Record<string, string> {
 /**
  * The one shared transport (TASK-0758). Sends `path` under `opts.apiBase` with the bearer from
  * `opts.auth`, and resolves with the parsed JSON body. An empty success body resolves with
- * undefined. A non-2xx response throws HttpError with the server detail. A network failure
- * propagates as the fetch error.
+ * undefined. A non-2xx response throws HttpError with the server detail. A 2xx body that is
+ * not JSON throws UnreadableResponseError. A network failure propagates as the fetch error.
  */
 export async function request<T>(path: string, spec: RequestSpec = {}, opts: RequestOptions = {}): Promise<T> {
   const fetchImpl: FetchLike = opts.fetchImpl ?? ((input, reqInit) => globalThis.fetch(input, reqInit));
@@ -118,7 +123,12 @@ export async function request<T>(path: string, spec: RequestSpec = {}, opts: Req
   const res = await fetchImpl(apiUrl(opts.apiBase, path), { ...spec, headers });
   if (!res.ok) throw new HttpError(res.status, await readErrorDetail(res));
   const text = await res.text();
-  return (text ? JSON.parse(text) : undefined) as T;
+  if (!text) return undefined as T;
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    throw new UnreadableResponseError(res.status);
+  }
 }
 
 /** POSTs a JSON body through `request`. */
@@ -134,8 +144,27 @@ export function postForm<T>(path: string, form: FormData, opts: RequestOptions =
 /** The user-facing message for a failed request: the server detail, or a network note. */
 export function requestFailureMessage(err: unknown): string {
   if (err instanceof HttpError) return err.detail;
+  if (err instanceof UnreadableResponseError) return err.message;
   const reason = err instanceof Error ? err.message : String(err);
   return `Network error: ${reason}`;
+}
+
+/**
+ * The user-facing message for a failed action (TASK-0759). `action` names the action, for
+ * example `caravan action`. `401` asks the user to sign in. `403` says that the account is
+ * not authorized. `503` says that the service is unavailable, with the server detail when one
+ * exists. Other codes show the server detail. A network failure shows `Network error: <reason>`.
+ */
+export function actionFailureMessage(err: unknown, action: string): string {
+  if (!(err instanceof HttpError)) return requestFailureMessage(err);
+  if (err.status === 401) return `Sign in to continue with this ${action}.`;
+  if (err.status === 403) return `Your account is not authorized for this ${action}.`;
+  if (err.status === 503) {
+    return err.detail === statusOnlyDetail(503)
+      ? 'Service unavailable. Try again later.'
+      : `Service unavailable: ${err.detail}`;
+  }
+  return err.detail;
 }
 
 /**

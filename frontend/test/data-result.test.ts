@@ -2,6 +2,7 @@
  * DataResult Unit Tests (TASK-0640).
  *
  * Covers the result helpers and the request() mapping from HTTP responses to typed results.
+ * request() runs over the shared `@runefoble/ui-core` transport (TASK-0759).
  * The gateway is faked at the fetch boundary. Governing ADRs: ADR-0007, ADR-0014
  */
 
@@ -11,7 +12,6 @@ import {
   dataOk, dataFailure, isNotFound, NETWORK_FAILURE_MESSAGE,
   UNREADABLE_RESPONSE_MESSAGE, type DataResult,
 } from '../src/services/data-result.ts';
-import { errorMessageFromBody } from '@runefoble/ui-core';
 import { AppDataService } from '../src/services/app-data-service.ts';
 import { installFakeGateway, type FakeGateway } from './support/fake-gateway.ts';
 
@@ -33,34 +33,35 @@ describe('DataResult helpers', () => {
   });
 });
 
-describe('errorMessageFromBody', () => {
-  it('uses a string detail field', () => {
-    assert.equal(errorMessageFromBody({ detail: 'Campaign title is required' }, 422), 'Campaign title is required');
+describe('AppDataService.request takes the error text from HttpError (TASK-0759)', () => {
+  let gateway: FakeGateway | undefined;
+  const service = new AppDataService();
+
+  afterEach(() => {
+    gateway?.restore();
+    gateway = undefined;
   });
 
-  it('joins FastAPI validation detail messages', () => {
+  async function failureFor(status: number, body: unknown) {
+    gateway = installFakeGateway({ 'GET /api/v1/campaigns': { status, body } });
+    return service.request<any>('/campaigns');
+  }
+
+  it('uses a string detail field', async () => {
+    assert.deepEqual(await failureFor(422, { detail: 'Campaign title is required' }), dataFailure(422, 'Campaign title is required'));
+  });
+
+  it('joins FastAPI validation detail messages', async () => {
     const body = { detail: [{ loc: ['body', 'title'], msg: 'field required' }, { loc: ['body', 'system'], msg: 'invalid system' }] };
-    assert.equal(errorMessageFromBody(body, 422), 'field required; invalid system');
+    assert.deepEqual(await failureFor(422, body), dataFailure(422, 'field required; invalid system'));
   });
 
-  it('uses a message field when detail is absent', () => {
-    assert.equal(errorMessageFromBody({ message: 'Rate limited' }, 429), 'Rate limited');
+  it('uses a message field when detail is absent', async () => {
+    assert.deepEqual(await failureFor(503, { message: 'The engine is down.' }), dataFailure(503, 'The engine is down.'));
   });
 
-  it('uses an error field when detail and message are absent', () => {
-    assert.equal(errorMessageFromBody({ error: 'Forbidden here' }, 403), 'Forbidden here');
-  });
-
-  it('ignores blank detail strings and falls back to the status text', () => {
-    assert.equal(errorMessageFromBody({ detail: '   ' }, 500), 'The request failed with status 500.');
-  });
-
-  it('gives a not-found sentence for a 404 with no readable body', () => {
-    assert.equal(errorMessageFromBody(null, 404), 'The requested item was not found.');
-  });
-
-  it('gives a status sentence for a non-object body', () => {
-    assert.equal(errorMessageFromBody('<html>', 502), 'The request failed with status 502.');
+  it('ignores a blank detail string and falls back to the status text', async () => {
+    assert.deepEqual(await failureFor(500, { detail: '   ' }), dataFailure(500, 'Request failed with status 500'));
   });
 });
 
@@ -96,7 +97,7 @@ describe('AppDataService.request maps HTTP responses to DataResult', () => {
   it('maps a 500 with no JSON body to a failure with the status message', async () => {
     gateway = installFakeGateway({ 'GET /api/v1/characters': { status: 500 } });
     const result = await service.request<any>('/characters');
-    assert.deepEqual(result, dataFailure(500, 'The request failed with status 500.'));
+    assert.deepEqual(result, dataFailure(500, 'Request failed with status 500'));
   });
 
   it('maps a network exception to status 0 with the network message', async () => {
@@ -114,6 +115,6 @@ describe('AppDataService.request maps HTTP responses to DataResult', () => {
   it('maps an unreadable error body to the status message, not to a parse crash', async () => {
     globalThis.fetch = (async () => new Response('<html>Bad Gateway</html>', { status: 502 })) as typeof fetch;
     const result = await service.request<any>('/campaigns');
-    assert.deepEqual(result, dataFailure(502, 'The request failed with status 502.'));
+    assert.deepEqual(result, dataFailure(502, 'Request failed with status 502'));
   });
 });

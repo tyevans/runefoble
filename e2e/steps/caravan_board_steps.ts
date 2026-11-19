@@ -2,8 +2,8 @@
  * Caravan Board Playwright BDD Step Definitions
  *
  * Drives <runefoble-caravan-board> through its UI. The only fault injection is a
- * 503 response at the network boundary, used to prove the error path (ADR-0015).
- * Governed by ADR-0014 and Hard Invariant 7. TASK-0677, TASK-0807.
+ * 403 or 503 response at the network boundary, used to prove the error path (ADR-0015).
+ * Governed by ADR-0014 and Hard Invariant 7. TASK-0677, TASK-0807, TASK-0759.
  */
 
 import { expect, type Page } from '@playwright/test';
@@ -34,6 +34,31 @@ Given('the caravan route {string} responds with status {int}', async ({ page }, 
     })
   );
 });
+
+Given('I record the caravan {string} request', async ({ page, world }, action: string) => {
+  const recorded: Record<string, string>[] = [];
+  world.customState.set(`caravanRequest:${action}`, recorded);
+  page.on('request', (req) => {
+    const path = new URL(req.url()).pathname;
+    if (req.method() === 'POST' && path.includes('/caravans/contracts/') && path.endsWith(`/${action}`)) {
+      recorded.push(req.headers());
+    }
+  });
+});
+
+Then(
+  'the caravan {string} request carries my bearer token and no {string} header',
+  async ({ world }, action: string, forbidden: string) => {
+    const token = requireValue(world.currentUser?.token, 'No signed-in token. Run "I am logged in as" first.');
+    const recorded = requireValue(
+      world.get<Record<string, string>[]>(`caravanRequest:${action}`),
+      `Run "I record the caravan \"${action}\" request" first.`
+    );
+    await expect.poll(() => recorded.length).toBeGreaterThan(0);
+    expect(recorded[0].authorization).toBe(`Bearer ${token}`);
+    expect(forbidden.toLowerCase() in recorded[0]).toBe(false);
+  }
+);
 
 /** Parses "Origin to Destination" into the two outposts of a contract title. */
 function outpostsFromTitle(title: string): { origin: string; destination: string } {

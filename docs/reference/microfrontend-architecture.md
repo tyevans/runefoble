@@ -167,11 +167,12 @@ Source: `libs/runefoble_ui/src/http.ts` (TASK-0825, TASK-0758). Every microfront
 | `opts.headers` | Extra headers. They win over the auth headers. |
 | `opts.fetchImpl` | Transport override for tests. The default reads the global `fetch` at call time. |
 | `HttpError` | `status` and `detail`. `detail` is the server `detail` (a string, or the joined FastAPI `msg` values), else the body `message`, else `Request failed with status <code>`. |
-| `requestFailureMessage(err)` | The user-facing message for a failed call: `detail` for `HttpError`, else `Network error: <reason>`. |
+| `UnreadableResponseError` | A 2xx response whose body is not JSON. It has the `status` of that response. |
+| `requestFailureMessage(err)` | The user-facing message for a failed call: `detail` for `HttpError`, the unreadable-body text for `UnreadableResponseError`, else `Network error: <reason>`. |
+| `actionFailureMessage(err, action)` | The user-facing message for a failed action: a sign-in text for `401`, a not-authorized text for `403`, `Service unavailable: <detail>` for `503`, else the detail. |
 | `ActionResult` | `{ ok: true } \| { ok: false; message }`. Used by writes that report and never throw. |
 | `bearerHeaders(token)` | `{ Authorization: 'Bearer ...' }` for a token, else `{}`. |
 | `wsUrl(path, loc?)` | `wss:` on an `https:` page, else `ws:`, on `loc.host`. Pass `{ protocol, host }` to build a URL for another origin. |
-| `errorMessageFromBody(body, status)` | The App Shell message for a read error. Used by `AppDataService`. |
 | `isRecord(value)` | Type guard for an object. |
 
 Rules:

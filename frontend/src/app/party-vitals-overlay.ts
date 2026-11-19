@@ -7,8 +7,8 @@
  * The gateway route checks `session.observe` on every read.
  */
 
-import { authHeaders } from '../auth/transport.ts';
-import { dataFailure, dataOk, NETWORK_FAILURE_MESSAGE, UNREADABLE_RESPONSE_MESSAGE, type DataResult } from '../services/data-result.ts';
+import type { DataResult } from '../services/data-result.ts';
+import { requestData } from '../services/shell-request.ts';
 
 export const OVERLAY_POSITIONS = ['bottom', 'top', 'sidebar'] as const;
 export type OverlayPosition = (typeof OVERLAY_POSITIONS)[number];
@@ -103,21 +103,10 @@ export function toOverlayCamera(camera: OwnerCameraTarget): OverlayCamera {
 
 export type OverlayFetcher = (sessionId: string, position: OverlayPosition) => Promise<DataResult<PartyVitalsReply>>;
 
-/** Reads the party vitals from the gateway with the viewer's bearer token. */
-export const fetchPartyVitals: OverlayFetcher = async (sessionId, position) => {
-  const url = `/overlay/party-vitals/${encodeURIComponent(sessionId)}?format=json&position=${position}`;
-  let res: Response;
-  try {
-    res = await fetch(url, { headers: { Accept: 'application/json', ...authHeaders() } });
-  } catch {
-    return dataFailure(0, NETWORK_FAILURE_MESSAGE);
-  }
-  let body: unknown;
-  try {
-    body = await res.json();
-  } catch {
-    return dataFailure(res.status, UNREADABLE_RESPONSE_MESSAGE);
-  }
-  if (!res.ok) return dataFailure(res.status, `The overlay could not load (${res.status}).`);
-  return dataOk(body as PartyVitalsReply);
-};
+/** Reads the party vitals from the gateway through the shared transport with the viewer's bearer token. */
+export const fetchPartyVitals: OverlayFetcher = (sessionId, position) =>
+  requestData<PartyVitalsReply>(
+    `/overlay/party-vitals/${encodeURIComponent(sessionId)}?format=json&position=${position}`,
+    {},
+    { Accept: 'application/json' },
+  );

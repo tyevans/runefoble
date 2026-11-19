@@ -423,6 +423,20 @@ The App Shell route `#/caravans/:sharedWorldId` mounts `<runefoble-caravan-board
 1. **One-Click Contract Acceptance**: Click **Accept Escort Contract** to claim open jobs via `POST /api/v1/shared-worlds/{wid}/caravans/contracts/{cid}/accept` with SpiceDB Zanzibar role enforcement.
 2. **Caravan Manifest Details Modal**: Click **Inspect Manifest** or any contract card to open the inspection modal showing departure settlement, destination stronghold, itemized cargo pills, and escrow bounty fees.
 3. **Active Transit Route Status Pill**: Caravans in transit display a live progress bar tracking completed stages vs. remaining distance, alongside ambush encounter warning badges.
-4. **Real-Time Notifications**: Bauhaus toast banners display immediate visual confirmation upon claiming, dispatching, or delivering trade convoys. If the server rejects a dispatch or a fulfilment, the banner shows a red error with the server message. The contract keeps its previous status. The board never shows a caravan as in transit or fulfilled without a successful server response (TASK-0677).
+4. **Real-Time Notifications**: Bauhaus toast banners display immediate visual confirmation upon claiming, dispatching, or delivering trade convoys. If the server rejects an accept, a dispatch or a fulfilment, the banner shows a red error. The contract keeps its previous status. The board never shows a contract as accepted, in transit or fulfilled without a successful server response (TASK-0677, TASK-0759).
+
+#### Requests and Error Text (TASK-0759)
+
+The board sends every action through the shared UI transport (see [UI Transport](../reference/ui-transport.md)). Each request carries the shell bearer token. No request sends an `x-user-id` header. The gateway reads identity from the token only.
+
+The banner puts `Accept failed: `, `Dispatch failed: ` or `Fulfilment failed: ` in front of the reason:
+
+| Reply | Reason |
+|---|---|
+| `401` | `Sign in to continue with this caravan action.` |
+| `403` | `Your account is not authorized for this caravan action.` |
+| `503` | `Service unavailable: <detail>`. With no server detail: `Service unavailable. Try again later.` |
+| Other codes, for example `409` | The server detail. |
+| No connection | `Network error: <reason>` |
 
 ---

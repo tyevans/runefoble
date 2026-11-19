@@ -35,7 +35,7 @@ export class RunefobleCaravanBoard extends LitElement {
       sharedWorldId: this.sharedWorldId,
       campaignId: this.campaignId,
       partyName: this.partyName,
-      authHeaders: () => this.auth.authHeaders(),
+      auth: this.auth,
     };
   }
 
@@ -68,16 +68,13 @@ export class RunefobleCaravanBoard extends LitElement {
 
   public async acceptContract(contract: CaravanContractItem, e?: Event): Promise<void> {
     if (e) e.stopPropagation();
-    try {
-      await apiAcceptContract(this.apiCtx, contract);
-      this.notificationMessage = `Contract accepted by ${this.partyName}! Ready to dispatch.`;
-      this.notificationType = 'success';
-    } catch (err: unknown) {
-      contract.status = 'accepted';
-      contract.contractor_party_name = this.partyName;
-      this.notificationMessage = `Escort contract claimed: ${err instanceof Error ? err.message : String(err)}`;
-      this.notificationType = 'info';
+    const result = await apiAcceptContract(this.apiCtx, contract);
+    if (!result.ok) {
+      this.showError(`Accept failed: ${result.message}`);
+      return;
     }
+    this.notificationMessage = `Contract accepted by ${this.partyName}! Ready to dispatch.`;
+    this.notificationType = 'success';
     this.requestUpdate();
     this.dispatchEvent(new CustomEvent('contract-accepted', { bubbles: true, composed: true, detail: { contractId: contract.contract_id, sharedWorldId: this.sharedWorldId, campaignId: this.campaignId, partyName: this.partyName } }));
   }

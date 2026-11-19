@@ -8,7 +8,10 @@ import { after, before, beforeEach, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
-import { HttpError, postForm, postJson, request, requestFailureMessage, type AuthSource } from '../src/index.ts';
+import {
+  HttpError, actionFailureMessage, postForm, postJson, request, requestFailureMessage, UnreadableResponseError,
+  type AuthSource,
+} from '../src/index.ts';
 import { startLoopbackUpstream, type LoopbackUpstream } from '../testing/loopback-upstream.ts';
 
 let upstream: LoopbackUpstream;
@@ -110,6 +113,17 @@ describe('request over a live loopback server', () => {
     });
   });
 
+  it('throws UnreadableResponseError with the status when a 2xx body is not JSON (TASK-0759)', async () => {
+    upstream.reply(200, '{not json');
+
+    await assert.rejects(request('/api/v1/x', {}, { apiBase: base }), (err: unknown) => {
+      assert.ok(err instanceof UnreadableResponseError);
+      assert.equal(err.status, 200);
+      assert.equal(requestFailureMessage(err), 'The server sent a response that could not be read.');
+      return true;
+    });
+  });
+
   it('lets the extra headers win over the auth headers', async () => {
     await request('/api/v1/x', {}, { apiBase: base, auth: signedIn, headers: { Authorization: 'Bearer other' } });
 
@@ -127,5 +141,48 @@ describe('request over a live loopback server', () => {
       assert.ok(!(err instanceof HttpError));
       return true;
     });
+  });
+});
+
+describe('actionFailureMessage over a live loopback server (TASK-0759)', () => {
+  async function messageFor(status: number, body: unknown): Promise<string> {
+    upstream.reply(status, body);
+    try {
+      await request('/api/v1/x', {}, { apiBase: base, auth: signedIn });
+    } catch (err) {
+      return actionFailureMessage(err, 'caravan action');
+    }
+    throw new assert.AssertionError({ message: 'The call resolved. It must reject.' });
+  }
+
+  it('asks the user to sign in on a 401', async () => {
+    assert.equal(await messageFor(401, { detail: 'Not authenticated' }), 'Sign in to continue with this caravan action.');
+  });
+
+  it('says not authorized on a 403, not the raw detail', async () => {
+    assert.equal(await messageFor(403, { detail: 'Forbidden' }), 'Your account is not authorized for this caravan action.');
+  });
+
+  it('says service unavailable on a 503 and keeps the server detail', async () => {
+    assert.equal(
+      await messageFor(503, { detail: 'Caravan route service is unavailable.' }),
+      'Service unavailable: Caravan route service is unavailable.',
+    );
+  });
+
+  it('says service unavailable on a 503 that has no detail', async () => {
+    assert.equal(await messageFor(503, 'upstream down'), 'Service unavailable. Try again later.');
+  });
+
+  it('shows the server detail for other codes', async () => {
+    assert.equal(await messageFor(409, { detail: 'Contract is already accepted.' }), 'Contract is already accepted.');
+  });
+
+  it('gives distinct text for 403 and 503', async () => {
+    assert.notEqual(await messageFor(403, { detail: 'x' }), await messageFor(503, { detail: 'x' }));
+  });
+
+  it('reports a network failure as a network error', () => {
+    assert.equal(actionFailureMessage(new TypeError('Failed to fetch'), 'caravan action'), 'Network error: Failed to fetch');
   });
 });

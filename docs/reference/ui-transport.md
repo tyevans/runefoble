@@ -12,7 +12,8 @@ Do not write a local `fetch` call, error class or error body reader in a UI pack
 | `postJson<T>(path, body, opts?)` | `request` with `POST` and `JSON.stringify(body)`. |
 | `postForm<T>(path, form, opts?)` | `request` with `POST` and a `FormData` body (for example an asset upload). |
 | `apiUrl(apiBase, path)` | Joins the API base and the path. A trailing slash on the base is removed. |
-| `requestFailureMessage(err)` | The user-facing text of a failure: `HttpError.detail`, else `Network error: <reason>`. |
+| `requestFailureMessage(err)` | The user-facing text of a failure: `HttpError.detail`, the unreadable-body text of `UnreadableResponseError`, else `Network error: <reason>`. |
+| `actionFailureMessage(err, action)` | The user-facing text of a failed action (TASK-0759). See [Status-Specific Text](#status-specific-text). |
 | `errorDetailFromBody(body)` | The FastAPI `detail` string, or the joined `detail[].msg` values of a `422`. |
 | `bearerHeaders(token)` | `{ Authorization: 'Bearer <token>' }` for a token, else `{}`. |
 
@@ -41,16 +42,29 @@ Do not write a local `fetch` call, error class or error body reader in a UI pack
 |---|---|
 | A non-2xx response | Rejects with `HttpError { status, detail }`. |
 | `detail` of the error | The FastAPI `detail` (a string, or the joined `msg` values). Else the `message` of an engine-unavailable body (`{"error", "message"}`). Else `Request failed with status <code>`. |
+| A 2xx response whose body is not JSON | Rejects with `UnreadableResponseError { status }`. |
 | A network failure | Rejects with the fetch error (a `TypeError`). It is not an `HttpError`. |
 
 Nothing resolves on failure. No call returns substitute data (ADR-0015 b).
 
 ## Status-Specific Text
 
-A caller renders `HttpError.detail`. Add status-specific text only where the UI needs it:
+A caller renders `HttpError.detail`, or calls `actionFailureMessage(err, action)`. `action` names the action, for example `caravan action`.
+
+| Status | Text of `actionFailureMessage` |
+|---|---|
+| `401` | `Sign in to continue with this <action>.` |
+| `403` | `Your account is not authorized for this <action>.` |
+| `503` | `Service unavailable: <detail>`. With no server detail: `Service unavailable. Try again later.` |
+| Other codes | The detail. |
+| A network failure | `Network error: <reason>`. |
+
+Some packages have their own status-specific text:
 
 | Package | Function | Text |
 |---|---|---|
+| `@runefoble/game-session-ui` | `caravan/caravan_api.ts` | `actionFailureMessage(err, 'caravan action')`. The board puts `Accept failed: `, `Dispatch failed: ` or `Fulfilment failed: ` in front. |
+| `@runefoble/rules-compendium-ui` | `<runefoble-encounter-builder>` | `actionFailureMessage(err, 'encounter balance request')` in a `role="alert"` box. |
 | `@runefoble/asset-forge-ui` | `forgeFailureMessage(err)` | `401`: a sign-in message. `403`: a permission message. Other codes: the detail. |
 | `@runefoble/board-state-ui` | `<runefoble-map-dropzone>` | `Upload failed: <detail>` for every status. |
 
@@ -62,6 +76,9 @@ A caller renders `HttpError.detail`. Add status-specific text only where the UI 
 | `@runefoble/board-state-ui` | `board-api.ts` | `POST /api/v1/boards/{id}/traps` and `/switch-map`. |
 | `@runefoble/board-state-ui` | `physics_3d/physics_bridge.ts` | `POST /api/v1/boards/{id}/physics/simulate-throw` and `/knockback`. The API base is the `apiBaseUrl` of the host element (`<runefoble-board>`, `<runefoble-tabletop-3d>`). |
 | `@runefoble/board-state-ui` | `runefoble-map-dropzone.ts` | `POST /api/v1/assets/upload` with `postForm`. The API base is its `apiBaseUrl` property. `<runefoble-map-uploader>` passes its own `apiBaseUrl` down. |
+| `@runefoble/game-session-ui` | `caravan/caravan_api.ts` | `POST /shared-worlds/{id}/caravans/contracts/{contract_id}/accept`, `/dispatch` and `/fulfill` under the board `api-base` (default `/api/v1`). One POST function serves the three routes. The board passes its `AuthConsumerController` as `auth`. No call sends `x-user-id`. |
+| `@runefoble/rules-compendium-ui` | `runefoble-encounter-builder.ts` | `POST /api/v1/compendium/encounters/balance` under `apiBaseUrl`, with `{ apiBase, auth }`. An empty `apiBaseUrl` shows `The compendium service address is not set.` and sends nothing. |
+| App Shell (`frontend/`) | `services/shell-request.ts` | `requestData(path, spec, headers)` sends through `request` with `shellAuth` (from `auth/transport.ts`) and returns a `DataResult`. `AppDataService.request` and `fetchPartyVitals` use it. `HttpError` keeps its status and detail. `UnreadableResponseError` gives the unreadable-response text. A fetch `TypeError` gives status `0` and the network text. |
 
 Protected asset reads (`<img>` bytes) use `fetchAssetObjectUrl` instead. See [Browser asset reads](browser-asset-reads.md).
 
@@ -78,3 +95,5 @@ Examples:
 - `libs/runefoble_ui/test/request-loopback.test.ts`: the transport itself.
 - `services/asset_forge/ui/test-dom/forge-transport.test.ts`: the forge elements render the `403` and `503` text, and the upstream sees the URL and the bearer.
 - `services/board_state/ui/test-dom/map-upload-transport.test.ts`: the multipart upload and its `403` and `503` text.
+- `services/game_session/ui/test-dom/caravan-board-transport.test.ts`: the caravan board sends the bearer, and shows distinct `403` and `503` text.
+- `services/rules_compendium/ui/test-dom/encounter-builder-transport.test.ts`: the encounter balance request sends the bearer, and shows the `403`, `503` and `422` text.

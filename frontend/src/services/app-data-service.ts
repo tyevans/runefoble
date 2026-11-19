@@ -5,18 +5,16 @@ import type { CaravanContractItem } from '@runefoble/game-session-ui';
 import type { WatcherFeedEvent } from '@runefoble/the-watcher-ui';
 import type { CampaignSessionItem } from '../components/runefoble-session-list.ts';
 import { authService, type UserClaims } from '../auth/auth-service.ts';
-import { authHeaders } from '../auth/transport.ts';
 import { toWatcherFeedEvent, type SessionChronicleEntry } from './session-chronicle.ts';
 import { resolveLobbyAvailableCharacters } from './lobby-character-options.ts';
 import type { CampaignCapabilities } from './campaign-capabilities.ts';
-import {
-  dataFailure, dataOk, NETWORK_FAILURE_MESSAGE, UNREADABLE_RESPONSE_MESSAGE, type DataResult,
-} from './data-result.ts';
+import { dataFailure, dataOk, type DataResult } from './data-result.ts';
+import { requestData } from './shell-request.ts';
 import { isArray, malformedResponse, requireFields } from './required-fields.ts';
 import {
   SESSION_REQUIRED_FIELDS, sessionFromOwner, lobbyParticipantsFromOwner, boardFromOwner,
 } from './owner-wire-mappers.ts';
-import { errorMessageFromBody } from '@runefoble/ui-core';
+import type { RequestSpec } from '@runefoble/ui-core';
 import {
   mutateCharacterHealth, mutateCharacterEquip, mutateCharacterUnequip, mutateCharacterAddInventory,
   mutateCharacterRemoveInventory, mutateCharacterApplyCondition, mutateCharacterRemoveCondition,
@@ -38,28 +36,13 @@ export class AppDataService {
     return AppDataService.instance;
   }
 
-  private getAuthHeaders(): HeadersInit {
-    return { 'Content-Type': 'application/json', ...authHeaders() };
-  }
-
   /**
-   * Calls the gateway. Returns a typed result. Never substitutes local data.
-   * A 204 or empty body yields `{}` cast to T; callers that expect no body use DataResult<void>.
+   * Calls the gateway through the shared transport. Returns a typed result. Never substitutes
+   * local data. A 204 or empty body yields `{}` cast to T; callers that expect no body use DataResult<void>.
    */
-  public async request<T>(path: string, init?: RequestInit): Promise<DataResult<T>> {
+  public request<T>(path: string, spec?: RequestSpec): Promise<DataResult<T>> {
     const url = path.startsWith(this.apiBase) ? path : `${this.apiBase}${path}`;
-    let res: Response;
-    try {
-      res = await fetch(url, { headers: this.getAuthHeaders(), ...init });
-    } catch {
-      return dataFailure(0, NETWORK_FAILURE_MESSAGE);
-    }
-    let text: string;
-    try { text = await res.text(); } catch { return dataFailure(res.status, UNREADABLE_RESPONSE_MESSAGE); }
-    let body: unknown = null;
-    try { body = text ? JSON.parse(text) : null; } catch { if (res.ok && text) return dataFailure(res.status, UNREADABLE_RESPONSE_MESSAGE); }
-    if (!res.ok) return dataFailure(res.status, errorMessageFromBody(body, res.status));
-    return dataOk((body ?? {}) as T);
+    return requestData<T>(url, spec);
   }
 
   public deduplicateCampaigns(campaigns: CampaignItem[]): CampaignItem[] {
