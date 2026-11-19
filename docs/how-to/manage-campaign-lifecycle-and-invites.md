@@ -252,6 +252,17 @@ Campaign owners and Dungeon Masters (holding `run_session` permission) can creat
 
 ### Creating a Session / Staging Lobby
 
+### Repair Session Links
+
+A session links to its campaign through one tuple, `game_session:<session_id>#campaign@campaign:<campaign_id>`. A campaign created before that rule may lack the tuple. An owner or DM (`run_session`) rewrites every link of a campaign with:
+
+```bash
+curl -X POST "http://localhost:8000/api/v1/campaigns/<campaign_id>/sessions/reconcile-links" \
+  -H "Authorization: Bearer <DM_JWT>"
+```
+
+**Response (`200 OK`):** `{"campaign_id": "<campaign_id>", "linked": 1}`. `linked` counts the sessions that the call wrote. The call is safe to repeat.
+
 The response `id` is the game session id. The same UUID works in `GET /api/v1/sessions/{id}`, the session start route, the combat routes, and the turn routes. A campaign session and its game session share one id (TASK-0706). The `status` value in the campaign list is descriptive. A new game session starts in `lobby` until the start route moves it to `active`.
 ```bash
 curl -X POST "http://localhost:8000/api/v1/campaigns/6f1c2b8e-3a4d-4e5f-9a7b-8c9d0e1f2a3b/sessions" \

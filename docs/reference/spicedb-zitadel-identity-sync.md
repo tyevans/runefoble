@@ -52,14 +52,6 @@ definition game_session {
 
     permission control = campaign->run_session
     permission participate = campaign->play
-    permission observe = campaign->view
-}
-
-definition session {
-    relation campaign: campaign
-
-    permission control = campaign->run_session
-    permission participate = campaign->play
     permission observe = campaign->view + participate + control
 }
 
@@ -79,7 +71,7 @@ definition board_token {
 | Token claim (any role, `is_admin`) | None | Claims never write a tuple. The verified principal carries identity only. |
 | Campaign role grant (`POST /api/v1/campaigns/{id}/roles`, requires `manage`) and invite redemption (`POST /api/v1/campaigns/join`) | `campaign:<id>#<role>@user:<sub_id>` | Grants the membership role after an authorized domain action. `game_session` writes it (`service_membership.py`). |
 | Character binding (`sync_character_ownership`) | `character:<char_id>#owner@user:<sub_id>`<br/>`character:<char_id>#campaign@campaign:<id>` | Binds a character to its owning player and campaign |
-| Session binding (`sync_session_campaign`) | `session:<sess_id>#campaign@campaign:<id>`<br/>`game_session:<sess_id>#campaign@campaign:<id>` | Links the session and the game session to their campaign. The campaign policies apply to the session. |
+| Session binding (`sync_session_campaign`) | `game_session:<sess_id>#campaign@campaign:<id>` | Links the session to its campaign. This is the one campaign link (ADR-0015 (a)). The campaign policies apply to the session. |
 | Board token binding (`sync_board_token`) | `board_token:<token_id>#character@character:<char_id>`<br/>`board_token:<token_id>#campaign@campaign:<id>` | Lets only the character owner or a game master move the token |
 
 Domain role names map to relations through `CAMPAIGN_ROLE_RELATIONS` (`libs/runefoble_auth/src/runefoble_auth/sync_tuples.py`). For example, `dm` and `gm` map to `game_master`. The map reads role names from domain events. It never reads token claims.
