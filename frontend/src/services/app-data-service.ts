@@ -1,6 +1,5 @@
 import type { CampaignItem, CampaignMember, CreateCampaignPayload, UpdateCampaignPayload, LobbyCharacterOption, LobbyParticipant } from '@runefoble/game-session-ui';
 import type { CharacterItem, RosterCampaignOption, CreateCharacterPayload } from '@runefoble/character-sheet-ui';
-import type { BoardToken } from '@runefoble/board-state-ui';
 import type { CaravanContractItem } from '@runefoble/game-session-ui';
 import type { WatcherFeedEvent } from '@runefoble/the-watcher-ui';
 import type { CampaignSessionItem } from '../components/runefoble-session-list.ts';
@@ -8,7 +7,8 @@ import { authService, type UserClaims } from '../auth/auth-service.ts';
 import { toWatcherFeedEvent, type SessionChronicleEntry } from './session-chronicle.ts';
 import { resolveLobbyAvailableCharacters } from './lobby-character-options.ts';
 import type { CampaignCapabilities } from './campaign-capabilities.ts';
-import { dataFailure, dataOk, type DataResult } from './data-result.ts';
+import { dataFailure, dataOk, isNotFound, type DataResult } from './data-result.ts';
+import type { SessionBoard } from './session-board.ts';
 import { requestData } from './shell-request.ts';
 import { isArray, malformedResponse, requireFields } from './required-fields.ts';
 import {
@@ -171,15 +171,16 @@ export class AppDataService {
     return this.request<unknown>(`${this.apiBase}/sessions/${sessionId}/join`, { method: 'POST', body: JSON.stringify(seat) });
   }
 
-  async fetchBoardState(sessionId: string): Promise<DataResult<{ cols: number; rows: number; tokens: BoardToken[] }>> {
+  /**
+   * Reads the session board (TASK-0906). A 404 means that no board exists yet for the session.
+   * It gives the typed `no_board` state. Every other failure stays a failure.
+   */
+  async fetchBoardState(sessionId: string): Promise<DataResult<SessionBoard>> {
     const res = await this.request<any>(`${this.apiBase}/boards/${sessionId}`);
+    if (isNotFound(res)) return dataOk({ kind: 'no_board' });
     if (!res.ok) return res;
-    return boardFromOwner(res.data);
-  }
-
-  async fetchBoardTokens(sessionId: string): Promise<DataResult<BoardToken[]>> {
-    const res = await this.fetchBoardState(sessionId);
-    return res.ok ? dataOk(res.data.tokens) : res;
+    const board = boardFromOwner(res.data);
+    return board.ok ? dataOk({ kind: 'board', ...board.data }) : board;
   }
 
   /** Reads the session chronicle feed from the gateway (TASK-0641). An empty session yields []. */

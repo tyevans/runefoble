@@ -69,13 +69,10 @@ describe('AppDataService success path through the gateway', () => {
     assert.equal(character.data.name, 'Valeros of Korvosa');
 
     const board = await service.fetchBoardState('session-tomb-14');
-    assert.ok(board.ok);
+    assert.ok(board.ok && board.data.kind === 'board');
     assert.equal(board.data.cols, 12);
     assert.equal(board.data.tokens.length, Object.keys(OWNER_BOARD_TOKENS).length);
-
-    const tokens = await service.fetchBoardTokens('session-tomb-14');
-    assert.ok(tokens.ok);
-    assert.equal(tokens.data[0].name, 'Valeros');
+    assert.equal(board.data.tokens[0].name, 'Valeros');
 
     const lobby = await service.fetchLobbyState('4', 'session-tomb-14');
     assert.ok(lobby.ok);
@@ -182,7 +179,6 @@ describe('AppDataService failure path returns typed errors, never fixture data',
     ['deleteCharacter', () => service.deleteCharacter('char-valeros')],
     ['fetchLobbyState', () => service.fetchLobbyState('4', 'session-tomb-14')],
     ['fetchBoardState', () => service.fetchBoardState('session-tomb-14')],
-    ['fetchBoardTokens', () => service.fetchBoardTokens('session-tomb-14')],
     ['createCampaignSession', () => service.createCampaignSession('4', { title: 'Session #16' })],
     ['createCampaign', () => service.createCampaign({ title: 'Ashen Keep' } as any)],
     ['updateCampaign', () => service.updateCampaign('4', { title: 'Renamed' } as any)],

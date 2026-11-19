@@ -9,6 +9,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./runefoble-board": "./src/runefoble-board.ts",
+    "./runefoble-board-empty": "./src/runefoble-board-empty.ts",
     "./runefoble-dm-trap-controls": "./src/runefoble-dm-trap-controls.ts",
     "./runefoble-dm-trap-controls.styles": "./src/runefoble-dm-trap-controls.styles.ts",
     "./runefoble-map-switcher": "./src/runefoble-map-switcher.ts",

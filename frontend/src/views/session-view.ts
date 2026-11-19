@@ -20,6 +20,16 @@ function renderBoardDmControls(app: RunefobleApp) {
   </div>`;
 }
 
+/**
+ * The board, or the no-battlemap state while the session has no board (TASK-0906).
+ * The DM board controls act on a board, so they show only when the board exists.
+ */
+function renderBoardArea(app: RunefobleApp, canRunSession: boolean) {
+  if (app.boardKind === 'no_board') return html`<runefoble-board-empty ?can-set-up-map=${canRunSession}></runefoble-board-empty>`;
+  return html`<runefoble-board .cols=${app.boardCols} .rows=${app.boardRows} .tokens=${app.tokens} .fogOfWar=${true} .websocketUrl=${app.getWebSocketUrl()} @token-action=${(e: CustomEvent) => handleBoardTokenAction(e, app.sessionSocket.current)} @aoe-place=${(e: CustomEvent) => handleBoardAoEPlace(e, app.sessionSocket.current)} @spell-vfx-triggered=${(e: CustomEvent) => handleBoardSpellVFX(e, app.sessionSocket.current)} @confirm-ghost=${(e: CustomEvent) => handleBoardConfirmGhost(e, app.sessionSocket.current)} @move-token=${(e: CustomEvent) => recordBoardMoveTarget(app, e)}></runefoble-board>
+      ${renderBoardDmControls(app)}`;
+}
+
 /** Renders the live tabletop (party mode) or the spectator view for an active session. */
 export function renderSessionActive(app: RunefobleApp) {
   const char = app.activeCharacter ?? app.resolveActiveCharacter(app.campaignId);
@@ -30,8 +40,7 @@ export function renderSessionActive(app: RunefobleApp) {
   return html`<div class="layout-grid">
     <div class="board-column">
       <runefoble-plugin-slot slot-id="hud-widget" .showFallback=${false}></runefoble-plugin-slot>
-      <runefoble-board .cols=${app.boardCols} .rows=${app.boardRows} .tokens=${app.tokens} .fogOfWar=${true} .websocketUrl=${app.getWebSocketUrl()} @token-action=${(e: CustomEvent) => handleBoardTokenAction(e, app.sessionSocket.current)} @aoe-place=${(e: CustomEvent) => handleBoardAoEPlace(e, app.sessionSocket.current)} @spell-vfx-triggered=${(e: CustomEvent) => handleBoardSpellVFX(e, app.sessionSocket.current)} @confirm-ghost=${(e: CustomEvent) => handleBoardConfirmGhost(e, app.sessionSocket.current)} @move-token=${(e: CustomEvent) => recordBoardMoveTarget(app, e)}></runefoble-board>
-      ${renderBoardDmControls(app)}
+      ${renderBoardArea(app, canRunSession)}
     </div>
     <div class="character-column">
       ${canRunSession ? html`<div class="dm-party-inspector" role="region" aria-label="DM Party Inspector"><span class="dm-badge">DM Party Inspector</span><select class="dm-character-switcher" aria-label="Switch inspected character" @change=${(e: Event) => switchDmCharacter(app, (e.target as HTMLSelectElement).value)}>${app.characters.map((c) => html`<option value="${c.id}" ?selected=${c.id === char?.id}>${c.name} (${c.characterClass} Lv ${c.level})</option>`)}</select></div>` : ''}

@@ -30,10 +30,27 @@ describe('App Shell Board State & Plugin Slot Wiring', () => {
 
   it('provides dynamic board dimensions and tokens via fetchBoardState', async () => {
     const state = await dataService.fetchBoardState('session-tomb-14');
-    assert.ok(state.ok);
+    assert.ok(state.ok && state.data.kind === 'board');
     assert.ok(typeof state.data.cols === 'number' && typeof state.data.rows === 'number');
     assert.ok(Array.isArray(state.data.tokens) && state.data.tokens.length >= 1);
   });
+
+  it('reads a 404 board as the typed no_board state (TASK-0906)', async () => {
+    gateway.restore();
+    gateway = installFakeGateway({ 'GET /api/v1/boards/session-new': { status: 404, body: { detail: 'Board not found' } } });
+    const state = await dataService.fetchBoardState('session-new');
+    assert.deepEqual(state, { ok: true, data: { kind: 'no_board' } });
+  });
+
+  for (const status of [401, 403, 503]) {
+    it(`keeps a ${status} board read as a failure (TASK-0906)`, async () => {
+      gateway.restore();
+      gateway = installFakeGateway({ 'GET /api/v1/boards/session-new': { status, body: { detail: 'Board service unavailable' } } });
+      const state = await dataService.fetchBoardState('session-new');
+      assert.equal(state.ok, false);
+      assert.equal((state as { status: number }).status, status);
+    });
+  }
 
   it('registers default tabletop plugins across standard slots for players and DM (TASK-0358)', () => {
     registerDefaultPlugins(pluginRegistry, false);
