@@ -19,6 +19,7 @@ from runefoble_platform.event_publish import DomainEventPublishError
 from voice_agent.auth import CallerPrincipal, get_voice_verifier
 from voice_agent.authz import require_speaker, speaker_allowed, speaker_authorizer
 from voice_agent.stt import get_streaming_pipeline
+from voice_agent.vad import AudioFormatError
 
 logger = logging.getLogger("runefoble.voice_agent.stream_routes")
 
@@ -160,6 +161,10 @@ async def audio_stream_websocket(
                     is_final=is_final,
                     caller_authorization=caller_authorization,
                 )
+            except AudioFormatError as e:
+                # The frame is not forwarded. Tell the client, then keep the stream open.
+                await websocket.send_json({"error": e.error_code, "message": str(e)})
+                continue
             except EngineUnavailableError as e:
                 await websocket.send_json(e.body())
                 continue

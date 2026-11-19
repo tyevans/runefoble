@@ -11,7 +11,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 import httpx
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from runefoble_auth.authz_http import install_authz_error_handlers
 from runefoble_platform.aggregate_loading import register_store_unavailable_handlers
@@ -57,6 +57,13 @@ from voice_agent.routers import (
 )
 from voice_agent.stt import get_streaming_pipeline
 from voice_agent.synthesis_engine import get_speech_synthesizer
+from voice_agent.vad import AudioFormatError
+
+
+async def audio_format_error_handler(_request: Request, exc: AudioFormatError) -> JSONResponse:
+    """Reject malformed WAV input with 400. The body names the stable code. No audio is guessed."""
+    return JSONResponse({"error": exc.error_code, "message": str(exc)}, status_code=400)
+
 
 # Start-up fails when the manifest is missing or invalid. No fallback manifest exists (ADR-0015 4).
 UI_MANIFEST = load_ui_manifest(
@@ -83,6 +90,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 app.add_exception_handler(EngineUnavailableError, engine_unavailable_handler)
+app.add_exception_handler(AudioFormatError, audio_format_error_handler)
 install_authz_error_handlers(app)
 register_store_unavailable_handlers(app)
 install_publish_failure_handler(app)

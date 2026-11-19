@@ -298,6 +298,7 @@ When the engine fails to load a model or to infer text, the utterance is dropped
 
 - `POST /api/v1/voice/stream/chunk` returns `503` with `{"detail": {"error": "speech_engine_unavailable", "engine": "faster-whisper", "message": "..."}}`.
 - `WS /api/v1/voice/stream/ws` sends `{"error": "speech_engine_unavailable", "engine": "...", "message": "..."}` and keeps the socket open.
+- A RIFF body with no `data` chunk, or shorter than the 44-byte header, returns `400` with `{"error": "audio_format_invalid", "message": "..."}` on the HTTP routes. The WebSocket sends the same body as a frame and keeps the socket open. The service never reads such bytes as raw PCM.
 - The route returns the 503 and records no speech. No Redis Streams event is published for the failure.
 - No `runefoble.events.watcher.player_spoke` is published, and The Watcher receives no transcript.
 
