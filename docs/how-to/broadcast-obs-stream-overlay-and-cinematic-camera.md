@@ -4,24 +4,36 @@ This guide explains how content creators and broadcast streamers (Devon) embed t
 
 ---
 
-## 1. Reading the Party Vitals Overlay Data
+## 1. Adding the Party Vitals Overlay to OBS
 
-The gateway serves the party vitals as JSON:
+Add one URL to OBS as a **Browser Source**. The App Shell serves the overlay on its own route. The page has no header and no shell chrome. Its background is transparent.
 
 ```
-http://localhost:8000/overlay/party-vitals/{session_id}?format=json
+https://<your-host>/#/overlay/party-vitals/{session_id}?position=bottom&easing=cubic-bezier(0.25,0.1,0.25,1.0)&duration=300
 ```
 
-The endpoint needs a verified `Authorization: Bearer <jwt>` header and the `session.observe` permission. The party and the camera target come from `board_state`. The round comes from `game_session`. A monster is never shown.
+### OBS Studio Configuration
+1. In OBS Studio, add a new **Browser Source** to your tabletop scene.
+2. Set **URL** to the address above. Replace `<your-host>` and `{session_id}`.
+3. Set **Width** to `1920` and **Height** to `1080`.
+4. Leave **Custom CSS** blank. The page sets its own transparent background.
+5. The page needs a signed-in viewer. If the source shows a sign-in error, right-click the source, choose **Interact**, and sign in there.
 
-The gateway no longer serves an HTML page for this route (TASK-0823). A request with `format=html`, or an `Accept` header that asks only for `text/html`, gets `406` with `error: html_not_served`. The OBS browser source cannot send a bearer header, so it cannot use this route. Host the `<runefoble-spectator-overlay>` component in an App Shell route to show the overlay in OBS. That route is not built yet.
-
-### URL Configuration Parameters
+### URL Query Parameters
 
 | Parameter | Type | Default | Description |
 |---|---|---|---|
-| `position` | `string` | `bottom` | Layout hint echoed in the JSON: `bottom`, `top`, or `sidebar` |
-| `format` | `string` | none | `json` returns JSON. `html` returns `406` |
+| `position` | `string` | `bottom` | Layout: `bottom`, `top`, or `sidebar` |
+| `easing` | `string` | `cubic-bezier(0.25, 0.1, 0.25, 1.0)` | CSS timing function for the card transitions. Only a `cubic-bezier(...)` value is accepted |
+| `duration` | `integer` | `300` | Card transition duration in milliseconds (0 to 10000) |
+
+A missing or malformed value takes its default. The values change how the overlay looks. They do not change what the owners send.
+
+### Data Source
+
+The page reads the party once from `GET /overlay/party-vitals/{session_id}?format=json`. The gateway checks `session.observe` on that read. The overlay then keeps itself current over its WebSocket. A viewer without `session.observe` sees an error on the page and no party data.
+
+The gateway serves JSON only. A request for HTML from the gateway route gets `406` with `error: html_not_served`. Use the App Shell URL above for OBS.
 
 ---
 

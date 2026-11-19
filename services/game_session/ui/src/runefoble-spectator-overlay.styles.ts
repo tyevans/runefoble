@@ -62,7 +62,7 @@ export const spectatorOverlayStyles = css`
     flex-direction: column;
     gap: 6px;
     pointer-events: auto;
-    transition: transform 300ms cubic-bezier(0.25, 0.1, 0.25, 1);
+    transition: transform var(--overlay-duration, 300ms) var(--overlay-easing, cubic-bezier(0.25, 0.1, 0.25, 1));
   }
 
   .party-vitals-card.active-turn {

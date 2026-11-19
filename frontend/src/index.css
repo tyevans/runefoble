@@ -17,3 +17,15 @@ body {
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
 }
+
+/* OBS party vitals page (TASK-0823 review): the document stays transparent so OBS can composite it. */
+html.obs-transparent,
+html.obs-transparent body,
+html.obs-transparent runefoble-app {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+main.obs-overlay-frame {
+  background: transparent;
+  min-height: 100vh;
+}

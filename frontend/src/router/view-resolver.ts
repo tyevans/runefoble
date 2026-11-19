@@ -20,7 +20,8 @@ export type AppActiveView =
   | 'session-lobby'
   | 'session-active'
   | 'profile'
-  | 'caravan-board';
+  | 'caravan-board'
+  | 'party-vitals-overlay';
 
 const CAMPAIGN = '#/campaigns/:campaignId';
 
@@ -39,5 +40,6 @@ export function resolveActiveView(route: Pick<MatchedRoute, 'pattern'> | null): 
   if (pat.startsWith('#/characters/')) return 'character-sheet';
   if (pat === '#/profile') return 'profile';
   if (pat === '#/caravans/:sharedWorldId') return 'caravan-board';
+  if (pat === '#/overlay/party-vitals/:sessionId') return 'party-vitals-overlay';
   return 'campaigns';
 }
