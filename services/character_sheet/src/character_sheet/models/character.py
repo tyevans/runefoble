@@ -38,6 +38,7 @@ class CharacterCore(BaseModel):
     spell_slots: dict[int, int] = Field(default_factory=lambda: {1: 2})
     stand_in_guardrails: StandInGuardrailPolicy = Field(default_factory=StandInGuardrailPolicy)
     is_stand_in_active: bool = False
+    applied_crafting_event_ids: list[str] = Field(default_factory=list)
     is_stabilized: bool = False
     base_portrait_url: str | None = None
     active_portrait_url: str | None = None

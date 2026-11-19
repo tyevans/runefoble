@@ -81,6 +81,7 @@ from runefoble_events.character import (
     AbsencePenaltyApplied,
     AbsencePenaltyCleared,
     CharacterAssignedToCampaign,
+    CharacterCraftingOutcomeApplied,
     CharacterCreated,
     CharacterDamaged,
     CharacterHealthChanged,

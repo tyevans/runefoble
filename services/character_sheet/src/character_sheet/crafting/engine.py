@@ -7,7 +7,11 @@ from typing import Any, Literal
 from uuid import UUID
 
 from character_sheet.crafting.mishaps import MishapResolver, calculate_volatile_risk
-from character_sheet.crafting.recipes import CraftingState, find_matching_recipe
+from character_sheet.crafting.recipes import (
+    CraftingAttemptRecord,
+    CraftingState,
+    find_matching_recipe,
+)
 from eventsource.domain.aggregate import DeclarativeAggregate
 from eventsource.domain.decorators import handles
 from runefoble_events.events import CraftingAttempted, CraftingMishapOccurred, CraftingSucceeded
@@ -101,7 +105,11 @@ class CraftingEngine:
 
 
 class CraftingAggregate(DeclarativeAggregate[CraftingState]):
-    """Event-sourced aggregate managing alchemical experimentation and volatile risk."""
+    """Event-sourced aggregate managing alchemical experimentation and volatile risk.
+
+    The aggregate records each combine decision and its outcome. The character applies the
+    recorded outcome later through the crafting process manager (TASK-0772).
+    """
 
     aggregate_type = "Crafting"
     requires_creation_event = False
@@ -116,6 +124,16 @@ class CraftingAggregate(DeclarativeAggregate[CraftingState]):
         self.state.character_id = e.character_id
         self.state.total_crafts += 1
         st = self.state
+        st.attempts.append(
+            CraftingAttemptRecord(
+                attempt_id=e.attempt_id,
+                session_id=str(e.session_id) if e.session_id else None,
+                reagents=list(e.reagents),
+                catalyst=e.catalyst,
+                risk_score=e.risk_score,
+                applies_to_character=e.applies_to_character,
+            )
+        )
         st.record("attempted", reagents=e.reagents, catalyst=e.catalyst, risk_score=e.risk_score)
 
     @handles(CraftingSucceeded)
@@ -123,11 +141,28 @@ class CraftingAggregate(DeclarativeAggregate[CraftingState]):
         self.state.successful_crafts += 1
         if e.recipe_name not in self.state.discovered_recipes:
             self.state.discovered_recipes.append(e.recipe_name)
+        attempt = self._open_attempt()
+        attempt.outcome_event_id = str(e.event_id)
+        attempt.outcome = "success"
+        attempt.item_name = e.item_name
+        attempt.recipe_name = e.recipe_name
+        attempt.quantity = e.quantity
+        attempt.tags = list(e.tags)
         self.state.record("succeeded", item_name=e.item_name, quantity=e.quantity, tags=e.tags)
 
     @handles(CraftingMishapOccurred)
     def handle_mishap(self, e: CraftingMishapOccurred) -> None:
         self.state.mishaps_count += 1
+        attempt = self._open_attempt()
+        attempt.outcome_event_id = str(e.event_id)
+        attempt.outcome = "mishap"
+        attempt.mishap = {
+            "mishap_type": e.mishap_type,
+            "severity": e.severity,
+            "description": e.description,
+            "damage": e.damage_dealt,
+            "condition": e.condition_inflicted,
+        }
         self.state.record(
             "mishap",
             mishap_type=e.mishap_type,
@@ -135,6 +170,17 @@ class CraftingAggregate(DeclarativeAggregate[CraftingState]):
             damage_dealt=e.damage_dealt,
             condition=e.condition_inflicted,
         )
+
+    def _open_attempt(self) -> CraftingAttemptRecord:
+        """Return the newest attempt that has no outcome yet. Its outcome event follows it."""
+        for attempt in reversed(self.state.attempts):
+            if attempt.outcome_event_id is None:
+                return attempt
+        raise RuntimeError("A crafting outcome arrived without a recorded attempt")
+
+    def find_attempt(self, attempt_id: UUID) -> CraftingAttemptRecord | None:
+        """Return the recorded attempt with this client attempt id, or None."""
+        return next((a for a in self.state.attempts if a.attempt_id == attempt_id), None)
 
     def combine_reagents(
         self,
@@ -146,6 +192,7 @@ class CraftingAggregate(DeclarativeAggregate[CraftingState]):
         player_id: str | None = None,
         force_mishap: bool = False,
         risk_threshold: float = 0.50,
+        attempt_id: UUID | None = None,
     ) -> CombineOutcome:
         """Combine reagents in crucible, evaluate volatile outcome, and record domain events."""
         camp, sess = (
@@ -155,7 +202,9 @@ class CraftingAggregate(DeclarativeAggregate[CraftingState]):
         att, ev_cls, kw, outcome = CraftingEngine.resolve(
             character_id, reagents, catalyst, camp, sess, player_id, force_mishap, risk_threshold
         )
-        self.create_event(CraftingAttempted, **att)
+        self.create_event(
+            CraftingAttempted, **att, attempt_id=attempt_id, applies_to_character=True
+        )
         self.create_event(ev_cls, **kw)
         return outcome
 

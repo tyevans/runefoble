@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -77,6 +77,28 @@ class Recipe(BaseModel):
     dc: int = 10
 
 
+class CraftingAttemptRecord(BaseModel):
+    """One recorded combine attempt and its outcome. Built from the crafting events (TASK-0772).
+
+    `outcome_event_id` names the success or mishap event. It is None until that event lands.
+    `applies_to_character` is False for attempts recorded before the process manager.
+    """
+
+    attempt_id: UUID | None = None
+    session_id: str | None = None
+    reagents: list[str] = Field(default_factory=list)
+    catalyst: str | None = None
+    risk_score: float = 0.0
+    applies_to_character: bool = False
+    outcome_event_id: str | None = None
+    outcome: Literal["success", "mishap"] | None = None
+    item_name: str | None = None
+    recipe_name: str | None = None
+    quantity: int = 1
+    tags: list[str] = Field(default_factory=list)
+    mishap: dict[str, Any] | None = None
+
+
 class CraftingState(BaseModel):
     """Event-sourced state for crafting history, discovered recipes, and mishaps."""
 
@@ -86,6 +108,8 @@ class CraftingState(BaseModel):
     mishaps_count: int = 0
     discovered_recipes: list[str] = Field(default_factory=list)
     crafting_log: list[dict[str, Any]] = Field(default_factory=list)
+    # Internal to the process manager. Not part of the history response.
+    attempts: list[CraftingAttemptRecord] = Field(default_factory=list, exclude=True)
 
     def record(self, kind: str, **kw: Any) -> None:
         self.crafting_log.append({"event": kind, **kw})

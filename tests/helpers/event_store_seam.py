@@ -9,12 +9,13 @@ Governed by ADR-0011, ADR-0015 and Hard Invariant 7 (TASK-0773).
 
 from __future__ import annotations
 
-from collections.abc import Iterator
+from collections.abc import Iterator, Sequence
 from contextlib import contextmanager
 from typing import NoReturn
 
 import pytest
 from eventsource.adapters.memory.store import InMemoryEventStore
+from eventsource.domain.stream_id import StreamId
 from runefoble_platform.event_sourcing import get_event_store, set_event_store
 
 from tests.helpers.module_state import restored_seam
@@ -25,6 +26,41 @@ class OutageEventStore(InMemoryEventStore):
 
     def read_stream(self, *_args: object, **_kwargs: object) -> NoReturn:  # type: ignore[override]
         raise ConnectionError("event store unreachable")
+
+
+class AppendOutageStore:
+    """Delegate every call to the inner store, except appends to one stream category.
+
+    An append to that category raises, as when PostgreSQL rejects a write. Reads still work,
+    so the events already stored remain visible.
+    """
+
+    def __init__(self, inner: object, stream_category: str) -> None:
+        self._inner = inner
+        self._category = stream_category
+
+    def __getattr__(self, name: str) -> object:
+        return getattr(self._inner, name)
+
+    async def append(self, stream: StreamId, events: Sequence[object], expected: object) -> object:
+        if stream.category == self._category:
+            raise ConnectionError("event store unreachable")
+        return await self._inner.append(stream, events, expected)  # type: ignore[attr-defined]
+
+
+@contextmanager
+def store_append_outage(stream_category: str) -> Iterator[None]:
+    """Fail every append to one stream category, then restore the previous store.
+
+    Use it to fail the second of two saves, for example the character save after the crafting
+    save. The previous store keeps its events.
+    """
+    previous = get_event_store()
+    set_event_store(AppendOutageStore(previous, stream_category))  # type: ignore[arg-type]
+    try:
+        yield
+    finally:
+        set_event_store(previous)
 
 
 @contextmanager

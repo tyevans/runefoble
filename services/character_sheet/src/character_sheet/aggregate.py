@@ -24,7 +24,11 @@ from character_sheet.rules import (
 )
 from eventsource.domain.aggregate import DeclarativeAggregate
 from eventsource.domain.decorators import handles
-from runefoble_events.events import CharacterAssignedToCampaign, CharacterCreated
+from runefoble_events.events import (
+    CharacterAssignedToCampaign,
+    CharacterCraftingOutcomeApplied,
+    CharacterCreated,
+)
 
 DEFAULT_SCORES = {"str": 10, "dex": 10, "con": 10, "int": 10, "wis": 10, "cha": 10}
 
@@ -115,3 +119,21 @@ class CharacterAggregate(
         self._state = self._state.with_campaign(
             str(event.campaign_id) if event.campaign_id is not None else None
         )
+
+    def record_crafting_outcome_applied(
+        self, crafting_event_id: str, attempt_id: str | None
+    ) -> None:
+        """Mark one crafting outcome as applied to this character (TASK-0772)."""
+        self.create_event(
+            CharacterCraftingOutcomeApplied,
+            character_id=str(self.aggregate_id),
+            crafting_event_id=crafting_event_id,
+            attempt_id=attempt_id,
+        )
+
+    @handles(CharacterCraftingOutcomeApplied)
+    def _on_crafting_outcome_applied(self, event: CharacterCraftingOutcomeApplied) -> None:
+        applied = list(self._state.applied_crafting_event_ids)
+        if event.crafting_event_id not in applied:
+            applied.append(event.crafting_event_id)
+        self._state = self._state.model_copy(update={"applied_crafting_event_ids": applied})
