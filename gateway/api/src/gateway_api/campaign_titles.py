@@ -10,6 +10,7 @@ from __future__ import annotations
 from fastapi import Request
 from gateway_api.proxy import forward_json
 from gateway_api.upstream_errors import UpstreamRejectedError
+from runefoble_platform.service_client import owner_routes
 
 
 async def campaign_titles(request: Request, campaign_ids: set[str]) -> dict[str, str | None]:
@@ -17,11 +18,12 @@ async def campaign_titles(request: Request, campaign_ids: set[str]) -> dict[str,
     titles: dict[str, str | None] = {}
     for campaign_id in sorted(campaign_ids):
         try:
+            route = owner_routes.get_campaign(campaign_id)
             body = await forward_json(
                 request,
                 service="game_session",
-                method="GET",
-                path=f"/api/v1/campaigns/{campaign_id}",
+                method=route.method,
+                path=route.path,
             )
         except UpstreamRejectedError:
             titles[campaign_id] = None
