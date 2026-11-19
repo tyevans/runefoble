@@ -1,0 +1,51 @@
+{{- if and .Values.silo.enabled .Values.silo.bucketJob.enabled -}}
+{{- /*
+Bucket Job for Silo (TASK-0924). It runs after install and upgrade, and creates every bucket in
+`silo.buckets`. `mc mb --ignore-existing` makes it idempotent: an existing bucket is not an
+error. The client image has no shell, so the Job does not wait in a loop. While Silo is not
+ready, `mc` exits with an error and the Job restarts the pod, up to `bucketJob.backoffLimit`.
+The client reads the Silo endpoint and credentials from MC_HOST_silo. Kubernetes expands the
+two Secret variables into that URL, so the Silo keys must be URL-safe.
+*/ -}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: silo-buckets
+  labels:
+    app: silo-buckets
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "5"
+    "helm.sh/hook-delete-policy": before-hook-creation
+spec:
+  backoffLimit: {{ .Values.silo.bucketJob.backoffLimit }}
+  template:
+    metadata:
+      labels:
+        app: silo-buckets
+    spec:
+      restartPolicy: OnFailure
+      automountServiceAccountToken: false
+      containers:
+        - name: create-buckets
+          image: {{ .Values.silo.bucketJob.image | quote }}
+          args:
+            - --config-dir
+            - /tmp/mc
+            - mb
+            - --ignore-existing
+            {{- range .Values.silo.buckets }}
+            - {{ printf "silo/%s" . | quote }}
+            {{- end }}
+          env:
+            {{- include "runefoble.secretEnv" (dict "root" $ "name" "SILO_ACCESS_KEY" "key" "silo-access-key") | nindent 12 }}
+            {{- include "runefoble.secretEnv" (dict "root" $ "name" "SILO_SECRET_KEY" "key" "silo-secret-key") | nindent 12 }}
+            - name: MC_HOST_silo
+              value: {{ printf "http://$(SILO_ACCESS_KEY):$(SILO_SECRET_KEY)@silo:%v" .Values.silo.port | quote }}
+          volumeMounts:
+            - name: mc-config
+              mountPath: /tmp
+      volumes:
+        - name: mc-config
+          emptyDir: {}
+{{- end }}

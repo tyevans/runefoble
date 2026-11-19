@@ -2,11 +2,19 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 from fastapi import HTTPException
 from runefoble_platform.asset_index import asset_read_path, record_stored_asset
-from runefoble_platform.storage import AssetStorageError, AssetValidationError, SiloStorageService
+from runefoble_platform.storage import (
+    AssetStorageError,
+    AssetValidationError,
+    SiloStorageService,
+    log_storage_failure,
+)
+
+logger = logging.getLogger(__name__)
 
 
 async def store_forged_asset(
@@ -22,7 +30,8 @@ async def store_forged_asset(
 
     The reply names the authorized read path in `download_url`. It never names a Silo URL.
 
-    Maps a rejected payload to HTTP 422 and any Silo failure to HTTP 503. On failure
+    Maps a rejected payload to HTTP 422 and any Silo failure to HTTP 503. A Silo failure is
+    logged with the bucket and the object key. On failure
     no index entry is written, so the caller never receives an asset id that does not
     resolve.
     """
@@ -38,6 +47,7 @@ async def store_forged_asset(
     except AssetValidationError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     except AssetStorageError as exc:
+        log_storage_failure(logger, "forge upload", exc)
         raise HTTPException(
             status_code=503,
             detail="Silo asset storage is unavailable. The asset was not stored.",

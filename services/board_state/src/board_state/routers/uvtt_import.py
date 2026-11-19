@@ -28,7 +28,7 @@ from board_state.parsers.uvtt import (
 )
 from board_state.projection import public_doors, public_portals
 from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
-from runefoble_platform.storage import AssetStorageError
+from runefoble_platform.storage import AssetStorageError, log_storage_failure
 
 logger = logging.getLogger("runefoble.board_state.routers.uvtt_import")
 router = APIRouter(tags=["uvtt"], dependencies=[Depends(get_principal)])
@@ -72,7 +72,7 @@ async def import_uvtt_map_endpoint(
                 session_id=id,
             )
         except AssetStorageError as exc:
-            logger.error("Silo rejected UVTT battlemap image: %s", exc)
+            log_storage_failure(logger, "UVTT battlemap image upload", exc)
             raise HTTPException(
                 status_code=503,
                 detail="Silo asset storage is unavailable. The map was not imported.",

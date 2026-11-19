@@ -90,8 +90,8 @@ Runefoble is designed around a Kubernetes-first microservices topology deployed 
 - **Buckets**: `runefoble-assets`, `runefoble-recordings`.
 - **Storage**: The chart runs Silo as a StatefulSet named `silo`. Its data claim `data` mounts at `/data`, the server data path. Size and storage class come from `silo.persistence.size` (default `10Gi`) and `silo.persistence.storageClass` (default empty). A pod restart keeps every object. Deleting the claim deletes every object.
 - **Environment Variables**: `RUNEFOBLE_SILO_ENDPOINT`, `RUNEFOBLE_SILO_ACCESS_KEY`, `RUNEFOBLE_SILO_SECRET_KEY`, `RUNEFOBLE_SILO_BUCKET_ASSETS`.
-- **Buckets**: The chart creates no buckets. Create `runefoble-assets` and `runefoble-recordings` on the Silo endpoint before the first upload, for example with the MinIO client (`mc mb`). Asset Forge stores its objects in `runefoble-assets`.
-- **Failure Behaviour**: Every write, read, and delete goes to Silo. A transport error or a non-2xx status raises `AssetStorageError`. Forge and gateway routes return `503 Service Unavailable`. No object is stored and no asset id is issued. Nothing is written to process memory.
+- **Bucket Job**: the Helm hook Job `silo-buckets` runs after install and upgrade. It creates every bucket in `silo.buckets` (default `runefoble-assets`, `runefoble-recordings`) with `mc mb --ignore-existing`, so an existing bucket is not an error. No manual step is needed. The image is `silo.bucketJob.image`, the Chainguard MinIO client, pinned by digest. The image has no shell. While Silo is not ready, the Job restarts its pod, up to `silo.bucketJob.backoffLimit` (default `10`). The Job reads the Silo keys from the credentials Secret and expands them into `MC_HOST_silo`, so the keys must be URL-safe. Asset Forge stores its objects in `runefoble-assets`.
+- **Failure Behaviour**: Every write, read, and delete goes to Silo. A transport error or a non-2xx status raises `AssetStorageError`. Forge and gateway routes return `503 Service Unavailable`. The owning service logs the failure at error level with the bucket and the object key (`runefoble_platform.storage.log_storage_failure`). The log record never holds the object bytes or the Silo keys. No object is stored and no asset id is issued. Nothing is written to process memory.
 - **Asset Index**: The metadata for each stored object is an event-sourced `AssetIndexAggregate` (`runefoble_platform.asset_index`). Its events are `AssetUploaded` and `AssetDeleted`. Its aggregate id is derived from the asset id. The index is written only after Silo confirms a write. It survives restarts and replicas when the event store is PostgreSQL.
 
 ### 6. Observability (OpenTelemetry, Loki, Grafana)
@@ -123,8 +123,8 @@ The chart stores every credential in one Kubernetes Secret and reads it with `se
 | Secret key | Values path | Read by |
 |---|---|---|
 | `postgres-password` | `credentials.postgres.password` | Every service with a database URL, SpiceDB, OpenPanel, Zitadel, Postgres |
-| `silo-access-key` | `credentials.silo.accessKey` | Silo, Soundscape, Asset Forge |
-| `silo-secret-key` | `credentials.silo.secretKey` | Silo, Soundscape, Asset Forge |
+| `silo-access-key` | `credentials.silo.accessKey` | Silo, Silo bucket Job, Soundscape, Asset Forge |
+| `silo-secret-key` | `credentials.silo.secretKey` | Silo, Silo bucket Job, Soundscape, Asset Forge |
 | `spicedb-preshared-key` | `credentials.spicedb.presharedKey` | SpiceDB, schema job, all services that call SpiceDB |
 | `zitadel-masterkey` | `credentials.zitadel.masterKey` | Zitadel |
 | `zitadel-admin-password` | `credentials.zitadel.adminPassword` | Zitadel |
