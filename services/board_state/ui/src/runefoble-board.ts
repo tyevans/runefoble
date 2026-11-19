@@ -2,7 +2,8 @@ import { AuthConsumerController, websocketProtocols } from '@runefoble/ui-core';
 import { LitElement, html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import type { AoETemplateConfig, BoardToken, DragKinematicsState, GhostPreviewState, RadialActionType, TerrainCell } from './board-types.ts';
-import { renderAoEBanner, renderAoEOverlay, renderBoardHeader, renderGhostBanner, renderRadialMenuOverlay, renderStatusBar } from './board-templates.ts';
+import { renderGhostBanner } from './templates/kinematics.template.ts';
+import { renderBoardHeader, renderStatusBar, renderRadialMenuOverlay, renderAoEOverlay, renderAoEBanner } from './templates/overlays.template.ts';
 import { cancelAoEPlacement, confirmAoEPlacement, executeRadialAction, handleBoardSocketMessage, requestAoEPreview } from './board-actions.ts';
 import { renderBoardGrid } from './board-grid.ts';
 import { buildConfirmMoveMessage } from './board-api.ts';
@@ -15,15 +16,6 @@ import { TabletopPhysicsVisualizer, PhysicsBridge } from './physics_3d/index.ts'
 import './radial_menu.ts';
 import './aoe_templates.ts';
 import './physics_3d/runefoble-tabletop-3d.ts';
-
-export type * from './board-types.ts';
-export * from './ghost_preview.ts';
-export * from './kinematics.ts';
-export * from './radial_menu.ts';
-export * from './aoe_templates.ts';
-export * from './board-actions.ts';
-export * from './particle_canvas.ts';
-export * from './physics_3d/index.ts';
 
 @customElement('runefoble-board')
 export class RunefobleBoard extends LitElement {

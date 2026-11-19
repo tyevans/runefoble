@@ -8,49 +8,27 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { nothing } from 'lit';
 
-// Test imports from aggregator facade
 import {
   getHealthBarColor,
   renderVectorOverlay,
   renderDistanceRuler,
   renderGhostBanner,
+} from '../../services/board_state/ui/src/templates/kinematics.template.ts';
+
+import {
   renderBoardCell,
+  type BoardCellProps,
+} from '../../services/board_state/ui/src/templates/cell.template.ts';
+
+import {
   renderBoardHeader,
   renderStatusBar,
   renderRadialMenuOverlay,
   renderAoEOverlay,
   renderAoEBanner,
-} from '../../services/board_state/ui/src/board-templates.ts';
-
-// Test direct imports from modular sub-templates
-import {
-  getHealthBarColor as getHealthBarColorDirect,
-  renderVectorOverlay as renderVectorOverlayDirect,
-  renderDistanceRuler as renderDistanceRulerDirect,
-  renderGhostBanner as renderGhostBannerDirect,
-} from '../../services/board_state/ui/src/templates/kinematics.template.ts';
-
-import {
-  renderBoardCell as renderBoardCellDirect,
-  type BoardCellProps,
-} from '../../services/board_state/ui/src/templates/cell.template.ts';
-
-import {
-  renderBoardHeader as renderBoardHeaderDirect,
-  renderStatusBar as renderStatusBarDirect,
-  renderRadialMenuOverlay as renderRadialMenuOverlayDirect,
-  renderAoEOverlay as renderAoEOverlayDirect,
-  renderAoEBanner as renderAoEBannerDirect,
 } from '../../services/board_state/ui/src/templates/overlays.template.ts';
 
 describe('Board Templates: Kinematics Submodule', () => {
-  it('re-exports match direct sub-template functions', () => {
-    assert.equal(getHealthBarColor, getHealthBarColorDirect);
-    assert.equal(renderVectorOverlay, renderVectorOverlayDirect);
-    assert.equal(renderDistanceRuler, renderDistanceRulerDirect);
-    assert.equal(renderGhostBanner, renderGhostBannerDirect);
-  });
-
   it('calculates health bar color according to health ratio', () => {
     assert.equal(getHealthBarColor(10, 10), 'var(--rf-accent-secondary)');
     assert.equal(getHealthBarColor(6, 10), 'var(--rf-accent-secondary)');
@@ -142,10 +120,6 @@ describe('Board Templates: Kinematics Submodule', () => {
 });
 
 describe('Board Templates: Cell Submodule', () => {
-  it('re-exports match direct sub-template functions', () => {
-    assert.equal(renderBoardCell, renderBoardCellDirect);
-  });
-
   it('renders tactical grid cell with token and health bar', () => {
     const props: BoardCellProps = {
       x: 2,
@@ -196,14 +170,6 @@ describe('Board Templates: Cell Submodule', () => {
 });
 
 describe('Board Templates: Overlays Submodule', () => {
-  it('re-exports match direct sub-template functions', () => {
-    assert.equal(renderBoardHeader, renderBoardHeaderDirect);
-    assert.equal(renderStatusBar, renderStatusBarDirect);
-    assert.equal(renderRadialMenuOverlay, renderRadialMenuOverlayDirect);
-    assert.equal(renderAoEOverlay, renderAoEOverlayDirect);
-    assert.equal(renderAoEBanner, renderAoEBannerDirect);
-  });
-
   it('renders board header with 3D toggle and watcher status', () => {
     let fogToggled = false;
     let toggled3D = false;

@@ -1,19 +1,12 @@
 import { LitElement, html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { settingsModalStyles } from './runefoble-settings-modal.styles.ts';
-import { type ColorMode, type ThemeOption, SETTINGS_THEME_OPTIONS } from './runefoble-settings-modal.types.ts';
+import type { ColorMode } from './runefoble-settings-modal.types.ts';
 import type { ThemeMode } from './runefoble-theme-switcher.ts';
 import { ThemeSettingsController } from './settings/settings-theme-controller.ts';
 import './settings/runefoble-settings-appearance.ts';
 import './settings/runefoble-settings-audio.ts';
 import './settings/runefoble-settings-dice.ts';
-
-export type { ColorMode, ThemeOption };
-export { SETTINGS_THEME_OPTIONS };
-export * from './settings/settings-theme-controller.ts';
-export * from './settings/runefoble-settings-appearance.ts';
-export * from './settings/runefoble-settings-audio.ts';
-export * from './settings/runefoble-settings-dice.ts';
 
 @customElement('runefoble-settings-modal')
 export class RunefobleSettingsModal extends LitElement {

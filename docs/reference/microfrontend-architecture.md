@@ -9,7 +9,7 @@ runefoble/
 ├── frontend/                     # Lightweight App Shell
 │   ├── src/
 │   │   ├── runefoble-app.ts      # Top-level shell layout, header & WebSocket orchestration
-│   │   ├── components/           # Shell components & re-export modules (defect, DoR 9; TASK-0502)
+│   │   ├── components/           # Shell components only; no forwarding re-exports (DoR 9)
 │   │   │   ├── runefoble-settings-modal.ts  # Bauhaus settings modal with color mode & themes
 │   │   │   └── runefoble-theme-switcher.ts  # Bauhaus modernist theme switcher
 │   │   └── styles/
@@ -24,7 +24,6 @@ runefoble/
 │   │       ├── runefoble-board-tokens.styles.ts
 │   │       ├── runefoble-board.stories.ts
 │   │       ├── runefoble-board.stories.fixtures.ts
-│   │       ├── board-templates.ts
 │   │       ├── templates/
 │   │       │   ├── kinematics.template.ts
 │   │       │   ├── cell.template.ts
@@ -341,6 +340,6 @@ When companion `.styles.ts` files approach modular size thresholds (> 300 lines)
 - `compendium-base.styles.ts`: Host container, search bar, navigation tabs, filter pills, and results cards (< 100 lines).
 - `encounter-builder.styles.ts`: Difficulty meters, monster tags, party thresholds, and draft roster controls (< 120 lines).
 - `homebrew-form.styles.ts`: Form inputs, stat block preview grids, and action button groups (< 110 lines).
-- **Aggregator Facade (`runefoble-rules-compendium.styles.ts`)**: Re-exports all sub-stylesheets and combines them into an exported `compendiumStyles: CSSResult[]` array (< 60 lines), Defect (DoR 9): kept for all importing components. Removal: TASK-0502.
+- **Aggregator (`runefoble-rules-compendium.styles.ts`)**: Imports all sub-stylesheets and combines them into an exported `compendiumStyles: CSSResult[]` array (< 60 lines). It re-exports no sub-stylesheet. Components import `compendiumStyles` only.
 
 
