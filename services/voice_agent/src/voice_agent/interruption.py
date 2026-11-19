@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 
 from runefoble_events.events import VoiceSpeechInterrupted
-from voice_agent.dsp.cosine_crossfade import apply_cosine_crossfade as apply_soft_crossfade
+from voice_agent.dsp.cosine_crossfade import apply_cosine_crossfade
 from voice_agent.room_aggregate import VoicePlaybackState
 
 
@@ -72,12 +72,11 @@ def build_interruption(
         remaining_narration_text=rem_text,
         original_text=playback.original_text,
         timestamp=now,
-        faded_audio_bytes=apply_soft_crossfade(audio_tail) if audio_tail else None,
+        faded_audio_bytes=apply_cosine_crossfade(audio_tail) if audio_tail else None,
     )
 
 
 __all__ = [
     "InterruptionResult",
-    "apply_soft_crossfade",
     "build_interruption",
 ]

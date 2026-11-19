@@ -41,7 +41,6 @@ async def kick_voice_peer(session_id: str, request: Request, body: Annotated[Any
     )
 
 
-@router.get("/voice/streams/{session_id}/quality")
 @router.get("/api/v1/voice/streams/{session_id}/quality")
 async def get_stream_quality(session_id: str, request: Request) -> Any:
     """Forward a stream quality query. The optional peer_id query parameter is passed on."""
@@ -54,8 +53,6 @@ async def get_stream_quality(session_id: str, request: Request) -> Any:
     )
 
 
-@router.post("/voice/streams/{session_id}/report")
-@router.post("/voice/streams/{session_id}/quality")
 @router.post("/api/v1/voice/streams/{session_id}/report")
 async def submit_rtcp_report(
     session_id: str, request: Request, body: Annotated[Any, Body()]
@@ -108,10 +105,9 @@ async def dispatch_turn_alert(
 
 
 def _stream_path(request: Request, session_id: str) -> str:
-    """Return the owner path that the caller used. voice_agent serves both `/api/v1` and bare paths."""
-    api_prefix = ("api", "v1") if request.url.path.startswith("/api/v1/") else ()
+    """Return the owner path for a stream action. voice_agent serves only `/api/v1/voice/streams`."""
     action = request.url.path.rsplit("/", 1)[-1]
-    return path(*api_prefix, "voice", "streams", session_id, action)
+    return path("api", "v1", "voice", "streams", session_id, action)
 
 
 __all__ = ["router"]

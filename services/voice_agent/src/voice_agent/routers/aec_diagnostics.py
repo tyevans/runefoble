@@ -46,7 +46,6 @@ class AECBenchmarkResponse(BaseModel):
     diagnostics: dict[str, float | int | bool | str] = Field(default_factory=dict)
 
 
-@router.post("/voice/aec/benchmark", response_model=AECBenchmarkResponse)
 @router.post("/api/v1/voice/aec/benchmark", response_model=AECBenchmarkResponse)
 async def run_aec_benchmark(
     req: AECBenchmarkRequest, principal: CallerPrincipal

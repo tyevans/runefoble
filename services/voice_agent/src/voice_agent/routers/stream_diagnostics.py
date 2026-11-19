@@ -52,7 +52,6 @@ def _make_resp(
     )
 
 
-@router.get("/voice/streams/{session_id}/quality")
 @router.get("/api/v1/voice/streams/{session_id}/quality")
 async def get_stream_quality(
     session_id: str, principal: CallerPrincipal, peer_id: str | None = None
@@ -68,8 +67,6 @@ async def get_stream_quality(
     }
 
 
-@router.post("/voice/streams/{session_id}/report", response_model=StreamQualityResponse)
-@router.post("/voice/streams/{session_id}/quality", response_model=StreamQualityResponse)
 @router.post("/api/v1/voice/streams/{session_id}/report", response_model=StreamQualityResponse)
 async def submit_rtcp_report(
     session_id: str, req: RTCPReportRequest, principal: CallerPrincipal

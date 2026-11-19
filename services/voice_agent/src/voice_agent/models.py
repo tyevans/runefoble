@@ -43,7 +43,6 @@ AVAILABLE_PERSONAS: dict[str, VoicePersona] = {
 
 
 class DSPApplyRequest(BaseModel):
-    filter: str | None = None
     filters: list[str] = Field(default_factory=list)
     audio_base64: str | None = None
     sample_rate: int = 16000
@@ -54,11 +53,9 @@ class DSPApplyRequest(BaseModel):
 
 class DSPApplyResponse(BaseModel):
     audio_base64: str
-    audio_payload: str
     audio_bytes_length: int
     filters_applied: list[str] = Field(default_factory=list)
     latency_ms: float = 0.0
-    dsp_metadata: dict[str, Any] = Field(default_factory=dict)
     dsp_parameters: dict[str, Any] = Field(default_factory=dict)
 
 
@@ -85,8 +82,6 @@ class TTSResponse(BaseModel):
     conditioned_text: str = ""
     effects_applied: list[str] = Field(default_factory=list)
     dsp_parameters: dict[str, Any] = Field(default_factory=dict)
-    dsp_metadata: dict[str, Any] = Field(default_factory=dict)
-    audio_payload: str = ""
     audio_base64: str = ""
     latency_ms: float = 0.0
 

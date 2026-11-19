@@ -2,9 +2,6 @@
 
 from __future__ import annotations
 
-from voice_agent.audio_utils import (
-    to_samples_array,
-)
 from voice_agent.dsp.barge_in_filter import BargeInOnsetFilter, BargeInOnsetResult
 from voice_agent.dsp.base import (
     DSPFilterConfig,
@@ -33,17 +30,6 @@ from voice_agent.dsp.presets import (
     get_preset,
     list_presets,
 )
-from voice_agent.filters import (
-    apply_audio_filters,
-    drunk_filter,
-    ethereal_filter,
-    underwater_filter,
-    whisper_filter,
-)
-from voice_agent.phonetics import (
-    apply_slurred_speech,
-    apply_text_transforms,
-)
 
 __all__ = [
     "ANCIENT_DRAGON",
@@ -61,18 +47,10 @@ __all__ = [
     "ROBOTIC_CONSTRUCT",
     "StreamPipelineFilter",
     "VoiceDSPPipeline",
-    "apply_audio_filters",
     "apply_cosine_crossfade",
-    "apply_slurred_speech",
-    "apply_text_transforms",
     "biquad_resonance",
-    "drunk_filter",
-    "ethereal_filter",
     "get_preset",
     "list_presets",
     "pitch_shift",
     "shift_pitch_and_formants",
-    "to_samples_array",
-    "underwater_filter",
-    "whisper_filter",
 ]
