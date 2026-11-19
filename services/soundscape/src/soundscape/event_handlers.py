@@ -10,6 +10,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 from runefoble_events.events import (
+    AreaEffectExploded,
     CharacterHealthChanged,
     CombatEncounterEnded,
     CombatEncounterStarted,
@@ -18,6 +19,7 @@ from runefoble_events.events import (
     InitiativeTurnAdvanced,
     PhysicsCollisionOccurred,
     PlayerSpokeEvent,
+    SpellCast,
     TokenHazardTriggered,
 )
 
@@ -29,7 +31,7 @@ from soundscape.scoring import (
     enemy_cr_balance_from_combatants,
 )
 from soundscape.session_state import load_session_aggregate, save_session_aggregate
-from soundscape.tactical_cues import hazard_cue, impact_cue
+from soundscape.tactical_cues import area_effect_cue, hazard_cue, impact_cue, spell_cast_cue
 
 logger = logging.getLogger("runefoble.soundscape.events")
 
@@ -166,16 +168,20 @@ async def _handle_leitmotif_trigger(
 
 
 async def _handle_tactical_board_event(
-    event: TokenHazardTriggered | PhysicsCollisionOccurred,
+    event: TokenHazardTriggered | PhysicsCollisionOccurred | SpellCast | AreaEffectExploded,
 ) -> None:
-    """Record a foley cue for a hazard trip or a physical impact on the board."""
+    """Record a foley cue for a board event: a hazard, an impact, a spell cast, or an area burst."""
     if not event.session_id:
         # A board event with no session in play feeds no cue.
         return
     if isinstance(event, TokenHazardTriggered):
         cue = hazard_cue(event.hazard_type)
-    else:
+    elif isinstance(event, PhysicsCollisionOccurred):
         cue = impact_cue(event.collision_type, event.impact_energy)
+    elif isinstance(event, SpellCast):
+        cue = spell_cast_cue(event.spell_archetype)
+    else:
+        cue = area_effect_cue(event.decal_type)
     agg = await load_session_aggregate(str(event.session_id))
     agg.record_cue(
         session_id=str(event.session_id),
@@ -212,7 +218,9 @@ async def handle_incoming_domain_event(event: Any) -> None:
         await _handle_leitmotif_trigger(
             session_id, char_id, char_name, "triumphant", "critical_hit"
         )
-    elif isinstance(event, (TokenHazardTriggered, PhysicsCollisionOccurred)):
+    elif isinstance(
+        event, (TokenHazardTriggered, PhysicsCollisionOccurred, SpellCast, AreaEffectExploded)
+    ):
         await _handle_tactical_board_event(event)
     elif isinstance(event, CharacterHealthChanged):
         # A health event has no session when no session is in play. Such an event feeds no tension.
