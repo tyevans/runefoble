@@ -76,6 +76,9 @@ EXPECTED_SERVICE_URLS: dict[str, dict[str, str]] = {
         "gateway-api": "http://rules-compendium:8007",
         "gateway-mcp": "http://rules-compendium:8007",
     },
+    "RUNEFOBLE_AUDIENCE_STUDIO_URL": {
+        "gateway-api": "http://audience-studio:8010",
+    },
 }
 
 

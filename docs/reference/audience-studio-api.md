@@ -60,6 +60,10 @@ A poll links to its campaign through the `campaign` relation. The service writes
 
 Documentation routes `GET /openapi.json` and `GET /docs` also need a token.
 
+## Gateway Routes (TASK-0439)
+
+Clients reach these routes through the unified gateway on port 8000. The gateway verifies the token, then forwards the request with the same token. The service checks each permission. The gateway passes the service's `401`, `403` and `404` answers on unchanged. An unreachable service returns `503` from the gateway. A `5xx` answer from the service returns `502` from the gateway, with the upstream name. The same paths and methods as the REST table above apply, with the prefix `/api/v1/audience`. The WebSocket path `/ws/audience/{campaignId}` is relayed the same way.
+
 ## Removed Interfaces (TASK-0533)
 
 | Removed | Replacement |

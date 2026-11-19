@@ -201,7 +201,7 @@ Service names and settings fields. The map `OWNER_URL_FIELDS` in `runefoble_plat
 | `voice_agent` | `voice_agent_url` | `RUNEFOBLE_VOICE_AGENT_URL` |
 | `audience_studio` | `audience_studio_url` | `RUNEFOBLE_AUDIENCE_STUDIO_URL` |
 
-Every service URL field defaults to `None`. No field has an in-cluster code default. A field left at `None` means no route: a proxy call returns `503`, and a health probe reports `not_configured`. Each variable is named `RUNEFOBLE_<SERVICE>_URL`, so each service has one name in every process (TASK-0794). The Helm chart renders these variables for `gateway-api` in `templates/services.yaml`: `RUNEFOBLE_GAME_SESSION_URL`, `RUNEFOBLE_WATCHER_URL`, `RUNEFOBLE_BOARD_STATE_URL`, `RUNEFOBLE_CHARACTER_SHEET_URL`, `RUNEFOBLE_VOICE_AGENT_URL`, `RUNEFOBLE_CAMPAIGN_LORE_URL`, `RUNEFOBLE_CAMPAIGN_ANALYTICS_URL`, `RUNEFOBLE_SOUNDSCAPE_URL`, `RUNEFOBLE_RULES_COMPENDIUM_URL`, and `RUNEFOBLE_ASSET_FORGE_URL`.
+Every service URL field defaults to `None`. No field has an in-cluster code default. A field left at `None` means no route: a proxy call returns `503`, and a health probe reports `not_configured`. Each variable is named `RUNEFOBLE_<SERVICE>_URL`, so each service has one name in every process (TASK-0794). The Helm chart renders these variables for `gateway-api` in `templates/services.yaml`: `RUNEFOBLE_GAME_SESSION_URL`, `RUNEFOBLE_WATCHER_URL`, `RUNEFOBLE_BOARD_STATE_URL`, `RUNEFOBLE_CHARACTER_SHEET_URL`, `RUNEFOBLE_VOICE_AGENT_URL`, `RUNEFOBLE_CAMPAIGN_LORE_URL`, `RUNEFOBLE_CAMPAIGN_ANALYTICS_URL`, `RUNEFOBLE_SOUNDSCAPE_URL`, `RUNEFOBLE_RULES_COMPENDIUM_URL`, `RUNEFOBLE_ASSET_FORGE_URL`, and `RUNEFOBLE_AUDIENCE_STUDIO_URL`.
 
 ## Related
 

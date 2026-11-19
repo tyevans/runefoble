@@ -25,6 +25,7 @@ from fastapi.testclient import TestClient
 from gateway_api.main import app as gateway_app
 from gateway_api.routers import (
     assets_proxy,
+    audience,
     boards_proxy,
     campaigns_proxy,
     caravan_proxy,
@@ -43,6 +44,7 @@ from tests.helpers.live_services import closed_port_url, serve
 
 ROUTE_MODULES = (
     assets_proxy,
+    audience,
     boards_proxy,
     campaigns_proxy,
     caravan_proxy,

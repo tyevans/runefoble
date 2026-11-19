@@ -533,6 +533,24 @@ The gateway forwards these routes to `game_session` with the caller's bearer tok
 
 The gateway reads `RUNEFOBLE_GAME_SESSION_URL` at start-up. See [Coordinate West Marches and Caravans](../how-to/coordinate-west-marches-shared-world-and-caravans.md).
 
+### Audience Routes (TASK-0439)
+
+The gateway forwards these routes to `audience_studio` with the caller's bearer token. The owner checks every permission (`audience_poll.view`, `vote`, `moderate`, `approve`, `veto`). The gateway adds no check. The status and body of the owner answer pass through.
+
+| Method | Gateway path | Owner |
+|---|---|---|
+| `POST` | `/api/v1/audience/polls` | `audience_studio` |
+| `GET` | `/api/v1/audience/polls` | `audience_studio` |
+| `GET` | `/api/v1/audience/polls/{poll_id}` | `audience_studio` |
+| `POST` | `/api/v1/audience/polls/{poll_id}/votes` | `audience_studio` |
+| `POST` | `/api/v1/audience/polls/{poll_id}/close` | `audience_studio` |
+| `GET` | `/api/v1/audience/proposals` | `audience_studio` |
+| `POST` | `/api/v1/audience/proposals/{proposal_id}/approve` | `audience_studio` |
+| `POST` | `/api/v1/audience/proposals/{proposal_id}/veto` | `audience_studio` |
+| `WS` | `/ws/audience/{campaign_id}` | `audience_studio` |
+
+The gateway reads `RUNEFOBLE_AUDIENCE_STUDIO_URL` at start-up. A refused handshake or a refused socket close code passes through the WebSocket relay. See [Orchestrate Audience Chaos Polls](../how-to/orchestrate-audience-chaos-polls.md).
+
 ### Voice Agent TTS Response (`POST /api/v1/voice/synthesize`)
 
 The response describes the audio it carries. Filters run on the synthesised clip only.
