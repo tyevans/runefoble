@@ -16,7 +16,7 @@ from collections.abc import Iterator
 from uuid import uuid4
 
 import pytest
-from campaign_lore.dependencies import set_west_marches_repo
+from campaign_lore.dependencies import get_west_marches_repo, set_west_marches_repo
 from campaign_lore.main import app as lore_app
 from campaign_lore.west_marches_aggregate import WestMarchesAtlasAggregate
 from eventsource.adapters.memory.store import InMemoryEventStore
@@ -71,8 +71,14 @@ def spicedb_client() -> Iterator[MockSpiceDBClient]:
 
 
 @pytest.fixture
-def lore_client(spicedb_client: MockSpiceDBClient, lore_backends) -> Iterator[TestClient]:
-    set_west_marches_repo(create_aggregate_repository(WestMarchesAtlasAggregate))
+def lore_client(
+    spicedb_client: MockSpiceDBClient, lore_backends, seam_restorer: SeamRestorer
+) -> Iterator[TestClient]:
+    seam_restorer.replace(
+        get_west_marches_repo,
+        set_west_marches_repo,
+        create_aggregate_repository(WestMarchesAtlasAggregate),
+    )
     with TestClient(lore_app, headers=bearer(VISITOR_SUBJECT)) as client:
         yield client
 

@@ -149,9 +149,17 @@ def build_speech_seams_from_env() -> None:
 
 @pytest.fixture
 def shared_event_bus(
-    mock_redis: MockAsyncRedis, speech_engine: FixtureTranscriber, use_redis_client
+    mock_redis: MockAsyncRedis,
+    speech_engine: FixtureTranscriber,
+    use_redis_client,
+    seam_restorer: SeamRestorer,
 ) -> RedisStreamsEventBus:
-    set_streaming_pipeline(StreamingAudioPipeline(transcriber=speech_engine))
+    """Route the voice pipeline to the fake transcriber. Teardown restores the previous pipeline."""
+    seam_restorer.replace(
+        get_streaming_pipeline,
+        set_streaming_pipeline,
+        StreamingAudioPipeline(transcriber=speech_engine),
+    )
     return use_redis_client(mock_redis)
 
 

@@ -30,6 +30,8 @@ from gateway_api.main import app
 from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
 from starlette.websockets import WebSocketDisconnect
 
+from tests.helpers.module_state import SeamRestorer
+
 RUNEFOBLE_PROTOCOL = "runefoble.v1"
 
 # The eight route groups named in TASK-0522 step 2.
@@ -76,15 +78,11 @@ def issuer() -> SigningTestIssuer:
 
 
 @pytest.fixture
-def client(issuer: SigningTestIssuer) -> Iterator[TestClient]:
+def client(issuer: SigningTestIssuer, seam_restorer: SeamRestorer) -> Iterator[TestClient]:
     """Trust the test issuer in both the gateway and the game_session verifiers."""
-    previous_gateway = get_zitadel_auth_service()
-    previous_session = get_session_auth()
-    set_zitadel_auth_service(issuer.verifier())
-    set_session_auth(issuer.verifier())
+    seam_restorer.replace(get_zitadel_auth_service, set_zitadel_auth_service, issuer.verifier())
+    seam_restorer.replace(get_session_auth, set_session_auth, issuer.verifier())
     yield TestClient(app)
-    set_zitadel_auth_service(previous_gateway)
-    set_session_auth(previous_session)
 
 
 def _bearer(token: str) -> list[str]:
