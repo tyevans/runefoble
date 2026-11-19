@@ -41,6 +41,6 @@ graph TD
 | `character_sheet` | `services/character_sheet` | Character stats, HP, penalties ("drunk"), and `@runefoble/character-sheet-ui` |
 | `game_session` | `services/game_session` | Active sessions, turns, dice, spectator view, and `@runefoble/game-session-ui` |
 | `voice_agent` | `services/voice_agent` | Audio streaming, STT/TTS pipeline, and `@runefoble/voice-agent-ui` |
-| `gateway_api` | `gateway/api` | API Gateway, WebSocket fanout, OpenAPI spec aggregation |
+| `gateway_api` | `gateway/api` | API Gateway: authentication, routing to owners, WebSocket fan-out, and OpenAPI spec aggregation. It owns no domain state and imports no service package (see [Gateway route ownership](gateway-route-ownership.md)) |
 | `gateway_mcp` | `gateway/mcp` | Model Context Protocol server exposing RPG tools to AI models |
 | `frontend` | `frontend/` | Lightweight App Shell, global Bauhaus theme switcher, Storybook studio aggregator |
