@@ -5,9 +5,12 @@ Coordinates active sessions, participant presence, turn order, and campaign time
 
 from __future__ import annotations
 
+import contextlib
+from collections.abc import AsyncIterator
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from game_session.audience_weather import start_audience_consumers
 from game_session.campaign import campaign_router, register_campaign_error_handlers
 from game_session.dependencies import (
     event_bus_provider,
@@ -43,6 +46,7 @@ from runefoble_platform.event_publish import (
     install_publish_failure_handler,
 )
 from runefoble_platform.event_sourcing import event_store_kind, get_event_store
+from runefoble_platform.stream_consumer import consumer_statuses
 from runefoble_platform.ui_manifest import load_ui_manifest
 
 # Start-up fails when the manifest is missing or invalid. No fallback manifest exists (ADR-0015 4).
@@ -60,11 +64,26 @@ __all__ = [
 # Build the event store now. A deployed service without a reachable store refuses to start (TASK-0707).
 get_event_store()
 
+
+@contextlib.asynccontextmanager
+async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
+    """Open the Redis Streams bus and start the audience weather consumer."""
+    bus = await event_bus_provider.connect()
+    consumers = await start_audience_consumers(bus)
+    app.state.consumers = {"game_session": consumers}
+    try:
+        yield
+    finally:
+        await consumers.stop()
+        await event_bus_provider.close()
+        app.state.consumers = {}
+
+
 app = FastAPI(
     title="Runefoble - Game Session Service",
     version="0.1.0",
     description="Session Lifecycle, Turn / Initiative Order, and Live Participation backed by eventsource-py.",
-    lifespan=event_bus_provider.lifespan,
+    lifespan=_lifespan,
 )
 
 register_store_unavailable_handlers(app)
@@ -96,12 +115,13 @@ install_authz_error_handlers(app)
 
 
 @app.get("/healthz")
-async def health_check():
+async def health_check(request: Request):
     return {
         "status": "ok",
         "service": "game_session",
         "event_store": event_store_kind(),
         "event_publish_failures": event_publish_failures(),
+        "consumers": consumer_statuses(getattr(request.app.state, "consumers", {})),
     }
 
 
