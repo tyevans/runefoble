@@ -11,7 +11,7 @@ from uuid import uuid4
 
 from fastapi import APIRouter, Depends, Header, HTTPException
 from game_session.auth import check_session_participation
-from game_session.dependencies import get_event_bus, get_tavern_repository
+from game_session.downtime.repositories import DowntimeRepos
 from game_session.merchants_service import HaggleOffer, haggle, load_merchant_profile
 from game_session.minigame_tables.models import MinigameTableState
 from game_session.minigame_tables.service import (
@@ -24,6 +24,8 @@ from game_session.minigames import (
     TavernGameAggregate,
     TavernGameState,
 )
+from game_session.play.repositories import SessionRepo
+from game_session.shared.container_access import EventBus
 from game_session.shared.identity import CallerId, get_principal
 from game_session.shared.permissions import check_establishment_play_permission
 from game_session.shared.streams import STREAM_TAVERN
@@ -91,11 +93,15 @@ async def _require_table_play(establishment_id: str, user_id: str) -> None:
 
 
 @router.post("/api/v1/tavern/tables", response_model=MinigameTableState, status_code=201)
-async def open_minigame_table(caller_id: CallerId, req: OpenTableRequest) -> MinigameTableState:
+async def open_minigame_table(
+    caller_id: CallerId, req: OpenTableRequest, repos: DowntimeRepos, events: EventBus
+) -> MinigameTableState:
     """Open a minigame table. Sockets join only tables opened here (TASK-0566)."""
     await _require_table_play(req.establishment_id, caller_id)
     try:
-        return await open_table(req.table_id, req.establishment_id, req.game_type)
+        return await open_table(
+            repos.tavern_games, events, req.table_id, req.establishment_id, req.game_type
+        )
     except TableAlreadyOpenError as e:
         raise HTTPException(status_code=409, detail=str(e)) from e
     except ValueError as e:
@@ -103,10 +109,12 @@ async def open_minigame_table(caller_id: CallerId, req: OpenTableRequest) -> Min
 
 
 @router.get("/api/v1/tavern/tables/{table_id}", response_model=MinigameTableState)
-async def get_minigame_table(caller_id: CallerId, table_id: str) -> MinigameTableState:
+async def get_minigame_table(
+    caller_id: CallerId, table_id: str, repos: DowntimeRepos
+) -> MinigameTableState:
     """Read the seats, chips, pot, and game state of an open minigame table."""
     try:
-        table = await load_table(table_id)
+        table = await load_table(repos.tavern_games, table_id)
     except TableNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
     await _require_table_play(table.establishment_id, caller_id)
@@ -118,12 +126,15 @@ async def start_minigame(
     caller_id: CallerId,
     session_id: str,
     req: StartMinigameRequest,
+    sessions: SessionRepo,
+    repos: DowntimeRepos,
+    events: EventBus,
 ) -> TavernGameState:
     """Start an interactive tavern minigame with wager."""
-    await check_session_participation(session_id, caller_id)
+    await check_session_participation(sessions, session_id, caller_id)
     game_id = f"game-{uuid4().hex[:8]}"
 
-    tavern_repo = get_tavern_repository()
+    tavern_repo = repos.tavern_games
     aggregate = TavernGameAggregate(game_id)
     aggregate.start_game(
         game_id=game_id,
@@ -137,7 +148,7 @@ async def start_minigame(
     events_to_publish = list(aggregate.uncommitted_events)
     await tavern_repo.save(aggregate)
 
-    bus = get_event_bus()
+    bus = events.get()
     if bus:
         await publish_aggregate_events(bus, STREAM_TAVERN, events_to_publish)
 
@@ -153,11 +164,14 @@ async def take_minigame_turn(
     session_id: str,
     game_id: str,
     req: MinigameTurnRequest,
+    sessions: SessionRepo,
+    repos: DowntimeRepos,
+    events: EventBus,
     authorization: str | None = Header(default=None),
 ) -> dict[str, Any]:
     """Submit a turn or wager action in an active tavern minigame."""
-    await check_session_participation(session_id, caller_id)
-    tavern_repo = get_tavern_repository()
+    await check_session_participation(sessions, session_id, caller_id)
+    tavern_repo = repos.tavern_games
 
     aggregate = await load_if_exists(tavern_repo, opaque_aggregate_id(game_id, field="game_id"))
     if aggregate is None:
@@ -187,7 +201,7 @@ async def take_minigame_turn(
     except VoiceAgentUnavailableError as e:
         raise HTTPException(status_code=503, detail=f"Voice DSP unavailable: {e}") from e
 
-    bus = get_event_bus()
+    bus = events.get()
     if bus:
         await publish_aggregate_events(bus, STREAM_TAVERN, events_to_publish)
 
@@ -205,11 +219,13 @@ async def get_minigame(
     caller_id: CallerId,
     session_id: str,
     game_id: str,
+    sessions: SessionRepo,
+    repos: DowntimeRepos,
 ) -> TavernGameState:
     """Get active status and state machine details for a minigame."""
-    await check_session_participation(session_id, caller_id)
+    await check_session_participation(sessions, session_id, caller_id)
     aggregate = await load_if_exists(
-        get_tavern_repository(), opaque_aggregate_id(game_id, field="game_id")
+        repos.tavern_games, opaque_aggregate_id(game_id, field="game_id")
     )
     if aggregate is None:
         raise HTTPException(status_code=404, detail=f"Minigame '{game_id}' not found")
@@ -225,11 +241,16 @@ async def haggle_merchant(
     session_id: str,
     merchant_id: str,
     req: HaggleRequest,
+    sessions: SessionRepo,
+    repos: DowntimeRepos,
+    events: EventBus,
     temperament: str = "stubborn_greedy",
 ) -> HaggleResponse:
     """Negotiate with an NPC merchant influenced by dynamic temperament and mood."""
-    await check_session_participation(session_id, caller_id)
+    await check_session_participation(sessions, session_id, caller_id)
     result = await haggle(
+        repos.merchants,
+        events,
         merchant_id=merchant_id,
         session_id=session_id,
         temperament=temperament,
@@ -257,9 +278,9 @@ async def haggle_merchant(
 
 
 @router.get("/api/v1/merchants/{merchant_id}")
-async def get_merchant(merchant_id: str) -> dict[str, Any]:
+async def get_merchant(merchant_id: str, repos: DowntimeRepos) -> dict[str, Any]:
     """Retrieve merchant temperament, mood score, and bartering history."""
-    profile = await load_merchant_profile(merchant_id)
+    profile = await load_merchant_profile(repos.merchants, merchant_id)
     if profile is None:
         raise HTTPException(status_code=404, detail=f"Merchant '{merchant_id}' not found")
     return profile

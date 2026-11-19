@@ -7,13 +7,13 @@ from typing import Annotated
 import pytest
 from fastapi import APIRouter, Depends
 from fastapi.testclient import TestClient
-from game_session.main import app as session_app
 from game_session.settlement import auth as sa
 from game_session.shared import identity
 from game_session.shared.identity import get_principal
 from runefoble_auth.zitadel import ZitadelAuthService
 
 from tests.helpers.campaign_setup import create_campaign
+from tests.helpers.game_session_app import session_app
 from tests.helpers.module_state import restored_seam
 from tests.helpers.ws_identity import SIGNING_ISSUER
 

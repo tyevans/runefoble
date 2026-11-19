@@ -6,8 +6,8 @@ Governed by ADR-0003, ADR-0007, ADR-0013, and PRD-0024.
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends
-from game_session.dependencies import get_event_bus, get_worker_repository
 from game_session.settlement.child_indexes import list_workers_for_establishment
+from game_session.settlement.repositories import SettlementRepos
 from game_session.settlement.worker_graph import (
     calculate_service_quality_contribution,
     compute_worker_tension,
@@ -27,6 +27,8 @@ from game_session.settlement.workers.operations import (
     create_and_assign_worker,
     sync_establishment_operations,
 )
+from game_session.shared.child_index_queries import ChildIndexes
+from game_session.shared.container_access import EventBus
 from game_session.shared.identity import CallerId, get_principal
 from game_session.shared.streams import STREAM_WEST_MARCHES
 from runefoble_platform.aggregate_loading import load_if_exists
@@ -38,21 +40,31 @@ router = APIRouter(dependencies=[Depends(get_principal)], tags=["settlement-npc-
 
 @router.post("/api/v1/establishments/{establishment_id}/workers", status_code=201)
 async def assign_worker(
-    establishment_id: str, req: AssignWorkerRequest, caller_id: CallerId
+    establishment_id: str,
+    req: AssignWorkerRequest,
+    caller_id: CallerId,
+    repos: SettlementRepos,
+    events: EventBus,
+    child_indexes: ChildIndexes,
 ) -> NPCWorkerState:
     """Assign an NPC worker to a role in an establishment storefront."""
-    est = await load_establishment(establishment_id, "manage", caller_id)
-    return await create_and_assign_worker(establishment_id, est, req, caller_id)
+    est = await load_establishment(repos, establishment_id, "manage", caller_id)
+    return await create_and_assign_worker(
+        repos, child_indexes, events, establishment_id, est, req, caller_id
+    )
 
 
 @router.get("/api/v1/establishments/{establishment_id}/workers")
 async def list_establishment_workers(
-    establishment_id: str, caller_id: CallerId
+    establishment_id: str,
+    caller_id: CallerId,
+    repos: SettlementRepos,
+    child_indexes: ChildIndexes,
 ) -> list[NPCWorkerState]:
     """Query active staff assigned to an establishment with inventories and ties."""
-    est = await load_establishment(establishment_id, "view", caller_id)
-    worker_ids = await list_workers_for_establishment(establishment_id)
-    worker_repo = get_worker_repository()
+    est = await load_establishment(repos, establishment_id, "view", caller_id)
+    worker_ids = await list_workers_for_establishment(child_indexes, establishment_id)
+    worker_repo = repos.workers
 
     workers: list[NPCWorkerState] = []
     for wid in worker_ids:
@@ -69,11 +81,15 @@ async def list_establishment_workers(
 
 @router.get("/api/v1/establishments/{establishment_id}/roster")
 async def get_establishment_roster(
-    establishment_id: str, caller_id: CallerId
+    establishment_id: str,
+    caller_id: CallerId,
+    repos: SettlementRepos,
+    events: EventBus,
+    child_indexes: ChildIndexes,
 ) -> EstablishmentRosterResponse:
     """Query comprehensive establishment roster with operations projection and graph edges."""
-    workers = await list_establishment_workers(establishment_id, caller_id)
-    ops = await sync_establishment_operations(establishment_id)
+    workers = await list_establishment_workers(establishment_id, caller_id, repos, child_indexes)
+    ops = await sync_establishment_operations(repos, child_indexes, events, establishment_id)
     return EstablishmentRosterResponse(
         establishment_id=establishment_id,
         workers=workers,
@@ -90,22 +106,25 @@ async def relieve_worker(
     establishment_id: str,
     npc_id: str,
     req: RelieveWorkerRequest,
+    repos: SettlementRepos,
+    events: EventBus,
+    child_indexes: ChildIndexes,
 ) -> NPCWorkerState:
     """Relieve an NPC worker from an establishment duty."""
-    await load_establishment(establishment_id, "manage", caller_id)
-    agg = await load_worker(npc_id, "manage", caller_id)
+    await load_establishment(repos, establishment_id, "manage", caller_id)
+    agg = await load_worker(repos, npc_id, "manage", caller_id)
     agg.relieve(establishment_id=establishment_id, reason=req.reason)
-    events = list(agg.uncommitted_events)
-    await get_worker_repository().save(agg)
-    await sync_establishment_operations(establishment_id)
-    if bus := get_event_bus():
-        await publish_aggregate_events(bus, STREAM_WEST_MARCHES, events)
+    new_events = list(agg.uncommitted_events)
+    await repos.workers.save(agg)
+    await sync_establishment_operations(repos, child_indexes, events, establishment_id)
+    if bus := events.get():
+        await publish_aggregate_events(bus, STREAM_WEST_MARCHES, new_events)
     return agg.state
 
 
 @router.get("/api/v1/npcs/{npc_id}")
-async def get_worker(npc_id: str, caller_id: CallerId) -> NPCWorkerState:
+async def get_worker(npc_id: str, caller_id: CallerId, repos: SettlementRepos) -> NPCWorkerState:
     """Retrieve an NPC worker profile, traits, inventories, and social ties."""
-    agg = await load_worker(npc_id, "view", caller_id)
+    agg = await load_worker(repos, npc_id, "view", caller_id)
     agg.refresh_computed_fields()
     return agg.state

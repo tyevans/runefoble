@@ -209,6 +209,8 @@ set_event_bus = event_bus_provider.set
 
 The service `main.py` passes `lifespan=event_bus_provider.lifespan`. A service with its own lifespan calls `event_bus_provider.lifespan(app)` inside it. Tests call `set_event_bus(RedisStreamsEventBus(client=MockAsyncRedis()))`. `close()` does not close a bus that a test set.
 
+`game_session` has no module-level provider. `build_container` creates the provider, and the app container holds it (`container.event_bus`). The lifespan calls `connect()` and `close()` on it. A route reads it through the `EventBus` dependency of `game_session.shared.container_access` and calls `.get()`. Tests pass their own provider to `build_container(event_bus=...)` (`tests/helpers/game_session_app.py`).
+
 ### Competing Consumer Reading
 ```python
 messages = await consumer_group.read_group(

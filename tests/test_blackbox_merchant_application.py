@@ -3,23 +3,23 @@
 Part of TASK-0728 / PRD-0024 / US-0047 / US-0075.
 Governed by ADR-0011, ADR-0015 (c, f), and Hard Invariant 7.
 
-Store outages are injected at the repository seam that the routes read through
-(`get_merchant_repository`, `get_tavern_repository`). The routes see only a failing load.
+Store outages are injected in a test container (ADR-0021 D6 rule 7): a copy of the test
+container whose merchant or tavern repository cannot reach its store. The routes see only
+a failing load.
 """
 
 from __future__ import annotations
 
+from dataclasses import replace
 from typing import Any
 from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
-from game_session import dependencies
-from game_session.main import app as session_app
 from game_session.shared.streams import STREAM_TAVERN
 
+from tests.helpers.game_session_app import app_with_container, session_app
 from tests.helpers.mock_redis import MockAsyncRedis
-from tests.helpers.module_state import SeamRestorer
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
@@ -40,11 +40,19 @@ class UnavailableRepository:
         self.saved.append(aggregate)
 
 
+HEADERS = {"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"}
+
+
 @pytest.fixture
 def client() -> TestClient:
-    return TestClient(
-        session_app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"}
-    )
+    return TestClient(session_app, headers=HEADERS)
+
+
+def _client_with_downtime(**repositories: Any) -> TestClient:
+    """A client of an app whose container uses the given downtime repositories."""
+    container = session_app.state.container
+    outage = replace(container, downtime=replace(container.downtime, **repositories))
+    return TestClient(app_with_container(outage), headers=HEADERS)
 
 
 def _owned_session(client: TestClient) -> str:
@@ -129,27 +137,19 @@ def test_haggle_on_existing_merchant_does_not_create_it_again(
     assert profile["total_negotiations"] == 2
 
 
-def test_merchant_profile_store_outage_returns_unavailable(
-    client: TestClient, seam_restorer: SeamRestorer
-) -> None:
-    seam_restorer.replace(
-        dependencies.merchant_repository.get,
-        dependencies.merchant_repository.set,
-        UnavailableRepository(),
-    )
+def test_merchant_profile_store_outage_returns_unavailable() -> None:
+    client = _client_with_downtime(merchants=UnavailableRepository())
 
     res = client.get("/api/v1/merchants/merchant_any")
     assert res.status_code == 503, res.text
 
 
 def test_haggle_store_outage_returns_unavailable_and_saves_nothing(
-    client: TestClient, mock_bus: MockAsyncRedis, seam_restorer: SeamRestorer
+    mock_bus: MockAsyncRedis,
 ) -> None:
-    session_id = _owned_session(client)
     repo = UnavailableRepository()
-    seam_restorer.replace(
-        dependencies.merchant_repository.get, dependencies.merchant_repository.set, repo
-    )
+    client = _client_with_downtime(merchants=repo)
+    session_id = _owned_session(client)
     events_before = len(_event_types(mock_bus))
 
     res = _haggle(client, session_id, "merchant_outage", offered=35)
@@ -158,15 +158,9 @@ def test_haggle_store_outage_returns_unavailable_and_saves_nothing(
     assert len(_event_types(mock_bus)) == events_before
 
 
-def test_minigame_store_outage_returns_unavailable(
-    client: TestClient, seam_restorer: SeamRestorer
-) -> None:
+def test_minigame_store_outage_returns_unavailable() -> None:
+    client = _client_with_downtime(tavern_games=UnavailableRepository())
     session_id = _owned_session(client)
-    seam_restorer.replace(
-        dependencies.tavern_repository.get,
-        dependencies.tavern_repository.set,
-        UnavailableRepository(),
-    )
 
     res = client.get(f"/api/v1/sessions/{session_id}/tavern/games/game-missing1")
     assert res.status_code == 503, res.text

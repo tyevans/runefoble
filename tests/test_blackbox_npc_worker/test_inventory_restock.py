@@ -1,24 +1,22 @@
 """Blackbox tests: a worker restock is an event, and worker routes sync before they publish.
 
 Governed by ADR-0011, ADR-0015 and Hard Invariant 7 (TASK-0888). A service restart is
-simulated by a new worker repository over the same event store. The Redis double is the
+simulated by a new app with a new container over the same event store. The Redis double is the
 process boundary. Setup and reads go through the public worker and establishment routes.
 """
 
 from __future__ import annotations
 
-from collections.abc import Callable, Iterator
+from collections.abc import Callable
 from typing import Any
 from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
-from game_session import dependencies as deps
-from game_session.settlement.workers import NPCWorkerAggregate
 from game_session.shared.streams import STREAM_WEST_MARCHES
 from runefoble_auth.mock import MockSpiceDBClient
-from runefoble_platform.event_sourcing import InMemoryEventStore, create_aggregate_repository
 
+from tests.helpers.game_session_app import app_with_container, build_test_container
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.stream_events import assert_stream_events
 from tests.helpers.ws_identity import SIGNING_ISSUER
@@ -34,18 +32,13 @@ class UnreachableRedis(MockAsyncRedis):
 
 
 @pytest.fixture
-def restart_workers() -> Iterator[Callable[[], None]]:
-    """Return a function that starts a fresh worker repository over one durable event store."""
-    store = InMemoryEventStore()
+def restart_service() -> Callable[[], TestClient]:
+    """Return a function that starts a new app with a new container over the same event store."""
 
-    def _restart() -> None:
-        deps.worker_repository.set(
-            create_aggregate_repository(NPCWorkerAggregate, event_store=store)
-        )
+    def _restart() -> TestClient:
+        return TestClient(app_with_container(build_test_container()))
 
-    _restart()
-    yield _restart
-    deps.worker_repository.set(None)
+    return _restart
 
 
 async def _worker(
@@ -82,9 +75,9 @@ async def test_restock_survives_a_restart_and_raises_an_event(
     client: TestClient,
     spicedb: MockSpiceDBClient,
     mock_bus: MockAsyncRedis,
-    restart_workers: Callable[[], None],
+    restart_service: Callable[[], TestClient],
 ) -> None:
-    """A restock is stored as an event. A fresh repository still shows the added quantity."""
+    """A restock is stored as an event. A restarted service still shows the added quantity."""
     h, _, npc_id = await _worker(client, spicedb)
     item = {"item_id": "rope", "name": "Hemp rope", "quantity": 3, "unit_price": 2}
     first = client.post(f"/api/v1/npcs/{npc_id}/inventory/restock", json=item, headers=h)
@@ -104,7 +97,7 @@ async def test_restock_survives_a_restart_and_raises_an_event(
     assert vault.status_code == 200, vault.text
     assert_stream_events(mock_bus, "WorkerInventoryRestocked")
 
-    restart_workers()
+    client = restart_service()
     read = client.get(f"/api/v1/npcs/{npc_id}/inventory/rope", headers=h)
     assert read.status_code == 200, read.text
     assert read.json()["quantity"] == 5 and read.json()["unit_price"] == 4

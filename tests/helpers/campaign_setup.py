@@ -71,7 +71,7 @@ def invite_and_join(
 
 def _game_session_client() -> TestClient:
     """Return a client for the game_session app. It shares the test SpiceDB client by factory."""
-    from game_session.main import app as session_app
+    from tests.helpers.game_session_app import session_app
 
     return TestClient(session_app)
 

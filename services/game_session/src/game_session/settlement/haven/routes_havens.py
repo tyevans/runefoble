@@ -8,7 +8,6 @@ from __future__ import annotations
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException
-from game_session.dependencies import get_event_bus, get_settlement_repository
 from game_session.settlement.auth import (
     check_campaign_write_permission,
     write_settlement_relationships,
@@ -25,8 +24,10 @@ from game_session.settlement.models import (
     FoundSettlementRequest,
     SettlementProjectionResponse,
 )
+from game_session.settlement.repositories import SettlementRepos
 from game_session.settlement.settlement_aggregate import SettlementAggregate
-from game_session.shared.child_index_queries import link_child
+from game_session.shared.child_index_queries import ChildIndexes, link_child
+from game_session.shared.container_access import EventBus
 from game_session.shared.identity import CallerId, get_principal
 from game_session.shared.streams import STREAM_WEST_MARCHES
 from runefoble_auth.factory import get_spicedb_client
@@ -42,9 +43,12 @@ async def found_settlement(
     caller_id: CallerId,
     campaign_id: str,
     req: FoundSettlementRequest,
+    repos: SettlementRepos,
+    event_bus: EventBus,
+    child_indexes: ChildIndexes,
 ) -> SettlementProjectionResponse:
     """Found a new settlement haven with scale, biome, and layout zoning."""
-    spicedb, repo, bus = get_spicedb_client(), get_settlement_repository(), get_event_bus()
+    spicedb, repo, bus = get_spicedb_client(), repos.settlements, event_bus.get()
     await check_campaign_write_permission(spicedb, campaign_id, caller_id)
 
     sid = uuid4()
@@ -73,10 +77,12 @@ async def found_settlement(
         founder_id=caller_id,
     )
 
-    await link_child(SettlementChildIndex.CAMPAIGN_SETTLEMENTS, campaign_id, str(sid))
+    await link_child(
+        child_indexes, SettlementChildIndex.CAMPAIGN_SETTLEMENTS, campaign_id, str(sid)
+    )
     if bus:
         await publish_aggregate_events(bus, STREAM_WEST_MARCHES, events)
-    return await build_settlement_projection(agg)
+    return await build_settlement_projection(repos, child_indexes, agg)
 
 
 @router.get("/api/v1/campaigns/{campaign_id}/settlements/{settlement_id}")
@@ -84,29 +90,33 @@ async def get_campaign_settlement_projection(
     caller_id: CallerId,
     campaign_id: str,
     settlement_id: str,
+    repos: SettlementRepos,
+    child_indexes: ChildIndexes,
 ) -> SettlementProjectionResponse:
     """Query settlement projection including scale, districts, and establishments."""
-    agg = await load_settlement(settlement_id, "view", caller_id)
+    agg = await load_settlement(repos, settlement_id, "view", caller_id)
     if agg.state.campaign_id and agg.state.campaign_id != campaign_id:
         raise HTTPException(
             status_code=404, detail="Settlement does not belong to specified campaign"
         )
-    return await build_settlement_projection(agg)
+    return await build_settlement_projection(repos, child_indexes, agg)
 
 
 @router.get("/api/v1/campaigns/{campaign_id}/settlements")
 async def list_campaign_settlements(
     caller_id: CallerId,
     campaign_id: str,
+    repos: SettlementRepos,
+    child_indexes: ChildIndexes,
 ) -> list[SettlementProjectionResponse]:
     """List all settlement projections founded for a campaign."""
-    sids = await list_settlements_for_campaign(campaign_id)
+    sids = await list_settlements_for_campaign(child_indexes, campaign_id)
     results: list[SettlementProjectionResponse] = []
-    repo = get_settlement_repository()
+    repo = repos.settlements
     for sid in sids:
         agg = await load_if_exists(repo, parse_uuid(sid, field="settlement_id"))
         if agg is not None and agg.state.is_founded:
-            results.append(await build_settlement_projection(agg))
+            results.append(await build_settlement_projection(repos, child_indexes, agg))
     return results
 
 

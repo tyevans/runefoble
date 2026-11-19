@@ -26,11 +26,11 @@ from asset_forge.main import app as asset_forge_app
 from character_sheet.main import app as character_sheet_app
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from game_session.main import app as game_session_app
 from runefoble_auth.errors import AuthzSchemaError, AuthzUnavailableError
 from runefoble_auth.mock import MockSpiceDBClient
 from the_watcher.main import app as the_watcher_app
 
+from tests.helpers.game_session_app import session_app as game_session_app
 from tests.helpers.ws_identity import bearer
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")

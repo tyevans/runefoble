@@ -11,7 +11,8 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID
 
-from game_session.dependencies import repo
+from game_session.aggregate import GameSessionAggregate
+from game_session.play.repositories import PlayRepositories
 from runefoble_platform.aggregate_loading import load_if_exists
 from runefoble_platform.audience_modifiers import (
     approved_modifier,
@@ -20,6 +21,7 @@ from runefoble_platform.audience_modifiers import (
     text_parameter,
 )
 from runefoble_platform.consumer_group import RedisConsumerGroup
+from runefoble_platform.event_sourcing import AggregateRepository
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 from runefoble_platform.stream_consumer import StreamConsumer, SupervisedStreamConsumers
 
@@ -30,7 +32,9 @@ AUDIENCE_STREAM = "runefoble.events.audience"
 WEATHER_MODIFIER = "weather_change"
 
 
-async def apply_audience_weather_event(event: Any) -> None:
+async def apply_audience_weather_event(
+    event: Any, repo: AggregateRepository[GameSessionAggregate]
+) -> None:
     """Record the approved weather on the session of the modifier.
 
     A rejected proposal (`approved` is not true) and any other modifier type are ignored.
@@ -58,7 +62,9 @@ async def apply_audience_weather_event(event: Any) -> None:
     await repo.save(session)
 
 
-async def start_audience_consumers(bus: RedisStreamsEventBus) -> SupervisedStreamConsumers:
+async def start_audience_consumers(
+    bus: RedisStreamsEventBus, play: PlayRepositories
+) -> SupervisedStreamConsumers:
     """Create the consumer group and start the read loop on the audience stream.
 
     Raises when the consumer group cannot be created, so the service does not start.
@@ -66,7 +72,7 @@ async def start_audience_consumers(bus: RedisStreamsEventBus) -> SupervisedStrea
     consumer_group = RedisConsumerGroup(client=await bus.get_client())
 
     async def _handle(_message_id: str, event: Any) -> None:
-        await apply_audience_weather_event(event)
+        await apply_audience_weather_event(event, play.sessions)
 
     consumers = SupervisedStreamConsumers(
         CONSUMER_NAME,

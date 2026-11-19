@@ -10,10 +10,10 @@ from collections.abc import Iterator
 from uuid import uuid4
 
 import pytest
-from game_session.main import app as session_app
 from httpx import ASGITransport, AsyncClient
 
 from tests.helpers.campaign_setup import create_owned_campaign_async
+from tests.helpers.game_session_app import session_app
 from tests.helpers.ports import free_port
 from tests.helpers.stand_in_policy import create_character
 from tests.helpers.watcher_double import serve_watcher_double, watcher_stand_in_app

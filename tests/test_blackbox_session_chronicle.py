@@ -16,9 +16,9 @@ from uuid import uuid4
 import httpx
 import pytest
 from fastapi.testclient import TestClient
-from game_session.main import app as session_app
 from gateway_api.main import app as gateway_app
 
+from tests.helpers.game_session_app import session_app
 from tests.helpers.stand_in_policy import create_character
 from tests.helpers.watcher_double import (
     STAND_IN_ACTION_BODY,

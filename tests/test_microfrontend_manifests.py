@@ -29,7 +29,7 @@ def character_client():
 
 @pytest.fixture
 def session_client():
-    from game_session.main import app
+    from tests.helpers.game_session_app import session_app as app
 
     return TestClient(app)
 

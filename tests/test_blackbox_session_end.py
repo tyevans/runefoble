@@ -11,10 +11,10 @@ import json
 
 import pytest
 from fastapi.testclient import TestClient
-from game_session.main import app as session_app
 from runefoble_platform.service_client import owner_routes
 
 from tests.helpers.campaign_setup import add_member, create_campaign_session
+from tests.helpers.game_session_app import session_app
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.ws_identity import bearer
 

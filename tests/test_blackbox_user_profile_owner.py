@@ -20,6 +20,7 @@ import pytest
 from fastapi.testclient import TestClient
 from gateway_api.main import app as gateway_app
 
+from tests.helpers.game_session_app import session_event_bus
 from tests.helpers.live_services import closed_port_url, serve
 
 
@@ -127,10 +128,13 @@ def test_profile_persists_across_game_session_restart(
     for name in [n for n in sys.modules if _is_game_session(n)]:
         del sys.modules[name]
     main = importlib.import_module("game_session.main")
+    container = importlib.import_module("game_session.container")
     tokens = importlib.import_module("game_session.shared.identity")
     tokens.set_zitadel_auth_service(trusted_ws_issuer.verifier())
+    restarted = main.create_app()
+    restarted.state.container = container.build_container(event_bus=session_event_bus)
 
-    with serve(main.app) as restarted_url:
+    with serve(restarted) as restarted_url:
         monkeypatch.setenv("RUNEFOBLE_GAME_SESSION_URL", restarted_url)
         with TestClient(gateway_app) as client:
             fetched = client.get("/api/v1/profile", headers=headers)

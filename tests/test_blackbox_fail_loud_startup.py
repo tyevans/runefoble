@@ -1,8 +1,9 @@
 """Blackbox start-up checks for ADR-0015 (4) and ADR-0013 (manifest contract).
 
-A service that cannot read its UI manifest, or that lacks its Watcher URL in a
-deployed environment, must refuse to start. It must not fall back to canned data.
-Each check runs the real module import in a child Python process.
+A service that cannot read its UI manifest, or that lacks its Watcher URL or its event
+store in a deployed environment, must refuse to start. It must not fall back to canned
+data. Each check runs in a child Python process. The UI manifest checks run the module
+import. The game_session checks run the app lifespan, which builds the container.
 """
 
 from __future__ import annotations
@@ -10,11 +11,15 @@ from __future__ import annotations
 import os
 import shutil
 import sys
+from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
 
+from tests.helpers.game_session_startup import STARTED_MARKER, start_game_session
+from tests.helpers.ports import free_port
 from tests.helpers.process import run_command
+from tests.helpers.redis_container import redis_container
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
@@ -67,45 +72,96 @@ def test_service_starts_when_ui_manifest_is_present(module: str) -> None:
     assert result.returncode == 0, result.stderr
 
 
+@pytest.fixture(scope="module")
+def startup_redis_url() -> Iterator[str]:
+    """A real Redis for the start-ups that must succeed. The lifespan pings the bus."""
+    with redis_container(free_port()) as url:
+        yield url
+
+
 def test_game_session_refuses_to_start_in_deployed_mode_without_watcher_url() -> None:
     """RUNEFOBLE_WATCHER_URL unset in staging or production stops game_session at start-up."""
-    result = _import_module(
-        "game_session.main",
-        None,
-        {"RUNEFOBLE_ENVIRONMENT": "production", "RUNEFOBLE_WATCHER_URL": None},
+    result = start_game_session(
+        {"RUNEFOBLE_ENVIRONMENT": "production", "RUNEFOBLE_WATCHER_URL": None}, REPO_ROOT
     )
 
     assert result.returncode != 0
     assert "RUNEFOBLE_WATCHER_URL must be set" in result.stderr
+    assert STARTED_MARKER not in result.stdout
 
 
-def test_game_session_starts_in_development_without_watcher_url() -> None:
+def test_game_session_refuses_to_start_in_deployed_mode_without_a_reachable_event_store() -> None:
+    """A deployed game_session whose event store setting names no reachable store stops.
+
+    RUNEFOBLE_DATABASE_URL points at a closed port. The lifespan builds the store before it
+    serves, so start-up fails. The memory store is never a substitute (ADR-0015 (f)).
+    """
+    closed_dsn = f"postgresql+asyncpg://runefoble:runefoble@127.0.0.1:{free_port()}/runefoble"
+    result = start_game_session(
+        {
+            "RUNEFOBLE_ENVIRONMENT": "production",
+            "RUNEFOBLE_WATCHER_URL": "http://the-watcher:8001",
+            "RUNEFOBLE_EVENT_STORE_BACKEND": "postgresql",
+            "RUNEFOBLE_DATABASE_URL": closed_dsn,
+        },
+        REPO_ROOT,
+    )
+
+    assert result.returncode != 0
+    assert "EventStoreInitializationError" in result.stderr
+    assert STARTED_MARKER not in result.stdout
+
+
+def test_game_session_refuses_the_memory_event_store_in_deployed_mode() -> None:
+    """A deployed game_session that selects the memory event store stops at start-up."""
+    result = start_game_session(
+        {
+            "RUNEFOBLE_ENVIRONMENT": "production",
+            "RUNEFOBLE_WATCHER_URL": "http://the-watcher:8001",
+            "RUNEFOBLE_EVENT_STORE_BACKEND": "memory",
+        },
+        REPO_ROOT,
+    )
+
+    assert result.returncode != 0
+    assert "memory event store is refused" in result.stderr
+    assert STARTED_MARKER not in result.stdout
+
+
+def test_game_session_starts_in_development_without_watcher_url(startup_redis_url: str) -> None:
     """Development keeps working without a Watcher. Autopilot still refuses per request."""
-    result = _import_module(
-        "game_session.main",
-        None,
-        {"RUNEFOBLE_ENVIRONMENT": "development", "RUNEFOBLE_WATCHER_URL": None},
+    result = start_game_session(
+        {
+            "RUNEFOBLE_ENVIRONMENT": "development",
+            "RUNEFOBLE_WATCHER_URL": None,
+            "RUNEFOBLE_REDIS_URL": startup_redis_url,
+        },
+        REPO_ROOT,
     )
 
     assert result.returncode == 0, result.stderr
+    assert STARTED_MARKER in result.stdout
 
 
-def test_game_session_starts_in_deployed_mode_with_watcher_url(postgres_service) -> None:
+def test_game_session_starts_in_deployed_mode_with_watcher_url(
+    postgres_service, startup_redis_url: str
+) -> None:
     """A configured Watcher URL satisfies the deployed-mode start-up rule.
 
     A deployed service also needs its PostgreSQL event store (TASK-0707), so the child
     process gets a reachable database.
     """
 
-    result = _import_module(
-        "game_session.main",
-        None,
+    result = start_game_session(
         {
             "RUNEFOBLE_ENVIRONMENT": "production",
             "RUNEFOBLE_WATCHER_URL": "http://the-watcher:8001",
             "RUNEFOBLE_EVENT_STORE_BACKEND": "postgresql",
             "RUNEFOBLE_DATABASE_URL": str(postgres_service["dsn"]),
+            "RUNEFOBLE_REDIS_URL": startup_redis_url,
         },
+        REPO_ROOT,
     )
 
     assert result.returncode == 0, result.stderr
+    assert STARTED_MARKER in result.stdout

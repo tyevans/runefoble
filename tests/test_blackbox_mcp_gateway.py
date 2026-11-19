@@ -55,12 +55,13 @@ def mcp_endpoint() -> Iterator[None]:
 def owning_services() -> Iterator[dict[str, str]]:
     """Run game_session, board_state, and rules_compendium as real HTTP services for the gateway."""
     from board_state.main import app as board_app
-    from game_session.main import app as session_app
     from game_session.shared.identity import (
         get_zitadel_auth_service,
         set_zitadel_auth_service,
     )
     from rules_compendium.main import app as compendium_app
+
+    from tests.helpers.game_session_app import session_app
 
     previous_verifier = get_zitadel_auth_service()
     set_zitadel_auth_service(SIGNING_ISSUER.verifier())

@@ -8,9 +8,10 @@ from __future__ import annotations
 from typing import Any, Literal
 
 from fastapi import APIRouter, Depends, HTTPException
-from game_session.dependencies import get_event_bus, get_worker_repository
+from game_session.settlement.repositories import SettlementRepos
 from game_session.settlement.worker_models import WorkerInventoryItem
 from game_session.settlement.workers.loaders import load_worker
+from game_session.shared.container_access import EventBus
 from game_session.shared.identity import CallerId, get_principal
 from game_session.shared.streams import STREAM_WEST_MARCHES
 from runefoble_platform.event_publish import publish_aggregate_events
@@ -19,9 +20,11 @@ router = APIRouter(dependencies=[Depends(get_principal)], tags=["settlement-npc-
 
 
 @router.get("/api/v1/npcs/{npc_id}/inventory")
-async def get_worker_inventory(npc_id: str, caller_id: CallerId) -> dict[str, Any]:
+async def get_worker_inventory(
+    npc_id: str, caller_id: CallerId, repos: SettlementRepos
+) -> dict[str, Any]:
     """Retrieve storefront shelf stock and accessible workplace inventory."""
-    agg = await load_worker(npc_id, "view", caller_id)
+    agg = await load_worker(repos, npc_id, "view", caller_id)
     return {
         "npc_id": npc_id,
         "shelf_inventory": agg.state.shelf_inventory,
@@ -30,16 +33,20 @@ async def get_worker_inventory(npc_id: str, caller_id: CallerId) -> dict[str, An
 
 
 @router.get("/api/v1/npcs/{npc_id}/inventory/vault")
-async def get_worker_vault(npc_id: str, caller_id: CallerId) -> list[WorkerInventoryItem]:
+async def get_worker_vault(
+    npc_id: str, caller_id: CallerId, repos: SettlementRepos
+) -> list[WorkerInventoryItem]:
     """Retrieve backroom vault inventory requiring manager authorization."""
-    agg = await load_worker(npc_id, "manage", caller_id)
+    agg = await load_worker(repos, npc_id, "manage", caller_id)
     return agg.state.backroom_inventory
 
 
 @router.get("/api/v1/npcs/{npc_id}/inventory/{item_id}")
-async def get_inventory_item(npc_id: str, item_id: str, caller_id: CallerId) -> WorkerInventoryItem:
+async def get_inventory_item(
+    npc_id: str, item_id: str, caller_id: CallerId, repos: SettlementRepos
+) -> WorkerInventoryItem:
     """Lookup specific workplace shelf item pricing, stock count, and contraband status."""
-    agg = await load_worker(npc_id, "view", caller_id)
+    agg = await load_worker(repos, npc_id, "view", caller_id)
     all_items = agg.state.shelf_inventory + agg.state.backroom_inventory
     item = next((i for i in all_items if i.item_id == item_id), None)
     if not item:
@@ -54,13 +61,15 @@ async def restock_worker_inventory(
     caller_id: CallerId,
     npc_id: str,
     item: WorkerInventoryItem,
+    repos: SettlementRepos,
+    events: EventBus,
     destination: Literal["shelf", "backroom"] = "shelf",
 ) -> WorkerInventoryItem:
     """Restock or add merchandise items to an NPC worker's shelf or backroom vault."""
-    agg = await load_worker(npc_id, "manage", caller_id)
+    agg = await load_worker(repos, npc_id, "manage", caller_id)
     result = agg.restock(item, destination)
-    events = list(agg.uncommitted_events)
-    await get_worker_repository().save(agg)
-    if bus := get_event_bus():
-        await publish_aggregate_events(bus, STREAM_WEST_MARCHES, events)
+    new_events = list(agg.uncommitted_events)
+    await repos.workers.save(agg)
+    if bus := events.get():
+        await publish_aggregate_events(bus, STREAM_WEST_MARCHES, new_events)
     return result

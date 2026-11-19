@@ -51,12 +51,13 @@ def test_microservice_entrypoint_initialization(monkeypatch, tmp_path, seam_rest
     from asset_forge.main import app as forge_app
     from board_state.main import app as board_app
     from character_sheet.main import app as character_app
-    from game_session.main import app as session_app
     from gateway_api.main import app as gateway_app
     from inference_worker.api import app as inference_app
     from the_watcher.main import app as watcher_app
     from voice_agent.main import app as voice_app
     from voice_agent.synthesis_engine import get_speech_synthesizer, set_speech_synthesizer
+
+    from tests.helpers.game_session_app import session_app
 
     # The voice agent is ready only when its speech binary answers. A stub stands in for espeak-ng.
     speech_stub = tmp_path / "espeak-ng-version"

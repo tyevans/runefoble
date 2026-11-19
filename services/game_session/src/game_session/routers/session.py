@@ -17,7 +17,6 @@ from game_session.character_client import (
     activate_stand_in,
     release_stand_in,
 )
-from game_session.dependencies import repo
 from game_session.models import (
     HotSwapRequest,
     HotSwapResponse,
@@ -29,6 +28,7 @@ from game_session.models import (
     RollDiceResponse,
     SelectLobbyCharacterRequest,
 )
+from game_session.play.repositories import SessionRepo
 from game_session.routers.session_auth import (
     SessionController,
     SessionParticipant,
@@ -38,11 +38,14 @@ from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.permissions import require_subject
 from runefoble_platform.aggregate_loading import load_or_404
 from runefoble_platform.dice import parse_and_roll
+from runefoble_platform.event_sourcing import AggregateRepository
 
 router = APIRouter(tags=["session"])
 
 
-async def _load_session(session_id: UUID) -> GameSessionAggregate:
+async def _load_session(
+    repo: AggregateRepository[GameSessionAggregate], session_id: UUID
+) -> GameSessionAggregate:
     """Load a session by id. Raise 404 when no session has that id."""
     return await load_or_404(repo, session_id, f"Session not found: {session_id}")
 
@@ -52,7 +55,7 @@ async def _load_session(session_id: UUID) -> GameSessionAggregate:
     dependencies=[SessionReader],
     response_model=GameSessionState,
 )
-async def get_session(session_id: UUID) -> GameSessionState:
+async def get_session(session_id: UUID, repo: SessionRepo) -> GameSessionState:
     """Load session state reconstituted from the event stream."""
     try:
         session = await repo.load(session_id)
@@ -62,9 +65,11 @@ async def get_session(session_id: UUID) -> GameSessionState:
 
 
 @router.post("/api/v1/sessions/{session_id}/start", response_model=GameSessionState)
-async def start_session(session_id: UUID, _controller: SessionController) -> GameSessionState:
+async def start_session(
+    session_id: UUID, _controller: SessionController, repo: SessionRepo
+) -> GameSessionState:
     """Transition session from lobby to active. The caller needs `session.control`."""
-    session = await _load_session(session_id)
+    session = await _load_session(repo, session_id)
     try:
         session.start()
     except ValueError as e:
@@ -74,9 +79,11 @@ async def start_session(session_id: UUID, _controller: SessionController) -> Gam
 
 
 @router.post("/api/v1/sessions/{session_id}/end", response_model=GameSessionState)
-async def end_session(session_id: UUID, _controller: SessionController) -> GameSessionState:
+async def end_session(
+    session_id: UUID, _controller: SessionController, repo: SessionRepo
+) -> GameSessionState:
     """End the session. The caller needs `session.control`. The owner publishes `session.ended`."""
-    session = await _load_session(session_id)
+    session = await _load_session(repo, session_id)
     try:
         session.end()
     except ValueError as e:
@@ -91,9 +98,10 @@ async def join_session(
     req: JoinSessionRequest,
     player_id: SessionParticipant,
     authorization: Annotated[str, Header(alias="Authorization")],
+    repo: SessionRepo,
 ) -> GameSessionState:
     """Seat the verified caller. A returning absent player releases the stand-in."""
-    session = await _load_session(session_id)
+    session = await _load_session(repo, session_id)
     stand_in_character_id = _active_stand_in_character(session.state, player_id)
     try:
         session.join_player(
@@ -118,13 +126,14 @@ async def leave_session(
     req: LeaveSessionRequest,
     player_id: SessionParticipant,
     authorization: Annotated[str, Header(alias="Authorization")],
+    repo: SessionRepo,
 ) -> LeaveSessionResponse:
     """Record the verified caller's absence. The lobby character goes to the AI stand-in (TASK-0690).
 
     character_sheet owns the stand-in flag. The leave is saved only after it accepts the
     activation. A player with no lobby character records the absence only.
     """
-    session = await _load_session(session_id)
+    session = await _load_session(repo, session_id)
     try:
         session.leave_player(player_id=player_id, reason=req.reason)
     except ValueError as e:
@@ -156,10 +165,10 @@ async def _call_character_sheet(call: Awaitable[None]) -> None:
 
 @router.post("/api/v1/sessions/{session_id}/lobby/readiness", response_model=GameSessionState)
 async def toggle_lobby_readiness(
-    session_id: UUID, req: ReadinessRequest, player_id: SessionParticipant
+    session_id: UUID, req: ReadinessRequest, player_id: SessionParticipant, repo: SessionRepo
 ) -> GameSessionState:
     """Record the verified caller's readiness in the session lobby."""
-    session = await _load_session(session_id)
+    session = await _load_session(repo, session_id)
     try:
         session.toggle_readiness(player_id=player_id, is_ready=req.is_ready)
     except ValueError as e:
@@ -170,10 +179,13 @@ async def toggle_lobby_readiness(
 
 @router.post("/api/v1/sessions/{session_id}/lobby/character", response_model=GameSessionState)
 async def select_lobby_character(
-    session_id: UUID, req: SelectLobbyCharacterRequest, player_id: SessionParticipant
+    session_id: UUID,
+    req: SelectLobbyCharacterRequest,
+    player_id: SessionParticipant,
+    repo: SessionRepo,
 ) -> GameSessionState:
     """Record which character the verified caller brings to the session lobby."""
-    session = await _load_session(session_id)
+    session = await _load_session(repo, session_id)
     try:
         session.select_lobby_character(player_id=player_id, character_id=req.character_id)
     except ValueError as e:
@@ -188,6 +200,7 @@ async def hot_swap_session(
     session_id: UUID,
     req: HotSwapRequest,
     authorization: Annotated[str, Header(alias="Authorization")],
+    repo: SessionRepo,
 ) -> HotSwapResponse:
     """Hand active turn control from the AI stand-in to the verified caller mid-session.
 
@@ -202,7 +215,7 @@ async def hot_swap_session(
         detail=f"User '{player_id}' does not have permission to take control of character '{req.character_id}'",
     )
 
-    session = await _load_session(session_id)
+    session = await _load_session(repo, session_id)
     try:
         session.hot_swap_character(player_id=player_id, character_id=req.character_id)
     except ValueError as e:
@@ -232,9 +245,11 @@ async def hot_swap_session(
     "/api/v1/sessions/{session_id}/next-turn",
     response_model=GameSessionState,
 )
-async def advance_turn(session_id: UUID, _controller: SessionController) -> GameSessionState:
+async def advance_turn(
+    session_id: UUID, _controller: SessionController, repo: SessionRepo
+) -> GameSessionState:
     """Advance to the next turn in the session."""
-    session = await _load_session(session_id)
+    session = await _load_session(repo, session_id)
     try:
         session.advance_turn()
     except ValueError as e:
@@ -248,11 +263,14 @@ async def advance_turn(session_id: UUID, _controller: SessionController) -> Game
     response_model=RollDiceResponse,
 )
 async def roll_dice_session(
-    session_id: UUID, roller_id: SessionParticipant, req: RollDiceRequest | None = None
+    session_id: UUID,
+    roller_id: SessionParticipant,
+    repo: SessionRepo,
+    req: RollDiceRequest | None = None,
 ) -> RollDiceResponse:
     """Evaluate a dice roll for the verified caller and record it on the session aggregate."""
     req_data = req or RollDiceRequest()
-    session = await _load_session(session_id)
+    session = await _load_session(repo, session_id)
     try:
         result = parse_and_roll(req_data.formula)
     except ValueError as e:

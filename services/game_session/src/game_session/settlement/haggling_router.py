@@ -9,12 +9,6 @@ from __future__ import annotations
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException
-from game_session.dependencies import (
-    get_establishment_repository,
-    get_event_bus,
-    get_negotiation_repository,
-    get_worker_repository,
-)
 from game_session.settlement.auth import (
     check_establishment_read_permission,
     check_negotiation_arbitrate_permission,
@@ -33,7 +27,9 @@ from game_session.settlement.haggling_models import (
     NegotiationSessionState,
     StartNegotiationRequest,
 )
-from game_session.shared.child_index_queries import link_child
+from game_session.settlement.repositories import SettlementRepos, SettlementRepositories
+from game_session.shared.child_index_queries import ChildIndexes, link_child
+from game_session.shared.container_access import EventBus
 from game_session.shared.identity import CallerId, get_principal
 from game_session.shared.permissions import check_establishment_play_permission
 from game_session.shared.streams import STREAM_TAVERN, STREAM_WEST_MARCHES
@@ -45,8 +41,8 @@ from runefoble_platform.identifiers import parse_uuid
 router = APIRouter(dependencies=[Depends(get_principal)], tags=["merchant-haggling"])
 
 
-async def _load_negotiation(nid: str) -> NegotiationAggregate:
-    repo = get_negotiation_repository()
+async def _load_negotiation(repos: SettlementRepositories, nid: str) -> NegotiationAggregate:
+    repo = repos.negotiations
     negotiation_uuid = parse_uuid(nid, field="negotiation_id")
     try:
         agg = await repo.load(negotiation_uuid)
@@ -64,13 +60,16 @@ async def haggle_establishment(
     caller_id: CallerId,
     establishment_id: str,
     req: StartNegotiationRequest,
+    repos: SettlementRepos,
+    events: EventBus,
+    child_indexes: ChildIndexes,
 ) -> NegotiationSessionState:
     """Start or advance an interactive bartering encounter within an establishment storefront."""
     spicedb = get_spicedb_client()
     await check_establishment_read_permission(spicedb, establishment_id, caller_id)
 
     # 1. Determine merchant identity and item base price from establishment worker if available
-    est_repo = get_establishment_repository()
+    est_repo = repos.establishments
     est_agg = await load_if_exists(est_repo, parse_uuid(establishment_id, field="establishment_id"))
     campaign_id = (est_agg.state.campaign_id if est_agg else None) or req.campaign_id
 
@@ -79,11 +78,9 @@ async def haggle_establishment(
     merchant_id = req.merchant_id or f"merchant-{establishment_id}"
     base_price = req.base_price or 100
 
-    worker_ids = await list_workers_for_establishment(establishment_id)
+    worker_ids = await list_workers_for_establishment(child_indexes, establishment_id)
     if worker_ids:
-        w_agg = await load_if_exists(
-            get_worker_repository(), parse_uuid(worker_ids[0], field="worker_id")
-        )
+        w_agg = await load_if_exists(repos.workers, parse_uuid(worker_ids[0], field="worker_id"))
         if w_agg is not None:
             merchant_name = w_agg.state.name or merchant_name
             temperament = w_agg.state.temperament or temperament
@@ -120,13 +117,13 @@ async def haggle_establishment(
             offered_price=req.initial_offer_gp or req.offered_price,
         )
 
-    repo = get_negotiation_repository()
-    bus = get_event_bus()
-    events = list(neg_agg.uncommitted_events)
+    repo = repos.negotiations
+    bus = events.get()
+    new_events = list(neg_agg.uncommitted_events)
     await repo.save(neg_agg)
     if bus:
-        await publish_aggregate_events(bus, STREAM_TAVERN, events)
-        await publish_aggregate_events(bus, STREAM_WEST_MARCHES, events)
+        await publish_aggregate_events(bus, STREAM_TAVERN, new_events)
+        await publish_aggregate_events(bus, STREAM_WEST_MARCHES, new_events)
 
     # 4. Write SpiceDB Zanzibar tuples
     await write_negotiation_relationships(
@@ -138,7 +135,9 @@ async def haggle_establishment(
         participant_id=caller_id,
     )
 
-    await link_child(SettlementChildIndex.ESTABLISHMENT_NEGOTIATIONS, establishment_id, str(nid))
+    await link_child(
+        child_indexes, SettlementChildIndex.ESTABLISHMENT_NEGOTIATIONS, establishment_id, str(nid)
+    )
     return neg_agg.state
 
 
@@ -146,6 +145,8 @@ async def haggle_establishment(
 async def start_haggling_session(
     caller_id: CallerId,
     req: StartNegotiationRequest,
+    repos: SettlementRepos,
+    events: EventBus,
 ) -> NegotiationSessionState:
     """Explicitly start an isolated negotiation session in an establishment the caller can play."""
     if not req.establishment_id:
@@ -169,13 +170,13 @@ async def start_haggling_session(
         temperament=req.temperament or "Stubborn",
     )
 
-    repo = get_negotiation_repository()
-    bus = get_event_bus()
-    events = list(neg_agg.uncommitted_events)
+    repo = repos.negotiations
+    bus = events.get()
+    new_events = list(neg_agg.uncommitted_events)
     await repo.save(neg_agg)
     if bus:
-        await publish_aggregate_events(bus, STREAM_TAVERN, events)
-        await publish_aggregate_events(bus, STREAM_WEST_MARCHES, events)
+        await publish_aggregate_events(bus, STREAM_TAVERN, new_events)
+        await publish_aggregate_events(bus, STREAM_WEST_MARCHES, new_events)
 
     await write_negotiation_relationships(
         spicedb,
@@ -193,12 +194,14 @@ async def execute_gambit_route(
     caller_id: CallerId,
     negotiation_id: str,
     req: ExecuteGambitRequest,
+    repos: SettlementRepos,
+    events: EventBus,
 ) -> NegotiationSessionState:
     """Submit a persuasive gambit (Flattery, Bulk Order, Point Out Flaw, Intimidation, Walk Away)."""
     spicedb = get_spicedb_client()
     await check_negotiation_participate_permission(spicedb, negotiation_id, caller_id)
 
-    neg_agg = await _load_negotiation(negotiation_id)
+    neg_agg = await _load_negotiation(repos, negotiation_id)
     try:
         neg_agg.execute_gambit(
             character_id=req.character_id,
@@ -210,13 +213,13 @@ async def execute_gambit_route(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
 
-    repo = get_negotiation_repository()
-    bus = get_event_bus()
-    events = list(neg_agg.uncommitted_events)
+    repo = repos.negotiations
+    bus = events.get()
+    new_events = list(neg_agg.uncommitted_events)
     await repo.save(neg_agg)
     if bus:
-        await publish_aggregate_events(bus, STREAM_TAVERN, events)
-        await publish_aggregate_events(bus, STREAM_WEST_MARCHES, events)
+        await publish_aggregate_events(bus, STREAM_TAVERN, new_events)
+        await publish_aggregate_events(bus, STREAM_WEST_MARCHES, new_events)
     return neg_agg.state
 
 
@@ -227,11 +230,13 @@ async def dm_negotiation_override(
     caller_id: CallerId,
     negotiation_id: str,
     req: HaggleDmOverrideRequest,
+    repos: SettlementRepos,
+    events: EventBus,
 ) -> NegotiationSessionState:
     """Game Master arbitration control: nudge mood, inject dialogue barks, or override price."""
     await check_negotiation_arbitrate_permission(get_spicedb_client(), negotiation_id, caller_id)
 
-    neg_agg = await _load_negotiation(negotiation_id)
+    neg_agg = await _load_negotiation(repos, negotiation_id)
     try:
         neg_agg.dm_override(
             dm_user_id=caller_id,
@@ -244,13 +249,13 @@ async def dm_negotiation_override(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
 
-    repo = get_negotiation_repository()
-    bus = get_event_bus()
-    events = list(neg_agg.uncommitted_events)
+    repo = repos.negotiations
+    bus = events.get()
+    new_events = list(neg_agg.uncommitted_events)
     await repo.save(neg_agg)
     if bus:
-        await publish_aggregate_events(bus, STREAM_TAVERN, events)
-        await publish_aggregate_events(bus, STREAM_WEST_MARCHES, events)
+        await publish_aggregate_events(bus, STREAM_TAVERN, new_events)
+        await publish_aggregate_events(bus, STREAM_WEST_MARCHES, new_events)
     return neg_agg.state
 
 
@@ -258,11 +263,12 @@ async def dm_negotiation_override(
 async def get_negotiation_state(
     caller_id: CallerId,
     negotiation_id: str,
+    repos: SettlementRepos,
 ) -> NegotiationSessionState:
     """Retrieve the live state and dialogue history of an interactive bartering encounter."""
     spicedb = get_spicedb_client()
     await check_negotiation_read_permission(spicedb, negotiation_id, caller_id)
-    neg_agg = await _load_negotiation(negotiation_id)
+    neg_agg = await _load_negotiation(repos, negotiation_id)
     return neg_agg.state
 
 
@@ -270,11 +276,13 @@ async def get_negotiation_state(
 async def accept_negotiation(
     caller_id: CallerId,
     negotiation_id: str,
+    repos: SettlementRepos,
+    events: EventBus,
 ) -> NegotiationSessionState:
     """Accept the merchant's current counter-offer and finalize the deal."""
     spicedb = get_spicedb_client()
     await check_negotiation_participate_permission(spicedb, negotiation_id, caller_id)
-    neg_agg = await _load_negotiation(negotiation_id)
+    neg_agg = await _load_negotiation(repos, negotiation_id)
     try:
         neg_agg.dm_override(
             dm_user_id=caller_id,
@@ -285,11 +293,11 @@ async def accept_negotiation(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
 
-    repo = get_negotiation_repository()
-    bus = get_event_bus()
-    events = list(neg_agg.uncommitted_events)
+    repo = repos.negotiations
+    bus = events.get()
+    new_events = list(neg_agg.uncommitted_events)
     await repo.save(neg_agg)
     if bus:
-        await publish_aggregate_events(bus, STREAM_TAVERN, events)
-        await publish_aggregate_events(bus, STREAM_WEST_MARCHES, events)
+        await publish_aggregate_events(bus, STREAM_TAVERN, new_events)
+        await publish_aggregate_events(bus, STREAM_WEST_MARCHES, new_events)
     return neg_agg.state

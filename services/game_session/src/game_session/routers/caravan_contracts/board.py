@@ -11,14 +11,15 @@ from uuid import UUID, uuid4
 from fastapi import APIRouter, Depends, Query
 from game_session.caravan import CaravanContractAggregate
 from game_session.caravan.child_indexes import WORLD_CONTRACTS, list_world_contracts_for_world
-from game_session.dependencies import get_caravan_contract_repository, get_event_bus
 from game_session.routers.caravan_contracts.auth import (
     _check_high_tier_auth,
 )
-from game_session.shared.child_index_queries import link_child
+from game_session.shared.child_index_queries import ChildIndexes, link_child
+from game_session.shared.container_access import EventBus
 from game_session.shared.identity import CallerId, get_principal
 from game_session.shared.streams import STREAM_WEST_MARCHES
 from game_session.west_marches_models import PostCaravanContractRequest
+from game_session.world.repositories import WorldRepos
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.permissions import require_subject
 from runefoble_platform.aggregate_loading import load_if_exists, load_or_404
@@ -37,6 +38,9 @@ async def post_caravan_contract(
     caller_id: CallerId,
     shared_world_id: str,
     req: PostCaravanContractRequest,
+    repos: WorldRepos,
+    events: EventBus,
+    child_indexes: ChildIndexes,
 ) -> dict[str, Any]:
     """Post an asynchronous mercenary escort contract to the shared world notice board."""
     wid = parse_uuid(shared_world_id, field="shared_world_id")
@@ -47,7 +51,7 @@ async def post_caravan_contract(
     )
 
     contract_id = uuid4()
-    contract_repo = get_caravan_contract_repository()
+    contract_repo = repos.caravan_contracts
     contract = CaravanContractAggregate(contract_id)
 
     cid = contract.post_contract(
@@ -65,18 +69,18 @@ async def post_caravan_contract(
         poster_user_id=caller_id,
         expires_in_turns=req.expires_in_turns,
     )
-    events = list(contract.uncommitted_events)
+    contract_events = list(contract.uncommitted_events)
     await contract_repo.save(contract)
 
     # Register in world notice board index and write Zanzibar relations
-    await link_child(WORLD_CONTRACTS, str(wid), cid)
+    await link_child(child_indexes, WORLD_CONTRACTS, str(wid), cid)
     await spicedb.write_relationship(
         "caravan_contract", cid, "shared_world", "shared_world", str(wid)
     )
     await spicedb.write_relationship("caravan_contract", cid, "poster", "user", caller_id)
 
-    if bus := get_event_bus():
-        await publish_aggregate_events(bus, STREAM_WEST_MARCHES, events)
+    if bus := events.get():
+        await publish_aggregate_events(bus, STREAM_WEST_MARCHES, contract_events)
     return {"shared_world_id": str(wid), "contract": contract.state.model_dump()}
 
 
@@ -84,6 +88,8 @@ async def post_caravan_contract(
 async def list_caravan_contracts(
     caller_id: CallerId,
     shared_world_id: str,
+    repos: WorldRepos,
+    child_indexes: ChildIndexes,
     status: str | None = Query(default=None),
     risk_level: str | None = Query(default=None),
     destination: str | None = Query(default=None),
@@ -94,8 +100,8 @@ async def list_caravan_contracts(
     spicedb = get_spicedb_client()
     await require_subject(spicedb, "shared_world", str(wid), "view", caller_id)
 
-    contract_repo = get_caravan_contract_repository()
-    cids = await list_world_contracts_for_world(str(wid))
+    contract_repo = repos.caravan_contracts
+    cids = await list_world_contracts_for_world(child_indexes, str(wid))
     contracts: list[dict[str, Any]] = []
 
     for c_id in cids:
@@ -120,6 +126,7 @@ async def get_caravan_contract(
     caller_id: CallerId,
     shared_world_id: str,
     contract_id: str,
+    repos: WorldRepos,
 ) -> dict[str, Any]:
     """Retrieve details and manifest for a specific caravan escort contract."""
     wid, cid = (
@@ -129,7 +136,7 @@ async def get_caravan_contract(
     spicedb = get_spicedb_client()
     await require_subject(spicedb, "caravan_contract", str(cid), "view", caller_id)
 
-    contract = await load_or_404(get_caravan_contract_repository(), cid, "Contract not found")
+    contract = await load_or_404(repos.caravan_contracts, cid, "Contract not found")
 
     return {"shared_world_id": str(wid), "contract": contract.state.model_dump()}
 

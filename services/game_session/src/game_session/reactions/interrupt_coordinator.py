@@ -7,7 +7,6 @@ from typing import Any
 from uuid import UUID, uuid4
 
 from game_session.aggregate import GameSessionAggregate
-from game_session.dependencies import repo as default_repo
 from game_session.models import DeclareReactionResponse, ResolveReactionResponse
 from runefoble_platform.event_sourcing import AggregateRepository
 
@@ -17,8 +16,8 @@ logger = logging.getLogger(__name__)
 class ReactionInterruptCoordinator:
     """Coordinates pausing and resuming active combat turn timers during reaction windows."""
 
-    def __init__(self, repo: AggregateRepository[GameSessionAggregate] | None = None) -> None:
-        self._repo = repo or default_repo
+    def __init__(self, repo: AggregateRepository[GameSessionAggregate]) -> None:
+        self._repo = repo
 
     async def declare_reaction(
         self,

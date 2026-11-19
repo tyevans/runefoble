@@ -12,7 +12,7 @@ Governed by:
 
 from __future__ import annotations
 
-from game_session.main import app as session_app
+from tests.helpers.game_session_app import session_app
 
 
 def test_routes_registered_in_session_app() -> None:

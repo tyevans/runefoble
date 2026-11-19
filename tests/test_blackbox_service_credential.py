@@ -14,9 +14,9 @@ from uuid import uuid4
 import pytest
 from character_sheet.main import app as character_app
 from fastapi.testclient import TestClient
-from game_session.main import app as session_app
 from runefoble_platform.service_credential import SERVICE_CREDENTIAL_HEADER
 
+from tests.helpers.game_session_app import session_app
 from tests.helpers.process import run_python_child
 from tests.helpers.ws_identity import SIGNING_ISSUER
 

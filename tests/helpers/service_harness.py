@@ -81,7 +81,7 @@ SERVICE_SEAMS: tuple[ServiceSeams, ...] = (
     ),
     ServiceSeams(
         "game_session",
-        bus="game_session.dependencies",
+        bus="tests.helpers.game_session_app",
         verifier="game_session.shared.identity",
         verifier_scope="on_demand",
     ),
@@ -374,18 +374,12 @@ def game_session_upstream(trusted_ws_issuer) -> Iterator[str]:
     Tokens minted by `trusted_ws_issuer` are accepted by both services (TASK-0591).
     """
     from eventsource.adapters.memory.store import InMemoryEventStore
-    from game_session.campaign.repositories import (
-        get_campaign_repositories,
-        set_campaign_repositories,
-    )
-    from game_session.main import app as session_app
     from runefoble_platform.event_sourcing import get_event_store, set_event_store
 
+    from tests.helpers.game_session_app import app_with_container, build_test_container
     from tests.helpers.module_state import restored_seam
 
-    with (
-        restored_seam(get_event_store, set_event_store, InMemoryEventStore(), replace=True),
-        restored_seam(get_campaign_repositories, set_campaign_repositories, None, replace=True),
-        live_upstream(session_app, "RUNEFOBLE_GAME_SESSION_URL") as url,
-    ):
-        yield url
+    with restored_seam(get_event_store, set_event_store, InMemoryEventStore(), replace=True):
+        session_app = app_with_container(build_test_container())
+        with live_upstream(session_app, "RUNEFOBLE_GAME_SESSION_URL") as url:
+            yield url

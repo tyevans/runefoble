@@ -11,7 +11,8 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
 from game_session.auth import check_session_participation
-from game_session.dependencies import get_stronghold_repository, repo
+from game_session.downtime.repositories import DowntimeRepos
+from game_session.play.repositories import SessionRepo
 from game_session.shared.identity import CallerId, get_principal
 from pydantic import BaseModel, Field
 from runefoble_auth.factory import get_spicedb_client
@@ -70,16 +71,18 @@ async def campfire_rest(
     caller_id: CallerId,
     session_id: str,
     req: CampfireRestRequest,
+    sessions: SessionRepo,
+    repos: DowntimeRepos,
 ) -> CampfireRestResponse:
     """Initiate interactive campfire rest sequence, applying rest boons and stronghold bonuses."""
-    await check_session_participation(session_id, caller_id)
+    await check_session_participation(sessions, session_id, caller_id)
     campaign_id = await _campaign_for_session(session_id)
     if campaign_id is None:
         raise HTTPException(status_code=403, detail="Session has no campaign for campfire rest")
 
     prompt = req.storytelling_prompt or random.choice(COLLABORATIVE_PROMPTS)
 
-    session = await load_if_exists(repo, opaque_aggregate_id(session_id, field="session_id"))
+    session = await load_if_exists(sessions, opaque_aggregate_id(session_id, field="session_id"))
     participants_healed = []
     if req.participating_character_ids:
         participants_healed = [str(cid) for cid in req.participating_character_ids]
@@ -111,7 +114,7 @@ async def campfire_rest(
         )
 
     # Check and apply persistent stronghold boons
-    stronghold = await load_if_exists(get_stronghold_repository(), campaign_id)
+    stronghold = await load_if_exists(repos.strongholds, campaign_id)
     if stronghold is not None:
         for b in stronghold.get_active_boons():
             if b not in boons:

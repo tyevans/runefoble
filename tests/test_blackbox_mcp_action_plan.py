@@ -27,7 +27,7 @@ _MCP: dict[str, str] = {}
 @pytest.fixture(scope="module")
 def upstreams() -> Iterator[dict[str, str]]:
     """Run The Watcher and game_session as real HTTP servers."""
-    from game_session.main import app as session_app
+    from tests.helpers.game_session_app import session_app
 
     with serve(watcher_app) as watcher_url, serve(session_app) as session_url:
         yield {"watcher": watcher_url, "session": session_url}

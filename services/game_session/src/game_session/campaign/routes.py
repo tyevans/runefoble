@@ -10,7 +10,6 @@ from typing import Annotated
 
 from eventsource.application.aggregates.repository import AggregateRepository
 from fastapi import APIRouter, Depends, status
-from game_session.aggregate import GameSessionAggregate
 from game_session.campaign import service_campaigns as campaigns
 from game_session.campaign import service_membership as membership
 from game_session.campaign import service_roles as roles
@@ -19,7 +18,7 @@ from game_session.campaign.permissions import (
     RunSessionCampaign,
     ViewCampaign,
 )
-from game_session.campaign.repositories import CampaignRepositories, get_campaign_repositories
+from game_session.campaign.repositories import CampaignRepositories, campaign_repositories
 from game_session.campaign.schemas import (
     AssignRoleRequest,
     CampaignCapabilitiesResponse,
@@ -38,7 +37,7 @@ from game_session.campaign.schemas import (
     UpdateCampaignRequest,
 )
 from game_session.campaign.tuples import SpiceDB
-from game_session.dependencies import get_game_session_repository
+from game_session.play.repositories import SessionRepo
 from game_session.profile.aggregate import UserProfileAggregate
 from game_session.profile.repository import get_profile_repository
 from game_session.shared.identity import CallerPrincipal, get_principal
@@ -50,11 +49,9 @@ router = APIRouter(
     tags=["Campaigns & Sessions"],
 )
 
-Repos = Annotated[CampaignRepositories, Depends(get_campaign_repositories)]
+Repos = Annotated[CampaignRepositories, Depends(campaign_repositories)]
 Spicedb = Annotated[SpiceDB, Depends(get_spicedb_client)]
-GameSessions = Annotated[
-    AggregateRepository[GameSessionAggregate], Depends(get_game_session_repository)
-]
+GameSessions = SessionRepo
 ProfileRepo = Annotated[AggregateRepository[UserProfileAggregate], Depends(get_profile_repository)]
 
 

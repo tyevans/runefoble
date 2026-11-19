@@ -24,10 +24,11 @@ from game_session.contracts.models import (
     CompleteBountyRequest,
     PostBountyRequest,
 )
-from game_session.dependencies import get_bounty_contract_repository, get_event_bus
-from game_session.shared.child_index_queries import link_child
+from game_session.shared.child_index_queries import ChildIndexes, link_child
+from game_session.shared.container_access import EventBus
 from game_session.shared.identity import CallerId, get_principal
 from game_session.shared.streams import STREAM_SESSION
+from game_session.world.repositories import WorldRepos, WorldRepositories
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_platform.aggregate_loading import load_if_exists
 from runefoble_platform.event_publish import publish_aggregate_events
@@ -36,8 +37,8 @@ from runefoble_platform.identifiers import parse_uuid
 router = APIRouter(dependencies=[Depends(get_principal)], prefix="/sessions", tags=["bounties"])
 
 
-async def _load(bid: UUID) -> MercenaryBountyAggregate:
-    agg = await load_if_exists(get_bounty_contract_repository(), bid)
+async def _load(repos: WorldRepositories, bid: UUID) -> MercenaryBountyAggregate:
+    agg = await load_if_exists(repos.bounty_contracts, bid)
     if agg is None:
         raise HTTPException(status_code=404, detail="Bounty not found")
     return agg
@@ -52,7 +53,12 @@ def _err(fn, *a, **kw) -> Any:
 
 @router.post("/{session_id}/contracts/bounties", status_code=201)
 async def post_bounty(
-    session_id: str, req: PostBountyRequest, caller_id: CallerId
+    repos: WorldRepos,
+    event_bus: EventBus,
+    child_indexes: ChildIndexes,
+    session_id: str,
+    req: PostBountyRequest,
+    caller_id: CallerId,
 ) -> dict[str, Any]:
     sid, spicedb = session_id, get_spicedb_client()
     await check_bounty_post(spicedb, str(sid), caller_id)
@@ -62,16 +68,18 @@ async def post_bounty(
     cid = data.pop("campaign_id", req.campaign_id)
     agg.post_bounty(str(sid), cid, **data, poster_user_id=caller_id)
     events = list(agg.uncommitted_events)
-    await get_bounty_contract_repository().save(agg)
-    if bus := get_event_bus():
+    await repos.bounty_contracts.save(agg)
+    if bus := event_bus.get():
         await publish_aggregate_events(bus, STREAM_SESSION, events)
-    await link_child(SESSION_BOUNTIES, str(sid), str(bid))
+    await link_child(child_indexes, SESSION_BOUNTIES, str(sid), str(bid))
     await write_bounty_relationships(spicedb, str(bid), str(sid), req.campaign_id, caller_id)
     return {"session_id": str(sid), "bounty": agg.state.model_dump()}
 
 
 @router.get("/{session_id}/contracts/bounties")
 async def list_bounties(
+    repos: WorldRepos,
+    child_indexes: ChildIndexes,
     caller_id: CallerId,
     session_id: str,
     status: str | None = Query(default=None),
@@ -80,8 +88,8 @@ async def list_bounties(
 ) -> dict[str, Any]:
     sid = session_id
     await check_bounty_view(get_spicedb_client(), str(sid), "", caller_id)
-    repo, results = get_bounty_contract_repository(), []
-    for bid_str in await list_bounties_for_session(str(sid)):
+    repo, results = repos.bounty_contracts, []
+    for bid_str in await list_bounties_for_session(child_indexes, str(sid)):
         agg = await load_if_exists(repo, UUID(bid_str))
         if agg is None:
             continue
@@ -97,15 +105,19 @@ async def list_bounties(
 
 
 @router.get("/{session_id}/contracts/bounties/{bounty_id}")
-async def get_bounty(session_id: str, bounty_id: str, caller_id: CallerId) -> dict[str, Any]:
+async def get_bounty(
+    repos: WorldRepos, session_id: str, bounty_id: str, caller_id: CallerId
+) -> dict[str, Any]:
     sid, bid = session_id, parse_uuid(bounty_id, field="bounty_id")
     await check_bounty_view(get_spicedb_client(), str(sid), str(bid), caller_id)
-    agg = await _load(bid)
+    agg = await _load(repos, bid)
     return {"session_id": str(sid), "bounty": agg.state.model_dump()}
 
 
 @router.post("/{session_id}/contracts/bounties/{bounty_id}/claim")
 async def claim_bounty(
+    repos: WorldRepos,
+    event_bus: EventBus,
     caller_id: CallerId,
     session_id: str,
     bounty_id: str,
@@ -113,11 +125,11 @@ async def claim_bounty(
 ) -> dict[str, Any]:
     sid, bid, spicedb = session_id, parse_uuid(bounty_id, field="bounty_id"), get_spicedb_client()
     await check_bounty_claim(spicedb, str(bid), caller_id)
-    agg = await _load(bid)
+    agg = await _load(repos, bid)
     _err(agg.claim_bounty, caller_id, req.claimant_campaign_id, req.claimant_party_name)
     events = list(agg.uncommitted_events)
-    await get_bounty_contract_repository().save(agg)
-    if bus := get_event_bus():
+    await repos.bounty_contracts.save(agg)
+    if bus := event_bus.get():
         await publish_aggregate_events(bus, STREAM_SESSION, events)
     await write_claimant_relationship(spicedb, str(bid), caller_id)
     return {"session_id": str(sid), "bounty": agg.state.model_dump()}
@@ -125,6 +137,8 @@ async def claim_bounty(
 
 @router.post("/{session_id}/contracts/bounties/{bounty_id}/complete")
 async def complete_bounty(
+    repos: WorldRepos,
+    event_bus: EventBus,
     caller_id: CallerId,
     session_id: str,
     bounty_id: str,
@@ -132,11 +146,11 @@ async def complete_bounty(
 ) -> dict[str, Any]:
     sid, bid = session_id, parse_uuid(bounty_id, field="bounty_id")
     await check_bounty_disburse(get_spicedb_client(), str(bid), caller_id)
-    agg = await _load(bid)
+    agg = await _load(repos, bid)
     payout = _err(agg.complete_bounty, proof=req.proof, disbursed_by=caller_id)
     events = list(agg.uncommitted_events)
-    await get_bounty_contract_repository().save(agg)
-    if bus := get_event_bus():
+    await repos.bounty_contracts.save(agg)
+    if bus := event_bus.get():
         await publish_aggregate_events(bus, STREAM_SESSION, events)
     return {
         "session_id": str(sid),

@@ -8,7 +8,6 @@ from __future__ import annotations
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException
-from game_session.dependencies import get_establishment_repository, get_event_bus
 from game_session.settlement.auth import (
     write_establishment_relationships,
 )
@@ -25,7 +24,9 @@ from game_session.settlement.models import (
     ConstructEstablishmentRequest,
     EstablishmentState,
 )
-from game_session.shared.child_index_queries import link_child
+from game_session.settlement.repositories import SettlementRepos
+from game_session.shared.child_index_queries import ChildIndexes, link_child
+from game_session.shared.container_access import EventBus
 from game_session.shared.identity import CallerId, get_principal
 from game_session.shared.streams import STREAM_WEST_MARCHES
 from runefoble_auth.factory import get_spicedb_client
@@ -41,9 +42,12 @@ async def construct_establishment(
     caller_id: CallerId,
     settlement_id: str,
     req: ConstructEstablishmentRequest,
+    repos: SettlementRepos,
+    event_bus: EventBus,
+    child_indexes: ChildIndexes,
 ) -> EstablishmentState:
     """Construct a commercial, civic, or hospitality establishment within a district."""
-    settlement = await load_settlement(settlement_id, "upgrade", caller_id)
+    settlement = await load_settlement(repos, settlement_id, "upgrade", caller_id)
     if req.district_id not in settlement.state.districts:
         raise HTTPException(
             status_code=400,
@@ -55,8 +59,8 @@ async def construct_establishment(
 
     spicedb, est_repo, bus = (
         get_spicedb_client(),
-        get_establishment_repository(),
-        get_event_bus(),
+        repos.establishments,
+        event_bus.get(),
     )
     eid = uuid4()
     est_agg = EstablishmentAggregate(eid)
@@ -87,7 +91,9 @@ async def construct_establishment(
         owner_id=caller_id,
     )
 
-    await link_child(SettlementChildIndex.SETTLEMENT_ESTABLISHMENTS, settlement_id, str(eid))
+    await link_child(
+        child_indexes, SettlementChildIndex.SETTLEMENT_ESTABLISHMENTS, settlement_id, str(eid)
+    )
     if bus:
         await publish_aggregate_events(bus, STREAM_WEST_MARCHES, events)
     return est_agg.state
@@ -97,11 +103,13 @@ async def construct_establishment(
 async def list_settlement_establishments(
     caller_id: CallerId,
     settlement_id: str,
+    repos: SettlementRepos,
+    child_indexes: ChildIndexes,
 ) -> list[EstablishmentState]:
     """List all establishments located in a settlement."""
-    await load_settlement(settlement_id, "view", caller_id)
-    est_ids = await list_establishments_for_settlement(settlement_id)
-    est_repo = get_establishment_repository()
+    await load_settlement(repos, settlement_id, "view", caller_id)
+    est_ids = await list_establishments_for_settlement(child_indexes, settlement_id)
+    est_repo = repos.establishments
     results: list[EstablishmentState] = []
     for eid in est_ids:
         agg = await load_if_exists(est_repo, parse_uuid(eid, field="establishment_id"))
@@ -114,9 +122,10 @@ async def list_settlement_establishments(
 async def get_establishment(
     caller_id: CallerId,
     establishment_id: str,
+    repos: SettlementRepos,
 ) -> EstablishmentState:
     """Retrieve establishment details and operational stats."""
-    agg = await load_establishment(establishment_id, "view", caller_id)
+    agg = await load_establishment(repos, establishment_id, "view", caller_id)
     return agg.state
 
 

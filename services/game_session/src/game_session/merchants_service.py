@@ -11,11 +11,12 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from game_session.dependencies import get_event_bus, get_merchant_repository
 from game_session.merchants import MerchantAggregate
 from game_session.shared.streams import STREAM_TAVERN
 from runefoble_platform.aggregate_loading import load_if_exists, load_or_create
+from runefoble_platform.event_bus import EventBusProvider
 from runefoble_platform.event_publish import publish_aggregate_events
+from runefoble_platform.event_sourcing import AggregateRepository
 from runefoble_platform.identifiers import opaque_aggregate_id
 
 
@@ -46,6 +47,8 @@ class HaggleResult:
 
 
 async def haggle(
+    repo: AggregateRepository[MerchantAggregate],
+    events: EventBusProvider,
     *,
     merchant_id: str,
     session_id: str,
@@ -56,7 +59,6 @@ async def haggle(
 
     The creation event, when there is one, precedes the negotiation event in the stream.
     """
-    repo = get_merchant_repository()
     aggregate = await load_or_create(
         repo,
         opaque_aggregate_id(merchant_id, field="merchant_id"),
@@ -76,7 +78,7 @@ async def haggle(
     events_to_publish = list(aggregate.uncommitted_events)
     await repo.save(aggregate)
 
-    bus = get_event_bus()
+    bus = events.get()
     if bus:
         await publish_aggregate_events(bus, STREAM_TAVERN, events_to_publish)
 
@@ -92,11 +94,11 @@ async def haggle(
     )
 
 
-async def load_merchant_profile(merchant_id: str) -> dict[str, Any] | None:
+async def load_merchant_profile(
+    repo: AggregateRepository[MerchantAggregate], merchant_id: str
+) -> dict[str, Any] | None:
     """Return the merchant state, or None when no merchant stream exists for the id."""
-    aggregate = await load_if_exists(
-        get_merchant_repository(), opaque_aggregate_id(merchant_id, field="merchant_id")
-    )
+    aggregate = await load_if_exists(repo, opaque_aggregate_id(merchant_id, field="merchant_id"))
     if aggregate is None:
         return None
     data = aggregate.state.model_dump()

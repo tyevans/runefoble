@@ -10,7 +10,6 @@ from __future__ import annotations
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from game_session.dependencies import get_event_bus, get_settlement_repository
 from game_session.settlement.bulletin_auth import (
     check_bulletin_board_edit_permission,
     check_bulletin_board_view_permission,
@@ -25,7 +24,9 @@ from game_session.settlement.models import (
     DecryptCipherNoticeRequest,
     PinBulletinNoticeRequest,
 )
+from game_session.settlement.repositories import SettlementRepos, SettlementRepositories
 from game_session.settlement.settlement_aggregate import SettlementAggregate
+from game_session.shared.container_access import EventBus
 from game_session.shared.identity import CallerId, get_principal
 from game_session.shared.streams import STREAM_WEST_MARCHES
 from runefoble_auth.factory import get_spicedb_client
@@ -36,9 +37,9 @@ router = APIRouter(dependencies=[Depends(get_principal)], tags=["bulletin-board"
 
 
 async def _load_settlement_for_bulletin(
-    settlement_id: str,
+    repos: SettlementRepositories, settlement_id: str
 ) -> SettlementAggregate:
-    repo = get_settlement_repository()
+    repo = repos.settlements
     settlement_uuid = parse_uuid(settlement_id, field="settlement_id")
     try:
         agg = await repo.load(settlement_uuid)
@@ -92,9 +93,11 @@ async def pin_bulletin_notice(
     caller_id: CallerId,
     settlement_id: str,
     req: PinBulletinNoticeRequest,
+    repos: SettlementRepos,
+    events: EventBus,
 ) -> BulletinNoticeResponse:
     """Pin a notice, monster bounty, ordinance, or rumor to the settlement bulletin board."""
-    agg = await _load_settlement_for_bulletin(settlement_id)
+    agg = await _load_settlement_for_bulletin(repos, settlement_id)
     spicedb = get_spicedb_client()
 
     await check_bulletin_board_view_permission(spicedb, settlement_id, caller_id)
@@ -127,14 +130,14 @@ async def pin_bulletin_notice(
         campaign_id=agg.state.campaign_id or None,
     )
 
-    events = list(agg.uncommitted_events)
+    new_events = list(agg.uncommitted_events)
 
-    await get_settlement_repository().save(agg)
+    await repos.settlements.save(agg)
 
-    bus = get_event_bus()
+    bus = events.get()
 
     if bus:
-        await publish_aggregate_events(bus, STREAM_WEST_MARCHES, events)
+        await publish_aggregate_events(bus, STREAM_WEST_MARCHES, new_events)
     notice = agg.state.bulletin_notices[nid]
     return _format_notice_response(notice, caller_id)
 
@@ -146,11 +149,12 @@ async def pin_bulletin_notice(
 async def list_bulletin_notices(
     caller_id: CallerId,
     settlement_id: str,
+    repos: SettlementRepos,
     board_type: str | None = None,
     category: str | None = None,
 ) -> list[BulletinNoticeResponse]:
     """Retrieve active notices for a settlement bulletin board, filtered by board type and category."""
-    agg = await _load_settlement_for_bulletin(settlement_id)
+    agg = await _load_settlement_for_bulletin(repos, settlement_id)
     spicedb = get_spicedb_client()
     await check_bulletin_board_view_permission(spicedb, settlement_id, caller_id)
 
@@ -174,10 +178,12 @@ async def remove_bulletin_notice(
     caller_id: CallerId,
     settlement_id: str,
     notice_id: str,
+    repos: SettlementRepos,
+    events: EventBus,
     reason: str = "removed",
 ) -> dict[str, Any]:
     """Remove or fulfill a notice from the bulletin board."""
-    agg = await _load_settlement_for_bulletin(settlement_id)
+    agg = await _load_settlement_for_bulletin(repos, settlement_id)
     if notice_id not in agg.state.bulletin_notices:
         raise HTTPException(
             status_code=404,
@@ -205,14 +211,14 @@ async def remove_bulletin_notice(
         campaign_id=agg.state.campaign_id or None,
     )
 
-    events = list(agg.uncommitted_events)
+    new_events = list(agg.uncommitted_events)
 
-    await get_settlement_repository().save(agg)
+    await repos.settlements.save(agg)
 
-    bus = get_event_bus()
+    bus = events.get()
 
     if bus:
-        await publish_aggregate_events(bus, STREAM_WEST_MARCHES, events)
+        await publish_aggregate_events(bus, STREAM_WEST_MARCHES, new_events)
     return {
         "status": "removed",
         "notice_id": notice_id,
@@ -228,9 +234,11 @@ async def decrypt_cipher_notice(
     settlement_id: str,
     notice_id: str,
     req: DecryptCipherNoticeRequest,
+    repos: SettlementRepos,
+    events: EventBus,
 ) -> dict[str, Any]:
     """Submit a cipher decryption solution and reveal hidden quest or meeting text."""
-    agg = await _load_settlement_for_bulletin(settlement_id)
+    agg = await _load_settlement_for_bulletin(repos, settlement_id)
     if notice_id not in agg.state.bulletin_notices:
         raise HTTPException(
             status_code=404,
@@ -250,14 +258,14 @@ async def decrypt_cipher_notice(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
 
-    events = list(agg.uncommitted_events)
+    new_events = list(agg.uncommitted_events)
 
-    await get_settlement_repository().save(agg)
+    await repos.settlements.save(agg)
 
-    bus = get_event_bus()
+    bus = events.get()
 
     if bus:
-        await publish_aggregate_events(bus, STREAM_WEST_MARCHES, events)
+        await publish_aggregate_events(bus, STREAM_WEST_MARCHES, new_events)
     notice = agg.state.bulletin_notices[notice_id]
     return {
         "status": "decrypted",

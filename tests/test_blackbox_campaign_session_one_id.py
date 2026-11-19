@@ -10,10 +10,10 @@ from uuid import UUID
 
 import pytest
 import pytest_asyncio
-from game_session.main import app as session_app
 from httpx import ASGITransport, AsyncClient
 from runefoble_auth.mock import MockSpiceDBClient
 
+from tests.helpers.game_session_app import session_app
 from tests.helpers.spicedb_factory import shared_spicedb_client
 from tests.helpers.ws_identity import bearer
 

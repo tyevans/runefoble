@@ -19,10 +19,10 @@ import pytest
 from campaign_lore.dependencies import get_west_marches_repo, set_west_marches_repo
 from campaign_lore.main import app as lore_app
 from fastapi.testclient import TestClient
-from game_session.main import app as session_app
 from game_session.shared.streams import STREAM_STRONGHOLD
 from runefoble_auth.mock import MockSpiceDBClient
 
+from tests.helpers.game_session_app import session_app
 from tests.helpers.live_services import closed_port_url
 from tests.helpers.module_state import SeamRestorer
 from tests.helpers.ws_identity import bearer

@@ -69,8 +69,9 @@ def _echo_authorization_app() -> FastAPI:
 def upstreams() -> Iterator[dict[str, str]]:
     """Run the owning services as real HTTP servers for the orchestration and resource tools."""
     from board_state.main import app as board_app
-    from game_session.main import app as session_app
     from rules_compendium.main import app as compendium_app
+
+    from tests.helpers.game_session_app import session_app
 
     with (
         serve(watcher_app) as watcher_url,

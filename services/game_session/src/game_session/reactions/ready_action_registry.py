@@ -6,7 +6,6 @@ from typing import Any
 from uuid import UUID, uuid4
 
 from game_session.aggregate import GameSessionAggregate
-from game_session.dependencies import repo as default_repo
 from game_session.models import ReadyActionResponse
 from runefoble_platform.event_sourcing import AggregateRepository
 
@@ -14,8 +13,8 @@ from runefoble_platform.event_sourcing import AggregateRepository
 class ReadyActionRegistry:
     """Registry evaluating conditional combat triggers against incoming domain events."""
 
-    def __init__(self, repo: AggregateRepository[GameSessionAggregate] | None = None) -> None:
-        self._repo = repo or default_repo
+    def __init__(self, repo: AggregateRepository[GameSessionAggregate]) -> None:
+        self._repo = repo
 
     async def register_ready_action(
         self,

@@ -13,21 +13,17 @@ from datetime import timedelta
 from typing import Any
 
 import pytest
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from game_session.campaign import service_membership
-from game_session.campaign.repositories import (
-    CampaignRepositories,
-    build_campaign_repositories,
-    get_campaign_repositories,
-    set_campaign_repositories,
-)
-from game_session.main import app as session_app
+from game_session.campaign.repositories import CampaignRepositories
 from game_session.shared.identity import get_zitadel_auth_service, set_zitadel_auth_service
 from runefoble_auth.mock import MockSpiceDBClient
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.event_sourcing import build_event_store, get_event_store, set_event_store
 from runefoble_platform.models import utc_now
 
+from tests.helpers.game_session_app import app_with_container, build_test_container
 from tests.helpers.module_state import SeamRestorer
 from tests.helpers.signing_test_issuer import SigningTestIssuer
 from tests.helpers.ws_identity import SIGNING_ISSUER
@@ -44,28 +40,33 @@ def issuer(seam_restorer: SeamRestorer) -> Iterator[SigningTestIssuer]:
 
 @pytest.fixture(autouse=True)
 def reset_process_globals(seam_restorer: SeamRestorer) -> Iterator[None]:
-    """Clear the event store and campaign repository singletons around every test.
+    """Clear the event store singleton around every test.
 
-    The PostgreSQL restart test binds both to a container that its module fixture stops.
+    The PostgreSQL restart test binds it to a container that its module fixture stops.
     Without this reset, later modules inherit a store that points at a closed port.
     """
     seam_restorer.replace(get_event_store, set_event_store, None)
-    seam_restorer.replace(get_campaign_repositories, set_campaign_repositories, None)
     yield
 
 
-@pytest.fixture
-def repos(seam_restorer: SeamRestorer) -> Iterator[CampaignRepositories]:
-    built = build_campaign_repositories()
-    seam_restorer.replace(get_campaign_repositories, set_campaign_repositories, built)
-    yield built
+def new_process() -> FastAPI:
+    """Start a new game_session app with a new container over the process event store."""
+    return app_with_container(build_test_container())
 
 
 @pytest.fixture
-def client(spicedb: MockSpiceDBClient, repos: CampaignRepositories) -> TestClient:
-    return TestClient(
-        session_app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"}
-    )
+def app() -> FastAPI:
+    return new_process()
+
+
+@pytest.fixture
+def repos(app: FastAPI) -> CampaignRepositories:
+    return app.state.container.campaign
+
+
+@pytest.fixture
+def client(spicedb: MockSpiceDBClient, app: FastAPI) -> TestClient:
+    return TestClient(app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"})
 
 
 def auth(issuer: SigningTestIssuer, sub: str) -> dict[str, str]:
@@ -140,8 +141,7 @@ def test_campaign_and_membership_survive_restart(
     assert join(client, issuer, token, "player-marcus").status_code == 200
 
     # A new process reads the same event store. No state may live only in memory.
-    restarted = build_campaign_repositories()
-    set_campaign_repositories(restarted)
+    client = TestClient(new_process(), headers=client.headers)
 
     got = client.get(f"/api/v1/campaigns/{campaign_id}", headers=auth(issuer, "dm-evelyn"))
     assert got.status_code == 200
@@ -253,11 +253,12 @@ def test_join_grants_player_or_spectator_relation_by_role(
 def test_failed_membership_save_writes_no_spicedb_tuple(
     issuer: SigningTestIssuer,
     spicedb: MockSpiceDBClient,
+    app: FastAPI,
     repos: CampaignRepositories,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     client = TestClient(
-        session_app,
+        app,
         headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"},
         raise_server_exceptions=False,
     )
@@ -384,25 +385,21 @@ async def test_campaign_membership_and_invites_survive_restart_on_postgres(
 
     dsn = str(postgres_service["dsn"])
 
-    def bind_process() -> CampaignRepositories:
+    def bind_process() -> FastAPI:
         settings = PlatformSettings(database_url=dsn, event_store_backend="postgresql")
         set_event_store(build_event_store(settings))
-        repos = build_campaign_repositories()
-        set_campaign_repositories(repos)
-        return repos
+        return new_process()
 
-    bind_process()
     with TestClient(
-        session_app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"}
+        bind_process(), headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"}
     ) as first:
         campaign_id = create_campaign(first, issuer, owner="dm-pg-evelyn")
         token = create_invite(first, issuer, campaign_id, owner="dm-pg-evelyn")
         assert join(first, issuer, token, "player-pg-marcus").status_code == 200
     await get_event_store().close()
 
-    bind_process()
     with TestClient(
-        session_app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"}
+        bind_process(), headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"}
     ) as second:
         got = second.get(f"/api/v1/campaigns/{campaign_id}", headers=auth(issuer, "dm-pg-evelyn"))
         assert got.status_code == 200

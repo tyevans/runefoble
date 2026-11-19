@@ -11,9 +11,9 @@ from pathlib import Path
 import pytest
 from character_sheet.main import app as character_app
 from fastapi.testclient import TestClient
-from game_session.main import app as session_app
 from gateway_api.main import app as gateway_app
 
+from tests.helpers.game_session_app import session_app
 from tests.helpers.signing_test_issuer import SigningTestIssuer
 from tests.helpers.ws_identity import SIGNING_ISSUER, bearer
 

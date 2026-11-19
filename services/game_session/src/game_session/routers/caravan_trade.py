@@ -11,13 +11,14 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
 from game_session.caravan.ledger import CaravanLedgerAggregate
-from game_session.dependencies import get_caravan_ledger_repository, get_event_bus
+from game_session.shared.container_access import EventBus
 from game_session.shared.identity import CallerId, get_principal
 from game_session.shared.streams import STREAM_WEST_MARCHES
 from game_session.west_marches_models import (
     CompleteCaravanRequest,
     DispatchCaravanRequest,
 )
+from game_session.world.repositories import WorldRepos, WorldRepositories
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.permissions import require_subject
 from runefoble_platform.aggregate_loading import load_or_create
@@ -31,14 +32,16 @@ router = APIRouter(
 )
 
 
-async def _load_ledger(wid: UUID) -> tuple[Any, CaravanLedgerAggregate]:
+async def _load_ledger(repos: WorldRepositories, wid: UUID) -> tuple[Any, CaravanLedgerAggregate]:
     """Load the world's caravan ledger, or start an empty one when none exists yet."""
-    repo = get_caravan_ledger_repository()
+    repo = repos.caravan_ledgers
     return repo, await load_or_create(repo, wid, CaravanLedgerAggregate)
 
 
 @router.post("/{shared_world_id}/caravans/dispatch", status_code=201)
 async def dispatch_caravan(
+    repos: WorldRepos,
+    event_bus: EventBus,
     caller_id: CallerId,
     shared_world_id: str,
     req: DispatchCaravanRequest,
@@ -48,7 +51,7 @@ async def dispatch_caravan(
     spicedb = get_spicedb_client()
     await require_subject(spicedb, "shared_world", str(wid), "trade", caller_id)
 
-    repo, ledger = await _load_ledger(wid)
+    repo, ledger = await _load_ledger(repos, wid)
 
     cid = ledger.dispatch_caravan(
         origin_outpost=req.origin_outpost,
@@ -60,7 +63,7 @@ async def dispatch_caravan(
     events_to_emit = list(ledger.uncommitted_events)
     await repo.save(ledger)
 
-    bus = get_event_bus()
+    bus = event_bus.get()
     if bus:
         await publish_aggregate_events(bus, STREAM_WEST_MARCHES, events_to_emit)
 
@@ -69,6 +72,8 @@ async def dispatch_caravan(
 
 @router.post("/{shared_world_id}/caravans/{caravan_id}/complete")
 async def complete_caravan_trade(
+    repos: WorldRepos,
+    event_bus: EventBus,
     caller_id: CallerId,
     shared_world_id: str,
     caravan_id: str,
@@ -79,7 +84,7 @@ async def complete_caravan_trade(
     spicedb = get_spicedb_client()
     await require_subject(spicedb, "shared_world", str(wid), "trade", caller_id)
 
-    repo, ledger = await _load_ledger(wid)
+    repo, ledger = await _load_ledger(repos, wid)
 
     try:
         caravan = ledger.complete_caravan_trade(
@@ -92,7 +97,7 @@ async def complete_caravan_trade(
     events_to_emit = list(ledger.uncommitted_events)
     await repo.save(ledger)
 
-    bus = get_event_bus()
+    bus = event_bus.get()
     if bus:
         await publish_aggregate_events(bus, STREAM_WEST_MARCHES, events_to_emit)
 
@@ -107,6 +112,7 @@ async def complete_caravan_trade(
 
 @router.get("/{shared_world_id}/outposts/{outpost_name}/merchant-stock")
 async def get_outpost_merchant_stock(
+    repos: WorldRepos,
     caller_id: CallerId,
     shared_world_id: str,
     outpost_name: str,
@@ -116,7 +122,7 @@ async def get_outpost_merchant_stock(
     spicedb = get_spicedb_client()
     await require_subject(spicedb, "shared_world", str(wid), "view", caller_id)
 
-    _, ledger = await _load_ledger(wid)
+    _, ledger = await _load_ledger(repos, wid)
 
     dest = outpost_name.lower()
     stock = ledger.state.outpost_stocks.get(dest, {"inventory": {}, "workshop_reagents": {}})

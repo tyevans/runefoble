@@ -114,7 +114,7 @@ The gateway API reads its upstream URLs once, when its lifespan starts (TASK-058
 
 The shared fixture `game_session_upstream` in `tests/helpers/service_harness.py` does the setup:
 
-1. Serves `game_session` on a loopback port with fresh in-memory campaign state.
+1. Serves a new `game_session` app with a new test container over a fresh in-memory event store, on a loopback port.
 2. Sets `RUNEFOBLE_GAME_SESSION_URL` with `monkeypatch`.
 3. Trusts the signing issuer in both services through `trusted_ws_issuer`.
 
@@ -190,6 +190,8 @@ These fixtures read the table. Every test gets the autouse fixtures. Each one se
 | `character_sheet_upstream`, `game_session_upstream` | Serve that service as a live loopback upstream. |
 
 `tests/helpers/stream_events.py` has `assert_stream_events(mock_bus, *names, stream=...)`. It checks that a test published each named event. The default stream is the West Marches stream. Do not write a copy of it in a conftest.
+
+The `game_session` row names `tests/helpers/game_session_app.py`, not a service module. `game_session` has no seams of its own (ADR-0021 D6). Its tests use `session_app` from that helper. `create_app` builds that app with a test container, and the container holds the harness event bus provider. To serve a repository that fails, copy the test container with `dataclasses.replace` and pass it to `app_with_container`.
 
 To add a service seam, add one `ServiceSeams` row. Do not write a setter call in a conftest. A directory conftest only builds a `TestClient` and its own helpers.
 

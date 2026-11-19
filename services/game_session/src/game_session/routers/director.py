@@ -10,25 +10,28 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
 from game_session.aggregate import GameSessionAggregate
-from game_session.dependencies import repo
 from game_session.models import AtmosphereUpdateRequest, DMOverrideRequest, GameSessionState
+from game_session.play.repositories import SessionRepo
 from game_session.routers.session_auth import SessionController
 from game_session.shared.identity import get_principal
 from runefoble_platform.aggregate_loading import load_or_404
+from runefoble_platform.event_sourcing import AggregateRepository
 
 router = APIRouter(dependencies=[Depends(get_principal)], tags=["session"])
 
 
-async def _load_session(session_id: UUID) -> GameSessionAggregate:
+async def _load_session(
+    repo: AggregateRepository[GameSessionAggregate], session_id: UUID
+) -> GameSessionAggregate:
     return await load_or_404(repo, session_id, f"Session not found: {session_id}")
 
 
 @router.post("/api/v1/sessions/{session_id}/dm-override", response_model=GameSessionState)
 async def apply_dm_override(
-    session_id: UUID, req: DMOverrideRequest, _caller: SessionController
+    session_id: UUID, req: DMOverrideRequest, _caller: SessionController, repo: SessionRepo
 ) -> GameSessionState:
     """Record a DM override on the session. The override appears in the session state."""
-    session = await _load_session(session_id)
+    session = await _load_session(repo, session_id)
     try:
         session.apply_dm_override(action=req.action, reason=req.reason, payload=req.payload)
     except ValueError as e:
@@ -39,10 +42,10 @@ async def apply_dm_override(
 
 @router.post("/api/v1/sessions/{session_id}/atmosphere", response_model=GameSessionState)
 async def update_atmosphere(
-    session_id: UUID, req: AtmosphereUpdateRequest, _caller: SessionController
+    session_id: UUID, req: AtmosphereUpdateRequest, _caller: SessionController, repo: SessionRepo
 ) -> GameSessionState:
     """Change the location, lighting, and mood of the session."""
-    session = await _load_session(session_id)
+    session = await _load_session(repo, session_id)
     try:
         session.update_atmosphere(
             location_name=req.location_name,
