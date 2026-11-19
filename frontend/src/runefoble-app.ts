@@ -1,6 +1,7 @@
 import { LitElement } from 'lit';
 import { wsUrl } from '@runefoble/ui-core';
 import { customElement, state } from 'lit/decorators.js';
+import { createRef } from 'lit/directives/ref.js';
 import './styles/themes.css';
 import { appShellStyles } from './styles/app-shell.styles.ts';
 import { loadViewBundles } from './app/component-registry.ts';
@@ -35,6 +36,7 @@ import { SessionSocket } from './app/session-socket.ts';
 import { installTitleResolvers } from './app/title-resolver.ts';
 import { pickActiveCharacter } from './app/active-character.ts';
 import type { BoardTarget } from './app/board-dm-controls.ts';
+import type { RunefobleHeader } from './components/runefoble-header.ts';
 
 @customElement('runefoble-app')
 export class RunefobleApp extends LitElement {
@@ -42,6 +44,8 @@ export class RunefobleApp extends LitElement {
 
   public readonly sessionSocket = new SessionSocket(this);
   public readonly authContextProvider = new AuthContextProviderController(this, authService);
+  /** The header that the shell renders. The shell calls its public methods only. */
+  public readonly header = createRef<RunefobleHeader>();
   @state() public viewMode: 'party' | 'spectator' = 'party';
   @state() public isSettingsOpen = false;
   @state() public currentTheme = 'bauhaus';
@@ -165,7 +169,7 @@ export class RunefobleApp extends LitElement {
 
   public handleSettingsClosed() {
     this.isSettingsOpen = false;
-    (this.shadowRoot?.querySelector('runefoble-header')?.shadowRoot?.querySelector('#settings-trigger-btn') as HTMLElement)?.focus();
+    this.header.value?.restoreFocus();
   }
 
   /** The bound character, or null when the roster is empty. Never a placeholder. */

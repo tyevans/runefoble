@@ -50,6 +50,11 @@ export class RunefobleHeader extends LitElement {
     }
   `;
 
+  /** Moves focus to the settings control, for example after the settings modal closes. */
+  public restoreFocus(): void {
+    this.renderRoot.querySelector<HTMLButtonElement>('#settings-trigger-btn')?.focus();
+  }
+
   private handleOpenSettings() {
     this.dispatchEvent(new CustomEvent('open-settings', { bubbles: true, composed: true }));
   }
