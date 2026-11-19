@@ -21,8 +21,8 @@ from pathlib import Path
 import httpx
 import pytest
 from gateway_mcp.container import GatewayMcpContainer
-from gateway_mcp.dynamic import DynamicToolDefinition
 from gateway_mcp.dynamic.auth import grant_tool_permissions
+from gateway_mcp.dynamic.models import DynamicToolDefinition
 from gateway_mcp.identity import get_verifier, set_verifier
 from gateway_mcp.server import build_http_app
 

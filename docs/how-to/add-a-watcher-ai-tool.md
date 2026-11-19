@@ -41,7 +41,7 @@ def register_character_tools(mcp: FastMCP, container: GatewayMcpContainer) -> No
 
 Service-backed tools are `async`. FastMCP awaits them.
 
-Pass the container through `register_tools(mcp, container)` in `gateway/mcp/src/gateway_mcp/tools/__init__.py`.
+For a new tool module, call its registration hook from `build_mcp(container)` in `gateway/mcp/src/gateway_mcp/server.py`. Import the hook from its defining module. The package `__init__.py` files hold only a docstring and export no names.
 
 ### 3. Add Type Annotations and Docstring
 MCP clients (such as Claude Desktop, Gemini agents, or Antigravity) use function docstrings and type annotations to generate the tool definition schema. Ensure all parameters have descriptions.

@@ -18,20 +18,28 @@ from starlette.responses import JSONResponse
 
 from gateway_mcp.container import GatewayMcpContainer
 from gateway_mcp.identity import BearerTransportAuth, get_verifier
-from gateway_mcp.prompts import register_prompts
-from gateway_mcp.resources import register_resources
-from gateway_mcp.routers import mount_tools_registry
+from gateway_mcp.prompts.narrative import register_narrative_prompts
+from gateway_mcp.resources.session import register_session_resources
+from gateway_mcp.routers.tools_registry import mount_tools_registry
 from gateway_mcp.settings import load_listen_settings, load_settings
-from gateway_mcp.tools import register_tools
+from gateway_mcp.tools.board import register_board_tools
+from gateway_mcp.tools.character import register_character_tools
+from gateway_mcp.tools.compendium import register_compendium_tools
+from gateway_mcp.tools.dice import register_dice_tools
+from gateway_mcp.tools.orchestration import register_orchestration_tools
 
 
 def build_mcp(container: GatewayMcpContainer) -> FastMCP:
     """Return a FastMCP app whose tools, resources, and registry all use `container`."""
     mcp = FastMCP("Runefoble MCP Gateway")
     container.registry.set_mcp_server(mcp)
-    register_tools(mcp, container)
-    register_resources(mcp, container)
-    register_prompts(mcp)
+    register_dice_tools(mcp)
+    register_board_tools(mcp, container)
+    register_character_tools(mcp, container)
+    register_orchestration_tools(mcp, container)
+    register_compendium_tools(mcp, container)
+    register_session_resources(mcp, container)
+    register_narrative_prompts(mcp)
 
     @mcp.custom_route("/healthz", methods=["GET"])
     async def healthz(_request: Request) -> JSONResponse:

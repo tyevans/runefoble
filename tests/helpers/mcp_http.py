@@ -16,7 +16,7 @@ from typing import Any
 import httpx
 from gateway_mcp.container import GatewayMcpContainer
 from gateway_mcp.identity import BearerTransportAuth
-from gateway_mcp.routers import mount_tools_registry
+from gateway_mcp.routers.tools_registry import mount_tools_registry
 from gateway_mcp.server import build_mcp
 from mcp.client.session import ClientSession
 from mcp.client.streamable_http import streamable_http_client
