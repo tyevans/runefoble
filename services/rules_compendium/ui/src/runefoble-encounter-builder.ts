@@ -5,7 +5,7 @@
 
 import { LitElement, html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { AuthConsumerController } from '@runefoble/ui-core';
+import { AuthConsumerController, actionFailureMessage, postJson } from '@runefoble/ui-core';
 import { compendiumStyles } from './runefoble-rules-compendium.styles.ts';
 import type {
   DifficultyTier,
@@ -52,6 +52,8 @@ export class RunefobleEncounterBuilder extends LitElement {
   @state() loading = false;
   @state() tacticalSummary = '';
   @state() lastBalancedResponse: EncounterBalanceResponse | null = null;
+  /** The reason the last balance request failed. Empty when it did not fail. */
+  @state() balanceError = '';
 
   public computePartyThresholds(): PartyXpThresholds {
     const t = { easy: 0, medium: 0, hard: 0, deadly: 0 };
@@ -128,44 +130,36 @@ export class RunefobleEncounterBuilder extends LitElement {
     this.requestUpdate();
   }
 
+  /**
+   * Sends `POST /api/v1/compendium/encounters/balance` through the shared transport
+   * (TASK-0759). A refused or failed request shows its reason and keeps the draft.
+   */
   public async autoBalanceEncounter() {
+    if (!this.apiBaseUrl) {
+      this.balanceError = 'The compendium service address is not set.';
+      return;
+    }
     this.loading = true;
+    this.balanceError = '';
     try {
-      if (this.apiBaseUrl) {
-        const res = await fetch(`${this.apiBaseUrl}/api/v1/compendium/encounters/balance`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...(await this.auth.authHeaders()) },
-          body: JSON.stringify({
-            party_levels: this.partyLevels,
-            target_difficulty: this.targetDifficulty,
-            campaign_id: this.campaignId,
-          }),
-        });
-        if (res.ok) {
-          const data: EncounterBalanceResponse = await res.json();
-          this.lastBalancedResponse = data;
-          this.tacticalSummary = data.tactical_summary;
-          this.draftMonsters = data.monsters.map((m) => ({
-            name: m.name,
-            cr: m.cr,
-            xp: m.xp,
-            role: m.role,
-            count: m.count,
-          }));
-          this.dispatchEvent(
-            new CustomEvent('encounter-balanced', {
-              detail: data,
-              bubbles: true,
-              composed: true,
-            })
-          );
-        }
-      }
-    } catch {
-      // Mock fallback
+      const data = await postJson<EncounterBalanceResponse>(
+        '/api/v1/compendium/encounters/balance',
+        { party_levels: this.partyLevels, target_difficulty: this.targetDifficulty, campaign_id: this.campaignId },
+        { apiBase: this.apiBaseUrl, auth: this.auth },
+      );
+      this.applyBalancedEncounter(data);
+    } catch (err) {
+      this.balanceError = actionFailureMessage(err, 'encounter balance request');
     } finally {
       this.loading = false;
     }
+  }
+
+  private applyBalancedEncounter(data: EncounterBalanceResponse) {
+    this.lastBalancedResponse = data;
+    this.tacticalSummary = data.tactical_summary;
+    this.draftMonsters = data.monsters.map((m) => ({ name: m.name, cr: m.cr, xp: m.xp, role: m.role, count: m.count }));
+    this.dispatchEvent(new CustomEvent('encounter-balanced', { detail: data, bubbles: true, composed: true }));
   }
 
   render() {
@@ -247,6 +241,9 @@ export class RunefobleEncounterBuilder extends LitElement {
             >
               ${this.loading ? 'Balancing Encounter...' : '⚡ Auto-Balance Encounter'}
             </button>
+            ${this.balanceError
+              ? html`<div class="balance-error" role="alert" style="background: #ffccd5; color: #800f2f; border: 1px solid #121212; padding: 8px; font-weight: 700; font-size: 0.8rem;">${this.balanceError}</div>`
+              : ''}
           </div>
 
           <!-- Right Column: Combatant Roster & Lethality Gauge -->
