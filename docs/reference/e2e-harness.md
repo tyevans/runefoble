@@ -24,7 +24,7 @@ e2e/
 | `e2e/support/zitadel_login.ts` | Drives the Zitadel hosted login page from the App Shell sign-in modal. |
 | `e2e/support/app_shell_session.ts` | The App Shell session key and its read-only shape. |
 | `e2e/support/auth_fixtures.ts` | The `AuthFixtures` class. `signInAs` signs a persona in through Zitadel. |
-| `e2e/support/environment.ts` | The base URL and the name of the admin token variable. |
+| `e2e/support/env.ts` | The only module that reads environment variables. It holds the API base URL, the Zitadel issuer and audience, and the name of the admin token variable. |
 | `e2e/support/frontdoor_api.ts` | The `FrontdoorApi` class. Calls public REST routes through the ingress. |
 | `e2e/support/world.ts` | Scenario context: the current user, campaign and session ids, one page per persona, and extra browser contexts. |
 
@@ -73,7 +73,7 @@ The token for a negative scenario, such as a token signed by an unknown key, is 
 
 ## Frontdoor API Client
 
-`FrontdoorApi` (`e2e/support/frontdoor_api.ts`) sends HTTP requests to public routes such as `POST /api/v1/campaigns`. It sends the bearer token when the caller passes one. Its methods include:
+`FrontdoorApi` (`e2e/support/frontdoor_api.ts`) sends HTTP requests to public routes such as `POST /api/v1/campaigns`. It sends the bearer token when the caller passes one. The `bearerHeader(token)` helper in the same file builds the `Authorization` header. Every e2e request that carries a token uses it. Its methods include:
 
 - Health and reads: `checkHealth`, `listCampaigns`, `getCampaign`, `listCharacters`, `getCharacter`, `listCampaignMembers`, `getAtlas`, `getCodex`.
 - Writes: `createCampaign`, `createCharacter`, `assignCampaignRole`, `createCampaignInvite`, `publishCodexEntry`, `createCampaignSession`, `startSession`.
@@ -84,7 +84,9 @@ A setup step must throw when the request fails. It must not fall back to a fixed
 
 Source: `playwright.config.ts`.
 
-- Base URL: the `PLAYWRIGHT_BASE_URL` variable. The default is `http://localhost`, the Kind ingress.
+- Base URL: the `PLAYWRIGHT_BASE_URL` variable. The default is `http://localhost`, the Kind ingress. The gateway API and the App Shell share this origin.
+- Zitadel issuer and audience, used by the forged-token negative scenarios: `PLAYWRIGHT_ZITADEL_ISSUER` (default `http://auth.localhost`) and `PLAYWRIGHT_ZITADEL_AUDIENCE` (default `runefoble-api`).
+- Defaults live in `e2e/support/env.ts` only. Steps import the values from there.
 - Global setup: `e2e/support/global_setup.ts`. It creates the personas (see above).
 - Projects: desktop Chromium, Firefox and WebKit.
 - Artifacts: a trace on the first retry. A video and a screenshot on failure.

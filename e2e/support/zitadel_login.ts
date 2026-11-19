@@ -6,7 +6,7 @@
  */
 
 import type { Page } from '@playwright/test';
-import { APP_BASE_URL } from './environment';
+import { API_BASE_URL } from './env';
 import { APP_SHELL_SESSION_KEY } from './app_shell_session';
 
 export type HostedLoginOutcome = { kind: 'session' } | { kind: 'rejected'; message: string };
@@ -36,7 +36,7 @@ async function waitForOutcome(page: Page): Promise<HostedLoginOutcome> {
     if (await error.isVisible()) {
       return { kind: 'rejected', message: (await error.innerText()).trim() };
     }
-    if (page.url().startsWith(`${APP_BASE_URL}/`)) {
+    if (page.url().startsWith(`${API_BASE_URL}/`)) {
       await page.waitForFunction((key) => window.localStorage.getItem(key) !== null, APP_SHELL_SESSION_KEY, {
         timeout: 15_000,
       });

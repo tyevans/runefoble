@@ -5,7 +5,8 @@
  * The admin personal access token comes from the environment and never reaches a file, a log, or an error message.
  */
 
-import { ZITADEL_ADMIN_PAT_ENV } from './environment';
+import { ZITADEL_ADMIN_PAT_ENV } from './env';
+import { bearerHeader } from './frontdoor_api';
 
 export interface HumanUserInput {
   username: string;
@@ -49,7 +50,7 @@ export async function createHumanUser(issuer: string, pat: string, input: HumanU
   const res = await fetch(`${issuer}/v2beta/users/human`, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${pat}`,
+      ...bearerHeader(pat),
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
