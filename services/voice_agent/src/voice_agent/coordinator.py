@@ -7,7 +7,6 @@ saves it, and then publishes its event. No room state stays in process (TASK-057
 
 from __future__ import annotations
 
-import logging
 import time
 from dataclasses import dataclass
 from typing import Any, Protocol
@@ -32,7 +31,6 @@ from voice_agent.webrtc.adaptive_bitrate import AdaptiveBitrateRegulator, OpusCo
 from voice_agent.webrtc.models import RTCPReportRequest
 from voice_agent.webrtc.quality_monitor import NetworkQualityMonitor, QualityMetrics
 
-logger = logging.getLogger("runefoble.voice_agent.coordinator")
 STREAM_SESSION = "runefoble.events.session"
 STREAM_VOICE = "runefoble.events.voice"
 
