@@ -1,7 +1,7 @@
 ---
 id: '0850'
 title: Voice Audio Parser Rejects Malformed WAV Instead of Guessing the Audio
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies: []
 governing_adrs:
@@ -14,7 +14,7 @@ target_release: 0.9.0
 # TASK-0850: Voice Audio Parser Rejects Malformed WAV Instead of Guessing the Audio
 
 ## Status
-Refined
+Complete
 
 ## Summary
 `parse_audio_data` in the voice agent returns raw bytes after a fixed 44-byte header when a RIFF file has no `data` chunk. It also catches every exception and returns the same guess. A malformed file becomes noise, and nothing is logged. The fix raises a typed `AudioFormatError`, removes the broad `except`, and maps the error to a 400 response at the edge.

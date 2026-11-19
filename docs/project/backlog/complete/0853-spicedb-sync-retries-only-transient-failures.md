@@ -1,7 +1,7 @@
 ---
 id: '0853'
 title: SpiceDB Sync Retries Only Transient Failures
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies: []
 governing_adrs:
@@ -15,7 +15,7 @@ target_release: 0.9.0
 # TASK-0853: SpiceDB Sync Retries Only Transient Failures
 
 ## Status
-Refined
+Complete
 
 ## Summary
 `execute_with_retry` in the auth lib catches every exception and retries it with backoff. A schema rejection is permanent. The gRPC adapter already classifies it as `AuthzSchemaError`. The retry loop still repeats it three times. The fix retries only `AuthzUnavailableError` and raises every other error at once.

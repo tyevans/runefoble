@@ -1,7 +1,7 @@
 ---
 id: '0872'
 title: Blackbox Tests Restore Every Seam They Replace and Drop Dead Fixtures
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies: []
 governing_adrs:
@@ -15,7 +15,7 @@ target_release: 0.9.0
 # TASK-0872: Blackbox Tests Restore Every Seam They Replace and Drop Dead Fixtures
 
 ## Status
-Refined.
+Complete
 
 ## Summary
 Some blackbox tests replace a process-wide seam and never restore it. The copilot engine that one test builds keeps its timers after the test ends. The shared helpers `seam_restorer` and `restored_seam` already exist. Use them at every site, and delete the unused audio fixtures and empty section headers.

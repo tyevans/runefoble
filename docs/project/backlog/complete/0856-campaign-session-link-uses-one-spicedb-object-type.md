@@ -1,7 +1,7 @@
 ---
 id: '0856'
 title: Campaign Link for a Session Uses One SpiceDB Object Type
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies:
 - TASK-0590
@@ -16,7 +16,7 @@ target_release: 0.9.0
 # TASK-0856: Campaign Link for a Session Uses One SpiceDB Object Type
 
 ## Status
-Refined
+Complete
 
 ## Summary
 The campaign-to-session link is written to two object types, `session` and `game_session`. ADR-0015 (a) names `game_session#campaign` as the authoritative link. The permission checks read `session`. The two types also define different `observe` rules. The fix writes one object type, moves the checks to it, and removes the second write. The `observe` rules must be made equal first, or access changes.

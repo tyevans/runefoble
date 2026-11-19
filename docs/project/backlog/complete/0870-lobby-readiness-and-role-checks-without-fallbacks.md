@@ -1,7 +1,7 @@
 ---
 id: '0870'
 title: Lobby Readiness Has No Role Fallback and Role Checks Use One Normalizer
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies: []
 governing_adrs:
@@ -19,7 +19,7 @@ target_release: 0.9.0
 # TASK-0870: Lobby Readiness Has No Role Fallback and Role Checks Use One Normalizer
 
 ## Status
-Refined.
+Complete
 
 ## Summary
 When a session has no player, the lobby counts every non-spectator as a player. A DM-only session then shows DMs as ready players. Role strings also drive owner and manage controls in several files. Remove the fallback. Route role checks through one normalizer and through permission flags from the server.
@@ -61,3 +61,6 @@ When a session has no player, the lobby counts every non-spectator as a player. 
 ## Audit Provenance
 - Severity: medium
 - Source audits: `frontend-ui`
+
+## Completion Note
+The Playwright scenarios moved to TASK-0840 (addendum 3 and 4).

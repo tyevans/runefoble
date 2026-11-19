@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Security
+- Removing a dynamic MCP tool revokes its SpiceDB permissions first. A SpiceDB failure answers 503 `authorization_unavailable` and keeps the tool. (TASK-0847)
 - game_session checks `session.control` on `POST /api/v1/sessions/{id}/dm-override` and `/atmosphere`. Before, any signed-in user who called game_session directly could direct any session; only the gateway checked. (found by TASK-0845)
 - Voice signaling takes the user id and role only from the verified token and SpiceDB session permissions; a join frame cannot change either, and `/ws/voice` and `/ws/mobile-companion` ignore the `role` query parameter. (TASK-0811)
 - The Asset Forge and caravan UI clients send the shared bearer on every request; the caravan client no longer sends `x-user-id`. (TASK-0812)
@@ -39,6 +40,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Gateway WebSocket routes admit a connection only with a verified `runefoble.bearer.<jwt>` subprotocol, checked before accept. Refused handshakes close with 1008. Removed the `?user_id=`, `?token=`, `x-user-id`, and `guest_user` identity paths on WebSocket and voice/companion signaling routes. (TASK-0522)
 
 ### Removed
+- The Redis bus drops its unused consumer-group methods and the raw-field fallback. `deserialize_event` lives in `runefoble_platform.event_deserializer`. (TASK-0852)
 - `POST /api/v1/sessions/create` is removed. A game session is created only through the campaign session create, so every session is in its campaign list. (TASK-0844)
 - The Redis URL has one environment name, `RUNEFOBLE_REDIS_URL`; the `REDIS_URL` alias is removed from the platform settings, Audience Studio, the dev orchestrator, CI and Helm. Audience Studio no longer rewrites `postgresql+asyncpg://` URLs. (TASK-0839)
 - Audience Studio has no compatibility shims or re-exports left (checked; no code change). (TASK-0499)
@@ -171,6 +173,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
 
 ### Changed
+- Campaign Analytics is built through `create_app(settings, event_bus)`. Start-up tests use the public factory instead of patching module state. (TASK-0873)
+- Blackbox tests restore every seam they replace, and dead fixtures are removed. (TASK-0872)
+- The campaign link of a session lives only on `game_session#campaign`; the duplicate `session` SpiceDB definition is removed. `POST /api/v1/campaigns/{id}/sessions/reconcile-links` writes missing links for a campaign. (TASK-0856)
 - The Helm chart tests share one renderer (`tests/helpers/helm.py`). They fail in CI when Helm is missing instead of skipping, and the CI Python job installs Helm. (TASK-0869)
 - Gateway permission checks follow one rule: a proxy route forwards the token and the owner checks; a composite route checks at the gateway. 21 proxy routes lost a duplicate gateway check. `docs/how-to/call-owning-services-through-the-gateway.md` states the rule. (TASK-0845)
 - The approved audience modifier consumers in game_session, board_state and character_sheet share one helper, `runefoble_platform.audience_modifiers`. Behaviour is unchanged. (TASK-0843)
@@ -1279,6 +1284,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **Documentation & Build Navigation**: Featured the Platform Showcase and Changelog in `zensical.toml` and root documentation landing page (`docs/index.md`), and enhanced `scripts/build_docs.py` to synchronize `CHANGELOG.md` to `docs/changelog.md` during documentation compilation.
 
 ### Fixed
+- Lobby readiness counts players only (an owner or DM is never counted) and shows "No players have joined" for an empty session. The members view shows management controls only from the server can-manage flag. (TASK-0870)
+- SpiceDB sync retries only transient failures. A write outage raises `AuthzWriteUnavailableError`, which callers still catch as a write error and sync retries. (TASK-0853)
+- The voice audio parser refuses a malformed WAV (RIFF) body: HTTP routes answer 400 `audio_format_invalid`, and the audio WebSocket sends a typed error frame. (TASK-0850)
 - The App Shell data mappers read the real owner responses (`session_id`, `combat_round`, the participant and token maps). A required field the owner does not send fails with an error instead of a made-up default. (TASK-0867)
 - `deserialize_event` returns a registered event or `UnknownEvent`, or raises `EventDecodeError`. Stream consumers send undecodable messages to the dead-letter stream. (TASK-0851)
 - The soundscape controls send the shell bearer token with ducking requests, not a raw Authorization string. (TASK-0868)

@@ -1,7 +1,7 @@
 ---
 id: '0847'
 title: Dynamic Tool Deregistration Revokes Permissions Before It Removes the Tool
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies: []
 governing_adrs:
@@ -15,7 +15,7 @@ target_release: 0.9.0
 # TASK-0847: Dynamic Tool Deregistration Revokes Permissions Before It Removes the Tool
 
 ## Status
-Refined
+Complete
 
 ## Summary
 The DELETE route for a dynamic MCP tool removes the registry entry first and then revokes the SpiceDB author relation. The revoke has no error mapping. When SpiceDB is down, the caller gets a 500, the tool is already gone, and the author tuple stays. A retry returns 404. The fix revokes first, maps the error the same way as grant, and removes the registry entry only after revoke succeeds.

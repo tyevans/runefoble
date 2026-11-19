@@ -1,7 +1,7 @@
 ---
 id: '0852'
 title: Redis Bus Drops the Unused Consumer-Group API and Its Raw-Field Fallback
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies:
 - TASK-0851
@@ -16,7 +16,7 @@ target_release: 0.9.0
 # TASK-0852: Redis Bus Drops the Unused Consumer-Group API and Its Raw-Field Fallback
 
 ## Status
-Refined
+Complete
 
 ## Summary
 `RedisStreamsEventBus` keeps three consumer-group methods. Production code does not call them. Production consumers use `RedisConsumerGroup` through `stream_consumer.py`. The bus also appends raw Redis fields to the result when a JSON decode fails, so a consumer gets a value of the wrong type with no marker. The fix deletes the three methods and the raw-field fallback. Decode failures follow TASK-0851.

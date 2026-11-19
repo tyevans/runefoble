@@ -66,6 +66,7 @@ each route, and the mode in which the gateway serves it.
 | POST | `/api/v1/campaigns/{campaign_id}/roles` | game_session | proxy | `gateway_api.routers.campaigns_proxy` |
 | GET | `/api/v1/campaigns/{campaign_id}/sessions` | game_session | proxy | `gateway_api.routers.campaigns_proxy` |
 | POST | `/api/v1/campaigns/{campaign_id}/sessions` | game_session | proxy | `gateway_api.routers.campaigns_proxy` |
+| POST | `/api/v1/campaigns/{campaign_id}/sessions/reconcile-links` | game_session | proxy | `gateway_api.routers.campaigns_proxy` |
 | GET | `/api/v1/campaigns/{campaign_id}/settlements` | game_session | proxy | `gateway_api.routers.settlements_proxy` |
 | POST | `/api/v1/campaigns/{campaign_id}/settlements` | game_session | proxy | `gateway_api.routers.settlements_proxy` |
 | GET | `/api/v1/campaigns/{campaign_id}/settlements/{settlement_id}` | game_session | proxy | `gateway_api.routers.settlements_proxy` |

@@ -1,7 +1,7 @@
 ---
 id: '0873'
 title: Campaign Analytics Startup Is Configured Through Settings, Not Patched Module Globals
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies: []
 governing_adrs:
@@ -17,7 +17,7 @@ target_release: 0.9.0
 # TASK-0873: Campaign Analytics Startup Is Configured Through Settings, Not Patched Module Globals
 
 ## Status
-Refined.
+Complete
 
 ## Summary
 The campaign analytics startup tests patch two module attributes of `services/campaign_analytics` (`platform_settings` and `event_bus_provider`). The module builds both at import time. The tests therefore do not run the public startup path. Build the app through a factory that takes explicit settings. The tests then call the factory with environment settings.
@@ -54,3 +54,6 @@ The campaign analytics startup tests patch two module attributes of `services/ca
 ## Audit Provenance
 - Severity: medium
 - Source audits: `tests`
+
+## Completion Note
+The token verifier still reads module settings; that is TASK-0880.
