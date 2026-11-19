@@ -4,7 +4,7 @@ This guide explains how to navigate the interactive multi-layered world atlas en
 
 ---
 
-> **Routing.** Clients call the gateway on port `8000`, not `campaign_lore`. The gateway routes `GET` for the atlas and the codex, and `POST` for atlas pins and codex entries (`run_session` and `play` permissions). The gateway does not yet route `POST` for atlas territories or `PATCH` for codex entries. Those calls fail through the gateway until the routes are added. Defect: the gateway route gap is not yet tasked.
+> **Routing.** Clients call the gateway on port `8000`, not `campaign_lore`. The gateway routes `GET` for the atlas and the codex, and `POST` for atlas pins and codex entries (`play` permission). The owner checks the permission. The gateway does not yet route `POST` for atlas territories or `PATCH` for codex entries. Those calls fail through the gateway until the routes are added. Defect: the gateway route gap is not yet tasked.
 
 ## 1. Deep-Zoom Atlas Navigation & Layer Projections
 

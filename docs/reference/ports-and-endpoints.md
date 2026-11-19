@@ -361,7 +361,7 @@ Campaign Lore routes require a verified bearer token, except `/healthz`, `/opena
 | `gateway-api` | GET | `/api/v1/campaigns/{campaign_id}/atlas` | Retrieves world atlas map layers, milestone pins, and geopolitical territories, forwarding `layer`, `era`, and `session_id` (requires `view`) |
 | `gateway-api` | GET | `/api/v1/campaigns/{campaign_id}/codex` | Retrieves campaign lore codex entries and cross-references (requires `view`) |
 | `gateway-api` | GET | `/api/v1/campaigns/{campaign_id}/codex` | Lists codex entries, forwarding `era`, `tag`, and `search` (requires `view`) |
-| `gateway-api` | POST | `/api/v1/campaigns/{campaign_id}/atlas/pins` | Places a milestone pin on the atlas; forwards the body to campaign-lore (requires `run_session`) |
+| `gateway-api` | POST | `/api/v1/campaigns/{campaign_id}/atlas/pins` | Places a milestone pin on the atlas; forwards the body to campaign-lore (requires `play`, checked by campaign-lore) |
 | `gateway-api` | POST | `/api/v1/campaigns/{campaign_id}/codex/entries` | Publishes a codex entry; forwards the body to campaign-lore (requires `play`) |
 | `gateway-api` | GET | `/api/v1/analytics/campaigns/{campaign_id}/heatmap` | Proxies to `campaign-analytics`. Forwards `session_id`, `cell_size`, and `metric` (requires `view`) |
 | `gateway-api` | GET | `/api/v1/analytics/campaigns/{campaign_id}/mvp` | Proxies to `campaign-analytics`. Forwards `session_id` and `encounter_id` (requires `view`) |

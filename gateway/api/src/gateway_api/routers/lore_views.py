@@ -5,15 +5,13 @@ The gateway verifies the caller's bearer token, then forwards it. The owner chec
 permission in the Zanzibar schema. It never filters or substitutes the owner's answer. Upstream
 failure returns 503 or 502, never canned data (ADR-0015).
 
-The one gateway check is the atlas pin route. It requires `run_session`, and the owner checks
-`play` on that route, which is a different permission. The gateway check keeps the stricter rule
-until the owner checks `run_session` too (TASK-0845).
+Proxy routes add no gateway check. The owner checks each object permission (TASK-0845).
 """
 
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Body, Depends, Query, Request
-from gateway_api.auth import get_principal, require_zanzibar_permission
+from gateway_api.auth import get_principal
 from gateway_api.proxy import forward_json
 
 SERVICE = "campaign_lore"
@@ -54,14 +52,14 @@ async def get_campaign_atlas(
 @router.post(
     "/api/v1/campaigns/{campaign_id}/atlas/pins",
     status_code=201,
-    dependencies=[Depends(require_zanzibar_permission("run_session", "campaign", "campaign_id"))],
+    dependencies=_VERIFIED,
 )
 async def create_campaign_atlas_pin(
     campaign_id: str,
     request: Request,
     body: Annotated[dict[str, Any], Body()],
 ) -> Any:
-    """Place a milestone pin on the atlas. Requires `run_session`, the permission to mutate the world."""
+    """Place a milestone pin on the atlas. The owner checks `play`."""
     return await forward_json(
         request,
         method="POST",
