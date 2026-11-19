@@ -42,13 +42,13 @@ Decompose `services/the_watcher/src/the_watcher/simulation_engine.py` (302 lines
    - `clashes.py`: Rival faction clash calculations, power shifts, and casualty evaluations (< 90 lines).
    - `unrest.py`: Regional unrest accumulation, escalation triggers, and geopolitical shift generator (< 90 lines).
 2. **Aggregator Facade (`services/the_watcher/src/the_watcher/simulation_engine.py`)**:
-   - Re-export `FactionSimulationEngine`, helper functions (`to_uuid`), and maintain 100% backward compatibility (< 40 lines).
+   - Update call sites directly, no re-exports (DoR 9) (< 40 lines).
 3. **Verification**:
    - Run blackbox tests in `tests/test_blackbox_faction_simulation.py` and `tests/test_blackbox_turf_war.py`.
    - Verify all tests pass cleanly.
 
 ## Definition of Done
 - `simulation_engine.py` decomposed into modular sub-modules strictly < 120 lines each.
-- `simulation_engine.py` remains a clean facade re-exporting symbols.
+- Update call sites directly, no re-exports (DoR 9).
 - Passes `uv run pytest tests/test_blackbox_faction_simulation.py tests/test_blackbox_turf_war.py`.
 - Passes `uv run ruff check .` and `uv run ruff format --check .`.

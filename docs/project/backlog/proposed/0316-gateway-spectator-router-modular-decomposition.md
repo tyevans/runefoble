@@ -23,6 +23,8 @@ target_release: 0.8.0
 ## Status
 Proposed
 
+Review 2026-11-18: candidate for closure; see refactor round 2 index.
+
 Superseded by TASK-0599 (audit 2026-11-17).
 
 ## Summary
@@ -43,9 +45,7 @@ Decompose `gateway/api/src/gateway_api/spectator.py` (289 lines, 57.8% of limit)
    - Extraction of state filtering logic, DM secret scrubbing, and visibility redaction functions (< 100 lines).
 3. **Route Handlers (`gateway/api/src/gateway_api/spectator/router.py`)**:
    - FastAPI APIRouter endpoints for stream overlays and state snapshots (< 110 lines).
-4. **Facade Re-export (`gateway/api/src/gateway_api/spectator/__init__.py`)**:
-   - Re-export models, router, and sanitization utilities maintaining full backward compatibility (< 30 lines).
-5. **Verification**:
+4. **Verification**:
    - Run `uv run pytest tests/test_blackbox_spectator.py` to ensure zero regression.
 
 ## Definition of Done

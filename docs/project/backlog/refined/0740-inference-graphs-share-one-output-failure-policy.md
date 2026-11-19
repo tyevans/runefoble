@@ -42,6 +42,8 @@ For the same bad model output, the intent graph returns a regex heuristic marked
 2. Remove the heuristic fallback and `degraded` from `intent_graph.py`. A degraded path, if product wants one, is an explicit port adapter (decide in a separate task).
 3. Move the mock-mode rules from the stand-in graph into the mock adapter from TASK-0739. Check the mock source in one place.
 
+Refactor round 2 addendum (2026-11-18): Also: remove `mock` from the production adapter registry (`services/inference_worker/src/inference_worker/llm_factory.py:32`). Refuse `RUNEFOBLE_WORKER_BACKEND=mock` at start-up in a deployed environment (`services/inference_worker/src/inference_worker/config.py:8` and `:33`; no validator covers it today). Cite ADR-0015 Context item 4, decision (b), and `docs/how-to/add-an-engine-port-adapter.md`. Do not cite ADR-0015 (f); that decision covers event stores.
+
 ## Frontdoor Blackbox Test Plan
 - A stub LLM returns prose. `POST /inference/v1/intent` returns 503, not a heuristic action. Same for stand-in and narration routes.
 

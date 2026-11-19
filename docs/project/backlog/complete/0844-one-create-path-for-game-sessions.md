@@ -1,7 +1,7 @@
 ---
 id: '0844'
 title: One Create Path for Game Sessions
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies: []
 governing_adrs:
@@ -17,7 +17,7 @@ target_release: 0.9.0
 # TASK-0844: One Create Path for Game Sessions
 
 ## Status
-Refined
+Complete
 
 Source: refactor round 2026-11-18 (user approved).
 

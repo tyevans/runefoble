@@ -36,6 +36,8 @@ None. Platform quality work.
 2. Apply it to every gateway request and response model through one base model. Refuse the other spelling.
 3. Update the App Shell, microfrontends, e2e steps and tests to the chosen casing.
 
+Refactor round 2 addendum (2026-11-18): After the gateway uses one casing, delete the dual-key reads in `frontend/src/services/app-data-service.ts:120-124` (`campaignId`, `participantsCount`). This is the second casing that TASK-0867 leaves in place.
+
 ## Frontdoor Blackbox Test Plan
 - POST with the chosen casing: accepted. POST with the other casing: 422.
 

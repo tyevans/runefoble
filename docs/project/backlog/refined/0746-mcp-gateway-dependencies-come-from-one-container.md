@@ -46,6 +46,8 @@ The registry, event bus, SpiceDB client, and MCP instance are module-level singl
 3. Put all FastMCP `_tool_manager` access in one adapter module.
 4. Remove the globals. Tests build one container per test.
 
+Refactor round 2 addendum (2026-11-18): Also: `gateway/mcp/src/gateway_mcp/owning_services.py:38` and `:60` keep a module-level `WeakKeyDictionary` of shared clients. Move it into the container. TASK-0861 depends on this task.
+
 ## Frontdoor Blackbox Test Plan
 - Existing `tests/test_blackbox_dynamic_mcp/` passes with unchanged behaviour.
 - New: two app instances keep separate registries.

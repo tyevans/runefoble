@@ -45,13 +45,13 @@ Decompose `services/voice_agent/src/voice_agent/stt.py` (279 lines, 55.8% of lim
 3. **Event Broadcaster (`services/voice_agent/src/voice_agent/stt/broadcaster.py`)**:
    - Extract Redis Streams `PlayerSpokeEvent` construction and dispatching logic (< 60 lines).
 4. **Aggregator Entry Point (`services/voice_agent/src/voice_agent/stt.py`)**:
-   - Re-export all pipeline classes and global singleton helpers for backwards compatibility (< 35 lines).
+   - Update call sites directly. No re-export (DoR 9). Singleton helpers move to TASK-0859 (< 35 lines).
 5. **Verification**:
    - Ensure `uv run pytest tests/test_blackbox_voice_agent.py` and all voice tests pass with zero regressions.
 
 ## Definition of Done
 - `services/voice_agent/src/voice_agent/stt/` submodules strictly < 110 lines each per Hard Invariant 6.
-- Root `stt.py` reduced to a backwards-compatible re-export module (< 40 lines).
+- Update call sites directly. No re-export (DoR 9).
 - Passes all tests via `uv run pytest`.
 - Code passes `uv run ruff check .` and `uv run ruff format --check .`.
 

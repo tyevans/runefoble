@@ -28,7 +28,7 @@ Move the caravan, encounter builder and shell data client to the shared transpor
 - `services/game_session/ui/src/caravan/caravan_api.ts:24` and `:53` send `x-user-id` and no Bearer token. Line 34 throws `err.detail || 'Authorization failed'`. A 503 without a detail shows an authorization message.
 - `caravan_api.ts` holds two copies of the same POST logic (about lines 14-60).
 - `services/rules_compendium/ui/src/runefoble-encounter-builder.ts:133` posts with no token.
-- `frontend/src/services/app-data-service.ts:33-60` has a third `request()` with the same job.
+- `frontend/src/services/app-data-service.ts:45-59` has a third `request()` with the same job.
 
 ## Documentation & Architecture Review
 - ADR-0013, ADR-0015 (b). `docs/how-to/post-and-fulfill-mercenary-bounty-contracts.md` and `docs/how-to/balance-combat-encounters-and-query-compendium.md` need their error text corrected.
@@ -42,6 +42,8 @@ Move the caravan, encounter builder and shell data client to the shared transpor
 2. `runefoble-encounter-builder.ts` uses `request`.
 3. `app-data-service.ts` uses `request` and `HttpError`. Keep its `DataResult` shape for views.
 4. Error text comes from `HttpError`: 401/403 say not authorized, 503 says service unavailable, other codes show the detail.
+
+Refactor round 2 addendum (2026-11-18): Also: `services/rules_compendium/ui/src/runefoble-encounter-builder.ts:135-160` does nothing when the response is not 2xx. Show the `HttpError` detail instead. Replace the empty `catch` at `:164-165` ("Mock fallback") with a reported error (TASK-0760). Also: `frontend/src/app/party-vitals-overlay.ts:111` is a raw `fetch` with its own failure mapping. Move it to the shared request.
 
 ## Frontdoor Blackbox Test Plan
 - Playwright BDD: post a caravan contract with a signed token. Assert the Bearer header and no `x-user-id`. Return 403 and 503 from a live loopback upstream and assert distinct messages.

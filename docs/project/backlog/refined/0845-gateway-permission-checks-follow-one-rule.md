@@ -40,6 +40,10 @@ Rule: a proxy route forwards the caller token and does not check permissions; th
 2. For a proxy route whose owner checks the same permission, remove the gateway check. Keep the gateway check on composite routes.
 3. Write the rule in `docs/how-to/call-owning-services-through-the-gateway.md` and the architecture overview. Correct every doc and docstring above that contradicts it.
 
+## Detailed Specification & Implementation Plan
+
+Refactor round 2 addendum (2026-11-18): Also: `gateway/api/src/gateway_api/websocket_validator.py:87-103` applies an action permission policy to campaign socket frames. This is a proxy-route permission check and falls under the rule in this task. TASK-0846 makes the owner the checker.
+
 ## Frontdoor Test Plan
 For each route whose gateway check is removed: a caller without the permission still gets 403, now from the owner, through the gateway (existing or new test in `gateway/api/tests/`).
 

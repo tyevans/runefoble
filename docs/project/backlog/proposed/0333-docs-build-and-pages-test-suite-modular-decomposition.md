@@ -38,6 +38,8 @@ Decompose `tests/test_docs_build_and_pages.py` (267 lines, 53.4% of limit) into 
 4. **Aggregator Entry Point (`tests/test_docs_build_and_pages.py`)**:
    - Re-export test cases to preserve pytest discovery compatibility (< 25 lines).
 
+Refactor round 2 addendum (2026-11-18): The governance tests also pin exact prose: `tests/test_blackbox_bdd_governance.py:21-25`, `:38-41` and `:46`, and `tests/test_docs_build_and_pages.py:216-234`. Assert structure instead: each required heading exists and each cited ADR path resolves. Keep one shared markdown-structure helper for docs tests. Keep the strict heading check.
+
 ## Definition of Done
 - `test_docs_build_and_pages.py` decomposed into modular sub-suites under `tests/docs_pages/`.
 - All created and modified files strictly < 100 lines each per Hard Invariant 6.

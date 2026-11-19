@@ -31,6 +31,8 @@ TypeScript UI code drops errors with empty `catch {}`. A malformed WebSocket fra
 - Safe to keep with a comment: `releasePointerCapture` at `runefoble-board.ts:206`, `aoe_templates.ts:59` and `:77`; `navigator.vibrate` guards in `runefoble-mobile-companion.ts:46`, `:145`.
 - The character sheet and rules lookup catches belong to TASK-0757.
 
+Refactor round 2 addendum (2026-11-18): `services/rules_compendium/ui/src/runefoble-encounter-builder.ts:164-165`: empty `catch {}` with the comment "Mock fallback". The comment names a fallback that does not exist. The homebrew fake success is in TASK-0866, not here.
+
 ## Documentation & Architecture Review
 - ADR-0015 (no hidden failure). ADR-0004 (Storybook, zero console errors).
 - The Python broad-except sweep (TASK-0699) does not cover TypeScript.

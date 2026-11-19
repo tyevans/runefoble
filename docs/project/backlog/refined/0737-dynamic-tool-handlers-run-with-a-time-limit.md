@@ -40,6 +40,8 @@ A dynamic tool handler runs synchronously inside the async event loop with no ti
 2. If the owner of the `exec` removal decides on another isolation model, follow it and keep the limit.
 3. Do not block the event loop at any point.
 
+Refactor round 2 addendum (2026-11-18): Also: `execute_dynamic_tool` (`gateway/mcp/src/gateway_mcp/routers/tools_registry.py:129-131`) returns `Execution error: {exc}` as the 500 detail. Log the traceback on the server and return a fixed detail. Keep the `ValueError` to 400 mapping.
+
 ## Frontdoor Blackbox Test Plan
 - Register a handler with `while True: pass` through the public admin route. Call it over MCP. Assert a tool error within about 2 s of the limit, and that `/healthz` answers during the call.
 

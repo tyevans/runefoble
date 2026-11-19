@@ -38,6 +38,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Gateway WebSocket routes admit a connection only with a verified `runefoble.bearer.<jwt>` subprotocol, checked before accept. Refused handshakes close with 1008. Removed the `?user_id=`, `?token=`, `x-user-id`, and `guest_user` identity paths on WebSocket and voice/companion signaling routes. (TASK-0522)
 
 ### Removed
+- `POST /api/v1/sessions/create` is removed. A game session is created only through the campaign session create, so every session is in its campaign list. (TASK-0844)
 - The Redis URL has one environment name, `RUNEFOBLE_REDIS_URL`; the `REDIS_URL` alias is removed from the platform settings, Audience Studio, the dev orchestrator, CI and Helm. Audience Studio no longer rewrites `postgresql+asyncpg://` URLs. (TASK-0839)
 - Audience Studio has no compatibility shims or re-exports left (checked; no code change). (TASK-0499)
 - The soundscape package root exports only its aggregate; the re-exports are removed. (TASK-0498)

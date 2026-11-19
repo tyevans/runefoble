@@ -61,6 +61,8 @@ While the domain aggregates for settlement havens, NPC workers, and civic bullet
 5. **Verification**:
    - Add unit tests in `frontend/test/router.test.ts` and `frontend/test/app_shell.test.ts` asserting route matching, breadcrumbs generation, and tab navigation.
 
+Refactor round 2 addendum (2026-11-18): View identity is spread across four maps. `frontend/src/router/view-resolver.ts:10-46` holds the `AppActiveView` union and an ordered `if` chain (order matters: `===` before `startsWith`). `frontend/src/app/component-registry.ts:38-54` holds `VIEW_BUNDLES`. `frontend/src/views/index.ts:33-49` holds `VIEW_CONTROLLERS`. Replace them with one ordered route table and one `VIEW_DEFINITIONS: Record<AppActiveView, { bundles, controller }>`. Keep a table test for each current pattern. Adding a view then edits one table and one controller module.
+
 ## Definition of Done
 1. `#/campaigns/:campaignId/town` is registered in `router.ts` and correctly generates breadcrumbs.
 2. The campaign tab bar includes the "Town Haven" tab and responds to click/navigation events.

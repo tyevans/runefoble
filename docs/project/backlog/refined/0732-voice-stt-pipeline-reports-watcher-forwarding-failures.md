@@ -43,6 +43,8 @@ The STT pipeline logs a warning and returns no intent when it fails to reach The
 3. Remove the inline client and the second environment read. Move forwarding out of `process_chunk`.
 4. Check `services/voice_agent/ui` and the gateway proxy for readers of the chunk response.
 
+Refactor round 2 addendum (2026-11-18): Also: `process_chunk` (`services/voice_agent/src/voice_agent/stt.py:124`, 115 lines) is over 60 lines. Split it in this change. Source: `refactor-r2/services-backend.md` F8. Not re-verified against the code.
+
 ## Frontdoor Blackbox Test Plan
 - Stream a chunk with The Watcher stopped (loopback upstream down). Assert the transcript and `PlayerSpokeEvent` are present, `watcher_error` is set, and no intent is returned.
 - Stream a chunk with a live loopback Watcher. Assert the intent is returned.

@@ -32,6 +32,8 @@ The end-to-end suite signs users in with tokens that the test code forges. The P
 - `e2e/features/smoke.feature:6-9` checks only that a guest reaches `#/login`. No scenario signs in through the form or the OIDC flow.
 - ADR-0014 allows local-storage token injection. It does not allow forged tokens. Injected tokens must come from Zitadel.
 
+Refactor round 2 addendum (2026-11-18): `e2e/support/auth_fixtures.ts:12` duplicates the `UserClaims` type from `frontend/src/auth/auth-service.ts:13`. `e2e/support/auth_fixtures.ts:190-191` and `:204-205` write the private storage keys `rf_auth_session` and `runefoble-user`. Export one test-only shape and one constant for the keys.
+
 ## Documentation & Architecture Review
 - ADR-0014 (BDD and Playwright) and `docs/how-to/validate-e2e-journeys-with-playwright-bdd.md` and `docs/how-to/test-user-flows-with-playwright-bdd.md`. Update both where they describe token fixtures.
 - Test users are provisioned through the Zitadel management API, not the database (invariant 7).

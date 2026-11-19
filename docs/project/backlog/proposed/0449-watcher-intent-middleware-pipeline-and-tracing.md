@@ -53,6 +53,8 @@ Intent extraction in `the_watcher` currently transitions directly from raw audio
 4. **Integration with TheWatcherEngine (`the_watcher/watcher_ai.py`)**:
    - Wire `IntentMiddlewarePipeline` into `TheWatcherEngine.parse_speech_intent` and `parse_compound_intent`.
 
+Refactor round 2 addendum (2026-11-18): Acceptance: `parse_speech_intent` (`services/the_watcher/src/the_watcher/movement_parser.py:59`, 115 lines) is under 60 lines after this change. Source: `refactor-r2/services-backend.md` F8. Not re-verified against the code.
+
 ## Definition of Done
 1. Middleware pipeline executes registered pre-parse and post-parse hooks in deterministic registration order.
 2. Built-in hooks strictly < 100 lines each per Hard Invariant 6.

@@ -40,6 +40,8 @@ None. Platform quality work.
 3. Make `ZitadelSpiceDBSyncService` require both adapters. Call sites pass them.
 4. Do not touch the claim sync modules. TASK-0534 is named in ADR-0015 but not found in the backlog; the orchestrator must confirm its scope.
 
+Refactor round 2 addendum (2026-11-18): Decision needed before TASK-0855: step 4 says do not touch the claim sync modules. TASK-0534 is complete, but its step 2 (delete the claim-to-relation mapping in `sync.py`) is still in the code. The orchestrator must confirm the scope of TASK-0855.
+
 ## Frontdoor Blackbox Test Plan
 - `tests/test_blackbox_zitadel_bootstrap.py` passes with the moved job. `helm template` renders the new command.
 - Constructing the sync service with no adapters raises `TypeError`.

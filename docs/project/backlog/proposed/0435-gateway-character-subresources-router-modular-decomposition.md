@@ -26,13 +26,15 @@ target_release: 0.9.0
 ## Status
 Proposed
 
+Review 2026-11-18: candidate for closure; see refactor round 2 index.
+
 Superseded by TASK-0586 (audit 2026-11-17).
 
 ## Summary
-Decompose `gateway/api/src/gateway_api/routers/character_subresources.py` (357 lines, 71.4% of limit) into modular domain sub-routers under `gateway/api/src/gateway_api/routers/characters/` (`health.py`, `inventory.py`, `conditions.py`, `spells.py`, `guardrails.py`), ensuring all subresource router modules remain strictly < 120 lines per Hard Invariant 6.
+Decompose `gateway/api/src/gateway_api/routers/characters_subresources_proxy.py` (357 lines, 71.4% of limit) into modular domain sub-routers under `gateway/api/src/gateway_api/routers/characters/` (`health.py`, `inventory.py`, `conditions.py`, `spells.py`, `guardrails.py`), ensuring all subresource router modules remain strictly < 120 lines per Hard Invariant 6.
 
 ## Problem Statement
-`gateway/api/src/gateway_api/routers/character_subresources.py` bundles health point adjustments, equipment item slot assignments, inventory additions and removals, active condition applications/clearing, spell slot preparation and casting, and stand-in guardrails persistence proxies into a single monolithic 357-line router. As feats, proficiencies, resting mechanics, and spell level filtering are expanded, this file will rapidly approach the 500-line invariant limit unless modularized into focused, single-responsibility sub-routers.
+`gateway/api/src/gateway_api/routers/characters_subresources_proxy.py` bundles health point adjustments, equipment item slot assignments, inventory additions and removals, active condition applications/clearing, spell slot preparation and casting, and stand-in guardrails persistence proxies into a single monolithic 357-line router. As feats, proficiencies, resting mechanics, and spell level filtering are expanded, this file will rapidly approach the 500-line invariant limit unless modularized into focused, single-responsibility sub-routers.
 
 ## Governing Architecture & ADRs
 - **ADR-0001: Google Zanzibar for Fine-Grained Authorization**: Preserves object-level permission dependencies on every subresource route (`edit` on `character:{character_id}`).
@@ -56,17 +58,17 @@ Decompose `gateway/api/src/gateway_api/routers/character_subresources.py` (357 l
    - Extract `POST /api/v1/characters/{character_id}/spells/cast` and `POST /api/v1/characters/{character_id}/spells/prepare` (< 80 lines).
 5. **Stand-In Guardrails Sub-Router (`gateway/api/src/gateway_api/routers/characters/guardrails.py`)**:
    - Extract `PUT /api/v1/characters/{character_id}/guardrails` (< 60 lines).
-6. **Aggregator Router (`gateway/api/src/gateway_api/routers/character_subresources.py`)**:
-   - Aggregate sub-routers into single parent router preserving complete route path backwards compatibility (< 40 lines).
+6. **Aggregator Router (`gateway/api/src/gateway_api/routers/characters_subresources_proxy.py`)**:
+   - Aggregate sub-routers into one parent router that keeps every route path (< 40 lines). Update call sites directly. No re-export (DoR 9).
 7. **Verification**:
    - Verify blackbox character mutations test suite: `uv run pytest tests/test_blackbox_character_sheet_mutations.py tests/test_blackbox_character_management_and_vtt_sync.py`.
 
 ## Definition of Done
-- `character_subresources.py` reduced to strictly < 50 lines.
+- `characters_subresources_proxy.py` reduced to strictly < 50 lines.
 - Extracted sub-routers under `routers/characters/` strictly < 120 lines each.
 - All character sheet mutation tests pass with 100% assertions.
 - Code passes `uv run ruff check .` and `uv run ruff format --check .`.
 
 ## Orchestrator Addenda (2026-11-17, refactor-r1)
 
-- TASK-0586 and TASK-0435 (gateway character subresources): append "`character_subresources.py:25-39` (`_forward`) is a pure pass-through of `forward_json` with a fixed service. Drop it when the module is rewritten. Same for `sessions_proxy.py` `SERVICE`." (The shared forwarder factory is not filed as a task, see deferred.)
+- TASK-0586 and TASK-0435 (gateway character subresources): append "`characters_subresources_proxy.py:25-39` (`_forward`) is a pure pass-through of `forward_json` with a fixed service. Drop it when the module is rewritten. Same for `sessions_proxy.py` `SERVICE`." (The shared forwarder factory is not filed as a task, see deferred.)
