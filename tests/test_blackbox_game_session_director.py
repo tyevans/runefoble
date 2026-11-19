@@ -112,11 +112,32 @@ def test_atmosphere_defaults_are_applied_when_omitted(client) -> None:
     assert atmosphere["mood"] == "Neutral"
 
 
-def test_unknown_session_returns_404_for_both_routes(client) -> None:
+def test_unknown_session_is_refused_for_both_routes(client) -> None:
+    """No caller holds `session.control` on a session that does not exist, so both routes refuse."""
     missing = uuid4()
     override = client.post(f"/api/v1/sessions/{missing}/dm-override", json={"action": "pause"})
     atmosphere = client.post(
         f"/api/v1/sessions/{missing}/atmosphere", json={"location_name": "Nowhere"}
     )
-    assert override.status_code == 404
-    assert atmosphere.status_code == 404
+    assert override.status_code == 403
+    assert atmosphere.status_code == 403
+
+
+@pytest.mark.parametrize(
+    ("path", "body"),
+    [
+        ("dm-override", {"action": "reveal_trap", "reason": "Not the DM"}),
+        ("atmosphere", {"location_name": "Hijacked"}),
+    ],
+)
+def test_a_caller_without_control_cannot_direct_the_session(client, stream_redis, path, body):
+    """A signed-in user who does not run the campaign gets 403. The session is unchanged."""
+    session_id = _create(client)
+    before = list(stream_redis.streams.get(SESSION_STREAM, []))
+    stranger = {"Authorization": f"Bearer {SIGNING_ISSUER.mint('stranger')}"}
+    res = client.post(f"/api/v1/sessions/{session_id}/{path}", json=body, headers=stranger)
+    assert res.status_code == 403, res.text
+    state = client.get(f"/api/v1/sessions/{session_id}").json()
+    assert state["dm_overrides"] == []
+    assert (state["atmosphere"] or {}).get("location_name") != "Hijacked"
+    assert stream_redis.streams.get(SESSION_STREAM, []) == before

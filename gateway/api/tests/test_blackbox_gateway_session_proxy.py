@@ -37,8 +37,8 @@ SESSION_ROUTES = [
     ("POST", "/api/v1/sessions/{sid}/start", None, False),
     ("POST", "/api/v1/sessions/{sid}/hot-swap", {"characterId": str(uuid4())}, True),
     ("POST", "/api/v1/sessions/{sid}/turns/advance", None, False),
-    ("POST", "/api/v1/sessions/{sid}/dm-override", {"action": "pause"}, True),
-    ("POST", "/api/v1/sessions/{sid}/atmosphere", {"location_name": "Crypt"}, True),
+    ("POST", "/api/v1/sessions/{sid}/dm-override", {"action": "pause"}, False),
+    ("POST", "/api/v1/sessions/{sid}/atmosphere", {"location_name": "Crypt"}, False),
 ]
 
 

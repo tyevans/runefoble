@@ -1,6 +1,7 @@
 """DM override and atmosphere routes for a live game session (TASK-0581).
 
-Each route loads the session aggregate, records one event, and saves through the repository.
+Each route requires `session.control` (the campaign `run_session` permission) for the caller,
+then loads the session aggregate, records one event, and saves through the repository.
 """
 
 from __future__ import annotations
@@ -11,6 +12,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from game_session.aggregate import GameSessionAggregate
 from game_session.dependencies import repo
 from game_session.models import AtmosphereUpdateRequest, DMOverrideRequest, GameSessionState
+from game_session.routers.session_auth import SessionController
 from game_session.settlement.auth.tokens import get_principal
 from runefoble_platform.aggregate_loading import load_or_404
 
@@ -22,7 +24,9 @@ async def _load_session(session_id: UUID) -> GameSessionAggregate:
 
 
 @router.post("/api/v1/sessions/{session_id}/dm-override", response_model=GameSessionState)
-async def apply_dm_override(session_id: UUID, req: DMOverrideRequest) -> GameSessionState:
+async def apply_dm_override(
+    session_id: UUID, req: DMOverrideRequest, _caller: SessionController
+) -> GameSessionState:
     """Record a DM override on the session. The override appears in the session state."""
     session = await _load_session(session_id)
     try:
@@ -34,7 +38,9 @@ async def apply_dm_override(session_id: UUID, req: DMOverrideRequest) -> GameSes
 
 
 @router.post("/api/v1/sessions/{session_id}/atmosphere", response_model=GameSessionState)
-async def update_atmosphere(session_id: UUID, req: AtmosphereUpdateRequest) -> GameSessionState:
+async def update_atmosphere(
+    session_id: UUID, req: AtmosphereUpdateRequest, _caller: SessionController
+) -> GameSessionState:
     """Change the location, lighting, and mood of the session."""
     session = await _load_session(session_id)
     try:

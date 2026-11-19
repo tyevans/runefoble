@@ -5,10 +5,10 @@ forwards that token, so game_session verifies the caller again and checks the pe
 the route needs. The gateway stores no session state. A failed upstream call returns the mapping
 in `upstream_errors.py`: 503 when unreachable, 502 on upstream 5xx, upstream 4xx unchanged.
 
-Three routes keep a gateway check because game_session does not check the same permission for
-the same caller. `hot-swap` needs `observe` here, and the owner checks `participate` and
-`character.edit`. `dm-override` and `atmosphere` need `control` here, and the owner checks only
-the token (see TASK-0845 for the open owner gaps). `events` and `absentee-recap` keep their
+`hot-swap` keeps a gateway check because game_session does not check the same permission for
+the same caller: it needs `observe` here, and the owner checks `participate` and
+`character.edit`. `dm-override` and `atmosphere` have no gateway check: game_session checks
+`session.control`. `events` and `absentee-recap` keep their
 gateway check because game_session answers 404 for an unknown session before it checks
 `observe`. Without the gateway check, a caller could tell a session that exists from one that
 does not.
@@ -50,7 +50,7 @@ async def get_session_proxy(session_id: str, request: Request) -> Any:
 
 @router.post("/api/v1/sessions/{session_id}/start", dependencies=_VERIFIED)
 async def start_session_proxy(session_id: str, request: Request) -> Any:
-    """Move a lobby to active (requires 'control'; game_session).
+    """Move a lobby to active (game_session checks 'control').
 
     The gateway then tells its WebSocket clients that the session started. The owner's reply
     supplies the status. The gateway keeps no state.
@@ -81,7 +81,7 @@ async def hot_swap_session_proxy(session_id: str, req: HotSwapRequest, request: 
 
 @router.post("/api/v1/sessions/{session_id}/turns/advance", dependencies=_VERIFIED)
 async def advance_turn_proxy(session_id: str, request: Request) -> Any:
-    """Advance the session to its next turn (requires 'control'; game_session)."""
+    """Advance the session to its next turn (game_session checks 'control')."""
     return await forward_json(
         request, service=SERVICE, method="POST", path=f"{SESSIONS}/{session_id}/next-turn"
     )
@@ -89,10 +89,9 @@ async def advance_turn_proxy(session_id: str, request: Request) -> Any:
 
 @router.post(
     "/api/v1/sessions/{session_id}/dm-override",
-    dependencies=[Depends(require_zanzibar_permission("control", resource_type="session"))],
 )
 async def dm_override_proxy(session_id: str, req: DMOverrideRequest, request: Request) -> Any:
-    """Record a DM override on the session (requires 'control'; game_session)."""
+    """Record a DM override on the session (game_session checks 'control')."""
     return await forward_json(
         request,
         service=SERVICE,
@@ -104,12 +103,11 @@ async def dm_override_proxy(session_id: str, req: DMOverrideRequest, request: Re
 
 @router.post(
     "/api/v1/sessions/{session_id}/atmosphere",
-    dependencies=[Depends(require_zanzibar_permission("control", resource_type="session"))],
 )
 async def update_atmosphere_proxy(
     session_id: str, req: AtmosphereUpdateRequest, request: Request
 ) -> Any:
-    """Change the location, lighting, and mood (requires 'control'; game_session)."""
+    """Change the location, lighting, and mood (game_session checks 'control')."""
     return await forward_json(
         request,
         service=SERVICE,

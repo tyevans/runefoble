@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Security
+- game_session checks `session.control` on `POST /api/v1/sessions/{id}/dm-override` and `/atmosphere`. Before, any signed-in user who called game_session directly could direct any session; only the gateway checked. (found by TASK-0845)
 - Voice signaling takes the user id and role only from the verified token and SpiceDB session permissions; a join frame cannot change either, and `/ws/voice` and `/ws/mobile-companion` ignore the `role` query parameter. (TASK-0811)
 - The Asset Forge and caravan UI clients send the shared bearer on every request; the caravan client no longer sends `x-user-id`. (TASK-0812)
 - MCP tools `get_character_sheet` and `inspect_inventory` check `character.view` for the caller before they read. `GET /api/v1/characters/{id}` no longer accepts the service credential without a user. (TASK-0808)
