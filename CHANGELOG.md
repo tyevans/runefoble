@@ -180,6 +180,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
 
 ### Changed
+- The Helm standalone service templates share one platform environment template. The Redis URL is rendered only when `redis.enabled`, and the database port follows `postgres.port`. (TASK-0725)
 - Gateway and MCP callers take owner paths from one route table (`runefoble_platform.service_client.owner_routes`). An id with a dot segment answers 404 before any owner call. (TASK-0861)
 - The gateway overlay router is split into `gateway_api.overlay` (camera relay, frame dispatch, room). Frame types, close codes and routes are unchanged. (TASK-0860)
 - More blackbox tests set up aggregate state through public routes instead of writing aggregates directly. (TASK-0874)

@@ -1,7 +1,7 @@
 ---
 id: '0725'
 title: Helm Standalone Services Share One Platform Environment Template
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0709
@@ -15,7 +15,7 @@ target_release: 0.9.0
 # TASK-0725: Helm Standalone Services Share One Platform Environment Template
 
 ## Status
-Refined. Found by the refactor audit round r1 and checked against the code by the orchestrator.
+Complete
 
 ## Summary
 Five Helm templates repeat the same platform environment block with hardcoded hosts. `services.yaml` branches on service names.
