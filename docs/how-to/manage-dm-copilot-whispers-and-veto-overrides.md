@@ -142,7 +142,7 @@ Content-Type: application/json
 - A second dispatch of the same whisper returns `409`. A whisper of another type returns `409`. An unknown whisper returns `404`.
 
 ### Audience Narration Failures
-When the inference worker cannot narrate an approved modifier, The Watcher records a whisper of type `narration_unavailable`. Its `content` holds a short reason. It never holds narration text, and it cannot be dispatched. The same happens when the worker answers with `degraded: true`, or when the Watcher runs on the `heuristic` engine. Nothing is sent to the table. The DM decides what to do next.
+When the inference worker cannot narrate an approved modifier, for example after an HTTP 503 or when the worker is unreachable, The Watcher records a whisper of type `narration_unavailable`. Its `content` holds a short reason. It never holds narration text, and it cannot be dispatched. The same happens when the Watcher runs on the `heuristic` engine. Nothing is sent to the table. The DM decides what to do next.
 
 ---
 

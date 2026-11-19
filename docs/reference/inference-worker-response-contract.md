@@ -33,7 +33,6 @@ Each successful response includes these fields.
 | Field | Type | Meaning |
 |---|---|---|
 | `source` | `"llm"` | The engine that produced the result. Only a model engine produces results. |
-| `degraded` | boolean | Always `false`. No path sets it to `true`. The field stays in the published shape. |
 
 `source` is always `llm`. The worker has no keyword rules and no canned output. Each route returns
 model output or `503`.
@@ -91,7 +90,7 @@ The Watcher returns the worker's `guardrails_applied` list in its `StandInAction
 ## The Watcher Routes
 
 The Watcher (`services/the_watcher`) calls the worker for three routes. Each route passes the
-worker result through with its `source` and `degraded` fields. The Watcher never returns a
+worker result through with its `source` field. The Watcher never returns a
 canned or template result for a failed worker call.
 
 Configuration:
@@ -104,9 +103,9 @@ Configuration:
 
 | Watcher route | Worker call | Result fields |
 |---|---|---|
-| `POST /api/v1/watcher/transcribe-and-act` (and `transcribe-and-act`) | `/inference/v1/intent` | `source`, `degraded`. `confidence` is `null` when the worker omits it. |
-| `POST /api/v1/watcher/stand-in/act` | `/inference/v1/stand-in-action` | `source`, `degraded`, `guardrails_applied` |
-| `POST /api/v1/watcher/narrate` | `/inference/v1/dm-narration` | `source`, `degraded` |
+| `POST /api/v1/watcher/transcribe-and-act` (and `transcribe-and-act`) | `/inference/v1/intent` | `source`. `confidence` is `null` when the worker omits it. |
+| `POST /api/v1/watcher/stand-in/act` | `/inference/v1/stand-in-action` | `source`, `guardrails_applied` |
+| `POST /api/v1/watcher/narrate` | `/inference/v1/dm-narration` | `source` |
 
 Speech sends the session's tokens as `visible_tokens`. A session with no board sends an empty list.
 
