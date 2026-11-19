@@ -15,8 +15,8 @@ Given(
     const campaignId = world.campaignId;
     if (!campaignId) throw new Error('No campaign in the world. Create one with "campaign {string} exists" first.');
     const session = await frontdoorApi.createCampaignSession(campaignId, title, token);
-    await frontdoorApi.startSession(session.session_id, token);
-    world.sessionId = session.session_id;
+    await frontdoorApi.startSession(session.id, token);
+    world.sessionId = session.id;
   }
 );
 

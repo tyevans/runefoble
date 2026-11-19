@@ -78,7 +78,7 @@ describe('AppDataService success path through the gateway', () => {
     assert.ok(tokens.ok);
     assert.equal(tokens.data[0].name, 'Valeros');
 
-    const lobby = await service.fetchLobbyState('session-tomb-14', '4');
+    const lobby = await service.fetchLobbyState('4', 'session-tomb-14');
     assert.ok(lobby.ok);
     assert.equal(lobby.data.participants[0].characterName, 'Valeros of Korvosa');
     assert.equal(lobby.data.availableCharacters[0].id, 'char-valeros');
@@ -181,7 +181,7 @@ describe('AppDataService failure path returns typed errors, never fixture data',
     ['createCharacter', () => service.createCharacter({ name: 'X', characterClass: 'Fighter', level: 1, maxHp: 10, armorClass: 10, speed: 30 } as any)],
     ['assignCharacterCampaign', () => service.assignCharacterCampaign('char-valeros', '4')],
     ['deleteCharacter', () => service.deleteCharacter('char-valeros')],
-    ['fetchLobbyState', () => service.fetchLobbyState('session-tomb-14', '4')],
+    ['fetchLobbyState', () => service.fetchLobbyState('4', 'session-tomb-14')],
     ['fetchBoardState', () => service.fetchBoardState('session-tomb-14')],
     ['fetchBoardTokens', () => service.fetchBoardTokens('session-tomb-14')],
     ['createCampaignSession', () => service.createCampaignSession('4', { title: 'Session #16' })],
