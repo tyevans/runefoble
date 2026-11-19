@@ -24,6 +24,7 @@ from board_state.models import (
     MoveTokenResponse,
     PlaceTokenRequest,
 )
+from board_state.realtime import board_ws_manager
 from fastapi import APIRouter, HTTPException
 
 router = APIRouter(tags=["tokens"])
@@ -34,7 +35,10 @@ router = APIRouter(tags=["tokens"])
     response_model=PlacedTokenState,
 )
 async def place_token(session_id: str, req: PlaceTokenRequest, user_id: CallerId):
-    """Place a token. A character token needs its owner. Other tokens need a board manager."""
+    """Place a token. A character token needs its owner. Other tokens need a board manager.
+
+    After the save, every open board socket of the session gets one `token_placed` frame.
+    """
     board = await get_board(session_id)
     token_id = req.token_id or str(uuid4())
     await bind_token(session_id, token_id, req.character_id, user_id, req.token_type)
@@ -49,7 +53,12 @@ async def place_token(session_id: str, req: PlaceTokenRequest, user_id: CallerId
         vision_radius=req.vision_radius,
     )
     await save_and_publish(repo, board, get_event_bus())
-    return board.state.tokens[token_id]
+    token = board.state.tokens[token_id]
+    await board_ws_manager.broadcast(
+        session_id,
+        {"type": "token_placed", "session_id": session_id, "token": token.model_dump(mode="json")},
+    )
+    return token
 
 
 @router.get(

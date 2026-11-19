@@ -37,6 +37,26 @@ export function replaceToken(
   return updated;
 }
 
+/**
+ * Maps the `token` of a server `token_placed` frame (PlacedTokenState) to a board token.
+ * Returns null when the id, name or a whole-number cell is missing.
+ */
+export function boardTokenFromPlaced(token: any): BoardToken | null {
+  if (typeof token?.token_id !== 'string' || !token.token_id || typeof token.name !== 'string') return null;
+  if (!Number.isInteger(token.x) || !Number.isInteger(token.y)) return null;
+  const mapped: BoardToken = { id: token.token_id, name: token.name, x: token.x, y: token.y };
+  if (typeof token.hp === 'number') mapped.hp = token.hp;
+  if (typeof token.vision_radius === 'number') mapped.visionRadius = token.vision_radius;
+  if ('active_action' in token) mapped.activeAction = token.active_action ?? null;
+  return mapped;
+}
+
+/** Puts a placed token on a new list. A token with the same id is replaced. */
+function addPlacedToken(host: { tokens: BoardToken[] }, token: BoardToken): void {
+  const shown = host.tokens.some((t) => t.id === token.id);
+  host.tokens = shown ? host.tokens.map((t) => (t.id === token.id ? token : t)) : [...host.tokens, token];
+}
+
 /** Ask the server to evaluate the active template. The result arrives as aoe_preview. */
 export function requestAoEPreview(host: BoardActionsHost, config: AoETemplateConfig): void {
   if (host.ws && host.ws.readyState === WebSocket.OPEN) {
@@ -148,6 +168,9 @@ export function handleBoardSocketMessage(
         replaceToken(host, data.token_id, { x: data.x, y: data.y });
       }
     }
+  } else if (data.type === 'token_placed') {
+    const placed = boardTokenFromPlaced(data.token);
+    if (placed) addPlacedToken(host, placed);
   } else if (data.type === 'token_action_executed') {
     replaceToken(host, data.token_id, { activeAction: data.action });
   } else if (action === 'aoe_preview') {
