@@ -347,7 +347,7 @@ def test_create_session_adds_session_to_campaign_and_spicedb(
     assert titles == ["Session #1: Staging Lobby", "Session #2: Crypt"]
 
     linked = asyncio.run(
-        spicedb.read_relationships(resource_type="session", resource_id=session["id"])
+        spicedb.read_relationships(resource_type="game_session", resource_id=session["id"])
     )
     assert [(r.relation, r.subject_id) for r in linked] == [("campaign", campaign_id)]
 

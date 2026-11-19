@@ -24,7 +24,6 @@ def test_schema_file_exists_and_syntax_structure() -> None:
         "definition user",
         "definition campaign",
         "definition character",
-        "definition session",
         "definition game_session",
         "definition board_token",
         "definition lore_document",

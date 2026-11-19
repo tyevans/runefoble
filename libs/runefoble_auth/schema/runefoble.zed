@@ -35,15 +35,8 @@ definition character {
     permission delete = owner
 }
 
+// Sessions: game_session#campaign is the one campaign link (ADR-0015 (a)).
 definition game_session {
-    relation campaign: campaign
-
-    permission control = campaign->run_session
-    permission participate = campaign->play
-    permission observe = campaign->view
-}
-
-definition session {
     relation campaign: campaign
 
     permission control = campaign->run_session
@@ -256,7 +249,7 @@ definition establishment {
 }
 
 definition bounty_contract {
-    relation session: session
+    relation session: game_session
     relation campaign: campaign
     relation creator: user
     relation claimant: user
@@ -276,7 +269,7 @@ definition bounty_contract {
 }
 
 definition mercenary_bounty {
-    relation session: session
+    relation session: game_session
     relation campaign: campaign
     relation creator: user
     relation claimant: user
@@ -317,7 +310,7 @@ definition npc {
 
 definition negotiation {
     relation establishment: establishment
-    relation session: session
+    relation session: game_session
     relation campaign: campaign
     relation participant: user
     relation arbitrator: user

@@ -151,7 +151,7 @@ async def test_automatic_voice_ducking_attenuates_leitmotif_by_12db(client: Test
     campaign_uuid = str(uuid4())
     spicedb = get_spicedb_client()
     await spicedb.write_relationship(
-        "session", session_id_str, "campaign", "campaign", campaign_uuid
+        "game_session", session_id_str, "campaign", "campaign", campaign_uuid
     )
     await spicedb.write_relationship(
         "campaign", campaign_uuid, "owner", "user", "soundscape-tester"

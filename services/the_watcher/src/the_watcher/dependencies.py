@@ -120,8 +120,10 @@ async def require_speaker(user_id: str, speaker_id: str) -> None:
 
 async def require_session_permission(user_id: str, session_id: str | None, action: str) -> None:
     """Raise 403 unless the user holds the session permission behind `action`."""
-    if not session_id or not await check_action_permission(user_id, "session", session_id, action):
-        raise HTTPException(status_code=403, detail=_denied(action, "session", session_id))
+    if not session_id or not await check_action_permission(
+        user_id, "game_session", session_id, action
+    ):
+        raise HTTPException(status_code=403, detail=_denied(action, "game_session", session_id))
 
 
 async def require_dm(
@@ -131,7 +133,7 @@ async def require_dm(
     if not await check_dm_authorization(user_id, campaign_id=campaign_id, session_id=session_id):
         action = "session.control" if session_id else "campaign.run_session"
         resource_type, resource_id = (
-            ("session", session_id) if session_id else ("campaign", campaign_id)
+            ("game_session", session_id) if session_id else ("campaign", campaign_id)
         )
         raise HTTPException(status_code=403, detail=_denied(action, resource_type, resource_id))
 
@@ -155,7 +157,7 @@ async def check_dm_authorization(
     permission `campaign.run_session` decides.
     """
     if session_id:
-        return await check_action_permission(user_id, "session", session_id, "session.control")
+        return await check_action_permission(user_id, "game_session", session_id, "session.control")
     if campaign_id:
         return await check_action_permission(
             user_id, "campaign", campaign_id, "campaign.run_session"

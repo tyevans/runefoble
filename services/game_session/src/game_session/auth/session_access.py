@@ -17,7 +17,7 @@ async def check_session_participation(session_id: str, user_id: str) -> None:
     A store error propagates to the caller and maps to 503.
     """
     spicedb = get_spicedb_client()
-    has_perm = await check_subject(spicedb, "session", str(session_id), "participate", user_id)
+    has_perm = await check_subject(spicedb, "game_session", str(session_id), "participate", user_id)
     if not has_perm:
         sess = await load_if_exists(
             session_repo, opaque_aggregate_id(session_id, field="session_id")

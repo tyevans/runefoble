@@ -1,7 +1,7 @@
 """Blackbox frontdoor tests for TASK-0552: The Watcher DM, intent, stand-in, and faction authorization.
 
 Every request goes through a public HTTP route of The Watcher. The table setup writes only
-schema relations (`campaign#dungeon_master`, `campaign#player`, `session#campaign`) through
+schema relations (`campaign#dungeon_master`, `campaign#player`, `game_session#campaign`) through
 the shared SpiceDB client. No Watcher frontdoor creates these relations yet.
 
 Governed by:

@@ -29,14 +29,14 @@ def shared_spicedb_client(client: Any) -> Any:
 
 
 async def bind_session_to_campaign(session_id: str, campaign_id: str) -> None:
-    """Write `session:<session_id>#campaign@campaign:<campaign_id>` on the shared client.
+    """Write `game_session:<session_id>#campaign@campaign:<campaign_id>` on the shared client.
 
     `session.control` and `session.participate` walk this relation to reach the campaign
     role. The tuple uses the schema relation name. It is the setup for Watcher tests that
     start from a session id without a game_session frontdoor.
     """
     await get_spicedb_client().write_relationship(
-        resource_type="session",
+        resource_type="game_session",
         resource_id=str(session_id),
         relation="campaign",
         subject_type="campaign",

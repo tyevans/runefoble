@@ -34,6 +34,7 @@ from game_session.campaign.schemas import (
     JoinCampaignResponse,
     MemberRemovedResponse,
     RoleAssignedResponse,
+    SessionLinkReconcileResponse,
     UpdateCampaignRequest,
 )
 from game_session.campaign.tuples import SpiceDB
@@ -172,6 +173,20 @@ async def create_session(
     return await campaigns.create_session(
         repos, spicedb, campaign_id, req, game_sessions, principal.user_id
     )
+
+
+@router.post(
+    "/{campaign_id}/sessions/reconcile-links",
+    response_model=SessionLinkReconcileResponse,
+)
+async def reconcile_session_links(
+    campaign_id: str,
+    principal: RunSessionCampaign,
+    repos: Repos,
+    spicedb: Spicedb,
+) -> SessionLinkReconcileResponse:
+    """Rewrite the campaign link of every session in the campaign. Requires `run_session`."""
+    return await campaigns.reconcile_session_links(repos, spicedb, campaign_id)
 
 
 @router.post(

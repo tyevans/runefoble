@@ -1,6 +1,6 @@
 """Session object permission checks for gateway HTTP routes (ADR-0001).
 
-Every check uses a permission that `runefoble.zed` defines on the `session` object:
+Every check uses a permission that `runefoble.zed` defines on the `game_session` object:
 `observe` for reads, `participate` for player actions, and `control` for DM actions.
 Socket admission uses `runefoble_auth.websocket.admit_websocket` with `action_authorizer`.
 """
@@ -16,7 +16,7 @@ from runefoble_auth.websocket import send_socket_error
 async def has_session_permission(session_id: str, user_id: str, permission: str) -> bool:
     """Return whether the user holds `permission` on the session. May raise AuthzUnavailableError."""
     return await get_spicedb_client().check_permission(
-        resource_type="session",
+        resource_type="game_session",
         resource_id=session_id,
         permission=permission,
         subject_type="user",

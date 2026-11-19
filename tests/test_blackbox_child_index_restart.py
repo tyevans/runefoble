@@ -45,7 +45,7 @@ def test_posted_bounty_is_listed_after_restart(restart_stack: RestartStack) -> N
     restart_stack.grant(
         [
             ("campaign", campaign_id, "player", "user", poster),
-            ("session", session_id, "campaign", "campaign", campaign_id),
+            ("game_session", session_id, "campaign", "campaign", campaign_id),
         ]
     )
 

@@ -108,6 +108,11 @@ class CreateCampaignSessionRequest(BaseModel):
     status: str = "lobby"
 
 
+class SessionLinkReconcileResponse(BaseModel):
+    campaign_id: str
+    linked: int
+
+
 class CampaignSessionResponse(BaseModel):
     id: str
     campaign_id: str

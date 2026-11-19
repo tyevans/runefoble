@@ -67,7 +67,7 @@ async def test_auth_sync_domain_event_orchestration() -> None:
     await service.handle_domain_event(
         SessionCreated(aggregate_id=uuid4(), campaign_id=camp_id, session_id=sess_id, dm_id=dm_id)
     )
-    assert await spicedb.check_permission("session", sess_id, "control", "user", dm_id)
+    assert await spicedb.check_permission("game_session", sess_id, "control", "user", dm_id)
 
     # 3. Character created
     await service.handle_domain_event(

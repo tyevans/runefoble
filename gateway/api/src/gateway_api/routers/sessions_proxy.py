@@ -66,7 +66,7 @@ async def start_session_proxy(session_id: str, request: Request) -> Any:
 
 @router.post(
     "/api/v1/sessions/{session_id}/hot-swap",
-    dependencies=[Depends(require_zanzibar_permission("observe", resource_type="session"))],
+    dependencies=[Depends(require_zanzibar_permission("observe", resource_type="game_session"))],
 )
 async def hot_swap_session_proxy(session_id: str, req: HotSwapRequest, request: Request) -> Any:
     """Hand turn control from an AI stand-in to a player (game_session, which releases the stand-in)."""
@@ -119,7 +119,7 @@ async def update_atmosphere_proxy(
 
 @router.get(
     "/api/v1/sessions/{session_id}/events",
-    dependencies=[Depends(require_zanzibar_permission("observe", resource_type="session"))],
+    dependencies=[Depends(require_zanzibar_permission("observe", resource_type="game_session"))],
 )
 async def list_session_events_proxy(session_id: str, request: Request) -> Any:
     """Read the session chronicle feed in commit order (requires 'observe'; game_session)."""
@@ -130,7 +130,7 @@ async def list_session_events_proxy(session_id: str, request: Request) -> Any:
 
 @router.get(
     "/api/v1/sessions/{session_id}/absentee-recap",
-    dependencies=[Depends(require_zanzibar_permission("observe", resource_type="session"))],
+    dependencies=[Depends(require_zanzibar_permission("observe", resource_type="game_session"))],
 )
 async def get_absentee_recap_proxy(session_id: str, request: Request) -> Any:
     """Read the stand-in turns and penalties of the session (requires 'observe'; game_session)."""
