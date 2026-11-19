@@ -182,7 +182,7 @@ def test_stream_frame_naming_another_speaker_closes_the_socket(session_id):
     client = TestClient(voice_app)
 
     with client.websocket_connect(
-        f"/api/v1/voice/stream/ws/{session_id}/{PLAYER}",
+        f"/api/v1/voice/stream/ws/{session_id}/{PLAYER}?campaign_id=camp-stream-1&speaker_name=Valeros",
         subprotocols=voice_ws_subprotocols(PLAYER),
     ) as ws:
         ws.send_json({"session_id": session_id, "speaker_id": DM, "audio_data": PCM_B64})

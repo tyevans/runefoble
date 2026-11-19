@@ -135,7 +135,7 @@ def test_audio_websocket_sends_typed_error_frame_and_keeps_stream_open(
 ):
     """A malformed binary frame gets a typed error frame. A valid frame after it still works."""
     session_id = _granted_session()
-    path = f"/api/v1/voice/stream/ws/{session_id}/{SPEAKER}"
+    path = f"/api/v1/voice/stream/ws/{session_id}/{SPEAKER}?campaign_id=camp-stream-1&speaker_name=Valeros"
 
     with client.websocket_connect(path, subprotocols=voice_ws_subprotocols()) as ws:
         ws.send_bytes(_riff_without_data_chunk())
@@ -153,7 +153,7 @@ def test_audio_websocket_sends_typed_error_frame_and_keeps_stream_open(
 def test_audio_websocket_valid_pcm_still_processed(client: TestClient):
     """Valid PCM on the socket still returns a normal chunk result."""
     session_id = _granted_session()
-    path = f"/api/v1/voice/stream/ws/{session_id}/{SPEAKER}"
+    path = f"/api/v1/voice/stream/ws/{session_id}/{SPEAKER}?campaign_id=camp-stream-1&speaker_name=Valeros"
 
     with client.websocket_connect(path, subprotocols=voice_ws_subprotocols()) as ws:
         ws.send_bytes(generate_pcm_sine(duration_ms=100))

@@ -156,7 +156,8 @@ def test_stream_chunk_publish_failure_is_reported_on_socket_and_not_recorded(
     }
 
     with client.websocket_connect(
-        f"/api/v1/voice/stream/ws/{chunk['session_id']}/spk-stream-policy",
+        f"/api/v1/voice/stream/ws/{chunk['session_id']}/spk-stream-policy"
+        "?campaign_id=camp-stream-1&speaker_name=Valeros",
         subprotocols=voice_ws_subprotocols(),
     ) as ws:
         ws.send_json(chunk)
