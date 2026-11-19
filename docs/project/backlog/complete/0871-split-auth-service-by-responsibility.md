@@ -1,7 +1,7 @@
 ---
 id: '0871'
 title: Auth Service Splits Claims, Token Storage and Session State
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies: []
 governing_adrs:
@@ -17,7 +17,7 @@ target_release: 0.9.0
 # TASK-0871: Auth Service Splits Claims, Token Storage and Session State
 
 ## Status
-Refined.
+Complete
 
 ## Summary
 `frontend/src/auth/auth-service.ts` has 308 lines and five jobs: a singleton, PKCE sign-in, JWT claim parsing, a refresh timer, and `localStorage` persistence. Split it into focused modules. Keep the public API, so callers do not change.

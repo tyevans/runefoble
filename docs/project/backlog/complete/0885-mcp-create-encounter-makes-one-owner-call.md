@@ -1,7 +1,7 @@
 ---
 id: '0885'
 title: MCP create_encounter Makes One Owner Call
-status: Refined
+status: Complete
 created: 2026-11-19
 dependencies:
 - TASK-0749
@@ -18,7 +18,7 @@ target_release: 0.9.0
 # TASK-0885: MCP create_encounter Makes One Owner Call
 
 ## Status
-Refined
+Complete
 
 Remaining part of TASK-0749 (`.audit/work/0749.md`). Read the decision in `docs/project/backlog/complete/0749-*.md`.
 

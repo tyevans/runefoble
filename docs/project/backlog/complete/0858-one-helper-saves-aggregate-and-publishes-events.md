@@ -1,7 +1,7 @@
 ---
 id: '0858'
 title: One Helper Saves an Aggregate and Publishes Its Events
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies: []
 governing_adrs:
@@ -15,7 +15,7 @@ target_release: 0.9.0
 # TASK-0858: One Helper Saves an Aggregate and Publishes Its Events
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Game session routers repeat the same save-then-publish loop in about 24 files. Four files define a local `_save_and_publish` helper with the same body. `libs/runefoble_platform/src/runefoble_platform/event_publish.py` already has `publish_or_fail`, but nothing shares the save step. The autopilot penalty publish bypasses `publish_or_fail` and only logs a warning on failure. The fix adds one helper in `libs/` and uses it at every call site, including the autopilot path.

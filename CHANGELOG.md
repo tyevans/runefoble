@@ -91,6 +91,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Campaign analytics worker `process_event` alias, tracking property wrappers, and package root re-exports. Callers use `handle_event`. (TASK-0500)
 
 ### Added
+The campaign rules tab at `#/campaigns/:campaignId/rules`. The homebrew forge registers rules for the campaign. `#/rules` shows the SRD search and the encounter builder only.
 - `POST /api/v1/sessions/{session_id}/encounters/start` starts combat and records the token placements on one event; board_state places the tokens from that event. A failed placement is dead-lettered and combat stays started. (TASK-0749)
 - game_session has `POST /api/v1/sessions/{session_id}/end` (`session.control`). board_state refuses a monster token from a caller without the board DM permission. Two owner routes that skipped their event publish now publish it. (TASK-0846)
 - The Watcher narrates each approved audience modifier as a private DM whisper (`audience_narration`). The DM sends it to the table, edited or not, with `POST /api/v1/watcher/whispers/{whisper_id}/dispatch`, which publishes `WatcherNarrativeDispatched`. When the inference worker fails, the DM gets a `narration_unavailable` notice and nothing reaches the players. (TASK-0838)
@@ -183,6 +184,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
 
 ### Changed
+Game session routes publish the events of one aggregate through `publish_aggregate_events`. The autopilot penalty publish returns HTTP 503 when the stream is unreachable. TASK-0886 converts the remaining sites.
+MCP `create_encounter` makes one call to game_session, and board_state places the enemy tokens from that event. The reply lists the accepted placements in `enemies_spawned` and no longer returns `grid`.
+The App Shell auth service keeps JWT claim handling, session storage and session state in separate modules. The public API and the sign-in flow are unchanged.
 - The Playwright BDD suite reads its API base URL, Zitadel issuer and audience from one module, `e2e/support/env.ts`, and builds bearer headers with one helper, `bearerHeader`. (TASK-0875)
 - The campaign WebSocket relays each action to its owner route with the caller's token. The gateway holds no action policy and publishes no events; each frame names its `session_id`, and a frame for a session of another campaign is refused. (TASK-0883)
 - The Helm standalone service templates share one platform environment template. The Redis URL is rendered only when `redis.enabled`, and the database port follows `postgres.port`. (TASK-0725)

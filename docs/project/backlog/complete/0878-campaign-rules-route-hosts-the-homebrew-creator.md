@@ -1,7 +1,7 @@
 ---
 id: '0878'
 title: Campaign Rules Route Hosts the Homebrew Creator
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies: 
 - TASK-0866
@@ -18,7 +18,7 @@ target_release: 0.9.0
 # TASK-0878: Campaign Rules Route Hosts the Homebrew Creator
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Follow-up of TASK-0866. The App Shell route `#/rules` passes no campaign id, so the homebrew creator cannot submit a registration there. Homebrew rules belong to a campaign. Decision (orchestrator): the compendium view with the homebrew creator is a campaign route, `#/campaigns/:campaignId/rules`, like the other campaign views. `#/rules` stays a read-only SRD search without the creator.
