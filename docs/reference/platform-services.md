@@ -202,9 +202,18 @@ The `voice-agent` image needs two runtime assets. The image and the Helm chart p
 | Asset | Provided by | Location in pod |
 |---|---|---|
 | `espeak-ng` binary | Dockerfile build argument `SYSTEM_PACKAGES=espeak-ng` (`PYTHON_IMAGE_ROWS` in the Makefile) | `/usr/bin/espeak-ng` |
-| faster-whisper model cache | PVC `voice-agent-model-cache` (`services.voiceAgent.modelCache.size`, default `1Gi`) | `/var/lib/runefoble/whisper` |
+| faster-whisper model cache (`sttEngine: faster-whisper` only) | PVC `voice-agent-model-cache` (`services.voiceAgent.modelCache.size`, default `1Gi`) | `/var/lib/runefoble/whisper` |
 
 The chart sets `RUNEFOBLE_VOICE_STT_MODEL_SIZE` (default `tiny.en`), `RUNEFOBLE_VOICE_STT_MODEL_DIR` (the mount path), and `RUNEFOBLE_VOICE_STT_DOWNLOAD_ENABLED=false` from `services.voiceAgent.env`. The pod does not download the model.
+
+### Speech-to-Text Engine Values (TASK-0833)
+
+`services.voiceAgent.sttEngine` sets `RUNEFOBLE_VOICE_STT_ENGINE`. `services.voiceAgent.sttBaseUrl` sets `RUNEFOBLE_VOICE_STT_BASE_URL`.
+
+- `faster-whisper` (default): the model runs in the pod. The chart mounts the model cache.
+- `whisper-cpp`: the pod calls a whisper.cpp HTTP server at `sttBaseUrl`, for example `http://<host>:8080`. The chart renders no model cache volume and no PVC. `sttBaseUrl` is required. Start-up fails without it.
+
+Set both keys in `deployments/helm/runefoble/values.local.yaml`. The example file `values.local.example.yaml` shows them as comments.
 
 Pre-fetch the model for Kind with `make voice-model-cache`. The target downloads the model to `.cache/voice-models` on the host and copies it into the running voice-agent pod. Set `VOICE_MODEL_SIZE` to use another model.
 

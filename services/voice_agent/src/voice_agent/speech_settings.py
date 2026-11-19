@@ -9,6 +9,7 @@ from runefoble_platform.engine_ports import build_adapter
 from voice_agent.espeak_synthesizer import EspeakNgSynthesizer
 from voice_agent.synthesizer import BaseSynthesizer
 from voice_agent.transcriber import BaseTranscriber, FasterWhisperTranscriber
+from voice_agent.whisper_cpp_transcriber import WhisperCppTranscriber
 
 
 class VoiceAgentSettings(BaseSettings):
@@ -20,7 +21,9 @@ class VoiceAgentSettings(BaseSettings):
         extra="ignore",
     )
 
-    stt_engine: Literal["faster-whisper"] = "faster-whisper"
+    stt_engine: Literal["faster-whisper", "whisper-cpp"] = "faster-whisper"
+    stt_base_url: str | None = None
+    stt_request_timeout_seconds: float = 30.0
     stt_model_size: str = "tiny.en"
     stt_device: str = "cpu"
     stt_compute_type: str = "int8"
@@ -29,6 +32,15 @@ class VoiceAgentSettings(BaseSettings):
 
     tts_engine: Literal["espeak-ng"] = "espeak-ng"
     tts_binary: str = "espeak-ng"
+
+
+def _whisper_cpp_base_url(settings: VoiceAgentSettings) -> str:
+    """whisper-cpp has no default server. Start-up stops when the URL is missing."""
+    if not settings.stt_base_url:
+        raise ValueError(
+            "RUNEFOBLE_VOICE_STT_BASE_URL is required when RUNEFOBLE_VOICE_STT_ENGINE is 'whisper-cpp'."
+        )
+    return settings.stt_base_url
 
 
 def build_transcriber(settings: VoiceAgentSettings) -> BaseTranscriber:
@@ -43,6 +55,10 @@ def build_transcriber(settings: VoiceAgentSettings) -> BaseTranscriber:
                 compute_type=settings.stt_compute_type,
                 model_dir=settings.stt_model_dir,
                 download_enabled=settings.stt_download_enabled,
+            ),
+            "whisper-cpp": lambda: WhisperCppTranscriber(
+                base_url=_whisper_cpp_base_url(settings),
+                timeout_seconds=settings.stt_request_timeout_seconds,
             ),
         },
     )

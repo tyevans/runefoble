@@ -267,7 +267,9 @@ The voice agent transcribes completed utterances with a configured speech engine
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `RUNEFOBLE_VOICE_STT_ENGINE` | `faster-whisper` | Speech engine. `faster-whisper` is the only supported value. |
+| `RUNEFOBLE_VOICE_STT_ENGINE` | `faster-whisper` | Speech engine. `faster-whisper` runs in the pod. `whisper-cpp` calls a whisper.cpp HTTP server (TASK-0833). |
+| `RUNEFOBLE_VOICE_STT_BASE_URL` | unset | Base URL of the whisper.cpp server, for example `http://<host>:8080`. Required for `whisper-cpp`. Start-up fails without it. |
+| `RUNEFOBLE_VOICE_STT_REQUEST_TIMEOUT_SECONDS` | `30` | Timeout for one `whisper-cpp` transcription request. |
 | `RUNEFOBLE_VOICE_STT_MODEL_SIZE` | `tiny.en` | faster-whisper model name (for example `tiny.en`, `base.en`). |
 | `RUNEFOBLE_VOICE_STT_DEVICE` | `cpu` | CTranslate2 device. |
 | `RUNEFOBLE_VOICE_STT_COMPUTE_TYPE` | `int8` | CTranslate2 compute type. |
@@ -275,6 +277,20 @@ The voice agent transcribes completed utterances with a configured speech engine
 | `RUNEFOBLE_VOICE_STT_DOWNLOAD_ENABLED` | `true` | When `true`, the model downloads on first use. When `false`, the model must already sit in `RUNEFOBLE_VOICE_STT_MODEL_DIR`. The Helm chart sets `false`. |
 
 Local development downloads the model on first use. The Kind cluster has no internet access. Run `make voice-model-cache` to copy the model into the running voice-agent pod.
+
+### whisper.cpp HTTP Engine (TASK-0833)
+
+Set `RUNEFOBLE_VOICE_STT_ENGINE=whisper-cpp` and `RUNEFOBLE_VOICE_STT_BASE_URL` to the server base URL. The adapter does this for each completed utterance:
+
+- It wraps the PCM audio as a mono 16-bit WAV file.
+- It sends `POST {base_url}/inference` as multipart form data. The fields are `file` (the WAV), `response_format` (`json`), and `temperature` (`0.0`).
+- It reads the `text` field of the JSON reply and removes the surrounding spaces.
+
+A connection error, timeout, non-2xx reply, or reply without `text` returns `503` with `{"detail": {"error": "speech_engine_unavailable", "engine": "whisper-cpp", "message": "..."}}`. The adapter never returns substitute text.
+
+`GET /healthz` calls `GET {base_url}/health`. The route returns `503` with `"status": "not_ready"` and `problems.stt` when the server does not answer with a 2xx status.
+
+In Helm, set `services.voiceAgent.sttEngine: whisper-cpp` and `services.voiceAgent.sttBaseUrl`. The chart then renders no model cache volume. See `docs/reference/platform-services.md`.
 
 ### Failure Behaviour
 
@@ -313,6 +329,8 @@ The response carries `source` so that callers can tell the two inputs apart.
 ### Test Setup
 
 Blackbox tests inject a deterministic engine (`tests/helpers/fixture_transcriber.py`) into the composition root. Tests that need an unavailable engine set `RUNEFOBLE_VOICE_STT_MODEL_SIZE` to an unknown model name and `HF_HUB_OFFLINE=1`. See `tests/test_blackbox_voice_stt_engine.py` and `tests/test_blackbox_voice_transcribe_input.py`.
+
+Tests for `whisper-cpp` run a loopback HTTP server (`tests/helpers/local_http_server.py`) as the whisper.cpp stand-in. See `tests/test_blackbox_voice_whisper_cpp.py`.
 
 ## 10. Text-to-Speech Engine and Synthesis Output (TASK-0601)
 

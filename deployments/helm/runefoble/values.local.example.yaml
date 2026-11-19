@@ -6,6 +6,11 @@ services:
       RUNEFOBLE_EMBEDDING_BASE_URL: "http://<host>:8080/v1"
       RUNEFOBLE_EMBEDDING_MODEL: "qwen3-embedding-0.6b"
       RUNEFOBLE_EMBEDDING_DIMENSION: "1024"
+  # Speech-to-text on a whisper.cpp server on your network. Uncomment all three lines.
+  # The pod then needs no model cache.
+  # voiceAgent:
+  #   sttEngine: whisper-cpp
+  #   sttBaseUrl: "http://<host>:8080"
   inferenceWorker:
     backend: openai_compatible
     openaiCompatibleBaseUrl: "http://<host>:8080/v1"
