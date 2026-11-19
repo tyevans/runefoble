@@ -46,6 +46,7 @@ async def health_check():
 In `deployments/helm/runefoble/values.yaml`:
 1. Set `swaggerName` on its entry under `services` to list its OpenAPI spec in the Swagger UI hub.
 2. Add an entry under `services` to deploy its Kubernetes pod. The chart renders the Deployment, the Service, and the Swagger UI row from that entry.
+   The entry also receives the shared platform environment (PostgreSQL, SpiceDB, Redis, OpenTelemetry, and Zitadel values) from the `runefoble.platformEnv` helper. Do not copy these settings into the template. See [Platform Services](../reference/platform-services.md#shared-platform-environment-task-0725).
 
 In `Makefile`, add one row to `PYTHON_IMAGE_ROWS`:
 `'<image-name>|<uv-package>|<module>.main:app|<port>'`.
