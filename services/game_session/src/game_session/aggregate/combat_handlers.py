@@ -43,8 +43,21 @@ class CombatHandlersMixin:
     aggregate_id: Any
     create_event: Any
 
-    def start_combat(self, combatants: list[dict[str, Any]] | None = None) -> None:
-        """Start a combat encounter with turn order and initiative tracking."""
+    def start_combat(
+        self,
+        combatants: list[dict[str, Any]] | None = None,
+        *,
+        board_cols: int | None = None,
+        board_rows: int | None = None,
+        placements: list[dict[str, Any]] | None = None,
+        initiated_by: str = "",
+    ) -> None:
+        """Start a combat encounter with turn order and initiative tracking.
+
+        `placements` are the tokens board_state places when it consumes this event (TASK-0749).
+        The event is the commit point. Board placement happens after it, so a placement that
+        fails leaves the combat started.
+        """
         if self.state.status == "ended":
             raise ValueError("Cannot start combat in an ended session")
         self.create_event(
@@ -53,6 +66,10 @@ class CombatHandlersMixin:
             session_id=self.aggregate_id,
             round_number=1,
             combatants=combatants or [],
+            board_cols=board_cols,
+            board_rows=board_rows,
+            placements=placements or [],
+            initiated_by=initiated_by,
         )
 
     def roll_initiative(

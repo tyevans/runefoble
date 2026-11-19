@@ -57,6 +57,7 @@ from runefoble_events.board_events.terrain import (
     UniversalVTTImported,
 )
 from runefoble_events.board_events.token import (
+    EncounterPlacementsApplied,
     TokenActionExecuted,
     TokenMoved,
     TokenPlaced,
