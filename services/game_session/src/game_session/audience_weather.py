@@ -57,6 +57,11 @@ async def apply_audience_weather_event(event: Any) -> None:
         raise AudienceWeatherError(
             f"Approved weather modifier {event.proposal_id} names unknown session {session_id}."
         )
+    if str(session.state.campaign_id) != str(event.campaign_id):
+        raise AudienceWeatherError(
+            f"Approved weather modifier {event.proposal_id} belongs to campaign {event.campaign_id}, "
+            f"not to the campaign of session {session_id}."
+        )
     session.apply_weather(weather=weather, source_proposal_id=str(event.proposal_id))
     await repo.save(session)
 

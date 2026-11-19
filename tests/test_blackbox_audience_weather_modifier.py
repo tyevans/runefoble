@@ -159,3 +159,22 @@ def test_weather_modifier_without_a_weather_value_is_dead_lettered(client, strea
     assert "weather" in dead_letter["error_reason"]
     assert _weather(client, session_id) is None
     assert _weather_events(stream_redis, session_id) == []
+
+
+def test_weather_modifier_for_another_campaign_is_dead_lettered(client, stream_redis) -> None:
+    """A modifier names a campaign that does not own the session. The session is unchanged."""
+    _campaign_id, session_id = _create(client)
+    other = client.post("/api/v1/campaigns", json={"title": "Other Tomb"})
+    assert other.status_code == 201, other.text
+    _publish(
+        stream_redis,
+        _approved(other.json()["id"], session_id, parameters={"weather": "storm"}),
+    )
+
+    assert wait_until(
+        lambda: bool(stream_redis.streams.get(AUDIENCE_DLQ)), timeout_s=10.0, interval_s=0.05
+    )
+    (_entry_id, dead_letter), *_ = stream_redis.streams[AUDIENCE_DLQ]
+    assert "belongs to campaign" in dead_letter["error_reason"]
+    assert _weather(client, session_id) is None
+    assert _weather_events(stream_redis, session_id) == []
