@@ -1,7 +1,7 @@
 ---
 id: '0737'
 title: Dynamic Tool Handlers Run With a Time Limit and Do Not Block the Event Loop
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0545
@@ -17,7 +17,7 @@ target_release: 0.9.0
 # TASK-0737: Dynamic Tool Handlers Run With a Time Limit and Do Not Block the Event Loop
 
 ## Status
-Refined. Found by the refactor audit round refactor-r1 and checked against the code on 2026-11-17.
+Complete
 
 ## Summary
 A dynamic tool handler runs synchronously inside the async event loop with no time limit. A long loop blocks the whole MCP server, including `/healthz` and every other session.

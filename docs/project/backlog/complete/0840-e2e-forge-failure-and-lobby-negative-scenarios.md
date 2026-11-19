@@ -1,7 +1,7 @@
 ---
 id: '0840'
 title: E2E Forge Failure Through a Frontdoor and the Lobby Negative Scenario
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies: 
 - TASK-0649
@@ -19,7 +19,7 @@ target_release: 0.9.0
 # TASK-0840: E2E Forge Failure Through a Frontdoor and the Lobby Negative Scenario
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Follow-up of TASK-0649. Two items stay open after the E2E backdoors were removed.

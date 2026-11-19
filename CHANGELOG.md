@@ -91,6 +91,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Campaign analytics worker `process_event` alias, tracking property wrappers, and package root re-exports. Callers use `handle_event`. (TASK-0500)
 
 ### Added
+E2E scenarios for a forge prompt that asset_forge refuses with 422, the Launch Session control by campaign capability, the empty-lobby readiness summary, and roster management controls. No `page.route` fault double of our own service.
 The campaign rules tab at `#/campaigns/:campaignId/rules`. The homebrew forge registers rules for the campaign. `#/rules` shows the SRD search and the encounter builder only.
 - `POST /api/v1/sessions/{session_id}/encounters/start` starts combat and records the token placements on one event; board_state places the tokens from that event. A failed placement is dead-lettered and combat stays started. (TASK-0749)
 - game_session has `POST /api/v1/sessions/{session_id}/end` (`session.control`). board_state refuses a monster token from a caller without the board DM permission. Two owner routes that skipped their event publish now publish it. (TASK-0846)
@@ -184,6 +185,7 @@ The campaign rules tab at `#/campaigns/:campaignId/rules`. The homebrew forge re
   - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
 
 ### Changed
+SpiceDB settings move from `PlatformSettings` to `runefoble_auth.settings.SpiceDBSettings`. Every service that checks permissions, voice_agent included, fails at start-up with `ConfigurationError` when `RUNEFOBLE_SPICEDB_PRESHARED_KEY` is missing.
 Settlement haven, establishment and NPC worker routes return HTTP 503 (not 200 or 201) when the event stream is unreachable. The state change is saved. Create routes write their SpiceDB relationships and index links before they publish.
 Game session routes publish the events of one aggregate through `publish_aggregate_events`. The autopilot penalty publish returns HTTP 503 when the stream is unreachable. TASK-0886 converts the remaining sites.
 MCP `create_encounter` makes one call to game_session, and board_state places the enemy tokens from that event. The reply lists the accepted placements in `enemies_spawned` and no longer returns `grid`.
@@ -1312,6 +1314,8 @@ The App Shell auth service keeps JWT claim handling, session storage and session
 - **Documentation & Build Navigation**: Featured the Platform Showcase and Changelog in `zensical.toml` and root documentation landing page (`docs/index.md`), and enhanced `scripts/build_docs.py` to synchronize `CHANGELOG.md` to `docs/changelog.md` during documentation compilation.
 
 ### Fixed
+Campaign member lists show the member's edited profile display name or the username from the member's verified token, never a name made from the user id. `CampaignCreated` records `owner_username` and `CampaignMemberAdded` records `username`.
+Dynamic MCP tool handlers bound `round` digits to -15..15 and `$expr` arguments to finite values within +/-10**9, so one call cannot block the MCP event loop. A non-finite result answers 400, and an internal error answers a fixed 500 detail.
 A board socket `confirm_move` onto a trapped path sends `trap_triggered` and `movement_paused` in its `token_moved` frame. HTTP and WebSocket moves send the same typed `MoveOutcome` fields.
 - Campaign Analytics keys its rows by campaign once the session-to-campaign mapping arrives. (TASK-0756)
 - Atlas pin placement is checked once, by campaign_lore (`campaign.play`, which matches `atlas.place_pin`). The gateway no longer requires `run_session`, so players can place pins as the schema intends. (TASK-0768)

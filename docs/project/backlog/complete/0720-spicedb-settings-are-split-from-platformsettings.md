@@ -1,7 +1,7 @@
 ---
 id: '0720'
 title: SpiceDB Settings Are Split From PlatformSettings
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0541
@@ -16,7 +16,7 @@ target_release: 0.9.0
 # TASK-0720: SpiceDB Settings Are Split From PlatformSettings
 
 ## Status
-Refined. Found by the refactor audit round r1 and checked against the code by the orchestrator.
+Complete
 
 ## Summary
 `PlatformSettings` holds about 60 fields. It requires the SpiceDB key in every service that imports it, including services that never call SpiceDB. SpiceDB config is read twice. This first slice extracts SpiceDB settings only.

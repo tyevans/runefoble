@@ -1,7 +1,7 @@
 ---
 id: '0887'
 title: Campaign Members Show Verified Names, Not Derived IDs
-status: Refined
+status: Complete
 created: 2026-11-19
 dependencies: []
 governing_adrs:
@@ -20,7 +20,7 @@ target_release: 0.9.0
 
 ## Status
 
-Refined. Found by the `campaign_hub.feature` Playwright run against Kind with real Zitadel sign-in (TASK-0525).
+Complete
 
 ## Summary
 
