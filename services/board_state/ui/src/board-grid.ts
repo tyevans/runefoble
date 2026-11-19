@@ -7,11 +7,8 @@ import type {
 } from './board-types.ts';
 import { calculateVectorLineCoordinates } from './ghost_preview.ts';
 import { isCellVisible } from './kinematics.ts';
-import {
-  renderBoardCell,
-  renderDistanceRuler,
-  renderVectorOverlay,
-} from './board-templates.ts';
+import { renderBoardCell } from './templates/cell.template.ts';
+import { renderDistanceRuler, renderVectorOverlay } from './templates/kinematics.template.ts';
 
 export interface BoardGridRenderOptions {
   cols: number;

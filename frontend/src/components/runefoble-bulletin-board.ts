@@ -12,9 +12,6 @@ import type {
   BulletinNoticeItem,
 } from './runefoble-bulletin-board.types.ts';
 
-
-export * from './runefoble-bulletin-board.types.ts';
-
 @customElement('runefoble-bulletin-board')
 export class RunefobleBulletinBoard extends LitElement {
   static styles = [bulletinBoardStyles];

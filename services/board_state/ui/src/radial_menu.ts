@@ -4,8 +4,6 @@ import type { RadialActionItem, RadialActionType } from './board-types.ts';
 import { radialMenuStyles } from './radial/radial_menu.styles.ts';
 import { RADIAL_ACTIONS, calculateWedgePosition, renderWedge } from './radial/radial_wedge.ts';
 
-export * from './radial/index.ts';
-
 @customElement('runefoble-radial-menu')
 export class RunefobleRadialMenu extends LitElement {
   static styles = radialMenuStyles;
