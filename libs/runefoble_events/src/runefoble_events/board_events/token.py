@@ -58,3 +58,18 @@ class TokenActionExecuted(BaseRunefobleEvent):
     target_token_ids: list[str] = Field(default_factory=list)
     details: dict[str, Any] = Field(default_factory=dict)
     initiated_by: str = "player"
+
+
+@register_event("runefoble.events.board.encounter_placements_applied")
+class EncounterPlacementsApplied(BaseRunefobleEvent):
+    """Records that board_state applied one combat start's placements (TASK-0749).
+
+    The board keeps the source event id, so a redelivered combat start applies nothing.
+    """
+
+    event_type: str = "runefoble.events.board.encounter_placements_applied"
+
+    aggregate_type: str = "BoardState"
+    session_id: str = ""
+    source_event_id: str
+    token_ids: list[str] = Field(default_factory=list)

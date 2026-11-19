@@ -30,6 +30,8 @@ class BoardState(BaseModel, BoardTransitionsMixin):
     background_image_url: str | None = None
     # The forged battlemap that last set the geometry. A redelivery of it changes nothing.
     forged_asset_id: str | None = None
+    # Source event ids of the combat starts already applied, oldest first (TASK-0749).
+    applied_encounter_event_ids: list[str] = Field(default_factory=list)
     wall_segments: list[dict[str, Any]] = Field(default_factory=list)
     portals: list[dict[str, Any]] = Field(default_factory=list)
     doors: dict[str, Any] = Field(default_factory=dict)

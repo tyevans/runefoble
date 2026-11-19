@@ -46,6 +46,7 @@ CloudEvents exports (`to_cloudevent_dict()`) lower-case the identifier.
 | `runefoble.events.board.camera_focused` | `CameraFocused` | `runefoble_events.board_events.camera` |
 | `runefoble.events.board.decals_decayed` | `EphemeralDecalsDecayed` | `runefoble_events.board_events.spells` |
 | `runefoble.events.board.door_toggled` | `BoardDoorToggledEvent` | `runefoble_events.board_events.lighting` |
+| `runefoble.events.board.encounter_placements_applied` | `EncounterPlacementsApplied` | `runefoble_events.board_events.token` |
 | `runefoble.events.board.fog_of_war_revealed` | `FogOfWarRevealed` | `runefoble_events.board_events.fog` |
 | `runefoble.events.board.fog_of_war_shrouded` | `FogOfWarShrouded` | `runefoble_events.board_events.fog` |
 | `runefoble.events.board.forged_battlemap_applied` | `ForgedBattlemapApplied` | `runefoble_events.board_events.terrain` |

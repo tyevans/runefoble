@@ -87,6 +87,12 @@ class CombatEncounterStarted(BaseRunefobleEvent):
     session_id: UUID | str | None = None
     round_number: int = 1
     combatants: list[dict[str, Any]] = Field(default_factory=list)
+    # The encounter board and the tokens to place on it. board_state consumes these (TASK-0749).
+    # An empty `placements` means combat only, with no board work.
+    board_cols: int | None = None
+    board_rows: int | None = None
+    placements: list[dict[str, Any]] = Field(default_factory=list)
+    initiated_by: str = ""
 
 
 @register_event("runefoble.events.session.initiative_rolled")

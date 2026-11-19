@@ -28,6 +28,7 @@ from game_session.routers import (
     chronicle_router,
     combat_router,
     director_router,
+    encounters_router,
     minigames_ws_router,
     reactions_router,
     session_router,
@@ -91,6 +92,7 @@ app.include_router(session_router)
 app.include_router(campaign_router)
 register_campaign_error_handlers(app)
 app.include_router(combat_router)
+app.include_router(encounters_router)
 app.include_router(director_router)
 app.include_router(reactions_router)
 app.include_router(autopilot_router)

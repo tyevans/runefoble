@@ -48,7 +48,7 @@ Part of the [Events Schema](events-schema.md). Each event identifier in this pag
   - `easing`: String (cubic-bezier)
   - `active_token_id`: Optional[String]
   - `reason`: String ("turn_started", "token_moved")
-- **`CombatEncounterStarted`** (`runefoble.events.session.combat_encounter_started`): Emitted when a combat encounter is initiated.
+- **`CombatEncounterStarted`** (`runefoble.events.session.combat_encounter_started`): Emitted when a combat encounter is initiated. It carries `combatants`, the encounter grid (`board_cols`, `board_rows`), `placements` (the enemy tokens to place), and `initiated_by`. board_state consumes it and places each placement. An empty `placements` list means combat only (TASK-0749).
   - `session_id`: Optional[UUID | str]
   - `round_number`: Integer (default 1)
   - `combatants`: List[Dict[str, Any]]
@@ -120,6 +120,7 @@ Part of the [Events Schema](events-schema.md). Each event identifier in this pag
   - `cell_size_px`: Integer
   - `grid_type`: "square" | "hex"
 - **`TokenPlaced`** (`runefoble.events.board.token_placed`): Emitted when a token is added to the grid.
+- **`EncounterPlacementsApplied`** (`runefoble.events.board.encounter_placements_applied`): Emitted when board_state applies one combat start's placements. It records `source_event_id`, so a redelivered combat start places nothing (TASK-0749).
   - `token_id`: String / UUID
   - `name`: String
   - `token_type`: "pc" | "monster" | "npc" | "obstacle" | "loot". A `loot` token is an item on the board (from an approved audience item drop). It is not a combatant and does not block movement.
