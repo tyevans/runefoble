@@ -1,7 +1,7 @@
 ---
 id: '0752'
 title: Board and Character Mutation Routes Map Typed Errors in One Place
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0699
@@ -15,7 +15,7 @@ target_release: 0.9.0
 # TASK-0752: Board and Character Mutation Routes Map Typed Errors in One Place
 
 ## Status
-Refined. Found by the refactor audit round refactor-r1 and checked against the code on 2026-11-17.
+Complete
 
 ## Summary
 Mutation routes in board_state and character_sheet catch every exception and return 400 or 500. A storage outage looks like a bad request.

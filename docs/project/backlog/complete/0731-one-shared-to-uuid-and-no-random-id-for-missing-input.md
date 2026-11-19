@@ -1,7 +1,7 @@
 ---
 id: '0731'
 title: One Shared to_uuid Helper That Rejects a Missing Identifier
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies: []
 governing_adrs:
@@ -14,7 +14,7 @@ target_release: 0.9.0
 # TASK-0731: One Shared to_uuid Helper That Rejects a Missing Identifier
 
 ## Status
-Refined. Found by the refactor audit round refactor-r1 and checked against the code on 2026-11-17.
+Complete
 
 ## Summary
 Four services each define `to_uuid`. All four return a random `uuid4()` for `None`. A missing identifier becomes a new identity with no error.

@@ -1,7 +1,7 @@
 ---
 id: '0724'
 title: Audience Studio Production Code Cannot Select In-Memory Adapters
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0499
@@ -16,7 +16,7 @@ target_release: 0.9.0
 # TASK-0724: Audience Studio Production Code Cannot Select In-Memory Adapters
 
 ## Status
-Refined. Found by the refactor audit round r1 and checked against the code by the orchestrator.
+Complete
 
 ## Summary
 `NODE_ENV=test` selects in-memory stores in the production bundle. ADR-0015 (f) says production code must not select memory. The routes file also repeats eight try/catch blocks.

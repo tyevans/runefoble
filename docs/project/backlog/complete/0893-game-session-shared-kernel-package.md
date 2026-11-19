@@ -1,7 +1,7 @@
 ---
 id: '0893'
 title: game_session Shared Kernel Package (ADR-0021 Step 1)
-status: Refined
+status: Complete
 created: 2026-11-19
 dependencies: []
 governing_adrs:
@@ -17,7 +17,7 @@ target_release: 0.9.0
 
 ## Status
 
-Refined.
+Complete
 
 ## Summary
 

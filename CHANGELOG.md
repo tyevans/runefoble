@@ -186,6 +186,9 @@ The campaign rules tab at `#/campaigns/:campaignId/rules`. The homebrew forge re
   - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
 
 ### Changed
+Audience Studio production code builds only the PostgreSQL event store and the Redis Streams publisher. Start-up needs `RUNEFOBLE_DATABASE_URL` and a `redis://` or `rediss://` `RUNEFOBLE_REDIS_URL` for every `NODE_ENV`. Memory adapters live only in the test fakes.
+Blackbox tests show that a Watcher or voice speech request without `campaign_id` answers 422, an empty one answers 400, and no event is published. The shared identifier policy of TASK-0816 is the only UUID helper.
+`game_session` has a shared kernel package `game_session.shared` (ADR-0021 step 1): route identity, the establishment play permission helper, the child index mechanism and the stream names. The `game_session.models` shims and the `game_session.queries` package are removed. Routes, streams and index ids do not change.
 SpiceDB settings move from `PlatformSettings` to `runefoble_auth.settings.SpiceDBSettings`. Every service that checks permissions, voice_agent included, fails at start-up with `ConfigurationError` when `RUNEFOBLE_SPICEDB_PRESHARED_KEY` is missing.
 Settlement haven, establishment and NPC worker routes return HTTP 503 (not 200 or 201) when the event stream is unreachable. The state change is saved. Create routes write their SpiceDB relationships and index links before they publish.
 Game session routes publish the events of one aggregate through `publish_aggregate_events`. The autopilot penalty publish returns HTTP 503 when the stream is unreachable. TASK-0886 converts the remaining sites.
@@ -1315,6 +1318,7 @@ The App Shell auth service keeps JWT claim handling, session storage and session
 - **Documentation & Build Navigation**: Featured the Platform Showcase and Changelog in `zensical.toml` and root documentation landing page (`docs/index.md`), and enhanced `scripts/build_docs.py` to synchronize `CHANGELOG.md` to `docs/changelog.md` during documentation compilation.
 
 ### Fixed
+Board and character mutation routes map errors in one place. A storage outage answers 503, never 400 or 500. A token, trap or AoE template that is not on the board answers 404.
 An NPC worker restock raises `NPCWorkerInventoryRestocked`, so the stock survives a reload. A `destination` other than `shelf` or `backroom` answers 422. Worker routes save the establishment summary before they publish, and a repeated relationship call adds no second tie.
 Voice streaming chunks, stream WebSocket frames and `POST /api/v1/voice/transcribe` report a failed forward to The Watcher in a `watcher_error` field. The transcript and `PlayerSpokeEvent` are kept. `voice-agent` receives `RUNEFOBLE_SERVICE_CREDENTIAL`.
 Campaign member lists show the member's edited profile display name or the username from the member's verified token, never a name made from the user id. `CampaignCreated` records `owner_username` and `CampaignMemberAdded` records `username`.
