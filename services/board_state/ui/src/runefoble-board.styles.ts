@@ -161,6 +161,12 @@ const baseBoardStyles = css`
     pointer-events: none;
   }
 
+  .board-error {
+    margin: 0 0 12px;
+    color: var(--rf-status-danger);
+    font-weight: 700;
+  }
+
   .status-bar {
     margin-top: 12px;
     font-size: 0.85rem;

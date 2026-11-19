@@ -52,9 +52,15 @@ async def _handle_ghost_preview(session_id: str, data: dict[str, Any]) -> None:
 
 
 async def _handle_confirm_move(session_id: str, data: dict[str, Any]) -> None:
+    """Move a token. A frame without a token or a target cell is refused, never dropped."""
     token_id, to_x, to_y = data.get("token_id"), data.get("to_x"), data.get("to_y")
-    if not (token_id and to_x is not None and to_y is not None):
-        return
+    missing = [
+        name
+        for name, value in (("token_id", token_id), ("to_x", to_x), ("to_y", to_y))
+        if value is None or value == ""
+    ]
+    if missing:
+        raise ValueError(f"A move needs {', '.join(missing)}")
     board = await get_board(session_id)
     outcome = board.move_token(
         token_id=token_id,
@@ -138,30 +144,28 @@ async def board_websocket(websocket: WebSocket, session_id: str):
                 or data.get("parameters", {}).get("action") == "cast_spell"
             )
 
+            # Each error frame names the action and the token, so the board UI can show it.
+            context = {"session_id": session_id, "action": action, "token_id": data.get("token_id")}
             try:
                 await authorize_message(user_id, session_id, action, is_cast, data)
                 await _dispatch_action(session_id, action, is_cast, data)
             except BoardActionDenied as exc:
                 await send_socket_error(
-                    websocket, "PERMISSION_DENIED", str(exc), status=403, session_id=session_id
+                    websocket, "PERMISSION_DENIED", str(exc), status=403, **context
                 )
             except BoardNotFoundError as exc:
-                await send_socket_error(
-                    websocket, "NOT_FOUND", str(exc), status=404, session_id=session_id
-                )
+                await send_socket_error(websocket, "NOT_FOUND", str(exc), status=404, **context)
             except UnknownBoardAction as exc:
                 await send_socket_error(
                     websocket,
                     "UNKNOWN_ACTION",
                     f"Unknown board action: {exc}",
                     status=422,
-                    session_id=session_id,
+                    **context,
                 )
             except (DomainError, ValueError) as exc:
                 # A refused command, or a frame value that does not parse.
-                await send_socket_error(
-                    websocket, "INVALID", str(exc), status=422, session_id=session_id
-                )
+                await send_socket_error(websocket, "INVALID", str(exc), status=422, **context)
     except WebSocketDisconnect:
         pass
     except Exception:

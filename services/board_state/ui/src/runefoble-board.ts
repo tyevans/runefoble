@@ -1,10 +1,10 @@
 import { AuthConsumerController, websocketProtocols } from '@runefoble/ui-core';
-import { LitElement, html } from 'lit';
+import { LitElement, html, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import type { AoETemplateConfig, BoardToken, DragKinematicsState, GhostPreviewState, RadialActionType, TerrainCell } from './board-types.ts';
 import { renderGhostBanner } from './templates/kinematics.template.ts';
 import { renderBoardHeader, renderStatusBar, renderRadialMenuOverlay, renderAoEOverlay, renderAoEBanner } from './templates/overlays.template.ts';
-import { cancelAoEPlacement, confirmAoEPlacement, executeRadialAction, handleBoardSocketMessage, requestAoEPreview } from './board-actions.ts';
+import { cancelAoEPlacement, confirmAoEPlacement, executeRadialAction, handleBoardSocketMessage, requestAoEPreview, socketErrorMessage } from './board-actions.ts';
 import { renderBoardGrid } from './board-grid.ts';
 import { buildConfirmMoveMessage } from './board-api.ts';
 import { GhostPreviewEngine, parseIncomingGhostPreview } from './ghost_preview.ts';
@@ -41,6 +41,8 @@ export class RunefobleBoard extends LitElement {
   @state() private localGhost: GhostPreviewState | null = null;
   @state() aoeAffectedTokenIds: string[] = [];
   @state() aoeAffectedCells: [number, number][] = [];
+  /** The last refused board action, from a server `error` frame or a closed socket. */
+  @state() boardError: string | null = null;
 
   ghostEngine: GhostPreviewEngine | null = null;
   private particleEngine: WebGLParticleEngine | null = null;
@@ -158,6 +160,8 @@ export class RunefobleBoard extends LitElement {
   }
 
   public handleIncomingSocketMessage(data: any) {
+    const error = socketErrorMessage(data);
+    if (error !== null) { this.boardError = error; return; }
     if (this.physicsBridge?.handleWebSocketMessage(data)) return;
     const vfx = parseIncomingSpellVFX(data);
     if (vfx) { this.triggerSpellVFX(vfx); return; }
@@ -227,6 +231,8 @@ export class RunefobleBoard extends LitElement {
     if (!this.dragState?.isDragging) return;
     const { targetCellX: toX, targetCellY: toY, startX, startY, tokenId } = this.dragState;
     if (toX !== startX || toY !== startY) {
+      // The drag is the whole move. The token stays unselected, so a later cell click sends no move.
+      this.selectedTokenId = null;
       this.requestTokenMove(tokenId, toX, toY);
     } else {
       this.radialTokenId = tokenId;
@@ -236,15 +242,19 @@ export class RunefobleBoard extends LitElement {
   }
   /**
    * Sends a token move as the `confirm_move` action on the board socket.
-   * Emits `move-rejected` when the socket is not open, so the host can react.
+   * When the socket is not open, the board shows the refusal and emits `move-rejected`.
+   * A refused move comes back as an `error` frame, and the board shows its message.
    */
   private requestTokenMove(tokenId: string, toX: number, toY: number): void {
+    this.boardError = null;
     this.dispatchEvent(new CustomEvent('move-token', { detail: { tokenId, toX, toY }, bubbles: true, composed: true }));
     if (this.ws?.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify(buildConfirmMoveMessage({ tokenId, toX, toY })));
     } else {
+      const reason = 'The board connection is not open, so the move was not sent.';
+      this.boardError = reason;
       this.dispatchEvent(new CustomEvent('move-rejected', {
-        detail: { tokenId, toX, toY, reason: 'board socket is not open' },
+        detail: { tokenId, toX, toY, reason },
         bubbles: true,
         composed: true,
       }));
@@ -263,6 +273,7 @@ export class RunefobleBoard extends LitElement {
     const radialToken = this.radialTokenId ? this.tokens.find((t) => t.id === this.radialTokenId) ?? null : null;
     return html`
       ${renderBoardHeader(this.fogOfWar, () => { this.fogOfWar = !this.fogOfWar; }, this.watcherStatus, this.enable3D, () => this.toggle3D())}
+      ${this.boardError ? html`<p class="board-error" role="alert">${this.boardError}</p>` : nothing}
       ${renderBoardGrid({
         cols: this.cols, rows: this.rows, tokens: this.tokens, terrainCells: this.terrainCells,
         activeTurnTokenId: this.activeTurnTokenId, selectedTokenId: this.selectedTokenId,

@@ -72,6 +72,9 @@ When(
     await expect(targetCell).toBeVisible({ timeout: 10_000 });
     await expect(targetCell.locator('.token'), 'The target cell must be free').toHaveCount(0);
 
+    // Raw mouse input uses viewport coordinates and does not scroll. On the player screen the
+    // board is below the fold, so a press at its layout box would hit no element.
+    await grid.scrollIntoViewIfNeeded();
     const srcBox = await token.boundingBox();
     const destBox = await targetCell.boundingBox();
     expect(srcBox, 'Source token must have a layout box').not.toBeNull();

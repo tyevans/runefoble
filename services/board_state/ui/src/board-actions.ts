@@ -57,6 +57,16 @@ function addPlacedToken(host: { tokens: BoardToken[] }, token: BoardToken): void
   host.tokens = shown ? host.tokens.map((t) => (t.id === token.id ? token : t)) : [...host.tokens, token];
 }
 
+/**
+ * Returns the text to show for a server `error` frame, or null for any other frame.
+ * The board socket sends `{type: "error", code, message, action, token_id}` for a refused action.
+ */
+export function socketErrorMessage(data: any): string | null {
+  if (data?.type !== 'error') return null;
+  const message = typeof data.message === 'string' && data.message ? data.message : 'The board refused the action.';
+  return typeof data.action === 'string' && data.action ? `${data.action} refused: ${message}` : message;
+}
+
 /** Ask the server to evaluate the active template. The result arrives as aoe_preview. */
 export function requestAoEPreview(host: BoardActionsHost, config: AoETemplateConfig): void {
   if (host.ws && host.ws.readyState === WebSocket.OPEN) {

@@ -33,7 +33,8 @@ The ingress sends `/ws/boards/...` to `board-state:8002`, which owns the board s
 
 When dragging a miniature or token across the tactical board:
 1. **Inertia & Elevation**: Tokens elevate visually with spring dampening and a raised drop shadow (`z-index: 100`, scale: 1.18).
-2. **Snap-to-Grid Collision**: When the pointer is released, the token snaps smoothly to the nearest valid cell center and dispatches the standard `move-token` event with `{ tokenId, toX, toY }`. The board also sends the `confirm_move` action over its own socket, `/ws/boards/{session_id}` (see section 4.1).
+2. **Snap-to-Grid Collision**: When the pointer is released, the token snaps smoothly to the nearest valid cell center and dispatches the standard `move-token` event with `{ tokenId, toX, toY }`. The board also sends the `confirm_move` action over its own socket, `/ws/boards/{session_id}` (see section 4.1). One drag sends one move. The browser click that ends the press stops at the token, so it sends no second move to the start cell. After a drag, no token is selected.
+   - A tap on a token (press and release on the same cell) opens the radial menu. The menu stays open until you click a cell or pick an action.
 3. **Dynamic Distance Ruler**: While dragging, a floating Bauhaus distance badge displays the cumulative travel distance in 5-foot increments.
 
 ---
@@ -91,7 +92,14 @@ Per PRD-0013 and US-0043 ("Speak and the board obeys"), spoken voice actions sta
 - `confirm-ghost`: `{ ghost: GhostPreviewState }`
 - `cancel-ghost`: `{ ghost: GhostPreviewState }`
 - `ghost-timeout`: `{ tokenId: string }`
-- `move-rejected`: `{ tokenId: string, toX: number, toY: number, reason: string }`. Emitted when the board socket is not open, so no `confirm_move` was sent.
+- `move-rejected`: `{ tokenId: string, toX: number, toY: number, reason: string }`. Emitted when the board socket is not open, so no `confirm_move` was sent. The board also shows `reason` in its alert line.
+
+### Refused Moves
+
+The board shows a refused action in an alert line (`role="alert"`) above the grid:
+- The server answers a refused message with an `error` frame (see "WebSocket `/ws/boards/{session_id}`"). The board shows `<action> refused: <message>`. The token stays on its cell, because only a `token_moved` frame moves it.
+- When the board socket is not open, the board shows "The board connection is not open, so the move was not sent."
+- The next move clears the alert line.
 
 ### 4.1 Event-to-Route Table
 
@@ -149,8 +157,9 @@ Token ids are global in SpiceDB. A token id must use only letters, digits, and `
 - A confirmed move broadcasts a `token_moved` frame. The frame has the same move fields as the HTTP move response: `movement_cost`, `hazard_triggered`, `damage_dice`, `trap_triggered`, and `movement_paused`. A move onto a trap stops at the trap cell and sets `movement_paused` to `true`.
 - `aoe_place`, `cast_spell`, `spell_vfx`, `SpellCast`, and spoken spell intents need `campaign.play`.
 - Every other defined message (previews, `aoe_preview`, `aoe_evaluate`, `cancel_preview`) needs `board.view`.
-- A denied message returns `{"type": "error", "code": "PERMISSION_DENIED", "status": 403, "session_id": "..."}`. The socket stays open.
+- A denied message returns `{"type": "error", "code": "PERMISSION_DENIED", "message": "...", "status": 403, "session_id": "...", "action": "confirm_move", "token_id": "..."}`. Every error frame names the `action` and the `token_id` of the refused message (`token_id` is `null` when the message has none). The socket stays open.
 - A message type that the board does not define returns `UNKNOWN_ACTION`. The board no longer rebroadcasts client frames.
+- A `confirm_move` without `token_id`, `to_x` or `to_y` returns `INVALID` (`422`) with a message that names the missing fields. A move that the board refuses (for example out of bounds, or over the movement budget) also returns `INVALID`. No message is dropped without a frame.
 - An unexpected server error closes the socket with `1011` and logs the error.
 
 ### Client side

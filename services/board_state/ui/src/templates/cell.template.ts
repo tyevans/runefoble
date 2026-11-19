@@ -22,6 +22,15 @@ export interface BoardCellProps {
   onGhostConfirm: () => void;
 }
 
+/**
+ * The browser sends a click after a token press ends. The press already did its work: a drag sent
+ * the move, and a tap opened the radial menu. The click must not reach the cell, or the cell would
+ * send a second move back to the start cell, or close the radial menu at once.
+ */
+function stopTokenClick(e: Event): void {
+  e.stopPropagation();
+}
+
 export function renderBoardCell(props: BoardCellProps) {
   const {
     x,
@@ -65,6 +74,7 @@ export function renderBoardCell(props: BoardCellProps) {
                 class="token ${token.isAiControlled ? 'ai' : ''} ${token.isHostile ? 'hostile' : ''} ${isActiveTurn ? 'active-turn' : ''} ${targeted ? 'target-halo' : ''} ${draggingTokenId === token.id ? 'dragging' : ''}"
                 style="background: ${token.color || 'var(--rf-accent-secondary)'}; ${selectedTokenId === token.id ? 'outline: 3px solid var(--rf-accent-primary);' : ''}"
                 @pointerdown="${(e: PointerEvent) => onTokenPointerDown(e, token)}"
+                @click="${stopTokenClick}"
                 title="${token.name}${token.isAiControlled ? ' (AI Stand-in)' : ''}${token.hp !== undefined ? ` [${token.hp}/${token.maxHp ?? token.hp} HP]` : ''}${isActiveTurn ? ' (Active Turn)' : ''}${targeted ? ' (Targeted by AoE)' : ''}"
               >
                 ${token.name.slice(0, 2).toUpperCase()}
