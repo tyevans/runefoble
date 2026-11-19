@@ -53,6 +53,14 @@ describe('applyRouteState', () => {
     assert.equal(host.isAuthModalOpen, true);
     assert.equal(host.campaignId, '');
   });
+
+  it('marks the board as loading when the session changes, and keeps it for the same session', () => {
+    const host: any = { selectedCharacterId: '', isAuthModalOpen: false, sessionId: 's1', boardKind: 'board' };
+    applyRouteState(host, new Router().match('#/campaigns/c1/sessions/s1')!);
+    assert.equal(host.boardKind, 'board');
+    applyRouteState(host, new Router().match('#/campaigns/c1/sessions/s2')!);
+    assert.equal(host.boardKind, 'loading');
+  });
 });
 
 describe('fetchSession without a title', () => {

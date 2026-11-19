@@ -17,8 +17,12 @@ export function handleBoardSetUp(host: RunefobleApp, e: CustomEvent<BoardSetUpDe
   host.reloadRouteData();
 }
 
-/** A `board_ready` frame for the open session reads the board again while this client has none. */
+/**
+ * A `board_ready` frame for the open session reads the board again while this client has none.
+ * While the first read is still out (`loading`), it can answer 404 from before the set-up, so
+ * the client reads again.
+ */
 export function handleBoardReady(host: RunefobleApp, msg: { sessionId?: unknown }): void {
-  if (msg.sessionId !== host.sessionId || host.boardKind !== 'no_board') return;
+  if (msg.sessionId !== host.sessionId || host.boardKind === 'board') return;
   host.reloadRouteData();
 }
