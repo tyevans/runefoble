@@ -115,6 +115,8 @@ Forged assets are written to Silo before the forge responds. The service never r
 ### Component Behaviour (`<runefoble-asset-forge>`)
 
 - The App Shell mounts this element on the **Asset Forge** tab of a campaign, at `#/campaigns/:campaignId/forge`. The Storybook stories stay the component's test surface.
+- Set the campaign with the `campaign-id` attribute (for example `<runefoble-asset-forge campaign-id="6f1c2a4e-0d3b-4c55-9f7e-1a2b3c4d5e6f">`). The attribute sets the `campaignId` property. Both forge requests send the value as `campaign_id`.
+- If the element has no campaign id, the forge buttons are disabled. The element shows the alert "Open a campaign to use the forge. The forge saves each asset to a campaign." and sends no request.
 
 - **Forge Tactical Battlemap** posts the prompt to `POST /api/v1/forge/battlemap`. The preview appears only after the route returns a successful response.
 - **Forge Token Portrait** posts the name, type, and prompt to `POST /api/v1/forge/token`. The preview appears only after a successful response.

@@ -51,7 +51,8 @@ export interface ForgedStlToken extends ForgedDownload {
 
 export interface BattlemapInput {
   prompt: string;
-  campaignId?: string;
+  /** Campaign that owns the forge record. Required: the forge routes answer 422 without it. */
+  campaignId: string;
   widthCells: number;
   heightCells: number;
 }
@@ -60,7 +61,8 @@ export interface TokenInput {
   prompt: string;
   tokenName: string;
   tokenType: string;
-  campaignId?: string;
+  /** Campaign that owns the forge record. Required: the forge routes answer 422 without it. */
+  campaignId: string;
 }
 
 export interface PrintPdfInput {
@@ -68,7 +70,8 @@ export interface PrintPdfInput {
   widthCells: number;
   heightCells: number;
   pageSize: 'letter' | 'a4';
-  campaignId?: string;
+  /** Campaign that owns the forge record. Required: the forge routes answer 422 without it. */
+  campaignId: string;
 }
 
 export interface StandeeInput {
@@ -82,14 +85,16 @@ export interface StandeesInput {
   sheetTitle: string;
   standees: StandeeInput[];
   pageSize: 'letter' | 'a4';
-  campaignId?: string;
+  /** Campaign that owns the forge record. Required: the forge routes answer 422 without it. */
+  campaignId: string;
 }
 
 export interface StlTokenInput {
   diameterMm: number;
   conditionLabel: string;
   numSlots: number;
-  campaignId?: string;
+  /** Campaign that owns the forge record. Required: the forge routes answer 422 without it. */
+  campaignId: string;
 }
 
 /** Text for a refused caller. Only 401 and 403 need their own words. The server detail covers the rest. */
@@ -123,21 +128,18 @@ interface TokenResponse {
   size_px: number;
 }
 
-function withCampaign(body: Record<string, unknown>, campaignId: string | undefined) {
-  return campaignId ? { ...body, campaign_id: campaignId } : body;
-}
+/** The message a forge element shows when it has no campaign. The element sends no request. */
+export const NO_CAMPAIGN_MESSAGE = 'Open a campaign to use the forge. The forge saves each asset to a campaign.';
 
 export async function forgeBattlemap(input: BattlemapInput, opts: RequestOptions): Promise<ForgedMapData> {
   const res = await postJson<BattlemapResponse>(
     '/api/v1/forge/battlemap',
-    withCampaign(
-      {
-        prompt: input.prompt,
-        width_cells: input.widthCells,
-        height_cells: input.heightCells,
-      },
-      input.campaignId,
-    ),
+    {
+      prompt: input.prompt,
+      width_cells: input.widthCells,
+      height_cells: input.heightCells,
+      campaign_id: input.campaignId,
+    },
     opts,
   );
   return {
@@ -154,14 +156,12 @@ export async function forgeBattlemap(input: BattlemapInput, opts: RequestOptions
 export async function forgeToken(input: TokenInput, opts: RequestOptions): Promise<ForgedTokenData> {
   const res = await postJson<TokenResponse>(
     '/api/v1/forge/token',
-    withCampaign(
-      {
-        prompt: input.prompt,
-        token_name: input.tokenName,
-        token_type: input.tokenType,
-      },
-      input.campaignId,
-    ),
+    {
+      prompt: input.prompt,
+      token_name: input.tokenName,
+      token_type: input.tokenType,
+      campaign_id: input.campaignId,
+    },
     opts,
   );
   return {
@@ -176,16 +176,14 @@ export async function forgeToken(input: TokenInput, opts: RequestOptions): Promi
 export async function exportPrintPdf(input: PrintPdfInput, opts: RequestOptions): Promise<ForgedPrintPdf> {
   return postJson<ForgedPrintPdf>(
     '/api/v1/forge/print-pdf',
-    withCampaign(
-      {
-        title: input.title,
-        width_cells: input.widthCells,
-        height_cells: input.heightCells,
-        page_size: input.pageSize,
-        format: 'json',
-      },
-      input.campaignId,
-    ),
+    {
+      title: input.title,
+      width_cells: input.widthCells,
+      height_cells: input.heightCells,
+      page_size: input.pageSize,
+      format: 'json',
+      campaign_id: input.campaignId,
+    },
     opts,
   );
 }
@@ -193,15 +191,13 @@ export async function exportPrintPdf(input: PrintPdfInput, opts: RequestOptions)
 export async function exportStandees(input: StandeesInput, opts: RequestOptions): Promise<ForgedStandees> {
   return postJson<ForgedStandees>(
     '/api/v1/forge/standees',
-    withCampaign(
-      {
-        sheet_title: input.sheetTitle,
-        standees: input.standees,
-        page_size: input.pageSize,
-        format: 'json',
-      },
-      input.campaignId,
-    ),
+    {
+      sheet_title: input.sheetTitle,
+      standees: input.standees,
+      page_size: input.pageSize,
+      format: 'json',
+      campaign_id: input.campaignId,
+    },
     opts,
   );
 }
@@ -209,15 +205,13 @@ export async function exportStandees(input: StandeesInput, opts: RequestOptions)
 export async function exportStlToken(input: StlTokenInput, opts: RequestOptions): Promise<ForgedStlToken> {
   return postJson<ForgedStlToken>(
     '/api/v1/forge/stl-token',
-    withCampaign(
-      {
-        diameter_mm: input.diameterMm,
-        condition_label: input.conditionLabel,
-        num_slots: input.numSlots,
-        format: 'json',
-      },
-      input.campaignId,
-    ),
+    {
+      diameter_mm: input.diameterMm,
+      condition_label: input.conditionLabel,
+      num_slots: input.numSlots,
+      format: 'json',
+      campaign_id: input.campaignId,
+    },
     opts,
   );
 }

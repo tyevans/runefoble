@@ -37,23 +37,28 @@ const sampleTokenSvg =
 
 export const DefaultEmpty: Story = {
   render: () => html`
-    <runefoble-asset-forge campaignId="campaign-alpha"></runefoble-asset-forge>
+    <runefoble-asset-forge campaign-id="6f1d7c2e-0000-4000-8000-0000000000a1"></runefoble-asset-forge>
   `,
 };
 
 export const GeneratingProgress: Story = {
   render: () => html`
     <runefoble-asset-forge
-      campaignId="campaign-alpha"
+      campaign-id="6f1d7c2e-0000-4000-8000-0000000000a1"
       .isGenerating=${true}
     ></runefoble-asset-forge>
   `,
 };
 
+/** No campaign: the forge buttons are disabled and the alert says why (TASK-0903). */
+export const NoCampaign: Story = {
+  render: () => html`<runefoble-asset-forge activeTab="battlemap"></runefoble-asset-forge>`,
+};
+
 export const BattlemapForgedPreview: Story = {
   render: () => html`
     <runefoble-asset-forge
-      campaignId="campaign-alpha"
+      campaign-id="6f1d7c2e-0000-4000-8000-0000000000a1"
       activeTab="battlemap"
       mapPreviewUrl=${sampleBattlemapSvg}
       .lastForgedMap=${{
@@ -72,7 +77,7 @@ export const BattlemapForgedPreview: Story = {
 export const TokenPortraitForged: Story = {
   render: () => html`
     <runefoble-asset-forge
-      campaignId="campaign-alpha"
+      campaign-id="6f1d7c2e-0000-4000-8000-0000000000a1"
       activeTab="token"
       tokenPreviewUrl=${sampleTokenSvg}
       .lastForgedToken=${{
@@ -121,7 +126,7 @@ export const ForgeMapSuccess: Story = {
     ),
   ],
   render: () => html`
-    <runefoble-asset-forge campaignId="campaign-alpha" activeTab="battlemap"></runefoble-asset-forge>
+    <runefoble-asset-forge campaign-id="6f1d7c2e-0000-4000-8000-0000000000a1" activeTab="battlemap"></runefoble-asset-forge>
   `,
 };
 
@@ -131,7 +136,7 @@ export const ForgeMapServiceUnavailable: Story = {
     withMockFetch({ match: '/api/v1/forge/battlemap', status: 503, body: serviceUnavailable }),
   ],
   render: () => html`
-    <runefoble-asset-forge campaignId="campaign-alpha" activeTab="battlemap"></runefoble-asset-forge>
+    <runefoble-asset-forge campaign-id="6f1d7c2e-0000-4000-8000-0000000000a1" activeTab="battlemap"></runefoble-asset-forge>
   `,
 };
 
@@ -144,7 +149,7 @@ export const ForgeTokenSuccess: Story = {
     ),
   ],
   render: () => html`
-    <runefoble-asset-forge campaignId="campaign-alpha" activeTab="token"></runefoble-asset-forge>
+    <runefoble-asset-forge campaign-id="6f1d7c2e-0000-4000-8000-0000000000a1" activeTab="token"></runefoble-asset-forge>
   `,
 };
 
@@ -152,7 +157,7 @@ export const ForgeTokenSuccess: Story = {
 export const ForgeTokenServiceUnavailable: Story = {
   decorators: [withMockFetch({ match: '/api/v1/forge/token', status: 503, body: serviceUnavailable })],
   render: () => html`
-    <runefoble-asset-forge campaignId="campaign-alpha" activeTab="token"></runefoble-asset-forge>
+    <runefoble-asset-forge campaign-id="6f1d7c2e-0000-4000-8000-0000000000a1" activeTab="token"></runefoble-asset-forge>
   `,
 };
 
@@ -167,7 +172,7 @@ export const PlaceTokenSuccess: Story = {
   ],
   render: () => html`
     <runefoble-asset-forge
-      campaignId="campaign-alpha"
+      campaign-id="6f1d7c2e-0000-4000-8000-0000000000a1"
       sessionId="session-demo-01"
       activeTab="token"
       tokenPreviewUrl=${sampleTokenSvg}
@@ -187,7 +192,7 @@ export const PlaceTokenBoardError: Story = {
   ],
   render: () => html`
     <runefoble-asset-forge
-      campaignId="campaign-alpha"
+      campaign-id="6f1d7c2e-0000-4000-8000-0000000000a1"
       sessionId="session-demo-01"
       activeTab="token"
       tokenPreviewUrl=${sampleTokenSvg}

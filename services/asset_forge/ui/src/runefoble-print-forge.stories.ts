@@ -14,26 +14,31 @@ type Story = StoryObj;
 
 export const DefaultTiledMap: Story = {
   render: () => html`
-    <runefoble-print-forge campaignId="campaign-demo-01" activeTab="tiled-map"></runefoble-print-forge>
+    <runefoble-print-forge campaign-id="6f1d7c2e-0000-4000-8000-0000000000d1" activeTab="tiled-map"></runefoble-print-forge>
   `,
 };
 
 export const PapercraftStandees: Story = {
   render: () => html`
-    <runefoble-print-forge campaignId="campaign-demo-01" activeTab="standees"></runefoble-print-forge>
+    <runefoble-print-forge campaign-id="6f1d7c2e-0000-4000-8000-0000000000d1" activeTab="standees"></runefoble-print-forge>
   `,
 };
 
 export const StlTokenRing: Story = {
   render: () => html`
-    <runefoble-print-forge campaignId="campaign-demo-01" activeTab="stl-tokens"></runefoble-print-forge>
+    <runefoble-print-forge campaign-id="6f1d7c2e-0000-4000-8000-0000000000d1" activeTab="stl-tokens"></runefoble-print-forge>
   `,
 };
 
 export const ExportInProgress: Story = {
   render: () => html`
-    <runefoble-print-forge campaignId="campaign-demo-01" .isExporting=${true}></runefoble-print-forge>
+    <runefoble-print-forge campaign-id="6f1d7c2e-0000-4000-8000-0000000000d1" .isExporting=${true}></runefoble-print-forge>
   `,
+};
+
+/** No campaign: the export buttons are disabled and the alert says why (TASK-0903). */
+export const NoCampaign: Story = {
+  render: () => html`<runefoble-print-forge activeTab="tiled-map"></runefoble-print-forge>`,
 };
 
 const serviceUnavailable = {
@@ -58,7 +63,7 @@ export const TiledMapExportSuccess: Story = {
     ),
   ],
   render: () => html`
-    <runefoble-print-forge campaignId="campaign-demo-01" activeTab="tiled-map"></runefoble-print-forge>
+    <runefoble-print-forge campaign-id="6f1d7c2e-0000-4000-8000-0000000000d1" activeTab="tiled-map"></runefoble-print-forge>
   `,
 };
 
@@ -66,7 +71,7 @@ export const TiledMapExportSuccess: Story = {
 export const TiledMapExportServiceUnavailable: Story = {
   decorators: [withMockFetch({ match: '/api/v1/forge/print-pdf', status: 503, body: serviceUnavailable })],
   render: () => html`
-    <runefoble-print-forge campaignId="campaign-demo-01" activeTab="tiled-map"></runefoble-print-forge>
+    <runefoble-print-forge campaign-id="6f1d7c2e-0000-4000-8000-0000000000d1" activeTab="tiled-map"></runefoble-print-forge>
   `,
 };
 
@@ -88,7 +93,7 @@ export const StandeesExportSuccess: Story = {
     ),
   ],
   render: () => html`
-    <runefoble-print-forge campaignId="campaign-demo-01" activeTab="standees"></runefoble-print-forge>
+    <runefoble-print-forge campaign-id="6f1d7c2e-0000-4000-8000-0000000000d1" activeTab="standees"></runefoble-print-forge>
   `,
 };
 
@@ -96,6 +101,6 @@ export const StandeesExportSuccess: Story = {
 export const StandeesExportServiceUnavailable: Story = {
   decorators: [withMockFetch({ match: '/api/v1/forge/standees', status: 503, body: serviceUnavailable })],
   render: () => html`
-    <runefoble-print-forge campaignId="campaign-demo-01" activeTab="standees"></runefoble-print-forge>
+    <runefoble-print-forge campaign-id="6f1d7c2e-0000-4000-8000-0000000000d1" activeTab="standees"></runefoble-print-forge>
   `,
 };

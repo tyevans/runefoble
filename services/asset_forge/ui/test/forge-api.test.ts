@@ -26,6 +26,7 @@ import {
 } from '../src/forge-api.ts';
 
 const TEST_TOKEN = 'test-access-token';
+const CAMPAIGN = '6f1d7c2e-0000-4000-8000-000000000001';
 const signedIn: AuthSource = { authHeaders: async () => ({ Authorization: `Bearer ${TEST_TOKEN}` }) };
 const anonymous: AuthSource = { authHeaders: async () => ({}) };
 
@@ -81,7 +82,7 @@ describe('forgeBattlemap (TASK-0613)', () => {
     upstream.reply(200, BATTLEMAP_RESPONSE);
 
     const map = await forgeBattlemap(
-      { prompt: 'Lava forge', campaignId: '6f1d7c2e-0000-4000-8000-000000000001', widthCells: 20, heightCells: 20 },
+      { prompt: 'Lava forge', campaignId: CAMPAIGN, widthCells: 20, heightCells: 20 },
       opts,
     );
 
@@ -91,7 +92,7 @@ describe('forgeBattlemap (TASK-0613)', () => {
     assert.equal(call.headers['content-type'], 'application/json');
     assert.deepEqual(call.body, {
       prompt: 'Lava forge',
-      campaign_id: '6f1d7c2e-0000-4000-8000-000000000001',
+      campaign_id: CAMPAIGN,
       width_cells: 20,
       height_cells: 20,
     });
@@ -106,18 +107,10 @@ describe('forgeBattlemap (TASK-0613)', () => {
     });
   });
 
-  it('omits campaign_id when no campaign is set', async () => {
-    upstream.reply(200, BATTLEMAP_RESPONSE);
-
-    await forgeBattlemap({ prompt: 'Crypt', campaignId: '', widthCells: 10, heightCells: 10 }, opts);
-
-    assert.equal('campaign_id' in onlyCall().body, false);
-  });
-
   it('rejects with HttpError carrying the 503 detail when Silo is unavailable', async () => {
     upstream.reply(503, { detail: SILO_DOWN });
 
-    const err = await rejection(forgeBattlemap({ prompt: 'Crypt', widthCells: 10, heightCells: 10 }, opts));
+    const err = await rejection(forgeBattlemap({ prompt: 'Crypt', widthCells: 10, heightCells: 10, campaignId: CAMPAIGN }, opts));
 
     assert.equal(err.status, 503);
     assert.equal(forgeFailureMessage(err), SILO_DOWN);
@@ -131,7 +124,7 @@ describe('forgeBattlemap (TASK-0613)', () => {
       ],
     });
 
-    const err = await rejection(forgeBattlemap({ prompt: 'x', widthCells: 99, heightCells: 10 }, opts));
+    const err = await rejection(forgeBattlemap({ prompt: 'x', widthCells: 99, heightCells: 10, campaignId: CAMPAIGN }, opts));
 
     assert.equal(err.status, 422);
     assert.equal(
@@ -143,7 +136,7 @@ describe('forgeBattlemap (TASK-0613)', () => {
   it('reports the HTTP status when the error body is not JSON', async () => {
     upstream.reply(502, '<html>Bad Gateway</html>');
 
-    const err = await rejection(forgeBattlemap({ prompt: 'Crypt', widthCells: 10, heightCells: 10 }, opts));
+    const err = await rejection(forgeBattlemap({ prompt: 'Crypt', widthCells: 10, heightCells: 10, campaignId: CAMPAIGN }, opts));
 
     assert.equal(err.status, 502);
     assert.match(forgeFailureMessage(err), /status 502/);
@@ -156,7 +149,7 @@ describe('forgeBattlemap (TASK-0613)', () => {
     await new Promise<void>((resolve) => closed.close(() => resolve()));
 
     await assert.rejects(
-      forgeBattlemap({ prompt: 'Crypt', widthCells: 10, heightCells: 10 }, { apiBase: deadBase, auth: signedIn }),
+      forgeBattlemap({ prompt: 'Crypt', widthCells: 10, heightCells: 10, campaignId: CAMPAIGN }, { apiBase: deadBase, auth: signedIn }),
       (err: unknown) => {
         assert.ok(err instanceof TypeError);
         assert.match(forgeFailureMessage(err), /^Network error: /);
@@ -168,11 +161,11 @@ describe('forgeBattlemap (TASK-0613)', () => {
 
 describe('forge bearer and refusal text (TASK-0812, TASK-0758)', () => {
   const forgeCalls: Array<[string, (o: RequestOptions) => Promise<unknown>]> = [
-    ['forgeBattlemap', (o) => forgeBattlemap({ prompt: 'Crypt', widthCells: 10, heightCells: 10 }, o)],
-    ['forgeToken', (o) => forgeToken({ prompt: 'Paladin', tokenName: 'Thorin', tokenType: 'pc' }, o)],
-    ['exportPrintPdf', (o) => exportPrintPdf({ title: 'Crypt', widthCells: 16, heightCells: 16, pageSize: 'letter' }, o)],
-    ['exportStandees', (o) => exportStandees({ sheetTitle: 'Standees', standees: [], pageSize: 'a4' }, o)],
-    ['exportStlToken', (o) => exportStlToken({ diameterMm: 28, conditionLabel: 'Poisoned', numSlots: 4 }, o)],
+    ['forgeBattlemap', (o) => forgeBattlemap({ prompt: 'Crypt', widthCells: 10, heightCells: 10, campaignId: CAMPAIGN }, o)],
+    ['forgeToken', (o) => forgeToken({ prompt: 'Paladin', tokenName: 'Thorin', tokenType: 'pc', campaignId: CAMPAIGN }, o)],
+    ['exportPrintPdf', (o) => exportPrintPdf({ title: 'Crypt', widthCells: 16, heightCells: 16, pageSize: 'letter', campaignId: CAMPAIGN }, o)],
+    ['exportStandees', (o) => exportStandees({ sheetTitle: 'Standees', standees: [], pageSize: 'a4', campaignId: CAMPAIGN }, o)],
+    ['exportStlToken', (o) => exportStlToken({ diameterMm: 28, conditionLabel: 'Poisoned', numSlots: 4, campaignId: CAMPAIGN }, o)],
     ['placeBoardToken', (o) => placeBoardToken({ sessionId: 's', name: 'n', tokenType: 'pc', x: 1, y: 1 }, o)],
   ];
 
@@ -247,13 +240,13 @@ describe('forgeToken (TASK-0613)', () => {
     });
 
     const token = await forgeToken(
-      { prompt: 'Dwarven paladin', tokenName: 'Thorin Ironbreaker', tokenType: 'pc', campaignId: '' },
+      { prompt: 'Dwarven paladin', tokenName: 'Thorin Ironbreaker', tokenType: 'pc', campaignId: CAMPAIGN },
       opts,
     );
 
     const call = onlyCall();
     assert.equal(call.path, '/api/v1/forge/token');
-    assert.deepEqual(call.body, { prompt: 'Dwarven paladin', token_name: 'Thorin Ironbreaker', token_type: 'pc' });
+    assert.deepEqual(call.body, { prompt: 'Dwarven paladin', token_name: 'Thorin Ironbreaker', token_type: 'pc', campaign_id: CAMPAIGN });
     assert.deepEqual(token, {
       asset_id: 'tok-0123456789ab',
       image_url: '/api/v1/assets/tok-0123456789ab',
@@ -278,13 +271,13 @@ describe('print forge exports (TASK-0613)', () => {
     });
 
     const result = await exportPrintPdf(
-      { title: 'Crypt', widthCells: 16, heightCells: 16, pageSize: 'letter', campaignId: '' },
+      { title: 'Crypt', widthCells: 16, heightCells: 16, pageSize: 'letter', campaignId: CAMPAIGN },
       opts,
     );
 
     const call = onlyCall();
     assert.equal(call.path, '/api/v1/forge/print-pdf');
-    assert.deepEqual(call.body, { title: 'Crypt', width_cells: 16, height_cells: 16, page_size: 'letter', format: 'json' });
+    assert.deepEqual(call.body, { title: 'Crypt', width_cells: 16, height_cells: 16, page_size: 'letter', format: 'json', campaign_id: CAMPAIGN });
     assert.equal(result.asset_id, 'pdf-aaaaaaaaaaaa');
     assert.equal(result.download_url, '/api/v1/assets/pdf-aaaaaaaaaaaa');
   });
@@ -301,13 +294,13 @@ describe('print forge exports (TASK-0613)', () => {
     const standees = [{ name: 'Valeros Fighter', type: 'pc', hp: 24, color: '#2a9d8f' }];
 
     const result = await exportStandees(
-      { sheetTitle: 'Valeros Fighter Standees', standees, pageSize: 'a4', campaignId: '' },
+      { sheetTitle: 'Valeros Fighter Standees', standees, pageSize: 'a4', campaignId: CAMPAIGN },
       opts,
     );
 
     const call = onlyCall();
     assert.equal(call.path, '/api/v1/forge/standees');
-    assert.deepEqual(call.body, { sheet_title: 'Valeros Fighter Standees', standees, page_size: 'a4', format: 'json' });
+    assert.deepEqual(call.body, { sheet_title: 'Valeros Fighter Standees', standees, page_size: 'a4', format: 'json', campaign_id: CAMPAIGN });
     assert.equal(result.download_url, '/api/v1/assets/std-bbbbbbbbbbbb');
   });
 
@@ -323,11 +316,11 @@ describe('print forge exports (TASK-0613)', () => {
       status: 'forged',
     });
 
-    const result = await exportStlToken({ diameterMm: 28, conditionLabel: 'Poisoned', numSlots: 4, campaignId: '' }, opts);
+    const result = await exportStlToken({ diameterMm: 28, conditionLabel: 'Poisoned', numSlots: 4, campaignId: CAMPAIGN }, opts);
 
     const call = onlyCall();
     assert.equal(call.path, '/api/v1/forge/stl-token');
-    assert.deepEqual(call.body, { diameter_mm: 28, condition_label: 'Poisoned', num_slots: 4, format: 'json' });
+    assert.deepEqual(call.body, { diameter_mm: 28, condition_label: 'Poisoned', num_slots: 4, format: 'json', campaign_id: CAMPAIGN });
     assert.equal(result.download_url, '/api/v1/assets/stl-cccccccccccc');
   });
 
@@ -335,7 +328,7 @@ describe('print forge exports (TASK-0613)', () => {
     upstream.reply(503, { detail: SILO_DOWN });
 
     const err = await rejection(
-      exportStlToken({ diameterMm: 28, conditionLabel: 'Poisoned', numSlots: 4, campaignId: '' }, opts),
+      exportStlToken({ diameterMm: 28, conditionLabel: 'Poisoned', numSlots: 4, campaignId: CAMPAIGN }, opts),
     );
 
     assert.equal(err.status, 503);
