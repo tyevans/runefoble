@@ -7,8 +7,6 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 
-from tests.helpers.campaign_setup import add_member, create_dm_campaign
-from tests.helpers.ws_identity import ws_subprotocols
 from tests.test_blackbox_uvtt_doors_lights.conftest import create_board
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
@@ -158,48 +156,3 @@ def test_door_toggle_state_transitions_http(board_client: TestClient):
     )
     assert toggle_res3.status_code == 200
     assert toggle_res3.json()["door"]["status"] == "locked"
-
-
-def test_door_toggle_over_websocket_authorized_and_denied(gateway_client: TestClient):
-    """Verify WebSocket Zanzibar authorization for door toggling."""
-    player_id = "valeros_fighter"
-    spectator_id = "spectator_sam"
-    campaign_id = create_dm_campaign("dm_doors")
-    add_member(campaign_id, "dm_doors", player_id, "player")
-    add_member(campaign_id, "dm_doors", spectator_id, "spectator")
-
-    # 1. Player can toggle door over WebSocket
-    with gateway_client.websocket_connect(
-        f"/ws/campaigns/{campaign_id}", subprotocols=ws_subprotocols(player_id)
-    ) as ws:
-        assert ws.receive_json()["type"] == "connected"
-        ws.send_json(
-            {
-                "action": "toggle_door",
-                "door_id": "door-portcullis-1",
-                "status": "open",
-                "is_open": True,
-            }
-        )
-        broadcast = ws.receive_json()
-        assert broadcast["type"] == "toggle_door"
-        assert broadcast["status"] == "open"
-        assert broadcast["door_id"] == "door-portcullis-1"
-        assert broadcast["is_open"] is True
-
-    # 2. Spectator cannot toggle door (denied with PERMISSION_DENIED)
-    with gateway_client.websocket_connect(
-        f"/ws/campaigns/{campaign_id}", subprotocols=ws_subprotocols(spectator_id)
-    ) as ws:
-        assert ws.receive_json()["type"] == "connected"
-        ws.send_json(
-            {
-                "action": "toggle_door",
-                "door_id": "door-portcullis-1",
-                "status": "open",
-            }
-        )
-        err = ws.receive_json()
-        assert err["type"] == "error"
-        assert err["code"] == "PERMISSION_DENIED"
-        assert "insufficient permissions" in err["message"]

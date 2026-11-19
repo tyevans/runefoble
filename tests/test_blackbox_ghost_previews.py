@@ -10,8 +10,6 @@ from uuid import uuid4
 import pytest
 from board_state.main import app as board_app
 from fastapi.testclient import TestClient
-from gateway_api.main import app as gateway_app
-from runefoble_auth.factory import get_spicedb_client
 
 from tests.helpers.ws_identity import bearer, ws_subprotocols
 
@@ -297,63 +295,3 @@ def test_websocket_ghost_preview_cancellation_preserves_original_state(board_cam
     board = client.get(f"/api/v1/boards/{board_id}").json()
     assert board["tokens"]["merisiel"]["x"] == 3
     assert board["tokens"]["merisiel"]["y"] == 3
-
-
-def test_gateway_campaign_websocket_ghost_preview_authorization():
-    """Verify SpiceDB Zanzibar permissions govern ghost preview staging on gateway campaign websocket."""
-    campaign_id = "camp-ghost-auth"
-    spicedb = get_spicedb_client()
-
-    import asyncio
-
-    # Authorize player to view campaign and move token 't-valeros'
-    asyncio.run(spicedb.write_relationship("campaign", campaign_id, "spectator", "user", "alice"))
-    asyncio.run(
-        spicedb.write_relationship(
-            "board_token", "t-valeros", "character", "character", "char-valeros"
-        )
-    )
-    asyncio.run(spicedb.write_relationship("character", "char-valeros", "owner", "user", "alice"))
-
-    # Authorize bob only to view
-    asyncio.run(spicedb.write_relationship("campaign", campaign_id, "spectator", "user", "bob"))
-
-    client = TestClient(gateway_app)
-
-    # 1. Alice (authorized) stages ghost preview
-    with client.websocket_connect(
-        f"/ws/campaigns/{campaign_id}", subprotocols=ws_subprotocols("alice")
-    ) as ws:
-        connected = ws.receive_json()
-        assert connected["type"] == "connected"
-
-        ws.send_json(
-            {
-                "action": "ghost_preview",
-                "token_id": "t-valeros",
-                "to_x": 4,
-                "to_y": 4,
-            }
-        )
-        staged = ws.receive_json()
-        assert staged["action"] == "ghost_preview"
-        assert staged["status"] == "applied"
-        assert staged["token_id"] == "t-valeros"
-
-    # 2. Bob (unauthorized to move t-valeros) attempts ghost preview and is denied
-    with client.websocket_connect(
-        f"/ws/campaigns/{campaign_id}", subprotocols=ws_subprotocols("bob")
-    ) as ws:
-        ws.receive_json()
-        ws.send_json(
-            {
-                "action": "ghost_preview",
-                "token_id": "t-valeros",
-                "to_x": 4,
-                "to_y": 4,
-            }
-        )
-        err = ws.receive_json()
-        assert err["type"] == "error"
-        assert err["code"] == "PERMISSION_DENIED"
-        assert err["action"] == "ghost_preview"

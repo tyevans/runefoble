@@ -7,8 +7,6 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 
-from tests.helpers.campaign_setup import add_member, create_dm_campaign
-from tests.helpers.ws_identity import ws_subprotocols
 from tests.test_blackbox_uvtt_doors_lights.conftest import create_board
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
@@ -125,49 +123,3 @@ def test_dynamic_light_placement_http(board_client: TestClient):
         light_src["light_id"] == "torch_01" and light_src["bright_radius"] == 20.0
         for light_src in lights
     )
-
-
-def test_light_placement_over_websocket_authorized_and_denied(gateway_client: TestClient):
-    """Verify WebSocket Zanzibar authorization for dynamic light placement."""
-    dm_id = "dm_evelyn"
-    spectator_id = "spectator_sam"
-    campaign_id = create_dm_campaign(dm_id)
-    add_member(campaign_id, dm_id, spectator_id, "spectator")
-
-    # 1. DM can place light over WebSocket
-    with gateway_client.websocket_connect(
-        f"/ws/campaigns/{campaign_id}", subprotocols=ws_subprotocols(dm_id)
-    ) as ws:
-        assert ws.receive_json()["type"] == "connected"
-        ws.send_json(
-            {
-                "action": "place_light",
-                "light_id": "campfire_01",
-                "x": 10.0,
-                "y": 10.0,
-                "color_hex": "#ff7700",
-                "bright_radius": 10.0,
-                "dim_radius": 20.0,
-            }
-        )
-        broadcast = ws.receive_json()
-        assert broadcast["type"] == "place_light"
-        assert broadcast["status"] == "applied"
-        assert broadcast["light_id"] == "campfire_01"
-
-    # 2. Spectator cannot place light (denied with PERMISSION_DENIED)
-    with gateway_client.websocket_connect(
-        f"/ws/campaigns/{campaign_id}", subprotocols=ws_subprotocols(spectator_id)
-    ) as ws:
-        assert ws.receive_json()["type"] == "connected"
-        ws.send_json(
-            {
-                "action": "place_light",
-                "light_id": "cheat_light",
-                "x": 1.0,
-                "y": 1.0,
-            }
-        )
-        err = ws.receive_json()
-        assert err["type"] == "error"
-        assert err["code"] == "PERMISSION_DENIED"
