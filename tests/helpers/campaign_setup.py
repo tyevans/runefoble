@@ -106,12 +106,12 @@ async def create_owned_campaign_async(
 
 
 def create_owner_session(base_url: str, headers: dict[str, str], campaign_id: str) -> str:
-    """Create a game session in a campaign through the owner's public game_session route."""
+    """Create a session in a campaign through the owner's public `POST .../campaigns/{id}/sessions`."""
     res = httpx.post(
-        f"{base_url}/api/v1/sessions/create",
-        json={"campaign_id": campaign_id, "title": "Crypt"},
+        f"{base_url}/api/v1/campaigns/{campaign_id}/sessions",
+        json={"title": "Crypt"},
         headers=headers,
         timeout=5.0,
     )
-    assert res.status_code == 200, res.text
-    return str(res.json()["session_id"])
+    assert res.status_code == 201, res.text
+    return str(res.json()["id"])

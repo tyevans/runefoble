@@ -46,13 +46,13 @@ def _owned_session(gateway: TestClient, upstream: str, owner: dict[str, str]) ->
     campaign = gateway.post("/api/v1/campaigns", json={"title": "Tomb"}, headers=owner)
     assert campaign.status_code == 201, campaign.text
     created = httpx.post(
-        f"{upstream}/api/v1/sessions/create",
-        json={"campaign_id": campaign.json()["id"], "title": "Crypt"},
+        f"{upstream}/api/v1/campaigns/{campaign.json()['id']}/sessions",
+        json={"title": "Crypt"},
         headers=owner,
         timeout=5.0,
     )
-    assert created.status_code == 200, created.text
-    return created.json()["session_id"]
+    assert created.status_code == 201, created.text
+    return created.json()["id"]
 
 
 def _absent_player_with_stand_in_turn(

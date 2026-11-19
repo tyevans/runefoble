@@ -18,15 +18,11 @@ def test_blackbox_campfire_crafting_frontdoor_integration(
     """Verify campfire rest and alchemical crafting workflows via public frontdoors."""
     camp_id = create_owned_campaign(session_client)
     session_res = session_client.post(
-        "/api/v1/sessions/create",
-        json={
-            "campaign_id": create_owned_campaign(session_client),
-            "title": "Campfire Haven Session",
-            "dm_id": "dm_bram",
-        },
+        f"/api/v1/campaigns/{camp_id}/sessions",
+        json={"title": "Campfire Haven Session"},
     )
-    assert session_res.status_code == 200
-    session_id = session_res.json()["session_id"]
+    assert session_res.status_code == 201
+    session_id = session_res.json()["id"]
 
     funded = session_client.post(
         f"/api/v1/campaigns/{camp_id}/stronghold/deposit",

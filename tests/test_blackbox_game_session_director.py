@@ -39,11 +39,11 @@ def _create(client: TestClient) -> str:
     campaign = client.post("/api/v1/campaigns", json={"title": "Tomb"})
     assert campaign.status_code == 201, campaign.text
     res = client.post(
-        "/api/v1/sessions/create",
-        json={"campaign_id": campaign.json()["id"], "title": "Crypt"},
+        f"/api/v1/campaigns/{campaign.json()['id']}/sessions",
+        json={"title": "Crypt"},
     )
-    assert res.status_code == 200, res.text
-    return res.json()["session_id"]
+    assert res.status_code == 201, res.text
+    return res.json()["id"]
 
 
 def test_create_is_refused_for_a_caller_without_run_session(client, stream_redis) -> None:
@@ -53,8 +53,8 @@ def test_create_is_refused_for_a_caller_without_run_session(client, stream_redis
     # The campaign create seeds its first session, which publishes its own event.
     before = list(stream_redis.streams.get(SESSION_STREAM, []))
     res = client.post(
-        "/api/v1/sessions/create",
-        json={"campaign_id": campaign.json()["id"], "title": "Uninvited"},
+        f"/api/v1/campaigns/{campaign.json()['id']}/sessions",
+        json={"title": "Uninvited"},
         headers=stranger,
     )
     assert res.status_code == 403, res.text

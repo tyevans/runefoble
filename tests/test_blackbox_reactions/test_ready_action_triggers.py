@@ -15,10 +15,10 @@ def _setup_active_combat(client: TestClient) -> tuple[str, str, str]:
     """Helper to initialize an active combat encounter."""
     campaign_id = create_owned_campaign(client)
     create_res = client.post(
-        "/api/v1/sessions/create",
-        json={"campaign_id": campaign_id, "title": "Ambush Corridor", "dm_id": "the_watcher"},
+        f"/api/v1/campaigns/{campaign_id}/sessions",
+        json={"title": "Ambush Corridor"},
     )
-    session_id = create_res.json()["session_id"]
+    session_id = create_res.json()["id"]
     marcus_id = str(uuid4())
     client.post(
         f"/api/v1/sessions/{session_id}/join",

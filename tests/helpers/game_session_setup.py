@@ -18,16 +18,13 @@ def start_session_with_player(base_url: str, dm_sub: str = "user-test") -> str:
     """Create a session, join one player, start it, and return its session id."""
     auth = {"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_sub)}"}
     with httpx.Client(base_url=base_url, headers=auth) as http:
+        campaign_id = create_campaign(http, dm_sub)
         created = http.post(
-            "/api/v1/sessions/create",
-            json={
-                "campaign_id": create_campaign(http, dm_sub),
-                "title": "Ambush",
-                "dm_id": "the_watcher",
-            },
+            f"/api/v1/campaigns/{campaign_id}/sessions",
+            json={"title": "Ambush"},
         )
-        assert created.status_code == 200, created.text
-        session_id = created.json()["session_id"]
+        assert created.status_code == 201, created.text
+        session_id = created.json()["id"]
 
         joined = http.post(
             f"/api/v1/sessions/{session_id}/join",

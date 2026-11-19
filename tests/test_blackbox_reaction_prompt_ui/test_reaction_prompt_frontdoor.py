@@ -22,11 +22,11 @@ def _setup_active_combat(client: TestClient) -> tuple[str, str, str]:
     """Helper to initialize an active combat encounter with two combatants."""
     campaign_id = create_owned_campaign(client)
     create_res = client.post(
-        "/api/v1/sessions/create",
-        json={"campaign_id": campaign_id, "title": "Reaction Arena", "dm_id": "the_watcher"},
+        f"/api/v1/campaigns/{campaign_id}/sessions",
+        json={"title": "Reaction Arena"},
     )
-    assert create_res.status_code == 200
-    session_id = create_res.json()["session_id"]
+    assert create_res.status_code == 201
+    session_id = create_res.json()["id"]
 
     marcus_id = str(uuid4())
     client.post(

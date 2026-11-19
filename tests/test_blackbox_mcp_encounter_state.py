@@ -61,16 +61,13 @@ def encounter(
 
     auth = {"Authorization": f"Bearer {SIGNING_ISSUER.mint('user-test')}"}
     with httpx.Client(base_url=upstreams["session"], headers=auth) as http:
+        owned_campaign_id = create_owned_campaign(http)
         created = http.post(
-            "/api/v1/sessions/create",
-            json={
-                "campaign_id": create_owned_campaign(http),
-                "title": "Ambush at Red Larch",
-                "dm_id": "the_watcher",
-            },
+            f"/api/v1/campaigns/{owned_campaign_id}/sessions",
+            json={"title": "Ambush at Red Larch"},
         )
-        assert created.status_code == 200, created.text
-        session_id = created.json()["session_id"]
+        assert created.status_code == 201, created.text
+        session_id = created.json()["id"]
 
         for character_id, name, character_class in [
             (str(uuid4()), "Valeros", "Fighter"),

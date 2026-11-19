@@ -15,11 +15,11 @@ def _setup_active_combat(client: TestClient) -> tuple[str, str, str]:
     """Helper to initialize an active combat encounter with two combatants."""
     campaign_id = create_owned_campaign(client)
     create_res = client.post(
-        "/api/v1/sessions/create",
-        json={"campaign_id": campaign_id, "title": "Reaction Arena", "dm_id": "the_watcher"},
+        f"/api/v1/campaigns/{campaign_id}/sessions",
+        json={"title": "Reaction Arena"},
     )
-    assert create_res.status_code == 200
-    session_id = create_res.json()["session_id"]
+    assert create_res.status_code == 201
+    session_id = create_res.json()["id"]
 
     marcus_id = str(uuid4())
     client.post(
@@ -156,11 +156,12 @@ def test_reaction_declare_error_handling(client: TestClient):
     assert res.status_code == 403
 
     # 2. Declare outside combat
+    peaceful_campaign_id = create_owned_campaign(client)
     c_res = client.post(
-        "/api/v1/sessions/create",
-        json={"campaign_id": create_owned_campaign(client), "title": "Peaceful Session"},
+        f"/api/v1/campaigns/{peaceful_campaign_id}/sessions",
+        json={"title": "Peaceful Session"},
     )
-    session_id = c_res.json()["session_id"]
+    session_id = c_res.json()["id"]
     res_no_combat = client.post(
         f"/sessions/{session_id}/reactions/declare",
         json={"reacting_combatant_id": "c-1", "trigger_phrase": "Counterspell!"},

@@ -54,11 +54,9 @@ def _create(client: TestClient) -> tuple[str, str]:
     campaign = client.post("/api/v1/campaigns", json={"title": "Tomb"})
     assert campaign.status_code == 201, campaign.text
     campaign_id = campaign.json()["id"]
-    res = client.post(
-        "/api/v1/sessions/create", json={"campaign_id": campaign_id, "title": "Crypt"}
-    )
-    assert res.status_code == 200, res.text
-    return campaign_id, res.json()["session_id"]
+    res = client.post(f"/api/v1/campaigns/{campaign_id}/sessions", json={"title": "Crypt"})
+    assert res.status_code == 201, res.text
+    return campaign_id, res.json()["id"]
 
 
 def _approved(

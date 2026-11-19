@@ -63,16 +63,13 @@ def _capturing_watcher(received: list[dict[str, Any]]) -> FastAPI:
 
 async def _start_session_with_absent_player(client: AsyncClient, character_id: str) -> str:
     """Create, join, start, and leave a session through public routes. Return its id."""
+    campaign_id = await create_owned_campaign_async(client)
     create_res = await client.post(
-        "/api/v1/sessions/create",
-        json={
-            "campaign_id": await create_owned_campaign_async(client),
-            "title": "Policy Session",
-            "dm_id": "dm_alice",
-        },
+        f"/api/v1/campaigns/{campaign_id}/sessions",
+        json={"title": "Policy Session"},
     )
-    assert create_res.status_code == 200
-    session_id = create_res.json()["session_id"]
+    assert create_res.status_code == 201
+    session_id = create_res.json()["id"]
     join_res = await client.post(
         f"/api/v1/sessions/{session_id}/join",
         json={

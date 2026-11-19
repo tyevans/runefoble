@@ -42,12 +42,12 @@ async def test_http_valid_signed_token_succeeds_and_extracts_subject(
     )
     assert campaign.status_code == 201, campaign.text
     created = httpx.post(
-        game_session_upstream + "/api/v1/sessions/create",
-        json={"campaign_id": campaign.json()["id"], "title": "JWKS", "dm_id": "the_watcher"},
+        f"{game_session_upstream}/api/v1/campaigns/{campaign.json()['id']}/sessions",
+        json={"title": "JWKS"},
         headers=headers,
     )
-    assert created.status_code == 200, created.text
-    session_id = created.json()["session_id"]
+    assert created.status_code == 201, created.text
+    session_id = created.json()["id"]
 
     # 1. Access protected session proxy
     res = client.get(f"/api/v1/sessions/{session_id}", headers=headers)

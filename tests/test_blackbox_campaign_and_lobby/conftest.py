@@ -46,11 +46,11 @@ def open_session(client_gw: TestClient, client_sess: TestClient):
         )
         assert campaign.status_code == 201, campaign.text
         session = client_sess.post(
-            "/api/v1/sessions/create",
-            json={"campaign_id": campaign.json()["id"], "title": "Night", "dm_id": owner},
+            f"/api/v1/campaigns/{campaign.json()['id']}/sessions",
+            json={"title": "Night"},
             headers=bearer(owner),
         )
-        assert session.status_code == 200, session.text
-        return session.json()["session_id"]
+        assert session.status_code == 201, session.text
+        return session.json()["id"]
 
     return _open

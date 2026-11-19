@@ -56,16 +56,13 @@ def _published_event_types(mock_redis: MockAsyncRedis, session_id: str) -> list[
 
 
 def _create_joined_session(client: TestClient) -> str:
+    campaign_id = create_campaign(client, "test-user")
     created = client.post(
-        "/api/v1/sessions/create",
-        json={
-            "campaign_id": create_campaign(client, "test-user"),
-            "title": "Publication Session",
-            "dm_id": "dm_alice",
-        },
+        f"/api/v1/campaigns/{campaign_id}/sessions",
+        json={"title": "Publication Session"},
     )
-    assert created.status_code == 200, created.text
-    session_id = created.json()["session_id"]
+    assert created.status_code == 201, created.text
+    session_id = created.json()["id"]
     joined = client.post(
         f"/api/v1/sessions/{session_id}/join",
         json={

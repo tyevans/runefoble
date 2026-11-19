@@ -79,11 +79,11 @@ async def _lobby_session(client, char_id: str, *, select_character: bool = True)
     )
     assert redeemed.status_code == 200, redeemed.text
     create_res = await client.post(
-        "/api/v1/sessions/create",
-        json={"campaign_id": campaign_id, "title": "Tomb", "dm_id": "the_watcher"},
+        f"/api/v1/campaigns/{campaign_id}/sessions",
+        json={"title": "Tomb"},
     )
-    assert create_res.status_code == 200, create_res.text
-    session_id = create_res.json()["session_id"]
+    assert create_res.status_code == 201, create_res.text
+    session_id = create_res.json()["id"]
     join = await client.post(
         f"/api/v1/sessions/{session_id}/join",
         json={"character_id": char_id, "character_name": "Kyra", "character_class": "Cleric"},

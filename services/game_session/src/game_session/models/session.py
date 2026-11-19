@@ -52,12 +52,6 @@ class SelectLobbyCharacterRequest(BaseModel):
     character_id: UUID
 
 
-class CreateSessionRequest(BaseModel):
-    campaign_id: UUID
-    title: str = "Tomb of the Star-Eater - Session 1"
-    dm_id: str = "the_watcher"
-
-
 class JoinSessionRequest(BaseModel):
     character_id: UUID
     character_name: str

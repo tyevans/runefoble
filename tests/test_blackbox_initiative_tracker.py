@@ -29,12 +29,11 @@ async def test_blackbox_combat_initiative_encounter_lifecycle_and_turn_cycling(c
 
     # 1. Frontdoor session setup: Create session
     create_resp = client.post(
-        "/api/v1/sessions/create",
-        json={"campaign_id": campaign_id, "title": "Ambush at Red Larch", "dm_id": "the_watcher"},
+        f"/api/v1/campaigns/{campaign_id}/sessions",
+        json={"title": "Ambush at Red Larch"},
     )
-    assert create_resp.status_code == 200, create_resp.text
-    session_data = create_resp.json()
-    session_id = session_data["session_id"]
+    assert create_resp.status_code == 201, create_resp.text
+    session_id = create_resp.json()["id"]
 
     # 2. Join players via public API
     valeros_id = str(uuid4())
@@ -189,10 +188,10 @@ def test_blackbox_start_combat_with_initial_combatants_and_tiebreaking(client: T
     """Verify starting combat with pre-defined combatants and PC vs NPC tie-breaking."""
     campaign_id = create_owned_campaign(client)
     create_resp = client.post(
-        "/api/v1/sessions/create",
-        json={"campaign_id": campaign_id, "title": "Dragon Lair", "dm_id": "the_watcher"},
+        f"/api/v1/campaigns/{campaign_id}/sessions",
+        json={"title": "Dragon Lair"},
     )
-    session_id = create_resp.json()["session_id"]
+    session_id = create_resp.json()["id"]
 
     # Start combat directly with initial combatants, testing tiebreaking
     # PC and NPC both rolled 14. PC (Ezren) must come before NPC (Orc Warrior).
@@ -235,10 +234,10 @@ def test_blackbox_combat_error_frontdoor_validation(client: TestClient):
     """Verify proper 400 / 403 HTTP errors on invalid combat actions."""
     campaign_id = create_owned_campaign(client)
     create_resp = client.post(
-        "/api/v1/sessions/create",
-        json={"campaign_id": campaign_id, "title": "Peaceful Tavern", "dm_id": "the_watcher"},
+        f"/api/v1/campaigns/{campaign_id}/sessions",
+        json={"title": "Peaceful Tavern"},
     )
-    session_id = create_resp.json()["session_id"]
+    session_id = create_resp.json()["id"]
 
     # 1. Roll initiative before starting combat -> 400 Bad Request
     roll_err = client.post(
