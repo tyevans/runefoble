@@ -1,5 +1,6 @@
 """Tests for Redis Streams Consumer Groups, pending entries, and DLQ routing."""
 
+from typing import Any
 from uuid import uuid4
 
 import pytest
@@ -8,7 +9,9 @@ from runefoble_events.events import (
     TokenMoved,
 )
 from runefoble_platform.consumer_group import RedisConsumerGroup
+from runefoble_platform.event_deserializer import UnknownEvent
 from runefoble_platform.redis_bus import RedisStreamsEventBus
+from runefoble_platform.stream_consumer import StreamConsumer
 
 from tests.helpers.mock_redis import MockAsyncRedis
 
@@ -218,3 +221,101 @@ async def test_dead_letter_queue_routing(
     assert entry_fields["max_retries"] == "3"
     assert entry_fields["event_type"] == "DeadLetterEvent"
     assert "malformed" in entry_fields["payload"]
+
+
+DECODE_STREAM = "runefoble.events.session"
+DECODE_GROUP = "decode_workers"
+DECODE_DLQ = f"{DECODE_STREAM}.dlq"
+
+
+async def _decode_consumer(
+    consumer_group: RedisConsumerGroup,
+    received: list[Any],
+) -> StreamConsumer:
+    async def handler(_message_id: str, event: Any) -> None:
+        received.append(event)
+
+    await consumer_group.create_group(DECODE_STREAM, DECODE_GROUP)
+    return StreamConsumer(
+        consumer_group=consumer_group,
+        stream=DECODE_STREAM,
+        group_name=DECODE_GROUP,
+        consumer_name="decode_worker_1",
+        handler=handler,
+    )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "fields",
+    [
+        pytest.param(
+            {
+                "event_type": "runefoble.events.session.created",
+                "payload": '{"title": "No aggregate"}',
+            },
+            id="registered-event-missing-required-field",
+        ),
+        pytest.param(
+            {"event_type": "runefoble.events.session.created", "payload": "{broken"},
+            id="payload-not-json",
+        ),
+    ],
+)
+async def test_undecodable_message_is_dead_lettered_and_skipped(
+    consumer_group: RedisConsumerGroup,
+    mock_redis: MockAsyncRedis,
+    event_bus: RedisStreamsEventBus,
+    fields: dict[str, str],
+) -> None:
+    received: list[Any] = []
+    consumer = await _decode_consumer(consumer_group, received)
+    bad_id = await mock_redis.xadd(DECODE_STREAM, fields)
+
+    handled = await consumer.poll_once()
+
+    # No handler runs for the bad message.
+    assert handled == 0
+    assert received == []
+
+    # The failure is recorded on the dead-letter stream.
+    assert len(mock_redis.streams[DECODE_DLQ]) == 1
+    _, dlq_fields = mock_redis.streams[DECODE_DLQ][0]
+    assert dlq_fields["original_stream"] == DECODE_STREAM
+    assert dlq_fields["original_message_id"] == bad_id
+    assert dlq_fields["error_reason"].startswith("EventDecodeError")
+    assert dlq_fields["event_type"] == "DeadLetterEvent"
+
+    # The message is acknowledged, so the group position moves past it.
+    assert mock_redis.get_pending(DECODE_STREAM, DECODE_GROUP) == {}
+
+    # The consumer keeps reading: the next valid event is handled.
+    good_event = SessionCreated(aggregate_id=uuid4(), title="After the bad message")
+    await event_bus.publish_event(DECODE_STREAM, good_event)
+    assert await consumer.poll_once() == 1
+    assert len(received) == 1
+    assert isinstance(received[0], SessionCreated)
+    assert received[0].title == "After the bad message"
+
+
+@pytest.mark.asyncio
+async def test_unregistered_event_type_reaches_handler_as_unknown_event(
+    consumer_group: RedisConsumerGroup,
+    mock_redis: MockAsyncRedis,
+) -> None:
+    received: list[Any] = []
+    consumer = await _decode_consumer(consumer_group, received)
+    await mock_redis.xadd(
+        DECODE_STREAM,
+        {"event_type": "runefoble.events.test.unregistered", "payload": '{"token": 7}'},
+    )
+
+    assert await consumer.poll_once() == 1
+
+    assert len(received) == 1
+    unknown = received[0]
+    assert isinstance(unknown, UnknownEvent)
+    assert unknown.event_type == "runefoble.events.test.unregistered"
+    assert unknown.fields == {"token": 7}
+    assert DECODE_DLQ not in mock_redis.streams
+    assert consumer.processed_count == 1

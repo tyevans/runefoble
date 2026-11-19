@@ -10,7 +10,7 @@ from eventsource.domain.event import DomainEvent
 from pydantic import BaseModel
 from pydantic_core import to_jsonable_python
 
-from runefoble_platform.event_deserializer import deserialize_event
+from runefoble_platform.event_deserializer import EventDecodeError, deserialize_event
 from runefoble_platform.models import utc_now
 
 logger = logging.getLogger(__name__)
@@ -81,7 +81,9 @@ class RedisConsumerGroup:
         results: list[tuple[str, Any]] = []
         for _stream_name, messages in raw_entries:
             for msg_id, fields in messages:
-                results.append((str(msg_id), deserialize_event(fields)))
+                decoded = await self._decode_or_dead_letter(stream, group_name, msg_id, fields)
+                if decoded is not None:
+                    results.append(decoded)
         return results
 
     async def ack(
@@ -122,8 +124,31 @@ class RedisConsumerGroup:
         results: list[tuple[str, Any]] = []
         for item in messages:
             if isinstance(item, (list, tuple)) and len(item) == 2:
-                results.append((str(item[0]), deserialize_event(item[1])))
+                decoded = await self._decode_or_dead_letter(stream, group_name, item[0], item[1])
+                if decoded is not None:
+                    results.append(decoded)
         return results
+
+    async def _decode_or_dead_letter(
+        self,
+        stream: str,
+        group_name: str,
+        message_id: Any,
+        fields: Any,
+    ) -> tuple[str, Any] | None:
+        """Decode one message. An undecodable message goes to the DLQ and is acknowledged.
+
+        Return None for an undecodable message, so no handler receives it.
+        """
+        msg_id = str(message_id)
+        try:
+            return msg_id, deserialize_event(fields)
+        except EventDecodeError as exc:
+            reason = f"EventDecodeError: {exc}"
+            logger.error("Undecodable message %s on %s: %s", msg_id, stream, reason)
+            await self.route_to_dead_letter(stream, msg_id, fields, reason)
+            await self.ack(stream, group_name, msg_id)
+            return None
 
     async def route_to_dead_letter(
         self,

@@ -15,7 +15,7 @@ import pytest
 import runefoble_events
 from eventsource.domain.event_registry import default_registry, get_event_class_or_none
 from runefoble_events.events import BattlemapForged
-from runefoble_platform.event_deserializer import deserialize_event
+from runefoble_platform.event_deserializer import UnknownEvent, deserialize_event
 
 WIRE_NAME_RULE = re.compile(r"^runefoble\.events\.[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$")
 
@@ -49,7 +49,9 @@ def test_retired_class_name_identifiers_resolve_to_no_event() -> None:
 def test_retired_short_name_does_not_deserialize(retired_name: str) -> None:
     fields = {"event_type": retired_name, "payload": json.dumps({"aggregate_id": "x"})}
 
-    assert isinstance(deserialize_event(fields), dict)
+    decoded = deserialize_event(fields)
+    assert isinstance(decoded, UnknownEvent)
+    assert decoded.event_type == retired_name
 
 
 def test_canonical_identifier_deserializes_to_the_event() -> None:
