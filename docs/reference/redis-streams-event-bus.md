@@ -141,7 +141,7 @@ Each service starts its consumers in its FastAPI lifespan. A start-up failure st
 | Consumer name | Service | Streams | Group | Handler | `/healthz` key |
 |---|---|---|---|---|---|
 | `analytics` | `campaign_analytics` | `runefoble.events.session`, `runefoble.events.board`, `runefoble.events.character`, `runefoble.events.watcher` | `campaign_analytics_worker` | `CampaignAnalyticsWorker.handle_event` (one projection transaction per message, stores the stream position) | `consumers.analytics` |
-| `soundscape` | `soundscape` | `runefoble.events.session`, `runefoble.events.watcher`, `runefoble.events.character` | `soundscape_workers` | `handle_incoming_domain_event` | `consumers.soundscape` |
+| `soundscape` | `soundscape` | `runefoble.events.session`, `runefoble.events.watcher`, `runefoble.events.character`, `runefoble.events.board` | `soundscape_workers` | `handle_incoming_domain_event` | `consumers.soundscape` |
 
 `/healthz` returns `200` with `"status": "ok"` when every consumer is `running`. It returns `503` with `"status": "degraded"` when any consumer is `failed`.
 
