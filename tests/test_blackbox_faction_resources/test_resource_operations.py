@@ -5,10 +5,12 @@ Governed by ADR-0003, ADR-0007, ADR-0011, and Hard Invariant 7 (Blackbox TDD).
 
 from __future__ import annotations
 
+from dataclasses import replace
 from uuid import uuid4
 
 import pytest
 from eventsource.domain.event_registry import get_event_class_or_none
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from runefoble_events.events import (
     FactionBriberyAttemptedEvent,
@@ -16,11 +18,10 @@ from runefoble_events.events import (
     FactionResourceUpdatedEvent,
 )
 from runefoble_platform.event_sourcing import create_aggregate_repository
-from the_watcher.dependencies import get_faction_resource_repo, set_faction_resource_repo
 from the_watcher.factions.resources.aggregate import FactionResourceAggregate
 
 from tests.helpers.event_store_seam import OutageEventStore
-from tests.helpers.module_state import restored_seam
+from tests.helpers.the_watcher_app import app_with_container
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 from .conftest import setup_campaign_roles
@@ -108,19 +109,18 @@ async def test_frontdoor_resource_adjust_deplete_and_query(client: TestClient):
     assert drain.status_code == 200 and drain.json()["treasury"] == 0
 
 
-def test_faction_resource_adjust_answers_503_on_store_outage(client: TestClient) -> None:
+def test_faction_resource_adjust_answers_503_on_store_outage(app: FastAPI) -> None:
     """A store outage on the faction resource load answers 503. No empty faction replaces it.
 
     The faction repository gets its own store, which fails every read.
     """
-    with restored_seam(
-        get_faction_resource_repo,
-        set_faction_resource_repo,
-        create_aggregate_repository(FactionResourceAggregate, event_store=OutageEventStore()),
-        replace=True,
-    ):
-        resp = client.post(
-            f"/api/v1/factions/fact-{uuid4().hex[:8]}/resources/adjust",
-            json={"treasury_delta": 100, "campaign_id": str(uuid4())},
-        )
+    container = app.state.container
+    outage = create_aggregate_repository(FactionResourceAggregate, event_store=OutageEventStore())
+    repositories = replace(container.repositories, faction_resources=outage)
+    outage_app = app_with_container(replace(container, repositories=repositories))
+    headers = {"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"}
+    resp = TestClient(outage_app, headers=headers).post(
+        f"/api/v1/factions/fact-{uuid4().hex[:8]}/resources/adjust",
+        json={"treasury_delta": 100, "campaign_id": str(uuid4())},
+    )
     assert resp.status_code == 503, resp.text

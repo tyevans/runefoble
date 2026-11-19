@@ -3,11 +3,8 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends
-from the_watcher.dependencies import (
-    get_copilot_engine,
-    require_dm,
-    require_session_permission,
-)
+from the_watcher.container_access import Copilot
+from the_watcher.dependencies import require_dm, require_session_permission
 from the_watcher.identity import CallerId, get_principal
 from the_watcher.models import (
     ApproveActionRequest,
@@ -21,17 +18,19 @@ router = APIRouter(dependencies=[Depends(get_principal)], tags=["copilot"])
 
 
 @router.post("/api/v1/watcher/actions/propose", response_model=PendingAction)
-async def propose_action(caller_id: CallerId, req: ProposeActionRequest) -> PendingAction:
+async def propose_action(
+    copilot: Copilot, caller_id: CallerId, req: ProposeActionRequest
+) -> PendingAction:
     """Propose an AI game mutation with a pre-execution pause window (default 2000ms)."""
     await require_session_permission(caller_id, req.session_id, "session.participate")
-    return await get_copilot_engine().propose_action(req)
+    return await copilot.propose_action(req)
 
 
 @router.post("/api/v1/watcher/veto")
-async def veto_action(caller_id: CallerId, req: VetoActionRequest):
+async def veto_action(copilot: Copilot, caller_id: CallerId, req: VetoActionRequest):
     """Cancel pending action execution. Requires DM permission."""
     await require_dm(caller_id, req.campaign_id, req.session_id)
-    action = await get_copilot_engine().veto_action(
+    action = await copilot.veto_action(
         req.session_id, req.action_id, vetoed_by=caller_id or "unknown", reason=req.reason
     )
     return {
@@ -43,10 +42,10 @@ async def veto_action(caller_id: CallerId, req: VetoActionRequest):
 
 
 @router.post("/api/v1/watcher/approve")
-async def approve_action(caller_id: CallerId, req: ApproveActionRequest):
+async def approve_action(copilot: Copilot, caller_id: CallerId, req: ApproveActionRequest):
     """Commit pending action immediately. Requires DM permission."""
     await require_dm(caller_id, req.campaign_id, req.session_id)
-    action = await get_copilot_engine().approve_action(
+    action = await copilot.approve_action(
         req.session_id, req.action_id, approved_by=caller_id or "unknown"
     )
     return {
@@ -58,10 +57,10 @@ async def approve_action(caller_id: CallerId, req: ApproveActionRequest):
 
 
 @router.post("/api/v1/watcher/modify")
-async def modify_action(caller_id: CallerId, req: ModifyActionRequest):
+async def modify_action(copilot: Copilot, caller_id: CallerId, req: ModifyActionRequest):
     """Modify parameters or intent of a pending action before execution. Requires DM permission."""
     await require_dm(caller_id, req.campaign_id, req.session_id)
-    action = await get_copilot_engine().modify_action(
+    action = await copilot.modify_action(
         req.session_id,
         req.action_id,
         modified_by=caller_id or "unknown",
@@ -83,10 +82,11 @@ async def modify_action(caller_id: CallerId, req: ModifyActionRequest):
 
 @router.get("/api/v1/watcher/actions/pending", response_model=list[PendingAction])
 async def list_pending_actions(
+    copilot: Copilot,
     caller_id: CallerId,
     session_id: str,
     campaign_id: str | None = None,
 ) -> list[PendingAction]:
     """Retrieve every action the session holds with its status. Requires DM permission."""
     await require_dm(caller_id, campaign_id, session_id)
-    return await get_copilot_engine().list_pending_actions(session_id, campaign_id)
+    return await copilot.list_pending_actions(session_id, campaign_id)

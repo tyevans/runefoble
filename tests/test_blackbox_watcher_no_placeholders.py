@@ -12,10 +12,10 @@ from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from httpx import ASGITransport, AsyncClient
 from runefoble_platform.redis_bus import RedisStreamsEventBus
-from the_watcher.main import app as watcher_app
 
 from tests.helpers.live_services import closed_port_url, serve
 from tests.helpers.spicedb_factory import bind_character_owner, make_table_runner
+from tests.helpers.the_watcher_app import watcher_app
 from tests.helpers.watcher_engine import error_fields, select_worker_engine
 from tests.helpers.ws_identity import SIGNING_ISSUER
 

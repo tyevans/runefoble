@@ -16,6 +16,7 @@ import json
 from typing import Any
 from uuid import UUID, uuid4
 
+from eventsource.application.aggregates.repository import AggregateRepository
 from eventsource.domain.exceptions import OptimisticLockError
 from fastapi import HTTPException
 from runefoble_auth.factory import get_spicedb_client
@@ -31,7 +32,7 @@ from runefoble_platform.engine_ports import EngineUnavailableError
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 from runefoble_platform.stream_consumer import StreamConsumer, SupervisedStreamConsumers
 from the_watcher.copilot_state.whispers import WhisperAggregate, whisper_log_id
-from the_watcher.dependencies import get_whisper_repo, logger
+from the_watcher.dependencies import logger
 from the_watcher.engine_selection import WatcherEngineSettings
 from the_watcher.models import WhisperSuggestion
 from the_watcher.worker_client import call_worker
@@ -91,7 +92,11 @@ async def _narrate(modifier: AudienceModifierApproved) -> tuple[str, str, dict[s
     }
     try:
         data = await call_worker(
-            settings.inference_url, WORKER_PATH, payload, timeout=WORKER_TIMEOUT_S
+            settings.inference_url,
+            WORKER_PATH,
+            payload,
+            timeout=WORKER_TIMEOUT_S,
+            credential=settings.service_credential,
         )
     except (EngineUnavailableError, HTTPException) as exc:
         logger.error("Narration for modifier %s failed: %s", modifier.proposal_id, exc)
@@ -107,7 +112,9 @@ async def _narrate(modifier: AudienceModifierApproved) -> tuple[str, str, dict[s
     return NARRATION_WHISPER, data["narration"], metadata
 
 
-async def record_audience_narration(event: Any) -> None:
+async def record_audience_narration(
+    event: Any, repo: AggregateRepository[WhisperAggregate]
+) -> None:
     """Record one whisper for the DM about an approved modifier.
 
     A rejected proposal records nothing. A session with no campaign link, or a campaign that is
@@ -128,7 +135,6 @@ async def record_audience_narration(event: Any) -> None:
         raise refusal(modifier, f"names session {session_id} that has no campaign link.")
     require_same_campaign(modifier, campaign, f"session {session_id}")
 
-    repo = get_whisper_repo()
     proposal_id = str(modifier.proposal_id)
     outcome: tuple[str, str, dict[str, Any]] | None = None
     for _attempt in range(RECORD_ATTEMPTS):
@@ -164,16 +170,18 @@ async def record_audience_narration(event: Any) -> None:
 
 
 async def start_audience_narration_consumers(
-    bus: RedisStreamsEventBus,
+    bus: RedisStreamsEventBus, whisper_repo: AggregateRepository[WhisperAggregate]
 ) -> SupervisedStreamConsumers:
     """Create the consumer group and start the read loop on the audience stream.
+
+    The lifespan passes the whisper repository of the app container.
 
     Raises when the consumer group cannot be created, so the service does not start.
     """
     consumer_group = RedisConsumerGroup(client=await bus.get_client())
 
     async def _handle(_message_id: str, event: Any) -> None:
-        await record_audience_narration(event)
+        await record_audience_narration(event, whisper_repo)
 
     consumers = SupervisedStreamConsumers(
         CONSUMER_NAME,

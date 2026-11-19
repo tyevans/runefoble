@@ -10,7 +10,6 @@ from runefoble_events.events import (
     SpeechIntentParsed,
 )
 from runefoble_platform.event_deserializer import deserialize_event
-from the_watcher.main import app as watcher_app
 from the_watcher.watcher_ai import TheWatcherEngine
 from voice_agent.main import app as voice_app
 
@@ -20,6 +19,7 @@ from tests.helpers.spicedb_factory import (
     grant_voice_session,
     make_table_runner,
 )
+from tests.helpers.the_watcher_app import watcher_app
 from tests.helpers.voice_identity import voice_auth_headers
 from tests.helpers.watcher_board import open_board_with_tokens, token_position
 from tests.helpers.ws_identity import SIGNING_ISSUER

@@ -10,7 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal
 
-from pydantic import field_validator
+from pydantic import SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from runefoble_platform.engine_ports import build_adapter
 from the_watcher.adapters.heuristic_engines import (
@@ -38,6 +38,8 @@ class WatcherEngineSettings(BaseSettings):
     watcher_engine: WatcherEngineName = "inference_worker"
     inference_url: str | None = None
     board_state_url: str | None = None
+    # The worker refuses a call without it (ADR-0015 e). The Watcher then answers 503.
+    service_credential: SecretStr | None = None
 
     @field_validator("inference_url", "board_state_url", mode="before")
     @classmethod
@@ -79,6 +81,7 @@ def build_watcher_ports(
                 "inference_worker": lambda: WorkerIntentParser(
                     base_url=_worker_url(settings),
                     board_state_url=settings.board_state_url,
+                    credential=settings.service_credential,
                 ),
                 "heuristic": lambda: HeuristicIntentParser(heuristic),
             },
@@ -87,7 +90,9 @@ def build_watcher_ports(
             setting,
             value,
             {
-                "inference_worker": lambda: WorkerStandInDecider(_worker_url(settings)),
+                "inference_worker": lambda: WorkerStandInDecider(
+                    _worker_url(settings), settings.service_credential
+                ),
                 "heuristic": lambda: HeuristicStandInDecider(heuristic),
             },
         ),
@@ -95,7 +100,9 @@ def build_watcher_ports(
             setting,
             value,
             {
-                "inference_worker": lambda: WorkerSceneNarrator(_worker_url(settings)),
+                "inference_worker": lambda: WorkerSceneNarrator(
+                    _worker_url(settings), settings.service_credential
+                ),
                 "heuristic": HeuristicSceneNarrator,
             },
         ),

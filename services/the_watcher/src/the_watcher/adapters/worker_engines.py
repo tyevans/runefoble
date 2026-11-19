@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from pydantic import SecretStr
 from runefoble_platform.stand_in_action import StandInAction
 from the_watcher.board_client import fetch_visible_tokens
 from the_watcher.models import (
@@ -20,9 +21,12 @@ class WorkerIntentParser(IntentParser):
 
     engine_name = WORKER_ENGINE
 
-    def __init__(self, base_url: str, board_state_url: str | None) -> None:
+    def __init__(
+        self, base_url: str, board_state_url: str | None, credential: SecretStr | None
+    ) -> None:
         self._base_url = base_url
         self._board_state_url = board_state_url
+        self._credential = credential
 
     async def parse(self, req: SpeechInputRequest) -> IntentResult:
         visible_tokens = await fetch_visible_tokens(self._board_state_url, req.session_id)
@@ -38,6 +42,7 @@ class WorkerIntentParser(IntentParser):
                 "visible_tokens": visible_tokens,
             },
             timeout=2.0,
+            credential=self._credential,
         )
         action = data["action"]
         target_name = action.get("target_token_name") or action.get("target_token_id")
@@ -57,8 +62,9 @@ class WorkerStandInDecider(StandInDecider):
 
     engine_name = WORKER_ENGINE
 
-    def __init__(self, base_url: str) -> None:
+    def __init__(self, base_url: str, credential: SecretStr | None) -> None:
         self._base_url = base_url
+        self._credential = credential
 
     async def decide(self, req: StandInRequest) -> StandInAction:
         guardrails = req.guardrails.model_dump(mode="json") if req.guardrails is not None else None
@@ -76,6 +82,7 @@ class WorkerStandInDecider(StandInDecider):
                 "guardrails": guardrails,
             },
             timeout=10.0,
+            credential=self._credential,
         )
         return StandInAction(
             character_name=data["character_name"],
@@ -94,8 +101,9 @@ class WorkerSceneNarrator(SceneNarrator):
 
     engine_name = WORKER_ENGINE
 
-    def __init__(self, base_url: str) -> None:
+    def __init__(self, base_url: str, credential: SecretStr | None) -> None:
         self._base_url = base_url
+        self._credential = credential
 
     async def narrate(self, req: DMGuidanceRequest) -> DMNarrationResult:
         data = await call_worker(
@@ -109,6 +117,7 @@ class WorkerSceneNarrator(SceneNarrator):
                 "guidance_prompt": req.prompt,
             },
             timeout=10.0,
+            credential=self._credential,
         )
         return DMNarrationResult(
             session_id=req.session_id,

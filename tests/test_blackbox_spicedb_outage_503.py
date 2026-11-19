@@ -28,9 +28,9 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from runefoble_auth.errors import AuthzSchemaError, AuthzUnavailableError
 from runefoble_auth.mock import MockSpiceDBClient
-from the_watcher.main import app as the_watcher_app
 
 from tests.helpers.game_session_app import session_app as game_session_app
+from tests.helpers.the_watcher_app import watcher_app as the_watcher_app
 from tests.helpers.ws_identity import bearer
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")

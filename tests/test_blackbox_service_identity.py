@@ -18,14 +18,13 @@ from httpx import ASGITransport, AsyncClient
 from inference_worker import api as worker_api
 from inference_worker.llm_factory import build_llm_port
 from runefoble_platform.service_credential import SERVICE_CREDENTIAL_HEADER
-from the_watcher import dependencies as watcher_dependencies
-from the_watcher.main import app as watcher_app
 
 from tests.helpers.game_session_app import session_app
 from tests.helpers.inference_worker_port import install_worker_port
 from tests.helpers.minigame_tables import open_minigame_table
 from tests.helpers.process import run_python_child
 from tests.helpers.spicedb_factory import make_table_runner
+from tests.helpers.the_watcher_app import watcher_app
 from tests.helpers.watcher_engine import error_fields, select_worker_engine
 from tests.helpers.ws_identity import SIGNING_ISSUER, ws_subprotocols
 
@@ -192,7 +191,7 @@ def test_worker_refuses_to_start_with_blank_service_credential():
 async def test_watcher_refuses_to_call_worker_without_configured_credential(monkeypatch):
     """The Watcher does not call the worker without a credential. It reports 503, never a template."""
     select_worker_engine(monkeypatch, "http://worker.invalid:8100")
-    monkeypatch.setattr(watcher_dependencies.platform_settings, "service_credential", None)
+    monkeypatch.delenv("RUNEFOBLE_SERVICE_CREDENTIAL")
     await make_table_runner("dm-1", "sess-1", "camp-1")
     async with AsyncClient(
         transport=ASGITransport(app=watcher_app),

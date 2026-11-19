@@ -60,7 +60,7 @@ def test_watcher_start_up_rearms_through_the_provider_store(caplog) -> None:
 
     Before the fix the forwarding store had no category read, so start-up logged an error.
     """
-    from the_watcher.main import app as watcher_app
+    from tests.helpers.the_watcher_app import watcher_app
 
     with caplog.at_level("ERROR"), TestClient(watcher_app) as client:
         assert client.get("/healthz").status_code == 200

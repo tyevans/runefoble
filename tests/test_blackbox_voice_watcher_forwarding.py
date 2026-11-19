@@ -15,7 +15,6 @@ from collections.abc import Iterator
 import pytest
 from fastapi.testclient import TestClient
 from runefoble_platform.config import PlatformSettings
-from the_watcher.main import app as watcher_app
 from voice_agent.main import app as voice_app
 from voice_agent.stt import StreamingAudioPipeline, get_streaming_pipeline, set_streaming_pipeline
 from voice_agent.watcher_intent import build_watcher_intent_port
@@ -26,6 +25,7 @@ from tests.helpers.live_services import closed_port_url, serve, unavailable_app
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.module_state import SeamRestorer
 from tests.helpers.spicedb_factory import VOICE_DM, bind_character_owner, grant_voice_session
+from tests.helpers.the_watcher_app import watcher_app
 from tests.helpers.voice_identity import voice_auth_headers
 
 pytestmark = pytest.mark.usefixtures("trusted_voice_issuer", "trusted_ws_issuer")

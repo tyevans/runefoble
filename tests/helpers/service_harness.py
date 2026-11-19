@@ -105,7 +105,7 @@ SERVICE_SEAMS: tuple[ServiceSeams, ...] = (
     ),
     ServiceSeams(
         "the_watcher",
-        bus="the_watcher.dependencies",
+        bus="tests.helpers.the_watcher_app",
         verifier="the_watcher.identity",
         verifier_scope="on_demand",
     ),

@@ -47,7 +47,7 @@ class CopilotEngine:
     def __init__(
         self,
         *,
-        pending_repo: Callable[[], AggregateRepository[PendingActionAggregate]],
+        pending_repo: AggregateRepository[PendingActionAggregate],
     ) -> None:
         self._pending_repo = pending_repo
         self._timer_tasks: dict[str, asyncio.Task[None]] = {}
@@ -89,7 +89,7 @@ class CopilotEngine:
             expires_at=now + pause_window_ms / 1000.0,
         )
 
-        repo = self._pending_repo()
+        repo = self._pending_repo
         agg = await load_or_create(repo, pending_action_key(req.session_id), _new_pending_aggregate)
         agg.propose(action)
         await repo.save(agg)
@@ -110,7 +110,7 @@ class CopilotEngine:
         self, session_id: str, action_id: str, vetoed_by: str, reason: str = ""
     ) -> PendingAction:
         """Cancel a pending action before it mutates state."""
-        repo = self._pending_repo()
+        repo = self._pending_repo
         agg = await _load_session(repo, session_id)
         agg.veto(action_id, vetoed_by=vetoed_by, reason=reason)
         action = agg.find(action_id)
@@ -123,7 +123,7 @@ class CopilotEngine:
         self, session_id: str, action_id: str, approved_by: str
     ) -> PendingAction:
         """Commit a pending action now, then run its callback."""
-        repo = self._pending_repo()
+        repo = self._pending_repo
         agg = await _load_session(repo, session_id)
         agg.approve(action_id, approved_by=approved_by)
         action = agg.find(action_id)
@@ -143,7 +143,7 @@ class CopilotEngine:
         auto_approve: bool = True,
     ) -> PendingAction:
         """Change a pending action. With auto_approve, also commit it in the same save."""
-        repo = self._pending_repo()
+        repo = self._pending_repo
         agg = await _load_session(repo, session_id)
         agg.modify(
             action_id,
@@ -166,7 +166,7 @@ class CopilotEngine:
         self, session_id: str, campaign_id: str | None = None
     ) -> list[PendingAction]:
         """Return every action the session holds, with its current status."""
-        agg = await load_if_exists(self._pending_repo(), pending_action_key(session_id))
+        agg = await load_if_exists(self._pending_repo, pending_action_key(session_id))
         if agg is None:
             return []
         actions = list(agg.state.actions.values())
@@ -180,7 +180,7 @@ class CopilotEngine:
 
     async def rearm_open_actions(self) -> int:
         """Start a timer for every open action in the store. Return how many were armed."""
-        repo = self._pending_repo()
+        repo = self._pending_repo
         store = cast(FullEventStore, repo.event_store)
         aggregate_ids: set[UUID] = set()
         async for envelope in store.read_category(PENDING_ACTIONS_AGGREGATE):
@@ -217,7 +217,7 @@ class CopilotEngine:
             self._schedule(session_id, action_id, time.time() + RETRY_SECONDS)
 
     async def _expire(self, session_id: str, action_id: str) -> None:
-        repo = self._pending_repo()
+        repo = self._pending_repo
         agg = await load_if_exists(repo, pending_action_key(session_id))
         if agg is None:
             return

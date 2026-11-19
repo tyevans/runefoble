@@ -6,7 +6,7 @@ Governed by:
 
 A restart discards the copilot engine and its timers. The event store survives, as it
 does in a real deployment. Tests touch only public HTTP routes, the watcher stream, and
-the restart seams. They never read or write private aggregate state.
+a new app over the same store. They never read or write private aggregate state.
 """
 
 from __future__ import annotations
@@ -18,29 +18,14 @@ from uuid import uuid4
 
 import pytest
 from eventsource.adapters.memory.store import InMemoryEventStore
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from httpx import ASGITransport, AsyncClient
 from runefoble_auth.factory import get_spicedb_client
-from runefoble_platform.event_sourcing import create_aggregate_repository
-from the_watcher.copilot_state.disambiguations import DisambiguationAggregate
-from the_watcher.copilot_state.pending_actions import PendingActionAggregate
-from the_watcher.copilot_state.whispers import WhisperAggregate
-from the_watcher.dependencies import (
-    build_copilot_engine,
-    get_copilot_engine,
-    get_disambiguation_repo,
-    get_pending_action_repo,
-    get_whisper_repo,
-    set_copilot_engine,
-    set_disambiguation_repo,
-    set_pending_action_repo,
-    set_whisper_repo,
-)
-from the_watcher.main import app
 
 from tests.helpers.mock_redis import MockAsyncRedis
-from tests.helpers.module_state import SeamRestorer
 from tests.helpers.spicedb_factory import bind_session_to_campaign, make_table_runner
+from tests.helpers.the_watcher_app import app_with_container, container_over, repositories_over
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
@@ -50,7 +35,9 @@ def _headers(user: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(user)}"}
 
 
-def _listed_status(sess_id: str, camp_id: str, user: str, action_id: str, status: str) -> bool:
+def _listed_status(
+    app: FastAPI, sess_id: str, camp_id: str, user: str, action_id: str, status: str
+) -> bool:
     """Return True when the pending list shows the action with the given status."""
     res = TestClient(app).get(
         f"/api/v1/watcher/actions/pending?session_id={sess_id}&campaign_id={camp_id}",
@@ -66,41 +53,33 @@ def mock_redis() -> MockAsyncRedis:
     return MockAsyncRedis()
 
 
+class WatcherProcess:
+    """One Watcher process over an event store that survives restarts."""
+
+    def __init__(self) -> None:
+        self.repositories = repositories_over(InMemoryEventStore())
+        self.app = self._boot()
+
+    def _boot(self) -> FastAPI:
+        return app_with_container(container_over(self.repositories))
+
+    def restart(self) -> None:
+        """Stop the running engine (its timers die with the process) and start a new app."""
+        self.app.state.container.copilot.shutdown()
+        self.app = self._boot()
+
+
 @pytest.fixture(autouse=True)
-def durable_copilot_store(
-    use_redis_client, mock_redis: MockAsyncRedis, seam_restorer: SeamRestorer
-) -> Iterator[None]:
-    """Give each test one event store that survives engine restarts, and a Redis double.
-
-    A test that restarts the engine leaves its new engine in the process seam. Teardown stops
-    that engine's timers first, then restores the engine that was in place before the test.
-    """
+def redis_double(use_redis_client, mock_redis: MockAsyncRedis) -> None:
     use_redis_client(mock_redis)
-    seam_restorer.keep(get_copilot_engine, set_copilot_engine)
-    store = InMemoryEventStore()
-    seam_restorer.replace(
-        get_pending_action_repo,
-        set_pending_action_repo,
-        create_aggregate_repository(PendingActionAggregate, event_store=store),
-    )
-    seam_restorer.replace(
-        get_whisper_repo,
-        set_whisper_repo,
-        create_aggregate_repository(WhisperAggregate, event_store=store),
-    )
-    seam_restorer.replace(
-        get_disambiguation_repo,
-        set_disambiguation_repo,
-        create_aggregate_repository(DisambiguationAggregate, event_store=store),
-    )
-    yield
-    get_copilot_engine().shutdown()
 
 
-def _restart() -> None:
-    """Stop the running engine (its timers die with the process) and start a fresh one."""
-    get_copilot_engine().shutdown()
-    set_copilot_engine(build_copilot_engine())
+@pytest.fixture
+def process() -> Iterator[WatcherProcess]:
+    """Give each test one event store that survives restarts. Teardown stops the last engine."""
+    watcher = WatcherProcess()
+    yield watcher
+    watcher.app.state.container.copilot.shutdown()
 
 
 async def _setup_dm(dm_user: str) -> tuple[str, str]:
@@ -131,15 +110,17 @@ def _propose(client: TestClient, sess_id: str, camp_id: str, dm: str, **kwargs: 
 
 
 @pytest.mark.asyncio
-async def test_pending_action_survives_restart_and_is_vetoed_by_dm(mock_redis: MockAsyncRedis):
+async def test_pending_action_survives_restart_and_is_vetoed_by_dm(
+    process: WatcherProcess, mock_redis: MockAsyncRedis
+):
     """Propose, restart, then veto through HTTP. The pending list then shows the veto."""
     dm = f"dm-{uuid4().hex[:6]}"
     camp_id, sess_id = await _setup_dm(dm)
-    client = TestClient(app)
+    client = TestClient(process.app)
     action_id = _propose(client, sess_id, camp_id, dm, pause_window_ms=60000)
 
-    _restart()
-    client = TestClient(app)
+    process.restart()
+    client = TestClient(process.app)
 
     listed = client.get(
         f"/api/v1/watcher/actions/pending?session_id={sess_id}&campaign_id={camp_id}",
@@ -172,11 +153,13 @@ async def test_pending_action_survives_restart_and_is_vetoed_by_dm(mock_redis: M
 
 
 @pytest.mark.asyncio
-async def test_unknown_action_veto_is_not_found(mock_redis: MockAsyncRedis):
+async def test_unknown_action_veto_is_not_found(
+    process: WatcherProcess, mock_redis: MockAsyncRedis
+):
     """A veto for an action that no session holds returns 404. It never creates a phantom."""
     dm = f"dm-{uuid4().hex[:6]}"
     camp_id, sess_id = await _setup_dm(dm)
-    client = TestClient(app)
+    client = TestClient(process.app)
 
     res = client.post(
         "/api/v1/watcher/veto",
@@ -193,6 +176,7 @@ async def test_unknown_action_veto_is_not_found(mock_redis: MockAsyncRedis):
 
 @pytest.mark.asyncio
 async def test_pending_action_expires_after_restart_without_dm_decision(
+    process: WatcherProcess,
     mock_redis: MockAsyncRedis,
 ):
     """An action with a 1-second window expires after a restart. The pending list shows it.
@@ -202,21 +186,22 @@ async def test_pending_action_expires_after_restart_without_dm_decision(
     """
     dm = f"dm-{uuid4().hex[:6]}"
     camp_id, sess_id = await _setup_dm(dm)
-    action_id = _propose(TestClient(app), sess_id, camp_id, dm, pause_window_ms=1000)
+    action_id = _propose(TestClient(process.app), sess_id, camp_id, dm, pause_window_ms=1000)
 
-    _restart()
-    with TestClient(app, headers=_headers(dm)):
+    process.restart()
+    with TestClient(process.app, headers=_headers(dm)):
         deadline = time.monotonic() + 10
         while time.monotonic() < deadline and not _listed_status(
-            sess_id, camp_id, dm, action_id, "executed"
+            process.app, sess_id, camp_id, dm, action_id, "executed"
         ):
             time.sleep(0.1)
 
-    assert _listed_status(sess_id, camp_id, dm, action_id, "executed")
+    assert _listed_status(process.app, sess_id, camp_id, dm, action_id, "executed")
 
 
 @pytest.mark.asyncio
 async def test_open_disambiguation_survives_restart_and_resolves(
+    process: WatcherProcess,
     mock_redis: MockAsyncRedis,
 ):
     """Open a disambiguation, restart, then resolve it. A second resolve finds nothing."""
@@ -245,7 +230,9 @@ async def test_open_disambiguation_survives_restart_and_resolves(
     ]
     await make_table_runner("test-user", s_id, c_id)
     async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test", headers=_headers("test-user")
+        transport=ASGITransport(app=process.app),
+        base_url="http://test",
+        headers=_headers("test-user"),
     ) as client:
         parse = await client.post(
             "/api/v1/watcher/intent/parse",
@@ -264,14 +251,19 @@ async def test_open_disambiguation_survives_restart_and_resolves(
         d_id = parse.json()["disambiguation_id"]
         assert d_id
 
-        _restart()
+    process.restart()
 
-        resolve_body = {
-            "session_id": s_id,
-            "campaign_id": c_id,
-            "disambiguation_id": d_id,
-            "selected_candidate_id": "goblin_2",
-        }
+    resolve_body = {
+        "session_id": s_id,
+        "campaign_id": c_id,
+        "disambiguation_id": d_id,
+        "selected_candidate_id": "goblin_2",
+    }
+    async with AsyncClient(
+        transport=ASGITransport(app=process.app),
+        base_url="http://test",
+        headers=_headers("test-user"),
+    ) as client:
         resolved = await client.post("/api/v1/watcher/intent/resolve", json=resolve_body)
         assert resolved.status_code == 200, resolved.text
         assert "shaman on the altar" in resolved.json()["resolved_target"]
@@ -281,11 +273,11 @@ async def test_open_disambiguation_survives_restart_and_resolves(
 
 
 @pytest.mark.asyncio
-async def test_whispers_survive_restart(mock_redis: MockAsyncRedis):
+async def test_whispers_survive_restart(process: WatcherProcess, mock_redis: MockAsyncRedis):
     """A whisper the DM wrote before a restart is still listed after it."""
     dm = f"dm-{uuid4().hex[:6]}"
     camp_id, sess_id = await _setup_dm(dm)
-    client = TestClient(app)
+    client = TestClient(process.app)
     created = client.post(
         "/api/v1/watcher/whispers",
         json={
@@ -299,8 +291,8 @@ async def test_whispers_survive_restart(mock_redis: MockAsyncRedis):
     assert created.status_code == 200, created.text
     whisper_id = created.json()["whisper_id"]
 
-    _restart()
-    listed = TestClient(app).get(
+    process.restart()
+    listed = TestClient(process.app).get(
         f"/api/v1/watcher/whispers?session_id={sess_id}&campaign_id={camp_id}",
         headers=_headers(dm),
     )

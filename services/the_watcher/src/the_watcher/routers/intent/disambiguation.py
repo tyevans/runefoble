@@ -5,13 +5,10 @@ from __future__ import annotations
 import time
 
 from fastapi import APIRouter, Depends, HTTPException
+from the_watcher.container_access import Disambiguations, Engines
 from the_watcher.copilot_state.disambiguations import DisambiguationNotFoundError
-from the_watcher.dependencies import (
-    compound_action_engine,
-    disambiguation_engine,
-    disambiguation_store,
-    require_session_permission,
-)
+from the_watcher.dependencies import require_session_permission
+from the_watcher.disambiguation import DisambiguationEngine, DisambiguationStore
 from the_watcher.identity import CallerId, get_principal
 from the_watcher.models import (
     CandidateTarget,
@@ -26,6 +23,7 @@ router = APIRouter(dependencies=[Depends(get_principal)], tags=["intent"])
 
 
 def evaluate_target_ambiguity(
+    disambiguation_engine: DisambiguationEngine,
     nodes: list[CompoundActionNode],
     entities: list[dict],
     from_x: int | None = None,
@@ -54,6 +52,8 @@ def evaluate_target_ambiguity(
 
 
 async def dispatch_disambiguation(
+    disambiguation_engine: DisambiguationEngine,
+    disambiguation_store: DisambiguationStore,
     req: IntentParseRequest,
     ambig_node: CompoundActionNode,
     ambig_candidates: list[CandidateTarget],
@@ -92,13 +92,16 @@ async def dispatch_disambiguation(
 
 @router.post("/api/v1/watcher/intent/resolve", response_model=IntentResolveResponse)
 async def resolve_intent_disambiguation(
-    caller_id: CallerId, req: IntentResolveRequest
+    engines: Engines,
+    disambiguations: Disambiguations,
+    caller_id: CallerId,
+    req: IntentResolveRequest,
 ) -> IntentResolveResponse:
     """Submit player disambiguation choice and emit resolved compound action graph."""
     await require_session_permission(caller_id, req.session_id, "session.participate")
     t0 = time.perf_counter()
     try:
-        pending, m = await disambiguation_store.resolve(
+        pending, m = await disambiguations.resolve(
             session_id=req.session_id,
             disambiguation_id=req.disambiguation_id,
             selected_candidate_id=req.selected_candidate_id,
@@ -113,7 +116,7 @@ async def resolve_intent_disambiguation(
     status, actions = "ready", pending.actions
     narrative = f"Resolved target to '{m.descriptor}'. Combo actions ready for execution."
     if req.execute_immediately:
-        status, actions, narrative, _ = compound_action_engine.execute_plan(
+        status, actions, narrative, _ = engines.compound_actions.execute_plan(
             session_id=req.session_id,
             actions=pending.actions,
             speaker_name=pending.speaker_name,
