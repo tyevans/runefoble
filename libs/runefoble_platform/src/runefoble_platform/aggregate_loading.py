@@ -11,6 +11,7 @@ A version conflict on save is mapped by `save_or_conflict`, the single conflict 
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Callable
 from uuid import UUID
 
@@ -20,6 +21,8 @@ from eventsource.domain.exceptions import AggregateNotFoundError, OptimisticLock
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError
+
+logger = logging.getLogger("runefoble.platform.event_store")
 
 
 async def load_or_create[T: DeclarativeAggregate](
@@ -85,8 +88,19 @@ async def save_or_conflict[T: DeclarativeAggregate](
 STORE_UNAVAILABLE_ERRORS: tuple[type[BaseException], ...] = (SQLAlchemyError, OSError)
 
 
-async def _store_unavailable(_request: Request, _exc: Exception) -> JSONResponse:
-    """Answer 503 when the event store cannot be reached. No substitute data is returned."""
+async def _store_unavailable(request: Request, exc: Exception) -> JSONResponse:
+    """Answer 503 when the event store cannot be reached. No substitute data is returned.
+
+    The log line names the route and the error, so an operator can see why a write failed.
+    """
+    logger.error(
+        "Event store unavailable on %s %s: %s: %s",
+        request.method,
+        request.url.path,
+        type(exc).__name__,
+        exc,
+        exc_info=exc,
+    )
     return JSONResponse(
         status_code=503,
         content={"detail": "Event store is unavailable"},

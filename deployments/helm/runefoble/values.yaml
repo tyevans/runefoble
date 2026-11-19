@@ -277,6 +277,7 @@ swaggerUI:
 #   databaseDriver               SQLAlchemy URL driver. Default postgresql+asyncpg.
 #   configMap                    Keys of the <name>-config ConfigMap that is loaded with envFrom.
 #   readinessPath, livenessPath  HTTP probe paths on the service port.
+#   readinessTimeoutSeconds      Time limit of one readiness probe call. Default 1.
 #   modelCache, podSecurityContext  Volume for model files, and the pod security context.
 services:
   gatewayApi:
@@ -323,6 +324,10 @@ services:
     urlEnv: RUNEFOBLE_GAME_SESSION_URL
     consumers: [gateway-api, campaign-lore, gateway-mcp]
     serviceCredential: true
+    # /readyz answers 200 only after the event store, SpiceDB and Redis answered once (TASK-0929).
+    readinessPath: /readyz
+    readinessTimeoutSeconds: 3
+    livenessPath: /healthz
   voiceAgent:
     swaggerName: "Voice Agent Service"
     image: runefoble/voice-agent:0.1.0

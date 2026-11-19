@@ -14,6 +14,7 @@ from game_session.audience_weather import start_audience_consumers
 from game_session.campaign import campaign_router, register_campaign_error_handlers
 from game_session.container import GameSessionContainer, build_container
 from game_session.profile import profile_router
+from game_session.readiness import build_readiness_gate
 from game_session.routers import (
     autopilot_router,
     bounties_router,
@@ -42,6 +43,7 @@ from runefoble_platform.event_publish import (
     install_publish_failure_handler,
 )
 from runefoble_platform.event_sourcing import event_store_kind
+from runefoble_platform.readiness import add_readiness_route
 from runefoble_platform.stream_consumer import consumer_statuses
 from runefoble_platform.ui_manifest import ui_manifest_router
 
@@ -121,6 +123,7 @@ def create_app(build: ContainerBuilder = build_container) -> FastAPI:
     )
     _include_routers(app)
     app.add_api_route("/healthz", health_check, methods=["GET"])
+    add_readiness_route(app, "game_session", build_readiness_gate(app))
     app.include_router(
         ui_manifest_router(
             Path(__file__).resolve().parents[2] / "ui" / "manifest.json",
