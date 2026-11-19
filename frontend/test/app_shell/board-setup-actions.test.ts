@@ -1,9 +1,9 @@
 /**
  * App Shell side of the DM battlemap set-up (TASK-0922).
  *
- * After `<runefoble-board-empty>` reports `board-set-up`, the App Shell sends the `board_ready`
- * frame on the session socket and reads the board again. A `board_ready` frame makes a client
- * without a board read the board again. The socket is faked at the browser boundary only.
+ * After `<runefoble-board-empty>` reports `board-set-up`, the App Shell reads the board again.
+ * It sends no frame: the gateway board create route sends `board_ready`. A `board_ready` frame
+ * makes a client without a board read the board again. The socket is faked at the browser boundary only.
  * Governing ADRs: ADR-0013, ADR-0015.
  */
 
@@ -35,10 +35,10 @@ function setUpEvent(failure: string | null): CustomEvent {
 }
 
 describe('battlemap set-up in the App Shell', () => {
-  it('announces the board on the session socket and reads the board again', () => {
+  it('reads the board again and sends no frame on the session socket', () => {
     const h = host('no_board');
     handleBoardSetUp(h.app, setUpEvent(null));
-    assert.deepEqual(h.sent.map((f) => JSON.parse(f)), [{ type: 'board_ready', sessionId: 'sess-1' }]);
+    assert.deepEqual(h.sent, []);
     assert.equal(h.reloads(), 1);
     assert.deepEqual(h.toasts, []);
   });

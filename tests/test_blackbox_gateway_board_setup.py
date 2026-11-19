@@ -9,16 +9,32 @@ character and join routes. Governed by ADR-0001, ADR-0014, ADR-0015 and Hard Inv
 from __future__ import annotations
 
 from collections.abc import Iterator
+from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import TimeoutError as FutureTimeout
+from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
 from gateway_api.main import app as gateway_app
 
 from tests.helpers.live_services import closed_port_url
-from tests.helpers.ws_identity import bearer
+from tests.helpers.ws_identity import bearer, ws_subprotocols
 
 DM = "dm-evelyn"
 PLAYER = "player-valeros"
+SILENCE_SECONDS = 1.0
+
+
+def _frame_within(ws, seconds: float) -> dict[str, Any] | None:
+    """Return the next frame, or None when no frame arrives within `seconds`."""
+    pool = ThreadPoolExecutor(max_workers=1)
+    pending = pool.submit(ws.receive_json)
+    try:
+        return pending.result(timeout=seconds)
+    except FutureTimeout:
+        return None
+    finally:
+        pool.shutdown(wait=False)
 
 
 @pytest.fixture
@@ -155,6 +171,40 @@ def test_a_second_create_returns_the_owner_409(gateway: TestClient) -> None:
     again = _create_board(gateway, campaign_id, session_id, DM)
 
     assert again.status_code == 409, again.text
+
+
+def test_dm_board_create_sends_one_board_ready_frame_to_each_session_socket(
+    gateway: TestClient,
+) -> None:
+    campaign_id, session_id, _ = _seated_table(gateway)
+    path = f"/ws/session/{session_id}"
+
+    with (
+        gateway.websocket_connect(path, subprotocols=ws_subprotocols(DM)) as dm,
+        gateway.websocket_connect(path, subprotocols=ws_subprotocols(PLAYER)) as player,
+    ):
+        assert dm.receive_json()["type"] == "connected"
+        assert player.receive_json()["type"] == "connected"
+
+        assert _create_board(gateway, campaign_id, session_id, DM).status_code == 200
+
+        expected = {"type": "board_ready", "sessionId": session_id}
+        assert dm.receive_json() == expected
+        assert player.receive_json() == expected
+        assert _frame_within(dm, SILENCE_SECONDS) is None
+        assert _frame_within(player, SILENCE_SECONDS) is None
+
+
+def test_a_refused_board_create_sends_no_board_ready_frame(gateway: TestClient) -> None:
+    campaign_id, session_id, _ = _seated_table(gateway)
+    path = f"/ws/session/{session_id}"
+
+    with gateway.websocket_connect(path, subprotocols=ws_subprotocols(DM)) as dm:
+        assert dm.receive_json()["type"] == "connected"
+
+        assert _create_board(gateway, campaign_id, session_id, PLAYER).status_code == 403
+
+        assert _frame_within(dm, SILENCE_SECONDS) is None
 
 
 def test_unreachable_board_owner_gives_503(

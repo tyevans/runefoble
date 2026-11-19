@@ -14,7 +14,7 @@ To set up the board as the DM:
 2. In the board area, click **Set up battlemap**. Only a caller with the `run_session` capability sees this control. A player sees the empty state only.
 3. The control creates the board with the default 10 x 10 grid (`POST /api/v1/boards`).
 4. The control then places one `pc` token for each seated character (`POST /api/v1/boards/{session_id}/tokens`, with `character_id`). The tokens go to free start cells in seat order, in row order from the top-left cell (`startCells`).
-5. The App Shell sends the `board_ready` session frame and reads the board from the server. Each other client that shows no board reads the board again.
+5. After board_state creates the board, the gateway board create route sends the `board_ready` frame to every socket of the session. The App Shell of the DM reads the board from the server. A client cannot send `board_ready` (`UNKNOWN_FRAME`). Each other client that shows no board reads the board again.
 
 `board_state` checks each call. The DM needs `campaign.run_session` to create the board. A character token needs `character.edit` on the character, so the character must belong to the campaign. The DM holds `character.edit` through `campaign->run_session`.
 

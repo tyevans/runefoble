@@ -170,8 +170,8 @@ def test_non_json_text_gets_an_invalid_frame_error_and_the_socket_stays_open(
         assert player.receive_json()["total"] == 17
 
 
-def test_board_ready_frame_from_the_dm_reaches_the_players(gateway, table) -> None:
-    """The DM client announces a new board. Other clients then read the board (TASK-0922)."""
+def test_a_client_board_ready_frame_gets_unknown_frame(gateway, table) -> None:
+    """Only the gateway board create route sends `board_ready` (TASK-0922). The DM cannot."""
     _, session_id = table
     path = f"/ws/session/{session_id}"
 
@@ -183,5 +183,8 @@ def test_board_ready_frame_from_the_dm_reaches_the_players(gateway, table) -> No
         assert player.receive_json()["type"] == "connected"
 
         dm.send_json({"type": "board_ready", "sessionId": session_id})
+        error = dm.receive_json()
 
-        assert player.receive_json() == {"type": "board_ready", "sessionId": session_id}
+        assert error["type"] == "error"
+        assert error["code"] == "UNKNOWN_FRAME"
+        assert _frame_within(player, SILENCE_SECONDS) is None
