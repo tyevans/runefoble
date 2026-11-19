@@ -46,7 +46,7 @@ In `libs/runefoble_auth/src/runefoble_auth/zitadel.py`, `verify_token` (line 153
    - Inspect `libs/runefoble_auth/src/runefoble_auth/zitadel.py`. Keep `ZitadelAuthService.verify_token`. Remove `decode_token` only as TASK-0520 specifies.
    - Ensure `ZitadelAuthService` exposes one canonical verification method. The names `ZitadelAuthClient`, `verify_token_async`, and `UserTokenClaims` do not exist in the code (audit 2026-11-17).
 2. **Clean Up `__init__.py` Re-exports**:
-   - Inspect `libs/runefoble_auth/src/runefoble_auth/__init__.py` (removed) to ensure only authoritative classes that exist (`ZitadelAuthService`, `SpiceDBClient`) are exposed, removing any deprecated alias symbols.
+   - Inspect `libs/runefoble_auth/src/runefoble_auth/__init__.py` to ensure only authoritative classes that exist (`ZitadelAuthService`, `SpiceDBClient`) are exposed, removing any deprecated alias symbols.
 3. **Migrate Call Sites Across Workspace**:
    - Audit `gateway/api`, services, and tests for any calls to legacy `verify_token` shims and update them to use canonical interfaces.
 4. **Update Test Assertions**:
@@ -62,7 +62,7 @@ In `libs/runefoble_auth/src/runefoble_auth/zitadel.py`, `verify_token` (line 153
 
 ## Definition of Done
 1. `zitadel.py` legacy backward-compatibility methods removed.
-2. `libs/runefoble_auth/__init__.py` (removed) cleaned of any deprecated alias symbols.
+2. `libs/runefoble_auth/__init__.py` cleaned of any deprecated alias symbols.
 3. All service and gateway callers migrated to canonical auth methods.
 4. `uv run pytest` passes cleanly with zero deprecation warnings from auth.
 5. Code passes `uv run ruff check .` and file length remains < 500 lines.
