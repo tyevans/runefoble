@@ -382,6 +382,7 @@ html`
 Key features of `<runefoble-campaign-members>`:
 - **Roster & Avatars**: Displays party member avatars, usernames, user IDs, and assigned characters.
 - **SpiceDB Zanzibar Role Dropdown**: Enables owners (`canManage=true`) to change active relations between `dungeon_master`, `game_master`, `player`, and `spectator`. Only `manage` holders see it.
+- **Single Permission Input**: The only input that grants management controls is `can-manage` (`.canManage`). The App Shell sets it from the `manage` flag of `GET /api/v1/campaigns/{id}/capabilities`. The `is-gm` attribute is removed (TASK-0870). Role labels map through one normalizer, `services/game_session/ui/src/lobby/roles.ts`, which accepts `dm` and `dungeon_master` as one role.
 - **Protected Owner**: The campaign owner is protected with an immutable "Owner" badge.
 - **Safe Removal with Confirmation**: Provides a confirmation modal before revoking campaign membership and Zanzibar permissions.
 - **Interactive Invite Generator**: Modal generator with role pre-assignment, shareable link preview, and one-click clipboard copying.

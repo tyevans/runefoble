@@ -2,6 +2,14 @@ import { LitElement, html, type PropertyValues } from 'lit';
 import { AssetImageSet, AuthConsumerController } from '@runefoble/ui-core';
 import { customElement, property, state } from 'lit/decorators.js';
 import { campaignMembersStyles } from './runefoble-campaign-members.styles.ts';
+import {
+  ROLE_LABELS,
+  isDungeonMasterRole,
+  isOwnerRole,
+  isPlayerRole,
+  isSpectatorRole,
+  normalizeRole,
+} from '../lobby/roles.ts';
 import type {
   CampaignMember,
   AssignRoleEventDetail,
@@ -28,8 +36,8 @@ export class RunefobleCampaignMembers extends LitElement {
   @property({ type: String, attribute: 'campaign-id' }) campaignId = '';
   @property({ type: String, attribute: 'campaign-title' }) campaignTitle = '';
   @property({ type: Array }) members: CampaignMember[] = [];
+  /** Server permission flag (`manage` on the campaign). Set by the App Shell from the capabilities route. */
   @property({ type: Boolean, attribute: 'can-manage' }) canManage = false;
-  @property({ type: Boolean, attribute: 'is-gm' }) isGm = false;
   @property({ type: String, attribute: 'current-user-id' }) currentUserId = '';
   @property({ type: String, attribute: 'invite-url' }) inviteUrl = '';
   @property({ type: String, attribute: 'invite-token' }) inviteToken = '';
@@ -38,10 +46,6 @@ export class RunefobleCampaignMembers extends LitElement {
   @state() private selectedInviteRole: 'player' | 'spectator' = 'player';
   @state() private memberToRemove: CampaignMember | null = null;
   @state() private copied = false;
-
-  get isManager(): boolean {
-    return this.canManage || this.isGm;
-  }
 
   get effectiveInviteUrl(): string {
     if (this.inviteUrl) return this.inviteUrl;
@@ -53,14 +57,8 @@ export class RunefobleCampaignMembers extends LitElement {
   }
 
   private formatRole(role: string): string {
-    const map: Record<string, string> = {
-      owner: 'Owner',
-      dungeon_master: 'Dungeon Master',
-      dm: 'Dungeon Master',
-      player: 'Player',
-      spectator: 'Spectator',
-    };
-    return map[(role || '').toLowerCase()] || role;
+    const known = normalizeRole(role);
+    return known === 'unknown' ? role : ROLE_LABELS[known];
   }
 
   private handleRoleSelect(member: CampaignMember, e: Event): void {
@@ -127,7 +125,7 @@ export class RunefobleCampaignMembers extends LitElement {
   }
 
   private renderMemberItem(member: CampaignMember) {
-    const isOwner = member.role === 'owner';
+    const isOwner = isOwnerRole(member.role);
     const isSelf = this.currentUserId && member.user_id === this.currentUserId;
 
     return html`
@@ -143,14 +141,14 @@ export class RunefobleCampaignMembers extends LitElement {
           </div>
         </div>
         <div class="member-controls">
-          ${isOwner ? html`<span class="badge-role role-owner">Owner</span>` : this.isManager ? html`
+          ${isOwner ? html`<span class="badge-role role-owner">Owner</span>` : this.canManage ? html`
             <select class="role-select" @change=${(e: Event) => this.handleRoleSelect(member, e)} aria-label="Assign role">
-              <option value="player" ?selected=${member.role === 'player'}>Player</option>
-              <option value="dungeon_master" ?selected=${member.role === 'dungeon_master' || member.role === 'dm'}>Dungeon Master</option>
-              <option value="spectator" ?selected=${member.role === 'spectator'}>Spectator</option>
+              <option value="player" ?selected=${isPlayerRole(member.role)}>Player</option>
+              <option value="dungeon_master" ?selected=${isDungeonMasterRole(member.role)}>Dungeon Master</option>
+              <option value="spectator" ?selected=${isSpectatorRole(member.role)}>Spectator</option>
             </select>
           ` : html`<span class="badge-role role-${member.role}">${this.formatRole(member.role)}</span>`}
-          ${this.isManager && !isOwner && !isSelf ? html`
+          ${this.canManage && !isOwner && !isSelf ? html`
             <button class="btn-remove" @click=${() => { this.memberToRemove = member; }} type="button">Remove</button>
           ` : ''}
         </div>
@@ -225,7 +223,7 @@ export class RunefobleCampaignMembers extends LitElement {
             <p class="members-subtitle">${this.campaignTitle ? `${this.campaignTitle} • ` : ''}Manage player permissions and SpiceDB Zanzibar relations</p>
           </div>
           <div class="header-actions">
-            ${this.isManager ? html`<button class="btn-invite" @click=${this.openInviteModal} type="button" aria-label="Invite Adventurers">+ Invite Adventurers</button>` : ''}
+            ${this.canManage ? html`<button class="btn-invite" @click=${this.openInviteModal} type="button" aria-label="Invite Adventurers">+ Invite Adventurers</button>` : ''}
           </div>
         </header>
 
