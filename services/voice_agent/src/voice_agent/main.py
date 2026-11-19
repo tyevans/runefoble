@@ -10,7 +10,6 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-import httpx
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from runefoble_auth.authz_http import install_authz_error_handlers
@@ -25,10 +24,6 @@ from voice_agent.dependencies import (
     STREAM_SESSION,
     STREAM_VOICE,
     dsp_pipeline,
-    platform_settings,
-)
-from voice_agent.dependencies import (
-    set_watcher_client as _dep_set_watcher_client,
 )
 from voice_agent.event_bus import event_bus_provider, get_event_bus, set_event_bus
 from voice_agent.models import (
@@ -109,10 +104,6 @@ app.include_router(audio_filters_router)
 app.include_router(aec_diagnostics_router)
 
 
-def set_watcher_client(client: httpx.AsyncClient | None) -> None:
-    _dep_set_watcher_client(client)
-
-
 @app.get("/healthz")
 async def health_check():
     transcriber = get_streaming_pipeline().transcriber
@@ -161,7 +152,5 @@ __all__ = [
     "app",
     "dsp_pipeline",
     "get_event_bus",
-    "platform_settings",
     "set_event_bus",
-    "set_watcher_client",
 ]

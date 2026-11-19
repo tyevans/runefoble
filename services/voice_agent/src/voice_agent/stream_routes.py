@@ -50,6 +50,8 @@ class AudioStreamChunkResponse(BaseModel):
     latency_ms: float = 0.0
     event_id: str | None = None
     watcher_intent: dict[str, Any] | None = None
+    # Why The Watcher did not take the transcript. None when it answered (TASK-0732).
+    watcher_error: str | None = None
     vad_state: str = "silence"
     buffer_duration_ms: float = 0.0
 

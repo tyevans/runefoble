@@ -104,6 +104,8 @@ class TranscribeResponse(BaseModel):
     speaker_name: str
     event_id: str | None = None
     watcher_intent: dict[str, Any] | None = None
+    # Why The Watcher did not take the transcript. None when it answered (TASK-0732).
+    watcher_error: str | None = None
 
 
 class PlaybackStartRequest(BaseModel):

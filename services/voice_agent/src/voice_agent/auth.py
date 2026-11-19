@@ -22,18 +22,9 @@ get_principal, CallerPrincipal, CallerId, get_caller_or_service, CallerOrService
 )
 
 
-def caller_headers(authorization: str | None) -> dict[str, str]:
-    """Return the headers that forward the speaker's own bearer to a downstream service.
-
-    The downstream service verifies the token itself. No identity is set here.
-    """
-    return {"Authorization": authorization} if authorization else {}
-
-
 __all__ = [
     "CallerId",
     "CallerPrincipal",
-    "caller_headers",
     "get_principal",
     "get_voice_verifier",
     "set_voice_verifier",

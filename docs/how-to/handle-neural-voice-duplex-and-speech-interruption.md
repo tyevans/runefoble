@@ -327,6 +327,24 @@ Rules:
 
 The response carries `source` so that callers can tell the two inputs apart.
 
+### Watcher Forwarding Failures (TASK-0732)
+
+After the service publishes `runefoble.events.watcher.player_spoke`, it forwards the transcript to The Watcher (`POST /api/v1/watcher/transcribe-and-act`). The call goes through the `WatcherIntentPort` in `voice_agent.watcher_intent`. The adapter uses the shared `ServiceClient` with the speaker's own bearer and the service credential.
+
+A failed forward does not fail the request. The response keeps `transcript` and `event_id`, sets `watcher_intent` to `null`, and sets `watcher_error` to the reason:
+
+| Cause | `watcher_error` |
+|---|---|
+| `RUNEFOBLE_WATCHER_URL` is not set | `RUNEFOBLE_WATCHER_URL is not set` |
+| Connect failure or timeout | `the_watcher is unreachable (<transport error>)` |
+| The Watcher answers 5xx | `the_watcher failed with HTTP <status>` |
+| The Watcher answers another non-200 status, for example `403` | `the_watcher refused the transcript with HTTP <status>` |
+| The body is not a JSON object | `the_watcher returned a body that is not JSON` or `... not an object` |
+
+When The Watcher answers `200`, `watcher_intent` holds its `IntentResult` and `watcher_error` is `null`. The same fields appear on `POST /api/v1/voice/stream/chunk`, on each stream WebSocket result frame, and on `POST /api/v1/voice/transcribe`.
+
+The composition root (`get_streaming_pipeline`) builds the port from `RUNEFOBLE_WATCHER_URL` and `RUNEFOBLE_SERVICE_CREDENTIAL`. The service refuses to start when the Watcher URL is set and the credential is not. Tests inject a port into `StreamingAudioPipeline(transcriber=..., watcher=...)`. See `tests/test_blackbox_voice_watcher_forwarding.py`.
+
 ### Test Setup
 
 Blackbox tests inject a deterministic engine (`tests/helpers/fixture_transcriber.py`) into the composition root. Tests that need an unavailable engine set `RUNEFOBLE_VOICE_STT_MODEL_SIZE` to an unknown model name and `HF_HUB_OFFLINE=1`. See `tests/test_blackbox_voice_stt_engine.py` and `tests/test_blackbox_voice_transcribe_input.py`.
