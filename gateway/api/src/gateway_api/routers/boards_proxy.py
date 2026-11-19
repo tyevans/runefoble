@@ -1,5 +1,7 @@
 """Board and token routes proxied to board_state, which owns the grid and the tokens (TASK-0582).
 
+The DM battlemap set-up flow creates the board and places the party tokens here (TASK-0922).
+
 The gateway verifies the bearer token, then forwards the request with that same token.
 board_state checks every board and token permission (ADR-0001, ADR-0015). The gateway keeps
 no board state and returns no substitute body. A failed upstream call returns the mapping in
@@ -11,7 +13,7 @@ Each route is a row in `ROUTES` (TASK-0822).
 from __future__ import annotations
 
 from fastapi import APIRouter
-from gateway_api.models import TokenMoveRequest
+from gateway_api.models import BoardCreateRequest, TokenMoveRequest, TokenPlaceRequest
 from gateway_api.proxy_table import ProxyRoute, register_proxy_routes
 from runefoble_platform.service_client import owner_routes
 
@@ -20,6 +22,18 @@ SERVICE = "board_state"
 router = APIRouter(tags=["Boards & Tokens"])
 
 ROUTES = (
+    ProxyRoute(
+        "POST",
+        "/api/v1/boards",
+        (),
+        SERVICE,
+        name="create_board",
+        doc="Create the board of a session (board_state checks `campaign.run_session`).",
+        owner=owner_routes.create_board,
+        body="json",
+        body_model=BoardCreateRequest,
+        principal=True,
+    ),
     ProxyRoute(
         "GET",
         "/api/v1/boards/{session_id}",
@@ -38,6 +52,18 @@ ROUTES = (
         name="get_token",
         doc="Read one placed token of a session's board (board_state).",
         owner=owner_routes.get_token,
+        principal=True,
+    ),
+    ProxyRoute(
+        "POST",
+        "/api/v1/boards/{session_id}/tokens",
+        (),
+        SERVICE,
+        name="place_token",
+        doc="Place a token on the board (board_state checks the board and character permissions).",
+        owner=owner_routes.place_token,
+        body="json",
+        body_model=TokenPlaceRequest,
         principal=True,
     ),
     ProxyRoute(
