@@ -178,6 +178,17 @@ A close code cannot be sent before accept, so the gateway accepts first and then
 
 Test a relayed socket with a stand-in owner from `serve(...)`. Check that the bearer subprotocol arrives, that text and binary frames round-trip, and that an owner close code reaches the client.
 
+## Relay a campaign socket action to an owner
+
+The campaign socket (`/ws/campaigns/{id}`) does not relay frames. It relays each action as one owner call. Add an action in two steps:
+
+1. Add one builder to `ACTIONS` in `gateway_api/campaign_actions.py`. The builder returns the owner route from `owner_routes` and the body. It copies only the fields the owner needs. Add the owner route function to `runefoble_platform.service_client.owner_routes` first.
+2. Add the owner check and the owner event in the owning service. The gateway adds no permission check and publishes no event.
+
+`send_owner_call` in `gateway_api/campaign_owner_call.py` sends the call with the caller's token. It maps the owner answer to a frame. The reference table is in [Campaign socket actions](../reference/ports-and-endpoints.md#campaign-socket-actions-task-0883).
+
+Test the action through the socket with a live owner (`game_session_upstream`, `board_state_upstream`, `character_sheet_upstream`), as `gateway/api/tests/test_blackbox_gateway_campaign_socket.py` does.
+
 ## Checklist
 
 - [ ] Setting field exists, with `default=None` and no `localhost` default.

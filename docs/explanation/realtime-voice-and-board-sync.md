@@ -89,12 +89,12 @@ Bidirectional voice streams and audio mesh coordination are negotiated via the W
 
 The browser voice controls live in the owning bounded context, `services/voice_agent/ui/src/` (`runefoble-voice-controls.ts`, `runefoble-voice-duplex-controls.ts`). The App Shell does not carry a separate WebRTC client. The former `frontend/src/services/webrtc-*.ts` and `webaudio-pipeline.ts` modules were unreachable from the App Shell and were removed in TASK-0824. The server side of the signaling path is described above.
 
-## Campaign WebSocket Hub and Action Validator Gateway Architecture
+## Campaign WebSocket Hub and Action Relay Gateway Architecture
 
 Real-time campaign mutations, token movement broadcasts, health modifications, and Watcher notifications stream through `/ws/campaigns/{campaign_id}`. In accordance with Hard Invariant 6 (File length limit < 500 lines) and ADR-0001 / ADR-0007 / ADR-0009, the WebSocket infrastructure in `gateway_api` is partitioned into modular, single-responsibility submodules:
 
-- **Zanzibar Action Validator (`gateway_api.websocket_validator`)**:
-  `WebSocketActionValidator` executes fine-grained SpiceDB Zanzibar permission checks (`campaign:view`, `campaign:read`, `board_token:move`, `character:edit`, `dungeon_master`). It enforces DM bypass privileges, movement authorization, and blocks non-DM encounter mutations.
+- **Action Relay (`gateway_api.campaign_actions`, `gateway_api.campaign_owner_call`)**:
+  Each action names one owner route in a single table. The gateway checks only that the frame's session is linked to the campaign (`game_session#campaign`). It then sends the action to the owner with the caller's token. The owner checks every object permission and publishes its own domain event. The gateway holds no permission policy and publishes no event (TASK-0883).
 - **Connection Hub (`gateway_api.websocket_manager`)**:
   `ws_campaign_manager`, a `runefoble_platform.ws_groups.WebSocketGroups` keyed by campaign, tracks active client connections per campaign and broadcasts JSON to the connected party members. A socket whose send fails is pruned, and the other members still receive the message.
 - **Credential & Handshake Auth (`gateway_api.websocket_auth`)**:
