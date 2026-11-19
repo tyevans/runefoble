@@ -31,6 +31,33 @@ class TokenMoveRequest(BaseModel):
     to_y: int
 
 
+class BoardCreateRequest(BaseModel):
+    """The session board to create. board_state checks `campaign.run_session` (TASK-0922)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    campaign_id: str
+    session_id: str
+    cols: int | None = Field(default=None, gt=0)
+    rows: int | None = Field(default=None, gt=0)
+
+
+class TokenPlaceRequest(BaseModel):
+    """One token to place. A character token names its character (TASK-0922)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    token_id: str | None = None
+    name: str
+    token_type: Literal["pc", "monster", "npc", "obstacle", "loot"] = "pc"
+    x: int
+    y: int
+    hp: int | None = None
+    is_friendly: bool = True
+    vision_radius: int = 2
+    character_id: str | None = None
+
+
 class UpgradeStrongholdGatewayRequest(BaseModel):
     """Names the facility only. Cost comes from the game_session tier table."""
 

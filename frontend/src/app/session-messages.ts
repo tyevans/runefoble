@@ -7,6 +7,7 @@
 
 import type { RunefobleApp } from '../runefoble-app.ts';
 import { dispatchSessionMessage } from '../vtt-mesh-handlers.ts';
+import { handleBoardReady } from './board-setup-actions.ts';
 
 function clockTime(): string {
   return new Date().toLocaleTimeString();
@@ -40,6 +41,8 @@ export function handleSessionMessage(host: RunefobleApp, msg: any): void {
     host.lobbyParticipants = host.lobbyParticipants.map((p) => (p.userId === msg.userId ? { ...p, isReady: msg.isReady } : p));
   } else if (msg.type === 'player_stand_in') {
     host.lobbyParticipants = host.lobbyParticipants.map((p) => (p.userId === msg.userId ? { ...p, isAbsent: msg.isAbsent } : p));
+  } else if (msg.type === 'board_ready') {
+    handleBoardReady(host, msg);
   } else {
     dispatchSessionMessage(msg);
   }

@@ -91,7 +91,8 @@ The speech targets are not measured. The 500 millisecond target has no latency t
 - **Live**: Spoken ghost preview route on the board service. Test: `tests/test_blackbox_ghost_previews.py`. The voice trigger is **Planned** (TASK-0509).
 - **Live**: Battlemap upload to Silo S3. Test: `tests/test_blackbox_silo_asset_lifecycle.py`.
 - **In progress**: Token kinematics and 5-foot waypoint measurement (TASK-0084 is complete). No passing browser test covers this behaviour in this review.
-- **In progress**: Gateway board and token routes. The gateway returns fixed data for some board and token routes (`gateway/api/src/gateway_api/routers/tabletop.py`). The gateway does not yet proxy them to `board_state`. Blocking task: TASK-0582. Token authorization: TASK-0547.
+- **Live**: Gateway board and token routes proxy to `board_state`, which checks each permission (TASK-0582). Test: `tests/test_blackbox_gateway_board_setup.py`.
+- **Live**: The DM sets up the session battlemap from the empty board. The control creates the board and places one token for each seated character (TASK-0922). Test: `tests/test_blackbox_gateway_board_setup.py`. The browser scenario runs on Kind (`e2e/features/session_lobby_and_vtt.feature`).
 - **Planned**: Light-based fog of war. No backlog task exists yet.
 
 ### 2. The Watcher: DM Co-Pilot and Stand-Ins

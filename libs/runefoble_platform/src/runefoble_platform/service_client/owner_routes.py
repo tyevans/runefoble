@@ -152,6 +152,11 @@ def clear_condition(character_id: str, condition: str) -> OwnerRoute:
 # board_state
 
 
+def create_board() -> OwnerRoute:
+    """POST: create the board of a session. The owner checks `campaign.run_session`."""
+    return OwnerRoute("POST", path("api", "v1", "boards"))
+
+
 def get_board(session_id: str) -> OwnerRoute:
     """GET: the board state of a session."""
     return OwnerRoute("GET", path("api", "v1", "boards", session_id))
@@ -163,7 +168,7 @@ def get_token(session_id: str, token_id: str) -> OwnerRoute:
 
 
 def place_token(session_id: str) -> OwnerRoute:
-    """POST: place a token on the board of a session."""
+    """POST: place a token on the board of a session. The owner checks the token permissions."""
     return OwnerRoute("POST", path("api", "v1", "boards", session_id, "tokens"))
 
 
