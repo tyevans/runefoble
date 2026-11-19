@@ -26,6 +26,9 @@ The client router (`frontend/src/router/router.ts`) supports standard deep-linka
 | `#/characters` | Personal character roster | `http://localhost/#/characters` |
 | `#/characters/:characterId` | Character Sheet inspector & inventory | `http://localhost/#/characters/char-valeros` |
 | `#/profile` | User profile & security settings | `http://localhost/#/profile` |
+| `#/rules` | Rules compendium: rules search, encounter builder, homebrew | `http://localhost/#/rules` |
+| `#/caravans/:sharedWorldId` | Caravan board for a shared world | `http://localhost/#/caravans/frontier-1` |
+| `#/overlay/party-vitals/:sessionId` | OBS party vitals overlay | `http://localhost/#/overlay/party-vitals/14` |
 
 ## 2. Navigating Programmatically
 

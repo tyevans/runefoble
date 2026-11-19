@@ -254,6 +254,12 @@ The gateway does not proxy `/ui/manifest`. The `rules_compendium` service serves
 ></runefoble-homebrew-creator>
 ```
 
+### App Shell route
+
+The App Shell mounts the compendium at `#/rules`. The route needs a signed-in player. The view passes the gateway origin as `apiBaseUrl`. The compendium does not search when `apiBaseUrl` is empty.
+
+The encounter builder is a tab inside `<runefoble-rules-compendium>`, so the route does not mount it a second time. The route passes no `campaignId`.
+
 ### Key Features:
 - **Instant Hybrid Search**: Debounced autocomplete with sub-50ms latency badge and category filter pills (`ALL`, `MONSTER`, `SPELL`, `CONDITION`, `HOMEBREW`).
 - **Interactive CR Encounter Builder**: Dynamic XP threshold computation across party levels/sizes with real-time lethality calculation and 1-click Auto-Balance.
