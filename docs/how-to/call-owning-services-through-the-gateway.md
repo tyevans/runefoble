@@ -26,7 +26,6 @@ A proxy route keeps a gateway check only when the owner does not check the same 
 | `POST /api/v1/sessions/{session_id}/atmosphere` | `control` on the session | Open owner gap. `game_session` checks only the token. Remove this check when the owner checks `control`. |
 | `GET /api/v1/sessions/{session_id}/events` | `observe` on the session | The owner answers `404` for an unknown session before it checks `observe`. Without the gateway check, a stranger could learn whether a session exists. |
 | `GET /api/v1/sessions/{session_id}/absentee-recap` | `observe` on the session | Same reason as `events`. |
-| `POST /api/v1/campaigns/{campaign_id}/atlas/pins` | `run_session` on the campaign | The owner checks `play`. The permissions differ. |
 
 WebSocket sockets are not proxy routes. The gateway checks `session.observe` at admission, and it checks `session.participate` before it relays each inbound frame.
 

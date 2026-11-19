@@ -30,6 +30,9 @@ LORE_ATLAS_FORBIDDEN = (
     "Forbidden: SpiceDB Zanzibar policy denies view access to this campaign atlas."
 )
 LORE_PUBLISH_FORBIDDEN = "Forbidden: User cannot publish codex entries in this campaign."
+LORE_PIN_FORBIDDEN = "Forbidden: User cannot place pins on this campaign atlas."
+PLAYER = "player_pin_0768"
+VIEWER = "viewer_pin_0768"
 
 
 def _auth(issuer, sub: str) -> dict[str, str]:
@@ -243,17 +246,53 @@ def test_lore_codex_publish_owner_refuses_a_stranger_through_the_gateway(
     assert res.json() == {"detail": LORE_PUBLISH_FORBIDDEN}
 
 
-def test_lore_atlas_pin_keeps_the_gateway_check_for_run_session(
+def _invite_member(client, cid, trusted_ws_issuer, role: str, member: str) -> dict[str, str]:
+    """The owner issues an invite for `role`, and `member` redeems it through the gateway."""
+    invite = client.post(
+        f"/api/v1/campaigns/{cid}/invites",
+        json={"role": role},
+        headers=_auth(trusted_ws_issuer, OWNER),
+    )
+    assert invite.status_code == 201, invite.text
+    joined = client.post(
+        "/api/v1/campaigns/join",
+        json={"invite_token": invite.json()["token"]},
+        headers=_auth(trusted_ws_issuer, member),
+    )
+    assert joined.status_code == 200, joined.text
+    return _auth(trusted_ws_issuer, member)
+
+
+def test_lore_atlas_pin_player_places_a_pin_through_the_gateway(
     lore_campaign, trusted_ws_issuer
 ) -> None:
-    """The gateway keeps `run_session` on the pin route. The owner checks `play` there, a different
-    permission, so the owner check cannot replace the gateway check yet (TASK-0845)."""
+    """A player holds `play` but not `run_session`. The gateway forwards, the owner allows."""
     client, cid = lore_campaign
+    player = _invite_member(client, cid, trusted_ws_issuer, "player", PLAYER)
     res = client.post(
         f"/api/v1/campaigns/{cid}/atlas/pins",
-        json={"title": "Gate", "coordinates": {"x": 1.0, "y": 2.0}},
-        headers=_auth(trusted_ws_issuer, STRANGER),
+        json={"title": "Player Gate", "coordinates": {"x": 1.0, "y": 2.0}},
+        headers=player,
+    )
+    assert res.status_code == 201, res.text
+    assert res.json()["title"] == "Player Gate"
+    atlas = client.get(f"/api/v1/campaigns/{cid}/atlas", headers=player)
+    assert atlas.status_code == 200, atlas.text
+    assert "Player Gate" in [pin["title"] for pin in atlas.json()["pins"]]
+
+
+def test_lore_atlas_pin_viewer_is_refused_by_the_owner_through_the_gateway(
+    lore_campaign, trusted_ws_issuer
+) -> None:
+    """A spectator holds `view` only. The gateway passes the owner's 403 through unchanged."""
+    client, cid = lore_campaign
+    viewer = _invite_member(client, cid, trusted_ws_issuer, "spectator", VIEWER)
+    res = client.post(
+        f"/api/v1/campaigns/{cid}/atlas/pins",
+        json={"title": "Viewer Gate", "coordinates": {"x": 1.0, "y": 2.0}},
+        headers=viewer,
     )
     assert res.status_code == 403, res.text
-    assert res.json()["detail"]["error"] == "permission_denied"
-    assert res.json()["detail"]["required_permission"] == "run_session"
+    assert res.json() == {"detail": LORE_PIN_FORBIDDEN}
+    atlas = client.get(f"/api/v1/campaigns/{cid}/atlas", headers=viewer)
+    assert "Viewer Gate" not in [pin["title"] for pin in atlas.json()["pins"]]
