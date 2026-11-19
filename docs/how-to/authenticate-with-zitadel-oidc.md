@@ -12,7 +12,7 @@ The full identity contract for every surface is in [Identity and Token Contract]
 ## Architecture & Verification Flows
 
 1. **User Login**: The frontend signs the user in with Zitadel (PKCE flow).
-2. **Token Issuance**: Zitadel issues an RS256 access token with `sub`, `iss`, `aud`, `exp`, and optional `email` and `preferred_username`. Zitadel JWT access tokens do not include `preferred_username` or `email` by default. When the claim is absent, `VerifiedPrincipal.username` is `None`.
+2. **Token Issuance**: Zitadel issues an RS256 access token with `sub`, `iss`, `aud`, `exp`, and optional `email` and `preferred_username`. Zitadel JWT access tokens do not include `preferred_username` or `email` by default. The bootstrap Job adds `preferred_username` with a Zitadel Action (see [The username claim Action](#the-username-claim-action)). When the claim is absent, `VerifiedPrincipal.username` is `None`.
 3. **Verification**: `ZitadelAuthService.verify_token` checks the RS256 signature against the issuer's JWKS. It checks `exp`, `sub`, `iss` (exact match), and `aud` (exact match). Any failure raises `TokenVerificationError`.
 4. **Principal**: A passing token yields a `VerifiedPrincipal` (`user_id`, `username`, `email`).
 5. **Zanzibar Check**: The `user_id` is the SpiceDB subject for permission checks.
@@ -150,9 +150,23 @@ Zitadel generates the project ID and the client ID when it runs. The chart canno
 2. Finds the project `runefoble` or creates it (`zitadel.bootstrap.projectName`).
 3. Finds the OIDC application `runefoble-web` or creates it (`zitadel.bootstrap.appName`). The application uses the authorization-code flow with PKCE, the `NONE` auth method (no client secret), and JWT access tokens. Its redirect URIs and post-logout URIs come from values.
 4. Converges the redirect URIs and post-logout URIs of an existing application to the values. It changes nothing when they already match.
-5. Server-side applies the Secret `runefoble-zitadel-client`. It has two keys: `project-id` and `client-id`.
+5. Finds the Zitadel Action `runefobleUsernameClaim` or creates it. It binds the Action to the flow "Complement Token" (id `2`), trigger "Pre access token creation" (id `5`). Other actions on that trigger stay bound. If the script, timeout, or `allowedToFail` value changed, the Job updates the Action in place. See [The username claim Action](#the-username-claim-action).
+6. Server-side applies the Secret `runefoble-zitadel-client`. It has two keys: `project-id` and `client-id`.
 
-A second run creates no project and no application. It writes the same Secret data.
+A second run creates no project, no application, and no Action. It writes the same Secret data.
+
+### The username claim Action
+
+Zitadel JWT access tokens do not carry `preferred_username`. The services verify the access token. Without the claim, `VerifiedPrincipal.username` is `None`, and member lists show no name. The Action adds the claim. The code is in `deployments/zitadel_bootstrap/src/zitadel_bootstrap/token_claims.py`.
+
+- API: Zitadel Actions v1, management API `/management/v1/actions` and `/management/v1/flows/{flow_type}/trigger/{trigger_type}` (Zitadel `v2.54.0`).
+- Script: `api.v1.claims.setClaim('preferred_username', ctx.v1.getUser().username)`. The function name is the Action name, because Zitadel calls the function with that name.
+- Value: the Zitadel username of the user, for example `evelyn-ab12`. It is not the display name.
+- `setClaim` does not replace a claim that is already in the token.
+- `allowedToFail` is `false`. If the script fails, Zitadel does not issue the token. The error is visible and no token goes out without the claim.
+- Scope: Actions v1 belong to one organization. Zitadel runs the flow of the organization that owns the user. The bootstrap token belongs to the default organization, so the claim applies to users of the default organization only.
+
+To see the claim, sign in and decode the access token payload in the browser. Do not paste real tokens into external tools.
 
 ### Admin token source
 

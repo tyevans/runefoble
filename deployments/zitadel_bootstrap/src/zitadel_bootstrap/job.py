@@ -1,7 +1,8 @@
 """Entry point for the Zitadel bootstrap Job (`python -m zitadel_bootstrap.job`).
 
 The Job reads its settings from the environment, provisions the OIDC project and web
-application, and server-side applies the Kubernetes Secret that the workloads read:
+application, binds the Action that puts `preferred_username` in access tokens
+(`token_claims`), and server-side applies the Kubernetes Secret that the workloads read:
 
 - `project-id`: the Zitadel project ID. Services use it as the expected token audience.
 - `client-id`: the public client ID of the web application. The App Shell uses it.
@@ -30,6 +31,7 @@ from zitadel_bootstrap.provisioning import (
     ZitadelManagement,
     provision,
 )
+from zitadel_bootstrap.token_claims import ensure_username_claim_action
 
 READY_TIMEOUT_SECONDS = 300
 FIELD_MANAGER = "runefoble-zitadel-bootstrap"
@@ -105,6 +107,7 @@ def run(config: BootstrapConfig) -> Provisioned:
     client = ZitadelManagement(config.issuer, config.internal_url, config.admin_token)
     client.wait_until_ready(READY_TIMEOUT_SECONDS)
     provisioned = provision(client, config.spec)
+    ensure_username_claim_action(client)
     apply_client_secret(config, provisioned)
     return provisioned
 

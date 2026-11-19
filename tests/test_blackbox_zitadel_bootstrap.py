@@ -27,6 +27,8 @@ class FakeZitadel:
     def __init__(self, starting_checks: int = 0) -> None:
         self.projects: dict[str, str] = {}
         self.apps: dict[tuple[str, str], dict[str, Any]] = {}
+        self.actions: dict[str, dict[str, Any]] = {}
+        self.triggers: dict[tuple[str, str], list[str]] = {}
         self.starting_checks = starting_checks
         self.health_checks = 0
         self._next = 0
@@ -56,6 +58,10 @@ class FakeZitadel:
             return 200, {"id": project_id}
         if len(parts) >= 7 and parts[3] == "projects" and parts[5] == "apps":
             return self._app_route(request, parts[4], parts[6:])
+        if parts[3] == "actions":
+            return self._action_route(request, parts[4:])
+        if parts[3] == "flows":
+            return self._flow_route(request, parts[4:])
         return 404, {"message": f"no route for {request.method} {request.path}"}
 
     def _search_projects(self, request: RecordedRequest) -> list[dict[str, str]]:
@@ -86,6 +92,47 @@ class FakeZitadel:
             app["oidcConfig"] = request.json()
             return 200, {}
         return 404, {"message": f"no app route for {request.method} {request.path}"}
+
+    def add_action(self, name: str, script: str) -> str:
+        action_id = self._id("action")
+        self.actions[action_id] = {
+            "id": action_id,
+            "name": name,
+            "script": script,
+            "timeout": "10s",
+            "allowedToFail": False,
+        }
+        return action_id
+
+    def _action_route(self, request: RecordedRequest, rest: list[str]) -> tuple[int, Any]:
+        if request.method == "POST" and rest == ["_search"]:
+            name = request.json()["queries"][0]["actionNameQuery"]["name"]
+            return 200, {"result": [a for a in self.actions.values() if a["name"] == name]}
+        if request.method == "POST" and rest == []:
+            body = request.json()
+            action_id = self.add_action(body["name"], body["script"])
+            self.actions[action_id].update(body)
+            return 200, {"id": action_id}
+        if request.method == "PUT" and len(rest) == 1 and rest[0] in self.actions:
+            self.actions[rest[0]].update({k: v for k, v in request.json().items() if k != "id"})
+            return 200, {}
+        return 404, {"message": f"no action route for {request.method} {request.path}"}
+
+    def _flow_route(self, request: RecordedRequest, rest: list[str]) -> tuple[int, Any]:
+        if request.method == "GET" and len(rest) == 1:
+            trigger_actions = [
+                {
+                    "triggerType": {"id": trigger},
+                    "actions": [self.actions[action_id] for action_id in ids],
+                }
+                for (flow, trigger), ids in self.triggers.items()
+                if flow == rest[0] and ids
+            ]
+            return 200, {"flow": {"type": {"id": rest[0]}, "triggerActions": trigger_actions}}
+        if request.method == "POST" and len(rest) == 3 and rest[1] == "trigger":
+            self.triggers[(rest[0], rest[2])] = list(request.json()["actionIds"])
+            return 200, {}
+        return 404, {"message": f"no flow route for {request.method} {request.path}"}
 
     def _app_by_id(self, project_id: str, app_id: str) -> dict[str, Any] | None:
         return next(
@@ -217,6 +264,7 @@ def test_second_run_creates_nothing_and_applies_the_same_ids(
     assert fake_kube.last_data() == first_data
     assert len(fake_zitadel.projects) == 1
     assert len(fake_zitadel.apps) == 1
+    assert len(fake_zitadel.actions) == 1
 
 
 def test_changed_redirect_uris_update_the_existing_app_without_a_second_app(
@@ -244,3 +292,57 @@ def test_missing_setting_is_named_in_the_error(zitadel, kubernetes, service_acco
 
     with pytest.raises(BootstrapConfigError, match="ZITADEL_ADMIN_PAT"):
         main(env, service_account)
+
+
+COMPLEMENT_TOKEN_FLOW = "2"
+PRE_ACCESS_TOKEN_TRIGGER = "5"
+
+
+def test_first_run_binds_a_username_claim_action_to_access_token_creation(
+    zitadel, kubernetes, service_account: Path
+) -> None:
+    fake_zitadel, zitadel_server = zitadel
+    _, kube_server = kubernetes
+
+    main(job_env(zitadel_server.url, kube_server.url), service_account)
+
+    bound = fake_zitadel.triggers[(COMPLEMENT_TOKEN_FLOW, PRE_ACCESS_TOKEN_TRIGGER)]
+    assert len(bound) == 1
+    action = fake_zitadel.actions[bound[0]]
+    # Zitadel calls the function whose name is the action name.
+    assert f"function {action['name']}(ctx, api)" in action["script"]
+    assert "api.v1.claims.setClaim('preferred_username'" in action["script"]
+    assert "ctx.v1.getUser()" in action["script"]
+    assert action["allowedToFail"] is False
+
+
+def test_other_actions_on_the_trigger_stay_bound(
+    zitadel, kubernetes, service_account: Path
+) -> None:
+    fake_zitadel, zitadel_server = zitadel
+    _, kube_server = kubernetes
+    other = fake_zitadel.add_action("addTenantClaim", "function addTenantClaim(ctx, api) {}")
+    fake_zitadel.triggers[(COMPLEMENT_TOKEN_FLOW, PRE_ACCESS_TOKEN_TRIGGER)] = [other]
+
+    main(job_env(zitadel_server.url, kube_server.url), service_account)
+
+    bound = fake_zitadel.triggers[(COMPLEMENT_TOKEN_FLOW, PRE_ACCESS_TOKEN_TRIGGER)]
+    assert bound[0] == other
+    assert len(bound) == 2
+
+
+def test_a_changed_action_script_is_updated_in_place(
+    zitadel, kubernetes, service_account: Path
+) -> None:
+    fake_zitadel, zitadel_server = zitadel
+    _, kube_server = kubernetes
+    main(job_env(zitadel_server.url, kube_server.url), service_account)
+    (action_id,) = fake_zitadel.actions
+    expected_script = fake_zitadel.actions[action_id]["script"]
+    fake_zitadel.actions[action_id]["script"] = "function stale(ctx, api) {}"
+
+    main(job_env(zitadel_server.url, kube_server.url), service_account)
+
+    assert list(fake_zitadel.actions) == [action_id]
+    assert fake_zitadel.actions[action_id]["script"] == expected_script
+    assert fake_zitadel.triggers[(COMPLEMENT_TOKEN_FLOW, PRE_ACCESS_TOKEN_TRIGGER)] == [action_id]

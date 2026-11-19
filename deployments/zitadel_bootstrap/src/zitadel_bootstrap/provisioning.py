@@ -125,6 +125,31 @@ class ZitadelManagement:
     def update_oidc_config(self, project_id: str, app_id: str, spec: ApplicationSpec) -> None:
         self._request("PUT", f"/projects/{project_id}/apps/{app_id}/oidc_config", _oidc_body(spec))
 
+    def find_action(self, name: str) -> dict[str, Any] | None:
+        query = {"queries": [{"actionNameQuery": {"name": name, "method": EQUALS}}]}
+        matches = self._request("POST", "/actions/_search", query).get("result") or []
+        return dict(matches[0]) if matches else None
+
+    def create_action(self, action: dict[str, Any]) -> str:
+        return str(self._request("POST", "/actions", action)["id"])
+
+    def update_action(self, action_id: str, action: dict[str, Any]) -> None:
+        self._request("PUT", f"/actions/{action_id}", action)
+
+    def trigger_action_ids(self, flow_type: str, trigger_type: str) -> list[str]:
+        """The IDs of the actions bound to one trigger of a flow, in execution order."""
+        flow = self._request("GET", f"/flows/{flow_type}").get("flow") or {}
+        for trigger in flow.get("triggerActions") or []:
+            if str(trigger.get("triggerType", {}).get("id")) == trigger_type:
+                return [str(action["id"]) for action in trigger.get("actions") or []]
+        return []
+
+    def set_trigger_actions(self, flow_type: str, trigger_type: str, action_ids: list[str]) -> None:
+        """Replace the list of actions bound to one trigger of a flow."""
+        self._request(
+            "POST", f"/flows/{flow_type}/trigger/{trigger_type}", {"actionIds": action_ids}
+        )
+
 
 def provision(client: ZitadelManagement, spec: ApplicationSpec) -> Provisioned:
     """Create or find the project and the web application. Converge the URIs and dev mode."""

@@ -9,7 +9,7 @@
 
 import type { Page } from '@playwright/test';
 import type { TestUser } from './world';
-import { findPersona, PERSONA_SEEDS, resolvePersonaKey, type PersonaKey, type PersonaRecord } from './personas';
+import { findPersona, resolvePersonaKey, type PersonaKey, type PersonaRecord } from './personas';
 import { APP_SHELL_SESSION_KEY, readAppShellSession, type AppShellSession } from './app_shell_session';
 import { signInWithZitadel, type HostedLoginOutcome } from './zitadel_login';
 
@@ -46,10 +46,10 @@ export class AuthFixtures {
         `The App Shell session belongs to "${session.user.user_id}", not to persona "${persona.key}".`
       );
     }
-    const seed = PERSONA_SEEDS[persona.key];
+    // The Zitadel username. The bootstrap Action copies it into the access token as `preferred_username`.
     return {
       userId: persona.userId,
-      username: `${seed.givenName} ${seed.familyName}`,
+      username: persona.loginName,
       token: session.tokens.accessToken,
     };
   }

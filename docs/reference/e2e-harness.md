@@ -68,6 +68,8 @@ Later sign-ins of the same persona in the same worker restore the session that Z
 
 The access token that `TestUser.token` holds always came from a Zitadel sign-in in the same run. The suite never forges a token.
 
+`TestUser.username` is the Zitadel user name of the persona, for example `evelyn-ab12`. The access token carries the same value as `preferred_username`, so a step can expect it in a member list. The display name (for example Evelyn Vance) is not in the access token.
+
 `AuthFixtures.attemptSignIn(persona, password, page?)` runs the same hosted login with any password. It returns Zitadel's answer. Use it to test refusal, for example with **Password is invalid**.
 
 The token for a negative scenario, such as a token signed by an unknown key, is built in the step. The step signs it with a throwaway RSA key. The gateway refuses it. See `e2e/steps/identity_negative_steps.ts`.
