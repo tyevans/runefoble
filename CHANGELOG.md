@@ -78,6 +78,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Campaign analytics worker `process_event` alias, tracking property wrappers, and package root re-exports. Callers use `handle_event`. (TASK-0500)
 
 ### Added
+- Gateway proxies 30 public Watcher routes to the_watcher through the shared proxy table. (TASK-0596)
 - Gateway proxies `POST /api/v1/soundscape/stems/volume` to the soundscape owner. (TASK-0436)
 - A battlemap forged with a session id becomes that session's board geometry: `BattlemapForged` carries the walls and hazards, and board_state applies them (`ForgedBattlemapApplied`). (TASK-0704)
 - Board spell casts publish `SpellCast` and `AreaEffectExploded`; soundscape records `cast_<archetype>` and `burst_<decal>` cues. (TASK-0834)
@@ -158,6 +159,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
 
 ### Changed
+- `scripts/dev_server.py` delegates to focused modules under `scripts/dev_orchestrator/`. (TASK-0434)
 - Gateway pass-through routes are rows in one proxy table, and owner paths come from one shared owner map; the OpenAPI document is unchanged. A `.` or `..` path value now returns 404. (TASK-0822)
 - Spectator and overlay data come from the owning services: board_state removes monsters and stores the camera target (`CameraFocused`), game_session gives status, round and public chronicle. (TASK-0823)
 - Leitmotif triggers for critical hits and 0 HP use `DiceRolled` (`is_crit`) and `CharacterHealthChanged`. (TASK-0703)

@@ -1,7 +1,7 @@
 ---
 id: '0596'
 title: Gateway The Watcher Public Routes Proxy to The Watcher Service
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0580
@@ -23,7 +23,7 @@ target_release: 0.9.0
 # TASK-0596: Gateway The Watcher Public Routes Proxy to The Watcher Service
 
 ## Status
-Refined
+Complete
 
 ## Summary
 The gateway has no route to `the_watcher`, except the canned speak-and-act route (TASK-0583). The ports reference names more than 30 public Watcher routes: faction agendas, world ticks, stand-ins, whispers, proposals and approvals, intent, narration and scenes. Add a gateway proxy for each public route. The gateway does not run Watcher logic and does not hold any Watcher state.
@@ -48,7 +48,7 @@ The gateway has no route to `the_watcher`, except the canned speak-and-act route
 
 ## Detailed Specification & Implementation Plan
 1. Build the route list from `docs/reference/ports-and-endpoints.md` (rows with `the-watcher` and a public `/api/v1` path). Put the list in a table in `docs/reference/gateway-route-ownership.md` (created by TASK-0598). Mark each row "proxy" or "internal".
-2. Create `gateway/api/src/gateway_api/routers/watcher_proxy.py` (one router). If the file exceeds 300 lines, split into `watcher_proxy_factions.py`, `watcher_proxy_intent.py` and `watcher_proxy_dm.py`.
+2. Create one Watcher proxy router module. If the file exceeds 300 lines, split into `watcher_proxy_factions.py`, `watcher_proxy_intent.py` and `watcher_proxy_dm.py`.
 3. Each handler forwards through `ServiceClient` (TASK-0580). It passes the path, query and JSON body unchanged, and the caller identity. Do not read the body's `user_id`, `approver_id` or `dm_id`.
 4. Set the timeout for `narrate`, `scenes/generate` and `whispers/generate` from the owner's LLM budget. Take the value from the settings field, not from a literal in the router.
 5. Add `THE_WATCHER` (TASK-0580) to the settings. Confirm the Helm variable from TASK-0624.
