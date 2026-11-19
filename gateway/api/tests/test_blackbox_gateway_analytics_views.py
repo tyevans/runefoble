@@ -67,9 +67,10 @@ def _forbidding_owner() -> FastAPI:
 @pytest.fixture
 def live_owner(analytics_service: AnalyticsService, monkeypatch) -> Iterator[AnalyticsService]:
     """Serve campaign_analytics as a live loopback upstream, with its lifespan running."""
-    from campaign_analytics.main import app as analytics_app
+    from campaign_analytics.main import create_app_from_environment
 
-    with serve(analytics_app, lifespan="on") as url:
+    # Build the owner after the fixture sets its environment (TASK-0873).
+    with serve(create_app_from_environment(), lifespan="on") as url:
         monkeypatch.setenv("RUNEFOBLE_CAMPAIGN_ANALYTICS_URL", url)
         yield analytics_service
 

@@ -14,7 +14,7 @@ from collections.abc import Iterator
 from uuid import uuid4
 
 import pytest
-from campaign_analytics.main import app as analytics_app
+from campaign_analytics.main import create_app_from_environment
 from campaign_lore.main import app as lore_app
 from fastapi.testclient import TestClient
 from gateway_api.main import app as gateway_app
@@ -179,7 +179,7 @@ def test_character_route_without_a_token_is_refused_at_the_gateway(
 def analytics_campaign(
     analytics_service: AnalyticsService, monkeypatch, game_session_upstream
 ) -> Iterator[tuple[TestClient, str]]:
-    with serve(analytics_app, lifespan="on") as url:
+    with serve(create_app_from_environment(), lifespan="on") as url:
         monkeypatch.setenv("RUNEFOBLE_CAMPAIGN_ANALYTICS_URL", url)
         with TestClient(gateway_app) as gateway_client:
             cid = create_campaign(gateway_client, OWNER)
