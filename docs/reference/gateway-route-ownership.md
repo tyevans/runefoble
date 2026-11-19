@@ -55,7 +55,6 @@ each route, and the mode in which the gateway serves it.
 | POST | `/api/v1/campaigns/{campaign_id}/atlas/pins` | campaign_lore | proxy | `gateway_api.routers.lore_views` |
 | GET | `/api/v1/campaigns/{campaign_id}/capabilities` | game_session | proxy | `gateway_api.routers.campaigns_proxy` |
 | GET | `/api/v1/campaigns/{campaign_id}/codex` | campaign_lore | proxy | `gateway_api.routers.lore_views` |
-| GET | `/api/v1/campaigns/{campaign_id}/codex/entries` | campaign_lore | proxy | `gateway_api.routers.lore_views` |
 | POST | `/api/v1/campaigns/{campaign_id}/codex/entries` | campaign_lore | proxy | `gateway_api.routers.lore_views` |
 | GET | `/api/v1/campaigns/{campaign_id}/factions` | the_watcher | proxy | `gateway_api.routers.watcher_proxy_factions` |
 | POST | `/api/v1/campaigns/{campaign_id}/factions` | the_watcher | proxy | `gateway_api.routers.watcher_proxy_factions` |
@@ -117,7 +116,6 @@ each route, and the mode in which the gateway serves it.
 | GET | `/api/v1/forge/token/{asset_id}` | asset_forge | proxy | `gateway_api.routers.forge_proxy` |
 | POST | `/api/v1/forge/wardrobe` | asset_forge | proxy | `gateway_api.routers.forge_proxy` |
 | GET | `/api/v1/forge/wardrobe/{variant_id}` | asset_forge | proxy | `gateway_api.routers.forge_proxy` |
-| GET | `/api/v1/health` | gateway_api | local | `gateway_api.routers.health` |
 | GET | `/api/v1/mobile/companion/profiles` | voice_agent | proxy | `gateway_api.routers.voice_proxy` |
 | POST | `/api/v1/mobile/companion/{session_id}/turn-alert` | voice_agent | proxy | `gateway_api.routers.voice_proxy` |
 | POST | `/api/v1/mobile/companion/{session_id}/whisper` | voice_agent | proxy | `gateway_api.routers.voice_proxy` |
@@ -182,7 +180,6 @@ each route, and the mode in which the gateway serves it.
 | GET | `/api/v1/watcher/whispers` | the_watcher | proxy | `gateway_api.routers.watcher_proxy_dm` |
 | POST | `/api/v1/watcher/whispers` | the_watcher | proxy | `gateway_api.routers.watcher_proxy_dm` |
 | POST | `/api/v1/watcher/whispers/generate` | the_watcher | proxy | `gateway_api.routers.watcher_proxy_dm` |
-| GET | `/health` | gateway_api | local | `gateway_api.routers.health` |
 | GET | `/healthz` | gateway_api | local | `gateway_api.routers.health` |
 | GET | `/overlay/party-vitals/{session_id}` | game_session, board_state | proxy | `gateway_api.routers.overlay` |
 | GET | `/readyz` | gateway_api | local | `gateway_api.routers.health` |

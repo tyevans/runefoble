@@ -103,12 +103,12 @@ curl -X POST http://localhost:8003/api/v1/characters/char-sarah-cleric/stand-in 
   }'
 ```
 
-Send `"active": false` to release the stand-in. This emits `StandInReleased`. The permadeath check reads the flag from the aggregate. The `is_stand_in` field on `POST .../health` only overrides the check for one request. It does not change the stored flag.
+Send `"active": false` to release the stand-in. This emits `StandInReleased`. The permadeath check reads the flag from the aggregate. The `is_stand_in` field on `POST .../healthz` only overrides the check for one request. It does not change the stored flag.
 
 Then damage the character:
 
 ```bash
-curl -X POST http://localhost:8003/api/v1/characters/char-sarah-cleric/health \
+curl -X POST http://localhost:8003/api/v1/characters/char-sarah-cleric/healthz \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $TOKEN" \
   -d '{
@@ -178,7 +178,7 @@ curl -X POST http://localhost:8004/api/v1/sessions/session-crypt-01/hot-swap \
 
 ### Auto-Pilot Turns Require The Watcher
 
-Auto-pilot turns (`POST /api/v1/sessions/{id}/turns/auto-pilot` or `/autopilot`) ask The Watcher for the stand-in action. `game_session` reads the Watcher URL from `RUNEFOBLE_WATCHER_URL` on each request.
+Auto-pilot turns (`POST /api/v1/sessions/{id}/turns/auto-pilot`) ask The Watcher for the stand-in action. `game_session` reads the Watcher URL from `RUNEFOBLE_WATCHER_URL` on each request.
 
 - If the URL is unset, the route returns `503` with a detail that names `RUNEFOBLE_WATCHER_URL`.
 - If The Watcher is unreachable, returns a status other than `200`, or returns an invalid body, the route returns `503`.

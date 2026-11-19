@@ -4,7 +4,7 @@ This guide explains how to ingest campaign worldbuilding documents, extract know
 
 ## Caller Identity
 
-Every Campaign Lore route needs a verified bearer token. The service checks the RS256 signature, issuer, audience, and expiry. Without a valid token it returns `401`. The caller is the token subject (`sub`). Campaign Lore never reads the caller from a body field, a query parameter, or an identity header. The public routes are `/health`, `/healthz`, `/openapi.json`, and `/ui/manifest`.
+Every Campaign Lore route needs a verified bearer token. The service checks the RS256 signature, issuer, audience, and expiry. Without a valid token it returns `401`. The caller is the token subject (`sub`). Campaign Lore never reads the caller from a body field, a query parameter, or an identity header. The public routes are `/healthz`, `/openapi.json`, and `/ui/manifest`.
 
 Set `$DM_TOKEN` and `$PLAYER_TOKEN` to tokens that Zitadel issued for each user. The examples below use them.
 
@@ -169,7 +169,7 @@ The service stops with an error when one of these checks fails. It does not serv
 ### Restarts
 
 - Document titles, secrecy, aliases, and search results survive a restart, because they come from the replayed events.
-- Codex entries survive a restart. `GET /api/v1/campaigns/{campaign_id}/codex/entries` reads the `runefoble.events.lore.codex_entry_published` events from the event store on each request. No process keeps a codex index.
+- Codex entries survive a restart. `GET /api/v1/campaigns/{campaign_id}/codex` reads the `runefoble.events.lore.codex_entry_published` events from the event store on each request. No process keeps a codex index.
 - Every committed lore event is published to its `runefoble.events.lore.<name>` stream. The table is in [Campaign Lore Stream Topics](../reference/events-catalog-world-media.md#campaign-lore-stream-topics). A publish failure returns `503`, and the client retries.
 - Entity identifiers are derived from the campaign, document, name, and type. A restart writes the same pgvector rows again. It adds no duplicate rows.
 - Replay time grows with the number of stored documents. Each start re-indexes them.

@@ -366,7 +366,7 @@ The `<runefoble-caravan-board>` Lit Web Component (vendored in `@runefoble/game-
 
 #### Component Manifest Registration
 
-Advertised via `/ui/manifest` and `/game_session/ui/manifest` on `game_session`:
+Advertised via `/ui/manifest` on `game_session`:
 
 ```bash
 curl http://localhost:8004/ui/manifest

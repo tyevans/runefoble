@@ -85,7 +85,7 @@ The `e2e-playwright` job in `.github/workflows/ci.yml` runs the suite on each pu
 1. Starts a `redis:7-alpine` service container.
 2. Restores the Playwright browser cache (`~/.cache/ms-playwright`). The cache key uses `pnpm-lock.yaml`.
 3. Starts the services with `make dev &`.
-4. Polls `http://localhost:8000/api/v1/health` and `http://localhost:5173` for up to 60 seconds.
+4. Polls `http://localhost:8000/healthz` and `http://localhost:5173` for up to 60 seconds.
 5. Runs `make test-e2e ARGS="--reporter=github,html"`.
 6. On failure, uploads the Playwright report and the test results as an artifact. The retention period is 14 days.
 

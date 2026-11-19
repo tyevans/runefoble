@@ -22,11 +22,11 @@ sequenceDiagram
     Player->>STT: "I cast Shield!"
     STT->>Watcher: Transcript: "I cast Shield!"
     Watcher->>Watcher: Parse reaction grammar (type: shield)
-    Watcher->>Session: POST /sessions/{id}/reactions/declare
+    Watcher->>Session: POST /api/v1/sessions/{id}/reactions/declare
     Session->>Session: Aggregate.declare_reaction()
     Session->>Bus: Emit combat.turn.paused_for_reaction
     Session-->>Player: Reaction window active (15s timeout)
-    Player->>Session: POST /sessions/{id}/reactions/{rx_id}/resolve
+    Player->>Session: POST /api/v1/sessions/{id}/reactions/{rx_id}/resolve
     Session->>Session: Aggregate.resolve_reaction()
     Session->>Bus: Emit combat.reaction.resolved
     Session-->>Player: Turn resumed
@@ -70,7 +70,7 @@ Each game-session reaction route checks the verified caller. Declare, ready-acti
 
 ### Declare Reaction Interrupt
 ```http
-POST /sessions/{session_id}/reactions/declare
+POST /api/v1/sessions/{session_id}/reactions/declare
 Content-Type: application/json
 
 {
@@ -85,7 +85,7 @@ Content-Type: application/json
 
 ### Register Ready Action
 ```http
-POST /sessions/{session_id}/reactions/ready-action
+POST /api/v1/sessions/{session_id}/reactions/ready-action
 Content-Type: application/json
 
 {
@@ -101,7 +101,7 @@ Content-Type: application/json
 
 ### Resolve Reaction Interrupt
 ```http
-POST /sessions/{session_id}/reactions/{reaction_id}/resolve
+POST /api/v1/sessions/{session_id}/reactions/{reaction_id}/resolve
 Content-Type: application/json
 
 {
@@ -112,7 +112,7 @@ Content-Type: application/json
 
 ### Query Active Reaction State
 ```http
-GET /sessions/{session_id}/reactions/active
+GET /api/v1/sessions/{session_id}/reactions/active
 ```
 
 ---

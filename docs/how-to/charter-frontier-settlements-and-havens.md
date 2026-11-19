@@ -77,7 +77,7 @@ curl -X GET http://localhost:8004/settlements/8d3e1a90-410a-49bf-9dfb-12d4a25032
   -H "Authorization: Bearer ${TOKEN_PALADIN_GAWAIN}"
 ```
 
-Both direct routes (`/settlements/{id}`) and API v1 aliases (`/api/v1/settlements/{id}`) are supported.
+Settlement routes use the `/api/v1` prefix, for example `/api/v1/settlements/{id}`.
 
 ---
 

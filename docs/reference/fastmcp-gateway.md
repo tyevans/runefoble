@@ -151,8 +151,8 @@ The gateway MCP process serves these routes next to `/mcp` (`mount_tools_registr
 
 | Method | Endpoint | Description |
 |---|---|---|
-| `GET` | `/mcp/tools/dynamic` (alias: `/mcp/tools`) | List all dynamically registered tools and JSON Schemas |
-| `POST` | `/mcp/tools/register` (alias: `/mcp/tools`) | Register a new dynamic tool with parameter validation and SpiceDB authorization. A non-empty declarative `handler` is required; a definition without one returns HTTP 422 and adds no tool. An invalid handler returns HTTP 400 |
+| `GET` | `/mcp/tools/dynamic` | List all dynamically registered tools and JSON Schemas |
+| `POST` | `/mcp/tools/register` | Register a new dynamic tool with parameter validation and SpiceDB authorization. A non-empty declarative `handler` is required; a definition without one returns HTTP 422 and adds no tool. An invalid handler returns HTTP 400 |
 | `GET` | `/mcp/tools/{name}` | Retrieve schema and configuration for a specific dynamic tool |
 | `PUT` | `/mcp/tools/{name}` | Update an existing dynamic tool definition and hot-reload logic |
 | `DELETE` | `/mcp/tools/{tool_name}` | Deregister a dynamic tool and revoke permissions |
