@@ -1,8 +1,8 @@
-"""Autonomous DM Session & Scene Orchestration Engine Facade.
+"""Autonomous DM engine for scene atmosphere, encounter balancing, and NPC tactics.
 
 Empowers The Watcher to autonomously set scene atmospheres, balance and spawn tactical
 encounters with monster tokens, and adjudicate intelligent NPC/monster tactics.
-Orchestrates modular presets, encounters, and tactics domain submodules.
+Callers import presets, encounters, and tactics from their own submodules.
 """
 
 from __future__ import annotations
@@ -15,22 +15,14 @@ from runefoble_events.events import (
     SceneAtmosphereSet,
 )
 from the_watcher.encounters import build_encounter
-from the_watcher.presets import SCENE_PRESETS, build_scene_atmosphere
+from the_watcher.presets import build_scene_atmosphere
 from the_watcher.tactics import adjudicate_npc_turn
 
-__all__ = [
-    "AutonomousDMEngine",
-    "SCENE_PRESETS",
-    "build_scene_atmosphere",
-    "build_encounter",
-    "adjudicate_npc_turn",
-]
+__all__ = ["AutonomousDMEngine"]
 
 
 class AutonomousDMEngine:
     """Core autonomous game master engine for scene atmosphere, encounter balancing, and NPC tactics."""
-
-    SCENE_PRESETS: dict[str, dict[str, Any]] = SCENE_PRESETS
 
     def set_scene(
         self,

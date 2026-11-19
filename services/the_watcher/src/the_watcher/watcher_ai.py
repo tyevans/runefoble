@@ -13,7 +13,10 @@ from the_watcher.disambiguation import DisambiguationEngine
 from the_watcher.intent.reactions import ReactionIntent, parse_reaction_intent
 from the_watcher.models import IntentResult, StandInRecapResponse
 from the_watcher.movement_parser import SpeechIntentParser
-from the_watcher.stand_in_ai import StandInAIEngine
+from the_watcher.spatial import calculate_bounded_destination
+from the_watcher.stand_in_guardrails import evaluate_tactical_guardrails
+from the_watcher.stand_in_persona import apply_penalty_modifiers
+from the_watcher.stand_in_recap import generate_absentee_recap
 
 __all__ = [
     "IntentResult",
@@ -30,7 +33,6 @@ class TheWatcherEngine:
 
     def __init__(self) -> None:
         self._movement_parser = SpeechIntentParser()
-        self._stand_in_ai = StandInAIEngine()
         self._disambiguation = DisambiguationEngine()
         self._compound_actions = CompoundActionEngine(self._movement_parser)
 
@@ -52,7 +54,7 @@ class TheWatcherEngine:
         rows: int = 12,
     ) -> tuple[int, int]:
         """Calculate target coordinates clamped strictly within tactical grid bounds."""
-        return self._movement_parser.calculate_bounded_destination(
+        return calculate_bounded_destination(
             from_x=from_x,
             from_y=from_y,
             dx=dx,
@@ -80,14 +82,27 @@ class TheWatcherEngine:
         personality_traits: list[str] | None = None,
         guardrails: StandInGuardrailPolicy | None = None,
     ) -> StandInAction:
-        """Simulate an action and dialogue for an absent player's character."""
-        return self._stand_in_ai.generate_stand_in_action(
+        """Simulate an action and dialogue for an absent player's character.
+
+        Tactical guardrails apply first. Persona and penalty simulation apply when none fires.
+        """
+        guardrail_action = evaluate_tactical_guardrails(
             character_name=character_name,
             character_class=character_class,
             penalties=penalties,
             scene_context=scene_context,
             personality_traits=personality_traits,
             guardrails=guardrails,
+        )
+        if guardrail_action is not None:
+            return guardrail_action
+
+        return apply_penalty_modifiers(
+            character_name=character_name,
+            character_class=character_class,
+            penalties=penalties,
+            scene_context=scene_context,
+            personality_traits=personality_traits,
         )
 
     def generate_stand_in_recap(
@@ -97,7 +112,7 @@ class TheWatcherEngine:
         penalties: list[str] | None = None,
     ) -> dict[str, Any]:
         """Generate a humorous absentee session recap for a returning player."""
-        return self._stand_in_ai.generate_stand_in_recap(
+        return generate_absentee_recap(
             character_name=character_name,
             actions=actions,
             penalties=penalties,
