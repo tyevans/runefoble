@@ -29,11 +29,7 @@ spec:
             {{- include "runefoble.secretEnv" (dict "root" $ "name" "RUNEFOBLE_SPICEDB_PRESHARED_KEY" "key" "spicedb-preshared-key") | nindent 12 }}
             {{- include "runefoble.zitadelServiceEnv" $ | nindent 12 }}
             {{- include "runefoble.serviceUrlEnv" (dict "root" $ "consumer" "gateway-mcp") | trim | nindent 12 }}
-          readinessProbe:
-            tcpSocket:
-              port: {{ $mcp.port }}
-            initialDelaySeconds: 5
-            periodSeconds: 10
+          {{- include "runefoble.probes" $mcp | nindent 10 }}
 ---
 apiVersion: v1
 kind: Service

@@ -88,23 +88,7 @@ spec:
                   name: {{ . }}
                   key: api-key
             {{- end }}
-          {{- with $svc.readinessPath }}
-          readinessProbe:
-            httpGet:
-              path: {{ . }}
-              port: {{ $svc.port }}
-            initialDelaySeconds: 5
-            periodSeconds: 10
-            timeoutSeconds: {{ $svc.readinessTimeoutSeconds | default 1 }}
-          {{- end }}
-          {{- with $svc.livenessPath }}
-          livenessProbe:
-            httpGet:
-              path: {{ . }}
-              port: {{ $svc.port }}
-            initialDelaySeconds: 5
-            periodSeconds: 10
-          {{- end }}
+          {{- include "runefoble.probes" $svc | nindent 10 }}
           {{- if $useModelCache }}
           volumeMounts:
             - name: model-cache

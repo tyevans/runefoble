@@ -1,4 +1,4 @@
-"""Readiness gate: a service is ready only after each dependency answered once (TASK-0929).
+"""Readiness gate: a service is ready only after each dependency answered once (TASK-0929, 0930).
 
 A Kubernetes readiness probe calls `GET /readyz`. The gate runs one probe for each
 dependency that has not answered yet (for example the event store, SpiceDB and Redis).
@@ -8,6 +8,9 @@ check.
 
 A failed probe is logged at warning level with the dependency name and the error, and
 `/readyz` answers 503 with the same detail (ADR-0015: failures are visible).
+
+`event_store_probe` and `redis_probe` are the shared probes. A service registers only the
+dependencies that it uses (`runefoble_auth.readiness.spicedb_probe` for SpiceDB).
 """
 
 from __future__ import annotations
@@ -15,15 +18,44 @@ from __future__ import annotations
 import asyncio
 import logging
 from collections.abc import Awaitable, Callable, Mapping
+from uuid import UUID
 
-from fastapi import FastAPI
+from fastapi import APIRouter, FastAPI, Request
 from fastapi.responses import JSONResponse
+
+from runefoble_platform.event_sourcing import get_event_store
+from runefoble_platform.redis_bus import RedisStreamsEventBus
 
 logger = logging.getLogger("runefoble.readiness")
 
 ReadinessProbe = Callable[[], Awaitable[object]]
 
 DEFAULT_PROBE_TIMEOUT_S = 2.5
+
+_PROBE_EVENT_ID = UUID(int=0)
+
+
+def event_store_probe() -> ReadinessProbe:
+    """Probe the event store. The first call opens the pool and runs the schema check.
+
+    The probe reads the store through `get_event_store` on each call, so it uses the same
+    store as the routes.
+    """
+
+    async def probe() -> None:
+        await get_event_store().event_exists(_PROBE_EVENT_ID)
+
+    return probe
+
+
+def redis_probe(bus: Callable[[], RedisStreamsEventBus]) -> ReadinessProbe:
+    """Probe Redis with one PING on the bus that `bus()` returns (the service event bus)."""
+
+    async def probe() -> None:
+        client = await bus().get_client()
+        await client.ping()
+
+    return probe
 
 
 class ReadinessGate:
@@ -57,10 +89,23 @@ class ReadinessGate:
         return None
 
 
-def add_readiness_route(app: FastAPI, service: str, gate: ReadinessGate) -> None:
-    """Add `GET /readyz`: 200 when every dependency answered once, else 503 with the failures."""
+def set_readiness_gate(app: FastAPI, gate: ReadinessGate) -> None:
+    """Make `gate` the gate that `/readyz` of `app` uses. Call it at the start of the lifespan.
 
-    async def readiness() -> JSONResponse:
+    A new lifespan gets a new gate, so no dependency counts as answered before the app starts.
+    """
+    app.state.readiness_gate = gate
+
+
+def add_readiness_route(app: FastAPI | APIRouter, service: str) -> None:
+    """Add `GET /readyz`: 200 when every dependency answered once, else 503 with the failures.
+
+    `app` is the app or the router that owns the health routes of the service. The route uses
+    the gate that the lifespan set with `set_readiness_gate`.
+    """
+
+    async def readiness(request: Request) -> JSONResponse:
+        gate: ReadinessGate = request.app.state.readiness_gate
         failures = await gate.pending()
         if failures:
             return JSONResponse(
@@ -83,4 +128,7 @@ __all__ = [
     "ReadinessGate",
     "ReadinessProbe",
     "add_readiness_route",
+    "event_store_probe",
+    "redis_probe",
+    "set_readiness_gate",
 ]
