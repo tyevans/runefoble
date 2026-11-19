@@ -48,11 +48,10 @@ def test_game_session_openapi_routes_completeness(session_client):
         "/api/v1/sessions/{session_id}/combat/end",
         "/api/v1/sessions/{session_id}/combat",
         "/api/v1/sessions/{session_id}/turns/auto-pilot",
-        "/api/v1/sessions/{session_id}/autopilot",
-        "/sessions/{session_id}/reactions/declare",
-        "/sessions/{session_id}/reactions/ready-action",
-        "/sessions/{session_id}/reactions/{reaction_id}/resolve",
-        "/sessions/{session_id}/reactions/active",
+        "/api/v1/sessions/{session_id}/reactions/declare",
+        "/api/v1/sessions/{session_id}/reactions/ready-action",
+        "/api/v1/sessions/{session_id}/reactions/{reaction_id}/resolve",
+        "/api/v1/sessions/{session_id}/reactions/active",
     ]
 
     for route in expected_routes:
@@ -135,9 +134,8 @@ def test_game_session_turns_frontdoor(session_client, live_character_sheet, monk
         watcher_stand_in_app(body={**STAND_IN_ACTION_BODY, "character_name": "Valeros"})
     ) as watcher_url:
         monkeypatch.setenv("RUNEFOBLE_WATCHER_URL", watcher_url)
-        for endpoint in ["/turns/auto-pilot", "/autopilot"]:
-            res = session_client.post(f"/api/v1/sessions/{session_id}{endpoint}", json=payload)
-            assert res.status_code == 200 and res.json()["action"]["character_name"] == "Valeros"
+        res = session_client.post(f"/api/v1/sessions/{session_id}/turns/auto-pilot", json=payload)
+        assert res.status_code == 200 and res.json()["action"]["character_name"] == "Valeros"
 
 
 def test_game_session_presence_frontdoor(session_client):

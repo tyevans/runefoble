@@ -35,7 +35,7 @@ def _bounty_body() -> dict[str, object]:
 
 def test_anonymous_bounty_post_returns_401(client: TestClient) -> None:
     _, session_id = create_campaign_session(client, "owner_bounty_anon")
-    res = client.post(f"/sessions/{session_id}/contracts/bounties", json=_bounty_body())
+    res = client.post(f"/api/v1/sessions/{session_id}/contracts/bounties", json=_bounty_body())
     assert res.status_code == 401
 
 
@@ -45,7 +45,7 @@ def test_player_posts_bounty_and_outsider_cannot_complete(client: TestClient) ->
     invite_and_join(client, campaign_id, owner, player, "player")
 
     posted = client.post(
-        f"/sessions/{session_id}/contracts/bounties",
+        f"/api/v1/sessions/{session_id}/contracts/bounties",
         json={**_bounty_body(), "campaign_id": campaign_id},
         headers=_auth(player),
     )
@@ -53,7 +53,7 @@ def test_player_posts_bounty_and_outsider_cannot_complete(client: TestClient) ->
     bounty_id = posted.json()["bounty"]["bounty_id"]
 
     complete = client.post(
-        f"/sessions/{session_id}/contracts/bounties/{bounty_id}/complete",
+        f"/api/v1/sessions/{session_id}/contracts/bounties/{bounty_id}/complete",
         json={"proof": "Staff"},
         headers=_auth(outsider),
     )

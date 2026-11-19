@@ -34,7 +34,7 @@ async def test_spicedb_zanzibar_permission_enforcement(
 
     # 1. Intruder cannot post bounty in session without participate permission
     res_unauth_post = client.post(
-        f"/sessions/{session_id}/contracts/bounties",
+        f"/api/v1/sessions/{session_id}/contracts/bounties",
         json={
             "title": "Unauthorized Bounty",
             "target_name": "Cave Troll",
@@ -59,14 +59,14 @@ async def test_spicedb_zanzibar_permission_enforcement(
 
     # 2. Intruder cannot view without view/observe permissions
     res_unauth_view = client.get(
-        f"/sessions/{session_id}/contracts/bounties",
+        f"/api/v1/sessions/{session_id}/contracts/bounties",
         headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(unauthorized_user)}"},
     )
     assert res_unauth_view.status_code == 403
 
     # 3. Intruder cannot claim bounty without participate/claim permissions
     res_unauth_claim = client.post(
-        f"/sessions/{session_id}/contracts/bounties/{bounty_id}/claim",
+        f"/api/v1/sessions/{session_id}/contracts/bounties/{bounty_id}/claim",
         json={"claimant_party_name": "Rogue Band"},
         headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(unauthorized_user)}"},
     )
@@ -74,7 +74,7 @@ async def test_spicedb_zanzibar_permission_enforcement(
 
     # Claimant is a player and claims the bounty
     res_claim = client.post(
-        f"/sessions/{session_id}/contracts/bounties/{bounty_id}/claim",
+        f"/api/v1/sessions/{session_id}/contracts/bounties/{bounty_id}/claim",
         json={"claimant_party_name": "Drake's Rangers"},
         headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(claimant_id)}"},
     )
@@ -82,7 +82,7 @@ async def test_spicedb_zanzibar_permission_enforcement(
 
     # 4. Intruder cannot complete / disburse escrow
     res_unauth_comp = client.post(
-        f"/sessions/{session_id}/contracts/bounties/{bounty_id}/complete",
+        f"/api/v1/sessions/{session_id}/contracts/bounties/{bounty_id}/complete",
         json={"proof": "Faked Goblin Staff"},
         headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(unauthorized_user)}"},
     )

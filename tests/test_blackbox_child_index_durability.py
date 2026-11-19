@@ -58,6 +58,6 @@ async def test_bounty_list_answers_503_when_the_store_is_unreachable(
     monkeypatch.setattr(get_event_store(), "read_stream", _unreachable)
 
     listed = session_client.get(
-        f"/sessions/{session_id}/contracts/bounties", headers=_headers(poster)
+        f"/api/v1/sessions/{session_id}/contracts/bounties", headers=_headers(poster)
     )
     assert listed.status_code == 503, listed.text

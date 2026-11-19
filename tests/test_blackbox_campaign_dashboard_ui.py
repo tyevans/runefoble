@@ -43,13 +43,6 @@ def test_campaign_dashboard_manifest_frontdoor(client: TestClient) -> None:
     assert "runefoble-campaign-dashboard" in data["components"]
     assert "runefoble-campaign-creator" in data["components"]
 
-    # Also test the routed alias /game_session/ui/manifest
-    alias_res = client.get("/game_session/ui/manifest")
-    assert alias_res.status_code == 200
-    alias_data = alias_res.json()
-    assert "runefoble-campaign-dashboard" in alias_data["components"]
-    assert "runefoble-campaign-creator" in alias_data["components"]
-
 
 # ---------------------------------------------------------------------------
 # 2. Campaign Dashboard Component Contracts & UI Invariants

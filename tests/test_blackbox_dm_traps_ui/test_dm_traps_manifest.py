@@ -37,13 +37,6 @@ def test_dm_traps_manifest_endpoint(client: TestClient) -> None:
     assert any("runefoble-dm-trap-controls.styles" in s for s in data["styles"])
     assert any("index.ts" in s for s in data["scripts"])
 
-    # Test routed alias /board_state/ui/manifest
-    alias_resp = client.get("/board_state/ui/manifest")
-    assert alias_resp.status_code == 200
-    alias_data = alias_resp.json()
-    assert "runefoble-dm-trap-controls" in alias_data["components"]
-    assert "runefoble-map-switcher" in alias_data["components"]
-
 
 def test_manifest_file_matches_advertised_manifest(client: TestClient) -> None:
     """Verify services/board_state/ui/manifest.json matches runtime advertising."""

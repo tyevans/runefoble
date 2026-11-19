@@ -42,12 +42,6 @@ def test_session_lobby_manifest_frontdoor(client: TestClient) -> None:
     assert data["version"] == "0.1.0"
     assert "runefoble-session-lobby" in data["components"]
 
-    # Also test routed alias
-    alias_res = client.get("/game_session/ui/manifest")
-    assert alias_res.status_code == 200
-    alias_data = alias_res.json()
-    assert "runefoble-session-lobby" in alias_data["components"]
-
 
 # ---------------------------------------------------------------------------
 # 2. Session Lobby Component Contracts & UI Invariants

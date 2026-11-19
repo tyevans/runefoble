@@ -39,7 +39,7 @@ async def test_blackbox_dynamic_mcp_tool_registration_and_execution(
         "metadata": {"author": "Alex (Modder)", "version": "1.0.0"},
     }
 
-    reg_resp = tools_client.post("/mcp/tools", json=tool_payload)
+    reg_resp = tools_client.post("/mcp/tools/register", json=tool_payload)
     assert reg_resp.status_code == 200, reg_resp.text
     assert reg_resp.json()["status"] == "registered"
 
@@ -71,7 +71,7 @@ async def test_blackbox_dynamic_mcp_tool_registration_and_execution(
     assert res_data["result"]["reduced_by"] == 20
 
     # Listing dynamic tools endpoint
-    list_resp = tools_client.get("/mcp/tools")
+    list_resp = tools_client.get("/mcp/tools/dynamic")
     assert list_resp.status_code == 200
     tool_names = [t["name"] for t in list_resp.json()["tools"]]
     assert tool_name in tool_names
@@ -93,7 +93,7 @@ def test_blackbox_dynamic_mcp_handler_rejection_security(
             "parameters": {"type": "object", "properties": {}},
             "handler": {"out": {"$expr": expression}},
         }
-        resp = tools_client.post("/mcp/tools", json=payload)
+        resp = tools_client.post("/mcp/tools/register", json=payload)
         assert resp.status_code == 400, f"Expected rejection for {name}"
         assert listed_tools_sync(mcp_endpoint).get(name) is None
 
@@ -113,7 +113,7 @@ def test_blackbox_dynamic_mcp_tool_lifecycle(tools_client: httpx.Client, mcp_end
     }
 
     # Register tool
-    reg = tools_client.post("/mcp/tools", json=initial_payload)
+    reg = tools_client.post("/mcp/tools/register", json=initial_payload)
     assert reg.status_code == 200
     assert listed_tools_sync(mcp_endpoint).get(tool_name) is not None
 

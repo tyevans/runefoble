@@ -67,7 +67,7 @@ async def test_regional_unrest_progression_and_economic_friction(client: TestCli
 
     for node, a_str, d_str in [("Gate", 40, 30), ("Square", 50, 35), ("Keep", 60, 40)]:
         client.post(
-            "/the-watcher/factions/skirmish/simulate",
+            "/api/v1/factions/skirmish/simulate",
             json={
                 "campaign_id": camp_id,
                 "region_id": region_id,
@@ -80,7 +80,7 @@ async def test_regional_unrest_progression_and_economic_friction(client: TestCli
         )
 
     res = client.get(
-        f"/the-watcher/regions/{region_id}/unrest?campaign_id={camp_id}",
+        f"/api/v1/regions/{region_id}/unrest?campaign_id={camp_id}",
         headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_user)}"},
     )
     assert res.status_code == 200

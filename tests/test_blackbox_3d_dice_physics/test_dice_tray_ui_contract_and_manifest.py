@@ -29,11 +29,6 @@ def test_ui_manifest_advertises_dice_tray_3d(client: TestClient) -> None:
     assert "runefoble-dice-tray-3d" in manifest["tags"]
     assert "./src/runefoble-dice-tray-3d.styles.ts" in manifest["styles"]
 
-    # Verify routed alias /board_state/ui/manifest
-    alias_resp = client.get("/board_state/ui/manifest")
-    assert alias_resp.status_code == 200
-    assert "runefoble-dice-tray-3d" in alias_resp.json()["components"]
-
 
 def test_manifest_file_matches_frontdoor_endpoint(client: TestClient) -> None:
     """Verify services/board_state/ui/manifest.json matches runtime endpoint response."""

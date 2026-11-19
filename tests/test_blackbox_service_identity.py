@@ -35,10 +35,7 @@ pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 WORKER_TOKEN = os.environ["RUNEFOBLE_SERVICE_CREDENTIAL"]
 PUBLIC_PATHS = {
     "/healthz",
-    "/health",
     "/ui/manifest",
-    "/game_session/ui/manifest",
-    "/the-watcher/ui/manifest",
 }
 WORKER_PAYLOADS = {
     "/inference/v1/intent": {

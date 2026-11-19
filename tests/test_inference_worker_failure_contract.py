@@ -257,7 +257,7 @@ async def test_watcher_speech_surfaces_worker_503(use_worker_backend, monkeypatc
         async with AsyncClient(
             transport=ASGITransport(app=watcher_app), base_url="http://test", headers=WATCHER_AUTH
         ) as ac:
-            resp = await ac.post("/api/v1/watcher/intent", json=speech_payload)
+            resp = await ac.post("/api/v1/watcher/transcribe-and-act", json=speech_payload)
 
     assert resp.status_code == 503
     assert error_fields(resp.json()["detail"]) == {
@@ -284,7 +284,7 @@ async def test_watcher_speech_unreachable_worker_is_503_not_template(monkeypatch
         async with AsyncClient(
             transport=ASGITransport(app=watcher_app), base_url="http://test", headers=WATCHER_AUTH
         ) as ac:
-            resp = await ac.post("/api/v1/watcher/intent", json=speech_payload)
+            resp = await ac.post("/api/v1/watcher/transcribe-and-act", json=speech_payload)
 
     assert resp.status_code == 503
     assert error_fields(resp.json()["detail"]) == {

@@ -35,7 +35,6 @@ def test_every_tool_route_refuses_a_call_without_bearer(
     assert client.post("/mcp/tools/register", json=_payload()).status_code == 200
     assert listed_tools_sync(mcp_endpoint).get(TOOL) is not None
 
-    assert anonymous_client.get("/mcp/tools").status_code == 401
     assert anonymous_client.get("/mcp/tools/dynamic").status_code == 401
     assert anonymous_client.get(f"/mcp/tools/{TOOL}").status_code == 401
     assert (

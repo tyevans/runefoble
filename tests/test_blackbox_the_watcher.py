@@ -163,7 +163,7 @@ async def test_blackbox_intent_endpoint_attack_and_spell(
     ) as client:
         # Attack
         resp_attack = await client.post(
-            "/api/v1/watcher/intent",
+            "/api/v1/watcher/transcribe-and-act",
             json={
                 "speaker_id": "spk-3",
                 "speaker_name": "Valeros",
@@ -225,7 +225,7 @@ async def test_blackbox_skill_check_and_dice_roll_frontdoors(
 
         # Dice roll
         resp_roll = await client.post(
-            "/api/v1/watcher/intent",
+            "/api/v1/watcher/transcribe-and-act",
             json={
                 "speaker_id": "spk-6",
                 "speaker_name": "Ezren",

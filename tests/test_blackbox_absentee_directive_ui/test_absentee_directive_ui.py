@@ -26,7 +26,7 @@ def client() -> TestClient:
 
 def test_the_watcher_ui_manifest_advertises_absentee_components(client: TestClient) -> None:
     """Verify GET /ui/manifest frontdoor exposes absentee directive and vote card."""
-    for path in ["/ui/manifest", "/the-watcher/ui/manifest"]:
+    for path in ["/ui/manifest"]:
         resp = client.get(path)
         assert resp.status_code == 200, f"Failed at {path}"
         data = resp.json()

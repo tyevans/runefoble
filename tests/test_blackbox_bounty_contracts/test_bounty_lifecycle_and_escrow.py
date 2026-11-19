@@ -36,7 +36,7 @@ async def test_bounty_lifecycle_claim_and_complete_with_escrow(
 
     # 1. Post bounty with 600 gold and healing elixir in escrow
     res_post = client.post(
-        f"/sessions/{session_id}/contracts/bounties",
+        f"/api/v1/sessions/{session_id}/contracts/bounties",
         json={
             "title": "Harvest Basilisk Venom",
             "description": "Retrieve 3 vials of fresh venom from the Petrified Vale.",
@@ -53,7 +53,7 @@ async def test_bounty_lifecycle_claim_and_complete_with_escrow(
 
     # 2. Prevent creator from claiming own bounty
     res_self = client.post(
-        f"/sessions/{session_id}/contracts/bounties/{bounty_id}/claim",
+        f"/api/v1/sessions/{session_id}/contracts/bounties/{bounty_id}/claim",
         json={"claimant_campaign_id": claimant_camp, "claimant_party_name": "Self Claim"},
         headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(creator_id)}"},
     )
@@ -62,7 +62,7 @@ async def test_bounty_lifecycle_claim_and_complete_with_escrow(
 
     # 3. Claimant claims bounty
     res_claim = client.post(
-        f"/sessions/{session_id}/contracts/bounties/{bounty_id}/claim",
+        f"/api/v1/sessions/{session_id}/contracts/bounties/{bounty_id}/claim",
         json={
             "claimant_campaign_id": claimant_camp,
             "claimant_party_name": "The Emerald Vanguard",
@@ -78,7 +78,7 @@ async def test_bounty_lifecycle_claim_and_complete_with_escrow(
 
     # Cannot claim again
     res_double = client.post(
-        f"/sessions/{session_id}/contracts/bounties/{bounty_id}/claim",
+        f"/api/v1/sessions/{session_id}/contracts/bounties/{bounty_id}/claim",
         json={"claimant_campaign_id": claimant_camp, "claimant_party_name": "Other Party"},
         headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('another_user')}"},
     )
@@ -86,7 +86,7 @@ async def test_bounty_lifecycle_claim_and_complete_with_escrow(
 
     # 4. Submit proof and complete bounty to disburse escrow
     res_complete = client.post(
-        f"/sessions/{session_id}/contracts/bounties/{bounty_id}/complete",
+        f"/api/v1/sessions/{session_id}/contracts/bounties/{bounty_id}/complete",
         json={
             "proof": "Delivered 3 sealed vials of basilisk venom to Fort Rowan.",
             "notes": "Verified by Outpost Alchemist.",

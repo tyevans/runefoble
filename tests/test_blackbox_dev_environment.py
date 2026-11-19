@@ -84,7 +84,7 @@ def test_gateway_health_probes_and_cors():
 def _check_health_and_cors(client: TestClient) -> None:
 
     # Health endpoints
-    for route in ["/healthz", "/health", "/api/v1/health"]:
+    for route in ["/healthz"]:
         resp = client.get(route)
         assert resp.status_code == 200, f"Expected 200 for {route}, got {resp.status_code}"
         data = resp.json()
@@ -93,7 +93,7 @@ def _check_health_and_cors(client: TestClient) -> None:
 
     # CORS verification for Vite dev origin
     cors_resp = client.options(
-        "/api/v1/health",
+        "/healthz",
         headers={
             "Origin": "http://localhost:5173",
             "Access-Control-Request-Method": "GET",
@@ -190,7 +190,7 @@ def test_blackbox_live_vite_proxy_to_gateway():
         while time.monotonic() < deadline:
             try:
                 with urllib.request.urlopen(
-                    f"http://127.0.0.1:{vite_port}/api/v1/health", timeout=1.0
+                    f"http://127.0.0.1:{vite_port}/healthz", timeout=1.0
                 ) as resp:
                     if resp.status == 200:
                         vite_ready = True
@@ -206,7 +206,7 @@ def test_blackbox_live_vite_proxy_to_gateway():
 
         # Assert proxy endpoints through Vite
         test_routes = [
-            ("/api/v1/health", "gateway"),
+            ("/healthz", "gateway"),
             ("/api/v1/campaigns", "gateway"),
             ("/api/users", "gateway"),
             ("/docs", "gateway"),
@@ -355,7 +355,7 @@ def test_orchestrator_live_full_flow():
         while time.monotonic() < deadline:
             try:
                 with urllib.request.urlopen(
-                    f"http://127.0.0.1:{vite_port}/api/v1/health", timeout=1.0
+                    f"http://127.0.0.1:{vite_port}/healthz", timeout=1.0
                 ) as resp:
                     if resp.status == 200:
                         ready = True

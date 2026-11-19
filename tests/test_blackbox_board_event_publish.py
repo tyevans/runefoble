@@ -67,7 +67,7 @@ def test_aoe_placement_publishes_template_placed_event(
     _create_board(client, board_id, board_campaign)
 
     res = client.post(
-        f"/api/v1/boards/{board_id}/aoe",
+        f"/api/v1/boards/{board_id}/aoe/place",
         json={
             "shape": "sphere",
             "origin_x": 4,
@@ -94,7 +94,7 @@ def test_uvtt_import_publishes_every_uncommitted_event_in_order(
     file_bytes = json.dumps(uvtt_data).encode("utf-8")
 
     res = client.post(
-        f"/api/v1/board/{board_id}/import/uvtt",
+        f"/api/v1/boards/{board_id}/import/uvtt",
         files={"file": ("crypt_dungeon.dd2vtt", file_bytes, "application/json")},
     )
     assert res.status_code == 200, res.text

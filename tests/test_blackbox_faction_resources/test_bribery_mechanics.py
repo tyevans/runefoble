@@ -24,7 +24,7 @@ async def test_frontdoor_bribery_resolution_mechanics(client: TestClient):
     fid = f"fact-{uuid4().hex[:8]}"
 
     client.post(
-        f"/factions/{fid}/resources/adjust",
+        f"/api/v1/factions/{fid}/resources/adjust",
         json={"treasury_delta": 400, "campaign_id": camp_id},
         headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_user)}"},
     )
@@ -39,7 +39,7 @@ async def test_frontdoor_bribery_resolution_mechanics(client: TestClient):
         "campaign_id": camp_id,
     }
     bribe_res = client.post(
-        f"/factions/{fid}/bribery/resolve",
+        f"/api/v1/factions/{fid}/bribery/resolve",
         json=bribe_payload,
         headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_user)}"},
     )
@@ -57,7 +57,7 @@ async def test_frontdoor_bribery_resolution_mechanics(client: TestClient):
         "campaign_id": camp_id,
     }
     c_res = client.post(
-        f"/factions/{fid}/bribery/resolve",
+        f"/api/v1/factions/{fid}/bribery/resolve",
         json=counter_payload,
         headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_user)}"},
     )
@@ -65,7 +65,7 @@ async def test_frontdoor_bribery_resolution_mechanics(client: TestClient):
 
     # 3. Critical success on natural 20
     crit = client.post(
-        f"/factions/{fid}/bribery/resolve",
+        f"/api/v1/factions/{fid}/bribery/resolve",
         json={
             "target_name": "Judge",
             "target_role": "judge",
@@ -79,7 +79,7 @@ async def test_frontdoor_bribery_resolution_mechanics(client: TestClient):
 
     # 4. Critical failure on natural 1
     fail = client.post(
-        f"/factions/{fid}/bribery/resolve",
+        f"/api/v1/factions/{fid}/bribery/resolve",
         json={
             "target_name": "Guard",
             "target_role": "guard",
@@ -93,7 +93,7 @@ async def test_frontdoor_bribery_resolution_mechanics(client: TestClient):
 
     # 5. Insufficient treasury check
     broke = client.post(
-        f"/factions/{fid}/bribery/resolve",
+        f"/api/v1/factions/{fid}/bribery/resolve",
         json={"target_name": "Guildmaster", "bribe_amount": 5000, "campaign_id": camp_id},
         headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_user)}"},
     )
@@ -107,7 +107,7 @@ async def test_bribery_unauthorized_access(client: TestClient):
     fid = f"fact-{uuid4().hex[:8]}"
 
     res = client.post(
-        f"/factions/{fid}/bribery/resolve",
+        f"/api/v1/factions/{fid}/bribery/resolve",
         json={"target_name": "Guard Captain", "bribe_amount": 50, "campaign_id": camp_id},
         headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(player_user)}"},
     )

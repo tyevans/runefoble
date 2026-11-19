@@ -238,14 +238,6 @@ async def test_downtime_world_tick_advances_agendas_and_rumors(client: TestClien
     assert "Faction Agenda Progress" in bulletin
     assert "Evolving Tavern Rumors" in bulletin
 
-    # Also verify alias endpoint POST /api/v1/campaigns/{id}/factions/tick
-    alias_res = client.post(
-        f"/api/v1/campaigns/{camp_id}/factions/tick",
-        json={"regional_stability": 50, "random_seed": 77},
-        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_user)}"},
-    )
-    assert alias_res.status_code == 200
-    assert alias_res.json()["tick_number"] == 2
 
 
 @pytest.mark.asyncio

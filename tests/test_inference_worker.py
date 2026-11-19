@@ -39,7 +39,7 @@ async def test_health_endpoint():
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test", headers=WORKER_AUTH
     ) as ac:
-        resp = await ac.get("/health")
+        resp = await ac.get("/healthz")
         assert resp.status_code == 200
         data = resp.json()
         assert data["status"] == "healthy"

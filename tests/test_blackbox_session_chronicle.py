@@ -91,7 +91,7 @@ def _absent_player_with_stand_in_turn(
     with serve_watcher_double(watcher_stand_in_app(body=STAND_IN_ACTION_BODY)) as watcher_url:
         monkeypatch.setenv("RUNEFOBLE_WATCHER_URL", watcher_url)
         turn = httpx.post(
-            f"{upstream}/api/v1/sessions/{session_id}/autopilot",
+            f"{upstream}/api/v1/sessions/{session_id}/turns/auto-pilot",
             json={"penalties": ["drunk"]},
             headers=owner,
             timeout=10.0,

@@ -39,7 +39,7 @@ async def test_blackbox_upgrade_settlement_facilities(
 
     # Charter settlement
     charter_res = client.post(
-        "/settlements",
+        "/api/v1/settlements",
         json={
             "name": "High Crag Stronghold",
             "shared_world_id": world_id,
@@ -53,7 +53,7 @@ async def test_blackbox_upgrade_settlement_facilities(
 
     # The founder funds the haven treasury
     funded = client.post(
-        f"/settlements/{sid}/deposit",
+        f"/api/v1/settlements/{sid}/deposit",
         json={"gold": 1000, "materials": {"timber": 100, "stone": 100}},
         headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(user_id)}"},
     )
@@ -61,7 +61,7 @@ async def test_blackbox_upgrade_settlement_facilities(
 
     # Upgrade workshop: the table cost (100 gold, 20 timber) leaves the treasury
     up_res = client.post(
-        f"/settlements/{sid}/upgrade",
+        f"/api/v1/settlements/{sid}/upgrade",
         json={
             "facility_id": "workshop",
             "contributing_campaign_id": camp_a,
@@ -77,7 +77,7 @@ async def test_blackbox_upgrade_settlement_facilities(
 
     # A client-set cost is refused. The facility does not change.
     refused = client.post(
-        f"/settlements/{sid}/upgrade",
+        f"/api/v1/settlements/{sid}/upgrade",
         json={"facility_id": "fortifications", "gold_spent": 100},
         headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(user_id)}"},
     )
@@ -85,7 +85,7 @@ async def test_blackbox_upgrade_settlement_facilities(
 
     # Upgrade fortifications -> improves defense
     fort_res = client.post(
-        f"/settlements/{sid}/upgrade",
+        f"/api/v1/settlements/{sid}/upgrade",
         json={
             "facility_id": "fortifications",
             "contributing_campaign_id": camp_a,
@@ -122,7 +122,7 @@ async def test_blackbox_claim_haven_rest_boon(
     await spicedb.write_relationship("campaign", camp_id, "player", "user", user_id)
 
     charter_res = client.post(
-        "/settlements",
+        "/api/v1/settlements",
         json={
             "name": "Sanctuary of Light",
             "shared_world_id": world_id,
@@ -133,7 +133,7 @@ async def test_blackbox_claim_haven_rest_boon(
     sid = charter_res.json()["settlement_id"]
 
     boon_res = client.post(
-        f"/settlements/{sid}/claim-boon",
+        f"/api/v1/settlements/{sid}/claim-boon",
         json={"campaign_id": camp_id, "character_id": "char_123", "facility_id": "sanctum"},
         headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(user_id)}"},
     )

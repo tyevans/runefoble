@@ -55,8 +55,8 @@ def test_uvtt_light_mapping_and_radiance_models(board_client: TestClient):
     create_board(board_client, board_id)
     uvtt_data = build_uvtt_with_lights()
 
-    # Frontdoor import via POST /board/{id}/import/uvtt
-    response = board_client.post(f"/board/{board_id}/import/uvtt", json=uvtt_data)
+    # Frontdoor import via POST /api/v1/boards/{id}/import/uvtt
+    response = board_client.post(f"/api/v1/boards/{board_id}/import/uvtt", json=uvtt_data)
     assert response.status_code == 200, response.text
     data = response.json()
 
@@ -89,8 +89,8 @@ def test_uvtt_light_mapping_and_radiance_models(board_client: TestClient):
     assert orb["color_hex"] == "#3366ff"
     assert orb["shadows"] is False
 
-    # Observable public projection via GET /board/{id}/lights
-    get_res = board_client.get(f"/board/{board_id}/lights")
+    # Observable public projection via GET /api/v1/boards/{id}/lights
+    get_res = board_client.get(f"/api/v1/boards/{board_id}/lights")
     assert get_res.status_code == 200
     assert len(get_res.json()["lights"]) == 2
 
@@ -100,7 +100,7 @@ def test_dynamic_light_placement_http(board_client: TestClient):
     board_id = f"board-light-place-{uuid4().hex[:8]}"
     create_board(board_client, board_id)
 
-    # Frontdoor placement: POST /board/{id}/lights
+    # Frontdoor placement: POST /api/v1/boards/{id}/lights
     req_payload = {
         "light_id": "torch_01",
         "x": 7.5,
@@ -112,13 +112,13 @@ def test_dynamic_light_placement_http(board_client: TestClient):
         "intensity": 1.0,
         "shadows": True,
     }
-    resp = board_client.post(f"/board/{board_id}/lights", json=req_payload)
+    resp = board_client.post(f"/api/v1/boards/{board_id}/lights", json=req_payload)
     assert resp.status_code == 200, resp.text
     assert resp.json()["status"] == "success"
     assert resp.json()["light_id"] == "torch_01"
 
     # Verify query projection
-    get_res = board_client.get(f"/board/{board_id}/lights")
+    get_res = board_client.get(f"/api/v1/boards/{board_id}/lights")
     assert get_res.status_code == 200
     lights = get_res.json()["lights"]
     assert any(

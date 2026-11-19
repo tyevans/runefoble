@@ -389,7 +389,7 @@ def test_secret_doors_and_portals_reach_only_the_dm(client: TestClient, board: s
     assert imported.status_code == 200, imported.text
     assert "hidden_vault" in imported.text
 
-    for url in (f"/api/v1/boards/{board}", f"/boards/{board}/doors"):
+    for url in (f"/api/v1/boards/{board}", f"/api/v1/boards/{board}/doors"):
         player = client.get(url, headers=bearer(PLAYER))
         dm = client.get(url, headers=bearer(DM))
         assert player.status_code == 200, player.text
