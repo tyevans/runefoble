@@ -31,10 +31,10 @@ The `<runefoble-session-lobby>` component is vendored in `@runefoble/game-sessio
 | `campaign-id` | `string` | Owning campaign identifier |
 | `session-title` | `string` | Display title for the game session |
 | `current-user-id` | `string` | User ID of the logged-in participant |
-| `participants` | `LobbyParticipant[]` | Array of participant objects with readiness state |
-| `available-characters` | `LobbyCharacterOption[]` | List of owned characters available for selection |
-| `is-dm` | `boolean` | Flag indicating whether current user has GM authority |
-| `can-launch` | `boolean` | Zanzibar-derived permission to launch the session |
+| `participants` (property) | `LobbyParticipant[]` | Array of participant objects with readiness state |
+| `availableCharacters` (property) | `LobbyCharacterOption[]` | List of owned characters available for selection |
+| `is-dm` | `boolean` | The caller holds `campaign.run_session` (server capability reply). Shows the Launch Session control and hides Take a Seat |
+| `can-play` | `boolean` | The caller holds `campaign.play` (server capability reply). With `is-dm` false and no seat for `current-user-id`, the lobby shows Take a Seat (TASK-0889) |
 | `is-loading` | `boolean` | Loading indicator disabling interactive triggers |
 
 ### Readiness Summary
@@ -58,7 +58,7 @@ With no player present, the summary has no fallback count. The pill never counts
   session-title="Session 15: Tomb of the Star-Eater"
   current-user-id="usr-marcus"
   .isDm=${false}
-  .canLaunch=${false}
+  .canPlay=${true}
   .participants=${partyParticipants}
   .availableCharacters=${myCharacters}
 ></runefoble-session-lobby>
@@ -80,6 +80,21 @@ interface SelectCharacterEventDetail {
   character?: LobbyCharacterOption;
 }
 ```
+
+### `take-seat`
+Dispatched when a player clicks "Take a Seat" with a character from the picker (TASK-0889):
+```typescript
+interface TakeSeatEventDetail {
+  sessionId: string;
+  characterId: string;
+  characterName: string;
+  characterClass: string;
+}
+```
+
+The App Shell (`takeLobbySeat` in `frontend/src/app/session-actions.ts`) sends `POST /api/v1/sessions/{session_id}/join` to the gateway with body `{"character_id", "character_name", "character_class"}`. The gateway forwards the bearer and the body. game_session seats the verified caller and checks `session.participate`. A caller outside the campaign gets the owner's `403`. An unreachable game_session gives `503`. On success, the App Shell reads the lobby roster again. On a refusal, the App Shell shows the error message and keeps the roster.
+
+A caller with no character sees "Create a character to take a seat." and a disabled button.
 
 ### `toggle-readiness`
 Dispatched when a player checks or unchecks "Ready to Play":

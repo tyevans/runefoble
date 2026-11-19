@@ -54,3 +54,17 @@ Given Evelyn runs the campaign "Lantern Vigil" and created the session "Lantern 
 When Evelyn opens the lobby of "Lantern Night" and no player has taken a seat
 Then the lobby readiness summary reads "No players have joined"
 ```
+
+## Scenario 5: A Campaign Player Takes a Seat and Becomes Ready
+```gherkin
+Given Evelyn runs the campaign "Lantern Vigil" and created the session "Lantern Night"
+And Mira redeemed Evelyn's player invite to the campaign
+And Mira has the character "Mira Thornwake"
+When Mira opens the lobby of "Lantern Night" and takes a seat with "Mira Thornwake"
+Then "POST /api/v1/sessions/{session_id}/join" is invoked on the gateway
+And the lobby readiness summary reads "0 of 1 players ready"
+When Mira marks herself ready to play
+Then the lobby readiness summary reads "1 of 1 players ready"
+```
+
+The Take a Seat control follows the `play` and `run_session` flags of the campaign capabilities reply. The person who runs the session does not see it and does not take a seat (TASK-0889).

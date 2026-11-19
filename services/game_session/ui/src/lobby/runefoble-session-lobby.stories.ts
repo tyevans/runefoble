@@ -196,3 +196,51 @@ export const DmOnlyNoPlayers: Story = {
     ></runefoble-session-lobby>
   `,
 };
+
+/** TASK-0889: a campaign player with no seat sees Take a Seat and picks a character. */
+export const PlayerUnseated: Story = {
+  render: () => html`
+    <runefoble-session-lobby
+      session-id="sess-star-eater-15"
+      campaign-id="camp-star-eater"
+      session-title="Session 15: Descent into the Sunken Vaults"
+      current-user-id="usr-ezren"
+      .isDm=${false}
+      .canPlay=${true}
+      .participants=${sampleParticipants}
+      .availableCharacters=${sampleCharacters}
+    ></runefoble-session-lobby>
+  `,
+};
+
+/** TASK-0889: a campaign player with no character cannot take a seat yet. */
+export const PlayerUnseatedNoCharacters: Story = {
+  render: () => html`
+    <runefoble-session-lobby
+      session-id="sess-new-lobby-1"
+      campaign-id="camp-frontier"
+      session-title="Frontier Staging Area"
+      current-user-id="usr-ezren"
+      .isDm=${false}
+      .canPlay=${true}
+      .participants=${[]}
+      .availableCharacters=${[]}
+    ></runefoble-session-lobby>
+  `,
+};
+
+/** TASK-0889: a seated player sees the roster and the readiness toggle, not Take a Seat. */
+export const PlayerSeated: Story = {
+  render: () => html`
+    <runefoble-session-lobby
+      session-id="sess-star-eater-15"
+      campaign-id="camp-star-eater"
+      session-title="Session 15: Descent into the Sunken Vaults"
+      current-user-id="usr-marcus"
+      .isDm=${false}
+      .canPlay=${true}
+      .participants=${sampleParticipants}
+      .availableCharacters=${sampleCharacters}
+    ></runefoble-session-lobby>
+  `,
+};

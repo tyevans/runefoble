@@ -41,6 +41,11 @@ def get_session(session_id: str) -> OwnerRoute:
     return OwnerRoute("GET", _session(session_id))
 
 
+def join_session(session_id: str) -> OwnerRoute:
+    """POST: seat the verified caller in the lobby. The owner checks `participate`."""
+    return OwnerRoute("POST", _session(session_id, "join"))
+
+
 def start_encounter(session_id: str) -> OwnerRoute:
     """POST: start combat and record the enemy placements on one event. The owner checks `control`."""
     return OwnerRoute("POST", _session(session_id, "encounters", "start"))
