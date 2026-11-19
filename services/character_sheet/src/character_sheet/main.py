@@ -6,9 +6,12 @@ equipment, and status conditions (such as DM penalties for missed sessions).
 
 from __future__ import annotations
 
+import contextlib
+from collections.abc import AsyncIterator
 from pathlib import Path
 from typing import Any
 
+from character_sheet.audience_status import start_audience_status_consumers
 from character_sheet.crafting_router import router as crafting_router
 from character_sheet.dependencies import (
     STREAM_CHARACTER,
@@ -20,11 +23,12 @@ from character_sheet.dependencies import (
 )
 from character_sheet.router import router
 from character_sheet.wardrobe_router import router as wardrobe_router
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from runefoble_auth.authz_http import install_authz_error_handlers
 from runefoble_platform.aggregate_loading import register_store_unavailable_handlers
 from runefoble_platform.event_publish import event_publish_failures
 from runefoble_platform.event_sourcing import event_store_kind, get_event_store
+from runefoble_platform.stream_consumer import consumer_statuses
 from runefoble_platform.ui_manifest import load_ui_manifest
 
 # Start-up fails when the manifest is missing or invalid. No fallback manifest exists (ADR-0015 4).
@@ -35,11 +39,26 @@ UI_MANIFEST = load_ui_manifest(
 # Build the event store now. A deployed service without a reachable store refuses to start (TASK-0707).
 get_event_store()
 
+
+@contextlib.asynccontextmanager
+async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
+    """Connect the Redis bus, start the audience status consumer, and stop both at shutdown."""
+    bus = await event_bus_provider.connect()
+    consumers = await start_audience_status_consumers(bus)
+    app.state.consumers = {"character_sheet": consumers}
+    try:
+        yield
+    finally:
+        await consumers.stop()
+        await event_bus_provider.close()
+        app.state.consumers = {}
+
+
 app = FastAPI(
     title="Runefoble - Character Sheet Service",
     version="0.1.0",
     description="Character Stats, HP Tracking, Inventory, Equipment, and DM Penalties backed by eventsource-py.",
-    lifespan=event_bus_provider.lifespan,
+    lifespan=_lifespan,
 )
 
 app.include_router(router)
@@ -50,12 +69,13 @@ install_authz_error_handlers(app)
 
 
 @app.get("/healthz")
-async def health_check():
+async def health_check(request: Request):
     return {
         "status": "ok",
         "service": "character_sheet",
         "event_store": event_store_kind(),
         "event_publish_failures": event_publish_failures(),
+        "consumers": consumer_statuses(getattr(request.app.state, "consumers", {})),
     }
 
 
