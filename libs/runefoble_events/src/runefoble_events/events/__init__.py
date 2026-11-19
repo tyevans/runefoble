@@ -174,6 +174,7 @@ from runefoble_events.session import (
     SessionStarted,
     TurnAdvanced,
     TurnStarted,
+    WeatherChanged,
 )
 from runefoble_events.settlement_workers import (
     NPCMoodUpdated,

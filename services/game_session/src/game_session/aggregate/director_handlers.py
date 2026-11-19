@@ -6,7 +6,7 @@ from typing import Any
 
 from eventsource.domain.decorators import handles
 from game_session.models import GameSessionState
-from runefoble_events.events import AtmosphereUpdated, DMOverrideApplied
+from runefoble_events.events import AtmosphereUpdated, DMOverrideApplied, WeatherChanged
 
 
 class DirectorHandlersMixin:
@@ -47,6 +47,20 @@ class DirectorHandlersMixin:
             description=description,
             ambient_audio_prompt=ambient_audio_prompt,
         )
+
+    def apply_weather(self, weather: str, source_proposal_id: str | None) -> None:
+        """Record a weather change from an approved audience modifier."""
+        self.create_event(
+            WeatherChanged,
+            campaign_id=self.state.campaign_id,
+            session_id=self.aggregate_id,
+            weather=weather,
+            source_proposal_id=source_proposal_id,
+        )
+
+    @handles(WeatherChanged)
+    def _on_weather_changed(self, event: WeatherChanged) -> None:
+        self._state = self.state.with_weather(event.weather)
 
     @handles(DMOverrideApplied)
     def _on_dm_override_applied(self, event: DMOverrideApplied) -> None:
