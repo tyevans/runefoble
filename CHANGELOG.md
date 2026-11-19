@@ -1241,6 +1241,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **Documentation & Build Navigation**: Featured the Platform Showcase and Changelog in `zensical.toml` and root documentation landing page (`docs/index.md`), and enhanced `scripts/build_docs.py` to synchronize `CHANGELOG.md` to `docs/changelog.md` during documentation compilation.
 
 ### Fixed
+- The local campaign-lore embedding key placeholder is `not-required`; the OpenAI client refused an empty key, so campaign-lore stopped at start with a keyless local endpoint.
 - The campaign-lore image did not install `runefoble_embeddings`, so the pod crashed at start in Kind. campaign-lore now declares the dependency.
 - The Helm chart loaded a stale SpiceDB schema (8 of 27 definitions), so Kind used an old authorization schema. The chart now carries the service schema, and a test keeps the two equal.
 - The Kind stack starts Zitadel with `--masterkeyFromEnv`. Zitadel publishes its admin PAT to the `zitadel-admin` Secret with no manual step. The SpiceDB schema Job no longer races the datastore migration. `gateway-mcp` reads the SpiceDB preshared key. Postgres allows 300 connections. (TASK-0798)
