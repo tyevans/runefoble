@@ -61,6 +61,17 @@ ROUTES = (
     ),
     ProxyRoute(
         "POST",
+        "/api/v1/soundscape/stems/volume",
+        ("api", "v1", "soundscape", "stems", "volume"),
+        SOUNDSCAPE_SERVICE,
+        name="update_stem_volumes",
+        doc="Set stem channel volumes. The service checks `session.control` or `campaign.run_session`.",
+        reply="bytes",
+        body="raw",
+        principal=True,
+    ),
+    ProxyRoute(
+        "POST",
         "/api/v1/soundscape/duck",
         ("api", "v1", "soundscape", "duck"),
         SOUNDSCAPE_SERVICE,
