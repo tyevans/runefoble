@@ -15,6 +15,13 @@ from board_state.dependencies import get_board, repo
 from board_state.events import save_and_publish
 from board_state.rules.hazards import is_known_hazard
 from runefoble_events.events import AudienceModifierApproved
+from runefoble_platform.audience_modifiers import (
+    approved_modifier,
+    integer_parameter,
+    refusal,
+    require_same_campaign,
+    text_parameter,
+)
 from runefoble_platform.consumer_group import RedisConsumerGroup
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 from runefoble_platform.stream_consumer import StreamConsumer
@@ -25,29 +32,10 @@ AUDIENCE_STREAM = "runefoble.events.audience"
 HAZARD_MODIFIER = "hazard_spawn"
 
 
-class AudienceHazardError(RuntimeError):
-    """Raised when an approved hazard modifier cannot be placed on its board."""
-
-
-def _integer_parameter(parameters: dict[str, Any], name: str, proposal_id: Any) -> int:
-    value = parameters.get(name)
-    if isinstance(value, bool) or not isinstance(value, int):
-        raise AudienceHazardError(
-            f"Approved hazard modifier {proposal_id} needs an integer '{name}' parameter."
-        )
-    return value
-
-
-def _hazard_type_parameter(parameters: dict[str, Any], proposal_id: Any) -> str:
-    value = parameters.get("hazard_type")
-    if not isinstance(value, str) or not value.strip():
-        raise AudienceHazardError(
-            f"Approved hazard modifier {proposal_id} needs a 'hazard_type' parameter."
-        )
+def _hazard_type_parameter(modifier: AudienceModifierApproved) -> str:
+    value = text_parameter(modifier, "hazard_type")
     if not is_known_hazard(value):
-        raise AudienceHazardError(
-            f"Approved hazard modifier {proposal_id} names an unknown hazard type '{value}'."
-        )
+        raise refusal(modifier, f"names an unknown hazard type '{value}'.")
     return value
 
 
@@ -58,24 +46,19 @@ async def apply_audience_hazard_event(event: Any, bus: RedisStreamsEventBus | No
     The board must exist and must belong to the campaign of the modifier. The cell must lie on
     the grid. The cell keeps its elevation and terrain type, and gains the hazard.
     """
-    if not isinstance(event, AudienceModifierApproved):
+    modifier = approved_modifier(event, HAZARD_MODIFIER)
+    if modifier is None:
         return
-    if event.approved is not True or event.modifier_type != HAZARD_MODIFIER:
-        return
-    if event.session_id is None:
-        raise AudienceHazardError(f"Approved hazard modifier {event.proposal_id} has no session.")
-    session_id = str(event.session_id)
-    x = _integer_parameter(event.parameters, "x", event.proposal_id)
-    y = _integer_parameter(event.parameters, "y", event.proposal_id)
-    hazard_type = _hazard_type_parameter(event.parameters, event.proposal_id)
+    if modifier.session_id is None:
+        raise refusal(modifier, "has no session.")
+    session_id = str(modifier.session_id)
+    x = integer_parameter(modifier, "x")
+    y = integer_parameter(modifier, "y")
+    hazard_type = _hazard_type_parameter(modifier)
 
     board = await get_board(session_id)
     owner = await board_campaign_id(session_id)
-    if owner != str(event.campaign_id):
-        raise AudienceHazardError(
-            f"Approved hazard modifier {event.proposal_id} belongs to campaign {event.campaign_id}, "
-            f"not to the campaign of board {session_id}."
-        )
+    require_same_campaign(modifier, owner, f"board {session_id}")
     current = board.get_terrain(x, y)
     board.configure_terrain(
         x=x,

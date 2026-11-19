@@ -12,8 +12,13 @@ from typing import Any
 from uuid import UUID
 
 from game_session.dependencies import repo
-from runefoble_events.events import AudienceModifierApproved
 from runefoble_platform.aggregate_loading import load_if_exists
+from runefoble_platform.audience_modifiers import (
+    approved_modifier,
+    refusal,
+    require_same_campaign,
+    text_parameter,
+)
 from runefoble_platform.consumer_group import RedisConsumerGroup
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 from runefoble_platform.stream_consumer import StreamConsumer, SupervisedStreamConsumers
@@ -25,44 +30,27 @@ AUDIENCE_STREAM = "runefoble.events.audience"
 WEATHER_MODIFIER = "weather_change"
 
 
-class AudienceWeatherError(RuntimeError):
-    """Raised when an approved weather modifier cannot be applied to its session."""
-
-
 async def apply_audience_weather_event(event: Any) -> None:
     """Record the approved weather on the session of the modifier.
 
     A rejected proposal (`approved` is not true) and any other modifier type are ignored.
     A missing weather value or a missing session raises, so the message is dead-lettered.
     """
-    if not isinstance(event, AudienceModifierApproved):
+    modifier = approved_modifier(event, WEATHER_MODIFIER)
+    if modifier is None:
         return
-    if event.approved is not True or event.modifier_type != WEATHER_MODIFIER:
-        return
-    weather = event.parameters.get("weather")
-    if not isinstance(weather, str) or not weather.strip():
-        raise AudienceWeatherError(
-            f"Approved weather modifier {event.proposal_id} has no 'weather' parameter."
-        )
-    if event.session_id is None:
-        raise AudienceWeatherError(f"Approved weather modifier {event.proposal_id} has no session.")
+    weather = text_parameter(modifier, "weather")
+    if modifier.session_id is None:
+        raise refusal(modifier, "has no session.")
     try:
-        session_id = UUID(str(event.session_id))
+        session_id = UUID(str(modifier.session_id))
     except ValueError as exc:
-        raise AudienceWeatherError(
-            f"Approved weather modifier {event.proposal_id} names a session id that is not a UUID."
-        ) from exc
+        raise refusal(modifier, "names a session id that is not a UUID.") from exc
     session = await load_if_exists(repo, session_id)
     if session is None:
-        raise AudienceWeatherError(
-            f"Approved weather modifier {event.proposal_id} names unknown session {session_id}."
-        )
-    if str(session.state.campaign_id) != str(event.campaign_id):
-        raise AudienceWeatherError(
-            f"Approved weather modifier {event.proposal_id} belongs to campaign {event.campaign_id}, "
-            f"not to the campaign of session {session_id}."
-        )
-    session.apply_weather(weather=weather, source_proposal_id=str(event.proposal_id))
+        raise refusal(modifier, f"names unknown session {session_id}.")
+    require_same_campaign(modifier, session.state.campaign_id, f"session {session_id}")
+    session.apply_weather(weather=weather, source_proposal_id=str(modifier.proposal_id))
     await repo.save(session)
 
 
