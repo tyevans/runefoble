@@ -5,8 +5,32 @@ Use this guide to add a gateway route that calls an owning bounded context. The 
 ## Before you start
 
 - The gateway holds no domain state. The owning service holds the state and checks the token.
-- The gateway verifies the caller's bearer token in the route dependencies. Use `require_zanzibar_permission` for object checks.
+- The gateway verifies the caller's bearer token in the route dependencies. A proxy route does not check object permissions. Its owner checks them. See [Permission rule](#permission-rule).
 - A failed upstream call returns an error. Do not return a canned or cached value.
+
+## Permission rule
+
+Every gateway route follows one rule (TASK-0845):
+
+- A **proxy route** verifies the bearer token and forwards it to the owner. The owner checks the object permission. The gateway adds no check. A stranger gets the owner's `403`, and the gateway passes it through unchanged.
+- A **composite route** builds its reply from several owner reads, so no single owner sees the whole reply. The gateway checks the permission that the reply needs, with `require_zanzibar_permission`.
+
+A proxy route keeps a gateway check only when the owner does not check the same permission for the same resource. These routes keep one:
+
+| Route | Gateway check | Why the check stays |
+|---|---|---|
+| `GET /api/v1/spectate/{session_id}` (composite) | `observe` on the session | Composite. It combines the session and board reads. |
+| `GET /overlay/party-vitals/{session_id}` (composite) | `observe` on the session | Composite. It combines the session and board reads. |
+| `POST /api/v1/sessions/{session_id}/hot-swap` | `observe` on the session | The owner checks `participate` and `character.edit`. The permissions differ. |
+| `POST /api/v1/sessions/{session_id}/dm-override` | `control` on the session | Open owner gap. `game_session` checks only the token. Remove this check when the owner checks `control`. |
+| `POST /api/v1/sessions/{session_id}/atmosphere` | `control` on the session | Open owner gap. `game_session` checks only the token. Remove this check when the owner checks `control`. |
+| `GET /api/v1/sessions/{session_id}/events` | `observe` on the session | The owner answers `404` for an unknown session before it checks `observe`. Without the gateway check, a stranger could learn whether a session exists. |
+| `GET /api/v1/sessions/{session_id}/absentee-recap` | `observe` on the session | Same reason as `events`. |
+| `POST /api/v1/campaigns/{campaign_id}/atlas/pins` | `run_session` on the campaign | The owner checks `play`. The permissions differ. |
+
+WebSocket sockets are not proxy routes. The gateway checks `session.observe` at admission, and it checks `session.participate` before it relays each inbound frame.
+
+To add a proxy route, add the owner check. Then test that a stranger gets the owner's `403` through the gateway. Do not add a gateway check to the route.
 
 ## 1. Set the base URL
 
@@ -34,12 +58,13 @@ Run `make helm-lint` and `make helm-template`.
 Call `forward_json` from `gateway_api.proxy`. Pass the service name, the method, and the path:
 
 ```python
+from gateway_api.auth import get_principal
 from gateway_api.proxy import forward_json
 
 
 @router.get(
     "/api/v1/campaigns/{campaign_id}/atlas",
-    dependencies=[Depends(require_zanzibar_permission("view", "campaign", "campaign_id"))],
+    dependencies=[Depends(get_principal)],
 )
 async def get_campaign_atlas(campaign_id: str, request: Request) -> Any:
     return await forward_json(
@@ -54,6 +79,7 @@ async def get_campaign_atlas(campaign_id: str, request: Request) -> Any:
 Rules:
 
 - Set `timeout` for each route. The default is 5.0 seconds.
+- Do not call `require_zanzibar_permission` on a proxy route. The owner checks the permission. Use it only on a composite route (see [Permission rule](#permission-rule)).
 - Do not read `os.environ` for a service URL. The registry holds the URL.
 - Do not add an `except` block that returns local data. The handlers in `upstream_errors.py` map each failure.
 - Do not copy client headers to the upstream request. Only the bearer token, the service credential, and the trace context leave the gateway.
@@ -76,7 +102,7 @@ ProxyRoute(
 )
 ```
 
-Then call `register_proxy_routes(router, ROUTES)` once at the end of the module. Use a row for each route that needs no check and no transform. Keep a hand-written handler for a route with a Zanzibar check, a body transform, a typed reply, or a second owner call. Add an owner route function to `runefoble_platform.service_client.owner_routes` when another caller also uses the route. A row can name that function in `owner=` instead of repeating the owner path in `owner_segments`:
+Then call `register_proxy_routes(router, ROUTES)` once at the end of the module. Use a row for each route that needs no check and no transform. Keep a hand-written handler for a composite route, a body transform, a typed reply, or a second owner call. Add an owner route function to `runefoble_platform.service_client.owner_routes` when another caller also uses the route. A row can name that function in `owner=` instead of repeating the owner path in `owner_segments`:
 
 ```python
 ProxyRoute(

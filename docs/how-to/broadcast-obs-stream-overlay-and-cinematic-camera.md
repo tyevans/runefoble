@@ -31,7 +31,7 @@ A missing or malformed value takes its default. The values change how the overla
 
 ### Data Source
 
-The page reads the party once from `GET /overlay/party-vitals/{session_id}?format=json`. The gateway checks `session.observe` on that read. The overlay then keeps itself current over its WebSocket. A viewer without `session.observe` sees an error on the page and no party data.
+The page reads the party once from `GET /overlay/party-vitals/{session_id}?format=json`. The gateway checks `session.observe` on that read, because the route is composite. It combines the session and board reads. The overlay then keeps itself current over its WebSocket. A viewer without `session.observe` sees an error on the page and no party data.
 
 The gateway serves JSON only. A request for HTML from the gateway route gets `406` with `error: html_not_served`. Use the App Shell URL above for OBS.
 

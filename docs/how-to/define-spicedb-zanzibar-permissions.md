@@ -292,7 +292,7 @@ campaign_ids = await client.lookup_resources(
 The mock client returns only resources that hold at least one direct tuple. The live client returns every resource that the schema grants. `game_session` uses this call for `GET /api/v1/campaigns`.
 
 ### FastAPI Dependency Factory
-In HTTP routes, use `require_zanzibar_permission`:
+A gateway composite route (one that combines several owner reads) checks its permission with `require_zanzibar_permission`:
 ```python
 from fastapi import APIRouter, Depends
 from gateway_api.auth import require_zanzibar_permission
@@ -300,24 +300,18 @@ from gateway_api.auth import require_zanzibar_permission
 router = APIRouter()
 
 @router.get(
-    "/api/v1/sessions/{session_id}",
-    dependencies=[Depends(require_zanzibar_permission("view", resource_type="campaign"))],
-)
-async def get_session(session_id: str):
-    return {"status": "active"}
-
-@router.get(
-    "/api/v1/characters/{character_id}",
+    "/api/v1/spectate/{session_id}",
     dependencies=[
-        Depends(
-            require_zanzibar_permission(
-                "view", resource_type="character", resource_param="character_id"
-            )
-        )
+        Depends(require_zanzibar_permission("observe", resource_type="session", resource_param="session_id"))
     ],
 )
-async def get_character(character_id: str):
-    return {"id": character_id}
+async def get_spectator_state(session_id: str):
+    return {"status": "active"}
+```
+
+A gateway proxy route does not check. It verifies the token and forwards it. The owning service checks the permission in its own dependency. See [Call Owning Services Through the Gateway](call-owning-services-through-the-gateway.md#permission-rule).
+
+Service routes check with `require_permission` or `require_subject` in their own bounded context, for example `character_sheet` in `services/character_sheet/src/character_sheet/dependencies.py`.
 ```
 
 ---

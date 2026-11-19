@@ -93,7 +93,7 @@ Two read routes project the session event stream. Neither writes state.
 - `GET /api/v1/sessions/{session_id}/events` reads the session stream and returns the chronicle feed lines for `runefoble.events.watcher.stand_in_action_decided`, `DiceRolled`, `runefoble.events.session.started`, and `runefoble.events.session.ended`. Other event kinds are skipped.
 - `GET /api/v1/sessions/{session_id}/absentee-recap` summarises the stand-in actions that the session aggregate recorded from `runefoble.events.watcher.stand_in_action_decided`. Each penalty comes from that event's `penalties_applied` list.
 
-Both routes are proxied by the gateway, which checks the `observe` permission on the session first. Both return an empty result when the session has no matching events. See [Ports and Endpoints](ports-and-endpoints.md).
+Both routes are proxied by the gateway. The gateway checks the `observe` permission on the session first, so a stranger gets the same `403` for a session that exists and for one that does not. Both return an empty result when the session has no matching events. See [Ports and Endpoints](ports-and-endpoints.md).
 
 ## Known Drift
 

@@ -72,7 +72,7 @@ Use the shared dependency. Do not write a new one.
 
 ```python
 from fastapi import APIRouter, Depends
-from gateway_api.auth import CallerPrincipal, require_zanzibar_permission
+from gateway_api.auth import CallerPrincipal, get_principal
 
 router = APIRouter()
 
@@ -80,13 +80,13 @@ router = APIRouter()
 async def get_profile(user: CallerPrincipal):
     return {"user_id": user.user_id, "username": user.username, "email": user.email}
 
-@router.get(
-    "/api/v1/sessions/{session_id}",
-    dependencies=[Depends(require_zanzibar_permission("view", resource_type="campaign"))],
-)
+@router.get("/api/v1/sessions/{session_id}", dependencies=[Depends(get_principal)])
 async def get_session(session_id: str):
+    # A proxy route verifies the token and forwards it. game_session checks `observe`.
     return {"id": session_id, "status": "active"}
 ```
+
+Use `require_zanzibar_permission` only on a composite gateway route. See [Permission rule](call-owning-services-through-the-gateway.md#permission-rule).
 
 A missing, malformed, or unverified Bearer token returns `HTTP 401` with `WWW-Authenticate: Bearer`. For the full contract, see [Verify Identity in FastAPI and WebSockets](verify-identity-in-fastapi-and-websockets.md).
 

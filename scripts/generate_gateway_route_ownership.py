@@ -24,7 +24,9 @@ each route, and the mode in which the gateway serves it.
 ## Modes
 
 - `proxy`: the gateway forwards the request to the owner. The owner checks the caller's token and
-  every object permission (ADR-0001, ADR-0015). The gateway adds no permission check of its own.
+  every object permission (ADR-0001, ADR-0015). The gateway adds no permission check, except on the
+  routes that the call-owning-services how-to guide lists (TASK-0845). A composite route, which
+  combines several owner reads, is a `proxy` row that checks the permission at the gateway.
 - `relay`: the gateway opens a WebSocket to the owner and relays its frames.
 - `local`: the gateway answers the request itself. It holds no domain state.
 
