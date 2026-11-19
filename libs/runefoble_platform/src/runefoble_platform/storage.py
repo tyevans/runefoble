@@ -40,7 +40,18 @@ SILO_TIMEOUT_SECONDS: float = 1.5
 
 
 class AssetStorageError(RunefobleError):
-    """Raised when an asset storage operation fails."""
+    """Raised when an asset storage operation fails.
+
+    `bucket` and `object_key` name the Silo object when the failure is a Silo request.
+    They are None for a payload that was rejected before any request.
+    """
+
+    def __init__(
+        self, message: str, *, bucket: str | None = None, object_key: str | None = None
+    ) -> None:
+        super().__init__(message, {"bucket": bucket, "object_key": object_key})
+        self.bucket = bucket
+        self.object_key = object_key
 
 
 class AssetValidationError(AssetStorageError):
@@ -113,7 +124,9 @@ class SiloStorageService:
                 return client.request(method, self._object_url(bucket, object_key), **kwargs)
         except httpx.HTTPError as exc:
             raise AssetStorageError(
-                f"Silo {method} failed for '{bucket}/{object_key}': {exc}"
+                f"Silo {method} failed for '{bucket}/{object_key}': {exc}",
+                bucket=bucket,
+                object_key=object_key,
             ) from exc
 
     def upload_asset(
@@ -141,7 +154,9 @@ class SiloStorageService:
         )
         if resp.status_code not in (200, 201, 204):
             raise AssetStorageError(
-                f"Silo PUT for '{bucket}/{object_key}' returned status {resp.status_code}."
+                f"Silo PUT for '{bucket}/{object_key}' returned status {resp.status_code}.",
+                bucket=bucket,
+                object_key=object_key,
             )
 
         return {
@@ -161,7 +176,9 @@ class SiloStorageService:
             raise AssetNotFoundError(f"{bucket}/{object_key}")
         if resp.status_code != 200:
             raise AssetStorageError(
-                f"Silo GET for '{bucket}/{object_key}' returned status {resp.status_code}."
+                f"Silo GET for '{bucket}/{object_key}' returned status {resp.status_code}.",
+                bucket=bucket,
+                object_key=object_key,
             )
         content_type = resp.headers.get("Content-Type", "application/octet-stream")
         return resp.content, content_type
@@ -173,8 +190,25 @@ class SiloStorageService:
             raise AssetNotFoundError(f"{bucket}/{object_key}")
         if resp.status_code not in (200, 204):
             raise AssetStorageError(
-                f"Silo DELETE for '{bucket}/{object_key}' returned status {resp.status_code}."
+                f"Silo DELETE for '{bucket}/{object_key}' returned status {resp.status_code}.",
+                bucket=bucket,
+                object_key=object_key,
             )
+
+
+def log_storage_failure(log: logging.Logger, action: str, exc: AssetStorageError) -> None:
+    """Log a Silo failure at error level with the bucket and the object key.
+
+    Call it where a route maps the failure to HTTP 503 (ADR-0015). The record holds the
+    error message only. It never holds the object bytes or the Silo credentials.
+    """
+    log.error(
+        "Silo %s failed: bucket=%s object_key=%s error=%s",
+        action,
+        exc.bucket,
+        exc.object_key,
+        exc.message,
+    )
 
 
 _global_storage_service: SiloStorageService | None = None

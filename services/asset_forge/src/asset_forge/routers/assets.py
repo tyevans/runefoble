@@ -31,6 +31,7 @@ from runefoble_platform.storage import (
     AssetStorageError,
     AssetValidationError,
     SiloStorageService,
+    log_storage_failure,
 )
 
 from asset_forge.asset_authz import (
@@ -108,7 +109,7 @@ async def upload_asset(
     except (AssetValidationError, ValueError) as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except AssetStorageError as exc:
-        logger.error("Silo rejected asset upload: %s", exc)
+        log_storage_failure(logger, "asset upload", exc)
         raise HTTPException(
             status_code=503, detail="Silo asset storage is unavailable. The asset was not stored."
         ) from exc
@@ -204,6 +205,7 @@ def _binary_response(
     except AssetNotFoundError as exc:
         raise _not_found(asset_id) from exc
     except AssetStorageError as exc:
+        log_storage_failure(logger, "asset read", exc)
         raise HTTPException(status_code=503, detail="Silo asset storage is unavailable.") from exc
     disposition = "attachment" if download else "inline"
     fname = meta["object_key"].split("/")[-1]
@@ -235,6 +237,7 @@ async def delete_asset(
         # Silo no longer holds the object. Drop the stale index entry below.
         logger.warning("Asset '%s' was missing in Silo. Removing its index entry.", asset_id)
     except AssetStorageError as exc:
+        log_storage_failure(logger, "asset delete", exc)
         raise HTTPException(
             status_code=503, detail="Silo asset storage is unavailable. The asset was not deleted."
         ) from exc
