@@ -186,6 +186,7 @@ The campaign rules tab at `#/campaigns/:campaignId/rules`. The homebrew forge re
   - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
 
 ### Changed
+game_session builds its repositories, child index repository and event bus provider in one app container (`GameSessionContainer`) at start-up, and routes read them through FastAPI `Depends` providers (ADR-0021 step 2). An unreachable or in-memory event store in a deployed environment stops start-up. `game_session.dependencies` is removed.
 Audience Studio production code builds only the PostgreSQL event store and the Redis Streams publisher. Start-up needs `RUNEFOBLE_DATABASE_URL` and a `redis://` or `rediss://` `RUNEFOBLE_REDIS_URL` for every `NODE_ENV`. Memory adapters live only in the test fakes.
 Blackbox tests show that a Watcher or voice speech request without `campaign_id` answers 422, an empty one answers 400, and no event is published. The shared identifier policy of TASK-0816 is the only UUID helper.
 `game_session` has a shared kernel package `game_session.shared` (ADR-0021 step 1): route identity, the establishment play permission helper, the child index mechanism and the stream names. The `game_session.models` shims and the `game_session.queries` package are removed. Routes, streams and index ids do not change.

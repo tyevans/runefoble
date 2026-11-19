@@ -1,7 +1,7 @@
 ---
 id: '0755'
 title: game_session Repositories Come From an App Container Built at Start-Up
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0567
@@ -18,7 +18,7 @@ target_release: 0.9.0
 # TASK-0755: game_session Repositories Come From an App Container Built at Start-Up
 
 ## Status
-Refined. Found by the refactor audit round refactor-r1 and checked against the code on 2026-11-17.
+Complete
 
 ## Summary
 `dependencies.py` builds 12 `AggregateRepository` objects at import time and reads the event store and settings at import time. The service cannot fail fast at start-up, and the package split in the ADR needs a container.
