@@ -32,6 +32,7 @@
 | `make test` | Runs the Python test suite in two phases, then builds the frontend. Phase 1 runs all tests except `serial` tests in parallel with pytest-xdist (`-n $(PYTEST_WORKERS)`, default 8). Phase 2 runs the `serial` tests one at a time. A `serial` test checks wall-clock time or starts a browser, so heavy parallel load makes it fail. `SERIAL_MODULES` in `tests/conftest.py` lists these modules. The per-test timeout is 300 seconds (`[tool.pytest.ini_options]`). A test that exceeds it fails with a timeout error |
 | `make test-authz-live` | Runs the live SpiceDB authorization suite (`pytest -m authz_live`) with `RUNEFOBLE_REQUIRE_LIVE_SPICEDB=1`. Needs Docker. The run fails if Docker is missing |
 | `make test-entrypoints` | Runs `tests/test_entrypoints.py`. Covers developer entrypoints, CLI tools, and microservice start-up |
+| `make test-gateway` | Runs `uv run pytest gateway/api`, the gateway API test package in `gateway/api/tests/`. Its tests use the root shared helpers. The canned-payload behaviour guard is `tests/test_canned_payload_guard.py` and runs in `make test` |
 | `make test-property` | Runs the Hypothesis property tests in `tests/test_properties.py` |
 | `make test-mutation` | Runs `mutmut` on the core domain modules and prints the results. A failed run does not stop the target |
 | `make test-e2e` | Runs `bddgen`, then the headless Playwright BDD suite. Passes `ARGS` to `playwright test` |

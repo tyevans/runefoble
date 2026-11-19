@@ -1,4 +1,4 @@
-.PHONY: help setup install-tools install-spec-ops cluster-up cluster-down images voice-model-cache helm-lint helm-template helm-check-event-store helm-deploy test test-authz-live test-entrypoints test-property test-mutation test-e2e test-e2e-ui test-bdd e2e-lore-up e2e-lore-down lint lint-fix build check-ui-manifests dev-frontend dev-storybook dev-api dev-worker deploy-remote-worker pre-commit health-check clean-worktrees backlog-worker docs-build docs-serve prd-audit prd-decompose prd-create prd-sync
+.PHONY: help setup install-tools install-spec-ops cluster-up cluster-down images voice-model-cache helm-lint helm-template helm-check-event-store helm-deploy test test-authz-live test-entrypoints test-gateway test-property test-mutation test-e2e test-e2e-ui test-bdd e2e-lore-up e2e-lore-down lint lint-fix build check-ui-manifests dev-frontend dev-storybook dev-api dev-worker deploy-remote-worker pre-commit health-check clean-worktrees backlog-worker docs-build docs-serve prd-audit prd-decompose prd-create prd-sync
 
 
 CLUSTER_NAME ?= runefoble-local
@@ -204,6 +204,10 @@ test-authz-live: ## Run the live SpiceDB authorization suite (needs Docker; fail
 test-entrypoints: ## Test developer entrypoints, CLI tools, and microservice startups
 	@echo "==> Running entrypoint tests..."
 	uv run pytest tests/test_entrypoints.py
+
+test-gateway: ## Run the gateway API test package (gateway/api/tests)
+	@echo "==> Running gateway API tests..."
+	uv run pytest gateway/api
 
 test-property: ## Run generative invariant property tests with Hypothesis
 	@echo "==> Running Hypothesis property tests..."

@@ -14,3 +14,11 @@ dependencies = [
     "runefoble-events",
     "websockets>=16.1.1",
 ]
+
+[tool.pytest.ini_options]
+# The gateway tests run from this package. They reuse the shared test helpers in the root `tests/`
+# folder, so the repository root joins the import path.
+testpaths = ["tests"]
+pythonpath = [".", "../.."]
+timeout = 300
+timeout_method = "signal"
