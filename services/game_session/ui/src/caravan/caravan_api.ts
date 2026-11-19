@@ -4,6 +4,10 @@
  * Every call goes through one POST over `postJson`. The bearer comes from the shared auth
  * source. No call sends a caller-asserted identity header. A failed call reports the text of
  * `actionFailureMessage` and never changes the contract.
+ *
+ * A successful call returns a new contract object. It never changes the contract that the
+ * caller passed in. Lit child elements render again only when a property gets a new
+ * reference, so the board must put the returned object in its list.
  */
 
 import { actionFailureMessage, postJson, type AuthSource } from '@runefoble/ui-core';
@@ -50,37 +54,38 @@ function contractPath(contract: CaravanContractItem, action: string): string {
 export async function apiAcceptContract(
   ctx: CaravanApiContext,
   contract: CaravanContractItem,
-): Promise<CaravanResult> {
+): Promise<CaravanResult<CaravanContractItem>> {
   const result = await postCaravan<AcceptContractResponse>(ctx, contractPath(contract, 'accept'), {
     contractor_campaign_id: ctx.campaignId,
     contractor_party_name: ctx.partyName,
   });
   if (!result.ok) return result;
-  contract.status = result.data?.contract?.status || 'accepted';
-  contract.contractor_party_name = result.data?.contract?.contractor_party_name || ctx.partyName;
-  return { ok: true, data: undefined };
+  return {
+    ok: true,
+    data: {
+      ...contract,
+      status: result.data?.contract?.status || 'accepted',
+      contractor_party_name: result.data?.contract?.contractor_party_name || ctx.partyName,
+    },
+  };
 }
 
 export async function apiDispatchCaravan(
   ctx: CaravanApiContext,
   contract: CaravanContractItem,
-): Promise<CaravanResult> {
+): Promise<CaravanResult<CaravanContractItem>> {
   const result = await postCaravan(ctx, contractPath(contract, 'dispatch'), {
     dispatched_by_campaign_id: ctx.campaignId,
   });
   if (!result.ok) return result;
-  contract.status = 'in_transit';
-  contract.current_stage = 1;
-  return { ok: true, data: undefined };
+  return { ok: true, data: { ...contract, status: 'in_transit', current_stage: 1 } };
 }
 
 export async function apiFulfillContract(
   ctx: CaravanApiContext,
   contract: CaravanContractItem,
-): Promise<CaravanResult> {
+): Promise<CaravanResult<CaravanContractItem>> {
   const result = await postCaravan(ctx, contractPath(contract, 'fulfill'), {});
   if (!result.ok) return result;
-  contract.status = 'fulfilled';
-  contract.current_stage = contract.transit_stages;
-  return { ok: true, data: undefined };
+  return { ok: true, data: { ...contract, status: 'fulfilled', current_stage: contract.transit_stages } };
 }

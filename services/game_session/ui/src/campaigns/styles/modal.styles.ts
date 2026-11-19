@@ -100,6 +100,12 @@ export const modalStyles = css`
     font-weight: 800; font-size: 0.75rem; margin-top: 4px;
   }
 
+  .copy-failed-badge {
+    display: inline-block;
+    color: var(--rf-accent-primary, rgb(230, 57, 70));
+    font-weight: 800; font-size: 0.75rem; margin-top: 4px;
+  }
+
   .modal-actions {
     display: flex; justify-content: flex-end; gap: 12px; margin-top: 20px;
     border-top: 1px solid var(--rf-border-subtle, rgba(18, 18, 18, 0.15));

@@ -45,7 +45,8 @@ export class RunefobleCampaignMembers extends LitElement {
   @state() private isInviteOpen = false;
   @state() private selectedInviteRole: 'player' | 'spectator' = 'player';
   @state() private memberToRemove: CampaignMember | null = null;
-  @state() private copied = false;
+  /** The result of the last copy. It is `copied` only after the clipboard accepts the link. */
+  @state() private copyState: 'idle' | 'copied' | 'failed' = 'idle';
 
   get effectiveInviteUrl(): string {
     if (this.inviteUrl) return this.inviteUrl;
@@ -72,12 +73,12 @@ export class RunefobleCampaignMembers extends LitElement {
 
   public openInviteModal(): void {
     this.isInviteOpen = true;
-    this.copied = false;
+    this.copyState = 'idle';
   }
 
   public closeInviteModal(): void {
     this.isInviteOpen = false;
-    this.copied = false;
+    this.copyState = 'idle';
   }
 
   private handleGenerateInvite(): void {
@@ -90,16 +91,20 @@ export class RunefobleCampaignMembers extends LitElement {
 
   private async copyInviteLink(): Promise<void> {
     const link = this.effectiveInviteUrl;
-    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
-      await navigator.clipboard.writeText(link).catch(() => {});
+    try {
+      if (typeof navigator === 'undefined' || !navigator.clipboard?.writeText) throw new Error('Clipboard unavailable');
+      await navigator.clipboard.writeText(link);
+    } catch {
+      this.copyState = 'failed';
+      return;
     }
-    this.copied = true;
+    this.copyState = 'copied';
     this.dispatchEvent(new CustomEvent('copy-invite-link', {
       detail: { inviteUrl: link, role: this.selectedInviteRole },
       bubbles: true,
       composed: true,
     }));
-    setTimeout(() => { this.copied = false; }, 2000);
+    setTimeout(() => { if (this.copyState === 'copied') this.copyState = 'idle'; }, 2000);
   }
 
   private confirmRemove(): void {
@@ -181,10 +186,11 @@ export class RunefobleCampaignMembers extends LitElement {
             <div class="invite-link-row">
               <input type="text" class="form-input invite-link-input" readonly .value=${this.effectiveInviteUrl} />
               <button class="btn-copy" @click=${this.copyInviteLink} type="button">
-                ${this.copied ? 'Copied!' : 'Copy Link'}
+                ${this.copyState === 'copied' ? 'Copied!' : 'Copy Link'}
               </button>
             </div>
-            ${this.copied ? html`<span class="copied-badge">✓ Copied to clipboard!</span>` : ''}
+            ${this.copyState === 'copied' ? html`<span class="copied-badge">✓ Copied to clipboard!</span>` : ''}
+            ${this.copyState === 'failed' ? html`<span class="copy-failed-badge" role="alert">Copy failed. Select the link and copy it.</span>` : ''}
           </div>
         </div>
       </div>

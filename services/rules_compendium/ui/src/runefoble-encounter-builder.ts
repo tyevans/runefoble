@@ -94,27 +94,18 @@ export class RunefobleEncounterBuilder extends LitElement {
   }
 
   public addMonster(monster: DraftMonsterEntry) {
-    const existing = this.draftMonsters.find((m) => m.name === monster.name);
-    if (existing) {
-      existing.count += 1;
-      this.draftMonsters = [...this.draftMonsters];
-    } else {
-      this.draftMonsters = [...this.draftMonsters, { ...monster, count: monster.count || 1 }];
-    }
-    this.requestUpdate();
+    const exists = this.draftMonsters.some((m) => m.name === monster.name);
+    this.draftMonsters = exists
+      ? this.draftMonsters.map((m) => (m.name === monster.name ? { ...m, count: m.count + 1 } : m))
+      : [...this.draftMonsters, { ...monster, count: monster.count || 1 }];
   }
 
   public removeMonster(name: string) {
     const existing = this.draftMonsters.find((m) => m.name === name);
-    if (existing) {
-      if (existing.count > 1) {
-        existing.count -= 1;
-        this.draftMonsters = [...this.draftMonsters];
-      } else {
-        this.draftMonsters = this.draftMonsters.filter((m) => m.name !== name);
-      }
-      this.requestUpdate();
-    }
+    if (!existing) return;
+    this.draftMonsters = existing.count > 1
+      ? this.draftMonsters.map((m) => (m.name === name ? { ...m, count: m.count - 1 } : m))
+      : this.draftMonsters.filter((m) => m.name !== name);
   }
 
   private setPartySize(size: number) {
