@@ -5,6 +5,7 @@ Each mutating use case saves its aggregate first, then writes SpiceDB tuples (AD
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from uuid import UUID, uuid4
 
@@ -13,7 +14,12 @@ from game_session.aggregate import GameSessionAggregate
 from game_session.campaign.campaign_aggregate import CampaignAggregate, CampaignState
 from game_session.campaign.errors import CampaignNotFoundError
 from game_session.campaign.membership_aggregate import MembershipAggregate
-from game_session.campaign.permission_flags import campaign_permissions
+from game_session.campaign.permission_flags import (
+    flags_from,
+    granted_by_campaign,
+    granted_permissions,
+    role_from,
+)
 from game_session.campaign.repositories import (
     CampaignRepositories,
     concurrent_update,
@@ -30,20 +36,17 @@ from game_session.campaign.schemas import (
 from game_session.campaign.session_aggregate import CampaignSessionsAggregate
 from game_session.campaign.session_bootstrap import open_game_session
 from game_session.campaign.tuples import SpiceDB, grant_owner, link_session
-from runefoble_auth.permissions import check_subject
 from runefoble_platform.aggregate_loading import load_if_exists, save_or_conflict
 from runefoble_platform.identifiers import parse_uuid
+from runefoble_platform.telemetry import get_tracer
 
 logger = logging.getLogger("runefoble.game_session.campaign")
+tracer = get_tracer("runefoble.game_session.campaign")
 
 SEEDED_SESSION_TITLE = "Session #1: Staging Lobby"
 SEEDED_SESSION_DESCRIPTION = "Initial campaign staging lobby."
-ROLE_CHECKS: tuple[tuple[str, str], ...] = (
-    ("manage", "owner"),
-    ("run_session", "dungeon_master"),
-    ("play", "player"),
-    ("view", "spectator"),
-)
+LIST_LOAD_CONCURRENCY = 5
+"""Most campaign loads that one list read runs at a time. It matches the default pool size."""
 
 
 def parse_campaign_id(raw: str) -> UUID:
@@ -67,14 +70,6 @@ async def load_sessions(
 ) -> CampaignSessionsAggregate:
     sessions = await load_if_exists(repos.sessions, campaign_id)
     return sessions if sessions is not None else repos.sessions.create_new(campaign_id)
-
-
-async def role_for(spicedb: SpiceDB, campaign_id: str, user_id: str) -> str | None:
-    """Return the highest role the user holds, read from SpiceDB permissions."""
-    for permission, role in ROLE_CHECKS:
-        if await check_subject(spicedb, "campaign", campaign_id, permission, user_id):
-            return role
-    return None
 
 
 def summary_from_state(
@@ -102,13 +97,24 @@ def summary_from_state(
 
 
 async def _summarize(
+    repos: CampaignRepositories,
+    campaign: CampaignAggregate,
+    granted: frozenset[str],
+) -> CampaignSummaryResponse:
+    memberships = await load_memberships(repos, UUID(campaign.state.campaign_id))
+    return summary_from_state(
+        campaign.state,
+        role_from(granted),
+        1 + len(memberships.state.members),
+        flags_from(granted),
+    )
+
+
+async def _summarize_for(
     repos: CampaignRepositories, spicedb: SpiceDB, campaign: CampaignAggregate, user_id: str
 ) -> CampaignSummaryResponse:
-    campaign_id = UUID(campaign.state.campaign_id)
-    memberships = await load_memberships(repos, campaign_id)
-    role = await role_for(spicedb, campaign.state.campaign_id, user_id)
-    permissions = await campaign_permissions(spicedb, campaign.state.campaign_id, user_id)
-    return summary_from_state(campaign.state, role, 1 + len(memberships.state.members), permissions)
+    granted = await granted_permissions(spicedb, campaign.state.campaign_id, user_id)
+    return await _summarize(repos, campaign, granted)
 
 
 async def create_campaign(
@@ -153,15 +159,15 @@ async def create_campaign(
         await save_or_conflict(repos.sessions, sessions, concurrent_update)
 
     await grant_owner(spicedb, str(campaign_id), owner_id)
-    permissions = await campaign_permissions(spicedb, str(campaign_id), owner_id)
-    return summary_from_state(campaign.state, "owner", 1, permissions)
+    granted = await granted_permissions(spicedb, str(campaign_id), owner_id)
+    return summary_from_state(campaign.state, "owner", 1, flags_from(granted))
 
 
 async def get_campaign(
     repos: CampaignRepositories, spicedb: SpiceDB, campaign_id: str, user_id: str
 ) -> CampaignSummaryResponse:
     campaign = await load_campaign(repos, parse_campaign_id(campaign_id))
-    return await _summarize(repos, spicedb, campaign, user_id)
+    return await _summarize_for(repos, spicedb, campaign, user_id)
 
 
 async def update_campaign(
@@ -174,27 +180,46 @@ async def update_campaign(
     campaign = await load_campaign(repos, parse_campaign_id(campaign_id))
     campaign.update(req.model_dump(exclude_none=True))
     await save_or_conflict(repos.campaigns, campaign, concurrent_update)
-    return await _summarize(repos, spicedb, campaign, user_id)
+    return await _summarize_for(repos, spicedb, campaign, user_id)
 
 
 async def list_viewable_campaigns(
     repos: CampaignRepositories, spicedb: SpiceDB, user_id: str
 ) -> list[CampaignSummaryResponse]:
-    """List campaigns where SpiceDB grants the caller `view`. Aggregates supply the details."""
-    campaign_ids = await spicedb.lookup_resources("campaign", "view", "user", user_id)
-    summaries: list[CampaignSummaryResponse] = []
-    for raw_id in sorted(campaign_ids):
-        try:
-            campaign_uuid = UUID(raw_id)
-        except ValueError:
-            logger.warning("SpiceDB grants view on non-UUID campaign id %s. Skipped.", raw_id)
-            continue
-        campaign = await load_if_exists(repos.campaigns, campaign_uuid)
-        if campaign is None:
-            logger.warning("SpiceDB grants view on campaign %s with no campaign record", raw_id)
-            continue
-        summaries.append(await _summarize(repos, spicedb, campaign, user_id))
-    return summaries
+    """List campaigns where SpiceDB grants the caller `view`. Aggregates supply the details.
+
+    SpiceDB gets one lookup per distinct permission, whatever the campaign count. The
+    campaign loads run concurrently, at most `LIST_LOAD_CONCURRENCY` at a time (TASK-0907).
+    """
+    with tracer.start_as_current_span("game_session.list_viewable_campaigns") as span:
+        granted = await granted_by_campaign(spicedb, user_id)
+        span.set_attribute("runefoble.campaign.viewable_count", len(granted))
+        gate = asyncio.Semaphore(LIST_LOAD_CONCURRENCY)
+
+        async def summarize(raw_id: str) -> CampaignSummaryResponse | None:
+            async with gate:
+                return await _load_summary(repos, raw_id, granted[raw_id])
+
+        results = await asyncio.gather(*(summarize(raw_id) for raw_id in sorted(granted)))
+        summaries = [summary for summary in results if summary is not None]
+        span.set_attribute("runefoble.campaign.listed_count", len(summaries))
+        return summaries
+
+
+async def _load_summary(
+    repos: CampaignRepositories, raw_id: str, granted: frozenset[str]
+) -> CampaignSummaryResponse | None:
+    """Summarize one listed campaign. Skip an id with no campaign record, and log it."""
+    try:
+        campaign_uuid = UUID(raw_id)
+    except ValueError:
+        logger.warning("SpiceDB grants view on non-UUID campaign id %s. Skipped.", raw_id)
+        return None
+    campaign = await load_if_exists(repos.campaigns, campaign_uuid)
+    if campaign is None:
+        logger.warning("SpiceDB grants view on campaign %s with no campaign record", raw_id)
+        return None
+    return await _summarize(repos, campaign, granted)
 
 
 async def list_sessions(

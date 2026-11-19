@@ -291,7 +291,7 @@ campaign_ids = await client.lookup_resources(
 )
 ```
 
-The mock client returns only resources that hold at least one direct tuple. The live client returns every resource that the schema grants. `game_session` uses this call for `GET /api/v1/campaigns`.
+The mock client returns only resources that hold at least one direct tuple. The live client returns every resource that the schema grants. `game_session` uses this call for `GET /api/v1/campaigns`. It sends one call for each permission that the response needs, and it does not send a `check` for each campaign (TASK-0907). Use this pattern for any list that shows per-item permissions.
 
 ### FastAPI Dependency Factory
 A gateway composite route (one that combines several owner reads) checks its permission with `require_zanzibar_permission`:
