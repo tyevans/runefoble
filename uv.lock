@@ -258,6 +258,7 @@ dependencies = [
     { name = "runefoble-events" },
     { name = "runefoble-platform" },
     { name = "uvicorn" },
+    { name = "websockets" },
 ]
 
 [package.metadata]
@@ -270,6 +271,7 @@ requires-dist = [
     { name = "runefoble-events", editable = "libs/runefoble_events" },
     { name = "runefoble-platform", editable = "libs/runefoble_platform" },
     { name = "uvicorn", specifier = ">=0.54.0" },
+    { name = "websockets", specifier = ">=16.1.1" },
 ]
 
 [[package]]
@@ -899,6 +901,7 @@ dependencies = [
     { name = "runefoble-events" },
     { name = "runefoble-platform" },
     { name = "uvicorn" },
+    { name = "websockets" },
 ]
 
 [package.metadata]
@@ -911,6 +914,7 @@ requires-dist = [
     { name = "runefoble-events", editable = "libs/runefoble_events" },
     { name = "runefoble-platform", editable = "libs/runefoble_platform" },
     { name = "uvicorn", specifier = ">=0.54.0" },
+    { name = "websockets", specifier = ">=16.1.1" },
 ]
 
 [[package]]
@@ -3869,6 +3873,7 @@ dependencies = [
     { name = "runefoble-events" },
     { name = "runefoble-platform" },
     { name = "uvicorn" },
+    { name = "websockets" },
 ]
 
 [package.metadata]
@@ -3881,6 +3886,7 @@ requires-dist = [
     { name = "runefoble-events", editable = "libs/runefoble_events" },
     { name = "runefoble-platform", editable = "libs/runefoble_platform" },
     { name = "uvicorn", specifier = ">=0.54.0" },
+    { name = "websockets", specifier = ">=16.1.1" },
 ]
 
 [[package]]

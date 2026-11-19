@@ -13,4 +13,5 @@ dependencies = [
     "runefoble-events",
     "runefoble-auth",
     "faster-whisper>=1.2.1",
+    "websockets>=16.1.1",
 ]
