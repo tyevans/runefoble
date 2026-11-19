@@ -26,7 +26,9 @@ from fastapi.responses import PlainTextResponse
 from fastapi.testclient import TestClient
 from gateway_api.main import app as gateway_app
 
+from tests.helpers.campaign_setup import create_campaign
 from tests.helpers.live_services import closed_port_url, serve, unavailable_app
+from tests.helpers.ws_identity import bearer
 
 
 def _echo_upstream() -> FastAPI:
@@ -56,18 +58,6 @@ def gateway(monkeypatch: pytest.MonkeyPatch, **upstream_urls: str) -> Iterator[T
         yield client
 
 
-def _create_campaign(client: TestClient, trusted_ws_issuer) -> tuple[str, dict[str, str]]:
-    """Create a campaign through the public frontdoor. Return its id and the owner's headers."""
-    headers = {"Authorization": f"Bearer {trusted_ws_issuer.mint('dm_valeros')}"}
-    res = client.post(
-        "/api/v1/campaigns",
-        json={"title": "Proxy Contract", "setting": "Test", "system": "5e", "description": "x"},
-        headers=headers,
-    )
-    assert res.status_code == 201, res.text
-    return res.json()["id"], headers
-
-
 def test_proxy_forwards_bearer_token_and_no_user_header(
     monkeypatch, trusted_ws_issuer, game_session_upstream
 ) -> None:
@@ -76,7 +66,8 @@ def test_proxy_forwards_bearer_token_and_no_user_header(
         serve(_echo_upstream()) as lore_url,
         gateway(monkeypatch, RUNEFOBLE_CAMPAIGN_LORE_URL=lore_url) as client,
     ):
-        campaign_id, headers = _create_campaign(client, trusted_ws_issuer)
+        campaign_id = create_campaign(client, "dm_valeros", title="Proxy Contract")
+        headers = bearer("dm_valeros")
         res = client.get(
             f"/api/v1/campaigns/{campaign_id}/atlas",
             headers={**headers, "X-User-Id": "spoofed-user"},
@@ -96,7 +87,8 @@ def test_proxy_sends_the_service_credential_and_trace_context(
         serve(_echo_upstream()) as lore_url,
         gateway(monkeypatch, RUNEFOBLE_CAMPAIGN_LORE_URL=lore_url) as client,
     ):
-        campaign_id, headers = _create_campaign(client, trusted_ws_issuer)
+        campaign_id = create_campaign(client, "dm_valeros", title="Proxy Contract")
+        headers = bearer("dm_valeros")
         res = client.get(f"/api/v1/campaigns/{campaign_id}/atlas", headers=headers)
 
     assert res.status_code == 200
@@ -146,7 +138,8 @@ def test_upstream_403_passes_through_unchanged(
         serve(unavailable_app(403)) as lore_url,
         gateway(monkeypatch, RUNEFOBLE_CAMPAIGN_LORE_URL=lore_url) as client,
     ):
-        campaign_id, headers = _create_campaign(client, trusted_ws_issuer)
+        campaign_id = create_campaign(client, "dm_valeros", title="Proxy Contract")
+        headers = bearer("dm_valeros")
         res = client.get(f"/api/v1/campaigns/{campaign_id}/atlas", headers=headers)
 
     assert res.status_code == 403
@@ -159,7 +152,8 @@ def test_upstream_5xx_returns_502(monkeypatch, trusted_ws_issuer, game_session_u
         serve(unavailable_app(503)) as lore_url,
         gateway(monkeypatch, RUNEFOBLE_CAMPAIGN_LORE_URL=lore_url) as client,
     ):
-        campaign_id, headers = _create_campaign(client, trusted_ws_issuer)
+        campaign_id = create_campaign(client, "dm_valeros", title="Proxy Contract")
+        headers = bearer("dm_valeros")
         res = client.get(f"/api/v1/campaigns/{campaign_id}/atlas", headers=headers)
 
     assert res.status_code == 502
@@ -172,7 +166,8 @@ def test_unreachable_upstream_returns_503(
 ) -> None:
     """A connection refused by the upstream returns 503 with no canned payload."""
     with gateway(monkeypatch, RUNEFOBLE_CAMPAIGN_LORE_URL=closed_port_url()) as client:
-        campaign_id, headers = _create_campaign(client, trusted_ws_issuer)
+        campaign_id = create_campaign(client, "dm_valeros", title="Proxy Contract")
+        headers = bearer("dm_valeros")
         res = client.get(f"/api/v1/campaigns/{campaign_id}/atlas", headers=headers)
 
     assert res.status_code == 503
@@ -185,7 +180,8 @@ def test_unconfigured_upstream_returns_503(
 ) -> None:
     """An empty upstream URL means no client exists, so the proxy returns 503 with no payload."""
     with gateway(monkeypatch, RUNEFOBLE_CAMPAIGN_LORE_URL="") as client:
-        campaign_id, headers = _create_campaign(client, trusted_ws_issuer)
+        campaign_id = create_campaign(client, "dm_valeros", title="Proxy Contract")
+        headers = bearer("dm_valeros")
         res = client.get(f"/api/v1/campaigns/{campaign_id}/atlas", headers=headers)
 
     assert res.status_code == 503
@@ -206,7 +202,8 @@ def test_non_json_success_body_returns_502(
         serve(broken) as lore_url,
         gateway(monkeypatch, RUNEFOBLE_CAMPAIGN_LORE_URL=lore_url) as client,
     ):
-        campaign_id, headers = _create_campaign(client, trusted_ws_issuer)
+        campaign_id = create_campaign(client, "dm_valeros", title="Proxy Contract")
+        headers = bearer("dm_valeros")
         res = client.get(f"/api/v1/campaigns/{campaign_id}/atlas", headers=headers)
 
     assert res.status_code == 502

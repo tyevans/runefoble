@@ -14,6 +14,7 @@ import pytest
 from fastapi.testclient import TestClient
 from game_session.main import app as session_app
 
+from tests.helpers.campaign_setup import create_campaign_session, invite_and_join
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
@@ -28,44 +29,20 @@ def client() -> TestClient:
     return TestClient(session_app)
 
 
-def _campaign_with_session(client: TestClient, owner: str) -> tuple[str, str]:
-    res = client.post(
-        "/api/v1/campaigns", json={"title": f"Authz {uuid4().hex[:8]}"}, headers=_auth(owner)
-    )
-    assert res.status_code == 201, res.text
-    campaign_id = res.json()["id"]
-    sessions = client.get(f"/api/v1/campaigns/{campaign_id}/sessions", headers=_auth(owner))
-    assert sessions.status_code == 200, sessions.text
-    return campaign_id, sessions.json()[0]["id"]
-
-
-def _join(client: TestClient, campaign_id: str, owner: str, member: str, role: str) -> None:
-    invite = client.post(
-        f"/api/v1/campaigns/{campaign_id}/invites", json={"role": role}, headers=_auth(owner)
-    )
-    assert invite.status_code == 201, invite.text
-    joined = client.post(
-        "/api/v1/campaigns/join",
-        json={"invite_token": invite.json()["token"]},
-        headers=_auth(member),
-    )
-    assert joined.status_code == 200, joined.text
-
-
 def _bounty_body() -> dict[str, object]:
     return {"title": "Clear the Warren", "target_name": "Goblin Shaman", "escrow_gold": 50}
 
 
 def test_anonymous_bounty_post_returns_401(client: TestClient) -> None:
-    _, session_id = _campaign_with_session(client, "owner_bounty_anon")
+    _, session_id = create_campaign_session(client, "owner_bounty_anon")
     res = client.post(f"/sessions/{session_id}/contracts/bounties", json=_bounty_body())
     assert res.status_code == 401
 
 
 def test_player_posts_bounty_and_outsider_cannot_complete(client: TestClient) -> None:
     owner, player, outsider = "owner_bounty", "player_bounty", "outsider_bounty"
-    campaign_id, session_id = _campaign_with_session(client, owner)
-    _join(client, campaign_id, owner, player, "player")
+    campaign_id, session_id = create_campaign_session(client, owner)
+    invite_and_join(client, campaign_id, owner, player, "player")
 
     posted = client.post(
         f"/sessions/{session_id}/contracts/bounties",
@@ -89,16 +66,16 @@ def test_shared_world_create_without_token_returns_401(client: TestClient) -> No
 
 
 def test_campfire_rest_without_token_returns_401(client: TestClient) -> None:
-    _, session_id = _campaign_with_session(client, "owner_campfire_anon")
+    _, session_id = create_campaign_session(client, "owner_campfire_anon")
     res = client.post(f"/api/v1/sessions/{session_id}/rest/campfire", json={})
     assert res.status_code == 401
 
 
 def test_stronghold_upgrade_by_role(client: TestClient) -> None:
     owner, player, spectator = "owner_stronghold", "player_stronghold", "spectator_stronghold"
-    campaign_id, _ = _campaign_with_session(client, owner)
-    _join(client, campaign_id, owner, player, "player")
-    _join(client, campaign_id, owner, spectator, "spectator")
+    campaign_id, _ = create_campaign_session(client, owner)
+    invite_and_join(client, campaign_id, owner, player, "player")
+    invite_and_join(client, campaign_id, owner, spectator, "spectator")
     url = f"/api/v1/campaigns/{campaign_id}/stronghold/upgrade"
     body = {"facility_id": "watchtower"}
     funded = client.post(

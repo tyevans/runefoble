@@ -13,10 +13,11 @@ from fastapi.testclient import TestClient
 from game_session.events import STREAM_TAVERN
 from runefoble_auth.spicedb import MockSpiceDBClient
 
+from tests.helpers.campaign_setup import create_campaign, invite_and_join
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
-from .conftest import create_campaign_for, create_test_establishment, invite_player
+from .conftest import create_test_establishment
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
@@ -28,8 +29,8 @@ async def test_blackbox_dm_arbitration_controls_and_override(
     """US-0075 Scenario 2: DM intervenes in real time, alters mood, and forces acceptance."""
     dm_user_id = f"dm_{uuid4().hex[:8]}"
     player_id = f"player_{uuid4().hex[:8]}"
-    campaign_id = create_campaign_for(client, dm_user_id)
-    invite_player(client, campaign_id, dm_user_id, player_id)
+    campaign_id = create_campaign(client, dm_user_id)
+    invite_and_join(client, campaign_id, dm_user_id, player_id)
     establishment_id = create_test_establishment(client, campaign_id, dm_user_id)
 
     # 1. Start negotiation
@@ -94,8 +95,8 @@ async def test_blackbox_spicedb_zanzibar_arbitration_permission(
     owner_id = f"owner_{uuid4().hex[:8]}"
     player_id = f"player_{uuid4().hex[:8]}"
     stranger_id = f"stranger_{uuid4().hex[:8]}"
-    campaign_id = create_campaign_for(client, owner_id)
-    invite_player(client, campaign_id, owner_id, player_id)
+    campaign_id = create_campaign(client, owner_id)
+    invite_and_join(client, campaign_id, owner_id, player_id)
     establishment_id = create_test_establishment(client, campaign_id, owner_id)
 
     start_res = client.post(

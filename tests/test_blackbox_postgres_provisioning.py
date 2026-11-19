@@ -20,19 +20,12 @@ from runefoble_platform.config import PlatformSettings
 from runefoble_platform.event_sourcing import (
     is_database_reachable,
     normalize_async_postgres_url,
-    set_event_store,
 )
 
 from tests.helpers.ports import free_port
 from tests.helpers.process import run_command
 
-
-@pytest.fixture(autouse=True)
-def reset_event_store_singleton():
-    """Reset global event store singleton between tests."""
-    set_event_store(None)
-    yield
-    set_event_store(None)
+pytestmark = pytest.mark.usefixtures("reset_event_store")
 
 
 def test_dsn_normalization_and_platform_settings():

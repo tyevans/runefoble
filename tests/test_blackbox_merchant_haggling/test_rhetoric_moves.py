@@ -12,9 +12,10 @@ import pytest
 from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import MockSpiceDBClient
 
+from tests.helpers.campaign_setup import create_campaign, invite_and_join
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
-from .conftest import create_campaign_for, create_test_establishment, invite_player
+from .conftest import create_test_establishment
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
@@ -26,8 +27,8 @@ async def test_blackbox_patience_depletion_and_ejection(
     """Verify that failing aggressive intimidation depletes patience and terminates the interaction."""
     owner_id = f"owner_{uuid4().hex[:8]}"
     player_id = f"player_{uuid4().hex[:8]}"
-    campaign_id = create_campaign_for(client, owner_id)
-    invite_player(client, campaign_id, owner_id, player_id)
+    campaign_id = create_campaign(client, owner_id)
+    invite_and_join(client, campaign_id, owner_id, player_id)
     establishment_id = create_test_establishment(client, campaign_id, owner_id)
 
     start_data = {
@@ -88,8 +89,8 @@ async def test_blackbox_walk_away_bluff_and_deal_acceptance(
     """Verify walk-away bluff discounts counter-offer and player can accept deal."""
     owner_id = f"owner_{uuid4().hex[:8]}"
     player_id = f"player_{uuid4().hex[:8]}"
-    campaign_id = create_campaign_for(client, owner_id)
-    invite_player(client, campaign_id, owner_id, player_id)
+    campaign_id = create_campaign(client, owner_id)
+    invite_and_join(client, campaign_id, owner_id, player_id)
     establishment_id = create_test_establishment(client, campaign_id, owner_id)
 
     start_data = {

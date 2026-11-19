@@ -20,13 +20,12 @@ from uuid import uuid4
 
 import pytest
 from runefoble_auth.factory import get_spicedb_client
-from runefoble_platform.event_sourcing import set_event_store
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.ws_identity import SIGNING_ISSUER, bearer
 
-pytestmark = pytest.mark.usefixtures("lore_backends")
+pytestmark = pytest.mark.usefixtures("lore_backends", "reset_event_store")
 
 DM_SUBJECT = f"dm-{uuid4().hex[:8]}"
 PLAYER_SUBJECT = f"player-{uuid4().hex[:8]}"
@@ -34,13 +33,6 @@ PLAYER_SUBJECT = f"player-{uuid4().hex[:8]}"
 
 def _is_campaign_lore(name: str) -> bool:
     return name == "campaign_lore" or name.startswith("campaign_lore.")
-
-
-@pytest.fixture(autouse=True)
-def reset_event_store_singleton() -> Iterator[None]:
-    set_event_store(None)
-    yield
-    set_event_store(None)
 
 
 @pytest.fixture

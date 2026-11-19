@@ -23,6 +23,7 @@ from gateway_api.main import app
 from runefoble_auth.bootstrap_schema import bootstrap_schema
 from runefoble_auth.spicedb import SpiceDBClient
 
+from tests.helpers.campaign_setup import create_campaign, invite_and_join
 from tests.helpers.spicedb_factory import shared_spicedb_client
 from tests.helpers.ws_identity import bearer
 
@@ -34,49 +35,18 @@ def gateway_tc(game_session_upstream) -> Iterator[TestClient]:
         yield gateway_client
 
 
-def _create_campaign_with_session(tc: TestClient, owner_headers: dict[str, str]) -> tuple[str, str]:
-    """Create a campaign as the owner and return (campaign_id, first_session_id)."""
-    res = tc.post(
-        "/api/v1/campaigns",
-        json={"title": f"Campaign {uuid4().hex[:8]}"},
-        headers=owner_headers,
-    )
-    assert res.status_code == 201
-    campaign_id = res.json()["id"]
-
-    return campaign_id, _owner_session(campaign_id, owner_headers)
-
-
-def _join_with_invite(
-    tc: TestClient,
-    campaign_id: str,
-    owner_headers: dict[str, str],
-    member_headers: dict[str, str],
-    role: str = "player",
-) -> None:
-    """Owner creates an invite for `role`; the member redeems it."""
-    invite = tc.post(
-        f"/api/v1/campaigns/{campaign_id}/invites",
-        json={"role": role},
-        headers=owner_headers,
-    )
-    assert invite.status_code == 201
-    joined = tc.post(
-        "/api/v1/campaigns/join",
-        json={"invite_token": invite.json()["token"]},
-        headers=member_headers,
-    )
-    assert joined.status_code == 200
-
-
 @pytest.mark.asyncio
 async def test_mock_spicedb_frontdoor_role_assignment(trusted_ws_issuer, gateway_tc):
     """Verify invite-based membership and enforcement using the strict mock SpiceDB client."""
     tc = gateway_tc
 
-    owner = bearer(f"owner-{uuid4().hex[:6]}", issuer=trusted_ws_issuer)
-    user_alice = bearer(f"user-{uuid4().hex[:6]}", issuer=trusted_ws_issuer)
-    camp_id, session_id = _create_campaign_with_session(tc, owner)
+    owner_id = f"owner-{uuid4().hex[:6]}"
+
+    owner = bearer(owner_id, issuer=trusted_ws_issuer)
+    user_alice_id = f"user-{uuid4().hex[:6]}"
+    user_alice = bearer(user_alice_id, issuer=trusted_ws_issuer)
+    camp_id = create_campaign(tc, owner_id)
+    session_id = _owner_session(camp_id, owner)
 
     # Not a member -> 403 Forbidden
     res = tc.get(f"/api/v1/sessions/{session_id}", headers=user_alice)
@@ -84,7 +54,7 @@ async def test_mock_spicedb_frontdoor_role_assignment(trusted_ws_issuer, gateway
     assert res.json()["detail"]["required_permission"] == "observe"
 
     # Redeem a player invite
-    _join_with_invite(tc, camp_id, owner, user_alice, role="player")
+    invite_and_join(tc, camp_id, owner_id, user_alice_id, role="player")
 
     # Player can view session but cannot advance turn
     res_view = tc.get(f"/api/v1/sessions/{session_id}", headers=user_alice)
@@ -127,15 +97,18 @@ async def test_live_spicedb_frontdoor_role_assignment_and_checks(
 
     with shared_spicedb_client(live_client):
         tc = gateway_tc
-        dm = bearer("dm_garrick", issuer=trusted_ws_issuer)
-        player = bearer("player_talia", issuer=trusted_ws_issuer)
-        camp_id, session_id = _create_campaign_with_session(tc, dm)
+        dm_id = "dm_garrick"
+        dm = bearer(dm_id, issuer=trusted_ws_issuer)
+        player_id = "player_talia"
+        player = bearer(player_id, issuer=trusted_ws_issuer)
+        camp_id = create_campaign(tc, dm_id)
+        session_id = _owner_session(camp_id, dm)
 
         # Before membership -> 403 Forbidden
         assert tc.get(f"/api/v1/sessions/{session_id}", headers=player).status_code == 403
 
         # Redeem a player invite through the frontdoor
-        _join_with_invite(tc, camp_id, dm, player, role="player")
+        invite_and_join(tc, camp_id, dm_id, player_id, role="player")
 
         # Player can view session but cannot advance turn
         assert tc.get(f"/api/v1/sessions/{session_id}", headers=player).status_code == 200
@@ -184,12 +157,16 @@ async def test_live_spicedb_relationship_deletion_and_revocation(
     with shared_spicedb_client(live_client):
         tc = gateway_tc
 
-        owner = bearer("owner_revocation", issuer=trusted_ws_issuer)
-        member = bearer("user_revoked", issuer=trusted_ws_issuer)
-        camp_id, session_id = _create_campaign_with_session(tc, owner)
+        owner_id = "owner_revocation"
+
+        owner = bearer(owner_id, issuer=trusted_ws_issuer)
+        member_id = "user_revoked"
+        member = bearer(member_id, issuer=trusted_ws_issuer)
+        camp_id = create_campaign(tc, owner_id)
+        session_id = _owner_session(camp_id, owner)
 
         # Membership through the invite frontdoor -> 200
-        _join_with_invite(tc, camp_id, owner, member, role="player")
+        invite_and_join(tc, camp_id, owner_id, member_id, role="player")
         assert tc.get(f"/api/v1/sessions/{session_id}", headers=member).status_code == 200
 
         # Delete the relationship in live SpiceDB and verify immediately denied

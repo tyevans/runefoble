@@ -18,6 +18,9 @@ from rules_compendium.main import app as compendium_app
 from runefoble_auth.errors import AuthzWriteError
 from runefoble_auth.factory import get_spicedb_client
 
+from tests.helpers.campaign_setup import create_campaign, invite_and_join
+from tests.helpers.ws_identity import bearer
+
 HOMEBREW_PAYLOAD = {
     "rule_type": "monster",
     "title": "Abyssal Shadowstalker",
@@ -42,19 +45,15 @@ def _auth(issuer, sub: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {issuer.mint(sub)}"}
 
 
-def _campaign_with_cast(gateway, issuer) -> tuple[str, dict[str, str]]:
+def _campaign_with_cast(gateway) -> tuple[str, dict[str, str]]:
     """Create a campaign as owner_orin. Redeem a spectator invite as the DM, then grant DM.
 
-    The player redeems a player invite.
-
-    Returns the campaign id and the owner's headers.
+    The player redeems a player invite. Returns the campaign id and the owner's headers.
     """
-    owner = _auth(issuer, "owner_orin")
-    created = gateway.post("/api/v1/campaigns", json={"title": "Homebrew Test"}, headers=owner)
-    assert created.status_code == 201, created.text
-    campaign_id = created.json()["id"]
+    campaign_id = create_campaign(gateway, "owner_orin", title="Homebrew Test")
     for role, sub in (("spectator", "dm_sable"), ("player", "player_tamsin")):
-        _join_with_invite(gateway, issuer, campaign_id, owner, role, sub)
+        invite_and_join(gateway, campaign_id, "owner_orin", sub, role)
+    owner = bearer("owner_orin")
     grant = gateway.post(
         f"/api/v1/campaigns/{campaign_id}/roles",
         json={"user_id": "dm_sable", "role": "dungeon_master"},
@@ -62,22 +61,6 @@ def _campaign_with_cast(gateway, issuer) -> tuple[str, dict[str, str]]:
     )
     assert grant.status_code in (200, 201), grant.text
     return campaign_id, owner
-
-
-def _join_with_invite(gateway, issuer, campaign_id: str, owner: dict, role: str, sub: str) -> None:
-    """Create an invite as the owner, then redeem it as `sub`."""
-    inv = gateway.post(
-        f"/api/v1/campaigns/{campaign_id}/invites",
-        json={"role": role},
-        headers=owner,
-    )
-    assert inv.status_code == 201, inv.text
-    join = gateway.post(
-        "/api/v1/campaigns/join",
-        json={"invite_token": inv.json()["token"]},
-        headers=_auth(issuer, sub),
-    )
-    assert join.status_code == 200, join.text
 
 
 def _register(compendium, campaign_id: str, headers: dict[str, str]):
@@ -106,7 +89,7 @@ def _search(compendium, campaign_id: str, headers: dict[str, str]) -> list[dict]
 
 def test_anonymous_homebrew_list_is_refused(gateway, compendium, trusted_ws_issuer):
     """With no bearer, the list route returns 401 and shows no homebrew."""
-    campaign_id, owner = _campaign_with_cast(gateway, trusted_ws_issuer)
+    campaign_id, owner = _campaign_with_cast(gateway)
     assert (
         _register(compendium, campaign_id, _auth(trusted_ws_issuer, "dm_sable")).status_code == 200
     )
@@ -117,7 +100,7 @@ def test_anonymous_homebrew_list_is_refused(gateway, compendium, trusted_ws_issu
 
 def test_anonymous_search_with_campaign_is_refused(gateway, compendium, trusted_ws_issuer):
     """With no bearer, a campaign search returns 401. No homebrew hit leaks."""
-    campaign_id, _ = _campaign_with_cast(gateway, trusted_ws_issuer)
+    campaign_id, _ = _campaign_with_cast(gateway)
     assert (
         _register(compendium, campaign_id, _auth(trusted_ws_issuer, "dm_sable")).status_code == 200
     )
@@ -131,7 +114,7 @@ def test_anonymous_search_with_campaign_is_refused(gateway, compendium, trusted_
 
 def test_campaign_members_see_homebrew_and_strangers_do_not(gateway, compendium, trusted_ws_issuer):
     """The DM and player see the rule in the list and in search. A stranger sees neither."""
-    campaign_id, _ = _campaign_with_cast(gateway, trusted_ws_issuer)
+    campaign_id, _ = _campaign_with_cast(gateway)
     dm = _auth(trusted_ws_issuer, "dm_sable")
     player = _auth(trusted_ws_issuer, "player_tamsin")
     stranger = _auth(trusted_ws_issuer, "stranger_vex")
@@ -155,7 +138,7 @@ def test_campaign_members_see_homebrew_and_strangers_do_not(gateway, compendium,
 
 def test_player_post_is_forbidden_and_writes_nothing(gateway, compendium, trusted_ws_issuer):
     """A redeemed player gets 403 and no rule is saved. A spoofed user header changes nothing."""
-    campaign_id, _ = _campaign_with_cast(gateway, trusted_ws_issuer)
+    campaign_id, _ = _campaign_with_cast(gateway)
     player = _auth(trusted_ws_issuer, "player_tamsin")
 
     res = _register(compendium, campaign_id, player)
@@ -173,7 +156,7 @@ def test_player_post_is_forbidden_and_writes_nothing(gateway, compendium, truste
 
 def test_stranger_post_is_forbidden(gateway, compendium, trusted_ws_issuer):
     """A verified user with no campaign grant gets 403."""
-    campaign_id, _ = _campaign_with_cast(gateway, trusted_ws_issuer)
+    campaign_id, _ = _campaign_with_cast(gateway)
 
     res = _register(compendium, campaign_id, _auth(trusted_ws_issuer, "stranger_vex"))
     assert res.status_code == 403, res.text
@@ -181,7 +164,7 @@ def test_stranger_post_is_forbidden(gateway, compendium, trusted_ws_issuer):
 
 def test_dm_post_is_saved_under_the_token_subject(gateway, compendium, trusted_ws_issuer):
     """The DM gets 200. The author is the token subject, never a body or header value."""
-    campaign_id, _ = _campaign_with_cast(gateway, trusted_ws_issuer)
+    campaign_id, _ = _campaign_with_cast(gateway)
 
     res = _register(compendium, campaign_id, _auth(trusted_ws_issuer, "dm_sable"))
     assert res.status_code == 200, res.text
@@ -192,7 +175,7 @@ def test_spicedb_write_failure_returns_503_and_saves_no_rule(
     gateway, compendium, trusted_ws_issuer, monkeypatch
 ):
     """A failed Zanzibar write returns 503. The rule is not saved."""
-    campaign_id, _ = _campaign_with_cast(gateway, trusted_ws_issuer)
+    campaign_id, _ = _campaign_with_cast(gateway)
     dm = _auth(trusted_ws_issuer, "dm_sable")
     client = get_spicedb_client()
 
@@ -210,7 +193,7 @@ def test_spicedb_write_failure_returns_503_and_saves_no_rule(
 
 def test_encounter_naming_a_campaign_requires_play(gateway, compendium, trusted_ws_issuer):
     """A campaign-scoped balance call needs `campaign.play`. A stranger gets 403."""
-    campaign_id, _ = _campaign_with_cast(gateway, trusted_ws_issuer)
+    campaign_id, _ = _campaign_with_cast(gateway)
     body = {"party_levels": [3, 3, 3, 3], "target_difficulty": "Medium", "campaign_id": campaign_id}
 
     stranger = compendium.post(
@@ -245,7 +228,7 @@ def _monster(compendium, name: str, headers: dict[str, str], campaign_id: str | 
 
 def test_owner_reads_own_homebrew_monster_by_name(gateway, compendium, trusted_ws_issuer):
     """The DM reads the homebrew monster by name when it names the campaign."""
-    campaign_id, _ = _campaign_with_cast(gateway, trusted_ws_issuer)
+    campaign_id, _ = _campaign_with_cast(gateway)
     assert (
         _register(compendium, campaign_id, _auth(trusted_ws_issuer, "dm_sable")).status_code == 200
     )
@@ -263,7 +246,7 @@ def test_owner_reads_own_homebrew_monster_by_name(gateway, compendium, trusted_w
 
 def test_stranger_gets_404_for_homebrew_monster(gateway, compendium, trusted_ws_issuer):
     """A verified stranger gets 404 for the campaign homebrew monster, as if it did not exist."""
-    campaign_id, _ = _campaign_with_cast(gateway, trusted_ws_issuer)
+    campaign_id, _ = _campaign_with_cast(gateway)
     assert (
         _register(compendium, campaign_id, _auth(trusted_ws_issuer, "dm_sable")).status_code == 200
     )
@@ -279,7 +262,7 @@ def test_stranger_gets_404_for_homebrew_monster(gateway, compendium, trusted_ws_
 
 def test_homebrew_monster_needs_a_campaign_to_be_read(gateway, compendium, trusted_ws_issuer):
     """Without `campaign_id`, even the DM gets 404 for a homebrew monster."""
-    campaign_id, _ = _campaign_with_cast(gateway, trusted_ws_issuer)
+    campaign_id, _ = _campaign_with_cast(gateway)
     assert (
         _register(compendium, campaign_id, _auth(trusted_ws_issuer, "dm_sable")).status_code == 200
     )
@@ -290,7 +273,7 @@ def test_homebrew_monster_needs_a_campaign_to_be_read(gateway, compendium, trust
 
 def test_srd_monster_is_readable_by_every_token_holder(gateway, compendium, trusted_ws_issuer):
     """An SRD monster is readable by the DM and by a stranger. No bearer gets 401."""
-    campaign_id, _ = _campaign_with_cast(gateway, trusted_ws_issuer)
+    campaign_id, _ = _campaign_with_cast(gateway)
 
     for sub in ("dm_sable", "stranger_vex"):
         res = _monster(compendium, "Goblin", _auth(trusted_ws_issuer, sub), campaign_id)
@@ -317,7 +300,7 @@ def _register_goblin(compendium, campaign_id: str, headers: dict[str, str]):
 
 def test_srd_goblin_wins_over_homebrew_goblin_by_name(gateway, compendium, trusted_ws_issuer):
     """A campaign homebrew Goblin never replaces the SRD Goblin, for the DM or anyone else."""
-    campaign_id, _ = _campaign_with_cast(gateway, trusted_ws_issuer)
+    campaign_id, _ = _campaign_with_cast(gateway)
     dm = _auth(trusted_ws_issuer, "dm_sable")
     assert _register_goblin(compendium, campaign_id, dm).status_code == 200
 
@@ -329,7 +312,7 @@ def test_srd_goblin_wins_over_homebrew_goblin_by_name(gateway, compendium, trust
 
 def test_shadowed_homebrew_is_listed_with_shadowed_flag(gateway, compendium, trusted_ws_issuer):
     """The list keeps the homebrew Goblin and marks it `shadowed` because an SRD entry has its name."""
-    campaign_id, _ = _campaign_with_cast(gateway, trusted_ws_issuer)
+    campaign_id, _ = _campaign_with_cast(gateway)
     dm = _auth(trusted_ws_issuer, "dm_sable")
     assert _register_goblin(compendium, campaign_id, dm).status_code == 200
     assert _register(compendium, campaign_id, dm).status_code == 200
@@ -342,7 +325,7 @@ def test_shadowed_homebrew_is_listed_with_shadowed_flag(gateway, compendium, tru
 
 def test_search_returns_srd_goblin_not_shadowed_homebrew(gateway, compendium, trusted_ws_issuer):
     """A campaign search for Goblin returns only the SRD entry under that name."""
-    campaign_id, _ = _campaign_with_cast(gateway, trusted_ws_issuer)
+    campaign_id, _ = _campaign_with_cast(gateway)
     dm = _auth(trusted_ws_issuer, "dm_sable")
     assert _register_goblin(compendium, campaign_id, dm).status_code == 200
 
@@ -359,7 +342,7 @@ def test_search_returns_srd_goblin_not_shadowed_homebrew(gateway, compendium, tr
 
 def test_campaign_homebrew_is_rebuilt_from_events_after_restart(gateway, trusted_ws_issuer):
     """A restarted compendium lists the campaign homebrew again. The events are the source of truth."""
-    campaign_id, _ = _campaign_with_cast(gateway, trusted_ws_issuer)
+    campaign_id, _ = _campaign_with_cast(gateway)
     dm = _auth(trusted_ws_issuer, "dm_sable")
     with TestClient(compendium_app) as before_restart:
         assert _register(before_restart, campaign_id, dm).status_code == 200
@@ -372,7 +355,7 @@ def test_campaign_homebrew_is_rebuilt_from_events_after_restart(gateway, trusted
 
 def test_restarted_compendium_reads_and_searches_rebuilt_homebrew(gateway, trusted_ws_issuer):
     """After a restart, the homebrew monster is readable by a member and found by search."""
-    campaign_id, _ = _campaign_with_cast(gateway, trusted_ws_issuer)
+    campaign_id, _ = _campaign_with_cast(gateway)
     dm = _auth(trusted_ws_issuer, "dm_sable")
     with TestClient(compendium_app) as before_restart:
         assert _register(before_restart, campaign_id, dm).status_code == 200

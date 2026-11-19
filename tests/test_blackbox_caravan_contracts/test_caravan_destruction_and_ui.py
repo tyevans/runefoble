@@ -13,10 +13,9 @@ import pytest
 from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import MockSpiceDBClient
 
+from tests.helpers.campaign_setup import create_campaign, invite_and_join
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.ws_identity import SIGNING_ISSUER
-
-from .conftest import create_campaign, join_campaign
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
@@ -39,7 +38,7 @@ async def test_blackbox_caravan_destroyed_and_ui_manifest(
     world_id = world_res.json()["shared_world_id"]
 
     campaign_id = create_campaign(client, officer_id)
-    join_campaign(client, campaign_id, officer_id, contractor_id)
+    invite_and_join(client, campaign_id, officer_id, contractor_id)
 
     client.post(
         f"/api/v1/shared-worlds/{world_id}/campaigns",

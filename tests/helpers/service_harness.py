@@ -17,14 +17,17 @@ from __future__ import annotations
 
 import importlib
 from collections.abc import Callable, Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass
 from types import ModuleType
 from typing import Literal
 
 import pytest
+from fastapi import FastAPI
 from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
 
+from tests.helpers.live_services import serve
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.spicedb_factory import shared_spicedb_client
 from tests.helpers.ws_identity import SIGNING_ISSUER
@@ -291,13 +294,24 @@ def trusted_ws_issuer() -> Iterator[SigningTestIssuer]:
         _restore(previous, "set_zitadel_auth_service")
 
 
+@contextmanager
+def live_upstream(app: FastAPI, env_var: str) -> Iterator[str]:
+    """Serve `app` on a loopback port and point `env_var` at it for the block.
+
+    The gateway reads the owning service URL from `env_var`. Build the gateway client after the
+    block starts, because the gateway lifespan reads the URL. The variable is restored on exit.
+    """
+    with serve(app) as url, pytest.MonkeyPatch.context() as env:
+        env.setenv(env_var, url)
+        yield url
+
+
 @pytest.fixture
 def character_sheet_upstream(monkeypatch, trusted_ws_issuer) -> Iterator[str]:
-    """Serve character_sheet as a live loopback upstream with a fresh event store (TASK-0585).
+    """Serve character_sheet with a fresh event store (TASK-0585).
 
-    The gateway reaches it over HTTP through RUNEFOBLE_CHARACTER_SHEET_URL. The aggregate repository
-    is replaced for this test, so characters from earlier tests do not leak in. The URL is
-    set before the gateway lifespan runs, so build the gateway client after this fixture.
+    The aggregate repository is replaced for this test, so characters from earlier tests do not
+    leak in.
     """
     from character_sheet import dependencies as sheet_deps
     from character_sheet.aggregate import CharacterAggregate
@@ -305,73 +319,53 @@ def character_sheet_upstream(monkeypatch, trusted_ws_issuer) -> Iterator[str]:
     from eventsource.adapters.memory.store import InMemoryEventStore
     from runefoble_platform.event_sourcing import create_aggregate_repository
 
-    from tests.helpers.live_services import serve
-
     fresh_repo = create_aggregate_repository(CharacterAggregate, event_store=InMemoryEventStore())
     monkeypatch.setattr(sheet_deps, "repo", fresh_repo)
-    with serve(sheet_app) as url:
-        monkeypatch.setenv("RUNEFOBLE_CHARACTER_SHEET_URL", url)
+    with live_upstream(sheet_app, "RUNEFOBLE_CHARACTER_SHEET_URL") as url:
         yield url
 
 
 @pytest.fixture
-def board_state_upstream(monkeypatch, trusted_ws_issuer) -> Iterator[str]:
+def board_state_upstream(trusted_ws_issuer) -> Iterator[str]:
     """Serve board_state as a live loopback upstream (TASK-0582).
 
-    The gateway reaches it over HTTP through RUNEFOBLE_BOARD_STATE_URL. Boards are created
-    through its public `POST /api/v1/boards`. The URL is set before the gateway lifespan runs,
-    so build the gateway client after this fixture.
+    Boards are created through its public `POST /api/v1/boards`.
     """
     from board_state.main import app as board_app
 
-    from tests.helpers.live_services import serve
-
-    with serve(board_app) as url:
-        monkeypatch.setenv("RUNEFOBLE_BOARD_STATE_URL", url)
+    with live_upstream(board_app, "RUNEFOBLE_BOARD_STATE_URL") as url:
         yield url
 
 
 @pytest.fixture
-def voice_agent_upstream(monkeypatch, trusted_voice_issuer) -> Iterator[str]:
+def voice_agent_upstream(trusted_voice_issuer) -> Iterator[str]:
     """Serve voice_agent as a live loopback upstream (TASK-0593).
 
-    The gateway proxies voice room routes to it through RUNEFOBLE_VOICE_AGENT_URL. Tokens
-    minted by the voice test issuer are accepted. The URL is set before the gateway lifespan
-    runs, so build the gateway client after this fixture.
+    Tokens minted by the voice test issuer are accepted.
     """
     from voice_agent.main import app as voice_app
 
-    from tests.helpers.live_services import serve
-
-    with serve(voice_app) as url:
-        monkeypatch.setenv("RUNEFOBLE_VOICE_AGENT_URL", url)
+    with live_upstream(voice_app, "RUNEFOBLE_VOICE_AGENT_URL") as url:
         yield url
 
 
 @pytest.fixture
-def asset_forge_upstream(monkeypatch) -> Iterator[str]:
+def asset_forge_upstream() -> Iterator[str]:
     """Serve asset_forge as a live loopback upstream (TASK-0595).
 
-    The gateway proxies the forge and Silo asset routes to it through RUNEFOBLE_ASSET_FORGE_URL.
-    The asset_forge verifier and SpiceDB mock are already set for each test. The URL is set
-    before the gateway lifespan runs, so build the gateway client after this fixture.
+    The asset_forge verifier and SpiceDB mock are already set for each test.
     """
     from asset_forge.main import app as forge_app
 
-    from tests.helpers.live_services import serve
-
-    with serve(forge_app) as url:
-        monkeypatch.setenv("RUNEFOBLE_ASSET_FORGE_URL", url)
+    with live_upstream(forge_app, "RUNEFOBLE_ASSET_FORGE_URL") as url:
         yield url
 
 
 @pytest.fixture
-def game_session_upstream(monkeypatch, trusted_ws_issuer) -> Iterator[str]:
-    """Serve game_session as a live loopback upstream with fresh in-memory campaign state.
+def game_session_upstream(trusted_ws_issuer) -> Iterator[str]:
+    """Serve game_session with fresh in-memory campaign state.
 
-    The gateway reaches it over HTTP through RUNEFOBLE_GAME_SESSION_URL (TASK-0591). Tokens
-    minted by `trusted_ws_issuer` are accepted by both services. The URL is set before the
-    gateway lifespan runs, so build the gateway client after this fixture.
+    Tokens minted by `trusted_ws_issuer` are accepted by both services (TASK-0591).
     """
     from eventsource.adapters.memory.store import InMemoryEventStore
     from game_session.campaign.repositories import (
@@ -381,13 +375,11 @@ def game_session_upstream(monkeypatch, trusted_ws_issuer) -> Iterator[str]:
     from game_session.main import app as session_app
     from runefoble_platform.event_sourcing import get_event_store, set_event_store
 
-    from tests.helpers.live_services import serve
     from tests.helpers.module_state import restored_seam
 
     with (
         restored_seam(get_event_store, set_event_store, InMemoryEventStore(), replace=True),
         restored_seam(get_campaign_repositories, set_campaign_repositories, None, replace=True),
-        serve(session_app) as url,
+        live_upstream(session_app, "RUNEFOBLE_GAME_SESSION_URL") as url,
     ):
-        monkeypatch.setenv("RUNEFOBLE_GAME_SESSION_URL", url)
         yield url
