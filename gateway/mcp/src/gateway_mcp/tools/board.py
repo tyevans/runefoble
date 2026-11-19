@@ -11,7 +11,7 @@ from pydantic import BaseModel
 
 from gateway_mcp.caller import caller_bearer
 from gateway_mcp.container import GatewayMcpContainer, bind_container
-from gateway_mcp.owning_services import OwningServices, ServiceRejectedError
+from gateway_mcp.owning_services import OwningServices
 from gateway_mcp.tool_authz import authorize_tool_call, session_control, token_move
 
 if TYPE_CHECKING:
@@ -21,7 +21,8 @@ if TYPE_CHECKING:
 class EnemyPlacement(BaseModel):
     """An enemy token to place when an encounter starts.
 
-    `cr` is the challenge rating. When it is absent, rules_compendium supplies it by `name`.
+    `cr` is the challenge rating. When it is absent, game_session reads it from the
+    rules_compendium stat block of `name`.
     """
 
     name: str
@@ -49,31 +50,6 @@ def _combat_view(combat: dict[str, Any]) -> dict[str, Any]:
         "active_combatant_id": combat["combat_active_id"],
         "turn_order": combat["initiative_order"],
     }
-
-
-async def _challenge_rating(
-    client: OwningServices, enemy: EnemyPlacement, campaign_id: str | None
-) -> float:
-    """Return the enemy's challenge rating from the request, else from its compendium stat block.
-
-    The stat block lookup names the campaign, so that its homebrew monsters resolve too.
-    An enemy with no rating in either place is a validation error. It is never scored as zero.
-    """
-    if enemy.cr is not None:
-        return enemy.cr
-    try:
-        monster = await client.get_monster(enemy.name.strip(), campaign_id=campaign_id)
-    except ServiceRejectedError as exc:
-        if exc.status_code != 404:
-            raise
-        monster = {}
-    rating = monster.get("challenge_rating")
-    if rating is None:
-        raise ValueError(
-            f"Enemy '{enemy.name}' has no challenge rating. Give cr in the request "
-            "or use a monster name from the compendium."
-        )
-    return float(rating)
 
 
 async def inspect_tactical_board(
@@ -138,8 +114,8 @@ async def create_encounter(
     """Start combat in a game session and place the enemy tokens on its board.
 
     The session id is the encounter id. `campaign_id` names the campaign whose homebrew
-    monsters resolve by name. Each enemy rating is read before the start, so a refused
-    enemy starts no combat.
+    monsters resolve by name. game_session reads each missing enemy rating before the start,
+    so a refused enemy starts no combat.
 
     One write to game_session starts combat and records the placements. board_state creates
     the board if needed and places the tokens after that write. The reply lists the placements
@@ -147,14 +123,10 @@ async def create_encounter(
     """
     await authorize_tool_call(ctx, container.permissions, session_control(session_id))
     client = OwningServices(container.service_clients, bearer=caller_bearer(ctx))
-    enemy_list = enemies or []
-    ratings = [await _challenge_rating(client, enemy, campaign_id) for enemy in enemy_list]
     started = await client.start_encounter(
         session_id,
-        enemies=[
-            {"name": enemy.name, "x": enemy.x, "y": enemy.y, "hp": enemy.hp, "cr": rating}
-            for enemy, rating in zip(enemy_list, ratings, strict=True)
-        ],
+        campaign_id=campaign_id,
+        enemies=[enemy.model_dump(exclude_none=True) for enemy in enemies or []],
     )
     return {
         "status": "encounter_created",

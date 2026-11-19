@@ -361,7 +361,8 @@ services:
     replicas: 1
     port: 8007
     urlEnv: RUNEFOBLE_RULES_COMPENDIUM_URL
-    consumers: [gateway-api, gateway-mcp]
+    # game-session reads enemy challenge ratings at encounter start (TASK-0918).
+    consumers: [game-session, gateway-api, gateway-mcp]
     serviceCredential: true
   assetForge:
     swaggerName: "Asset Forge Service"
