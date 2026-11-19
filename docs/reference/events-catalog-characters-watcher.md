@@ -10,6 +10,8 @@ Part of the [Events Schema](events-schema.md). Each event identifier in this pag
   - `name`: String
   - `character_class`: String
   - `max_hp`: Integer, `current_hp`: Integer
+  - `level`: Integer, 1 to 20 (default 1). The starting level. The spell slots start at the slots for this level.
+  - `portrait_url`: Optional[String]. The base portrait: an http(s) URL, an image data URI or `/api/v1/assets/{id}`.
   - `player_id`: Optional[String]
   - `personality_traits`: List[String]
   - `campaign_id`: Optional[String]

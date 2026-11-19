@@ -370,7 +370,7 @@ Campaign Lore routes require a verified bearer token, except `/healthz`, `/opena
 | `gateway-api` | GET | `/api/v1/analytics/campaigns/{campaign_id}/mvp` | Proxies to `campaign-analytics`. Forwards `session_id` and `encounter_id` (requires `view`) |
 | `gateway-api` | GET | `/api/v1/analytics/campaigns/{campaign_id}/timeline` | Proxies to `campaign-analytics`. Forwards `session_id` and `limit` (requires `view`) |
 | `gateway-api` | GET | `/api/v1/characters` | Proxies to `character_sheet` (`view` filter, optional `campaignId`). Adds `campaign_title` from `game_session` |
-| `gateway-api` | POST | `/api/v1/characters` | Proxies to `character_sheet`, which writes the owner tuple. Returns 201. Returns 422 for `level`, `currentHp`, `portraitUrl`, `isAiStandIn` or `id` values the owner cannot store |
+| `gateway-api` | POST | `/api/v1/characters` | Proxies to `character_sheet`, which writes the owner tuple. Returns 201. Stores `level` (1-20) and `portraitUrl`. Returns 422 for a bad level or portrait, and for `currentHp`, `isAiStandIn` or `id` values the owner cannot store |
 | `gateway-api` | GET | `/api/v1/characters/{character_id}` | Proxies to `character_sheet` (requires `view`, checked by the owner) |
 | `gateway-api` | PATCH | `/api/v1/characters/{character_id}/campaign` | Proxies to `character_sheet` (requires `edit`, checked and written by the owner) |
 | `gateway-api` | POST | `/api/v1/characters/{character_id}/health` | Proxies to `character_sheet`: changes HP (requires `edit`, checked by the owner). Owner `4xx` answers pass through unchanged. An unreachable owner returns `503` |

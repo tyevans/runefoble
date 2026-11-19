@@ -25,6 +25,19 @@ Response codes:
 
 Character creation writes the owner tuple before it stores the character. If the write fails, the response is 503 and no character exists.
 
+### Set the Level and the Portrait at Creation
+
+`POST /api/v1/characters` stores `level` and `portraitUrl` (TASK-0905). The create reply and `GET /api/v1/characters/{id}` return both values.
+
+1. Set `level` to an integer from 1 to 20. If you do not set it, the level is 1. The spell slots start at the slots for that level.
+2. Set `portraitUrl` to one of these values:
+   - an `http` or `https` URL with a host,
+   - an image data URI (`data:image/png`, `jpeg`, `gif`, `webp` or `svg+xml`),
+   - an asset reference: `/api/v1/assets/{uuid}`, with an optional query such as `?stream=true`.
+3. Do not put whitespace, quotes or angle brackets in the URL. The portrait composer writes the URL into an SVG attribute.
+
+Any other level or portrait returns 422. The gateway also returns 422 for `currentHp` other than `maxHp`, for `isAiStandIn: true` and for a client `id`, because character_sheet cannot store them.
+
 ---
 
 ## 1. Visual Paper Doll & Click-to-Equip Interaction
@@ -125,7 +138,7 @@ Provides a validated form for creating new adventurers:
 1. **Identity**: Character Name (required), Class (SRD 5e standard classes), and optional Subclass.
 2. **Combat Vitals**: Level (1–20), Max HP ($> 0$), Armor Class, and Movement Speed (5-ft increments).
 3. **Ability Scores**: STR, DEX, CON, INT, WIS, CHA scores with real-time automatic modifier calculations ($\lfloor(\text{score} - 10) / 2\rfloor$).
-4. **Token Portrait**: Predefined geometric portrait presets or custom avatar URLs.
+4. **Token Portrait**: Predefined geometric portrait presets (image data URIs). The builder sends the level and the portrait in the create request, and character_sheet stores them.
 
 ### Example Embedding
 ```html
