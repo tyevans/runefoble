@@ -168,6 +168,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
 
 ### Changed
+- The approved audience modifier consumers in game_session, board_state and character_sheet share one helper, `runefoble_platform.audience_modifiers`. Behaviour is unchanged. (TASK-0843)
 - A campaign session and its game session share one UUID id. Creating a campaign session also creates the game session, so the App Shell can read, start and run combat in the session it launched. The `session-` id prefix is removed. (TASK-0706)
 - Settlement and haven blackbox tests create campaigns and join members through the public campaign routes, not by writing SpiceDB tuples. (TASK-0716)
 - Playwright BDD steps act only through visible controls and public routes: no injected component state, no synthetic DOM events, no hash jumps, no direct theme writes. (TASK-0649)

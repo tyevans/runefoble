@@ -354,7 +354,7 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 348. **TASK-0801 (Complete)**: [`0801-dev-server-port-forwards-stop-with-their-parent.md`](complete/0801-dev-server-port-forwards-stop-with-their-parent.md) — Dev Server Port-Forwards Stop With Their Parent Process
 349. **TASK-0802 (Complete)**: [`0802-backlog-link-check-treats-cache-only-folders-as-missing.md`](complete/0802-backlog-link-check-treats-cache-only-folders-as-missing.md) — Backlog Link Check Treats Cache-Only Folders as Missing
 350. **TASK-0803 (Complete)**: [`0803-game-session-soundscape-redis-harness.md`](complete/0803-game-session-soundscape-redis-harness.md) — One Test Harness Runs Game Session, Redis and Soundscape Together
-351. **TASK-0843 (Refined)**: [`0843-one-helper-for-approved-audience-modifier-consumers.md`](refined/0843-one-helper-for-approved-audience-modifier-consumers.md) — One Helper for Approved Audience Modifier Consumers
+351. **TASK-0843 (Complete)**: [`0843-one-helper-for-approved-audience-modifier-consumers.md`](complete/0843-one-helper-for-approved-audience-modifier-consumers.md) — One Helper for Approved Audience Modifier Consumers
 352. **TASK-0844 (Refined)**: [`0844-one-create-path-for-game-sessions.md`](refined/0844-one-create-path-for-game-sessions.md) — One Create Path for Game Sessions
 353. **TASK-0845 (Refined)**: [`0845-gateway-permission-checks-follow-one-rule.md`](refined/0845-gateway-permission-checks-follow-one-rule.md) — Gateway Permission Checks Follow One Rule
 354. **TASK-0525 (Refined)**: [`0525-playwright-bdd-real-zitadel-sign-in-journeys.md`](refined/0525-playwright-bdd-real-zitadel-sign-in-journeys.md) — Playwright BDD Journeys Authenticate Through Real Zitadel

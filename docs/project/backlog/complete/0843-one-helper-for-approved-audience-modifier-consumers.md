@@ -1,7 +1,7 @@
 ---
 id: '0843'
 title: One Helper for Approved Audience Modifier Consumers
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies: []
 governing_adrs:
@@ -18,7 +18,7 @@ target_release: 0.9.0
 # TASK-0843: One Helper for Approved Audience Modifier Consumers
 
 ## Status
-Refined
+Complete
 
 Source: refactor round 2026-11-18 (user approved).
 
