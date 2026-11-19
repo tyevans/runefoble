@@ -21,7 +21,7 @@ from gateway_mcp.identity import BearerTransportAuth, get_verifier
 from gateway_mcp.prompts.narrative import register_narrative_prompts
 from gateway_mcp.resources.session import register_session_resources
 from gateway_mcp.routers.tools_registry import mount_tools_registry
-from gateway_mcp.settings import load_listen_settings, load_settings
+from gateway_mcp.settings import load_listen_settings
 from gateway_mcp.tools.board import register_board_tools
 from gateway_mcp.tools.character import register_character_tools
 from gateway_mcp.tools.compendium import register_compendium_tools
@@ -67,9 +67,9 @@ def main() -> None:
 
     Requests without a verified bearer token are refused before any tool runs.
 
-    The upstream URLs are read first, so a missing URL stops the process before it listens.
+    `GatewayMcpContainer.default()` reads the upstream URLs, so a missing URL stops the process
+    before it listens.
     """
-    load_settings()
     platform_settings = PlatformSettings()
     init_telemetry("gateway-mcp", settings=platform_settings)
     listen = load_listen_settings()

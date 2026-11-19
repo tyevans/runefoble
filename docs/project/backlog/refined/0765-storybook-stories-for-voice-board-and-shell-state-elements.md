@@ -45,6 +45,10 @@ Seven more custom elements have no story. Add them.
 ## Definition of Done
 - Seven stories added. Storybook build clean. No file over 500 lines.
 
+## Refactor r3 Addendum (Detailed Specification)
+
+Refactor r3 addendum (2026-11-19): stories that stub `fetch` use `installStoryFetch` from `@runefoble/ui-core` (TASK-0921) and restore it in cleanup. Do not add a local fetch stub.
+
 ## Audit Provenance
 - Severity: low
 - Source audits: `frontend-ui`

@@ -18,6 +18,7 @@ from runefoble_auth.settings import load_spicedb_settings
 from gateway_mcp.dynamic.registry import DynamicToolRegistry
 from gateway_mcp.permissions import PermissionChecker, SpiceDBPermissionChecker
 from gateway_mcp.service_clients import ServiceClientPool
+from gateway_mcp.settings import load_settings
 
 
 @dataclass
@@ -32,9 +33,14 @@ class GatewayMcpContainer:
     def default(cls) -> GatewayMcpContainer:
         """Build the production wiring. The SpiceDB client is resolved on each use.
 
+        Both start paths (`server.main` and `gateway_mcp.asgi`) build this container, so a
+        missing upstream URL or SpiceDB key stops both of them before they serve.
+
         Raises:
             ConfigurationError: The SpiceDB preshared key is missing (TASK-0720).
+            ValidationError: An upstream service URL is missing.
         """
+        load_settings()
         load_spicedb_settings()
         permissions = SpiceDBPermissionChecker(get_spicedb_client)
         return cls(

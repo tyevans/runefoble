@@ -52,6 +52,10 @@ Counts from the audit (recounted): `def _auth(` appears in 40 files under `tests
 - Docs named in the specification are corrected.
 - `uv run pytest`, `make lint` and `make health-check` pass. No file over 500 lines.
 
+## Refactor r3 Addendum (Detailed Specification step 1)
+
+Refactor r3 addendum (2026-11-19): 40 local `_auth`, `_bearer`, `bearer_token`, `bearer_for` or `bearer_headers` helpers in 35 files under `tests/` wrap `issuer.mint(sub)`. Examples: `tests/test_blackbox_compendium_authz.py:44`, `tests/test_blackbox_campaign_grants_authz.py:28`, `tests/test_blackbox_character_authz.py:35`, `tests/test_blackbox_session_chronicle.py:40`. Replace each with `bearer(sub, issuer)` from `tests/helpers/ws_identity.py:16`. The username-claim copy at `tests/test_blackbox_campaign_member_names.py:17` calls `issuer.mint` with `extra_claims` directly. List the 35 files in this task before work starts (`grep -rln "def _auth\|def _bearer\|def bearer_token\|def bearer_for\|def bearer_headers" tests/`).
+
 ## Audit Provenance
 - Severity: low
 - Source audits: `refactor-r1/tests.md`

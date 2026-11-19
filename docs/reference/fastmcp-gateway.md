@@ -23,7 +23,6 @@ gateway/mcp/src/gateway_mcp/
 ├── routers/               # FastMCP REST routers (< 130 lines)
 │   └── tools_registry.py  # REST endpoints for dynamic tool registration & lifecycle
 ├── asgi.py                # ASGI app (`gateway_mcp.asgi:app`) for the streamable HTTP endpoint
-├── main.py                # `python -m gateway_mcp.main` runs `server.main()`
 ├── server.py              # `build_mcp(container)` and `build_http_app(container)`, plus `main()`
 ├── settings.py            # Required upstream service URLs and the GATEWAY_MCP_HOST/PORT listen address
 ├── tools/                 # MCP tool implementations (< 180 lines each)
@@ -50,7 +49,7 @@ Every request to `/mcp` must carry `Authorization: Bearer <token>`. The gateway 
 | Bind address | `GATEWAY_MCP_HOST` | `0.0.0.0` |
 | Bind port | `GATEWAY_MCP_PORT` | `8012` |
 
-- Run locally: `uv run python -m gateway_mcp.main` (or `gateway_mcp.main` after `uv sync`). Set the five upstream URLs first.
+- Run locally: `uv run python -m gateway_mcp.server`. Set the five upstream URLs first.
 - Container: `gateway_mcp.asgi:app` under uvicorn, port `8012`. The Helm Deployment `gateway-mcp` and ClusterIP Service `gateway-mcp` expose it inside the cluster only. No ingress rule routes to it.
 - The process stops at start-up when an upstream URL is unset. The error names the variable.
 - The server keeps session state in memory. Run one replica.

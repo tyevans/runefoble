@@ -51,7 +51,7 @@ The MCP transport needs a verified bearer token on every request. A client that 
 
 Run the test suite or test locally. Export the upstream URLs first, because the process refuses to start without them:
 ```bash
-uv run python -m gateway_mcp.main
+uv run python -m gateway_mcp.server
 ```
 And verify via pytest:
 ```bash

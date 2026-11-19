@@ -54,6 +54,10 @@ Refactor round 2 addendum (2026-11-18): `services/rules_compendium/ui/src/runefo
 - No empty `catch {}` without a reason comment in the listed files.
 - Gates pass. No file over 500 lines.
 
+## Refactor r3 Addendum (Problem Statement)
+
+Refactor r3 addendum (2026-11-19): the line numbers moved. The frame catches are now `services/board_state/ui/src/runefoble-board.ts:157` and `services/voice_agent/ui/src/runefoble-mobile-companion.ts:135`. Both wrap the handler call and the `JSON.parse` in one `try {} catch {}`. Parse the frame in the `try`, and call the handler outside it, so that handler errors reach the console and `runefoble-error`. The `navigator.vibrate` guard is copied at eight sites (`runefoble-mobile-companion.ts:47`, `:159`; `mobile_companion/haptic_ping_panel.ts:39`; `the_watcher/ui/src/runefoble-absentee-directive.ts:38`; `runefoble-absentee-vote-card.ts:57`; `frontend/src/components/minigames/runefoble-minigame-roulette.ts:161`, `-darts.ts:57`, `-liars-dice.ts:141`). The three minigame copies have no `try`. Replace them with one `vibrate(pattern): boolean` helper in `libs/runefoble_ui/src/haptics.ts` that holds the guard, the `try` and the one reason comment.
+
 ## Audit Provenance
 - Severity: medium
 - Source audits: `frontend-ui`

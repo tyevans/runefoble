@@ -43,8 +43,8 @@ Decompose `services/campaign_lore/src/campaign_lore/handouts.py` (285 lines, 57.
    - Extract 3D WebGL relic mesh synthesis and UV ink revelation equations (< 80 lines).
 4. **Handout Generator Engine (`services/campaign_lore/src/campaign_lore/handouts/generator.py`)**:
    - Extract `HandoutGenerator` assembling textures, seals, and ink layers (< 90 lines).
-5. **Facade Re-export (`services/campaign_lore/src/campaign_lore/handouts.py`)**:
-   - Re-export all classes, dictionaries, and helpers for backward compatibility (< 35 lines).
+5. **Update importers**:
+   - Update every importer of `campaign_lore.handouts` to the new submodules. Add no re-export facade (DoR 9). Delete `handouts.py`.
 6. **Verification**:
    - Verify all tests pass via `uv run pytest tests/test_blackbox_diegetic_handouts_and_relics.py`.
 
@@ -57,8 +57,7 @@ Decompose `services/campaign_lore/src/campaign_lore/handouts.py` (285 lines, 57.
 - **Testable (T)**: Existing diegetic handouts blackbox test suite validates artifact output.
 
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
-1. `services/campaign_lore/src/campaign_lore/handouts.py` reduced to a facade < 40 lines.
-2. Modular submodules in `services/campaign_lore/src/campaign_lore/handouts/` strictly < 100 lines each.
-3. Full backward compatibility maintained.
-4. All diegetic handout tests pass via `uv run pytest tests/test_blackbox_diegetic_handouts_and_relics.py`.
-5. Code passes `uv run ruff check .` and `uv run ruff format --check .`.
+1. Modular submodules in `services/campaign_lore/src/campaign_lore/handouts/` strictly < 100 lines each.
+2. Every importer uses the new submodules. No re-export facade exists.
+3. All diegetic handout tests pass via `uv run pytest tests/test_blackbox_diegetic_handouts_and_relics.py`.
+4. Code passes `uv run ruff check .` and `uv run ruff format --check .`.

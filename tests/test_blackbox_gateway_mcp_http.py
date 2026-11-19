@@ -136,7 +136,7 @@ def _status_when_ready(endpoint: str) -> int:
 
 @pytest.fixture
 def gateway_process() -> Iterator[str]:
-    """Start `python -m gateway_mcp.main` on a free port and yield its MCP endpoint URL."""
+    """Start `python -m gateway_mcp.server` on a free port and yield its MCP endpoint URL."""
     port = free_port()
     env = {
         **os.environ,
@@ -145,7 +145,7 @@ def gateway_process() -> Iterator[str]:
         "GATEWAY_MCP_PORT": str(port),
     }
     process = subprocess.Popen(
-        [sys.executable, "-m", "gateway_mcp.main"],
+        [sys.executable, "-m", "gateway_mcp.server"],
         cwd=REPO_ROOT,
         env=env,
         stdout=subprocess.PIPE,
@@ -254,7 +254,7 @@ def test_entrypoint_refuses_to_start_without_upstream_urls():
     env = {key: value for key, value in os.environ.items() if key not in UPSTREAM_ENV}
     env["GATEWAY_MCP_PORT"] = str(free_port())
     result = run_command(
-        [sys.executable, "-m", "gateway_mcp.main"], cwd=REPO_ROOT, env=env, timeout=120
+        [sys.executable, "-m", "gateway_mcp.server"], cwd=REPO_ROOT, env=env, timeout=120
     )
     assert result.returncode != 0
     assert "RUNEFOBLE_BOARD_STATE_URL" in result.stderr
