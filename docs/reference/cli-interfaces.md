@@ -44,7 +44,7 @@
 | `make test-bdd` | Typechecks `e2e/` (`pnpm run e2e:typecheck`), fails on unused Playwright BDD step definitions (`uv run python scripts/check_e2e_unused_steps.py`), and runs `bddgen`. Does not launch browsers |
 | `make build` | Produces production frontend bundle and static Storybook documentation |
 | `make check-ui-manifests` | Fails when a service UI manifest is missing or invalid (ADR-0013, ADR-0015) |
-| `make voice-model-cache` | Downloads the faster-whisper model set by `VOICE_MODEL_SIZE` (default `tiny.en`) into `.cache/voice-models`, then copies it into the running voice-agent pod |
+| `make voice-model-cache` | Downloads the faster-whisper model set by `VOICE_MODEL_SIZE` (default `tiny.en`) into `.cache/voice-models`, then copies it into the running voice-agent pod. Needs the `faster-whisper` engine: the chart creates no model cache for `whisper-cpp` |
 | `make prd-audit` | Audits PRD decomposition status, buffer health (6 to 12 refined tasks), and detects epic proposed tasks by the scope rule in the decomposition how-to. Local tool, kept. See the parity record below |
 | `make prd-decompose` | Decomposes PRDs into ADR spikes and vertical slices (`ARGS="--prd PRD-0014"`). Local tool, kept. See the parity record below |
 | `make prd-create` | Scaffolds a new PRD document with frontmatter and registers it. Local tool, kept. See the parity record below |

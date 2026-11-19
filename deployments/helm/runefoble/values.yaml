@@ -306,6 +306,11 @@ services:
     urlEnv: RUNEFOBLE_VOICE_AGENT_URL
     consumers: [game-session, gateway-api]
     readinessPath: /healthz
+    # Speech-to-text engine. faster-whisper runs in-process and needs the model cache below.
+    # whisper-cpp calls a whisper.cpp HTTP server at sttBaseUrl (for example http://<host>:8080)
+    # and needs no model cache. The chart drops the cache volume for whisper-cpp.
+    sttEngine: faster-whisper
+    sttBaseUrl: ""
     # faster-whisper model. Pre-fetched into modelCache by make voice-model-cache.
     # RUNEFOBLE_VOICE_STT_MODEL_DIR must equal modelCache.mountPath.
     env:

@@ -6,6 +6,7 @@
 {{- range $key, $svc := .Values.services }}
 {{- if not $svc.ownTemplate }}
 {{- $name := kebabcase $key }}
+{{- $useModelCache := and $svc.modelCache (or (not $svc.sttEngine) (eq $svc.sttEngine "faster-whisper")) }}
 {{- if $svc.configMap }}
 ---
 apiVersion: v1
@@ -86,6 +87,14 @@ spec:
               value: {{ $value | quote }}
             {{- end }}
             {{- end }}
+            {{- with $svc.sttEngine }}
+            - name: RUNEFOBLE_VOICE_STT_ENGINE
+              value: {{ . | quote }}
+            {{- end }}
+            {{- with $svc.sttBaseUrl }}
+            - name: RUNEFOBLE_VOICE_STT_BASE_URL
+              value: {{ . | quote }}
+            {{- end }}
             {{- with $svc.embeddingApiKeySecret }}
             - name: RUNEFOBLE_EMBEDDING_API_KEY
               valueFrom:
@@ -109,16 +118,16 @@ spec:
             initialDelaySeconds: 5
             periodSeconds: 10
           {{- end }}
-          {{- with $svc.modelCache }}
+          {{- if $useModelCache }}
           volumeMounts:
             - name: model-cache
-              mountPath: {{ .mountPath | quote }}
+              mountPath: {{ $svc.modelCache.mountPath | quote }}
           {{- end }}
       {{- with $svc.podSecurityContext }}
       securityContext:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with $svc.modelCache }}
+      {{- if $useModelCache }}
       volumes:
         - name: model-cache
           persistentVolumeClaim:

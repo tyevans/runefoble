@@ -22,7 +22,7 @@ Current engine ports:
 
 | Service | Setting | Port | Adapters | Error code | Body key for the engine |
 |---|---|---|---|---|---|
-| `voice_agent` | `RUNEFOBLE_VOICE_STT_ENGINE` | `BaseTranscriber` | `faster-whisper` | `speech_engine_unavailable` | `engine` |
+| `voice_agent` | `RUNEFOBLE_VOICE_STT_ENGINE` | `BaseTranscriber` | `faster-whisper`, `whisper-cpp` | `speech_engine_unavailable` | `engine` |
 | `voice_agent` | `RUNEFOBLE_VOICE_TTS_ENGINE` | `BaseSynthesizer` | `espeak-ng` | `speech_synthesis_unavailable` | `engine` |
 | `asset_forge` | `RUNEFOBLE_ASSET_FORGE_MAP_GENERATOR` | `MapGenerator` | `deterministic` | `map_generation_unavailable` | `generator` |
 | `asset_forge` | `RUNEFOBLE_WARDROBE_GENERATOR` | `WardrobeGenerator` | `placeholder` | none (no failure path) | none |
