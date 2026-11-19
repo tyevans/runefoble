@@ -11,7 +11,7 @@ import {
   errorMessageFromBody,
   postJson,
   requestFailureMessage,
-  requestJson,
+  request,
   wsUrl,
 } from '../src/index.ts';
 
@@ -103,11 +103,11 @@ describe('postJson', () => {
   });
 });
 
-describe('requestJson', () => {
+describe('request', () => {
   it('sends a GET with no body and no JSON content type', async () => {
     const { calls, fetchImpl } = recordingFetch(() => jsonResponse(200, { ok: 1 }));
 
-    assert.deepEqual(await requestJson<{ ok: number }>('/api/v1/y', {}, { fetchImpl }), { ok: 1 });
+    assert.deepEqual(await request<{ ok: number }>('/api/v1/y', {}, { fetchImpl }), { ok: 1 });
     assert.equal(calls[0].init.method, undefined);
     assert.deepEqual(calls[0].init.headers, {});
   });

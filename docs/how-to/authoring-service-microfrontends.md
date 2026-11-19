@@ -107,12 +107,12 @@ Do not read tokens from `localStorage`. Ask the App Shell through the auth conte
 2. Create the controller in the component:
 
 ```ts
-import { AuthConsumerController, HttpError, requestJson } from '@runefoble/ui-core';
+import { AuthConsumerController, HttpError, request } from '@runefoble/ui-core';
 
 private readonly auth = new AuthConsumerController(this);
 
 try {
-  const data = await requestJson<Result>(url, {}, { headers: await this.auth.authHeaders() });
+  const data = await request<Result>(path, {}, { apiBase: this.apiBaseUrl, auth: this.auth });
   this.result = data;
 } catch (err) {
   this.error = err instanceof HttpError ? `Request failed (status ${err.status}).` : 'The request failed.';
@@ -121,7 +121,7 @@ try {
 
 3. Catch failures and set an error state. Render the error. Do not show demo data.
 
-For a POST with a JSON body, call `postJson(url, body, { headers })`. Both helpers throw `HttpError` on a non-2xx response. `HttpError.detail` holds the server message. Do not write a local `fetch` and error parser.
+For a POST with a JSON body, call `postJson(path, body, { apiBase, auth })`. For an upload, call `postForm(path, formData, { apiBase, auth })`. All helpers throw `HttpError` on a non-2xx response. `HttpError.detail` holds the server message. Do not write a local `fetch` and error parser. See [UI transport](../reference/ui-transport.md).
 4. In stories, add one story with `<runefoble-story-auth-provider token="story-token">` and one story with no provider. Use `installTokenCheckingFetch` from `@runefoble/ui-core/story-fetch` to stand in for the gateway.
 
 ### WebSockets

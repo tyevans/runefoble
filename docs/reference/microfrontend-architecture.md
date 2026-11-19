@@ -145,15 +145,18 @@ Rules:
 
 ## Shared HTTP and Socket Helpers (`@runefoble/ui-core`)
 
-Source: `libs/runefoble_ui/src/http.ts` (TASK-0825). Every microfrontend and the App Shell use these helpers. Do not add a local copy.
+Source: `libs/runefoble_ui/src/http.ts` (TASK-0825, TASK-0758). Every microfrontend and the App Shell use these helpers. Do not add a local copy. The full contract is in [UI transport](ui-transport.md).
 
 | Export | Behaviour |
 |---|---|
-| `requestJson<T>(url, init, opts)` | Sends the request and resolves with the parsed JSON. An empty success body resolves with `undefined`. A non-2xx response throws `HttpError`. |
-| `postJson<T>(url, body, opts)` | `requestJson` with `POST` and a JSON body. |
-| `opts.headers` | Extra headers, such as `await auth.authHeaders()`. |
+| `request<T>(path, spec, opts)` | Sends the request and resolves with the parsed JSON. An empty success body resolves with `undefined`. A non-2xx response throws `HttpError`. |
+| `postJson<T>(path, body, opts)` | `request` with `POST` and a JSON body. |
+| `postForm<T>(path, form, opts)` | `request` with `POST` and a `FormData` body. |
+| `opts.apiBase` | API base put in front of the path. Empty means the page origin. |
+| `opts.auth` | Bearer source, such as the `AuthConsumerController`. |
+| `opts.headers` | Extra headers. They win over the auth headers. |
 | `opts.fetchImpl` | Transport override for tests. The default reads the global `fetch` at call time. |
-| `HttpError` | `status` and `detail`. `detail` is the server `detail` (a string, or the joined FastAPI `msg` values), else `Request failed with status <code>`. |
+| `HttpError` | `status` and `detail`. `detail` is the server `detail` (a string, or the joined FastAPI `msg` values), else the body `message`, else `Request failed with status <code>`. |
 | `requestFailureMessage(err)` | The user-facing message for a failed call: `detail` for `HttpError`, else `Network error: <reason>`. |
 | `ActionResult` | `{ ok: true } \| { ok: false; message }`. Used by writes that report and never throw. |
 | `bearerHeaders(token)` | `{ Authorization: 'Bearer ...' }` for a token, else `{}`. |

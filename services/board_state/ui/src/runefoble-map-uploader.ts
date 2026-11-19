@@ -22,6 +22,8 @@ export interface MapUploadedDetail {
 export class RunefobleMapUploader extends LitElement {
   static styles = mapUploaderStyles;
 
+  /** API base put in front of `uploadEndpoint`. Empty means the page origin. */
+  @property({ type: String }) apiBaseUrl = '';
   @property({ type: String }) uploadEndpoint = '/api/v1/assets/upload';
   @property({ type: String }) ownerId = 'gm-host';
   @property({ type: String }) assetType = 'battlemap';
@@ -91,7 +93,7 @@ export class RunefobleMapUploader extends LitElement {
       ${this.successMessage ? html`<div class="status-msg success">✅ ${this.successMessage}</div>` : ''}
       ${!this.previewUrl ? html`
         <runefoble-map-dropzone
-          .uploadEndpoint="${this.uploadEndpoint}" .ownerId="${this.ownerId}"
+          .apiBaseUrl="${this.apiBaseUrl}" .uploadEndpoint="${this.uploadEndpoint}" .ownerId="${this.ownerId}"
           .assetType="${this.assetType}" .isUploading="${this.isUploading}"
           .uploadProgress="${this.uploadProgress}"
           @upload-start="${() => { this.isUploading = true; this.uploadProgress = 15; this.errorMessage = null; }}"

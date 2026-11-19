@@ -1,4 +1,4 @@
-import { AuthConsumerController, fetchAssetObjectUrl } from '@runefoble/ui-core';
+import { AuthConsumerController, HttpError, fetchAssetObjectUrl, postForm } from '@runefoble/ui-core';
 import { LitElement, html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { mapUploaderStyles } from './runefoble-map-uploader.styles.ts';
@@ -13,12 +13,22 @@ export interface DropzoneUploadSuccessDetail {
   resolution: { width: number; height: number };
 }
 
+/** Body of `POST /api/v1/assets/upload`. */
+interface UploadResponse {
+  asset_id: string;
+  download_url?: string;
+  byte_size?: number;
+  content_type?: string;
+}
+
 @customElement('runefoble-map-dropzone')
 export class RunefobleMapDropzone extends LitElement {
   private readonly auth = new AuthConsumerController(this);
 
   static styles = mapUploaderStyles;
 
+  /** API base put in front of `uploadEndpoint`. Empty means the page origin. */
+  @property({ type: String }) apiBaseUrl = '';
   @property({ type: String }) uploadEndpoint = '/api/v1/assets/upload';
   @property({ type: String }) ownerId = 'gm-host';
   @property({ type: String }) assetType = 'battlemap';
@@ -61,15 +71,11 @@ export class RunefobleMapDropzone extends LitElement {
     try {
       this.uploadProgress = 50;
       this.emit('upload-progress', { progress: 50 });
-      const response = await fetch(this.uploadEndpoint, {
-        method: 'POST',
-        headers: await this.auth.authHeaders(),
-        body: formData,
+      const data = await postForm<UploadResponse>(this.uploadEndpoint, formData, {
+        apiBase: this.apiBaseUrl,
+        auth: this.auth,
       });
-      if (!response.ok) throw new Error(`Upload failed with status ${response.status}`);
-
       this.uploadProgress = 100;
-      const data = await response.json();
       if (!data.download_url) throw new Error('Upload response has no download_url.');
       // Asset reads need a bearer, so an <img src> cannot load the URL directly (TASK-0784).
       const downloadUrl = await fetchAssetObjectUrl(data.download_url, () => this.auth.authHeaders());
@@ -83,7 +89,7 @@ export class RunefobleMapDropzone extends LitElement {
         resolution,
       });
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to upload battlemap.';
+      const message = err instanceof HttpError ? `Upload failed: ${err.detail}` : err instanceof Error ? err.message : String(err);
       this.emit('upload-error', { message });
     } finally {
       this.isUploading = false;

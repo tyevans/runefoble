@@ -3,22 +3,13 @@
  * TASK-0613: Asset Forge and Print Forge Components Call Forge API and Show Results.
  * Token placement calls the board_state token route (services/board_state).
  *
- * Every call posts to a forge route and resolves only with the response body.
- * A non-2xx response rejects with ForgeApiError that carries the server detail.
- * A 401 or 403 rejects with ForgeAuthError. Network failures reject with the fetch error.
- * Nothing resolves on failure.
- *
- * TASK-0812: every call takes the shared auth source (the same one AssetImageController uses,
- * `AuthConsumerController.authHeaders`) and sends its headers, so the bearer reaches the gateway.
- * TASK-0825: the request runs through the shared `postJson` helper in `@runefoble/ui-core`.
+ * Every call posts to a forge route through the shared transport `postJson` in
+ * `@runefoble/ui-core` (TASK-0758). `opts.apiBase` is the gateway base and `opts.auth` is the
+ * caller's bearer source (TASK-0812). A non-2xx response rejects with `HttpError`. A network
+ * failure rejects with the fetch error. Nothing resolves on failure.
  */
 
-import { HttpError, postJson } from '@runefoble/ui-core';
-
-export type FetchLike = typeof fetch;
-
-/** Resolves the headers that carry the caller's bearer. Empty when nobody is signed in. */
-export type AuthHeaders = () => Promise<Record<string, string>>;
+import { HttpError, postJson, requestFailureMessage, type RequestOptions } from '@runefoble/ui-core';
 
 export interface ForgedMapData {
   asset_id: string;
@@ -101,27 +92,17 @@ export interface StlTokenInput {
   campaignId?: string;
 }
 
-export class ForgeApiError extends Error {
-  status: number;
+/** Text for a refused caller. Only 401 and 403 need their own words. The server detail covers the rest. */
+const AUTH_FAILURE_TEXT: Record<number, string> = {
+  401: 'Sign in to use the forge. Your session is missing or has expired.',
+  403: 'Your account does not have permission for this forge action.',
+};
 
-  constructor(message: string, status: number) {
-    super(message);
-    this.name = 'ForgeApiError';
-    this.status = status;
-  }
-}
-
-/** The server refused the caller (401 or 403). The message tells the player what to do. */
-export class ForgeAuthError extends ForgeApiError {
-  constructor(status: 401 | 403) {
-    super(
-      status === 401
-        ? 'Sign in to use the forge. Your session is missing or has expired.'
-        : 'Your account does not have permission for this forge action.',
-      status,
-    );
-    this.name = 'ForgeAuthError';
-  }
+/** The message a forge element shows for a failed call. */
+export function forgeFailureMessage(err: unknown): string {
+  if (err instanceof HttpError) return AUTH_FAILURE_TEXT[err.status] ?? err.detail;
+  if (err instanceof Error && !(err instanceof TypeError)) return err.message;
+  return requestFailureMessage(err);
 }
 
 interface BattlemapResponse {
@@ -146,33 +127,9 @@ function withCampaign(body: Record<string, unknown>, campaignId: string | undefi
   return campaignId ? { ...body, campaign_id: campaignId } : body;
 }
 
-async function postForge<TResponse>(
-  fetchImpl: FetchLike,
-  authHeaders: AuthHeaders,
-  url: string,
-  body: Record<string, unknown>,
-): Promise<TResponse> {
-  try {
-    return await postJson<TResponse>(url, body, { headers: await authHeaders(), fetchImpl });
-  } catch (err) {
-    if (err instanceof HttpError) {
-      if (err.status === 401 || err.status === 403) throw new ForgeAuthError(err.status);
-      throw new ForgeApiError(err.detail, err.status);
-    }
-    throw err;
-  }
-}
-
-export async function forgeBattlemap(
-  baseUrl: string,
-  input: BattlemapInput,
-  authHeaders: AuthHeaders,
-  fetchImpl: FetchLike = fetch,
-): Promise<ForgedMapData> {
-  const res = await postForge<BattlemapResponse>(
-    fetchImpl,
-    authHeaders,
-    `${baseUrl}/api/v1/forge/battlemap`,
+export async function forgeBattlemap(input: BattlemapInput, opts: RequestOptions): Promise<ForgedMapData> {
+  const res = await postJson<BattlemapResponse>(
+    '/api/v1/forge/battlemap',
     withCampaign(
       {
         prompt: input.prompt,
@@ -181,6 +138,7 @@ export async function forgeBattlemap(
       },
       input.campaignId,
     ),
+    opts,
   );
   return {
     asset_id: res.asset_id,
@@ -193,16 +151,9 @@ export async function forgeBattlemap(
   };
 }
 
-export async function forgeToken(
-  baseUrl: string,
-  input: TokenInput,
-  authHeaders: AuthHeaders,
-  fetchImpl: FetchLike = fetch,
-): Promise<ForgedTokenData> {
-  const res = await postForge<TokenResponse>(
-    fetchImpl,
-    authHeaders,
-    `${baseUrl}/api/v1/forge/token`,
+export async function forgeToken(input: TokenInput, opts: RequestOptions): Promise<ForgedTokenData> {
+  const res = await postJson<TokenResponse>(
+    '/api/v1/forge/token',
     withCampaign(
       {
         prompt: input.prompt,
@@ -211,6 +162,7 @@ export async function forgeToken(
       },
       input.campaignId,
     ),
+    opts,
   );
   return {
     asset_id: res.asset_id,
@@ -221,16 +173,9 @@ export async function forgeToken(
   };
 }
 
-export async function exportPrintPdf(
-  baseUrl: string,
-  input: PrintPdfInput,
-  authHeaders: AuthHeaders,
-  fetchImpl: FetchLike = fetch,
-): Promise<ForgedPrintPdf> {
-  return postForge<ForgedPrintPdf>(
-    fetchImpl,
-    authHeaders,
-    `${baseUrl}/api/v1/forge/print-pdf`,
+export async function exportPrintPdf(input: PrintPdfInput, opts: RequestOptions): Promise<ForgedPrintPdf> {
+  return postJson<ForgedPrintPdf>(
+    '/api/v1/forge/print-pdf',
     withCampaign(
       {
         title: input.title,
@@ -241,19 +186,13 @@ export async function exportPrintPdf(
       },
       input.campaignId,
     ),
+    opts,
   );
 }
 
-export async function exportStandees(
-  baseUrl: string,
-  input: StandeesInput,
-  authHeaders: AuthHeaders,
-  fetchImpl: FetchLike = fetch,
-): Promise<ForgedStandees> {
-  return postForge<ForgedStandees>(
-    fetchImpl,
-    authHeaders,
-    `${baseUrl}/api/v1/forge/standees`,
+export async function exportStandees(input: StandeesInput, opts: RequestOptions): Promise<ForgedStandees> {
+  return postJson<ForgedStandees>(
+    '/api/v1/forge/standees',
     withCampaign(
       {
         sheet_title: input.sheetTitle,
@@ -263,19 +202,13 @@ export async function exportStandees(
       },
       input.campaignId,
     ),
+    opts,
   );
 }
 
-export async function exportStlToken(
-  baseUrl: string,
-  input: StlTokenInput,
-  authHeaders: AuthHeaders,
-  fetchImpl: FetchLike = fetch,
-): Promise<ForgedStlToken> {
-  return postForge<ForgedStlToken>(
-    fetchImpl,
-    authHeaders,
-    `${baseUrl}/api/v1/forge/stl-token`,
+export async function exportStlToken(input: StlTokenInput, opts: RequestOptions): Promise<ForgedStlToken> {
+  return postJson<ForgedStlToken>(
+    '/api/v1/forge/stl-token',
     withCampaign(
       {
         diameter_mm: input.diameterMm,
@@ -285,6 +218,7 @@ export async function exportStlToken(
       },
       input.campaignId,
     ),
+    opts,
   );
 }
 
@@ -305,19 +239,14 @@ export interface PlacedBoardToken {
 }
 
 /** Places a token on a board through the board_state route. Requires a session id. */
-export async function placeBoardToken(
-  baseUrl: string,
-  input: PlaceBoardTokenInput,
-  authHeaders: AuthHeaders,
-  fetchImpl: FetchLike = fetch,
-): Promise<PlacedBoardToken> {
-  const url = `${baseUrl}/api/v1/boards/${encodeURIComponent(input.sessionId)}/tokens`;
-  const res = await postForge<PlacedBoardToken>(fetchImpl, authHeaders, url, {
+export async function placeBoardToken(input: PlaceBoardTokenInput, opts: RequestOptions): Promise<PlacedBoardToken> {
+  const path = `/api/v1/boards/${encodeURIComponent(input.sessionId)}/tokens`;
+  const res = await postJson<PlacedBoardToken>(path, {
     name: input.name,
     token_type: input.tokenType,
     x: input.x,
     y: input.y,
-  });
+  }, opts);
   return {
     token_id: res.token_id,
     name: res.name,

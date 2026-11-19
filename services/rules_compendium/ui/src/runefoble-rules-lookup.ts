@@ -5,7 +5,7 @@
 
 import { LitElement, html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { AuthConsumerController, HttpError, requestJson } from '@runefoble/ui-core';
+import { AuthConsumerController, HttpError, request } from '@runefoble/ui-core';
 import { compendiumStyles } from './runefoble-rules-compendium.styles.ts';
 import type { RuleCategory, RuleSearchResultItem, RuleSearchResponse } from './types.ts';
 
@@ -58,7 +58,7 @@ export class RunefobleRulesLookup extends LitElement {
       const campParam = this.campaignId ? `&campaign_id=${this.campaignId}` : '';
       const url = `${this.apiBaseUrl}/api/v1/compendium/rules/search?query=${encodeURIComponent(query)}${catParam}${campParam}`;
 
-      const data = await requestJson<RuleSearchResponse>(url, {}, { headers: await this.auth.authHeaders() });
+      const data = await request<RuleSearchResponse>(url, {}, { auth: this.auth });
       this.searchError = null;
       this.results = data.results;
       this.tookMs = data.took_ms;

@@ -1,10 +1,13 @@
-import { AuthConsumerController, fetchAssetObjectUrl, revokeAssetObjectUrl } from '@runefoble/ui-core';
+import {
+  AuthConsumerController, fetchAssetObjectUrl, revokeAssetObjectUrl, type RequestOptions,
+} from '@runefoble/ui-core';
 import { LitElement, html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { assetForgeStyles } from './runefoble-asset-forge.styles.ts';
 import {
   forgeBattlemap,
   forgeToken,
+  forgeFailureMessage,
   placeBoardToken,
   type ForgedMapData,
   type ForgedTokenData,
@@ -73,6 +76,11 @@ export class RunefobleAssetForge extends LitElement {
     revokeAssetObjectUrl(this.tokenPreviewUrl);
   }
 
+  /** The shared transport settings: the API base and the shell bearer. */
+  private transport(): RequestOptions {
+    return { apiBase: this.apiBaseUrl, auth: this.auth };
+  }
+
   /** Runs one forge request. Shows the error on failure. Never reports false success. */
   private async runForge(action: () => Promise<void>) {
     this.isGenerating = true;
@@ -80,7 +88,7 @@ export class RunefobleAssetForge extends LitElement {
     try {
       await action();
     } catch (err) {
-      this.errorMessage = err instanceof Error ? err.message : 'Forge request failed.';
+      this.errorMessage = forgeFailureMessage(err);
     } finally {
       this.isGenerating = false;
     }
@@ -88,12 +96,12 @@ export class RunefobleAssetForge extends LitElement {
 
   private async handleForgeMap() {
     await this.runForge(async () => {
-      const map = await forgeBattlemap(this.apiBaseUrl, {
+      const map = await forgeBattlemap({
         prompt: this.mapPrompt,
         campaignId: this.campaignId || undefined,
         widthCells: 20,
         heightCells: 20,
-      }, () => this.auth.authHeaders());
+      }, this.transport());
       const preview = await fetchAssetObjectUrl(map.image_url, () => this.auth.authHeaders());
       revokeAssetObjectUrl(this.mapPreviewUrl);
       this.mapPreviewUrl = preview;
@@ -117,12 +125,12 @@ export class RunefobleAssetForge extends LitElement {
 
   private async handleForgeToken() {
     await this.runForge(async () => {
-      const token = await forgeToken(this.apiBaseUrl, {
+      const token = await forgeToken({
         prompt: this.tokenPrompt,
         tokenName: this.tokenName,
         tokenType: this.tokenType,
         campaignId: this.campaignId || undefined,
-      }, () => this.auth.authHeaders());
+      }, this.transport());
       const preview = await fetchAssetObjectUrl(token.image_url, () => this.auth.authHeaders());
       revokeAssetObjectUrl(this.tokenPreviewUrl);
       this.tokenPreviewUrl = preview;
@@ -153,13 +161,13 @@ export class RunefobleAssetForge extends LitElement {
       if (!forged) {
         throw new Error('Forge a token before placing it.');
       }
-      const placed = await placeBoardToken(this.apiBaseUrl, {
+      const placed = await placeBoardToken({
         sessionId: this.sessionId,
         name: forged.token_name,
         tokenType: forged.token_type,
         x: this.tokenX,
         y: this.tokenY,
-      }, () => this.auth.authHeaders());
+      }, this.transport());
       this.dispatchEvent(
         new CustomEvent('token-placed', {
           detail: {
