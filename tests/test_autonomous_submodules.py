@@ -4,7 +4,7 @@ Verifies:
 1. the_watcher.presets: SCENE_PRESETS and build_scene_atmosphere.
 2. the_watcher.encounters: build_encounter threat balancing and scaling.
 3. the_watcher.tactics: adjudicate_npc_turn tactical decision heuristics.
-4. the_watcher.autonomous_dm: AutonomousDMEngine orchestrates the submodules.
+4. the_watcher.autonomous_dm_engine: AutonomousDMEngine orchestrates the submodules.
 """
 
 from runefoble_events.events import (
@@ -12,7 +12,7 @@ from runefoble_events.events import (
     EncounterSpawned,
     SceneAtmosphereSet,
 )
-from the_watcher.autonomous_dm import (
+from the_watcher.autonomous_dm_engine import (
     AutonomousDMEngine,
 )
 from the_watcher.encounters import build_encounter as direct_build_encounter

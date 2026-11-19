@@ -18,7 +18,7 @@ from runefoble_events.events import (
     EncounterSpawned,
     SceneAtmosphereSet,
 )
-from the_watcher.autonomous_dm import AutonomousDMEngine
+from the_watcher.autonomous_dm_engine import AutonomousDMEngine
 from the_watcher.main import app as watcher_app
 
 from tests.helpers.spicedb_factory import make_table_runner
