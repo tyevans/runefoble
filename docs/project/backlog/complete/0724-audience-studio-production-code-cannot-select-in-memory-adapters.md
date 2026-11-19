@@ -25,7 +25,7 @@ Complete
 - `services/audience_studio/src/adapters.ts:25,51,137-161`: `MemoryEventStore` and `InMemoryStreamPublisher` (`src/memoryStreams.ts`) are chosen when `NODE_ENV === 'test'`. `mock://` Redis URLs are allowed under the same flag.
 - `src/index.ts:21` passes `createAdapters` into `buildServer`, which accepts an injected factory (`server.ts:200`).
 - `services/audience_studio/src/eventStore/types.ts:33`: `EventStore.kind` has no reader.
-- `services/audience_studio/src/routes.ts:61-198`: eight identical try/catch blocks that call `sendError`. `createAudienceRoutes` is about 175 lines.
+- `services/audience_studio/src/routes.ts:61-198` (removed): eight identical try/catch blocks that call `sendError`. `createAudienceRoutes` is about 175 lines.
 
 ## Documentation & Architecture Review
 - AGENTS.md hard invariants and DoR 9 (no compatibility shims).
