@@ -7,6 +7,7 @@ from uuid import UUID, uuid4
 from character_sheet import dependencies as deps
 from character_sheet import roster, schemas
 from character_sheet.authz import write_character_ownership
+from character_sheet.crafting.process_manager import apply_pending_for_character
 from character_sheet.models import CharacterState
 from character_sheet.roster import CharacterRosterView
 from fastapi import APIRouter, HTTPException, Query
@@ -105,8 +106,19 @@ async def restore_spell_slots(
     response_model=CharacterRosterView,
     dependencies=deps.VIEW_CHARACTER,
 )
-async def get_character(character_id: UUID, repo: deps.RepoDep, spicedb: deps.SpiceDep):
-    """Read one character. The caller's user bearer needs `view`. The service credential alone is refused."""
+async def get_character(
+    character_id: UUID,
+    repo: deps.RepoDep,
+    crafting_repo: deps.CraftingRepoDep,
+    spicedb: deps.SpiceDep,
+):
+    """Read one character. The caller's user bearer needs `view`. The service credential alone is refused.
+
+    A read first applies any crafting outcome that the character has not applied yet (TASK-0772).
+    """
+    await apply_pending_for_character(
+        repo, crafting_repo, character_id, deps.publish_character_event
+    )
     state = (await deps.load_character(repo, character_id)).state
     return await roster.roster_view(spicedb, state)
 

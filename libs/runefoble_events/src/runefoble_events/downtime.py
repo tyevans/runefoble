@@ -22,6 +22,11 @@ class CraftingAttempted(BaseRunefobleEvent):
     reagents: list[str] = Field(default_factory=list)
     catalyst: str | None = None
     risk_score: float = 0.0
+    # Client-chosen identity of the combine request. A repeat with the same id is the same attempt.
+    attempt_id: UUID | None = None
+    # True when the character step runs through the crafting process manager (TASK-0772).
+    # Events recorded before TASK-0772 default to False and need no character apply.
+    applies_to_character: bool = False
 
 
 @register_event("runefoble.events.downtime.crafting_succeeded")

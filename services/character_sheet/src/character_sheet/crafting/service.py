@@ -1,8 +1,18 @@
-"""Reagent combination as one typed service call (TASK-0729, ADR-0015 f).
+"""Reagent combination as one typed service call (TASK-0729, TASK-0772, ADR-0011).
 
-Order of work: load the character (not found is an error, a store failure propagates), load
-the crafting history, consume reagents, craft, apply the outcome, save the character, save the
-crafting history, then publish. Nothing is published before both saves succeed.
+Order of work for one combine:
+1. Load the character. A missing stream is an error and nothing is saved.
+2. Load the crafting history. A load failure propagates.
+3. Apply pending outcomes of earlier combines (idempotent).
+4. When the request carries an `attempt_id` that is already recorded, return the recorded
+   outcome. Nothing is spent again.
+5. Otherwise record the new attempt on the crafting aggregate and save it. This save is the
+   commit point of the decision.
+6. Apply the outcome to the character and save it. If this save fails, the request fails and
+   the outcome stays pending. The next combine or character read applies it.
+
+The crafting aggregate and the character are separate streams. Their saves are not atomic. The
+process manager makes the character step idempotent, so a retry never applies an outcome twice.
 """
 
 from __future__ import annotations
@@ -10,11 +20,12 @@ from __future__ import annotations
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from typing import Any, Literal
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from character_sheet.aggregate import CharacterAggregate
-from character_sheet.crafting.engine import CombineOutcome, CraftingAggregate
-from character_sheet.health_events import health_change_events
+from character_sheet.crafting.engine import CraftingAggregate, CraftingEngine
+from character_sheet.crafting.process_manager import apply_pending_outcomes
+from character_sheet.crafting.recipes import CraftingAttemptRecord
 from eventsource.application.aggregates.repository import AggregateRepository
 from runefoble_platform.aggregate_loading import load_if_exists, load_or_create
 
@@ -41,53 +52,27 @@ class CombineResult:
     mishap: dict[str, Any] | None = None
 
 
-def _consume_reagents(char: CharacterAggregate, reagents: list[str]) -> None:
-    """Remove one matching inventory item per reagent name. Unmatched names consume nothing."""
-    for reagent_name in reagents:
-        matching_item = next(
-            (
-                item
-                for item in char.state.inventory.values()
-                if item.name.lower() == reagent_name.lower()
-            ),
-            None,
-        )
-        if matching_item:
-            char.remove_inventory_item(matching_item.item_id, quantity=1)
-
-
-def _apply_outcome(
-    char: CharacterAggregate, outcome: CombineOutcome, session_id: str | None
-) -> list[Any]:
-    """Change the character for the outcome. Return the health events to publish after save."""
-    if outcome.outcome == "success":
-        char.add_inventory_item(
-            item_id=str(uuid4()),
-            name=outcome.item_name,
-            quantity=outcome.quantity,
-            weight_lbs=0.5,
-        )
-        return []
-
-    mishap = outcome.mishap
-    if mishap is None:
-        raise RuntimeError("A mishap outcome must carry its mishap record")
-    damage = int(mishap.get("damage", 0))
-    health_events: list[Any] = []
-    if damage > 0:
-        was_stabilized = char.state.is_stabilized
-        char.modify_health(delta=-damage, source="crafting_mishap", session_id=session_id)
-        health_events = health_change_events(
-            char.aggregate_id,
-            char,
-            delta=-damage,
-            source="crafting_mishap",
-            session_id=session_id,
-            was_stabilized=was_stabilized,
-        )
-    if mishap.get("condition"):
-        char.apply_condition(mishap["condition"], source="crafting_mishap")
-    return health_events
+def _result(attempt: CraftingAttemptRecord, char: CharacterAggregate) -> CombineResult:
+    """Build the response from a recorded attempt and the character as it is now."""
+    if attempt.outcome is None:
+        raise RuntimeError("A combine result needs a recorded outcome")
+    success = attempt.outcome == "success"
+    return CombineResult(
+        outcome=attempt.outcome,
+        risk_score=attempt.risk_score,
+        character_current_hp=char.state.current_hp,
+        character_conditions=[
+            c if isinstance(c, str) else getattr(c, "name", str(c)) for c in char.state.conditions
+        ],
+        item_name=attempt.item_name if success else None,
+        recipe_name=attempt.recipe_name if success else None,
+        quantity=attempt.quantity if success else 1,
+        tags=attempt.tags if success else [],
+        properties=CraftingEngine.evaluate_recipe(attempt.reagents)[3] if success else {},
+        reagents_consumed=attempt.reagents if success else [],
+        catalyst_consumed=attempt.catalyst if success else None,
+        mishap=attempt.mishap,
+    )
 
 
 class CombineReagentsService:
@@ -116,14 +101,21 @@ class CombineReagentsService:
         player_id: str | None,
         force_mishap: bool,
         risk_threshold: float,
+        attempt_id: UUID | None = None,
     ) -> CombineResult:
         char = await load_if_exists(self._char_repo, character_id)
         if char is None:
             raise CharacterNotFoundError(str(character_id))
         crafting = await load_or_create(self._crafting_repo, character_id, CraftingAggregate)
 
-        _consume_reagents(char, reagents)
-        outcome = crafting.combine_reagents(
+        await apply_pending_outcomes(self._char_repo, char, crafting.state, self._publish_character)
+
+        if attempt_id is not None:
+            recorded = crafting.find_attempt(attempt_id)
+            if recorded is not None:
+                return _result(recorded, char)
+
+        crafting.combine_reagents(
             character_id=character_id,
             reagents=reagents,
             catalyst=catalyst,
@@ -132,35 +124,16 @@ class CombineReagentsService:
             player_id=player_id,
             force_mishap=force_mishap,
             risk_threshold=risk_threshold,
+            attempt_id=attempt_id,
         )
         crafting_events = list(crafting.uncommitted_events)
-        health_events = _apply_outcome(char, outcome, str(session_id) if session_id else None)
-
-        await self._char_repo.save(char)
         await self._crafting_repo.save(crafting)
-
         for crafting_event in crafting_events:
             await self._publish_crafting(crafting_event)
-        for health_event in health_events:
-            await self._publish_character(health_event)
 
-        return CombineResult(
-            outcome=outcome.outcome,
-            risk_score=outcome.risk_score,
-            character_current_hp=char.state.current_hp,
-            character_conditions=[
-                c if isinstance(c, str) else getattr(c, "name", str(c))
-                for c in char.state.conditions
-            ],
-            item_name=outcome.item_name,
-            recipe_name=outcome.recipe_name,
-            quantity=outcome.quantity,
-            tags=outcome.tags,
-            properties=outcome.properties,
-            reagents_consumed=outcome.reagents_consumed,
-            catalyst_consumed=outcome.catalyst_consumed,
-            mishap=outcome.mishap,
-        )
+        attempt = crafting.state.attempts[-1]
+        await apply_pending_outcomes(self._char_repo, char, crafting.state, self._publish_character)
+        return _result(attempt, char)
 
 
 __all__ = ["CharacterNotFoundError", "CombineReagentsService", "CombineResult"]

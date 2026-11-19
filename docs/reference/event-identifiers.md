@@ -69,6 +69,7 @@ CloudEvents exports (`to_cloudevent_dict()`) lower-case the identifier.
 | `runefoble.events.character.assigned_to_campaign` | `CharacterAssignedToCampaign` | `runefoble_events.character` |
 | `runefoble.events.character.condition_applied` | `ConditionApplied` | `runefoble_events.character` |
 | `runefoble.events.character.condition_removed` | `ConditionRemoved` | `runefoble_events.character` |
+| `runefoble.events.character.crafting_outcome_applied` | `CharacterCraftingOutcomeApplied` | `runefoble_events.character` |
 | `runefoble.events.character.created` | `CharacterCreated` | `runefoble_events.character` |
 | `runefoble.events.character.currency_deducted` | `CurrencyDeducted` | `runefoble_events.haggling` |
 | `runefoble.events.character.damaged` | `CharacterDamaged` | `runefoble_events.character` |

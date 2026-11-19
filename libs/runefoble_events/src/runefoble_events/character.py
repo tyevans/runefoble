@@ -255,3 +255,19 @@ class CharacterAssignedToCampaign(BaseRunefobleEvent):
     character_id: str = ""
     campaign_id: str | None = None
     assigned_by: str = ""
+
+
+@register_event("runefoble.events.character.crafting_outcome_applied")
+class CharacterCraftingOutcomeApplied(BaseRunefobleEvent):
+    """Emitted when a character applies one recorded crafting outcome (TASK-0772).
+
+    The character keeps the set of applied crafting event ids. A second apply of the same
+    crafting event is a no-op, so a retry cannot spend reagents or apply damage twice.
+    """
+
+    event_type: str = "runefoble.events.character.crafting_outcome_applied"
+    aggregate_type: str = "CharacterSheet"
+    aggregate_id: UUID = Field(default_factory=uuid4)
+    character_id: str = ""
+    crafting_event_id: str = ""
+    attempt_id: str | None = None

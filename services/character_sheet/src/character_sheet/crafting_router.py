@@ -49,6 +49,9 @@ class CombineReagentsRequest(BaseModel):
     player_id: str | None = None
     force_mishap: bool = False
     risk_threshold: float = 0.50
+    # Optional client attempt id. A repeat with the same id spends nothing again and returns the
+    # recorded outcome. Without it, every call is a new attempt (TASK-0772).
+    attempt_id: UUID | None = None
 
 
 class CombineReagentsResponse(BaseModel):
@@ -116,6 +119,7 @@ async def combine_reagents(
             player_id=req.player_id,
             force_mishap=req.force_mishap,
             risk_threshold=req.risk_threshold,
+            attempt_id=req.attempt_id,
         )
     except CharacterNotFoundError as e:
         raise HTTPException(status_code=404, detail=f"Character not found: {e}") from e
