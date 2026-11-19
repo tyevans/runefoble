@@ -1,7 +1,7 @@
 ---
 id: '0835'
 title: Approved Audience Hazard Modifier Places a Hazard on the Board
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies:
 - TASK-0441
@@ -19,7 +19,7 @@ target_release: 0.9.0
 # TASK-0835: Approved Audience Hazard Modifier Places a Hazard on the Board
 
 ## Status
-Refined
+Complete
 
 ## Summary
 board_state consumes `AudienceModifierApproved` on `runefoble.events.audience`. An approved `hazard_spawn` modifier places a hazard cell on the board of `session_id`.

@@ -1,7 +1,7 @@
 ---
 id: '0836'
 title: Approved Audience Status Modifier Applies a Condition to a Character
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies:
 - TASK-0441
@@ -19,7 +19,7 @@ target_release: 0.9.0
 # TASK-0836: Approved Audience Status Modifier Applies a Condition to a Character
 
 ## Status
-Refined
+Complete
 
 ## Summary
 character_sheet consumes `AudienceModifierApproved` on `runefoble.events.audience`. An approved `status_buff` modifier applies a condition (for example `blessed` or `inspired`) to the character named in `parameters["character_id"]`.

@@ -80,6 +80,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Campaign analytics worker `process_event` alias, tracking property wrappers, and package root re-exports. Callers use `handle_event`. (TASK-0500)
 
 ### Added
+- An approved audience `status_buff` modifier gives a character the `blessed` or `inspired` condition. (TASK-0836)
+- An approved audience `hazard_spawn` modifier places a hazard on the board cell it names. The board hazard table adds `deep_water` (1d6), `chasm` (3d6) and `arcane_void` (2d8), the types the forge emits. (TASK-0835)
 - An approved audience `weather_change` modifier changes the session weather (`runefoble.events.session.weather_changed`); the session read shows `weather`. A vetoed modifier, a modifier of another campaign, or one without a weather value changes nothing. (TASK-0441)
 - Gateway routes for audience polls, spectator votes, modifier proposals and the live audience socket (`/api/v1/audience/*`, `/ws/audience/{campaign_id}`) proxy to audience_studio, which checks each permission. Helm gives the gateway `RUNEFOBLE_AUDIENCE_STUDIO_URL`. (TASK-0439)
 - Gateway routes for character wardrobe variants (`GET` and `POST /api/v1/characters/{character_id}/wardrobe`) and the active portrait (`POST /api/v1/characters/{character_id}/portrait/active`) proxy to character_sheet, which checks `view` or `edit`. (TASK-0444)
