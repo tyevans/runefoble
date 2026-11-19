@@ -73,6 +73,18 @@ async def start_session(session_id: UUID, _controller: SessionController) -> Gam
     return session.state
 
 
+@router.post("/api/v1/sessions/{session_id}/end", response_model=GameSessionState)
+async def end_session(session_id: UUID, _controller: SessionController) -> GameSessionState:
+    """End the session. The caller needs `session.control`. The owner publishes `session.ended`."""
+    session = await _load_session(session_id)
+    try:
+        session.end()
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    await repo.save(session)
+    return session.state
+
+
 @router.post("/api/v1/sessions/{session_id}/join", response_model=GameSessionState)
 async def join_session(
     session_id: UUID,

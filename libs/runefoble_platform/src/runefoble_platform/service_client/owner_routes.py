@@ -31,6 +31,11 @@ def get_campaign(campaign_id: str) -> OwnerRoute:
     return OwnerRoute("GET", path("api", "v1", "campaigns", campaign_id))
 
 
+def end_session(session_id: str) -> OwnerRoute:
+    """POST: end a session. The owner checks `control`."""
+    return OwnerRoute("POST", path("api", "v1", "sessions", session_id, "end"))
+
+
 # character_sheet
 
 
@@ -59,6 +64,11 @@ def cast_spell(character_id: str) -> OwnerRoute:
     return OwnerRoute("POST", _character(character_id, "spells", "cast"))
 
 
+def clear_condition(character_id: str, condition: str) -> OwnerRoute:
+    """DELETE: remove one tactical status condition."""
+    return OwnerRoute("DELETE", _character(character_id, "conditions", condition))
+
+
 # board_state
 
 
@@ -75,6 +85,16 @@ def place_token(session_id: str) -> OwnerRoute:
 def move_token(session_id: str, token_id: str) -> OwnerRoute:
     """POST: move a token on the board."""
     return OwnerRoute("POST", path("api", "v1", "boards", session_id, "tokens", token_id, "move"))
+
+
+def toggle_door(board_id: str, door_id: str) -> OwnerRoute:
+    """POST: toggle one interactive door or portal. The owner checks `play`."""
+    return OwnerRoute("POST", path("api", "v1", "boards", board_id, "doors", door_id, "toggle"))
+
+
+def place_light(board_id: str) -> OwnerRoute:
+    """POST: place or update a dynamic light. The owner checks `manage_traps`."""
+    return OwnerRoute("POST", path("api", "v1", "boards", board_id, "lights"))
 
 
 # rules_compendium
