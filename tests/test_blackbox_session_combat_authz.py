@@ -63,7 +63,7 @@ CONTROL_ROUTES = [
     ("combat/next-turn", {}),
     ("combat/end", {}),
     ("next-turn", {}),
-    ("autopilot", {}),
+    ("turns/auto-pilot", {}),
     ("reactions/evaluate-triggers", {"event_type": "x"}),
 ]
 
