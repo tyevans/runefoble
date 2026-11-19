@@ -77,3 +77,6 @@ When The Watcher was decomposed into focused submodules (such as modular copilot
 Source: `.audit/synth/discovered-round2.md`.
 
 - tests/test_blackbox_stand_in_guardrails.py::test_stand_in_facade_and_submodule_backward_compatibility checks facade re-exports. Delete the test with the facade.
+
+## Progress (batch 31)
+The `stand_in_ai.py` facade and the parser aliases are removed. Open: `autonomous_dm.py` stays until `dependencies.py` imports the engine from its package (do after TASK-0819).
