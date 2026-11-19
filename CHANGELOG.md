@@ -148,6 +148,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
 
 ### Changed
+- Tests create the board DM through `POST /api/v1/campaigns` and check MCP tools through public `tools/list` and `tools/call`; no test reads FastMCP `_tool_manager` or writes `_coordinator`. (TASK-0830)
 - Every service checks SpiceDB through `runefoble_auth.permissions` (`check_subject`, `require_subject`, and the `require_permission` route dependency); no service calls `check_permission` directly. (TASK-0817)
 - Aggregate loads and saves use `load_or_404`, `save_or_conflict` and `LazyRepository`; 404 and 409 answers are unchanged. (TASK-0819)
 - Speak-and-act publishes no board event for a proposed move; a confirmed move publishes one `token_moved`. (TASK-0814)
@@ -628,6 +629,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis guide `docs/how-to/manage-generative-wardrobe-and-condition-portraits.md` and updated `docs/reference/events-schema.md`.
 
 ### Changed
+- Tests create the board DM through `POST /api/v1/campaigns` and check MCP tools through public `tools/list` and `tools/call`; no test reads FastMCP `_tool_manager` or writes `_coordinator`. (TASK-0830)
 - **Board State AoE Templates Geometry and Rendering Modular Decomposition (`TASK-0140`, `ADR-0013`)**:
   - Decomposed `services/board_state/ui/src/aoe_templates.ts` (411 lines) into modular, single-responsibility TypeScript modules adhering strictly to ADR-0013 and Hard Invariant 6 (< 200 lines per module).
   - Extracted type contracts, AoE shape definitions, event payloads, and color design tokens into `services/board_state/ui/src/aoe_types.ts` (41 lines).
@@ -980,6 +982,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Replenished ready buffer in `docs/project/backlog/refined/` to 10 items (JIT queue health) with rigorous blackbox TDD Definitions of Done, governing ADR citations, and INVEST alignment.
   - Re-indexed `docs/project/backlog/PRIORITY.md` maintaining strict priority hierarchy: Foundational Enablers → Milestone 4 Epics → Identified Invariant Refactorings → Future Milestones.
 ### Changed
+- Tests create the board DM through `POST /api/v1/campaigns` and check MCP tools through public `tools/list` and `tools/call`; no test reads FastMCP `_tool_manager` or writes `_coordinator`. (TASK-0830)
 - **Definition of Done Platform Showcase Maintenance Requirement**:
   - Updated the repository Definition of Done in `AGENTS.md`, `docs/operating-manual.md`, and `docs/project/backlog/README.md` to mandate ongoing maintenance of the Platform Showcase marketing page (`docs/marketing.md`) as capabilities, architecture, and milestones progress.
   - Added automated test validation in `tests/test_docs_build_and_pages.py` (`test_definition_of_done_includes_marketing_page_maintenance`) to ensure the Definition of Done in `AGENTS.md` and `docs/operating-manual.md` enforces marketing page maintenance.
@@ -1203,6 +1206,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **Blackbox Documentation & Pages Test Suite**: Expanded `tests/test_docs_build_and_pages.py` to assert changelog existence, Keep a Changelog structure, Definition of Done enforcement, and marketing page navigation integrity.
 
 ### Changed
+- Tests create the board DM through `POST /api/v1/campaigns` and check MCP tools through public `tools/list` and `tools/call`; no test reads FastMCP `_tool_manager` or writes `_coordinator`. (TASK-0830)
 - **Microfrontends Blackbox Test Suite Modular Decomposition (`TASK-0088`)**:
   - Decomposed `tests/test_microfrontends.py` (454 lines) into two focused, single-responsibility blackbox test suites:
     - `tests/test_microfrontend_manifests.py` (191 lines) covering service microfrontend discovery (`GET /ui/manifest`), component tag registries, package integrity, and battlemap uploader frontdoor contracts.

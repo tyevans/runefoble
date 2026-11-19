@@ -44,3 +44,6 @@ None. Refactor and consolidation chosen by the user on 2026-11-18.
 ## Audit Provenance
 - Severity: refactor
 - Source audits: `.audit/research/tests.md` (T-04, T-05, T-06, T-07, T-08, T-09, T-20)
+
+## Progress (batch 31)
+Board DM tuple writes, `_tool_manager` lookups and the leftover campaign-setup copies are done. Open: five seam resets in the voice tests; T-07 and T-20 sites need a fresh grep. See `.audit/work/0830.md`.
