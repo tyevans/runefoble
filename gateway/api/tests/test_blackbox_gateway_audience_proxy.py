@@ -118,14 +118,16 @@ def test_create_poll_forwards_the_body_and_bearer_and_relays_the_owner_201(
     owner.status = 201
     body = {"campaign_id": CAMPAIGN, "title": "Storm", "prompt": "Pick", "options": ["a", "b"]}
 
-    res = client.post("/api/v1/audience/polls", json=body, headers=_auth())
+    headers = _auth()
+
+    res = client.post("/api/v1/audience/polls", json=body, headers=headers)
 
     assert res.status_code == 201, res.text
     echoed = res.json()
     assert echoed["method"] == "POST"
     assert echoed["path"] == "/api/v1/audience/polls"
     assert echoed["body"] == body
-    assert echoed["authorization"] == _auth()["Authorization"]
+    assert echoed["authorization"] == headers["Authorization"]
 
 
 def test_read_poll_tallies_forwards_a_get_to_the_owner_poll_path(
