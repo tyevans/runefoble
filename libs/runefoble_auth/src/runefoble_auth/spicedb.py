@@ -18,7 +18,7 @@ from runefoble_auth.grpc_adapter import (
     grpc_write_relationship,
     grpc_write_schema,
 )
-from runefoble_auth.mock.client import Relationship
+from runefoble_auth.relationship import Relationship
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +27,8 @@ __all__ = ["SpiceDBClient"]
 
 class SpiceDBClient:
     """Client for querying and writing permissions to SpiceDB Zanzibar engine over live gRPC."""
+
+    backend_name = "grpc"
 
     def __init__(
         self,

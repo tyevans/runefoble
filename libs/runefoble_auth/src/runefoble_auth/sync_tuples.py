@@ -10,7 +10,7 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 from runefoble_auth.errors import AuthzUnavailableError
-from runefoble_auth.mock.client import Relationship
+from runefoble_auth.relationship import Relationship
 
 logger = logging.getLogger(__name__)
 

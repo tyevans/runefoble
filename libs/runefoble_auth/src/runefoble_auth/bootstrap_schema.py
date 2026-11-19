@@ -7,6 +7,7 @@ from pathlib import Path
 
 from runefoble_platform.errors import ConfigurationError
 
+from runefoble_auth.port import SpiceDBPort
 from runefoble_auth.settings import load_spicedb_settings
 from runefoble_auth.spicedb import SpiceDBClient
 
@@ -19,7 +20,7 @@ async def bootstrap_schema(
     endpoint: str = "localhost:50051",
     token: str | None = None,
     schema_path: str | Path | None = None,
-    client: SpiceDBClient | None = None,
+    client: SpiceDBPort | None = None,
     insecure: bool = True,
 ) -> str:
     """Read Zanzibar schema definition from disk and apply it to SpiceDB.
