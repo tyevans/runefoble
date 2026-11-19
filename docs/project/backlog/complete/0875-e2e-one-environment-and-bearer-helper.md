@@ -1,7 +1,7 @@
 ---
 id: '0875'
 title: E2E Suites Read One Environment Module and One Bearer Helper
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies: []
 governing_adrs:
@@ -14,13 +14,13 @@ target_release: 0.9.0
 # TASK-0875: E2E Suites Read One Environment Module and One Bearer Helper
 
 ## Status
-Refined.
+Complete
 
 ## Summary
 The Playwright BDD support code repeats the API base URL, the Zitadel issuer, the audience and the `Authorization: Bearer` header. Put the environment values in one module and the header builder in one helper.
 
 ## Problem Statement
-- `e2e/support/frontdoor_api.ts:32` defaults the API base to `http://localhost:8000`.
+- `e2e/support/frontdoor_api.ts:32` defaults the API base to `http://localhost`.
 - `e2e/steps/identity_negative_steps.ts:13-15` repeats the base URL. It reads `PLAYWRIGHT_ZITADEL_ISSUER` and `PLAYWRIGHT_ZITADEL_AUDIENCE` with defaults.
 - `e2e/support/frontdoor_api.ts:37-39` and `e2e/steps/identity_negative_steps.ts:45` both build `Authorization: Bearer ${token}`.
 
@@ -38,7 +38,7 @@ None. Test harness work.
 
 ## Frontdoor Blackbox Test Plan
 - The identity negative scenarios (TASK-0535, complete) pass unchanged. They prove that the behaviour is the same.
-- Run the e2e suite once with the default environment and once with `PLAYWRIGHT_API_BASE_URL` set.
+- Run the e2e suite once with the default environment and once with `PLAYWRIGHT_BASE_URL` set.
 
 ## Definition of Done
 - One source for each default value under `e2e/support`.
