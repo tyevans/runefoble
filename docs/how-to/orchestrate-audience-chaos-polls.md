@@ -2,6 +2,8 @@
 
 This guide explains how to configure and orchestrate live audience chaos polls, ingest spectator votes across streaming channels (Twitch, YouTube, web), and manage DM approval queues using the TypeScript `audience_studio` microservice (ADR-0001, ADR-0005, ADR-0006, ADR-0007, ADR-0013).
 
+Clients call the paths below through the gateway on port 8000. The gateway forwards them to `audience_studio` on port 8010. See the [Audience Studio API reference](../reference/audience-studio-api.md#gateway-routes-task-0439).
+
 ---
 
 ## 1. SpiceDB Zanzibar Object Authorization
