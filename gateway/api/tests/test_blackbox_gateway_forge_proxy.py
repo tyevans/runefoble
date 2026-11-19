@@ -110,8 +110,26 @@ def test_owner_4xx_body_passes_through_unchanged(gateway: TestClient) -> None:
         headers=bearer(PLAYER),
     )
 
-    assert res.status_code == 400, res.text
-    assert "campaign_id" in res.json()["detail"]
+    assert res.status_code == 422, res.text
+    assert "campaign_id" in [error["loc"][-1] for error in res.json()["detail"]]
+
+
+def test_campaign_forge_records_list_the_token_forged_through_the_gateway(
+    gateway: TestClient, campaign: str
+) -> None:
+    forged = gateway.post("/api/v1/forge/token", json=_token_body(campaign), headers=bearer(PLAYER))
+    assert forged.status_code == 200, forged.text
+
+    res = gateway.get(f"/api/v1/forge/campaigns/{campaign}/records", headers=bearer(PLAYER))
+
+    assert res.status_code == 200, res.text
+    assert [record["asset_id"] for record in res.json()["records"]] == [forged.json()["asset_id"]]
+
+
+def test_campaign_forge_records_refuse_a_stranger(gateway: TestClient, campaign: str) -> None:
+    res = gateway.get(f"/api/v1/forge/campaigns/{campaign}/records", headers=bearer(STRANGER))
+
+    assert res.status_code == 403, res.text
 
 
 def test_stranger_is_refused_forging_in_a_campaign_it_does_not_play(

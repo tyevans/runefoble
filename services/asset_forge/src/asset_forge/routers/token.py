@@ -76,8 +76,8 @@ async def forge_token(
     )
 
     # 3. Record domain event in event-sourced aggregate
-    agg_id = request.campaign_id or uuid4()
-    forge_agg = await load_or_create(repo, agg_id, AssetForgeAggregate)
+    # The campaign id is the forge aggregate id. The campaign record list reads it back.
+    forge_agg = await load_or_create(repo, campaign_id, AssetForgeAggregate)
 
     forge_agg.record_token_forged(
         asset_id=asset_id,

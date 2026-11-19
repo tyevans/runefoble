@@ -5,7 +5,6 @@ from __future__ import annotations
 import logging
 from uuid import UUID
 
-from fastapi import HTTPException
 from runefoble_auth.permissions import require_subject
 from runefoble_auth.settings import load_spicedb_settings
 from runefoble_auth.spicedb import SpiceDBClient
@@ -72,18 +71,17 @@ get_principal, CallerPrincipal, CallerId, get_caller_or_service, CallerOrService
 
 async def require_forge_permission(
     user_id: str,
-    campaign_id: UUID | None,
+    campaign_id: UUID,
     spicedb: SpiceDBClient,
 ) -> UUID:
     """Allow a forge action only for a campaign player (`campaign.play`).
 
-    Returns the campaign id, so the caller holds a non-optional value.
+    Every forge request model requires `campaign_id`, so a request without one fails
+    validation with 422 before this check runs (TASK-0902).
 
     Raises:
-        HTTPException: 400 when no campaign is named, 403 when the caller lacks `play`.
+        HTTPException: 403 when the caller lacks `play`.
     """
-    if campaign_id is None:
-        raise HTTPException(status_code=400, detail="A campaign_id is required to forge assets.")
     await require_subject(
         spicedb,
         "campaign",
@@ -118,6 +116,22 @@ async def record_asset_relations(
         relation="campaign",
         subject_type="campaign",
         subject_id=str(campaign_id),
+    )
+
+
+async def require_campaign_view(spicedb: SpiceDBClient, campaign_id: UUID, user_id: str) -> None:
+    """Allow a campaign read only when the caller holds `campaign.view`.
+
+    Raises:
+        HTTPException: 403 when the caller lacks the permission.
+    """
+    await require_subject(
+        spicedb,
+        "campaign",
+        str(campaign_id),
+        "view",
+        user_id,
+        detail=f"Forbidden: User '{user_id}' cannot view campaign '{campaign_id}'.",
     )
 
 

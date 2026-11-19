@@ -43,11 +43,11 @@ router = APIRouter(tags=["Print Forge"], dependencies=[Depends(get_principal)])
 
 async def _record_aggregate(
     repo: AggregateRepository[AssetForgeAggregate],
-    agg_id: UUID | None,
+    campaign_id: UUID,
     record_fn: Callable[[AssetForgeAggregate], None],
 ) -> None:
-    target_id = agg_id or uuid4()
-    forge_agg = await load_or_create(repo, target_id, AssetForgeAggregate)
+    """Save one forge record in the campaign forge aggregate. The campaign id is its id."""
+    forge_agg = await load_or_create(repo, campaign_id, AssetForgeAggregate)
     record_fn(forge_agg)
     await repo.save(forge_agg)
 
@@ -98,7 +98,7 @@ async def export_print_pdf(
 
     await _record_aggregate(
         repo,
-        request.campaign_id,
+        campaign_id,
         lambda agg: agg.record_print_pdf_forged(
             asset_id=asset_id,
             creator_id=creator_id,
@@ -181,7 +181,7 @@ async def export_standees(
 
     await _record_aggregate(
         repo,
-        request.campaign_id,
+        campaign_id,
         lambda agg: agg.record_print_pdf_forged(
             asset_id=asset_id,
             creator_id=creator_id,
@@ -261,7 +261,7 @@ async def export_stl_token(
 
     await _record_aggregate(
         repo,
-        request.campaign_id,
+        campaign_id,
         lambda agg: agg.record_stl_token_forged(
             asset_id=asset_id,
             creator_id=creator_id,
