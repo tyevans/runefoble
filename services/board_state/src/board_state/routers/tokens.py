@@ -86,16 +86,13 @@ async def move_token_by_id(
     board = await get_board(session_id)
     await require_token_move(user_id, session_id, token_id)
     try:
-        move_res = board.move_token(
+        outcome = board.move_token(
             token_id=token_id,
             to_x=req.to_x,
             to_y=req.to_y,
             initiated_by=req.initiated_by,
             movement_budget=req.movement_budget,
         )
-        cost, hazard_trig, dmg_dice = move_res
-        trap_trig = getattr(move_res, "trap_triggered", None)
-        movement_paused = getattr(move_res, "movement_paused", False)
 
         await save_and_publish(repo, board, get_event_bus())
 
@@ -111,11 +108,7 @@ async def move_token_by_id(
             vision_radius=tok.vision_radius,
             active_hazard=tok.active_hazard,
             hazard_status=tok.hazard_status,
-            movement_cost=cost,
-            hazard_triggered=hazard_trig,
-            damage_dice=dmg_dice,
-            trap_triggered=trap_trig,
-            movement_paused=movement_paused,
+            **outcome.as_wire(),
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e

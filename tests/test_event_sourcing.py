@@ -207,12 +207,12 @@ async def test_unit_board_aggregate_modular_handlers_round_trip():
     assert board.state.tokens["valeros"].y == 1
 
     # 3. Move token across hazard at (3, 3) to (4, 4)
-    cost, hazard, damage = board.move_token("valeros", to_x=4, to_y=4)
+    outcome = board.move_token("valeros", to_x=4, to_y=4)
     assert board.state.tokens["valeros"].x == 4
     assert board.state.tokens["valeros"].y == 4
-    assert hazard == "lava"
-    assert damage == "2d10"
-    assert cost > 0
+    assert outcome.hazard_triggered == "lava"
+    assert outcome.damage_dice == "2d10"
+    assert outcome.movement_cost > 0
 
     # 4. Execute tactical token action
     board.execute_token_action(

@@ -6,6 +6,7 @@ Verifies:
 - Step trigger breaches immediately pause token movement at the trap coordinates.
 - Proximity trigger breaches pause token movement within designated cell radius.
 - Movement response flags `trap_triggered` and `movement_paused`.
+- A WebSocket `confirm_move` sends the same move fields in its `token_moved` frame.
 - TrapSprungEvent emission and event bus publication.
 """
 
@@ -19,7 +20,7 @@ from fastapi.testclient import TestClient
 from runefoble_auth.mock import MockSpiceDBClient
 
 from tests.helpers.mock_redis import MockAsyncRedis
-from tests.helpers.ws_identity import bearer
+from tests.helpers.ws_identity import bearer, ws_subprotocols
 
 
 @pytest.mark.asyncio
@@ -152,3 +153,49 @@ async def test_proximity_trap_breach_pauses_movement(spicedb: MockSpiceDBClient)
     assert data["y"] == 4
     assert data["movement_paused"] is True
     assert data["trap_triggered"] is not None
+
+
+@pytest.mark.asyncio
+async def test_websocket_confirm_move_onto_trap_reports_pause(spicedb: MockSpiceDBClient):
+    """A socket move onto a trapped path sends the same pause fields as the HTTP move."""
+    client = TestClient(board_app)
+
+    board_id = f"board-{uuid4().hex[:8]}"
+    campaign_id = f"camp-{uuid4().hex[:8]}"
+    dm_user = f"dm-{uuid4().hex[:6]}"
+
+    await spicedb.write_relationship("campaign", campaign_id, "dungeon_master", "user", dm_user)
+
+    client.post(
+        "/api/v1/boards",
+        json={"board_id": board_id, "campaign_id": campaign_id, "cols": 12, "rows": 12},
+        headers=bearer(dm_user),
+    )
+    trap_res = client.post(
+        f"/api/v1/boards/{board_id}/traps",
+        json={"name": "Pressure Plate", "x": 4, "y": 3, "trigger_type": "step"},
+        headers=bearer(dm_user),
+    )
+    assert trap_res.status_code == 201
+    trap_id = trap_res.json()["trap_id"]
+    place_res = client.post(
+        f"/api/v1/boards/{board_id}/tokens",
+        json={"token_id": "valeros", "name": "Valeros", "x": 2, "y": 3, "is_friendly": True},
+        headers=bearer(dm_user),
+    )
+    assert place_res.status_code == 200
+
+    with client.websocket_connect(
+        f"/ws/boards/{board_id}", subprotocols=ws_subprotocols(dm_user)
+    ) as socket:
+        assert socket.receive_json()["type"] == "connected"
+        socket.send_json({"action": "confirm_move", "token_id": "valeros", "to_x": 6, "to_y": 3})
+        frame = socket.receive_json()
+
+    assert frame["type"] == "token_moved"
+    assert (frame["x"], frame["y"]) == (4, 3)
+    assert frame["movement_paused"] is True
+    assert frame["trap_triggered"] == trap_id
+    assert frame["movement_cost"] == 2
+    assert frame["hazard_triggered"] is None
+    assert frame["damage_dice"] is None
