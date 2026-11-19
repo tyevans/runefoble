@@ -1,7 +1,7 @@
 ---
 id: '0798'
 title: Kind Stack Deploys From a Clean Cluster With One Command
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies: []
 governing_adrs:
@@ -58,3 +58,6 @@ None. Platform quality work.
 ## Progress (2026-11-18)
 All images rebuilt and deployed. 27 pods run and the gateway probes report every service operational. Fixed on the way: the chart loaded a stale SpiceDB schema; campaign-lore did not declare runefoble-embeddings; the voice model cache is filled with `make voice-model-cache`.
 Open gap (user decision: leave for now): campaign-lore needs an OpenAI-compatible embedding endpoint, and the Kind chart has none, so its pod stops at start.
+
+## Completion Note (2026-11-18)
+Every pod runs on Kind (28 pods, 2 completed jobs). campaign-lore uses an OpenAI-compatible embedding endpoint, and the inference worker uses an OpenAI-compatible LLM; both are set in the git-ignored `deployments/helm/runefoble/values.local.yaml` (see `values.local.example.yaml`). Manual step left: `make voice-model-cache` fills the voice model cache. Seen once: SpiceDB tables were missing after a redeploy; a SpiceDB restart re-ran the migration. Not reproduced.
