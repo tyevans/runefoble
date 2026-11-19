@@ -24,6 +24,7 @@ from tests.helpers.campaign_analytics_service import (
     SESSION_STREAM,
     AnalyticsService,
 )
+from tests.helpers.campaign_setup import create_campaign
 from tests.helpers.live_services import closed_port_url, serve
 from tests.helpers.polling import wait_until
 
@@ -32,22 +33,6 @@ OWNER_FORBIDDEN_DETAIL = "Forbidden: User lacks permission to view campaign anal
 
 def _auth(issuer, sub: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {issuer.mint(sub)}"}
-
-
-def _create_campaign(client: TestClient, issuer) -> str:
-    """Create a campaign through the gateway. dm_valeros becomes its Zanzibar owner."""
-    res = client.post(
-        "/api/v1/campaigns",
-        json={
-            "title": "Tomb of the Star-Eater",
-            "setting": "Astral Void",
-            "system": "5e",
-            "description": "Analytics views.",
-        },
-        headers=_auth(issuer, "dm_valeros"),
-    )
-    assert res.status_code == 201, res.text
-    return res.json()["id"]
 
 
 def _recording_owner(seen: list[dict[str, Any]]) -> FastAPI:
@@ -104,7 +89,7 @@ def live_campaign(live_owner: AnalyticsService, live_client: TestClient, trusted
     read the analytics double, so the view relation is written there. Existing owner tests use
     the same `grant_view` pattern.
     """
-    cid = _create_campaign(live_client, trusted_ws_issuer)
+    cid = create_campaign(live_client, "dm_valeros")
     live_owner.grant_view(cid, "dm_valeros")
     return cid
 
@@ -240,7 +225,7 @@ def test_owner_forbidden_answer_passes_through(
     with serve(_forbidding_owner()) as owner_url:
         monkeypatch.setenv("RUNEFOBLE_CAMPAIGN_ANALYTICS_URL", owner_url)
         with TestClient(gateway_app) as client:
-            cid = _create_campaign(client, trusted_ws_issuer)
+            cid = create_campaign(client, "dm_valeros")
             res = client.get(
                 f"/api/v1/analytics/campaigns/{cid}/heatmap",
                 headers=_auth(trusted_ws_issuer, "dm_valeros"),
@@ -253,7 +238,7 @@ def test_owner_forbidden_answer_passes_through(
 def test_owner_down_returns_503(monkeypatch, game_session_upstream, trusted_ws_issuer) -> None:
     monkeypatch.setenv("RUNEFOBLE_CAMPAIGN_ANALYTICS_URL", closed_port_url())
     with TestClient(gateway_app) as client:
-        cid = _create_campaign(client, trusted_ws_issuer)
+        cid = create_campaign(client, "dm_valeros")
         res = client.get(
             f"/api/v1/analytics/campaigns/{cid}/mvp",
             headers=_auth(trusted_ws_issuer, "dm_valeros"),
@@ -270,7 +255,7 @@ def test_analytics_routes_forward_only_the_bearer_and_query(
     with serve(_recording_owner(seen)) as owner_url:
         monkeypatch.setenv("RUNEFOBLE_CAMPAIGN_ANALYTICS_URL", owner_url)
         with TestClient(gateway_app) as client:
-            cid = _create_campaign(client, trusted_ws_issuer)
+            cid = create_campaign(client, "dm_valeros")
             headers = {**_auth(trusted_ws_issuer, "dm_valeros"), "X-User-Id": "spoofed"}
             cases = [
                 (
@@ -298,7 +283,7 @@ def test_summary_route_is_not_served(monkeypatch, game_session_upstream, trusted
     with serve(_recording_owner([])) as owner_url:
         monkeypatch.setenv("RUNEFOBLE_CAMPAIGN_ANALYTICS_URL", owner_url)
         with TestClient(gateway_app) as client:
-            cid = _create_campaign(client, trusted_ws_issuer)
+            cid = create_campaign(client, "dm_valeros")
             res = client.get(
                 f"/api/v1/analytics/campaigns/{cid}", headers=_auth(trusted_ws_issuer, "dm_valeros")
             )

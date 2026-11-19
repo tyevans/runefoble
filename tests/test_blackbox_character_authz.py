@@ -27,7 +27,9 @@ from gateway_api.auth import get_spicedb_client
 from gateway_api.main import app as gateway_app
 from runefoble_auth.errors import AuthzUnavailableError
 
+from tests.helpers.campaign_setup import create_campaign, invite_and_join
 from tests.helpers.live_services import closed_port_url
+from tests.helpers.ws_identity import bearer
 
 
 def _auth(issuer, sub: str) -> dict[str, str]:
@@ -46,30 +48,6 @@ def gateway(character_sheet_upstream, game_session_upstream) -> Iterator[TestCli
     """Gateway client with the lifespan entered after both upstreams serve."""
     with TestClient(gateway_app) as client:
         yield client
-
-
-def _create_campaign(gateway, issuer, owner_sub: str) -> tuple[str, dict[str, str]]:
-    """Create a campaign as the DM (owner) through the gateway. Return its id and DM headers."""
-    headers = _auth(issuer, owner_sub)
-    res = gateway.post("/api/v1/campaigns", json={"title": "Ownership Test"}, headers=headers)
-    assert res.status_code == 201, res.text
-    return res.json()["id"], headers
-
-
-def _join_campaign(gateway, issuer, campaign_id: str, owner_headers, sub: str) -> None:
-    """The DM creates a player invite. `sub` redeems it through the gateway."""
-    inv = gateway.post(
-        f"/api/v1/campaigns/{campaign_id}/invites",
-        json={"role": "player"},
-        headers=owner_headers,
-    )
-    assert inv.status_code == 201, inv.text
-    join = gateway.post(
-        "/api/v1/campaigns/join",
-        json={"invite_token": inv.json()["token"]},
-        headers=_auth(issuer, sub),
-    )
-    assert join.status_code == 200, join.text
 
 
 def _create_sheet_character(sheet, issuer, sub: str, campaign_id: str | None = None) -> str:
@@ -119,9 +97,9 @@ def test_owner_may_change_health_and_non_owner_player_may_not(
     trusted_ws_issuer, sheet, gateway
 ) -> None:
     """The owner passes 'edit'. A party player with no edit right gets 403 on health."""
-    campaign_id, dm_headers = _create_campaign(gateway, trusted_ws_issuer, "dm_valeros")
-    _join_campaign(gateway, trusted_ws_issuer, campaign_id, dm_headers, "player_kira")
-    _join_campaign(gateway, trusted_ws_issuer, campaign_id, dm_headers, "player_marcus")
+    campaign_id = create_campaign(gateway, "dm_valeros")
+    invite_and_join(gateway, campaign_id, "dm_valeros", "player_kira")
+    invite_and_join(gateway, campaign_id, "dm_valeros", "player_marcus")
     char_id = _create_sheet_character(sheet, trusted_ws_issuer, "player_kira", campaign_id)
 
     res_party = sheet.post(
@@ -143,9 +121,9 @@ def test_campaign_dm_may_penalize_and_party_player_may_not(
     trusted_ws_issuer, sheet, gateway
 ) -> None:
     """The campaign DM passes 'edit' through campaign->run_session. A player does not."""
-    campaign_id, dm_headers = _create_campaign(gateway, trusted_ws_issuer, "dm_valeros")
-    _join_campaign(gateway, trusted_ws_issuer, campaign_id, dm_headers, "player_kira")
-    _join_campaign(gateway, trusted_ws_issuer, campaign_id, dm_headers, "player_marcus")
+    campaign_id = create_campaign(gateway, "dm_valeros")
+    invite_and_join(gateway, campaign_id, "dm_valeros", "player_kira")
+    invite_and_join(gateway, campaign_id, "dm_valeros", "player_marcus")
     char_id = _create_sheet_character(sheet, trusted_ws_issuer, "player_kira", campaign_id)
 
     res_player = sheet.post(
@@ -155,16 +133,18 @@ def test_campaign_dm_may_penalize_and_party_player_may_not(
     )
     assert res_player.status_code == 403
 
-    res_dm = sheet.post(f"/api/v1/characters/{char_id}/penalties", json=PENALTY, headers=dm_headers)
+    res_dm = sheet.post(
+        f"/api/v1/characters/{char_id}/penalties", json=PENALTY, headers=bearer("dm_valeros")
+    )
     assert res_dm.status_code == 200, res_dm.text
     assert "drunk" in res_dm.json()["penalties"]
 
 
 def test_party_player_may_read_and_stranger_may_not(trusted_ws_issuer, sheet, gateway) -> None:
     """Campaign membership grants 'view' on the character. A non-member does not."""
-    campaign_id, dm_headers = _create_campaign(gateway, trusted_ws_issuer, "dm_valeros")
-    _join_campaign(gateway, trusted_ws_issuer, campaign_id, dm_headers, "player_kira")
-    _join_campaign(gateway, trusted_ws_issuer, campaign_id, dm_headers, "player_marcus")
+    campaign_id = create_campaign(gateway, "dm_valeros")
+    invite_and_join(gateway, campaign_id, "dm_valeros", "player_kira")
+    invite_and_join(gateway, campaign_id, "dm_valeros", "player_marcus")
     char_id = _create_sheet_character(sheet, trusted_ws_issuer, "player_kira", campaign_id)
 
     assert (

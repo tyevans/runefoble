@@ -11,6 +11,7 @@ import pytest
 from fastapi.testclient import TestClient
 from gateway_api.main import app
 
+from tests.helpers.campaign_setup import create_campaign, invite_and_join
 from tests.helpers.ws_identity import bearer
 
 
@@ -21,50 +22,17 @@ def client(game_session_upstream, board_state_upstream):
         yield gateway_client
 
 
-def _create_campaign_with_session(
-    client: TestClient, owner_headers: dict[str, str]
-) -> tuple[str, str]:
-    """Create a campaign as the owner and return (campaign_id, first_session_id)."""
-    res = client.post(
-        "/api/v1/campaigns",
-        json={"title": "Zanzibar Authorization Campaign"},
-        headers=owner_headers,
-    )
-    assert res.status_code == 201
-    campaign_id = res.json()["id"]
-
-    return campaign_id, _owner_session(campaign_id, owner_headers)
-
-
-def _join_with_invite(
-    client: TestClient,
-    campaign_id: str,
-    owner_headers: dict[str, str],
-    member_headers: dict[str, str],
-    role: str,
-) -> None:
-    """Owner creates an invite for `role`; the member redeems it."""
-    invite = client.post(
-        f"/api/v1/campaigns/{campaign_id}/invites",
-        json={"role": role},
-        headers=owner_headers,
-    )
-    assert invite.status_code == 201
-    joined = client.post(
-        "/api/v1/campaigns/join",
-        json={"invite_token": invite.json()["token"]},
-        headers=member_headers,
-    )
-    assert joined.status_code == 200
-
-
 @pytest.mark.asyncio
 async def test_zanzibar_authorization_enforcement(trusted_ws_issuer, client):
     """Verify that Gateway API enforces SpiceDB Zanzibar permissions without hardcoded role checks."""
-    owner = bearer("owner_dana", issuer=trusted_ws_issuer)
-    player = bearer("player_alice", issuer=trusted_ws_issuer)
-    stranger = bearer("stranger_bob", issuer=trusted_ws_issuer)
-    campaign_id, session_id = _create_campaign_with_session(client, owner)
+    owner_id = "owner_dana"
+    owner = bearer(owner_id, issuer=trusted_ws_issuer)
+    player_id = "player_alice"
+    player = bearer(player_id, issuer=trusted_ws_issuer)
+    stranger_id = "stranger_bob"
+    stranger = bearer(stranger_id, issuer=trusted_ws_issuer)
+    campaign_id = create_campaign(client, owner_id)
+    session_id = _owner_session(campaign_id, owner)
 
     # 1. Unassigned user tries to view session -> 403 Forbidden
     res_unauth = client.get(f"/api/v1/sessions/{session_id}", headers=stranger)
@@ -74,7 +42,7 @@ async def test_zanzibar_authorization_enforcement(trusted_ws_issuer, client):
     assert err_data["required_permission"] == "observe"
 
     # 2. Owner invites the player; the player redeems the invite
-    _join_with_invite(client, campaign_id, owner, player, role="player")
+    invite_and_join(client, campaign_id, owner_id, player_id, role="player")
 
     # 3. Player can now view session
     res_player_view = client.get(f"/api/v1/sessions/{session_id}", headers=player)
@@ -104,14 +72,18 @@ async def test_zanzibar_authorization_enforcement(trusted_ws_issuer, client):
 @pytest.mark.asyncio
 async def test_zanzibar_board_view_permission(trusted_ws_issuer, client):
     """Verify board query endpoint requires Zanzibar view permission."""
-    owner = bearer("owner_dana", issuer=trusted_ws_issuer)
-    spectator = bearer("spectator_devon", issuer=trusted_ws_issuer)
-    stranger = bearer("stranger_mallory", issuer=trusted_ws_issuer)
-    campaign_id, session_id = _create_campaign_with_session(client, owner)
+    owner_id = "owner_dana"
+    owner = bearer(owner_id, issuer=trusted_ws_issuer)
+    spectator_id = "spectator_devon"
+    spectator = bearer(spectator_id, issuer=trusted_ws_issuer)
+    stranger_id = "stranger_mallory"
+    stranger = bearer(stranger_id, issuer=trusted_ws_issuer)
+    campaign_id = create_campaign(client, owner_id)
+    session_id = _owner_session(campaign_id, owner)
     _owner_board(campaign_id, session_id, owner)
 
     # Owner invites a spectator; the spectator redeems the invite
-    _join_with_invite(client, campaign_id, owner, spectator, role="spectator")
+    invite_and_join(client, campaign_id, owner_id, spectator_id, role="spectator")
 
     res = client.get(f"/api/v1/boards/{session_id}", headers=spectator)
     assert res.status_code == 200

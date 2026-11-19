@@ -22,6 +22,7 @@ from runefoble_auth.sync import ZitadelSpiceDBSyncService
 from runefoble_events.events import SessionCreated
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 
+from tests.helpers.campaign_setup import create_campaign
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.ws_identity import bearer
 
@@ -60,17 +61,6 @@ def test_sync_user_route_is_removed(trusted_ws_issuer, client) -> None:
     )
 
 
-def _create_campaign_as_owner(client: TestClient, issuer, owner_sub: str) -> str:
-    """Create a campaign through the public route. The creator becomes its owner."""
-    res = client.post(
-        "/api/v1/campaigns",
-        json={"title": "Sync Campaign"},
-        headers=bearer(owner_sub, issuer=issuer),
-    )
-    assert res.status_code == 201, res.text
-    return res.json()["id"]
-
-
 @pytest.mark.asyncio
 async def test_gm_synchronization_dm_override_and_atmosphere(trusted_ws_issuer, client) -> None:
     """Synchronized GM can execute DM override and update campaign atmosphere."""
@@ -78,7 +68,7 @@ async def test_gm_synchronization_dm_override_and_atmosphere(trusted_ws_issuer, 
     owner_id = "owner_arthur"
     gm_id = "gm_elena"
     stranger_id = "stranger_pete"
-    campaign_id = _create_campaign_as_owner(client, trusted_ws_issuer, owner_id)
+    campaign_id = create_campaign(client, owner_id, title="Sync Campaign")
     session_id = _owner_session(campaign_id, bearer(owner_id, issuer=trusted_ws_issuer))
 
     # 1. Before sync: GM and stranger are rejected with 403
@@ -145,7 +135,7 @@ async def test_gm_synchronization_dm_override_and_atmosphere(trusted_ws_issuer, 
 async def test_idempotence_and_instant_revocation(trusted_ws_issuer, client) -> None:
     """Re-granting produces no duplicates; removal immediately revokes permissions."""
     owner_id = "owner_idem"
-    campaign_id = _create_campaign_as_owner(client, trusted_ws_issuer, owner_id)
+    campaign_id = create_campaign(client, owner_id, title="Sync Campaign")
     session_id = _owner_session(campaign_id, bearer(owner_id, issuer=trusted_ws_issuer))
     user_id = "test_player_grant"
     owner_headers = bearer(owner_id, issuer=trusted_ws_issuer)

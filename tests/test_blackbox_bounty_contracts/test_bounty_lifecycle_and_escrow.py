@@ -12,14 +12,10 @@ from fastapi.testclient import TestClient
 from game_session.events import STREAM_SESSION
 from runefoble_auth.spicedb import MockSpiceDBClient
 
+from tests.helpers.campaign_setup import create_campaign_session, invite_and_join
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.stream_events import assert_stream_events
 from tests.helpers.ws_identity import SIGNING_ISSUER
-
-from .conftest import (
-    create_campaign_session,
-    join_campaign,
-)
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
@@ -36,7 +32,7 @@ async def test_bounty_lifecycle_claim_and_complete_with_escrow(
 
     # The creator owns the campaign. The claimant joins as a player through an invite.
     campaign_id, session_id = create_campaign_session(client, creator_id)
-    join_campaign(client, campaign_id, creator_id, claimant_id)
+    invite_and_join(client, campaign_id, creator_id, claimant_id)
 
     # 1. Post bounty with 600 gold and healing elixir in escrow
     res_post = client.post(

@@ -19,6 +19,7 @@ import pytest
 from fastapi.testclient import TestClient
 from game_session.main import app as session_app
 
+from tests.helpers.campaign_setup import create_campaign
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
@@ -58,7 +59,7 @@ def _create_joined_session(client: TestClient) -> str:
     created = client.post(
         "/api/v1/sessions/create",
         json={
-            "campaign_id": _owned_campaign(client),
+            "campaign_id": create_campaign(client, "test-user"),
             "title": "Publication Session",
             "dm_id": "dm_alice",
         },
@@ -123,10 +124,3 @@ def test_lobby_readiness_toggle_is_returned_by_session_state(
     assert state.json()["lobby_readiness"] == {"test-user": True}
     types = _published_event_types(stream_redis, session_id)
     assert types.count("runefoble.events.session.readiness_toggled") == 1
-
-
-def _owned_campaign(client) -> str:
-    """Create a campaign as the calling user, so that the caller can run sessions in it."""
-    res = client.post("/api/v1/campaigns", json={"title": "Owned Campaign"})
-    assert res.status_code == 201, res.text
-    return res.json()["id"]

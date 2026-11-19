@@ -12,11 +12,10 @@ import pytest
 from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import MockSpiceDBClient
 
+from tests.helpers.campaign_setup import create_campaign, invite_and_join
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.stream_events import assert_stream_events
 from tests.helpers.ws_identity import SIGNING_ISSUER
-
-from .conftest import create_campaign, join_campaign
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
@@ -43,7 +42,7 @@ async def test_blackbox_cross_campaign_acceptance_and_zanzibar_authorization(
     # grunt_user is a plain player of campaign B and has no run_session grant.
     campaign_a = create_campaign(client, officer_id)
     campaign_b = create_campaign(client, officer_id)
-    join_campaign(client, campaign_b, officer_id, grunt_user)
+    invite_and_join(client, campaign_b, officer_id, grunt_user)
 
     # Register campaign A and B
 

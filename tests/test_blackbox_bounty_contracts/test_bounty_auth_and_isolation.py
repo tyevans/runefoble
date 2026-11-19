@@ -9,10 +9,9 @@ import pytest
 from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import MockSpiceDBClient
 
+from tests.helpers.campaign_setup import create_campaign_session, invite_and_join
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.ws_identity import SIGNING_ISSUER
-
-from .conftest import create_campaign_session, join_campaign
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
@@ -30,8 +29,8 @@ async def test_spicedb_zanzibar_permission_enforcement(
 
     # The DM owns the campaign and its session. Poster and claimant join as players.
     campaign_id, session_id = create_campaign_session(client, dm_id)
-    join_campaign(client, campaign_id, dm_id, poster_id)
-    join_campaign(client, campaign_id, dm_id, claimant_id)
+    invite_and_join(client, campaign_id, dm_id, poster_id)
+    invite_and_join(client, campaign_id, dm_id, claimant_id)
 
     # 1. Intruder cannot post bounty in session without participate permission
     res_unauth_post = client.post(

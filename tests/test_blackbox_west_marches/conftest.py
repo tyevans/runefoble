@@ -10,6 +10,7 @@ from fastapi.testclient import TestClient
 from game_session.main import app as session_app
 from runefoble_auth.spicedb import MockSpiceDBClient
 
+from tests.helpers.campaign_setup import create_campaign, invite_and_join
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
@@ -33,18 +34,7 @@ def party_ids(client: TestClient) -> dict[str, str]:
     officer, blue, gold = "rowan_officer", "blue_explorer", "gold_scout"
     ids = {"officer": officer, "blue_player": blue, "gold_player": gold}
     for key, player in (("campaign_blue", blue), ("campaign_gold", gold)):
-        created = client.post("/api/v1/campaigns", json={"title": key}, headers=_auth(officer))
-        assert created.status_code == 201, created.text
-        cid = created.json()["id"]
-        invite = client.post(
-            f"/api/v1/campaigns/{cid}/invites", json={"role": "player"}, headers=_auth(officer)
-        )
-        assert invite.status_code == 201, invite.text
-        joined = client.post(
-            "/api/v1/campaigns/join",
-            json={"invite_token": invite.json()["token"]},
-            headers=_auth(player),
-        )
-        assert joined.status_code == 200, joined.text
+        cid = create_campaign(client, officer, title=key)
+        invite_and_join(client, cid, officer, player)
         ids[key] = cid
     return ids

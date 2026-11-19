@@ -13,6 +13,7 @@ import pytest
 from fastapi.testclient import TestClient
 from gateway_api.main import app as gateway_app
 
+from tests.helpers.campaign_setup import create_campaign, invite_and_join
 from tests.helpers.ws_identity import bearer
 
 
@@ -23,20 +24,9 @@ def open_table(
     members: dict[str, str] | None = None,
 ) -> tuple[str, str]:
     """Return (campaign_id, session_id). `members` maps user id to invite role."""
-    campaign = gateway.post("/api/v1/campaigns", json={"title": "Table"}, headers=bearer(owner))
-    assert campaign.status_code == 201, campaign.text
-    campaign_id = campaign.json()["id"]
+    campaign_id = create_campaign(gateway, owner, title="Table")
     for user, role in (members or {}).items():
-        invite = gateway.post(
-            f"/api/v1/campaigns/{campaign_id}/invites", json={"role": role}, headers=bearer(owner)
-        )
-        assert invite.status_code == 201, invite.text
-        joined = gateway.post(
-            "/api/v1/campaigns/join",
-            json={"invite_token": invite.json()["token"]},
-            headers=bearer(user),
-        )
-        assert joined.status_code == 200, joined.text
+        invite_and_join(gateway, campaign_id, owner, user, role)
     session = httpx.post(
         f"{session_upstream_url}/api/v1/sessions/create",
         json={"campaign_id": campaign_id, "title": "Night", "dm_id": owner},
