@@ -140,7 +140,7 @@ def test_campfire_rest_for_unknown_session_is_denied(client: TestClient, trusted
     headers = _headers(trusted_ws_issuer, "dm_campfire_missing")
 
     res = client.post(
-        f"/api/v1/sessions/session-{uuid4().hex}/rest/campfire",
+        f"/api/v1/sessions/{uuid4()}/rest/campfire",
         json={"rest_type": "long"},
         headers=headers,
     )

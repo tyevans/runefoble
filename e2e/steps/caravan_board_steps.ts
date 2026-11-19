@@ -87,12 +87,12 @@ async function seedContract(
   await page.waitForSelector(`${CARD} .status-badge`, { timeout: 15_000 });
 }
 
-Given('an accepted caravan contract {string} is on the board', async (fixtures, title: string) => {
-  await seedContract(fixtures, title, false);
+Given('an accepted caravan contract {string} is on the board', async ({ page, frontdoorApi, world }, title: string) => {
+  await seedContract({ page, frontdoorApi, world }, title, false);
 });
 
-Given('a caravan contract {string} is in transit on the board', async (fixtures, title: string) => {
-  await seedContract(fixtures, title, true);
+Given('a caravan contract {string} is in transit on the board', async ({ page, frontdoorApi, world }, title: string) => {
+  await seedContract({ page, frontdoorApi, world }, title, true);
 });
 
 Then('I should see the caravan notice {string}', async ({ page }, message: string) => {
