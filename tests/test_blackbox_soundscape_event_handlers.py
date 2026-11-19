@@ -20,9 +20,10 @@ from runefoble_events.events import (
     InitiativeTurnAdvanced,
     PlayerSpokeEvent,
 )
+from runefoble_platform.models import utc_now
 from soundscape.event_handlers import handle_incoming_domain_event
 from soundscape.leitmotif import LeitmotifEngine
-from soundscape.session_state import read_session_state, utc_now
+from soundscape.session_state import read_session_state
 
 
 async def _state(session_id: str):

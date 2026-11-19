@@ -15,6 +15,7 @@ from uuid import UUID
 
 import httpx
 from runefoble_platform.config import PlatformSettings
+from runefoble_platform.errors import ServiceUnavailableError
 from runefoble_platform.service_client import ServiceClient, UpstreamError
 from runefoble_platform.service_credential import expected_service_credential
 from runefoble_platform.stand_in_guardrails import StandInGuardrailPolicy
@@ -25,7 +26,7 @@ STAND_IN_PATH = "/api/v1/characters/{character_id}/stand-in"
 GUARDRAILS_PATH = "/api/v1/characters/{character_id}/guardrails"
 
 
-class CharacterSheetUnavailableError(Exception):
+class CharacterSheetUnavailableError(ServiceUnavailableError):
     """character_sheet did not confirm the stand-in change."""
 
 

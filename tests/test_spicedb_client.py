@@ -5,13 +5,14 @@ from uuid import uuid4
 import pytest
 from runefoble_auth.spicedb import MockSpiceDBClient, Relationship, SpiceDBClient
 from runefoble_auth.sync import SyncResult, ZitadelSpiceDBSyncService
-from runefoble_auth.sync_events import extract_event_type, handle_domain_event
+from runefoble_auth.sync_events import handle_domain_event
 from runefoble_auth.sync_tuples import (
     CAMPAIGN_ROLE_RELATIONS,
     format_tuple,
     normalize_campaign_role,
 )
 from runefoble_events.events import CharacterCreated, ParticipantJoined, SessionCreated
+from runefoble_platform.event_fields import event_type_of
 
 
 @pytest.mark.asyncio
@@ -143,7 +144,7 @@ async def test_handle_domain_event_dispatch() -> None:
 
     # 6. Unknown event type returns empty list
     assert await service.handle_domain_event({"type": "UnknownEvent"}) == []
-    assert extract_event_type({"type": "org.runefoble.CustomEvent"}) == "org.runefoble.CustomEvent"
+    assert event_type_of({"type": "org.runefoble.CustomEvent"}) == "org.runefoble.CustomEvent"
 
 
 @pytest.mark.asyncio

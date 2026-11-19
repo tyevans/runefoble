@@ -12,6 +12,7 @@ from typing import Any
 
 import httpx
 from pydantic import BaseModel, Field, ValidationError
+from runefoble_platform.errors import ServiceUnavailableError
 
 VOICE_AGENT_URL_ENV = "RUNEFOBLE_VOICE_AGENT_URL"
 VOICE_AGENT_TIMEOUT_ENV = "RUNEFOBLE_VOICE_AGENT_TIMEOUT_SECONDS"
@@ -19,7 +20,7 @@ DEFAULT_TIMEOUT_SECONDS = 5.0
 CONDITION_PATH = "/api/v1/voice/dsp/condition"
 
 
-class VoiceAgentUnavailableError(Exception):
+class VoiceAgentUnavailableError(ServiceUnavailableError):
     """voice_agent did not return a usable speech conditioning result."""
 
 

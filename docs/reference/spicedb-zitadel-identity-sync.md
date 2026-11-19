@@ -165,7 +165,7 @@ The sync code is split into three modules. Each module stays under the 500-line 
    - `batch_write_tuples` and `reconcile_tuples`.
 
 2. **Domain event handlers (`sync_events.py`)**:
-   - `extract_event_type` and `get_event_field`, which read domain event models and CloudEvent JSON dictionaries.
+   - `event_type_of` and `event_field` from `runefoble_platform.event_fields`, which read domain event models and CloudEvent JSON dictionaries. An event without a type raises `EventTypeMissingError`. No handler runs for it.
    - `handle_domain_event`, the dispatcher in the table above.
    - The four handlers: `handle_session_created`, `handle_participant_joined`, `handle_character_created`, and `handle_token_placed`.
 

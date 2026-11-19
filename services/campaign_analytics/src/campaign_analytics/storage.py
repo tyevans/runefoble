@@ -15,6 +15,7 @@ from collections.abc import AsyncIterator
 from typing import Any
 
 from runefoble_platform.config import PlatformSettings
+from runefoble_platform.errors import ServiceUnavailableError
 from runefoble_platform.event_sourcing import normalize_async_postgres_url
 from sqlalchemy import func, or_, select
 from sqlalchemy.exc import SQLAlchemyError
@@ -49,7 +50,7 @@ class CampaignStoreStartupError(RuntimeError):
     """Raised at start-up when PostgreSQL cannot be reached or its read-model tables cannot be created."""
 
 
-class StorageUnavailableError(RuntimeError):
+class StorageUnavailableError(ServiceUnavailableError):
     """Raised when a query runs before the storage engine is ready."""
 
 

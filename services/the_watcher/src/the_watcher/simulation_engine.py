@@ -12,6 +12,7 @@ import random
 from typing import Any
 from uuid import uuid4
 
+from runefoble_platform.dice import roll_d20
 from runefoble_platform.event_publish import publish_or_fail
 from runefoble_platform.identifiers import opaque_aggregate_id
 from the_watcher.bulletin import build_intelligence_bulletin, generate_geopolitical_shift
@@ -167,7 +168,7 @@ class FactionSimulationEngine:
         dc = base_dc + (stability_mod if subversive else -stability_mod) + rival_mod
         dc = max(8, min(22, dc))
 
-        roll = rng.randint(1, 20)
+        roll = roll_d20(rng=rng)
         modifier = (state.influence // 10) + (state.resources // 20)
         total = roll + modifier
 

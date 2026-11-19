@@ -14,7 +14,7 @@ from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
-from game_session.campaign import clock
+from game_session.campaign import service_membership
 from game_session.campaign.repositories import (
     CampaignRepositories,
     build_campaign_repositories,
@@ -27,6 +27,7 @@ from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.event_sourcing import build_event_store, get_event_store, set_event_store
+from runefoble_platform.models import utc_now
 
 from tests.helpers.module_state import SeamRestorer
 from tests.helpers.ws_identity import SIGNING_ISSUER
@@ -177,8 +178,8 @@ def test_expired_invite_returns_410(
     campaign_id = create_campaign(client, issuer)
     token = create_invite(client, issuer, campaign_id, {"role": "player", "expires_in_hours": 1})
 
-    real_now = clock.utc_now()
-    monkeypatch.setattr(clock, "utc_now", lambda: real_now + timedelta(hours=2))
+    real_now = utc_now()
+    monkeypatch.setattr(service_membership, "utc_now", lambda: real_now + timedelta(hours=2))
 
     res = join(client, issuer, token, "player-marcus")
     assert res.status_code == 410

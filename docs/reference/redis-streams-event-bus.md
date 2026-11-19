@@ -77,6 +77,7 @@ Routers do not publish events that an aggregate commits. The `AggregateRepositor
 - `SESSION_EVENT_STREAMS` in the same module maps each session event type to its stream.
 - An event type with no mapping raises `UnmappedSessionEventError`. Add the mapping when you add an event.
 - A publish failure raises `DomainEventPublishError`. The API returns HTTP 503 and the client retries.
+- An event without a type raises `EventTypeMissingError` before any `XADD`. The reader is `event_type_of` in `runefoble_platform.event_fields`. No placeholder type is written.
 - A missing bus skips publication, as the other game session routes do when Redis is not configured.
 
 ### Board Events
@@ -183,6 +184,7 @@ await consumer_group.create_group(
 `libs/runefoble_platform/src/runefoble_platform/event_bus.py` holds the only bus factory. No service builds `RedisStreamsEventBus` itself. No in-memory bus exists in production code.
 
 - `create_event_bus(settings)` builds the bus lazily. It raises `EventBusUnavailableError` when `RUNEFOBLE_REDIS_URL` is empty.
+- `EventBusUnavailableError` is a `ServiceUnavailableError` from `runefoble_platform.errors`. The one unavailable-error base is `ServiceUnavailableError`.
 - `EventBusProvider(settings)` owns one bus per service process. Its methods are `get()`, `set(bus)`, `connect()`, `close()`, and `lifespan(app)`.
 - `connect()` pings Redis. It raises `EventBusUnavailableError` when Redis is unreachable.
 - `lifespan(app)` is a FastAPI lifespan. It calls `connect()` at start-up and `close()` at shutdown. A service that cannot reach Redis does not start.

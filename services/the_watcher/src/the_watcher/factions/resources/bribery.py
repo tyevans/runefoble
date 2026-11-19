@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-import random
 from typing import Any
+
+from runefoble_platform.dice import roll_d20
 
 LOYALTY_DC_MODIFIERS: dict[str, int] = {
     "incorruptible": 15,
@@ -44,7 +45,7 @@ def calculate_bribery_outcome(
     dc = max(5, base_dc + loyalty_mod + role_mod + counter_mod)
     modifier = min(10, max(0, bribe_amount // 50))
 
-    actual_roll = roll if roll is not None else random.randint(1, 20)
+    actual_roll = roll_d20(roll)
     total_roll = actual_roll + modifier
 
     if actual_roll == 1:

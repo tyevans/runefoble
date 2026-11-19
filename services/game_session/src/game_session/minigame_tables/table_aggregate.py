@@ -32,6 +32,7 @@ from runefoble_events.events import (
     TableOpened,
     TablePlayerSeated,
 )
+from runefoble_platform.dice import roll_die
 
 
 class TableCommandsMixin:
@@ -298,7 +299,7 @@ class TableCommandsMixin:
     def roll_craps(self) -> dict[str, Any]:
         table = self._table()
         rng = random.SystemRandom()
-        actual_dice = [rng.randint(1, 6), rng.randint(1, 6)]
+        actual_dice = [roll_die(6, rng), roll_die(6, rng)]
         new_point, payouts, _winning_bets, narrative = evaluate_craps_roll(
             actual_dice, table.point, table.bets
         )

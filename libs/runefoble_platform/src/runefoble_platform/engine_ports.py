@@ -20,12 +20,14 @@ from collections.abc import Callable, Mapping
 from fastapi import Request
 from fastapi.responses import JSONResponse
 
+from runefoble_platform.errors import ServiceUnavailableError
+
 
 class UnknownAdapterError(ValueError):
     """A settings value names no registered adapter."""
 
 
-class EngineUnavailableError(RuntimeError):
+class EngineUnavailableError(ServiceUnavailableError):
     """An adapter's engine cannot produce a result for the request.
 
     `error_code` is a stable snake_case identifier for clients, for example

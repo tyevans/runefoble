@@ -7,6 +7,7 @@ from typing import Annotated, Any
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.spicedb import SpiceDBClient
+from runefoble_platform.models import utc_now
 
 from soundscape.dependencies import (
     CallerId,
@@ -29,7 +30,6 @@ from soundscape.session_state import (
     read_session_state,
     save_session_aggregate,
     tension_status,
-    utc_now,
 )
 
 router = APIRouter(
