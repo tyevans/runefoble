@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "lint": "tsc --noEmit && node --experimental-strip-types scripts/check-asset-paths.ts",
+    "lint": "tsc --noEmit && node --experimental-strip-types scripts/check-asset-paths.ts && node --experimental-strip-types scripts/check-orphan-components.ts",
     "preview": "vite preview",
     "test": "node --experimental-strip-types --test test/*.test.ts test/*/*.test.ts tests/*.test.ts && vitest run",
     "storybook": "WATCHPACK_POLLING=true CHOKIDAR_USEPOLLING=true storybook dev -p 6006",
