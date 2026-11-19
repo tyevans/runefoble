@@ -10,6 +10,7 @@ import { expect, type Page } from '@playwright/test';
 import { Given, When, Then } from '../support/fixtures';
 import type { FrontdoorApi } from '../support/frontdoor_api';
 import type { World } from '../support/world';
+import { requireValue } from '../support/guards';
 
 const CARD = 'runefoble-caravan-contract-card';
 
@@ -48,8 +49,8 @@ async function seedContract(
   dispatch: boolean
 ): Promise<void> {
   const token = world.currentUser?.token;
-  const sharedWorldId = world.customState.get('sharedWorldId') as string;
-  const campaignId = world.campaignId as string;
+  const sharedWorldId = requireValue(world.get<string>('sharedWorldId'), 'No shared world. Run "the caravan board is open" first.');
+  const campaignId = requireValue(world.campaignId, 'No campaign. Run "the caravan board is open" first.');
   const { origin, destination } = outpostsFromTitle(title);
   const posted = await frontdoorApi.postCaravanContract(
     sharedWorldId,

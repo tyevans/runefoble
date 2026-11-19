@@ -3,7 +3,10 @@
 #
 # Status: the unknown-campaign prerequisite is met. gateway-api proxies GET
 # /api/v1/campaigns/{id} to game_session, which answers 404 for an unknown id (TASK-0591).
-# The "Empty title" and "Gateway unavailable" scenarios from TASK-0640 are not written yet.
+# The "Empty title" scenario from TASK-0640 is not written yet (TASK-0654).
+# The "Gateway unavailable" scenario is dropped (TASK-0650). No public make target stops the gateway,
+# and every scenario in the serial run calls the gateway. The @lore-down scenario in
+# campaign_analytics_and_codex.feature proves the unavailable-service error path (`make e2e-lore-down`).
 
 Feature: App Shell Data Errors Are Explicit
   As a player of a tabletop campaign

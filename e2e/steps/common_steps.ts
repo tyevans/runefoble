@@ -24,11 +24,8 @@ When('I navigate to {string}', async ({ page }, path: string) => {
 });
 
 When('I click the {string} button', async ({ page }, buttonName: string) => {
-  const button = page
-    .getByRole('button', { name: buttonName })
-    .or(page.locator(`button:has-text("${buttonName}")`))
-    .or(page.locator(`[aria-label="${buttonName}"]`))
-    .first();
+  // The accessible name must equal the feature text. Strict mode fails on zero or several matches.
+  const button = page.getByRole('button', { name: buttonName, exact: true });
   await button.click();
 });
 
@@ -40,8 +37,7 @@ When('I switch theme to {string}', async ({ page, world }, themeId: string) => {
   const switcherBtn = page
     .locator('runefoble-theme-switcher')
     .locator('button.theme-button')
-    .filter({ hasText: label })
-    .first();
+    .filter({ hasText: label });
 
   if (await switcherBtn.isVisible()) {
     await switcherBtn.click();
@@ -49,15 +45,14 @@ When('I switch theme to {string}', async ({ page, world }, themeId: string) => {
   }
 
   // 2. Settings modal: open it, then pick the theme card
-  const settingsBtn = page.locator('#settings-trigger-btn').first();
+  const settingsBtn = page.locator('#settings-trigger-btn');
   await expect(settingsBtn, `No theme control visible for "${themeId}"`).toBeVisible({
     timeout: 10_000,
   });
   await settingsBtn.click();
   const modalThemeCard = page
     .locator('runefoble-settings-appearance button.theme-card')
-    .filter({ hasText: label })
-    .first();
+    .filter({ hasText: label });
   await expect(modalThemeCard, `No theme card visible for "${themeId}"`).toBeVisible({
     timeout: 10_000,
   });
@@ -65,10 +60,7 @@ When('I switch theme to {string}', async ({ page, world }, themeId: string) => {
 });
 
 Then('I should see the heading {string}', async ({ page }, headingText: string) => {
-  const heading = page
-    .getByRole('heading', { name: headingText })
-    .or(page.locator('h1, h2, h3, h4').filter({ hasText: headingText }))
-    .first();
+  const heading = page.getByRole('heading', { name: headingText, exact: true });
 
   await expect(heading).toBeVisible({ timeout: 10_000 });
 });
@@ -85,12 +77,8 @@ Then('the active theme should be {string}', async ({ page }, expectedTheme: stri
   // Read the user-visible control state: the pressed switcher button, or the
   // active settings theme card. Setup never writes the theme attribute.
   const label = new RegExp(expectedTheme.replace('-', ' '), 'i');
-  const switcherActive = page
-    .locator('runefoble-theme-switcher button.theme-button[aria-pressed="true"]')
-    .first();
-  const modalActive = page
-    .locator('runefoble-settings-appearance button.theme-card.active')
-    .first();
+  const switcherActive = page.locator('runefoble-theme-switcher button.theme-button[aria-pressed="true"]');
+  const modalActive = page.locator('runefoble-settings-appearance button.theme-card.active');
   const active = (await switcherActive.isVisible()) ? switcherActive : modalActive;
 
   await expect(active, `No active theme control visible`).toBeVisible({ timeout: 10_000 });

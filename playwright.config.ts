@@ -39,18 +39,25 @@ export default defineConfig({
     video: 'retain-on-failure',
     screenshot: 'only-on-failure',
   },
+  // Clipboard access lets the invite scenario read back the copied join URL (TASK-0650).
+  // Each engine grants it differently. A read that the engine refuses fails the step.
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: { ...devices['Desktop Chrome'], permissions: ['clipboard-read', 'clipboard-write'] },
     },
     {
       name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
+      use: {
+        ...devices['Desktop Firefox'],
+        // Firefox has no clipboard permission. This test pref allows the async clipboard read without a prompt.
+        launchOptions: { firefoxUserPrefs: { 'dom.events.testing.asyncClipboard': true } },
+      },
     },
     {
       name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
+      // WebKit has no clipboard-write permission. Writes are allowed without it.
+      use: { ...devices['Desktop Safari'], permissions: ['clipboard-read'] },
     },
   ],
 });

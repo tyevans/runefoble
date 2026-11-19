@@ -53,6 +53,6 @@ When('I enter {string} as the homebrew monster title', async ({ page }, title: s
 });
 
 Then('the homebrew form reports {string}', async ({ page }, text: string) => {
-  const report = page.locator(HOMEBREW_CREATOR).getByText(text).first();
+  const report = page.locator(HOMEBREW_CREATOR).getByText(text);
   await expect(report).toBeVisible({ timeout: 15_000 });
 });

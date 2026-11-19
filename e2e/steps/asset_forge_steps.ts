@@ -59,7 +59,12 @@ Given('the asset forge is open', async ({ page, world }) => {
 });
 
 When('I enter {string} as the battlemap prompt', async ({ page }, prompt: string) => {
-  await page.locator('runefoble-asset-forge input.input-field').first().fill(prompt);
+  // The input sits in the form group with the "Battlemap Prompt" label.
+  await page
+    .locator('runefoble-asset-forge .form-group')
+    .filter({ has: page.locator('.form-label', { hasText: 'Battlemap Prompt' }) })
+    .locator('input.input-field')
+    .fill(prompt);
 });
 
 Then('the forge route {string} receives the prompt {string}', async ({ page }, path: string, prompt: string) => {
@@ -92,7 +97,7 @@ Then('I should see the asset id returned by the forge', async ({ page }) => {
   const bodies = await Promise.all(replies.map((reply) => reply.json() as Promise<{ asset_id?: string }>));
   const assetIds = bodies.map((body) => body.asset_id).filter((id): id is string => typeof id === 'string');
   expect(assetIds.length).toBeGreaterThan(0);
-  const shown = page.locator('[data-testid="forged-asset-id"]').first();
+  const shown = page.locator('[data-testid="forged-asset-id"]');
   await expect(shown).toContainText(assetIds[assetIds.length - 1]);
 });
 

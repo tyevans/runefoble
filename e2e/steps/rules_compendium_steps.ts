@@ -19,5 +19,6 @@ When('I search the rules compendium for {string}', async ({ page }, query: strin
 
 Then('the rules compendium results list contains {string}', async ({ page }, name: string) => {
   const result = page.locator(`${COMPENDIUM} .result-card .rule-title`, { hasText: name });
+  // Justified .first(): a search can return several matching rules. The step asserts that at least one is listed.
   await expect(result.first()).toBeVisible({ timeout: 15_000 });
 });
