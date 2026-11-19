@@ -20,4 +20,4 @@ Feature: App Shell Route and API State
   Scenario: A user without characters sees an empty state, not a placeholder
     Given I am logged in as a "player"
     When I navigate to "#/characters"
-    Then the page should not show "Adventurer"
+    Then the character roster shows the empty state "No characters found"
