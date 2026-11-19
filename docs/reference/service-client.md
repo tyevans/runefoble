@@ -27,7 +27,7 @@ The package exports `ServiceClient`, `UpstreamReply`, `UpstreamError`, `Upstream
 |---|---|
 | `get_campaign(campaign_id)` | `GET /api/v1/campaigns/{id}` (game_session) |
 | `get_session(session_id)` | `GET /api/v1/sessions/{id}` (game_session) |
-| `start_combat(session_id)` | `POST /api/v1/sessions/{id}/combat/start` (game_session) |
+| `start_encounter(session_id)` | `POST /api/v1/sessions/{id}/encounters/start` (game_session) |
 | `get_combat_state(session_id)` | `GET /api/v1/sessions/{id}/combat` (game_session) |
 | `list_characters()` | `GET /api/v1/characters` (character_sheet) |
 | `create_character()` | `POST /api/v1/characters` (character_sheet) |
@@ -45,7 +45,6 @@ The package exports `ServiceClient`, `UpstreamReply`, `UpstreamError`, `Upstream
 | `remove_inventory_item(character_id, item_id)` | `DELETE /api/v1/characters/{id}/inventory/{item_id}` |
 | `get_guardrails(character_id)` | `GET /api/v1/characters/{id}/guardrails` |
 | `update_guardrails(character_id)` | `PUT /api/v1/characters/{id}/guardrails` |
-| `create_board()` | `POST /api/v1/boards` (board_state) |
 | `get_board(session_id)` | `GET /api/v1/boards/{session_id}` (board_state) |
 | `get_token(session_id, token_id)` | `GET /api/v1/boards/{session_id}/tokens/{token_id}` (board_state) |
 | `place_token(session_id)` | `POST /api/v1/boards/{session_id}/tokens` (board_state) |
