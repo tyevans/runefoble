@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 from gateway_api.proxy_table import ProxyRoute, register_proxy_routes
+from runefoble_platform.service_client import owner_routes
 
 COMPENDIUM_SERVICE = "rules_compendium"
 
@@ -31,10 +32,11 @@ ROUTES = (
     ProxyRoute(
         "GET",
         "/api/v1/compendium/monsters/{name}",
-        ("api", "v1", "compendium", "monsters", "{name}"),
+        (),
         COMPENDIUM_SERVICE,
         name="get_monster",
         doc="Monster stat block by name. A `campaign_id` query value reaches the owner unchanged.",
+        owner=owner_routes.get_monster,
         query_all=True,
         principal=True,
     ),
@@ -59,10 +61,11 @@ ROUTES = (
     ProxyRoute(
         "POST",
         "/api/v1/compendium/encounters/balance",
-        ("api", "v1", "compendium", "encounters", "balance"),
+        (),
         COMPENDIUM_SERVICE,
         name="balance_encounter",
         doc="Balance an encounter for a party roster. A campaign-scoped call needs `campaign.play`.",
+        owner=owner_routes.balance_encounter,
         reply="bytes",
         body="raw",
         principal=True,

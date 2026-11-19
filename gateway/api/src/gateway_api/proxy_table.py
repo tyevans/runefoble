@@ -2,8 +2,10 @@
 
 A pass-through route forwards one request to one owner route and returns the reply. Such a route
 needs no code of its own. A `ProxyRoute` row names the public path, the owner route, the body
-mode, and the reply mode. `register_proxy_routes` turns each row into a FastAPI route that calls
-`forward_json` or `forward_bytes`.
+mode, and the reply mode. The owner route is either its segments, or a function of
+`runefoble_platform.service_client.owner_routes` (one definition of each owner path).
+`register_proxy_routes` turns each row into a FastAPI route that calls `forward_json` or
+`forward_bytes`.
 
 Each generated endpoint carries a real signature: path parameters, query defaults, and the body
 are declared to FastAPI. The OpenAPI document therefore lists them as before. The table does not
@@ -25,7 +27,7 @@ from fastapi import APIRouter, Body, Depends, HTTPException, Request, Response, 
 from gateway_api.auth import get_principal
 from gateway_api.proxy import forward_bytes, forward_json
 from pydantic import BaseModel
-from runefoble_platform.service_client import path
+from runefoble_platform.service_client import OwnerRoute, path
 
 _PATH_PARAM = re.compile(r"\{(\w+)\}")
 _SEGMENT_PARAM = re.compile(r"^\{(\w+)\}$")
@@ -39,6 +41,9 @@ class ProxyRoute:
 
     - `public_path`: the FastAPI path template, with `{name}` path parameters.
     - `owner_segments`: the owner path as segments. A segment `{name}` takes the path parameter.
+      Empty when `owner` is set.
+    - `owner`: a function of `owner_routes` that returns the owner route. Its parameters are the
+      path parameters of `public_path`, by name.
     - `reply`: "json" returns the decoded JSON (`forward_json`); "bytes" relays the payload
       unchanged (`forward_bytes`).
     - `returns`: the return annotation the route declares. Binary routes use "response".
@@ -55,6 +60,7 @@ class ProxyRoute:
     service: str
     name: str
     doc: str
+    owner: Callable[..., OwnerRoute] | None = None
     reply: Literal["json", "bytes"] = "json"
     # The OpenAPI return type. "response" keeps a binary route's schema empty (`-> Response`).
     returns: Literal["any", "response"] = "any"
@@ -76,20 +82,35 @@ class ProxyRoute:
         if self.query_all and self.query_defaults:
             raise ValueError(f"{self.name}: pick query_all or query_defaults, not both")
         template_params = set(_PATH_PARAM.findall(self.public_path))
+        if (self.owner is None) == (not self.owner_segments):
+            raise ValueError(f"{self.name}: give either owner_segments or owner")
         for segment in self.owner_segments:
             match = _SEGMENT_PARAM.match(segment)
             if match and match.group(1) not in template_params:
                 raise ValueError(f"{self.name}: owner segment {segment} is not in the path")
+        if self.owner is not None:
+            owner_params = set(inspect.signature(self.owner).parameters)
+            if owner_params != template_params:
+                raise ValueError(f"{self.name}: owner takes {owner_params}, not {template_params}")
+
+    def owner_path(self, values: dict[str, str]) -> str:
+        """Build the owner path from the path parameter values.
+
+        Raises ValueError when a value is one the owner path cannot encode.
+        """
+        if self.owner is not None:
+            return self.owner(**values).path
+        segments = [
+            values[match.group(1)] if (match := _SEGMENT_PARAM.match(s)) else s
+            for s in self.owner_segments
+        ]
+        return path(*segments)
 
 
 def _owner_path(route: ProxyRoute, values: dict[str, str]) -> str:
     """Build the owner path. A segment the owner cannot encode is a missing resource."""
-    segments = [
-        values[match.group(1)] if (match := _SEGMENT_PARAM.match(s)) else s
-        for s in route.owner_segments
-    ]
     try:
-        return path(*segments)
+        return route.owner_path(values)
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from exc
 

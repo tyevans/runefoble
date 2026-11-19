@@ -25,25 +25,35 @@ from fastapi.testclient import TestClient
 from gateway_api.main import app as gateway_app
 from gateway_api.routers import (
     assets_proxy,
+    boards_proxy,
+    campaigns_proxy,
+    caravan_proxy,
     compendium_proxy,
     downtime_proxy,
     forge_proxy,
     settlements_proxy,
     soundscape,
     voice_proxy,
+    watcher_speech_proxy,
 )
+from gateway_api.routers.auth import profile
 from runefoble_platform.service_client import OWNER_URL_FIELDS
 
 from tests.helpers.live_services import closed_port_url, serve
 
 ROUTE_MODULES = (
     assets_proxy,
+    boards_proxy,
+    campaigns_proxy,
+    caravan_proxy,
     compendium_proxy,
     downtime_proxy,
     forge_proxy,
+    profile,
     settlements_proxy,
     soundscape,
     voice_proxy,
+    watcher_speech_proxy,
 )
 # Body models need a valid body, which the owner contract defines. Those rows are covered by the
 # downtime contract tests. This table checks the forwarding of every other row.
@@ -84,6 +94,9 @@ def owner_stub_url() -> Iterator[str]:
 
 
 def _owner_env(service: str) -> str:
+    """The environment variable of an owner base URL. The Watcher keeps its short name."""
+    if service == "the_watcher":
+        return "RUNEFOBLE_WATCHER_URL"
     return "RUNEFOBLE_" + OWNER_URL_FIELDS[service].upper()
 
 
@@ -105,8 +118,8 @@ def _auth(issuer, sub: str) -> dict[str, str]:
 def _concrete(row: Any) -> tuple[str, str]:
     """Return the public URL and the expected owner path of one row with a sample value."""
     public = re.sub(r"\{\w+\}", VALUE, row.public_path)
-    owner_segments = [VALUE if seg.startswith("{") else seg for seg in row.owner_segments]
-    return public, "/" + "/".join(owner_segments)
+    values = dict.fromkeys(re.findall(r"\{(\w+)\}", row.public_path), VALUE)
+    return public, row.owner_path(values)
 
 
 def _send(client: TestClient, row: Any, headers: dict[str, str], query: str = "") -> Any:
@@ -129,7 +142,9 @@ def test_table_route_forwards_method_path_query_and_payload(
     with _gateway(monkeypatch, owner_stub_url) as client:
         res = _send(client, row, _auth(trusted_ws_issuer, "user_table"), query="probe=1")
 
-    assert res.status_code == (row.status_code or 200), res.text
+    # A bytes reply relays the owner's status. A JSON reply takes the status the row declares.
+    expected = 200 if row.reply == "bytes" else (row.status_code or 200)
+    assert res.status_code == expected, res.text
     echo = res.json()
     assert echo["method"] == row.method
     assert echo["path"] == _concrete(row)[1]
