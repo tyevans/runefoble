@@ -25,7 +25,8 @@ export interface ZitadelSettings {
 /** The identity a verified token proves. */
 export interface VerifiedPrincipal {
   userId: string;
-  username: string;
+  /** From `preferred_username`. `null` when the token has no such claim. Never made from `sub`. */
+  username: string | null;
   email?: string;
 }
 
@@ -130,7 +131,7 @@ function principalFromClaims(payload: JWTPayload): VerifiedPrincipal {
   }
   const username = typeof payload.preferred_username === 'string' && payload.preferred_username
     ? payload.preferred_username
-    : payload.sub;
+    : null;
   const email = typeof payload.email === 'string' && payload.email ? payload.email : undefined;
   return { userId: payload.sub, username, email };
 }

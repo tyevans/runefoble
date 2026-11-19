@@ -32,6 +32,8 @@ export interface MintOptions {
   audience?: string;
   issuer?: string;
   expiresInSeconds?: number;
+  /** The `preferred_username` claim. `null` leaves the claim out, as a Zitadel access token does by default. */
+  preferredUsername?: string | null;
 }
 
 export class TestIssuer {
@@ -79,7 +81,9 @@ export class TestIssuer {
   /** Mints a token that Zitadel would accept for `sub`. Overrides build negative cases. */
   async mint(sub: string, options: MintOptions = {}): Promise<string> {
     const now = Math.floor(Date.now() / 1000);
-    return new SignJWT({ preferred_username: `${sub}-name`, email: `${sub}@runefoble.local` })
+    const preferredUsername = options.preferredUsername === undefined ? `${sub}-name` : options.preferredUsername;
+    const claims = preferredUsername === null ? {} : { preferred_username: preferredUsername };
+    return new SignJWT({ ...claims, email: `${sub}@runefoble.local` })
       .setProtectedHeader({ alg: 'RS256', kid: KID })
       .setSubject(sub)
       .setIssuer(options.issuer ?? TEST_ISSUER)

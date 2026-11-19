@@ -114,7 +114,9 @@ Then(
 
 Then(
   'she should be displayed in the Campaign Roster as {string}',
-  async ({ page }, expectedRole: string) => {
+  async ({ page, world }, expectedRole: string) => {
+    const owner = world.currentUser;
+    if (!owner) throw new Error('No signed-in persona. Sign Evelyn in before the roster check.');
     const membersComp = page.locator('runefoble-campaign-members');
     await expect(membersComp).toBeVisible({ timeout: 15_000 });
 
@@ -124,7 +126,7 @@ Then(
       .first();
 
     await expect(ownerRow).toBeVisible({ timeout: 10_000 });
-    await expect(ownerRow).toContainText('Evelyn');
+    await expect(ownerRow).toContainText(owner.username);
     await expect(ownerRow.locator('.role-owner, .badge-role')).toContainText(expectedRole);
   }
 );
