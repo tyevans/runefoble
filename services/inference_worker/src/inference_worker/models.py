@@ -67,10 +67,6 @@ class IntentParseResponse(BaseModel):
     action: ParsedAction
     execution_time_ms: float = 0.0
     source: ResponseSource
-    degraded: bool = Field(
-        default=False,
-        description="Always false. No path sets it true. Kept in the published response shape.",
-    )
 
 
 class DMNarrationRequest(BaseModel):
@@ -102,10 +98,6 @@ class DMNarrationResponse(BaseModel):
     suggested_dm_prompts: list[str] = Field(default_factory=list)
     tension_level: TensionLevel = "rising"
     source: ResponseSource
-    degraded: bool = Field(
-        default=False,
-        description="Always false. No path sets it true. Kept in the published response shape.",
-    )
 
 
 class StandInActionRequest(BaseModel):
@@ -146,7 +138,3 @@ class StandInActionResponse(BaseModel):
         description="Active guardrail names that the decision enforced",
     )
     source: ResponseSource
-    degraded: bool = Field(
-        default=False,
-        description="Always false. No path sets it true. Kept in the published response shape.",
-    )

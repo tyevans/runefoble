@@ -118,7 +118,6 @@ async def test_intent_route_calls_openai_backend_with_configured_secret(
     assert resp.status_code == 200
     data = resp.json()
     assert data["source"] == "llm"
-    assert data["degraded"] is False
     assert data["action"]["action_type"] == "attack"
 
     assert len(captured) == 1

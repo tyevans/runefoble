@@ -72,7 +72,7 @@ def _recent_event_line(modifier: AudienceModifierApproved) -> str:
 async def _narrate(modifier: AudienceModifierApproved) -> tuple[str, str, dict[str, Any]]:
     """Ask the worker for narration. Return (whisper type, content, metadata).
 
-    An unavailable or degraded worker gives a notice, never narration text. A worker call that
+    An unavailable worker gives a notice, never narration text. A worker call that
     fails for another reason propagates, so the message is dead-lettered.
     """
     base = {
@@ -95,9 +95,6 @@ async def _narrate(modifier: AudienceModifierApproved) -> tuple[str, str, dict[s
         )
     except (EngineUnavailableError, HTTPException) as exc:
         logger.error("Narration for modifier %s failed: %s", modifier.proposal_id, exc)
-        return UNAVAILABLE_WHISPER, UNAVAILABLE_REASON, base
-    if data.get("degraded") is True:
-        logger.error("Narration for modifier %s came from a degraded result", modifier.proposal_id)
         return UNAVAILABLE_WHISPER, UNAVAILABLE_REASON, base
     metadata = {
         **base,

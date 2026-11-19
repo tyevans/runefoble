@@ -220,7 +220,6 @@ async def test_narrate_passes_scene_data_and_reports_provenance(bus, monkeypatch
         "suggested_dm_prompts": ["Ask who turned the page."],
         "tension_level": "rising",
         "source": "llm",
-        "degraded": False,
     }
     with serve(_recording_worker(captured, 200, body)) as worker_url:
         select_worker_engine(monkeypatch, worker_url)
@@ -233,7 +232,6 @@ async def test_narrate_passes_scene_data_and_reports_provenance(bus, monkeypatch
     data = resp.json()
     assert data["narrative"] == "Pages turn by themselves."
     assert data["source"] == "llm"
-    assert data["degraded"] is False
 
 
 # ---------------------------------------------------------------------------
@@ -251,7 +249,6 @@ async def test_speech_sends_board_tokens_and_reports_worker_provenance(bus, monk
         "action": action,
         "execution_time_ms": 1.0,
         "source": "llm",
-        "degraded": False,
     }
     with (
         serve(_recording_worker(captured, 200, body)) as worker_url,
@@ -269,7 +266,6 @@ async def test_speech_sends_board_tokens_and_reports_worker_provenance(bus, monk
     assert data["action_type"] == "attack"
     assert data["confidence"] is None
     assert data["source"] == "llm"
-    assert data["degraded"] is False
 
 
 @pytest.mark.asyncio
@@ -280,7 +276,6 @@ async def test_speech_board_unavailable_is_503_and_worker_not_called(bus, monkey
         "speaker_name": "Valeros",
         "action": {"action_type": "attack"},
         "source": "llm",
-        "degraded": False,
     }
     with serve(_recording_worker(captured, 200, body)) as worker_url:
         select_worker_engine(monkeypatch, worker_url)

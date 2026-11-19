@@ -14,7 +14,6 @@ class IntentResult(BaseModel):
     target: str | None = None
     details: str | None = None
     source: str = "watcher_rules"  # "llm" from the worker
-    degraded: bool = False
 
 
 class StandInRecapResponse(BaseModel):
@@ -96,7 +95,6 @@ class DMNarrationResult(BaseModel):
     suggested_dm_prompts: list[str] = Field(default_factory=list)
     tension_level: str = "rising"
     source: str
-    degraded: bool
 
 
 class DMGuidanceRequest(BaseModel):

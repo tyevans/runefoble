@@ -49,7 +49,6 @@ def _fake_worker() -> FastAPI:
             "suggested_dm_prompts": ["Ask who lit the torch."],
             "tension_level": "rising",
             "source": "llm",
-            "degraded": False,
         }
 
     return app
