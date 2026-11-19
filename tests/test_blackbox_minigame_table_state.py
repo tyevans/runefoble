@@ -38,9 +38,9 @@ def default_table_patron(spicedb: MockSpiceDBClient) -> None:
 
 @pytest.fixture(autouse=True)
 def clean_socket_registry():
-    minigame_table_manager.connections.clear()
+    minigame_table_manager.clear()
     yield
-    minigame_table_manager.connections.clear()
+    minigame_table_manager.clear()
 
 
 @pytest.fixture

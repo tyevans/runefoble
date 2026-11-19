@@ -8,13 +8,9 @@ from game_session.minigame_tables.rules_engine import (
     evaluate_roulette_bets,
     score_dart_hit,
 )
-from game_session.minigame_tables.ws_manager import (
-    MinigameTableManager,
-    minigame_table_manager,
-)
+from game_session.minigame_tables.ws_manager import minigame_table_manager
 
 __all__ = [
-    "MinigameTableManager",
     "MinigameTableState",
     "TablePlayer",
     "calculate_dart_trajectory",

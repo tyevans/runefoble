@@ -66,9 +66,9 @@ def gateway_client(
 
 @pytest.fixture(autouse=True)
 def clean_gateway_ws() -> Generator[None]:
-    ws_campaign_manager.active_connections.clear()
+    ws_campaign_manager.clear()
     yield
-    ws_campaign_manager.active_connections.clear()
+    ws_campaign_manager.clear()
 
 
 def setup_campaign_settlement(

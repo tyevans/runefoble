@@ -161,6 +161,30 @@ Rules:
 - Do not accept, then send an error, for an identity failure. The handshake is refused.
 - Never read a token from the URL query string.
 - Accept only `runefoble.v1` as the protocol echo.
+- Run the loop with `serve_authorized_socket`. Do not write a receive loop by hand.
+
+### Run the Socket Loop With `serve_authorized_socket`
+
+The session, campaign, and overlay routes share one loop. `serve_authorized_socket` runs the whole life of an admitted socket:
+
+```python
+from runefoble_auth.websocket import action_authorizer, serve_authorized_socket
+
+await serve_authorized_socket(
+    websocket,
+    admit=lambda ws: admit_gateway_websocket(ws, action_authorizer("session.observe", session_id)),
+    on_open=open_room,      # register the socket, send "connected"; return False if refused
+    on_frame=handle_frame,  # one call per inbound frame
+    on_close=lambda: ws_manager.disconnect(session_id, websocket),  # always runs once
+    receive=WebSocket.receive_text,  # default: WebSocket.receive_json
+)
+```
+
+Do not write a second receive loop in a route. `on_close` runs in a `finally` block, so a finished socket always leaves its group.
+
+### Keep Live Sockets in `WebSocketGroups`
+
+`runefoble_platform.ws_groups.WebSocketGroups[K]` holds the live sockets of one room, keyed by session, campaign, table, or board. It offers `register`, `disconnect`, `broadcast`, and `clear`. A socket whose send fails is logged and removed from its group. The other sockets still receive the message. Create one instance per room kind at module level, for example `ws_manager = WebSocketGroups[str]()`.
 
 ## Test Both Paths With Signed Tokens
 
