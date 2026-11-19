@@ -12,11 +12,11 @@ from __future__ import annotations
 from collections.abc import Iterator
 from uuid import uuid4
 
-import httpx
 import pytest
 from fastapi.testclient import TestClient
 from gateway_api.main import app as gateway_app
 
+from tests.helpers.campaign_setup import create_owner_session
 from tests.helpers.live_services import closed_port_url
 
 
@@ -62,25 +62,13 @@ def test_unobservable_session_is_refused_and_no_canned_state_is_returned(
     assert res.json()["detail"]["error"] == "permission_denied"
 
 
-def _owner_session(game_session_upstream: str, headers: dict[str, str], campaign_id: str) -> str:
-    """Create a session through the owner's public route, linked to the campaign."""
-    res = httpx.post(
-        f"{game_session_upstream}/api/v1/sessions/create",
-        json={"campaign_id": campaign_id, "title": "Crypt"},
-        headers=headers,
-        timeout=5.0,
-    )
-    assert res.status_code == 200, res.text
-    return res.json()["session_id"]
-
-
 @pytest.fixture
 def owned_session(client, game_session_upstream, trusted_ws_issuer):
     """A campaign owned by dm-evelyn, with one live session linked to it."""
     owner = _auth(trusted_ws_issuer, "dm-evelyn")
     campaign = client.post("/api/v1/campaigns", json={"title": "Tomb"}, headers=owner)
     assert campaign.status_code == 201, campaign.text
-    session_id = _owner_session(game_session_upstream, owner, campaign.json()["id"])
+    session_id = create_owner_session(game_session_upstream, owner, campaign.json()["id"])
     return owner, session_id
 
 
