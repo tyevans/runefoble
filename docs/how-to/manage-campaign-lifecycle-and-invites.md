@@ -427,3 +427,12 @@ Key features of `<runefoble-campaign-header>`:
 - **SpiceDB Zanzibar Guarded Editing**: Renders the "Edit Campaign" button strictly when `canManage=true` (granted to users holding `manage` permission in SpiceDB Zanzibar schema).
 - **Edit Campaign Modal**: Provides a form to update title, setting, system ruleset, cover art URL, and narrative description, dispatching standard `@update-campaign` custom events with `UpdateCampaignPayload`.
 
+
+## 12. Setting Up Campaign Members in Blackbox Tests
+
+Blackbox tests create campaigns and members through the public routes. They do not write SpiceDB tuples for membership. The helpers in `tests/helpers/campaign_setup.py` do this:
+
+1. `create_campaign(client, owner_id)` calls `POST /api/v1/campaigns`. The owner holds the `owner` relation. The owner also passes the `run_session` and `play` checks, so the owner acts as the dungeon master.
+2. `invite_and_join(client, campaign_id, owner_id, member_id, role)` calls `POST /api/v1/campaigns/{id}/invites` and then `POST /api/v1/campaigns/join`. Invites accept the `player` and `spectator` roles. To grant another role, call `POST /api/v1/campaigns/{id}/roles` as the owner.
+
+Both helpers sign tokens with the shared issuer by default. Pass `issuer=` when a test trusts its own issuer. Tests that check SpiceDB sync, such as the tuple mapping in [`spicedb-zitadel-identity-sync.md`](../reference/spicedb-zitadel-identity-sync.md), write tuples directly. Other membership setup uses these helpers.
