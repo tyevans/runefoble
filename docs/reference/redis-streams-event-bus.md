@@ -1,6 +1,6 @@
 # Reference: Redis Streams Event Bus & Consumer Groups
 
-Runefoble uses Redis Streams as a high-throughput, distributed event bus for cross-service asynchronous communication. Two services run stream consumers in production today: Campaign Analytics and Soundscape. See [Production Consumers](#production-consumers).
+Runefoble uses Redis Streams as a high-throughput, distributed event bus for cross-service asynchronous communication. Three services run stream consumers in production today: Campaign Analytics, Soundscape, and Board State. See [Production Consumers](#production-consumers).
 
 ## Architecture Overview
 
@@ -142,6 +142,7 @@ Each service starts its consumers in its FastAPI lifespan. A start-up failure st
 |---|---|---|---|---|---|
 | `analytics` | `campaign_analytics` | `runefoble.events.session`, `runefoble.events.board`, `runefoble.events.character`, `runefoble.events.watcher` | `campaign_analytics_worker` | `CampaignAnalyticsWorker.handle_event` (one projection transaction per message, stores the stream position) | `consumers.analytics` |
 | `soundscape` | `soundscape` | `runefoble.events.session`, `runefoble.events.watcher`, `runefoble.events.character`, `runefoble.events.board` | `soundscape_workers` | `handle_incoming_domain_event` | `consumers.soundscape` |
+| `board_state` | `board_state` | `runefoble.events.asset` | `board_state_workers` | `apply_forged_battlemap_event` (applies `BattlemapForged` layout to the board of its session) | `consumers.board_state` |
 
 `/healthz` returns `200` with `"status": "ok"` when every consumer is `running`. It returns `503` with `"status": "degraded"` when any consumer is `failed`.
 

@@ -170,6 +170,12 @@ Part of the [Events Schema](events-schema.md). Each event identifier in this pag
   - `token_id`: String
   - `hazard_type`: String
   - `damage_dice`: String (e.g. "2d10", "1d6")
+- **`ForgedBattlemapApplied`**: Emitted when a forged battlemap becomes the board geometry (`runefoble.events.board.forged_battlemap_applied`). The grid size and walls are replaced. Wall obstacle tokens and hazard cells follow as `TokenPlaced` and `TerrainCellModified` events.
+  - `session_id`: String
+  - `asset_id`: String
+  - `cols`: Integer
+  - `rows`: Integer
+  - `wall_segments`: List of objects
 - **`UniversalVTTImported`** : Emitted when a Universal VTT (`.dd2vtt`) map is imported onto the board (`runefoble.events.board.map_imported`).
   - `session_id`: String
   - `cols`: Integer
