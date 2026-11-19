@@ -19,7 +19,7 @@ This how-to guide explains how the Runefoble App Shell (`frontend/src/runefoble-
 | `app/data-loader.ts` | Runs the campaign switcher read and the view controller read. A failed read sets `loadError`. |
 | `app/session-data-loader.ts` | Loads lobby and active-session data. |
 | `app/session-socket.ts` | Opens, closes, and reconnects the session WebSocket. A failed open or message logs the error and shows a toast. |
-| `app/session-actions.ts` | Handles the launch-session and stand-in toggle events. |
+| `app/session-actions.ts` | Handles the take-seat, launch-session and stand-in toggle events. |
 | `app/session-messages.ts` | Applies live session messages to shell state. |
 | `app/campaign-actions.ts` | Handles campaign, session, membership, and invite events. |
 | `app/character-actions.ts` | Handles roster and lobby character events. |

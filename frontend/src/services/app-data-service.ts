@@ -183,6 +183,11 @@ export class AppDataService {
     return dataOk({ participants: roster.data, availableCharacters: resolveLobbyAvailableCharacters(characters.data, campaignId) });
   }
 
+  /** Seats the verified caller in the lobby through the gateway join route (TASK-0889). */
+  async joinSession(sessionId: string, seat: { character_id: string; character_name: string; character_class: string }): Promise<DataResult<unknown>> {
+    return this.request<unknown>(`${this.apiBase}/sessions/${sessionId}/join`, { method: 'POST', body: JSON.stringify(seat) });
+  }
+
   async fetchBoardState(sessionId: string): Promise<DataResult<{ cols: number; rows: number; tokens: BoardToken[] }>> {
     const res = await this.request<any>(`${this.apiBase}/boards/${sessionId}`);
     if (!res.ok) return res;

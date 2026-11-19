@@ -1,9 +1,12 @@
 /**
  * App Shell Session Actions (TASK-0643).
  *
- * Handles the lobby events that start a live session and activate an absentee stand-in.
+ * Handles the lobby events that seat a player, start a live session, and activate an absentee
+ * stand-in.
  */
 
+import type { TakeSeatEventDetail } from '@runefoble/game-session-ui';
+import { appDataService } from '../services/app-data-service.ts';
 import { router } from '../router/index.ts';
 import type { RunefobleApp } from '../runefoble-app.ts';
 import { handleToggleStandIn } from '../vtt-mesh-handlers.ts';
@@ -28,4 +31,31 @@ export function toggleStandIn(host: RunefobleApp, e: CustomEvent): void {
     host.isAbsenteeDirectiveOpen = true;
     host.showToast('Stand-In Activated: Directives drawer opened');
   }
+}
+
+/**
+ * Seats the caller through the gateway join route, then reads the lobby roster again (TASK-0889).
+ * game_session checks `session.participate`. A refusal shows the owner's message and keeps the roster.
+ */
+export async function takeLobbySeat(host: RunefobleApp, e: CustomEvent<TakeSeatEventDetail>): Promise<void> {
+  const sId = e.detail?.sessionId || host.sessionId;
+  const seat = e.detail;
+  if (!sId || !seat?.characterId) {
+    host.showToast('Seat not taken. The session or the character is not known.');
+    return;
+  }
+  const joined = await appDataService.joinSession(sId, {
+    character_id: seat.characterId, character_name: seat.characterName, character_class: seat.characterClass,
+  });
+  if (!joined.ok) {
+    host.showToast(`Seat not taken: ${joined.message}`);
+    return;
+  }
+  const lobby = await appDataService.fetchLobbyState(host.campaignId, sId);
+  if (!lobby.ok) {
+    host.showToast(`Seat taken, but the roster did not load: ${lobby.message}`);
+    return;
+  }
+  host.lobbyParticipants = lobby.data.participants;
+  host.lobbyAvailableCharacters = lobby.data.availableCharacters;
 }

@@ -1,6 +1,6 @@
 import { LitElement, html, type PropertyValues, type TemplateResult } from 'lit';
 import { AssetImageSet, AuthConsumerController } from '@runefoble/ui-core';
-import { customElement, property } from 'lit/decorators.js';
+import { customElement, property, state } from 'lit/decorators.js';
 import { sessionLobbyStyles } from './runefoble-session-lobby.styles.ts';
 import {
   type LobbyParticipant,
@@ -10,8 +10,10 @@ import {
   type ToggleReadinessEventDetail,
   type ToggleStandInEventDetail,
   type LaunchSessionEventDetail,
+  type TakeSeatEventDetail,
   computeReadinessSummary,
 } from './types.ts';
+import { canTakeSeat } from './seat.ts';
 
 /** Row key of one participant image. Avatar and portrait are separate rows. */
 const imageKey = (userId: string, slot: 'avatar' | 'portrait') => `${userId}:${slot}`;
@@ -45,9 +47,21 @@ export class RunefobleSessionLobby extends LitElement {
   @property({ type: Array }) availableCharacters: LobbyCharacterOption[] = [];
   @property({ type: Boolean, attribute: 'is-dm' }) isDm = false;
   @property({ type: Boolean, attribute: 'is-loading' }) isLoading = false;
+  /** The caller holds `campaign.play` (server capability reply). */
+  @property({ type: Boolean, attribute: 'can-play' }) canPlay = false;
+  @state() private seatCharacterId = '';
 
   get canUserLaunch(): boolean {
     return this.isDm;
+  }
+
+  get canUserTakeSeat(): boolean {
+    return canTakeSeat({
+      canPlay: this.canPlay,
+      canRunSession: this.isDm,
+      currentUserId: this.currentUserId,
+      participants: this.participants,
+    });
   }
 
   get readinessSummary(): ReadinessSummary {
@@ -60,6 +74,52 @@ export class RunefobleSessionLobby extends LitElement {
       detail: { sessionId: this.sessionId, campaignId: this.campaignId },
       bubbles: true, composed: true,
     }));
+  }
+
+  private handleTakeSeat(): void {
+    const character = this.availableCharacters.find((c) => c.id === this.seatCharacterId) ?? this.availableCharacters[0];
+    if (!character || this.isLoading) return;
+    this.dispatchEvent(new CustomEvent<TakeSeatEventDetail>('take-seat', {
+      detail: {
+        sessionId: this.sessionId,
+        characterId: character.id,
+        characterName: character.name,
+        characterClass: character.characterClass,
+      },
+      bubbles: true, composed: true,
+    }));
+  }
+
+  private renderSeatPanel(): TemplateResult {
+    if (!this.canUserTakeSeat) return html``;
+    const hasCharacters = this.availableCharacters.length > 0;
+    return html`
+      <div class="seat-panel">
+        ${hasCharacters
+          ? html`
+              <div class="char-select-container">
+                <label class="select-label" for="seat-character-select">Your Character</label>
+                <select
+                  id="seat-character-select"
+                  class="character-dropdown seat-character-select"
+                  @change=${(e: Event) => { this.seatCharacterId = (e.target as HTMLSelectElement).value; }}
+                >
+                  ${this.availableCharacters.map(
+                    (c) => html`<option value="${c.id}" ?selected=${c.id === this.seatCharacterId}>${c.name} (${c.characterClass} Lv ${c.level})</option>`
+                  )}
+                </select>
+              </div>
+            `
+          : html`<p class="seat-hint">Create a character to take a seat.</p>`}
+        <button
+          class="btn-take-seat"
+          ?disabled=${!hasCharacters || this.isLoading}
+          @click=${this.handleTakeSeat}
+        >
+          Take a Seat
+        </button>
+      </div>
+    `;
   }
 
   private handleSelectCharacter(userId: string, characterId: string): void {
@@ -247,6 +307,7 @@ export class RunefobleSessionLobby extends LitElement {
         </header>
 
         <section class="participants-section">
+          ${this.renderSeatPanel()}
           <div class="section-label">Party Roster (${this.participants.length} Assembled)</div>
 
           ${this.participants.length === 0

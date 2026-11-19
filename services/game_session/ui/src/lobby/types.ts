@@ -56,6 +56,14 @@ export interface ToggleStandInEventDetail {
   isAbsent: boolean;
 }
 
+/** Detail of `take-seat`: the caller takes a lobby seat with one character (TASK-0889). */
+export interface TakeSeatEventDetail {
+  sessionId: string;
+  characterId: string;
+  characterName: string;
+  characterClass: string;
+}
+
 export interface LaunchSessionEventDetail {
   sessionId: string;
   campaignId?: string;
