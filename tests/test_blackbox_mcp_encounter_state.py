@@ -15,7 +15,7 @@ import pytest
 from gateway_mcp.server import mcp
 from mcp.types import CallToolResult
 
-from tests.helpers.campaign_setup import create_dm_campaign
+from tests.helpers.campaign_setup import create_dm_campaign, create_owned_campaign
 from tests.helpers.live_services import serve, unavailable_app
 from tests.helpers.mcp_http import call_tool_over_http, serve_mcp
 from tests.helpers.ws_identity import SIGNING_ISSUER, bearer
@@ -64,7 +64,7 @@ def encounter(
         created = http.post(
             "/api/v1/sessions/create",
             json={
-                "campaign_id": _owned_campaign(http),
+                "campaign_id": create_owned_campaign(http),
                 "title": "Ambush at Red Larch",
                 "dm_id": "the_watcher",
             },
@@ -205,13 +205,6 @@ async def test_encounter_reads_refuse_a_caller_with_no_session_access(
     assert "403" in tool_text(result)
     assert "Goblin Archer" not in tool_text(result)
     assert "Valeros" not in tool_text(result)
-
-
-def _owned_campaign(client) -> str:
-    """Create a campaign as the calling user, so that the caller can run sessions in it."""
-    res = client.post("/api/v1/campaigns", json={"title": "Owned Campaign"})
-    assert res.status_code == 201, res.text
-    return res.json()["id"]
 
 
 @pytest.fixture(autouse=True)

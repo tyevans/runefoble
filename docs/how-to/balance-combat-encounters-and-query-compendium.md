@@ -199,18 +199,17 @@ A homebrew rule whose name matches an SRD entry is `shadowed`. The list route ma
 
 ## 5. FastMCP Tabletop Tools
 
-LLM agents and The Watcher can call compendium tools via FastMCP:
+LLM agents and The Watcher can call compendium tools through the MCP server. Use the public MCP client protocol. `session` is an initialized MCP `ClientSession` on the `/mcp` endpoint, with the caller bearer:
 
 ```python
-from gateway_mcp.server import mcp
-
 # Look up monster stat block
-monster_tool = mcp._tool_manager.get_tool("query_monster_stat_block")
-res = await monster_tool.run({"monster_name": "Bugbear"})
+res = await session.call_tool("query_monster_stat_block", {"monster_name": "Bugbear"})
 
 # Calculate encounter balance
-encounter_tool = mcp._tool_manager.get_tool("calculate_encounter_balance")
-enc = await encounter_tool.run({"party_levels": [4, 4, 4], "target_difficulty": "Hard"})
+enc = await session.call_tool(
+    "calculate_encounter_balance",
+    {"party_levels": [4, 4, 4], "target_difficulty": "Hard"},
+)
 ```
 
 ---

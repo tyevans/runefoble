@@ -14,6 +14,7 @@ from game_session.settlement.auth.tokens import get_principal
 from runefoble_auth.mock import MockSpiceDBClient
 from runefoble_auth.zitadel import ZitadelAuthService
 
+from tests.helpers.module_state import restored_seam
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 from .conftest import bearer_headers
@@ -33,12 +34,11 @@ def test_missing_bearer_token_is_refused_without_fallback():
     service = ZitadelAuthService(
         issuer="http://zitadel.test", audience="runefoble-api", internal_url=None
     )
-    sa.set_zitadel_auth_service(service)
-    try:
+    with restored_seam(
+        sa.get_zitadel_auth_service, sa.set_zitadel_auth_service, service, replace=True
+    ):
         response = TestClient(session_app).get("/api/v1/test_auth_missing/whoami")
         assert response.status_code == 401
-    finally:
-        sa.set_zitadel_auth_service(None)
 
 
 def test_fastapi_route_dependencies(spicedb: MockSpiceDBClient, settlement_issuer):

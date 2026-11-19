@@ -3,7 +3,7 @@
 Tests exercise FastMCP public protocol entrypoints exclusively:
 - Tool discovery and execution through the MCP streamable HTTP transport, with the
   caller's signed bearer on each MCP request ('tests/helpers/mcp_http.py')
-- Tool discovery via 'mcp._tool_manager'
+- Tool discovery via MCP `tools/list`
 - Error handling for invalid tools and out-of-bounds tactical grid movements
 """
 
@@ -23,7 +23,7 @@ from runefoble_auth.sync_events import handle_domain_event
 from tests.helpers.campaign_setup import create_campaign, create_dm_campaign
 from tests.helpers.game_session_setup import start_session_with_player
 from tests.helpers.live_services import closed_port_url, serve, unavailable_app
-from tests.helpers.mcp_http import call_tool_over_http, serve_mcp
+from tests.helpers.mcp_http import call_tool_over_http, listed_tools, serve_mcp
 from tests.helpers.spicedb_factory import shared_spicedb_client
 from tests.helpers.ws_identity import SIGNING_ISSUER, bearer
 
@@ -165,14 +165,13 @@ async def test_blackbox_execute_agent_action_plan_invalid_tool():
 
 @pytest.mark.asyncio
 async def test_blackbox_mcp_tool_discovery():
-    """Verify public FastMCP discovery reveals all expected tools including action orchestrator."""
-    tools = mcp._tool_manager.list_tools()
-    tool_map = {t.name: t for t in tools}
+    """Verify public MCP discovery (`tools/list`) reveals all expected tools, including the orchestrator."""
+    tool_map = await listed_tools(_MCP["url"])
 
     assert "execute_agent_action_plan" in tool_map
     plan_tool = tool_map["execute_agent_action_plan"]
-    assert "actions" in plan_tool.parameters["properties"]
-    assert "session_id" in plan_tool.parameters["properties"]
+    assert "actions" in plan_tool.inputSchema["properties"]
+    assert "session_id" in plan_tool.inputSchema["properties"]
 
 
 @pytest.mark.asyncio

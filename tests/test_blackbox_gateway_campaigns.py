@@ -11,10 +11,11 @@ Verifies:
 
 import os
 
-import httpx
 import pytest
 from fastapi.testclient import TestClient
 from gateway_api.main import app
+
+from tests.helpers.campaign_setup import create_owner_session
 
 
 @pytest.fixture
@@ -220,7 +221,7 @@ async def test_spectator_invite_and_usage_limit(trusted_ws_issuer, client):
         headers=headers_dm,
     )
     camp_id = res_create.json()["id"]
-    session_id = _owner_session(camp_id, headers_dm)
+    session_id = create_owner_session(os.environ["RUNEFOBLE_GAME_SESSION_URL"], headers_dm, camp_id)
 
     # Create single-use spectator invite
     res_invite = client.post(
@@ -259,16 +260,3 @@ async def test_spectator_invite_and_usage_limit(trusted_ws_issuer, client):
         headers=headers_viewer1,
     )
     assert res_advance.status_code == 403
-
-
-def _owner_session(campaign_id: str, headers: dict[str, str]) -> str:
-    """Create a game session in a campaign through the owner's public game_session route."""
-    url = os.environ["RUNEFOBLE_GAME_SESSION_URL"]
-    res = httpx.post(
-        f"{url}/api/v1/sessions/create",
-        json={"campaign_id": campaign_id, "title": "Crypt"},
-        headers=headers,
-        timeout=5.0,
-    )
-    assert res.status_code == 200, res.text
-    return res.json()["session_id"]

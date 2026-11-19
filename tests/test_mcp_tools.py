@@ -9,10 +9,13 @@ import pytest
 from gateway_mcp.server import mcp, roll_dice
 from runefoble_platform.dice import parse_and_roll
 
+from tests.helpers.mcp_http import listed_tools_sync, serve_mcp
+
 
 def test_mcp_registered_tools():
-    """Verify that all tools are registered with FastMCP tool manager."""
-    tool_names = [tool.name for tool in mcp._tool_manager.list_tools()]
+    """Verify that every expected tool is listed by the MCP server over `tools/list`."""
+    with serve_mcp(mcp) as endpoint:
+        tool_names = list(listed_tools_sync(endpoint))
     expected = [
         "roll_dice",
         "inspect_tactical_board",

@@ -7,12 +7,13 @@ from uuid import uuid4
 from fastapi.testclient import TestClient
 from runefoble_platform.redis_bus import deserialize_event
 
+from tests.helpers.campaign_setup import create_owned_campaign
 from tests.helpers.mock_redis import MockAsyncRedis
 
 
 def _setup_active_combat(client: TestClient) -> tuple[str, str, str]:
     """Helper to initialize an active combat encounter with two combatants."""
-    campaign_id = _owned_campaign(client)
+    campaign_id = create_owned_campaign(client)
     create_res = client.post(
         "/api/v1/sessions/create",
         json={"campaign_id": campaign_id, "title": "Reaction Arena", "dm_id": "the_watcher"},
@@ -157,7 +158,7 @@ def test_reaction_declare_error_handling(client: TestClient):
     # 2. Declare outside combat
     c_res = client.post(
         "/api/v1/sessions/create",
-        json={"campaign_id": _owned_campaign(client), "title": "Peaceful Session"},
+        json={"campaign_id": create_owned_campaign(client), "title": "Peaceful Session"},
     )
     session_id = c_res.json()["session_id"]
     res_no_combat = client.post(
@@ -166,10 +167,3 @@ def test_reaction_declare_error_handling(client: TestClient):
     )
     assert res_no_combat.status_code == 400
     assert "not in combat" in res_no_combat.json()["detail"]
-
-
-def _owned_campaign(client) -> str:
-    """Create a campaign as the calling user, so that the caller can run sessions in it."""
-    res = client.post("/api/v1/campaigns", json={"title": "Owned Campaign"})
-    assert res.status_code == 201, res.text
-    return res.json()["id"]

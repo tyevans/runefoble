@@ -218,9 +218,9 @@ async def test_lore_projection_survives_restart(postgres_service):
 
 @pytest.mark.usefixtures("lore_backends")
 @pytest.mark.asyncio
+@pytest.mark.usefixtures("reset_event_store")
 async def test_extracted_entities_record_pattern_provenance():
     """Entities from regex extraction are recorded as pattern extraction, never as LLM output."""
-    set_event_store(None)
     campaign_id = str(uuid4())
     await _seed_dm(campaign_id)
     with TestClient(create_app(), headers=bearer(VISITOR_SUBJECT)) as client:
@@ -244,9 +244,9 @@ async def test_extracted_entities_record_pattern_provenance():
 
 @pytest.mark.asyncio
 @pytest.mark.usefixtures("lore_backends")
+@pytest.mark.usefixtures("reset_event_store")
 async def test_alias_consolidation_requires_an_existing_document():
     """A consolidation cannot be recorded against a document that does not exist."""
-    set_event_store(None)
     campaign_id = str(uuid4())
     await _seed_dm(campaign_id)
     with TestClient(create_app(), headers=bearer(VISITOR_SUBJECT)) as client:

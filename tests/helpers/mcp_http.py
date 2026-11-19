@@ -7,6 +7,7 @@ caller identity part of the MCP request itself. In-memory sessions carry no head
 
 from __future__ import annotations
 
+import asyncio
 import json
 from collections.abc import AsyncIterator, Iterator
 from contextlib import asynccontextmanager, contextmanager
@@ -21,7 +22,7 @@ from mcp.server.fastmcp import FastMCP
 from mcp.server.fastmcp.server import StreamableHTTPASGIApp
 from mcp.server.streamable_http_manager import StreamableHTTPSessionManager
 from mcp.shared.exceptions import McpError
-from mcp.types import CallToolResult
+from mcp.types import CallToolResult, Tool
 from pydantic import AnyUrl
 from runefoble_auth.principal import require_principal
 from starlette.applications import Starlette
@@ -100,6 +101,21 @@ async def call_tool_json(
     text = result.content[0].text if result.content else ""
     assert not result.isError, f"Tool '{name}' failed: {text}"
     return json.loads(text)
+
+
+async def listed_tools(endpoint: str, caller: str = "user-test") -> dict[str, Tool]:
+    """Return the tools that `tools/list` reports to `caller`, keyed by tool name.
+
+    Each `Tool` carries its `inputSchema`. A tool that is not registered is absent.
+    """
+    async with mcp_session(endpoint, SIGNING_ISSUER.mint(caller)) as session:
+        listed = await session.list_tools()
+    return {tool.name: tool for tool in listed.tools}
+
+
+def listed_tools_sync(endpoint: str, caller: str = "user-test") -> dict[str, Tool]:
+    """Blocking form of `listed_tools` for tests that do not run an event loop."""
+    return asyncio.run(listed_tools(endpoint, caller))
 
 
 async def read_resource_over_http(endpoint: str, uri: str, bearer: str | None = None) -> str:

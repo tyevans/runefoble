@@ -20,6 +20,8 @@ import pytest
 from fastapi.testclient import TestClient
 from gateway_api.main import app as gateway_app
 
+from tests.helpers.campaign_setup import create_owner_session
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = REPO_ROOT / "frontend"
 SRC_DIR = FRONTEND_DIR / "src"
@@ -65,7 +67,9 @@ def test_gateway_campaign_and_session_routes(client: TestClient, trusted_ws_issu
     )
     assert camp_res.status_code == 201
     campaign_id = camp_res.json()["id"]
-    session_id = _owner_session(campaign_id, headers)
+    session_id = create_owner_session(
+        os.environ["RUNEFOBLE_GAME_SESSION_URL"], headers, campaign_id
+    )
 
     # 2. Fetch campaign list (for #/campaigns)
     list_res = client.get("/api/v1/campaigns", headers=headers)
@@ -104,16 +108,3 @@ def _owner_board(campaign_id: str, session_id: str, headers: dict[str, str]) -> 
         timeout=5.0,
     )
     assert res.status_code == 200, res.text
-
-
-def _owner_session(campaign_id: str, headers: dict[str, str]) -> str:
-    """Create a game session in a campaign through the owner's public game_session route."""
-    url = os.environ["RUNEFOBLE_GAME_SESSION_URL"]
-    res = httpx.post(
-        f"{url}/api/v1/sessions/create",
-        json={"campaign_id": campaign_id, "title": "Crypt"},
-        headers=headers,
-        timeout=5.0,
-    )
-    assert res.status_code == 200, res.text
-    return res.json()["session_id"]

@@ -24,7 +24,7 @@ from runefoble_auth.sync import ZitadelSpiceDBSyncService
 from runefoble_auth.sync_events import handle_domain_event
 from the_watcher.main import app as watcher_app
 
-from tests.helpers.campaign_setup import create_dm_campaign
+from tests.helpers.campaign_setup import create_dm_campaign, create_owned_campaign
 from tests.helpers.live_services import closed_port_url, serve, unavailable_app
 from tests.helpers.mcp_http import call_tool_over_http, read_resource_over_http, serve_mcp
 from tests.helpers.watcher_engine import select_worker_engine
@@ -101,7 +101,11 @@ def _create_session(session_url: str, title: str) -> str:
     with httpx.Client(base_url=session_url, headers=bearer("user-test")) as http:
         created = http.post(
             "/api/v1/sessions/create",
-            json={"campaign_id": _owned_campaign(http), "title": title, "dm_id": "the_watcher"},
+            json={
+                "campaign_id": create_owned_campaign(http),
+                "title": title,
+                "dm_id": "the_watcher",
+            },
         )
         assert created.status_code == 200, created.text
         return str(created.json()["session_id"])
@@ -431,13 +435,6 @@ def test_blackbox_caller_bearer_reads_authorization_header_of_mcp_request():
     assert caller_bearer(no_request) is None
     assert caller_bearer(basic_scheme) is None
     assert caller_bearer(None) is None
-
-
-def _owned_campaign(client) -> str:
-    """Create a campaign as the calling user, so that the caller can run sessions in it."""
-    res = client.post("/api/v1/campaigns", json={"title": "Owned Campaign"})
-    assert res.status_code == 201, res.text
-    return res.json()["id"]
 
 
 @pytest.fixture(autouse=True)

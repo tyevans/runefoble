@@ -7,9 +7,8 @@ from __future__ import annotations
 
 import httpx
 import pytest
-from gateway_mcp.server import mcp
 
-from tests.helpers.mcp_http import call_tool_json
+from tests.helpers.mcp_http import call_tool_json, listed_tools, listed_tools_sync
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 
@@ -19,7 +18,7 @@ async def test_blackbox_dynamic_mcp_tool_registration_and_execution(
 ):
     """Verify registering a dynamic tool via administrative frontdoor and invoking it in FastMCP."""
     tool_name = "calculate_spell_falloff"
-    assert mcp._tool_manager.get_tool(tool_name) is None
+    assert (await listed_tools(mcp_endpoint)).get(tool_name) is None
 
     # Register dynamic tool definition via administrative HTTP frontdoor
     tool_payload = {
@@ -45,10 +44,10 @@ async def test_blackbox_dynamic_mcp_tool_registration_and_execution(
     assert reg_resp.json()["status"] == "registered"
 
     # Assert tool is immediately visible in FastMCP discovery WITHOUT gateway restart
-    registered_tool = mcp._tool_manager.get_tool(tool_name)
+    registered_tool = (await listed_tools(mcp_endpoint)).get(tool_name)
     assert registered_tool is not None, "Tool must be discovered immediately in FastMCP"
-    assert "base_damage" in registered_tool.parameters["properties"]
-    assert "distance" in registered_tool.parameters["properties"]
+    assert "base_damage" in registered_tool.inputSchema["properties"]
+    assert "distance" in registered_tool.inputSchema["properties"]
 
     # Invoke the dynamic tool through public FastMCP tool interface
     mcp_result = await call_tool_json(
@@ -78,7 +77,9 @@ async def test_blackbox_dynamic_mcp_tool_registration_and_execution(
     assert tool_name in tool_names
 
 
-def test_blackbox_dynamic_mcp_handler_rejection_security(tools_client: httpx.Client):
+def test_blackbox_dynamic_mcp_handler_rejection_security(
+    tools_client: httpx.Client, mcp_endpoint: str
+):
     """Verify registration refuses handlers that reach for system calls or imports."""
     unsafe_cases = [
         ("os", "__import__('os').getcwd()"),
@@ -94,10 +95,10 @@ def test_blackbox_dynamic_mcp_handler_rejection_security(tools_client: httpx.Cli
         }
         resp = tools_client.post("/mcp/tools", json=payload)
         assert resp.status_code == 400, f"Expected rejection for {name}"
-        assert mcp._tool_manager.get_tool(name) is None
+        assert listed_tools_sync(mcp_endpoint).get(name) is None
 
 
-def test_blackbox_dynamic_mcp_tool_lifecycle(tools_client: httpx.Client):
+def test_blackbox_dynamic_mcp_tool_lifecycle(tools_client: httpx.Client, mcp_endpoint: str):
     """Verify updating and deregistering dynamic tools cleanly."""
     tool_name = "tactical_flare"
     initial_payload = {
@@ -114,7 +115,7 @@ def test_blackbox_dynamic_mcp_tool_lifecycle(tools_client: httpx.Client):
     # Register tool
     reg = tools_client.post("/mcp/tools", json=initial_payload)
     assert reg.status_code == 200
-    assert mcp._tool_manager.get_tool(tool_name) is not None
+    assert listed_tools_sync(mcp_endpoint).get(tool_name) is not None
 
     # Update tool with new description and parameters
     update_payload = {
@@ -129,13 +130,13 @@ def test_blackbox_dynamic_mcp_tool_lifecycle(tools_client: httpx.Client):
     }
     upd = tools_client.put(f"/mcp/tools/{tool_name}", json=update_payload)
     assert upd.status_code == 200
-    updated_tool = mcp._tool_manager.get_tool(tool_name)
+    updated_tool = listed_tools_sync(mcp_endpoint).get(tool_name)
     assert updated_tool is not None
-    assert "color" in updated_tool.parameters["properties"]
+    assert "color" in updated_tool.inputSchema["properties"]
 
     # Deregister tool
     del_resp = tools_client.delete(f"/mcp/tools/{tool_name}")
     assert del_resp.status_code == 200
     assert del_resp.json()["status"] == "deregistered"
-    assert mcp._tool_manager.get_tool(tool_name) is None
+    assert listed_tools_sync(mcp_endpoint).get(tool_name) is None
     assert tools_client.delete(f"/mcp/tools/{tool_name}").status_code == 404

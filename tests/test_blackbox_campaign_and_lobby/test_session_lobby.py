@@ -11,6 +11,7 @@ import pytest
 from fastapi.testclient import TestClient
 from game_session.events import STREAM_SESSION
 
+from tests.helpers.campaign_setup import create_owned_campaign
 from tests.helpers.ws_identity import bearer, ws_subprotocols
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
@@ -19,7 +20,7 @@ pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 def test_session_lobby_readiness_and_ai_stand_in(client_sess: TestClient) -> None:
     """Verify players assembling in lobby, readiness presence, and absent stand-in toggle."""
     char_valeros_id, char_kyra_id = uuid4(), uuid4()
-    campaign_id = _owned_campaign(client_sess)
+    campaign_id = create_owned_campaign(client_sess)
     _seat_players(client_sess, campaign_id, ["player_marcus", "player_sarah"])
 
     sess_res = client_sess.post(
@@ -121,13 +122,6 @@ def test_session_lobby_launch_transition_and_events(
 
     session_events = mock_redis.streams.get(STREAM_SESSION, [])
     assert any("runefoble.events.session.started" in str(evt) for evt in session_events)
-
-
-def _owned_campaign(client) -> str:
-    """Create a campaign as the calling user, so that the caller can run sessions in it."""
-    res = client.post("/api/v1/campaigns", json={"title": "Owned Campaign"})
-    assert res.status_code == 201, res.text
-    return res.json()["id"]
 
 
 def _seat_players(

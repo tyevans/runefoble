@@ -9,23 +9,18 @@ from __future__ import annotations
 from fastapi.testclient import TestClient
 from game_session.events import STREAM_SESSION, STREAM_STRONGHOLD
 
-
-def _owned_campaign(client: TestClient) -> str:
-    """Create a campaign through the public route. The caller becomes its owner."""
-    created = client.post("/api/v1/campaigns", json={"title": "Campfire Campaign"})
-    assert created.status_code == 201, created.text
-    return created.json()["id"]
+from tests.helpers.campaign_setup import create_owned_campaign
 
 
 def test_blackbox_campfire_crafting_frontdoor_integration(
     session_client: TestClient, char_client: TestClient, mock_bus
 ) -> None:
     """Verify campfire rest and alchemical crafting workflows via public frontdoors."""
-    camp_id = _owned_campaign(session_client)
+    camp_id = create_owned_campaign(session_client)
     session_res = session_client.post(
         "/api/v1/sessions/create",
         json={
-            "campaign_id": _owned_campaign(session_client),
+            "campaign_id": create_owned_campaign(session_client),
             "title": "Campfire Haven Session",
             "dm_id": "dm_bram",
         },
@@ -79,10 +74,3 @@ def test_blackbox_campfire_crafting_frontdoor_integration(
     assert combine_res.status_code == 200
     data = combine_res.json()
     assert data["outcome"] == "success" and data["item_name"] == "Radiant Smoke Pellet"
-
-
-def _owned_campaign(client) -> str:
-    """Create a campaign as the calling user, so that the caller can run sessions in it."""
-    res = client.post("/api/v1/campaigns", json={"title": "Owned Campaign"})
-    assert res.status_code == 201, res.text
-    return res.json()["id"]

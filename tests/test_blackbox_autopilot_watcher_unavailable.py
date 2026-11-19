@@ -13,6 +13,7 @@ import pytest
 from game_session.main import app as session_app
 from httpx import ASGITransport, AsyncClient
 
+from tests.helpers.campaign_setup import create_owned_campaign_async
 from tests.helpers.ports import free_port
 from tests.helpers.stand_in_policy import create_character
 from tests.helpers.watcher_double import serve_watcher_double, watcher_stand_in_app
@@ -43,7 +44,7 @@ async def _start_session_with_absent_player(client: AsyncClient, character_id: s
     create_res = await client.post(
         "/api/v1/sessions/create",
         json={
-            "campaign_id": await _owned_campaign(client),
+            "campaign_id": await create_owned_campaign_async(client),
             "title": "Absent Session",
             "dm_id": "dm_alice",
         },
@@ -155,10 +156,3 @@ async def test_auto_pilot_records_the_action_from_the_configured_watcher(
             state = (await client.get(f"/api/v1/sessions/{session_id}")).json()
             assert state["current_turn"] == 2
             assert state["stand_in_actions"][0]["dialogue"] == "Configured Watcher says hello."
-
-
-async def _owned_campaign(client) -> str:
-    """Create a campaign as the calling user, so that the caller can run sessions in it."""
-    res = await client.post("/api/v1/campaigns", json={"title": "Owned Campaign"})
-    assert res.status_code == 201, res.text
-    return res.json()["id"]

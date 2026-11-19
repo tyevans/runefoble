@@ -16,14 +16,13 @@ import os
 from collections.abc import Iterator
 from uuid import uuid4
 
-import httpx
 import pytest
 from fastapi.testclient import TestClient
 from gateway_api.main import app
 from runefoble_auth.bootstrap_schema import bootstrap_schema
 from runefoble_auth.spicedb import SpiceDBClient
 
-from tests.helpers.campaign_setup import create_campaign, invite_and_join
+from tests.helpers.campaign_setup import create_campaign, create_owner_session, invite_and_join
 from tests.helpers.spicedb_factory import shared_spicedb_client
 from tests.helpers.ws_identity import bearer
 
@@ -46,7 +45,7 @@ async def test_mock_spicedb_frontdoor_role_assignment(trusted_ws_issuer, gateway
     user_alice_id = f"user-{uuid4().hex[:6]}"
     user_alice = bearer(user_alice_id, issuer=trusted_ws_issuer)
     camp_id = create_campaign(tc, owner_id)
-    session_id = _owner_session(camp_id, owner)
+    session_id = create_owner_session(os.environ["RUNEFOBLE_GAME_SESSION_URL"], owner, camp_id)
 
     # Not a member -> 403 Forbidden
     res = tc.get(f"/api/v1/sessions/{session_id}", headers=user_alice)
@@ -102,7 +101,7 @@ async def test_live_spicedb_frontdoor_role_assignment_and_checks(
         player_id = "player_talia"
         player = bearer(player_id, issuer=trusted_ws_issuer)
         camp_id = create_campaign(tc, dm_id)
-        session_id = _owner_session(camp_id, dm)
+        session_id = create_owner_session(os.environ["RUNEFOBLE_GAME_SESSION_URL"], dm, camp_id)
 
         # Before membership -> 403 Forbidden
         assert tc.get(f"/api/v1/sessions/{session_id}", headers=player).status_code == 403
@@ -163,7 +162,7 @@ async def test_live_spicedb_relationship_deletion_and_revocation(
         member_id = "user_revoked"
         member = bearer(member_id, issuer=trusted_ws_issuer)
         camp_id = create_campaign(tc, owner_id)
-        session_id = _owner_session(camp_id, owner)
+        session_id = create_owner_session(os.environ["RUNEFOBLE_GAME_SESSION_URL"], owner, camp_id)
 
         # Membership through the invite frontdoor -> 200
         invite_and_join(tc, camp_id, owner_id, member_id, role="player")
@@ -178,16 +177,3 @@ async def test_live_spicedb_relationship_deletion_and_revocation(
             subject_id="user_revoked",
         )
         assert tc.get(f"/api/v1/sessions/{session_id}", headers=member).status_code == 403
-
-
-def _owner_session(campaign_id: str, headers: dict[str, str]) -> str:
-    """Create a game session in a campaign through the owner's public game_session route."""
-    url = os.environ["RUNEFOBLE_GAME_SESSION_URL"]
-    res = httpx.post(
-        f"{url}/api/v1/sessions/create",
-        json={"campaign_id": campaign_id, "title": "Crypt"},
-        headers=headers,
-        timeout=5.0,
-    )
-    assert res.status_code == 200, res.text
-    return res.json()["session_id"]

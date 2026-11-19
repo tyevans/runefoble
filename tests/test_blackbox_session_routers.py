@@ -10,6 +10,7 @@ import pytest
 from fastapi.testclient import TestClient
 from game_session.main import app as session_app
 
+from tests.helpers.campaign_setup import create_owned_campaign
 from tests.helpers.stand_in_policy import create_character
 from tests.helpers.watcher_double import (
     STAND_IN_ACTION_BODY,
@@ -67,7 +68,7 @@ def test_game_session_lifecycle_frontdoor(session_client):
     create_res = session_client.post(
         "/api/v1/sessions/create",
         json={
-            "campaign_id": _owned_campaign(session_client),
+            "campaign_id": create_owned_campaign(session_client),
             "title": "Test Session",
             "dm_id": "dm_alice",
         },
@@ -87,7 +88,7 @@ def test_game_session_turns_frontdoor(session_client, live_character_sheet, monk
     c_res = session_client.post(
         "/api/v1/sessions/create",
         json={
-            "campaign_id": _owned_campaign(session_client),
+            "campaign_id": create_owned_campaign(session_client),
             "title": "Combat Session",
             "dm_id": "dm_alice",
         },
@@ -142,7 +143,7 @@ def test_game_session_presence_frontdoor(session_client):
     c_res = session_client.post(
         "/api/v1/sessions/create",
         json={
-            "campaign_id": _owned_campaign(session_client),
+            "campaign_id": create_owned_campaign(session_client),
             "title": "Presence Session",
             "dm_id": "dm_bob",
         },
@@ -164,7 +165,7 @@ def test_game_session_dice_frontdoor(session_client):
     c_res = session_client.post(
         "/api/v1/sessions/create",
         json={
-            "campaign_id": _owned_campaign(session_client),
+            "campaign_id": create_owned_campaign(session_client),
             "title": "Dice Session",
             "dm_id": "dm_carol",
         },
@@ -184,7 +185,7 @@ def test_game_session_dice_rejects_bad_notation(session_client):
     c_res = session_client.post(
         "/api/v1/sessions/create",
         json={
-            "campaign_id": _owned_campaign(session_client),
+            "campaign_id": create_owned_campaign(session_client),
             "title": "Bad Dice Session",
             "dm_id": "dm_carol",
         },
@@ -197,10 +198,3 @@ def test_game_session_dice_rejects_bad_notation(session_client):
         json={"formula": "1d20abc", "roller_name": "Valeros"},
     )
     assert roll_res.status_code == 422, roll_res.text
-
-
-def _owned_campaign(client) -> str:
-    """Create a campaign as the calling user, so that the caller can run sessions in it."""
-    res = client.post("/api/v1/campaigns", json={"title": "Owned Campaign"})
-    assert res.status_code == 201, res.text
-    return res.json()["id"]

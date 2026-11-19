@@ -23,15 +23,21 @@ from pathlib import Path
 import httpx
 import pytest
 import yaml
-from gateway_mcp.dynamic import DynamicToolDefinition, dynamic_registry, set_event_bus
+from gateway_mcp.dynamic import (
+    DynamicToolDefinition,
+    dynamic_registry,
+    get_event_bus,
+    set_event_bus,
+)
 from gateway_mcp.dynamic.auth import grant_tool_permissions
-from gateway_mcp.identity import set_verifier
+from gateway_mcp.identity import get_verifier, set_verifier
 from gateway_mcp.server import build_http_app
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 
 from tests.helpers.live_services import serve
 from tests.helpers.mcp_http import call_tool_over_http, mcp_session
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.module_state import SeamRestorer, restored_seam
 from tests.helpers.polling import wait_until
 from tests.helpers.process import run_command
 from tests.helpers.ws_identity import SIGNING_ISSUER
@@ -181,12 +187,11 @@ def test_entrypoint_keeps_health_check_public(gateway_process: str):
 @pytest.fixture(scope="module")
 def authenticated_endpoint() -> Iterator[str]:
     """Serve the public MCP ASGI app in-process, trusting the shared signing issuer."""
-    set_verifier(SIGNING_ISSUER.verifier())
-    try:
-        with serve(build_http_app(), lifespan="on") as base_url:
-            yield f"{base_url}/mcp"
-    finally:
-        set_verifier(None)
+    with (
+        restored_seam(get_verifier, set_verifier, SIGNING_ISSUER.verifier(), replace=True),
+        serve(build_http_app(), lifespan="on") as base_url,
+    ):
+        yield f"{base_url}/mcp"
 
 
 def test_bearer_caller_lists_the_static_tools(authenticated_endpoint: str):
@@ -219,11 +224,13 @@ def test_tool_call_without_bearer_is_refused_before_dispatch(authenticated_endpo
     assert response.status_code == 401
 
 
-def test_dynamic_tool_call_over_http_records_the_verified_caller(authenticated_endpoint: str):
+def test_dynamic_tool_call_over_http_records_the_verified_caller(
+    authenticated_endpoint: str, seam_restorer: SeamRestorer
+):
     """A dynamic tool called over MCP reports the token subject, who needs `mcp_tool.execute`."""
     name = "transport_identity_probe"
     bus_client = MockAsyncRedis()
-    set_event_bus(RedisStreamsEventBus(client=bus_client))
+    seam_restorer.replace(get_event_bus, set_event_bus, RedisStreamsEventBus(client=bus_client))
     dynamic_registry.register_tool(
         DynamicToolDefinition(
             name=name,
@@ -251,7 +258,6 @@ def test_dynamic_tool_call_over_http_records_the_verified_caller(authenticated_e
         assert invoked and invoked[-1]["user_id"] == "mallory"
     finally:
         dynamic_registry.deregister_tool(name)
-        set_event_bus(None)
 
 
 def test_entrypoint_refuses_to_start_without_upstream_urls():

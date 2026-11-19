@@ -8,12 +8,7 @@ from __future__ import annotations
 from fastapi.testclient import TestClient
 from game_session.events import STREAM_SESSION, STREAM_STRONGHOLD
 
-
-def _owned_campaign(client: TestClient) -> str:
-    """Create a campaign through the public route. The caller becomes its owner."""
-    created = client.post("/api/v1/campaigns", json={"title": "Campfire Campaign"})
-    assert created.status_code == 201, created.text
-    return created.json()["id"]
+from tests.helpers.campaign_setup import create_owned_campaign
 
 
 def _fund(client: TestClient, campaign_id: str, gold: int, materials: dict[str, int]) -> None:
@@ -37,7 +32,7 @@ def test_campfire_crafting_microfrontend_manifest(session_client: TestClient):
 
 def test_blackbox_stronghold_campsite_progression(session_client: TestClient, mock_bus):
     """Test persistent campsite facility upgrades and team rest boons."""
-    camp_id = _owned_campaign(session_client)
+    camp_id = create_owned_campaign(session_client)
 
     init_res = session_client.get(f"/api/v1/campaigns/{camp_id}/stronghold")
     assert init_res.status_code == 200
@@ -77,7 +72,7 @@ def test_blackbox_stronghold_campsite_progression(session_client: TestClient, mo
 
 def test_blackbox_campfire_rest_interlude_with_boons(session_client: TestClient, mock_bus):
     """Test campfire rest sequence with collaborative storytelling prompts and resting buffs."""
-    camp_id = _owned_campaign(session_client)
+    camp_id = create_owned_campaign(session_client)
 
     create_res = session_client.post(
         "/api/v1/sessions/create",
@@ -125,10 +120,3 @@ def test_blackbox_campfire_rest_interlude_with_boons(session_client: TestClient,
         "runefoble.events.downtime.campfire_rest_completed" in entry[1].get("event_type", "")
         for entry in entries
     )
-
-
-def _owned_campaign(client) -> str:
-    """Create a campaign as the calling user, so that the caller can run sessions in it."""
-    res = client.post("/api/v1/campaigns", json={"title": "Owned Campaign"})
-    assert res.status_code == 201, res.text
-    return res.json()["id"]

@@ -12,22 +12,32 @@ from the_watcher.copilot_state.disambiguations import DisambiguationAggregate
 from the_watcher.copilot_state.pending_actions import PendingActionAggregate
 from the_watcher.copilot_state.whispers import WhisperAggregate
 from the_watcher.dependencies import (
+    get_disambiguation_repo,
+    get_pending_action_repo,
+    get_whisper_repo,
     set_disambiguation_repo,
     set_pending_action_repo,
     set_whisper_repo,
 )
 
+from tests.helpers.module_state import SeamRestorer
 
-def install_fresh_copilot_stores() -> None:
-    """Point every copilot aggregate repository at one new, empty event store."""
+
+def install_fresh_copilot_stores(seam_restorer: SeamRestorer) -> None:
+    """Point every copilot aggregate repository at one new, empty event store. Teardown restores."""
     store = InMemoryEventStore()
-    set_pending_action_repo(create_aggregate_repository(PendingActionAggregate, event_store=store))
-    set_whisper_repo(create_aggregate_repository(WhisperAggregate, event_store=store))
-    set_disambiguation_repo(create_aggregate_repository(DisambiguationAggregate, event_store=store))
-
-
-def reset_copilot_stores() -> None:
-    """Restore the process default repositories."""
-    set_pending_action_repo(None)
-    set_whisper_repo(None)
-    set_disambiguation_repo(None)
+    seam_restorer.replace(
+        get_pending_action_repo,
+        set_pending_action_repo,
+        create_aggregate_repository(PendingActionAggregate, event_store=store),
+    )
+    seam_restorer.replace(
+        get_whisper_repo,
+        set_whisper_repo,
+        create_aggregate_repository(WhisperAggregate, event_store=store),
+    )
+    seam_restorer.replace(
+        get_disambiguation_repo,
+        set_disambiguation_repo,
+        create_aggregate_repository(DisambiguationAggregate, event_store=store),
+    )

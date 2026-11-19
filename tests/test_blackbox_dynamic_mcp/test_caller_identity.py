@@ -10,9 +10,9 @@ import json
 
 import pytest
 from fastapi.testclient import TestClient
-from gateway_mcp.server import mcp
 from runefoble_auth.mock import MockSpiceDBClient
 
+from tests.helpers.mcp_http import listed_tools_sync
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.test_blackbox_dynamic_mcp.conftest import caller_headers
 
@@ -31,11 +31,11 @@ def _payload(name: str = TOOL, **overrides: object) -> dict[str, object]:
 
 
 def test_every_tool_route_refuses_a_call_without_bearer(
-    client: TestClient, anonymous_client: TestClient
+    client: TestClient, anonymous_client: TestClient, mcp_endpoint: str
 ):
     """Each route answers 401 before it looks at the tool, so no tool changes."""
     assert client.post("/mcp/tools/register", json=_payload()).status_code == 200
-    assert mcp._tool_manager.get_tool(TOOL) is not None
+    assert listed_tools_sync(mcp_endpoint).get(TOOL) is not None
 
     assert anonymous_client.get("/mcp/tools").status_code == 401
     assert anonymous_client.get("/mcp/tools/dynamic").status_code == 401
@@ -49,17 +49,17 @@ def test_every_tool_route_refuses_a_call_without_bearer(
         anonymous_client.post(f"/mcp/tools/{TOOL}/execute", json={"arguments": {"charge": 1}})
     ).status_code == 401
 
-    assert mcp._tool_manager.get_tool("anon_tool") is None
+    assert listed_tools_sync(mcp_endpoint).get("anon_tool") is None
     assert client.get(f"/mcp/tools/{TOOL}").status_code == 200
 
 
-def test_x_user_id_header_is_not_an_identity(anonymous_client: TestClient):
+def test_x_user_id_header_is_not_an_identity(anonymous_client: TestClient, mcp_endpoint: str):
     """A bare X-User-Id header no longer authenticates a register call."""
     res = anonymous_client.post(
         "/mcp/tools/register", json=_payload("header_probe"), headers={"X-User-Id": "alex"}
     )
     assert res.status_code == 401
-    assert mcp._tool_manager.get_tool("header_probe") is None
+    assert listed_tools_sync(mcp_endpoint).get("header_probe") is None
 
 
 def test_body_author_is_ignored_and_token_subject_is_recorded(client: TestClient):

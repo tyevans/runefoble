@@ -36,6 +36,7 @@ from starlette.websockets import WebSocketDisconnect
 from tests.helpers.leitmotif_fixtures import (  # noqa: F401 (registers the fixtures)
     leitmotif_session_id_fixture,
 )
+from tests.helpers.module_state import SeamRestorer
 from tests.helpers.spicedb_factory import shared_spicedb_client
 from tests.helpers.ws_identity import bearer
 
@@ -52,15 +53,14 @@ async def _spicedb_unreachable(*_args: object, **_kwargs: object) -> bool:
 
 
 @pytest.fixture(autouse=True)
-def _pin_process_event_store() -> Iterator[None]:
+def _pin_process_event_store(seam_restorer: SeamRestorer) -> Iterator[None]:
     """Pin an in-memory process store for each test, then drop it.
 
     Campaign Lore tests run inside a PostgreSQL environment (`lore_backends`). A store read in
     that environment would cache a PostgreSQL store process-wide and leak into later tests.
     """
-    set_event_store(InMemoryEventStore())
+    seam_restorer.replace(get_event_store, set_event_store, InMemoryEventStore())
     yield
-    set_event_store(None)
 
 
 @pytest.fixture
