@@ -41,7 +41,7 @@ Abrupt audio clipping during conversational barge-in sounds harsh and unnatural,
    - Audio ring-buffer evaluator detecting vocalization onset in under 40ms (< 140 lines).
 2. **Smooth Cosine Crossfade Attenuator (`services/voice_agent/src/voice_agent/dsp/cosine_crossfade.py`)**:
    - 20ms soft-fade filter damping outgoing TTS PCM samples gracefully to silence (< 120 lines).
-3. **CloudEvents Registration (`libs/runefoble_events/src/runefoble_events/voice_barge_in.py`)**:
+3. **CloudEvents Registration (`libs/runefoble_events/src/runefoble_events/voice_barge_in.py` (removed))**:
    - Define `NeuralSpeechBargeInDetectedEvent` and `TTSStreamAttenuatedEvent` (< 70 lines).
 4. **Frontdoor Audio Diagnostic API (`services/voice_agent/src/voice_agent/routers/audio_filters.py`)**:
    - `POST /voice/filters/barge-in/evaluate`: Feed synthetic audio frames to evaluate interruption onset and attenuation timing (< 130 lines).

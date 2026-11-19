@@ -1,7 +1,7 @@
 ---
 id: '0823'
 title: "Spectator Redaction, Camera Direction and the OBS Overlay Move to Their Owners"
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies:
 - TASK-0809
@@ -18,7 +18,7 @@ target_release: 0.9.0
 # TASK-0823: Spectator Redaction, Camera Direction and the OBS Overlay Move to Their Owners
 
 ## Status
-Refined
+Complete
 
 ## Summary
 The gateway holds redaction rules, camera math and overlay HTML, which are domain and presentation logic.

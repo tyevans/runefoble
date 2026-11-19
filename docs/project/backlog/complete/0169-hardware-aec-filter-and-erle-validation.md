@@ -43,7 +43,7 @@ Tabletop players using desktop speakers rather than headsets experience acoustic
    - Adaptive transversal filter computing loudspeaker transfer functions and canceling echo signals (< 150 lines).
 2. **Double-Talk Detector & Residual Echo Suppressor (`services/voice_agent/src/voice_agent/aec/double_talk.py`)**:
    - State machine preventing filter divergence during simultaneous human and AI speech (< 130 lines).
-3. **CloudEvents Registration (`libs/runefoble_events/src/runefoble_events/aec.py`)**:
+3. **CloudEvents Registration (`libs/runefoble_events/src/runefoble_events/aec.py` (removed))**:
    - Define `EchoSuppressionEngagedEvent` and `AECBenchmarkCompletedEvent` (< 70 lines).
 4. **Diagnostic REST Endpoint (`services/voice_agent/src/voice_agent/routers/aec_diagnostics.py`)**:
    - `POST /voice/aec/benchmark`: Feed paired loudspeaker and microphone PCM streams to validate ERLE > 35dB (< 120 lines).

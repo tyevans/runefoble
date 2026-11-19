@@ -40,7 +40,7 @@ Decompose `tests/test_blackbox_cinematic_director/` (342 lines, 68.4% of limit) 
    - Extract test client, mock sessions, camera coordinates, and party state fixtures (< 60 lines).
 2. **OBS Overlay Routes (`tests/test_blackbox_cinematic_director/test_obs_overlay_routes.py`)**:
    - Transparent OBS party vitals HTML canvas rendering, CSS alpha-channel verification, layout customization, and JSON sanitization (< 120 lines).
-3. **Cinematic Camera Math (`tests/test_blackbox_cinematic_director/test_cinematic_camera.py`)**:
+3. **Cinematic Camera Math (`tests/test_blackbox_cinematic_director/test_cinematic_camera.py` (removed))**:
    - Cubic-bezier math evaluation, ease curve interpolation, TurnStarted centering, and TokenMoved destination tracking (< 110 lines).
 4. **Spectator WebSockets & Manifest (`tests/test_blackbox_cinematic_director/test_spectator_websocket.py`)**:
    - WebSocket connection handshake, sanitized initial state delivery, turn/movement camera updates, and microfrontend manifest advertisement (< 120 lines).

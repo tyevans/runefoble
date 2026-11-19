@@ -27,7 +27,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/103
 Complete
 
 ## Summary
-Decompose `tests/test_spectator_view.py` (removed) (330 lines, 66.0% of limit) into two specialized test modules (`tests/test_spectator_events_and_schema.py` and `tests/test_spectator_stream_overlay.py`) to prevent breaching Hard Invariant 6 (File length limit < 500 lines) as live audience interactivity (TASK-0051) and OBS stream overlays (TASK-0056) expand broadcast capabilities.
+Decompose `tests/test_spectator_view.py` (removed) (330 lines, 66.0% of limit) into two specialized test modules (`tests/test_spectator_events_and_schema.py` (removed) and `tests/test_spectator_stream_overlay.py`) to prevent breaching Hard Invariant 6 (File length limit < 500 lines) as live audience interactivity (TASK-0051) and OBS stream overlays (TASK-0056) expand broadcast capabilities.
 
 ## Problem Statement
 `tests/test_spectator_view.py` (removed) currently spans 330 lines and validates multiple facets of the spectator broadcast pipeline:
@@ -52,7 +52,7 @@ As upcoming Milestone 4 broadcast features (Audience Studio interactivity in TAS
   - [`us-0030-obs-transparent-party-vitals-and-multi-track-audio.md`](../../user_stories/accepted/us-0030-obs-transparent-party-vitals-and-multi-track-audio.md)
 
 ## Proposed Decomposition
-1. **Event Registration & Sanitization Unit Suite (`tests/test_spectator_events_and_schema.py`)**:
+1. **Event Registration & Sanitization Unit Suite (`tests/test_spectator_events_and_schema.py` (removed))**:
    - `SpectatorSessionConnected` event registry and CloudEvents 1.0 specification tests.
    - Comprehensive state sanitization logic tests (hidden tokens, private notes, secret encounters, monster stat blocks) (< 160 lines).
 2. **Spectator Stream & Endpoint Blackbox Suite (`tests/test_spectator_stream_overlay.py`)**:

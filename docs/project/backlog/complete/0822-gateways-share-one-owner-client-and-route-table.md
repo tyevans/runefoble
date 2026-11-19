@@ -1,7 +1,7 @@
 ---
 id: '0822'
 title: "Both Gateways Share One Owner Client and the API Gateway Uses a Route Table"
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies:
 - TASK-0807
@@ -16,7 +16,7 @@ target_release: 0.9.0
 # TASK-0822: Both Gateways Share One Owner Client and the API Gateway Uses a Route Table
 
 ## Status
-Refined
+Complete
 
 ## Summary
 gateway_api and gateway_mcp each have a client stack for the same owners, and about 83 pass-through proxy routes repeat the same forward code.

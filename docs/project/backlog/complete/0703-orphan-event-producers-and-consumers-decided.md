@@ -1,7 +1,7 @@
 ---
 id: '0703'
 title: Orphan Event Producers and Consumers Are Decided
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0579
@@ -16,7 +16,7 @@ target_release: 0.9.0
 # TASK-0703: Orphan Event Producers and Consumers Are Decided
 
 ## Status
-Refined. Slice of TASK-0579 (Follow-ups items 1 and 5).
+Complete
 
 ## Summary
 17 event classes have no producer and 38 have no consumer. Each needs a producer, a consumer, or deletion.

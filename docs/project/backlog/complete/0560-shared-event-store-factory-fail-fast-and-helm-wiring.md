@@ -34,7 +34,7 @@ Evidence:
 - `services/asset_forge/src/asset_forge/dependencies.py:30`, `services/soundscape/src/soundscape/dependencies.py:32`, `services/rules_compendium/src/rules_compendium/dependencies.py:20-23`, and `services/campaign_lore/src/campaign_lore/dependencies.py:37-42` have the same pattern.
 - `services/*/src/*/main.py` health checks report `type(get_event_store()).__name__` (for example `services/board_state/src/board_state/main.py:64`), so the report hides the fallback.
 - `docs/reference/platform-services.md:42` documents a "Graceful Fallback" that AGENTS.md Hard Invariant 2 does not allow.
-- `libs/runefoble_platform/src/runefoble_platform/consumer_group.py:14,168` (removed) and `gateway/mcp/src/gateway_mcp/dynamic/events.py:19-22` reach `MockAsyncRedis` from production code (w1-libs F11). This task removes the store-side mock path only. The Redis mock is handled in TASK-0579.
+- `libs/runefoble_platform/src/runefoble_platform/consumer_group.py:14,168` and `gateway/mcp/src/gateway_mcp/dynamic/events.py:19-22` (removed) reach `MockAsyncRedis` from production code (w1-libs F11). This task removes the store-side mock path only. The Redis mock is handled in TASK-0579.
 
 ## Documentation & Architecture Review
 - `docs/how-to/define-event-sourced-aggregates.md` section 6 says staging and production use the PostgreSQL store. The code and Helm do not match this. Fix the how-to with this task.

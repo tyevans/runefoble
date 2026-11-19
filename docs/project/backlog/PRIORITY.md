@@ -338,8 +338,8 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 332. **TASK-0819 (Complete)**: [`0819-aggregate-load-errors-use-the-lib-helpers.md`](complete/0819-aggregate-load-errors-use-the-lib-helpers.md) — Aggregate Load and Not-Found Handling Use the Lib Helpers
 333. **TASK-0820 (Complete)**: [`0820-one-websocket-room-manager.md`](complete/0820-one-websocket-room-manager.md) — One WebSocket Room Manager and One Serve Loop
 334. **TASK-0821 (Complete)**: [`0821-one-event-type-extractor.md`](complete/0821-one-event-type-extractor.md) — Event Type Extraction and Small Helpers Have One Home
-335. **TASK-0822 (Refined)**: [`0822-gateways-share-one-owner-client-and-route-table.md`](refined/0822-gateways-share-one-owner-client-and-route-table.md) — Both Gateways Share One Owner Client and the API Gateway Uses a Route Table
-336. **TASK-0823 (Refined)**: [`0823-spectator-redaction-and-camera-move-to-owners.md`](refined/0823-spectator-redaction-and-camera-move-to-owners.md) — Spectator Redaction, Camera Direction and the OBS Overlay Move to Their Owners
+335. **TASK-0822 (Complete)**: [`0822-gateways-share-one-owner-client-and-route-table.md`](complete/0822-gateways-share-one-owner-client-and-route-table.md) — Both Gateways Share One Owner Client and the API Gateway Uses a Route Table
+336. **TASK-0823 (Complete)**: [`0823-spectator-redaction-and-camera-move-to-owners.md`](complete/0823-spectator-redaction-and-camera-move-to-owners.md) — Spectator Redaction, Camera Direction and the OBS Overlay Move to Their Owners
 337. **TASK-0824 (Complete)**: [`0824-frontend-removes-shims-and-unreachable-code.md`](complete/0824-frontend-removes-shims-and-unreachable-code.md) — The Frontend Removes Forwarding Shims and Unreachable Code
 338. **TASK-0825 (Complete)**: [`0825-ui-http-auth-and-socket-helpers-live-in-runefoble-ui.md`](complete/0825-ui-http-auth-and-socket-helpers-live-in-runefoble-ui.md) — UI HTTP, Auth and Socket Helpers Live in libs/runefoble_ui
 339. **TASK-0826 (Complete)**: [`0826-app-shell-stops-reaching-into-service-components.md`](complete/0826-app-shell-stops-reaching-into-service-components.md) — The App Shell Stops Reaching Into Service Component Internals
@@ -766,7 +766,7 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 760. **TASK-0516 (Proposed)**: [`0516-settlement-town-haven-frontdoor-blackbox-test-suite.md`](proposed/0516-settlement-town-haven-frontdoor-blackbox-test-suite.md) — Settlement Town Haven Frontdoor Blackbox Test Suite
 761. **TASK-0700 (Complete)**: [`0700-local-project-tools-reach-parity-with-spec-ops-or-are-removed.md`](complete/0700-local-project-tools-reach-parity-with-spec-ops-or-are-removed.md) — Local Project Tools Reach Parity With spec-ops or Are Removed
 762. **TASK-0701 (Complete)**: [`0701-event-wire-names-follow-one-rule.md`](complete/0701-event-wire-names-follow-one-rule.md) — Event Wire Names Follow One Identifier Rule
-763. **TASK-0703 (Refined)**: [`0703-orphan-event-producers-and-consumers-decided.md`](refined/0703-orphan-event-producers-and-consumers-decided.md) — Orphan Event Producers and Consumers Are Decided
+763. **TASK-0703 (Complete)**: [`0703-orphan-event-producers-and-consumers-decided.md`](complete/0703-orphan-event-producers-and-consumers-decided.md) — Orphan Event Producers and Consumers Are Decided
 764. **TASK-0704 (Refined)**: [`0704-forged-battlemap-reaches-board-state.md`](refined/0704-forged-battlemap-reaches-board-state.md) — Forged Battlemap Reaches Board State
 765. **TASK-0705 (Complete)**: [`0705-compendium-index-events-emitted-or-removed.md`](complete/0705-compendium-index-events-emitted-or-removed.md) — Compendium Index Events Are Emitted or Removed
 766. **TASK-0706 (Refined)**: [`0706-app-shell-session-id-and-chronicle-journey.md`](refined/0706-app-shell-session-id-and-chronicle-journey.md) — App Shell Receives the Session Id and the Chronicle Journey Runs End to End

@@ -33,7 +33,7 @@ Every deployed stream is written and none is read by a running process. Four con
 - `services/soundscape/src/soundscape/event_handlers.py:155-166` subscribes to the in-process bus only. No Redis consumer exists in soundscape (w2-soundscape F1). This is the consumer that `TASK-0438` depends on. `0438` is refined but does not add it.
 - `services/inference_worker/src/inference_worker/redis_consumer.py:91-127` (removed) consumes `runefoble.inference.requests`. No producer exists. Failed messages are not acknowledged or dead-lettered (w2-inference-worker F7). `redis_enabled` defaults to `False` (`config.py:58`).
 - `services/campaign_analytics/src/campaign_analytics/worker.py` (`AnalyticsEventWorker`) and `client.py` have no caller (w2-campaign-analytics F12).
-- `gateway/mcp/src/gateway_mcp/dynamic/events.py:14-25` falls back to `RedisStreamsEventBus(client=MockAsyncRedis())`, and the gateway never sets the bus. Dynamic tool events never reach `runefoble:events:system` (w1-gateway-mcp F4). `libs/runefoble_platform/src/runefoble_platform/consumer_group.py:14,168` (removed) exports `MockAsyncRedis` from production code (w1-libs F11).
+- `gateway/mcp/src/gateway_mcp/dynamic/events.py:14-25` (removed) falls back to `RedisStreamsEventBus(client=MockAsyncRedis())`, and the gateway never sets the bus. Dynamic tool events never reach `runefoble:events:system` (w1-gateway-mcp F4). `libs/runefoble_platform/src/runefoble_platform/consumer_group.py:14,168` exports `MockAsyncRedis` from production code (w1-libs F11).
 
 ## Documentation & Architecture Review
 - `docs/reference/redis-streams-event-bus.md` says projection workers run in production. That is false today. Correct it with this task.

@@ -25,7 +25,7 @@ Some publish sites in voice_agent and gateway_mcp still log a failure and contin
 ## Problem Statement
 - `services/voice_agent/src/voice_agent/dependencies.py:60-78`: `publish_voice_event` and the conditioning loop log warnings and continue. No count.
 - `services/voice_agent/src/voice_agent/coordinator.py:159-164`, `routers/duplex.py:50`, `routers/audio_filters.py:96`, `stt.py:159` and `:231`: same pattern (from report 0564).
-- `gateway/mcp/src/gateway_mcp/dynamic/events.py:43-53`: dropped system events are logged and traced. They are not counted on `/healthz`.
+- `gateway/mcp/src/gateway_mcp/dynamic/events.py:43-53` (removed): dropped system events are logged and traced. They are not counted on `/healthz`.
 - `services/voice_agent/src/voice_agent/routers/transcribe.py`: an engine failure does not publish `VoiceTranscriptionFailed`. The stream path in `stt.py` does.
 - Report 0578: `gateway_mcp` `server.py` `main()` configures no event bus when run standalone, so dynamic tool events are dropped.
 - `/healthz` counters exist in the_watcher, game_session, board_state, asset_forge, soundscape, character_sheet and gateway. They do not exist in campaign_lore, campaign_analytics, rules_compendium, voice_agent or inference_worker.

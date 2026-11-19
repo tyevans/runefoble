@@ -46,7 +46,7 @@ Adding or updating community-authored MCP tools currently requires restarting th
    - Thread-safe registry mapping tool names to callable async functions with JSON Schema validation (< 140 lines).
 2. **SpiceDB Tool Execution Guard (`gateway/mcp/src/gateway_mcp/dynamic/auth.py`)**:
    - Permission verification ensuring only authorized users/agents can register or invoke sensitive tools (< 110 lines).
-3. **CloudEvents Registration (`libs/runefoble_events/src/runefoble_events/mcp_tools.py`)**:
+3. **CloudEvents Registration (`libs/runefoble_events/src/runefoble_events/mcp_tools.py` (removed))**:
    - Define `DynamicToolRegisteredEvent`, `DynamicToolUnregisteredEvent`, and `DynamicToolInvokedEvent` (< 80 lines).
 4. **Tool Management REST Router (`gateway/mcp/src/gateway_mcp/routers/tools_registry.py`)**:
    - `POST /mcp/tools/register`: Register a dynamic tool definition at runtime.

@@ -24,7 +24,7 @@ Complete
 Two fake behaviours in the dynamic tool path. First, dynamic tool events go to an in-memory mock Redis bus in production, and failures are dropped silently. Second, a dynamic tool with no handler returns a fixed success echo. This task injects the real Redis Streams bus at gateway startup, logs dropped events, and rejects tool definitions without a handler or proxy target.
 
 ## Problem Statement
-- `gateway/mcp/src/gateway_mcp/dynamic/events.py:14-25`: `get_event_bus` falls back to `RedisStreamsEventBus(client=MockAsyncRedis())` when no bus is set.
+- `gateway/mcp/src/gateway_mcp/dynamic/events.py:14-25` (removed): `get_event_bus` falls back to `RedisStreamsEventBus(client=MockAsyncRedis())` when no bus is set.
 - `gateway/api/src/gateway_api/main.py` sets only the platform bus, not the gateway MCP bus.
 - `events.py:36-40`: `safe_dispatch_event` drops the event on `RuntimeError` without a log.
 - Result: `DynamicToolRegisteredEvent`, `DynamicToolUnregisteredEvent` and `DynamicToolInvokedEvent` never reach `runefoble:events:system` in deployment.
@@ -44,7 +44,7 @@ Source: `.audit/reports/w1-gateway-mcp.md` F4 and F12.
 
 ## Detailed Specification & Implementation Plan
 1. Gateway startup (`gateway/api/src/gateway_api/main.py`) builds the Redis Streams bus from platform settings and calls the gateway MCP `set_event_bus`.
-2. Remove the `MockAsyncRedis` fallback from `dynamic/events.py`. If no bus is set, raise at startup.
+2. Remove the `MockAsyncRedis` fallback from `dynamic/events.py` (removed). If no bus is set, raise at startup.
 3. Replace the silent drop with a logged error and an OpenTelemetry span event.
 4. At registration, reject definitions with empty `handler_code` and no proxy URL (HTTP 422 on the REST route).
 5. Update the fastmcp-gateway reference and the event schema if they list the mock behaviour.

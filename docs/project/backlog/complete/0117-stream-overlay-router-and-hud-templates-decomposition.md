@@ -53,7 +53,7 @@ As upcoming enhancements introduce multi-track audio meters and camera framing c
 ## Detailed Specification & Implementation Plan
 1. **Overlay Models (`gateway/api/src/gateway_api/overlay_models.py`)**:
    - Pydantic models for party vitals, camera parameters, and roll animations (< 80 lines).
-2. **Overlay HUD Templates (`gateway/api/src/gateway_api/overlay_templates.py`)**:
+2. **Overlay HUD Templates (`gateway/api/src/gateway_api/overlay_templates.py` (removed))**:
    - Clean HTML template generation function `render_overlay_html(session_id, transparent, theme)` encapsulating HTML markup, CSS styling, and client WebSocket synchronization scripts (< 180 lines).
 3. **Overlay Router (`gateway/api/src/gateway_api/routers/overlay.py`)**:
    - APIRouter handling HTTP template serving and WebSocket broadcast lifecycle, delegating rendering to `overlay_templates.py` (< 150 lines).

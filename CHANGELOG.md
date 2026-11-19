@@ -38,6 +38,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Gateway WebSocket routes admit a connection only with a verified `runefoble.bearer.<jwt>` subprotocol, checked before accept. Refused handshakes close with 1008. Removed the `?user_id=`, `?token=`, `x-user-id`, and `guest_user` identity paths on WebSocket and voice/companion signaling routes. (TASK-0522)
 
 ### Removed
+- The gateway OBS overlay HTML, camera math, redaction rules and duplicate spectator and overlay paths. (TASK-0823)
+- 29 event classes that no service read, and their publish calls, including the `WatcherAction*` events and `SpectatorSessionConnected`. (TASK-0703)
 - The Watcher `stand_in_ai.py` and `autonomous_dm.py` facades and parser aliases; import `AutonomousDMEngine` from `the_watcher.autonomous_dm_engine`. (TASK-0490)
 - The five WebSocket group managers. (TASK-0820)
 - Duplicate voice routes `POST /api/v1/voice/tts` and the unprefixed `/voice/*` paths. (TASK-0494)
@@ -76,6 +78,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Campaign analytics worker `process_event` alias, tracking property wrappers, and package root re-exports. Callers use `handle_event`. (TASK-0500)
 
 ### Added
+- App Shell route `#/overlay/party-vitals/:sessionId` for the OBS browser source (`position`, `easing`, `duration`). (TASK-0823)
+- Local Helm values file `deployments/helm/runefoble/values.local.yaml` (git-ignored; see `values.local.example.yaml`) for model endpoints on your network, and the `inferenceWorker.openaiCompatibleModel` value.
 - `POST /api/v1/boards/{session_id}/ghost-previews` stages a proposed move; only the player's `confirm_move` commits it. (TASK-0814)
 - `runefoble_auth.factory.set_spicedb_client` test seam; every process reads one SpiceDB client from the factory. (TASK-0818)
 - `@runefoble/ui-core` HTTP, bearer and WebSocket URL helpers (`requestJson`, `postJson`, `HttpError`, `wsUrl`). (TASK-0825)
@@ -148,6 +152,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
 
 ### Changed
+- Gateway pass-through routes are rows in one proxy table, and owner paths come from one shared owner map; the OpenAPI document is unchanged. A `.` or `..` path value now returns 404. (TASK-0822)
+- Spectator and overlay data come from the owning services: board_state removes monsters and stores the camera target (`CameraFocused`), game_session gives status, round and public chronicle. (TASK-0823)
+- Leitmotif triggers for critical hits and 0 HP use `DiceRolled` (`is_crit`) and `CharacterHealthChanged`. (TASK-0703)
 - Tests create the board DM through `POST /api/v1/campaigns` and check MCP tools through public `tools/list` and `tools/call`; no test reads FastMCP `_tool_manager` or writes `_coordinator`. (TASK-0830)
 - Every service checks SpiceDB through `runefoble_auth.permissions` (`check_subject`, `require_subject`, and the `require_permission` route dependency); no service calls `check_permission` directly. (TASK-0817)
 - Aggregate loads and saves use `load_or_404`, `save_or_conflict` and `LazyRepository`; 404 and 409 answers are unchanged. (TASK-0819)
