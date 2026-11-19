@@ -13,14 +13,23 @@ from typing import Any
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from runefoble_auth.authz_http import install_authz_error_handlers
+from runefoble_auth.readiness import spicedb_probe
 from runefoble_platform.aggregate_loading import register_store_unavailable_handlers
 from runefoble_platform.engine_ports import EngineUnavailableError, engine_unavailable_handler
 from runefoble_platform.event_publish import event_publish_failures
 from runefoble_platform.event_sourcing import get_event_store
+from runefoble_platform.readiness import (
+    ReadinessGate,
+    add_readiness_route,
+    event_store_probe,
+    redis_probe,
+    set_readiness_gate,
+    silo_probe,
+)
 from runefoble_platform.storage import get_storage_service
 from runefoble_platform.ui_manifest import ui_manifest_router
 
-from asset_forge.dependencies import event_bus_provider, get_wardrobe_generator
+from asset_forge.dependencies import event_bus_provider, get_event_bus, get_wardrobe_generator
 from asset_forge.map_generation_engine import get_map_generator
 from asset_forge.routers.assets import router as assets_router
 from asset_forge.routers.battlemap import router as battlemap_router
@@ -37,6 +46,13 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     get_wardrobe_generator()
     # A deployed service without the Silo keys refuses to start (TASK-0926).
     get_storage_service()
+    readiness = {
+        "event_store": event_store_probe(),
+        "spicedb": spicedb_probe(),
+        "redis": redis_probe(get_event_bus),
+        "silo": silo_probe(),
+    }
+    set_readiness_gate(app, ReadinessGate(readiness))
     async with event_bus_provider.lifespan(app):
         yield
 
@@ -90,6 +106,9 @@ def health_check() -> dict[str, Any]:
         "service": "asset_forge",
         "event_publish_failures": event_publish_failures(),
     }
+
+
+add_readiness_route(app, "asset_forge")
 
 
 def main() -> None:

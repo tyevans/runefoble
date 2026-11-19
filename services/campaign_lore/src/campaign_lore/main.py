@@ -15,6 +15,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from runefoble_auth.authz_http import install_authz_error_handlers
+from runefoble_auth.readiness import spicedb_probe
 from runefoble_platform.aggregate_loading import register_store_unavailable_handlers
 from runefoble_platform.config import (
     EmbeddingEndpointSettings,
@@ -24,10 +25,17 @@ from runefoble_platform.config import (
 from runefoble_platform.errors import ServiceUnavailableError
 from runefoble_platform.event_publish import event_publish_failures, install_publish_failure_handler
 from runefoble_platform.event_sourcing import PostgreSQLEventStore, get_event_store
+from runefoble_platform.readiness import (
+    ReadinessGate,
+    add_readiness_route,
+    event_store_probe,
+    redis_probe,
+    set_readiness_gate,
+)
 from runefoble_platform.ui_manifest import ui_manifest_router
 
 from campaign_lore.codex import CodexCrossReferencer
-from campaign_lore.dependencies import event_bus_provider
+from campaign_lore.dependencies import event_bus_provider, get_event_bus
 from campaign_lore.projection import rebuild_lore_projection
 from campaign_lore.retrieval_factory import build_retrieval_engine
 from campaign_lore.routers.aliases import router as aliases_router
@@ -49,6 +57,12 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     Start-up fails if the configured event store, embedding endpoint, or pgvector store
     is not available. The service never serves from an empty projection or a fallback.
     """
+    readiness = {
+        "event_store": event_store_probe(),
+        "spicedb": spicedb_probe(),
+        "redis": redis_probe(get_event_bus),
+    }
+    set_readiness_gate(app, ReadinessGate(readiness))
     store = get_event_store()
     if PlatformSettings().event_store_backend == "postgresql" and not isinstance(
         store, PostgreSQLEventStore
@@ -129,6 +143,8 @@ def _register_routes(app: FastAPI) -> None:
             "service": "campaign_lore",
             "event_publish_failures": event_publish_failures(),
         }
+
+    add_readiness_route(app, "campaign_lore")
 
 
 # Build the event store now. A deployed service without a reachable store refuses to start (TASK-0707).

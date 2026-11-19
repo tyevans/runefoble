@@ -24,10 +24,18 @@ from character_sheet.router import router
 from character_sheet.wardrobe_router import router as wardrobe_router
 from fastapi import FastAPI, Request
 from runefoble_auth.authz_http import install_authz_error_handlers
+from runefoble_auth.readiness import spicedb_probe
 from runefoble_platform.aggregate_loading import register_store_unavailable_handlers
 from runefoble_platform.domain_errors_http import install_domain_error_handlers
 from runefoble_platform.event_publish import event_publish_failures
 from runefoble_platform.event_sourcing import event_store_kind, get_event_store
+from runefoble_platform.readiness import (
+    ReadinessGate,
+    add_readiness_route,
+    event_store_probe,
+    redis_probe,
+    set_readiness_gate,
+)
 from runefoble_platform.stream_consumer import consumer_statuses
 from runefoble_platform.ui_manifest import ui_manifest_router
 
@@ -38,6 +46,12 @@ get_event_store()
 @contextlib.asynccontextmanager
 async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Connect the Redis bus, start the audience status consumer, and stop both at shutdown."""
+    readiness = {
+        "event_store": event_store_probe(),
+        "spicedb": spicedb_probe(),
+        "redis": redis_probe(get_event_bus),
+    }
+    set_readiness_gate(app, ReadinessGate(readiness))
     bus = await event_bus_provider.connect()
     consumers = await start_audience_status_consumers(bus)
     app.state.consumers = {"character_sheet": consumers}
@@ -79,6 +93,9 @@ async def health_check(request: Request):
         "event_publish_failures": event_publish_failures(),
         "consumers": consumer_statuses(getattr(request.app.state, "consumers", {})),
     }
+
+
+add_readiness_route(app, "character_sheet")
 
 
 def main():

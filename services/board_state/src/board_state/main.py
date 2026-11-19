@@ -9,7 +9,7 @@ import contextlib
 from collections.abc import AsyncIterator
 from pathlib import Path
 
-from board_state.dependencies import event_bus_provider
+from board_state.dependencies import event_bus_provider, get_event_bus
 from board_state.forged_battlemap import start_board_consumers
 from board_state.routers import (
     actions_router,
@@ -28,6 +28,7 @@ from board_state.routers import (
 )
 from fastapi import FastAPI, Request
 from runefoble_auth.authz_http import install_authz_error_handlers
+from runefoble_auth.readiness import spicedb_probe
 from runefoble_platform.aggregate_loading import register_store_unavailable_handlers
 from runefoble_platform.domain_errors_http import install_domain_error_handlers
 from runefoble_platform.event_publish import (
@@ -35,6 +36,13 @@ from runefoble_platform.event_publish import (
     install_publish_failure_handler,
 )
 from runefoble_platform.event_sourcing import event_store_kind, get_event_store
+from runefoble_platform.readiness import (
+    ReadinessGate,
+    add_readiness_route,
+    event_store_probe,
+    redis_probe,
+    set_readiness_gate,
+)
 from runefoble_platform.storage import get_storage_service
 from runefoble_platform.stream_consumer import consumer_statuses
 from runefoble_platform.ui_manifest import ui_manifest_router
@@ -45,6 +53,13 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Open the Redis Streams bus and start the forged battlemap consumer."""
     # A deployed service without the Silo keys refuses to start (TASK-0926).
     get_storage_service()
+    # Silo serves only the UVTT import, so a Silo that is not up does not hold the board back.
+    readiness = {
+        "event_store": event_store_probe(),
+        "spicedb": spicedb_probe(),
+        "redis": redis_probe(get_event_bus),
+    }
+    set_readiness_gate(app, ReadinessGate(readiness))
     bus = await event_bus_provider.connect()
     consumers = await start_board_consumers(bus)
     app.state.consumers = {"board_state": consumers}
@@ -100,6 +115,9 @@ async def health_check(request: Request):
         "event_publish_failures": event_publish_failures(),
         "event_store": event_store_kind(),
     }
+
+
+add_readiness_route(app, "board_state")
 
 
 def main():

@@ -25,7 +25,7 @@ from soundscape.main import app as soundscape_app
 from tests.helpers.signing_test_issuer import SigningTestIssuer
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
-PUBLIC_PATHS = {"/healthz", "/ui/manifest", "/openapi.json"}
+PUBLIC_PATHS = {"/healthz", "/readyz", "/ui/manifest", "/openapi.json"}
 PATH_PARAM_VALUE = "00000000-0000-4000-8000-000000000001"
 SERVICE_APPS = {
     "asset_forge": asset_forge_app,

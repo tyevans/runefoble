@@ -52,7 +52,7 @@ When running the local development environment via `make dev`, Vite proxies requ
 
 The table below lists owner service routes. The gateway mounts its own public routes. For each gateway route, the owner and the mode (`proxy`, `relay`, or `local`) are listed in [Gateway route ownership](gateway-route-ownership.md).
 
-Campaign Lore routes require a verified bearer token, except `/healthz`, `/openapi.json`, and `/ui/manifest`. The service never reads the caller from a body field or an identity header (TASK-0531).
+Campaign Lore routes require a verified bearer token, except `/healthz`, `/readyz`, `/openapi.json`, and `/ui/manifest`. The service never reads the caller from a body field or an identity header (TASK-0531).
 
 | Service | Method | Route | Description |
 |---|---|---|---|
@@ -440,7 +440,23 @@ Campaign Lore routes require a verified bearer token, except `/healthz`, `/opena
 | `inference-worker` | POST | `/inference/v1/stand-in-action` | Generates a stand-in action for an absent player's character (`StandInActionResponse`) |
 
 
+## Service Readiness Route (`GET /readyz`)
 
+These services serve `GET /readyz` as the readiness probe of the pod (Helm `readinessPath` default). The route is public. It answers `200` with `status: ready` only after each dependency in the table answered one probe call. Until then it answers `503` with `status: not_ready` and `pending` (dependency name to error), and logs each failed probe. A dependency that answered is not probed again. `/healthz` stays the cheap liveness check. See [Add a readiness check](../how-to/add-a-readiness-check.md).
+
+| Service | Dependencies behind `/readyz` |
+|---|---|
+| `gateway-api` | SpiceDB, Redis. The owning services are not probed (TASK-0930). |
+| `game-session` | Event store, SpiceDB, Redis (TASK-0929). |
+| `the-watcher` | Event store, SpiceDB, Redis (TASK-0931). |
+| `board-state` | Event store, SpiceDB, Redis. Silo is not probed: only the UVTT import uses it (TASK-0931). |
+| `character-sheet` | Event store, SpiceDB, Redis (TASK-0931). |
+| `campaign-lore` | Event store, SpiceDB, Redis. The embedding endpoint and pgvector are checked at start-up (TASK-0931). |
+| `asset-forge` | Event store, SpiceDB, Redis, and the Silo asset bucket (one signed `HEAD`, `200` only) (TASK-0931). |
+| `soundscape` | Event store, SpiceDB, Redis (TASK-0931). |
+| `audience-studio` | Redis, PostgreSQL (see the `audience-studio` rows). |
+
+`voice-agent`, `rules-compendium`, `campaign-analytics`, `inference-worker`, and `gateway-mcp` still use `/healthz` as the readiness probe.
 
 ## Gateway Health Route (`GET /healthz`)
 
@@ -654,7 +670,7 @@ A storage outage never answers `400` or `500`. A `ValueError` is not a refused c
 
 `asset-forge`, `soundscape`, and `character-sheet` verify the Zitadel bearer token on every route. A request without a valid `Authorization: Bearer <token>` header returns `401`. The `X-User-Id` header is ignored. The creator, owner, or caller is the token `sub`.
 
-Public routes: `/healthz`, `/ui/manifest`, and `/openapi.json`.
+Public routes: `/healthz`, `/readyz`, `/ui/manifest`, and `/openapi.json`.
 
 The shared settings are `RUNEFOBLE_ZITADEL_ISSUER`, `RUNEFOBLE_ZITADEL_AUDIENCE`, and `RUNEFOBLE_ZITADEL_INTERNAL_URL`. The Helm chart sets them for each service. The audience comes from the Secret `runefoble-zitadel-client`.
 

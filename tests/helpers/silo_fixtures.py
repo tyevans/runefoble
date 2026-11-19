@@ -39,7 +39,7 @@ class FakeSilo:
     """In-process stand-in for the Silo HTTP API.
 
     It sits at the HTTP boundary only. The platform SiloStorageService sends real
-    PUT, GET and DELETE requests through this transport. Tests can simulate an
+    PUT, GET, DELETE and bucket HEAD requests through this transport. Tests can simulate an
     outage (connection refused) or a fixed error status.
 
     Like the real Silo, it refuses a request without an AWS Signature Version 4
@@ -50,6 +50,7 @@ class FakeSilo:
         self.objects: dict[str, tuple[bytes, str]] = {}
         self.outage: bool = False
         self.forced_status: int | None = None
+        self.buckets: set[str] = {"runefoble-assets"}
 
     def transport(self) -> httpx.MockTransport:
         return httpx.MockTransport(self._handle)
@@ -63,6 +64,8 @@ class FakeSilo:
             return httpx.Response(self.forced_status, request=request)
 
         key = request.url.path.lstrip("/")
+        if request.method == "HEAD":
+            return httpx.Response(200 if key.rstrip("/") in self.buckets else 404, request=request)
         if request.method == "PUT":
             content_type = request.headers.get("Content-Type", "application/octet-stream")
             self.objects[key] = (request.content, content_type)

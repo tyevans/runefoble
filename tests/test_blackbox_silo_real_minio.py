@@ -65,3 +65,21 @@ def test_wrong_secret_key_raises_a_typed_storage_error(minio: MinioServer) -> No
     assert caught.value.object_key == "maps/refused.png"
     assert "403" in caught.value.message
     assert "not-the-silo-secret" not in caught.value.message
+
+
+def test_bucket_check_passes_for_the_asset_bucket(minio: MinioServer) -> None:
+    _client(minio).check_bucket()
+
+
+def test_bucket_check_fails_for_a_missing_bucket(minio: MinioServer) -> None:
+    with pytest.raises(AssetStorageError) as caught:
+        _client(minio).check_bucket("no-such-bucket")
+
+    assert "404" in caught.value.message
+
+
+def test_bucket_check_fails_for_a_wrong_secret_key(minio: MinioServer) -> None:
+    with pytest.raises(AssetStorageError) as caught:
+        _client(minio, secret_key="not-the-silo-secret").check_bucket()
+
+    assert "403" in caught.value.message

@@ -231,6 +231,21 @@ class SiloStorageService:
         content_type = resp.headers.get("Content-Type", "application/octet-stream")
         return resp.content, content_type
 
+    def check_bucket(self, bucket: str | None = None) -> None:
+        """Send one signed HEAD for the bucket. Raise AssetStorageError unless Silo answers 200.
+
+        The readiness probe uses it. A missing bucket (404) or a refused signature (403)
+        is a failure, because no upload can succeed then.
+        """
+        name = bucket or self.default_bucket
+        resp = self._request("HEAD", name, "")
+        if resp.status_code != 200:
+            raise AssetStorageError(
+                f"Silo HEAD for bucket '{name}' returned status {resp.status_code}.",
+                bucket=name,
+                object_key="",
+            )
+
     def delete_asset(self, bucket: str, object_key: str) -> None:
         """Delete an object from Silo. Missing objects raise AssetNotFoundError."""
         resp = self._request("DELETE", bucket, object_key)

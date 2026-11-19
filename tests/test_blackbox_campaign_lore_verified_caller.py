@@ -22,6 +22,7 @@ from tests.helpers.ws_identity import bearer
 
 PUBLIC_PATHS = {
     "/healthz",
+    "/readyz",
     "/openapi.json",
     "/ui/manifest",
     "/docs",

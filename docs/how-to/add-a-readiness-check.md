@@ -21,10 +21,15 @@ Kubernetes sends traffic to a pod when its readiness probe passes. A pod that is
 | `event_store_probe()` | `runefoble_platform.readiness` | `event_exists` on `get_event_store()`. The first call opens the pool and runs the schema check. |
 | `redis_probe(get_bus)` | `runefoble_platform.readiness` | `PING` on the bus that `get_bus()` returns. |
 | `spicedb_probe()` | `runefoble_auth.readiness` | `read_schema` on `get_spicedb_client()`. The first call opens the gRPC channel. |
+| `silo_probe()` | `runefoble_platform.readiness` | One signed `HEAD` on the default asset bucket through `get_storage_service().check_bucket()`. Only `200` passes. A missing bucket (`404`) or a refused signature (`403`) fails. |
 
 Each check reads its client when it runs, not at import time. Then a test that replaces a client through its public seam also replaces the client that the check uses.
 
-For a dependency that has no shared check (for example Silo or an owning service), write an `async def` with no arguments that makes one cheap call and raises on failure. Do not add the owning services of a gateway: one owner that is down must not take the gateway out of service.
+For a dependency that has no shared check (for example an owning service), write an `async def` with no arguments that makes one cheap call and raises on failure. Do not add the owning services of a gateway: one owner that is down must not take the gateway out of service.
+
+Register a dependency only when the main work of the service needs it. For example, `board_state` uses Silo only for the UVTT import, so its gate does not probe Silo. A Silo that is not up must not hold the whole board out of service.
+
+The Silo check of `asset_forge` needs the asset bucket. The Silo bucket Job (`silo-buckets-job.yaml`) is a Helm `post-install` and `post-upgrade` hook. Do not use `helm install --wait` on a new cluster: Helm then waits for `asset-forge` to be ready before it runs the Job that creates the bucket.
 
 ## 1. Add the route
 
@@ -37,7 +42,7 @@ app.add_api_route("/healthz", health_check, methods=["GET"])
 add_readiness_route(app, "game_session")
 ```
 
-The route is public, as `/healthz` is. `tests/test_blackbox_service_identity.py` lists `/readyz` as a public path.
+The route is public, as `/healthz` is. Add `/readyz` to the public paths of each test that calls every OpenAPI route without a bearer (for example `tests/test_blackbox_service_identity.py` and `tests/test_blackbox_service_bearer_verification.py`).
 
 ## 2. Set the gate in the lifespan
 
@@ -65,7 +70,7 @@ async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
     ...
 ```
 
-The reference implementations are `services/game_session/src/game_session/main.py` (event store, SpiceDB, Redis) and `gateway/api/src/gateway_api/routers/health.py` (SpiceDB, Redis).
+The reference implementations are `services/game_session/src/game_session/main.py` (event store, SpiceDB, Redis), `services/asset_forge/src/asset_forge/main.py` (event store, SpiceDB, Redis, Silo) and `gateway/api/src/gateway_api/routers/health.py` (SpiceDB, Redis). [Ports and endpoints](../reference/ports-and-endpoints.md) lists the dependencies of each gated service.
 
 ## 3. Use the default Helm probe
 
@@ -88,7 +93,7 @@ Test the gate with a dependency that is not up yet. `tests/helpers/tcp_relay.py`
 3. If the service has a write route that needs the dependency, call it. Expect `503` and a log line that names the failure.
 4. Call `relay.come_up()`. Poll `GET /readyz` until it answers `200`.
 
-The reference tests are `tests/test_blackbox_game_session_readiness.py` and `tests/test_blackbox_gateway_readiness.py`.
+The reference tests are `tests/test_blackbox_game_session_readiness.py`, `tests/test_blackbox_gateway_readiness.py` and `tests/test_blackbox_service_readiness.py`. The last one runs one set of tests over each service in its `SERVICES` table. Add a new gated service to that table. For Silo, use the `silo_double` fixture: set `outage` or clear `buckets` instead of a TCP relay.
 
 ## Related
 

@@ -307,7 +307,6 @@ services:
     image: runefoble/the-watcher:0.1.0
     replicas: 1
     port: 8001
-    readinessPath: /healthz  # No /readyz yet (TASK-0930 follow-up).
     urlEnv: RUNEFOBLE_WATCHER_URL
     consumers: [game-session, voice-agent, gateway-api, gateway-mcp]
     serviceCredential: true
@@ -320,7 +319,6 @@ services:
     image: runefoble/board-state:0.1.0
     replicas: 1
     port: 8002
-    readinessPath: /healthz  # No /readyz yet (TASK-0930 follow-up).
     urlEnv: RUNEFOBLE_BOARD_STATE_URL
     consumers: [gateway-api, gateway-mcp]
     serviceCredential: true
@@ -331,7 +329,6 @@ services:
     image: runefoble/character-sheet:0.1.0
     replicas: 1
     port: 8003
-    readinessPath: /healthz  # No /readyz yet (TASK-0930 follow-up).
     urlEnv: RUNEFOBLE_CHARACTER_SHEET_URL
     consumers: [game-session, gateway-api, gateway-mcp]
     serviceCredential: true
@@ -376,7 +373,6 @@ services:
     image: runefoble/campaign-lore:0.1.0
     replicas: 1
     port: 8006
-    readinessPath: /healthz  # No /readyz yet (TASK-0930 follow-up).
     urlEnv: RUNEFOBLE_CAMPAIGN_LORE_URL
     consumers: [gateway-api]
     serviceCredential: true
@@ -404,7 +400,8 @@ services:
     image: runefoble/asset-forge:0.1.0
     replicas: 1
     port: 8008
-    readinessPath: /healthz  # No /readyz yet (TASK-0930 follow-up).
+    # /readyz (the default) waits for the event store, SpiceDB, Redis and the Silo asset
+    # bucket (TASK-0931). The Silo bucket Job creates the bucket after install.
     urlEnv: RUNEFOBLE_ASSET_FORGE_URL
     consumers: [gateway-api]
     siloCredentials: true
@@ -419,7 +416,6 @@ services:
     image: runefoble/soundscape:0.1.0
     replicas: 1
     port: 8009
-    readinessPath: /healthz  # No /readyz yet (TASK-0930 follow-up).
     urlEnv: RUNEFOBLE_SOUNDSCAPE_URL
     consumers: [gateway-api]
     siloCredentials: true
