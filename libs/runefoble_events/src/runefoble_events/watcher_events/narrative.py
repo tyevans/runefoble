@@ -77,10 +77,26 @@ class SceneAtmosphereSet(BaseRunefobleEvent):
     ambient_audio_prompt: str
 
 
+@register_event("runefoble.events.watcher.narrative_dispatched")
+class WatcherNarrativeDispatched(BaseRunefobleEvent):
+    """The DM sent an audience narration to the table (TASK-0838). The table and overlay show it."""
+
+    event_type: str = "runefoble.events.watcher.narrative_dispatched"
+
+    aggregate_type: str = "GameSession"
+    aggregate_id: UUID = Field(default_factory=uuid4)
+    session_id: str
+    campaign_id: str
+    whisper_id: str
+    text: str
+    source_proposal_id: str
+
+
 __all__ = [
     "AbsenteeRecapGenerated",
     "PlayerSpokeEvent",
     "SceneAtmosphereSet",
     "SpeechIntentParsed",
     "StandInActionDecided",
+    "WatcherNarrativeDispatched",
 ]

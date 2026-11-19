@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from runefoble_auth.authz_http import install_authz_error_handlers
 from runefoble_platform.aggregate_loading import register_store_unavailable_handlers
 from runefoble_platform.engine_ports import EngineUnavailableError, engine_unavailable_handler
@@ -15,6 +15,8 @@ from runefoble_platform.event_publish import (
 )
 from runefoble_platform.event_sourcing import get_event_store
 from runefoble_platform.stand_in_action import StandInAction
+from runefoble_platform.stream_consumer import consumer_statuses
+from the_watcher.audience_narration import CONSUMER_NAME, start_audience_narration_consumers
 from the_watcher.copilot_state import install_copilot_state_error_handlers
 from the_watcher.dependencies import (
     STREAM_BOARD,
@@ -66,15 +68,24 @@ from the_watcher.routers import (
 
 @asynccontextmanager
 async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
-    """Select the engine ports first. A missing worker URL or a bad setting stops start-up."""
+    """Select the engine ports first. A missing worker URL or a bad setting stops start-up.
+
+    The Redis bus opens before the audience narration consumer starts. A failed connection
+    stops start-up (ADR-0015).
+    """
     load_watcher_ports(engine)
-    async with event_bus_provider.lifespan(app):
-        copilot = get_copilot_engine()
+    bus = await event_bus_provider.connect()
+    consumers = await start_audience_narration_consumers(bus)
+    app.state.consumers = {CONSUMER_NAME: consumers}
+    copilot = get_copilot_engine()
+    try:
         await copilot.rearm_open_actions()
-        try:
-            yield
-        finally:
-            copilot.shutdown()
+        yield
+    finally:
+        await consumers.stop()
+        copilot.shutdown()
+        await event_bus_provider.close()
+        app.state.consumers = {}
 
 
 # Build the event store now. A deployed service without a reachable store refuses to start (TASK-0707).
@@ -104,12 +115,13 @@ install_copilot_state_error_handlers(app)
 
 
 @app.get("/healthz")
-async def health_check():
+async def health_check(request: Request):
     return {
         "status": "ok",
         "service": "the_watcher",
         "watcher_engine": WatcherEngineSettings().watcher_engine,
         "event_publish_failures": event_publish_failures(),
+        "consumers": consumer_statuses(getattr(request.app.state, "consumers", {})),
     }
 
 

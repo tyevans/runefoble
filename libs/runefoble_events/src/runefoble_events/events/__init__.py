@@ -271,6 +271,7 @@ from runefoble_events.watcher_events.copilot_state import (
     PendingActionModified,
     PendingActionProposed,
     PendingActionVetoed,
+    WhisperDispatched,
     WhisperRecorded,
 )
 from runefoble_events.watcher_events.factions import (
@@ -287,6 +288,7 @@ from runefoble_events.watcher_events.narrative import (
     SceneAtmosphereSet,
     SpeechIntentParsed,
     StandInActionDecided,
+    WatcherNarrativeDispatched,
 )
 from runefoble_events.west_marches import (
     CampaignRegisteredToSharedWorld,

@@ -120,6 +120,12 @@ Part of the [Events Schema](events-schema.md). Each event identifier in this pag
   - `action_type`: String
   - `dialogue`: String
   - `penalties_applied`: List[String]
+- **`WatcherNarrativeDispatched`** (`runefoble.events.watcher.narrative_dispatched`): Emitted on `runefoble.events.watcher` when the DM sends an audience narration to the table (TASK-0838). The table and the overlay show it.
+  - `session_id`: String
+  - `campaign_id`: String
+  - `whisper_id`: String (the whisper the DM sent)
+  - `text`: String (the narration as sent, after any DM edit)
+  - `source_proposal_id`: String (the approved audience modifier that asked for the narration)
 - **`DiceRolled`**: Emitted when dice are rolled through `POST /api/v1/sessions/{session_id}/roll`. The session aggregate records the roll, so the session must exist (404 otherwise). The session repository publishes it to `runefoble.events.session` (`runefoble.events.dice.rolled`).
   - `session_id`: String
   - `roller_id`: String

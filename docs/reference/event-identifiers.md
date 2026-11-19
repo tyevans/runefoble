@@ -216,6 +216,7 @@ CloudEvents exports (`to_cloudevent_dict()`) lower-case the identifier.
 | `runefoble.events.watcher.faction_skirmish_resolved` | `FactionSkirmishResolvedEvent` | `runefoble_events.turf_war` |
 | `runefoble.events.watcher.faction_territory_captured` | `FactionTerritoryCapturedEvent` | `runefoble_events.turf_war` |
 | `runefoble.events.watcher.geopolitical_shift_occurred` | `GeopoliticalShiftOccurred` | `runefoble_events.watcher_events.factions` |
+| `runefoble.events.watcher.narrative_dispatched` | `WatcherNarrativeDispatched` | `runefoble_events.watcher_events.narrative` |
 | `runefoble.events.watcher.pending_action_approved` | `PendingActionApproved` | `runefoble_events.watcher_events.copilot_state` |
 | `runefoble.events.watcher.pending_action_expired` | `PendingActionExpired` | `runefoble_events.watcher_events.copilot_state` |
 | `runefoble.events.watcher.pending_action_modified` | `PendingActionModified` | `runefoble_events.watcher_events.copilot_state` |
@@ -225,6 +226,7 @@ CloudEvents exports (`to_cloudevent_dict()`) lower-case the identifier.
 | `runefoble.events.watcher.regional_unrest_escalated` | `RegionalUnrestEscalatedEvent` | `runefoble_events.turf_war` |
 | `runefoble.events.watcher.speech_intent_parsed` | `SpeechIntentParsed` | `runefoble_events.watcher_events.narrative` |
 | `runefoble.events.watcher.stand_in_action_decided` | `StandInActionDecided` | `runefoble_events.watcher_events.narrative` |
+| `runefoble.events.watcher.whisper_dispatched` | `WhisperDispatched` | `runefoble_events.watcher_events.copilot_state` |
 | `runefoble.events.watcher.whisper_recorded` | `WhisperRecorded` | `runefoble_events.watcher_events.copilot_state` |
 | `runefoble.events.watcher.world_tick_executed` | `WorldTickExecuted` | `runefoble_events.watcher_events.factions` |
 | `runefoble.events.west_marches.campaign_registered_to_shared_world` | `CampaignRegisteredToSharedWorld` | `runefoble_events.west_marches` |

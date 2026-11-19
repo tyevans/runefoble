@@ -125,6 +125,16 @@ ROUTES = (
     ),
     ProxyRoute(
         "POST",
+        "/api/v1/watcher/whispers/{whisper_id}/dispatch",
+        ("api", "v1", "watcher", "whispers", "{whisper_id}", "dispatch"),
+        SERVICE,
+        name="watcher_dispatch_whisper",
+        doc="Send an audience narration to the table (The Watcher; DM only).",
+        body="json",
+        principal=True,
+    ),
+    ProxyRoute(
+        "POST",
         "/api/v1/watcher/actions/propose",
         ("api", "v1", "watcher", "actions", "propose"),
         SERVICE,
