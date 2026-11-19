@@ -1,7 +1,7 @@
 ---
 id: '0869'
 title: Helm Chart Tests Share One Renderer and Fail in CI When Helm Is Missing
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies: []
 governing_adrs:
@@ -15,7 +15,7 @@ target_release: 0.9.0
 # TASK-0869: Helm Chart Tests Share One Renderer and Fail in CI When Helm Is Missing
 
 ## Status
-Refined.
+Complete
 
 ## Summary
 Thirteen test files run `helm template` through their own helper. Most of them skip when helm is missing. A CI host without helm then passes these chart tests with no assertion. DoD item 8 requires `helm template` to pass. One helper and one `require_helm()` gate replace the copies, and CI fails when helm is absent.

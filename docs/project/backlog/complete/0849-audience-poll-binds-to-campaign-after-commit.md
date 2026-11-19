@@ -1,7 +1,7 @@
 ---
 id: '0849'
 title: Audience Poll Binds to Its Campaign Only After the Poll Event Commits
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies: []
 governing_adrs:
@@ -15,7 +15,7 @@ target_release: 0.9.0
 # TASK-0849: Audience Poll Binds to Its Campaign Only After the Poll Event Commits
 
 ## Status
-Refined
+Complete
 
 ## Summary
 `PollEngine` writes the SpiceDB campaign binding before it commits the `poll.start` event. If the commit fails, the binding stays for a poll that does not exist. This is a dual write with no compensation. The fix commits the event first and binds the poll after the commit, through the outbox path, or it removes the binding when the commit fails.
@@ -53,3 +53,6 @@ None. Platform quality work.
 ## Audit Provenance
 - Severity: medium
 - Source audits: `refactor-r2/libs.md` (F6)
+
+## Completion Note
+Accepted design: commit, then bind; a failed bind answers 503. The remaining gap (a stored poll without a binding) is TASK-0879.

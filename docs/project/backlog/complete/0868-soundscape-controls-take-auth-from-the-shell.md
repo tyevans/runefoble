@@ -1,7 +1,7 @@
 ---
 id: '0868'
 title: Soundscape Controls Send Ducking With the Shell Bearer Token
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies: []
 governing_adrs:
@@ -18,7 +18,7 @@ target_release: 0.9.0
 # TASK-0868: Soundscape Controls Send Ducking With the Shell Bearer Token
 
 ## Status
-Refined.
+Complete
 
 ## Summary
 The soundscape HUD widget takes a raw `authorization` string. No caller sets it. A duck request therefore carries no `Authorization` header. Ducking is then not applied. The widget must get its auth headers from the same consumer that other service UI packages use.
@@ -58,3 +58,6 @@ The soundscape HUD widget takes a raw `authorization` string. No caller sets it.
 ## Audit Provenance
 - Severity: high
 - Source audits: `frontend-ui`
+
+## Completion Note
+Unit tests, typecheck and the gateway duck test pass. Playwright and Storybook checks were not run in the worker; the orchestrator gate builds the frontend.

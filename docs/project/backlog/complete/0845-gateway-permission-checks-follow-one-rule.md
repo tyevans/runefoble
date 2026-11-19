@@ -1,7 +1,7 @@
 ---
 id: '0845'
 title: Gateway Permission Checks Follow One Rule
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies: []
 governing_adrs:
@@ -17,7 +17,7 @@ target_release: 0.9.0
 # TASK-0845: Gateway Permission Checks Follow One Rule
 
 ## Status
-Refined
+Complete
 
 Source: refactor round 2026-11-18 (user approved).
 
@@ -52,3 +52,6 @@ Small to medium. Testable through the gateway routes.
 
 ## Definition of Done
 1. The route list is in the task report. 2. Code and docs follow the rule. 3. 403 tests pass. 4. `make health-check` passes.
+
+## Completion Note
+The owner gaps it found (dm-override and atmosphere had no owner check) were fixed on main in d68cb1e2; both routes now rely on the owner check only.

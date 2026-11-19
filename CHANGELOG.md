@@ -170,6 +170,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
 
 ### Changed
+- The Helm chart tests share one renderer (`tests/helpers/helm.py`). They fail in CI when Helm is missing instead of skipping, and the CI Python job installs Helm. (TASK-0869)
+- Gateway permission checks follow one rule: a proxy route forwards the token and the owner checks; a composite route checks at the gateway. 21 proxy routes lost a duplicate gateway check. `docs/how-to/call-owning-services-through-the-gateway.md` states the rule. (TASK-0845)
 - The approved audience modifier consumers in game_session, board_state and character_sheet share one helper, `runefoble_platform.audience_modifiers`. Behaviour is unchanged. (TASK-0843)
 - A campaign session and its game session share one UUID id. Creating a campaign session also creates the game session, so the App Shell can read, start and run combat in the session it launched. The `session-` id prefix is removed. (TASK-0706)
 - Settlement and haven blackbox tests create campaigns and join members through the public campaign routes, not by writing SpiceDB tuples. (TASK-0716)
@@ -1276,6 +1278,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **Documentation & Build Navigation**: Featured the Platform Showcase and Changelog in `zensical.toml` and root documentation landing page (`docs/index.md`), and enhanced `scripts/build_docs.py` to synchronize `CHANGELOG.md` to `docs/changelog.md` during documentation compilation.
 
 ### Fixed
+- The soundscape controls send the shell bearer token with ducking requests, not a raw Authorization string. (TASK-0868)
+- The homebrew creator reports only registrations that the owner accepted, through the shared request helper, and shows the owner's error detail. (TASK-0866)
+- Audience Studio commits a poll before it writes the campaign binding. A failed binding answers 503 and is logged. (TASK-0849)
+- The email transport raises when it cannot send and keeps no in-memory record of mail it did not send. (TASK-0848)
 - The local campaign-lore embedding key placeholder is `not-required`; the OpenAI client refused an empty key, so campaign-lore stopped at start with a keyless local endpoint.
 - The campaign-lore image did not install `runefoble_embeddings`, so the pod crashed at start in Kind. campaign-lore now declares the dependency.
 - The Helm chart loaded a stale SpiceDB schema (8 of 27 definitions), so Kind used an old authorization schema. The chart now carries the service schema, and a test keeps the two equal.

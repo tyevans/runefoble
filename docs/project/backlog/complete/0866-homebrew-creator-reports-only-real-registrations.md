@@ -1,7 +1,7 @@
 ---
 id: '0866'
 title: Homebrew Creator Reports Only Real Registrations
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies: []
 governing_adrs:
@@ -18,7 +18,7 @@ target_release: 0.9.0
 # TASK-0866: Homebrew Creator Reports Only Real Registrations
 
 ## Status
-Refined.
+Complete
 
 ## Summary
 When the API base URL is empty, the homebrew form says "validated", invents a `rule_id`, and dispatches `homebrew-created`. Nothing is saved. Remove this path. Send the write through the shared JSON request, and show the server detail when it fails.
@@ -60,3 +60,6 @@ When the API base URL is empty, the homebrew form says "validated", invents a `r
 ## Audit Provenance
 - Severity: high
 - Source audits: `frontend-ui`
+
+## Completion Note
+The Playwright scenarios need a campaign id on the rules route. They moved to TASK-0878.

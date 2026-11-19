@@ -1,7 +1,7 @@
 ---
 id: '0848'
 title: Email Transport Raises on Failure and Keeps No Fake Sent Mail
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies: []
 governing_adrs:
@@ -14,7 +14,7 @@ target_release: 0.9.0
 # TASK-0848: Email Transport Raises on Failure and Keeps No Fake Sent Mail
 
 ## Status
-Refined
+Complete
 
 ## Summary
 The SMTP transport in `runefoble_platform` records mail in memory when the SMTP server is down. The default is on. The caller gets a normal return value, so a failed send looks like a success. The Mailpit client also returns `None` or `True` on failure. The fix removes the in-memory fallback from production code, makes failures raise, and moves the test recorder to `tests/helpers/`.
@@ -36,7 +36,7 @@ None. Platform quality work.
 
 ## Detailed Specification & Implementation Plan
 1. Remove the `fallback_in_memory` parameter and the `sent_emails` recorder from `smtp.py`. Let the SMTP exception propagate. Use a typed error from `runefoble_platform` if the module has one.
-2. Move the in-memory recorder to `tests/helpers/email_recorder.py` for tests that need it.
+2. Move the in-memory recorder out of production code. Done as a Mailpit API double in `tests/helpers/mailpit_double.py`.
 3. In `mailpit.py`, `_get` raises on transport errors and on non-200 responses. `delete_all_messages` raises instead of returning `True` after a failure.
 4. Keep `check_health` as the one place that turns a failure into a status. It reports the cause text.
 5. Remove the `fallback_in_memory` argument from every caller. Do not keep an alias.
