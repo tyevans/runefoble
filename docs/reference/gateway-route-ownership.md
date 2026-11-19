@@ -191,5 +191,5 @@ each route, and the mode in which the gateway serves it.
 | WS | `/ws/mobile-companion/{session_id}` | voice_agent | relay | `gateway_api.routers.realtime` |
 | WS | `/ws/overlay/{session_id}` | game_session, board_state | relay | `gateway_api.routers.overlay` |
 | WS | `/ws/session/{session_id}` | board_state, voice_agent, the_watcher | relay | `gateway_api.routers.realtime` |
-| WS | `/ws/spectator/{session_id}` | game_session, board_state | relay | `gateway_api.routers.spectator` |
+| WS | `/ws/spectator/{session_id}` | game_session, board_state | relay | `gateway_api.routers.overlay` |
 | WS | `/ws/voice/{session_id}` | voice_agent | relay | `gateway_api.routers.realtime` |
