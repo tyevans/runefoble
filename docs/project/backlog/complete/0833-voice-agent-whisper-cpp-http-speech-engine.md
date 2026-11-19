@@ -1,7 +1,7 @@
 ---
 id: '0833'
 title: "Voice Agent Supports a whisper.cpp HTTP Speech Engine"
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies: []
 governing_adrs:
@@ -16,7 +16,7 @@ target_release: 0.9.0
 # TASK-0833: Voice Agent Supports a whisper.cpp HTTP Speech Engine
 
 ## Status
-Refined
+Complete
 
 ## Summary
 The voice agent supports only the in-process faster-whisper engine. The user runs a whisper.cpp server on the local network and wants the voice agent to use it, so the pod needs no model cache.

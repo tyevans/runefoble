@@ -330,7 +330,7 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 324. **TASK-0812 (Complete)**: [`0812-forge-and-caravan-ui-clients-send-the-bearer.md`](complete/0812-forge-and-caravan-ui-clients-send-the-bearer.md) — Forge and Caravan UI Clients Send the Bearer Token
 325. **TASK-0813 (Complete)**: [`0813-spicedb-outage-maps-to-one-503-in-every-service.md`](complete/0813-spicedb-outage-maps-to-one-503-in-every-service.md) — A SpiceDB Outage Maps to One 503 Answer in Every Service
 326. **TASK-0798 (Complete)**: [`0798-kind-stack-deploys-from-a-clean-cluster-with-one-command.md`](complete/0798-kind-stack-deploys-from-a-clean-cluster-with-one-command.md) — Kind Stack Deploys From a Clean Cluster With One Command
-327. **TASK-0833 (Refined)**: [`0833-voice-agent-whisper-cpp-http-speech-engine.md`](refined/0833-voice-agent-whisper-cpp-http-speech-engine.md) — Voice Agent Supports a whisper.cpp HTTP Speech Engine
+327. **TASK-0833 (Complete)**: [`0833-voice-agent-whisper-cpp-http-speech-engine.md`](complete/0833-voice-agent-whisper-cpp-http-speech-engine.md) — Voice Agent Supports a whisper.cpp HTTP Speech Engine
 328. **TASK-0815 (Complete)**: [`0815-events-have-one-import-home-and-no-alias-names.md`](complete/0815-events-have-one-import-home-and-no-alias-names.md) — Each Event Class Has One Import Home and No Alias Names
 329. **TASK-0816 (Complete)**: [`0816-uuid-parsing-uses-one-policy.md`](complete/0816-uuid-parsing-uses-one-policy.md) — UUID Parsing Uses One Policy in Every Service
 330. **TASK-0817 (Complete)**: [`0817-services-use-the-shared-permission-check.md`](complete/0817-services-use-the-shared-permission-check.md) — Services Use One Shared Permission Check Instead of Local Wrappers
