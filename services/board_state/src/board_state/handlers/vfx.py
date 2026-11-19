@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from board_state.aoe_models import AoETemplateState
+from board_state.errors import BoardElementNotFoundError
 from board_state.spells import BoardSpellsMixin
 from eventsource.domain.decorators import handles
 from runefoble_events.events import (
@@ -66,7 +67,7 @@ class VFXHandlerMixin(BoardSpellsMixin):
         """Remove a placed AoE template from the board."""
         tid_str = str(template_id)
         if not any(t.template_id == tid_str for t in self.state.active_aoe_templates):
-            raise ValueError(f"AoE template '{template_id}' not found on grid")
+            raise BoardElementNotFoundError(f"AoE template '{template_id}' not found on grid")
         self.create_event(
             AoETemplateRemoved,
             session_id=str(self.state.session_id),

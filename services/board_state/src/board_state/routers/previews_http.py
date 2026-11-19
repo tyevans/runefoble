@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 from board_state.authz import VIEW, require_board_permission
-from board_state.dependencies import BoardNotFoundError, CallerId, get_board, get_principal
-from board_state.ghost_staging import GhostStageRequest, UnknownGhostToken, stage_ghost_preview
+from board_state.dependencies import CallerId, get_board, get_principal
+from board_state.ghost_staging import GhostStageRequest, stage_ghost_preview
 from board_state.preview import (
     PreviewMoveRequest,
     PreviewMoveResponse,
@@ -27,20 +27,15 @@ async def preview_token_move(
     """Compute waypoint trajectory, 5-ft increments, terrain penalties, and hazard warnings."""
     board = await get_board(session_id)
     await require_board_permission(user_id, session_id, VIEW)
-    try:
-        return compute_kinematic_route_preview(
-            board_aggregate=board,
-            token_id=token_id,
-            to_x=req.to_x,
-            to_y=req.to_y,
-            from_x=req.from_x,
-            from_y=req.from_y,
-            movement_budget=req.movement_budget,
-        )
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e)) from e
+    return compute_kinematic_route_preview(
+        board_aggregate=board,
+        token_id=token_id,
+        to_x=req.to_x,
+        to_y=req.to_y,
+        from_x=req.from_x,
+        from_y=req.from_y,
+        movement_budget=req.movement_budget,
+    )
 
 
 @router.post("/api/v1/boards/{session_id}/preview-move", response_model=PreviewMoveResponse)
@@ -58,14 +53,7 @@ async def propose_ghost_preview(session_id: str, req: GhostStageRequest, user_id
     needs `board.view`. The Watcher calls this route with the speaker's own bearer token.
     """
     await require_board_permission(user_id, session_id, VIEW)
-    try:
-        return await stage_ghost_preview(session_id, req)
-    except BoardNotFoundError as exc:
-        raise HTTPException(status_code=404, detail=f"No board for session '{session_id}'") from exc
-    except UnknownGhostToken as exc:
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return await stage_ghost_preview(session_id, req)
 
 
 __all__ = ["preview_move", "preview_token_move", "propose_ghost_preview", "router"]

@@ -15,7 +15,7 @@ from character_sheet.crafting import CraftingAggregate
 from character_sheet.health_events import health_change_events
 from character_sheet.models import CharacterState
 from character_sheet.schemas import CreateCharacterRequest
-from fastapi import Depends, HTTPException
+from fastapi import Depends
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.mock import MockSpiceDBClient
 from runefoble_auth.permissions import require_permission
@@ -158,10 +158,7 @@ async def execute_character_mutation(
     mutation_fn: Callable[[CharacterAggregate], Any],
 ) -> CharacterState:
     char = await load_character(repo, character_id)
-    try:
-        mutation_fn(char)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
+    mutation_fn(char)
     await repo.save(char)
     return char.state
 
@@ -173,14 +170,11 @@ async def execute_condition_mutation(
 ) -> CharacterState:
     """Apply one condition change, save it, then publish the events it committed.
 
-    The events are read before the save, because a save clears them. A refused change raises 400
-    and publishes nothing.
+    The events are read before the save, because a save clears them. A refused change raises
+    ValueError (HTTP 400 through the service handler) and publishes nothing.
     """
     char = await load_character(repo, character_id)
-    try:
-        mutation_fn(char)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
+    mutation_fn(char)
     committed = list(char.uncommitted_events)
     await repo.save(char)
     for event in committed:
@@ -244,10 +238,7 @@ async def assign_character_campaign(
     The tuple write comes before the save. A failed write leaves the character unchanged.
     """
     char = await load_character(repo, character_id)
-    try:
-        char.assign_campaign(campaign_id, assigned_by)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
+    char.assign_campaign(campaign_id, assigned_by)
     await replace_character_campaign(spicedb, character_id, campaign_id)
     await repo.save(char)
     await publish_character_event(

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+from board_state.errors import BoardElementNotFoundError
 from eventsource.domain.decorators import handles
 from runefoble_events import events as ev
 
@@ -22,7 +23,7 @@ class ActionsHandlerMixin:
     def _require_token(self, token_id: str) -> str:
         tid = str(token_id)
         if tid not in self.state.tokens:
-            raise ValueError(f"Token '{token_id}' not found on grid")
+            raise BoardElementNotFoundError(f"Token '{token_id}' not found on grid")
         return tid
 
     def execute_token_action(

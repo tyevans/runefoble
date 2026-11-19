@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, Literal
 
+from board_state.errors import BoardElementNotFoundError
 from board_state.handlers.actions import ActionsHandlerMixin
 from board_state.models import MoveOutcome, PlacedTokenState
 from board_state.rules.grid import is_within_bounds, validate_point_within_bounds
@@ -32,7 +33,7 @@ class TokensHandlerMixin(ActionsHandlerMixin):
     def _get_token(self, token_id: str) -> tuple[str, Any]:
         tid = str(token_id)
         if tid not in self.state.tokens:
-            raise ValueError(f"Token '{token_id}' not found on grid")
+            raise BoardElementNotFoundError(f"Token '{token_id}' not found on grid")
         return tid, self.state.tokens[tid]
 
     def place_token(

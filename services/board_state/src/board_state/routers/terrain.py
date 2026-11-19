@@ -17,7 +17,7 @@ from board_state.models import (
     TerrainCellState,
     VisibilityResponse,
 )
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 
 router = APIRouter(tags=["terrain"], dependencies=[Depends(get_principal)])
 
@@ -66,20 +66,15 @@ async def configure_terrain(
     """Set terrain on a cell. Needs `board.manage_traps`."""
     await require_board_permission(user_id, session_id, MANAGE_TRAPS)
     board = await get_board(session_id)
-    try:
-        board.configure_terrain(
-            x=req.x,
-            y=req.y,
-            elevation=req.elevation,
-            terrain_type=req.terrain_type,
-            hazard=req.hazard,
-        )
-        await repo.save(board)
-        return board.get_terrain(req.x, req.y)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e)) from e
+    board.configure_terrain(
+        x=req.x,
+        y=req.y,
+        elevation=req.elevation,
+        terrain_type=req.terrain_type,
+        hazard=req.hazard,
+    )
+    await repo.save(board)
+    return board.get_terrain(req.x, req.y)
 
 
 @router.post("/api/v1/boards/{session_id}/fog-of-war/reveal", response_model=VisibilityResponse)
@@ -91,14 +86,9 @@ async def reveal_fog_of_war(
     """Manually reveal fog-of-war cells. Needs `board.view_secret_layer`."""
     await require_board_permission(user_id, session_id, VIEW_SECRET_LAYER)
     board = await get_board(session_id)
-    try:
-        board.reveal_cells(cells=req.cells, revealed_by_token_id=req.token_id)
-        await repo.save(board)
-        return _visibility(session_id, board, is_dm=True)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e)) from e
+    board.reveal_cells(cells=req.cells, revealed_by_token_id=req.token_id)
+    await repo.save(board)
+    return _visibility(session_id, board, is_dm=True)
 
 
 @router.post("/api/v1/boards/{session_id}/fog-of-war/shroud", response_model=VisibilityResponse)
@@ -110,11 +100,6 @@ async def shroud_fog_of_war(
     """Manually shroud fog-of-war cells. Needs `board.view_secret_layer`."""
     await require_board_permission(user_id, session_id, VIEW_SECRET_LAYER)
     board = await get_board(session_id)
-    try:
-        board.shroud_cells(cells=req.cells)
-        await repo.save(board)
-        return _visibility(session_id, board, is_dm=True)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e)) from e
+    board.shroud_cells(cells=req.cells)
+    await repo.save(board)
+    return _visibility(session_id, board, is_dm=True)

@@ -9,7 +9,9 @@ import contextlib
 from collections.abc import AsyncIterator
 
 from board_state.dependencies import BoardNotFoundError, event_bus_provider
+from board_state.errors import BoardElementNotFoundError
 from board_state.forged_battlemap import start_board_consumers
+from board_state.ghost_staging import UnknownGhostToken
 from board_state.routers import (
     actions_router,
     aoe_router,
@@ -27,8 +29,9 @@ from board_state.routers import (
     vfx_router,
 )
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
 from runefoble_auth.authz_http import install_authz_error_handlers
+from runefoble_platform.aggregate_loading import register_store_unavailable_handlers
+from runefoble_platform.domain_errors_http import install_domain_error_handlers
 from runefoble_platform.event_publish import (
     event_publish_failures,
     install_publish_failure_handler,
@@ -77,11 +80,10 @@ app.include_router(traps_router)
 app.include_router(uvtt_import_router)
 install_publish_failure_handler(app)
 install_authz_error_handlers(app)
-
-
-@app.exception_handler(BoardNotFoundError)
-async def board_not_found_handler(request: Request, exc: BoardNotFoundError) -> JSONResponse:
-    return JSONResponse(status_code=404, content={"detail": str(exc)})
+register_store_unavailable_handlers(app)
+install_domain_error_handlers(
+    app, not_found=(BoardNotFoundError, BoardElementNotFoundError, UnknownGhostToken)
+)
 
 
 @app.get("/healthz")

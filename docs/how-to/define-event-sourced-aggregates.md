@@ -131,6 +131,24 @@ await save_or_conflict(
 )
 ```
 
+### Map domain errors once per service
+
+Routes do not catch errors from a command. Do not write `except Exception` or `except ValueError` in a route. Register the shared handlers in `main.py` instead:
+
+```python
+from runefoble_platform.aggregate_loading import register_store_unavailable_handlers
+from runefoble_platform.domain_errors_http import install_domain_error_handlers
+
+register_store_unavailable_handlers(app)
+install_domain_error_handlers(app, not_found=(BoardNotFoundError, BoardElementNotFoundError))
+```
+
+- `ValueError` answers `400` with the error text.
+- `AggregateNotFoundError` and each type in `not_found` answer `404`.
+- A store outage answers `503` through `register_store_unavailable_handlers`.
+
+Raise a typed not-found error when a command names an element that does not exist. Do not match the text of the message. Starlette picks the most specific registered class, so a not-found type that subclasses `ValueError` answers `404`.
+
 ### Hold a repository at module level
 
 Keep each repository behind a `LazyRepository` from `runefoble_platform.lazy_repository`. It

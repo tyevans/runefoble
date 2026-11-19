@@ -606,6 +606,19 @@ The response describes the audio it carries. Filters run on the synthesised clip
 
 Engine failure returns `503` with `{"detail": {"error": "speech_synthesis_unavailable", "engine": "espeak-ng", "message": "..."}}`. No audio field is present.
 
+## Board and Character Mutation Errors (TASK-0752)
+
+The `board-state` and `character-sheet` services map errors in one place, at application start-up. Their routes do not catch errors.
+
+| Error | Status | Body |
+|---|---|---|
+| `ValueError` (a refused command or bad input, for example a move out of bounds) | `400` | `{"detail": "<domain message>"}` |
+| A missing board, a token, trap or AoE template that is not on the board, or no matching ghost token | `404` | `{"detail": "<domain message>"}` |
+| Event store outage (`SQLAlchemyError`, `OSError`) | `503` | `{"detail": "Event store is unavailable"}` |
+| SpiceDB outage (`AuthzError`) | `503` | `{"error": "authorization_unavailable"}` |
+
+A storage outage never answers `400` or `500`. The handlers come from `runefoble_platform.domain_errors_http.install_domain_error_handlers` and `runefoble_platform.aggregate_loading.register_store_unavailable_handlers`.
+
 ## Service Bearer Token Verification
 
 `asset-forge`, `soundscape`, and `character-sheet` verify the Zitadel bearer token on every route. A request without a valid `Authorization: Bearer <token>` header returns `401`. The `X-User-Id` header is ignored. The creator, owner, or caller is the token `sub`.
