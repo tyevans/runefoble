@@ -261,10 +261,20 @@ def test_orchestrator_exits_when_redis_is_unreachable():
     assert "Redis is not reachable" in result.stdout
 
 
+# Replies for the commands whose answer is not `+OK`. An empty stream gives a null read and an
+# empty reclaim.
+_RESP_REPLIES = {
+    b"PING": b"+PONG\r\n",
+    b"XREADGROUP": b"*-1\r\n",
+    b"XAUTOCLAIM": b"*3\r\n$3\r\n0-0\r\n*0\r\n*0\r\n",
+}
+
+
 class _RespServer(threading.Thread):
     """Minimal Redis protocol server on a loopback port. It answers PING and accepts any command.
 
-    Redis is an external process. The gateway only needs it to answer the start-up ping.
+    Redis is an external process. The gateway needs it to answer the start-up ping, and its
+    session frame consumer reads an empty stream (TASK-0923).
     """
 
     def __init__(self) -> None:
@@ -292,7 +302,7 @@ class _RespServer(threading.Thread):
                 while (parsed := _RespServer._take_command(buffer)) is not None:
                     command, buffer = parsed
                     name = command[0].upper() if command else b""
-                    conn.sendall(b"+PONG\r\n" if name == b"PING" else b"+OK\r\n")
+                    conn.sendall(_RESP_REPLIES.get(name, b"+OK\r\n"))
 
     @staticmethod
     def _take_command(buffer: bytes) -> tuple[list[bytes], bytes] | None:

@@ -446,11 +446,12 @@ Campaign Lore routes require a verified bearer token, except `/healthz`, `/opena
 
 | Field | Value |
 |---|---|
-| `status` | `healthy` while the gateway process runs. A downstream failure does not change it. |
+| `status` | `healthy` while the gateway process runs and every consumer is `running`. A downstream failure does not change it. A `failed` consumer makes it `degraded`, and the reply is `503` (TASK-0923). |
 | `downstream_services` | One key for each of `the_watcher`, `game_session`, `board_state`, `character_sheet`, `voice_agent`, and `campaign_lore`. Each value is `operational`, `degraded`, `unreachable`, or `not_configured` |
 | `event_publish_failures` | Count of failed event publishes in this process |
 | `event_bus` | `connected` or `disconnected` |
 | `authorization_engine` | `SpiceDB Zanzibar` |
+| `consumers` | `{"session_frames": "running" \| "failed"}`. The session frame consumer (TASK-0923) |
 
 Each probe sends `GET /healthz` to the service with the service credential (ADR-0015 e). A probe result is:
 
@@ -519,11 +520,13 @@ Server kinds are not client kinds. A client frame of a server kind gets `UNKNOWN
 | Server kind | Decision (TASK-0910) |
 |---|---|
 | `session_started` | The gateway start route `POST /api/v1/sessions/{id}/start` is the only source. It sends `{"type": "session_started", "sessionId", "status"}` after game_session moves the session to `active`. An owner reply without `status` returns `502`. |
-| `turn_advanced` | Removed from the inbound table. The owner route is `POST /api/v1/sessions/{id}/turns/advance` (game_session checks `control`). No server code sends this kind on the session socket. |
-| `dice_rolled` | Removed from the inbound table. game_session owns dice rolls. No server code sends this kind on the session socket. The overlay socket keeps its own `dice_rolled` frame. |
-| `token_moved` | Removed from the inbound table. board_state sends `token_moved` on its own board socket after it saves the move. |
-| `dm_whisper` | Removed from the inbound table. A broadcast reaches every socket of the session, players included, so a whisper on this socket is never private (US-0017). Whispers go through the DM copilot and mobile companion routes. |
+| `turn_advanced` | Removed from the inbound table. The owner route is `POST /api/v1/sessions/{id}/turns/advance` (game_session checks `control`). The gateway sends `{"type": "turn_advanced", "sessionId", "previousTurn", "newTurn", "activeCharacterId"}` for each `runefoble.events.session.turn_advanced` event (TASK-0923). |
+| `dice_rolled` | Removed from the inbound table. game_session owns dice rolls (`POST /api/v1/sessions/{id}/roll`). The gateway sends `{"type": "dice_rolled", "sessionId", "rollerId", "rollerName", "formula", "total", "rolls", "isCrit", "isFumble"}` for each `runefoble.events.dice.rolled` event (TASK-0923). The overlay socket keeps its own `dice_rolled` frame. |
+| `token_moved` | Removed from the inbound table. board_state sends `token_moved` on its own board socket after it saves the move. The board socket owns live moves, so the session socket sends no `token_moved` frame (TASK-0923). |
+| `dm_whisper` | Removed from the inbound table. A broadcast reaches every socket of the session, players included, so a whisper on this socket is never private (US-0017). Whispers go through the DM copilot and mobile companion routes. No service publishes a whisper event, so the gateway sends no `dm_whisper` frame (TASK-0923). |
 | `board_ready` | The gateway board create route `POST /api/v1/boards` is the only source (TASK-0922). It sends `{"type": "board_ready", "sessionId"}` to the session room after board_state answers `2xx`. A client that shows no board then reads the board again. |
+
+The gateway builds the `turn_advanced` and `dice_rolled` frames in the `session_frames` consumer (`gateway_api/session_frame_consumer.py`). The consumer reads `runefoble.events.session` and sends one frame to every socket of the event's session. Each gateway replica has its own consumer group, `gateway_session_frames_<host name>`, because each replica holds its own sockets. A new group starts at the end of the stream, so old events give no frame. A redelivered event (same `event_id`) gives no second frame: each replica keeps the last 1,000 event ids in memory. A mapped event without `session_id` goes to `runefoble.events.session.dlq`.
 
 The overlay socket (`/ws/overlay/{id}`) uses the same check, `may_publish_frame` in `gateway_api/session_access.py`, with the permission `participate` for every overlay frame.
 
