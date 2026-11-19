@@ -193,7 +193,7 @@ To eliminate harsh audio clipping and delayed conversational cutoffs, `voice_age
 The diagnostic endpoint evaluates synthetic or captured audio frames and returns onset metrics and attenuated PCM waveforms:
 
 ```bash
-curl -X POST http://voice-agent.runefoble.svc.cluster.local:8005/voice/filters/barge-in/evaluate \
+curl -X POST http://voice-agent.runefoble.svc.cluster.local:8005/api/v1/voice/filters/barge-in/evaluate \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -242,7 +242,7 @@ To ensure tabletop players can converse through open room speakers without headp
 The diagnostic endpoint evaluates paired loudspeaker and microphone PCM streams to benchmark ERLE:
 
 ```bash
-curl -X POST http://voice-agent.runefoble.svc.cluster.local:8005/voice/aec/benchmark \
+curl -X POST http://voice-agent.runefoble.svc.cluster.local:8005/api/v1/voice/aec/benchmark \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -334,7 +334,7 @@ Blackbox tests inject a deterministic engine (`tests/helpers/fixture_transcriber
 
 ## 10. Text-to-Speech Engine and Synthesis Output (TASK-0601)
 
-`POST /api/v1/voice/tts` renders the persona text with the configured speech synthesis engine. It then applies the requested DSP filters to that audio and returns the audio.
+`POST /api/v1/voice/synthesize` renders the persona text with the configured speech synthesis engine. It then applies the requested DSP filters to that audio and returns the audio.
 
 | Variable | Default | Meaning |
 |---|---|---|

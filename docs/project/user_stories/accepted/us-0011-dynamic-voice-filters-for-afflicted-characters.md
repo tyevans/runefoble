@@ -23,5 +23,5 @@ So that our immersion is deepened and the hilarious consequences of missed sessi
 ## Acceptance Criteria
 1. When generating speech for a character with the "drunk" condition or penalty, the voice pipeline modulates pitch and alters text with stutter/slur tokens.
 2. Filter presets (`drunk`, `whisper`, `underwater`, `ethereal`) alter audio properties deterministically.
-3. `/api/v1/voice/tts` accepts a `filters: list[str]` parameter and returns DSP transform metadata alongside synthesized audio.
+3. `/api/v1/voice/synthesize` accepts a `filters: list[str]` parameter and returns DSP transform metadata alongside synthesized audio.
 4. Latency of the DSP filter pipeline is under 50ms.

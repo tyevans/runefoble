@@ -144,19 +144,18 @@ Campaign Lore routes require a verified bearer token, except `/health`, `/health
 | `voice-agent` | POST | `/api/v1/voice/stream/chunk` | Streaming PCM/WAV chunk ingestion with sub-250ms VAD segmentation and Whisper STT. Returns `503` with `error: speech_engine_unavailable` when the configured engine cannot transcribe a completed utterance; publishes `VoiceTranscriptionFailed` to `runefoble.events.voice` and no `runefoble.events.watcher.player_spoke` |
 | `voice-agent` | WS | `/api/v1/voice/stream/ws` | Real-time bidirectional WebSocket stream for continuous PCM audio frames and STT events. Sends `{"error": "speech_engine_unavailable", ...}` for a failed utterance and keeps the socket open |
 | `voice-agent` | POST | `/api/v1/voice/transcribe` | Transcribes player speech from `audio_base64` (STT port) or uses a non-empty typed `transcript`. Returns `source` (`audio` or `client_text`). Returns `422` when neither input is present or the audio is malformed, and `503` with `error: speech_engine_unavailable` when the engine fails. Emits `runefoble.events.watcher.player_spoke` to Redis Streams only for non-empty text, and forwards that text to The Watcher. Never invents text |
-| `voice-agent` | POST | `/api/v1/voice/tts` | Synthesizes persona speech with the configured engine (`espeak-ng`), applies DSP filters (drunk, underwater, whisper, ghostly) to that audio, and returns the audio it describes. Returns `503` with `error: speech_synthesis_unavailable` when the engine cannot render audio. No tone is returned. See the TTS response schema below |
-| `voice-agent` | POST | `/api/v1/voice/synthesize` | Defect (DoR 9): TTS synthesis endpoint. Also served at `/api/v1/voice/tts` (alias). Removal: TASK-0494 |
+| `voice-agent` | POST | `/api/v1/voice/synthesize` | Synthesizes persona speech with the configured engine (`espeak-ng`), applies DSP filters (drunk, underwater, whisper, ghostly) to that audio, and returns the audio it describes. Returns `503` with `error: speech_synthesis_unavailable` when the engine cannot render audio. No tone is returned. See the TTS response schema below |
 | `voice-agent` | GET | `/api/v1/voice/personas` | Lists available voice persona models |
 | `voice-agent` | GET | `/api/v1/voice/rooms/{session_id}` | Retrieves active WebRTC voice room participants, roles, mute status, and audio telemetry |
 | `voice-agent` | POST | `/api/v1/voice/rooms/{session_id}/kick` | DM moderation endpoint kicking disruptive peer from room (Zanzibar enforced) |
 | `voice-agent` | WS | `/api/v1/voice/duplex/ws/{session_id}/{speaker_id}` | Zero-latency voice duplex stream with sub-80ms barge-in detection and echo cancellation |
 | `voice-agent` | POST | `/api/v1/voice/duplex/playback/start` | Registers active TTS narration playback for barge-in cancellation tracking |
 | `voice-agent` | GET | `/api/v1/voice/duplex/status/{session_id}` | Checks active TTS narration playback status |
-| `voice-agent` | GET | `/voice/presets` | Lists all available NPC voice presets (Ancient Dragon, Goblin Skulker, Celestial Spirit, Robotic Construct) (alias: `/api/v1/voice/presets`) |
-| `voice-agent` | POST | `/voice/modulate` | Applies real-time DSP pitch and formant shift transformations with <50ms processing latency (alias: `/api/v1/voice/modulate`, Zanzibar enforced) |
-| `voice-agent` | GET | `/voice/streams/{session_id}/quality` | Queries stream bitrate, packet loss, and Opus codec mode (alias: `/api/v1/voice/streams/{session_id}/quality`) |
-| `voice-agent` | POST | `/voice/streams/{session_id}/report` | Submits RTCP receiver reports and dynamically adapts Opus bitrate/complexity within 200ms (alias: `/api/v1/voice/streams/{session_id}/report`) |
-| `voice-agent` | POST | `/voice/filters/barge-in/evaluate` | Evaluates audio frames for vocal onset (<40ms) and applies 20ms cosine crossfade attenuation (<80ms halt) (alias: `/api/v1/voice/filters/barge-in/evaluate`) |
+| `voice-agent` | GET | `/api/v1/voice/presets` | Lists all available NPC voice presets (Ancient Dragon, Goblin Skulker, Celestial Spirit, Robotic Construct) |
+| `voice-agent` | POST | `/api/v1/voice/modulate` | Applies real-time DSP pitch and formant shift transformations with <50ms processing latency (Zanzibar enforced) |
+| `voice-agent` | GET | `/api/v1/voice/streams/{session_id}/quality` | Queries stream bitrate, packet loss, and Opus codec mode |
+| `voice-agent` | POST | `/api/v1/voice/streams/{session_id}/report` | Submits RTCP receiver reports and dynamically adapts Opus bitrate/complexity within 200ms |
+| `voice-agent` | POST | `/api/v1/voice/filters/barge-in/evaluate` | Evaluates audio frames for vocal onset (<40ms) and applies 20ms cosine crossfade attenuation (<80ms halt) |
 | `voice-agent` | GET | `/healthz` | Readiness check. Reports the active speech engines as `stt_engine` (default `faster-whisper`) and `tts_engine` (default `espeak-ng`). Returns `503` with `status: not_ready` and `problems` when a speech engine is not ready |
 | `voice-agent` | POST | `/api/v1/voice/dsp/apply` | Applies DSP filters to supplied base64 PCM or WAV audio. Returns `422` when `audio_base64` is missing or invalid. The route never synthesises a carrier tone |
 | `voice-agent` | POST | `/api/v1/voice/dsp/condition` | Conditions speech text for affliction filters (for example `drunk`). Input: `text`, `filters`. Returns `original_text`, `conditioned_text`, `active_filters`, and `dsp_config`. Returns no audio. Called by `game-session` over HTTP at `RUNEFOBLE_VOICE_AGENT_URL` (`http://voice-agent:8005` in Helm) for drink rolls with `speech_text` |
@@ -346,7 +345,7 @@ Campaign Lore routes require a verified bearer token, except `/health`, `/health
 | `gateway-api` | WS | `/ws/campaigns/{campaign_id}` | Real-time Zanzibar-protected campaign WebSocket stream for party state synchronization |
 | `gateway-api` | GET | `/api/v1/voice/rooms/{session_id}` | Proxies to `voice-agent`. Retrieves active WebRTC voice room participants, roles, and audio telemetry. Returns `503` when `voice-agent` is unreachable and `502` on an upstream `5xx`. The owner checks the bearer token and `session.observe` |
 | `gateway-api` | POST | `/api/v1/voice/rooms/{session_id}/kick` | Proxies to `voice-agent`. The owner checks `session.control` |
-| `gateway-api` | GET, POST | `/voice/streams/{session_id}/quality`, `/voice/streams/{session_id}/report`, and the `/api/v1/` forms | Proxies stream diagnostics to `voice-agent`. The owner checks `session.control` |
+| `gateway-api` | GET, POST | `/api/v1/voice/streams/{session_id}/quality`, `/api/v1/voice/streams/{session_id}/report` | Proxies stream diagnostics to `voice-agent`. The owner checks `session.control` |
 | `gateway-api` | POST | `/api/v1/mobile/companion/{session_id}/whisper` | Proxies to `voice-agent`, which dispatches the secret DM whisper with a triple-pulse haptic alert. The owner checks `session.control` |
 | `gateway-api` | POST | `/api/v1/mobile/companion/{session_id}/turn-alert` | Proxies to `voice-agent`, which triggers the combat turn initiative double-pulse haptic alert. The owner checks `session.control` |
 | `gateway-api` | GET | `/api/v1/mobile/companion/profiles` | Proxies to `voice-agent`, which lists the adaptive Opus mobile audio streaming profiles |
@@ -433,14 +432,14 @@ After the bearer token passes, each voice route checks one permission in `libs/r
 | Route | Check | Subject |
 |---|---|---|
 | `POST /api/v1/voice/rooms/{session_id}/kick` | `session.control` | Token subject |
-| `POST /voice/modulate` | `session.participate` | Token subject |
+| `POST /api/v1/voice/modulate` | `session.participate` | Token subject |
 | `POST /api/v1/voice/aec/benchmark` | `session.control` | Token subject |
-| `GET /voice/streams/{session_id}/quality`, `POST /voice/streams/{session_id}/report` | `session.control` | Token subject |
+| `GET /api/v1/voice/streams/{session_id}/quality`, `POST /api/v1/voice/streams/{session_id}/report` | `session.control` | Token subject |
 | `GET /api/v1/voice/duplex/status/{session_id}` | `session.observe` | Token subject |
 | `POST /api/v1/voice/duplex/playback/start` | `session.participate` | Token subject |
-| `POST /api/v1/voice/synthesize`, `POST /api/v1/voice/tts` | Speaker rule | `speaker_id` |
+| `POST /api/v1/voice/synthesize` | Speaker rule | `speaker_id` |
 | `POST /api/v1/voice/dsp/apply` | Speaker rule | `speaker_id` |
-| `POST /voice/filters/barge-in/evaluate` | Speaker rule | `speaker_id` |
+| `POST /api/v1/voice/filters/barge-in/evaluate` | Speaker rule | `speaker_id` |
 | `POST /api/v1/voice/transcribe` | Speaker rule | `speaker_id` |
 | `POST /api/v1/voice/stream/chunk` | Speaker rule | `speaker_id` |
 | `WS /api/v1/voice/duplex/ws/...` | Speaker rule at connect | `speaker_id` |
@@ -487,21 +486,20 @@ The gateway forwards these routes to `game_session` with the caller's bearer tok
 
 The gateway reads `RUNEFOBLE_GAME_SESSION_URL` at start-up. See [Coordinate West Marches and Caravans](../how-to/coordinate-west-marches-shared-world-and-caravans.md).
 
-### Voice Agent TTS Response (`POST /api/v1/voice/tts`)
+### Voice Agent TTS Response (`POST /api/v1/voice/synthesize`)
 
 The response describes the audio it carries. Filters run on the synthesised clip only.
 
 | Field | Type | Meaning |
 |---|---|---|
 | `audio_base64` | string | Base64 of a RIFF/WAVE file (mono, 16-bit PCM) at `sample_rate_hz`. |
-| `audio_payload` | string | Same value as `audio_base64`. |
 | `audio_mime_type` | string | Always `audio/wav`. |
 | `sample_rate_hz` | integer | Sample rate of the WAV samples. |
 | `duration_ms` | number | Sample count divided by `sample_rate_hz`, in milliseconds. |
 | `content_sha256` | string | SHA-256 of the decoded WAV bytes. Equal text gives an equal hash. |
 | `engine` | string | Speech engine that rendered the text (`espeak-ng`). |
 | `original_text`, `conditioned_text` | string | Input text and the text after affliction transforms. `conditioned_text` is metadata and is not voiced. |
-| `effects_applied`, `dsp_parameters`, `dsp_metadata`, `latency_ms`, `persona_used` | mixed | DSP and request metadata. |
+| `effects_applied`, `dsp_parameters`, `latency_ms`, `persona_used` | mixed | DSP and request metadata. |
 
 Engine failure returns `503` with `{"detail": {"error": "speech_synthesis_unavailable", "engine": "espeak-ng", "message": "..."}}`. No audio field is present.
 
