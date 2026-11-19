@@ -12,7 +12,8 @@ The suite runs against the Kind stack through the Traefik ingress at `http://loc
 e2e/
 ├── features/   # Gherkin .feature files
 ├── steps/      # Step definitions. common_steps.ts holds the shared steps. sign_in_steps.ts holds the sign-in steps.
-└── support/    # Global setup, auth fixtures, Zitadel clients, frontdoor API client, scenario world
+├── support/    # Global setup, auth fixtures, Zitadel clients, frontdoor API client, scenario world, guards
+└── unit/       # Node unit tests for the support modules. They run with node --test. Playwright does not load them.
 ```
 
 | File | Role |
@@ -27,7 +28,8 @@ e2e/
 | `e2e/support/env.ts` | The only module that reads environment variables. It holds the API base URL, the Zitadel issuer and audience, and the name of the admin token variable. |
 | `e2e/support/frontdoor_api.ts` | The `FrontdoorApi` class. Calls public REST routes through the ingress. |
 | `e2e/support/campaign_capabilities.ts` | `openAndRecordCapabilities` opens an App Shell route and records the `GET /api/v1/campaigns/{campaign_id}/capabilities` reply. `recordedCapabilities` returns it. Steps compare a role-gated control with the server flag. |
-| `e2e/support/world.ts` | Scenario context: the current user, campaign and session ids, one page per persona, and extra browser contexts. |
+| `e2e/support/world.ts` | Scenario context: the current user, campaign and session ids, one page per persona, and extra browser contexts. `getPage(name)` throws when no step opened a page for that persona. |
+| `e2e/support/guards.ts` | Fail-loud guards. `requireValue` throws when a setup value is missing. `assertOk` throws with the status and body of a failed response. `sessionIdFromTitle` reads the session number from a title such as "Lobby 15". `exactText` builds a whole-text match for `hasText`. |
 
 ## Global Setup and Personas
 
@@ -92,6 +94,7 @@ Source: `playwright.config.ts`.
 - Defaults live in `e2e/support/env.ts` only. Steps import the values from there.
 - Global setup: `e2e/support/global_setup.ts`. It creates the personas (see above).
 - Projects: desktop Chromium, Firefox and WebKit.
+- Clipboard access, so that the invite scenario can read back the copied URL: Chromium gets `clipboard-read` and `clipboard-write`. WebKit gets `clipboard-read`. Firefox has no clipboard permission, so its project sets the `dom.events.testing.asyncClipboard` preference. A clipboard read that the engine refuses fails the step.
 - Artifacts: a trace on the first retry. A video and a screenshot on failure.
 - Web servers: none. The suite does not start the gateway or the App Shell. The Kind stack must already run.
 
@@ -99,7 +102,7 @@ Source: `playwright.config.ts`.
 
 | Command | Runs | Starts browsers |
 |---|---|---|
-| `make test-bdd` | `pnpm run e2e:typecheck`, then `scripts/check_e2e_unused_steps.py`, then `pnpm exec bddgen` | No |
+| `make test-bdd` | `pnpm run e2e:typecheck`, then `node --test e2e/unit/*.test.ts`, then `scripts/check_e2e_unused_steps.py`, then `pnpm exec bddgen` | No |
 | `make test-e2e` | `pnpm exec bddgen`, then `pnpm exec playwright test $(ARGS)` with `ZITADEL_ADMIN_PAT` read from the `zitadel-admin` Secret | Yes, all three projects |
 | `make test-e2e-ui` | `pnpm exec bddgen`, then `pnpm exec playwright test --ui $(ARGS)` with the same token | Yes |
 | `scripts/test_ci_e2e.sh` | Starts the dev servers on `:8000` and `:5173`. It does not start Zitadel or the Kind stack, so it cannot run the real sign-in flow. | Yes |
