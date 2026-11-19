@@ -8,9 +8,8 @@ from __future__ import annotations
 
 import pytest
 from fastapi.testclient import TestClient
-from gateway_mcp.server import mcp
 
-from tests.helpers.mcp_http import call_tool_json
+from tests.helpers.mcp_http import call_tool_json, listed_tools_sync
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 PARAMS = {
@@ -98,15 +97,17 @@ def test_dice_expression_stays_in_range(client: TestClient):
         "two_directives",
     ],
 )
-def test_registration_refuses_unsafe_or_invalid_handlers(client: TestClient, handler):
+def test_registration_refuses_unsafe_or_invalid_handlers(
+    client: TestClient, handler, mcp_endpoint: str
+):
     res = _register(client, "probe_unsafe", handler)
 
     assert res.status_code == 400
-    assert mcp._tool_manager.get_tool("probe_unsafe") is None
+    assert listed_tools_sync(mcp_endpoint).get("probe_unsafe") is None
     assert client.get("/mcp/tools/probe_unsafe").status_code == 404
 
 
-def test_code_handlers_are_gone(client: TestClient):
+def test_code_handlers_are_gone(client: TestClient, mcp_endpoint: str):
     payload = {
         "name": "legacy_code",
         "parameters": {"type": "object", "properties": {}},
@@ -115,7 +116,7 @@ def test_code_handlers_are_gone(client: TestClient):
     res = client.post("/mcp/tools/register", json=payload)
 
     assert res.status_code == 422
-    assert mcp._tool_manager.get_tool("legacy_code") is None
+    assert listed_tools_sync(mcp_endpoint).get("legacy_code") is None
 
 
 def test_runtime_arithmetic_error_is_a_clean_400(client: TestClient):

@@ -4,9 +4,8 @@ from __future__ import annotations
 
 import pytest
 from fastapi.testclient import TestClient
-from gateway_mcp.server import mcp
 
-from tests.helpers.mcp_http import call_tool_json
+from tests.helpers.mcp_http import call_tool_json, listed_tools
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 
@@ -31,7 +30,7 @@ async def test_blackbox_hot_reload_tool_logic_without_restart(
     res1 = client.post("/mcp/tools/register", json=v1_payload)
     assert res1.status_code == 200
 
-    tool_v1 = mcp._tool_manager.get_tool(tool_name)
+    tool_v1 = (await listed_tools(mcp_endpoint)).get(tool_name)
     assert tool_v1 is not None
     out1 = await call_tool_json(
         mcp_endpoint, tool_name, {"dex_mod": 3}, SIGNING_ISSUER.mint("user-test")
@@ -58,8 +57,8 @@ async def test_blackbox_hot_reload_tool_logic_without_restart(
     assert res2.json()["status"] == "updated"
 
     # 3. Assert FastMCP immediately runs updated logic without server restart
-    tool_v2 = mcp._tool_manager.get_tool(tool_name)
-    assert "prof_bonus" in tool_v2.parameters["properties"]
+    tool_v2 = (await listed_tools(mcp_endpoint)).get(tool_name)
+    assert "prof_bonus" in tool_v2.inputSchema["properties"]
     out2 = await call_tool_json(
         mcp_endpoint, tool_name, {"dex_mod": 3, "prof_bonus": 4}, SIGNING_ISSUER.mint("user-test")
     )

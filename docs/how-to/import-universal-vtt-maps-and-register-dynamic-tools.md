@@ -141,18 +141,16 @@ print("Tool registered successfully:", response.json())
 
 ### Immediate FastMCP Discovery
 
-Once registered, the tool is immediately visible to FastMCP clients:
+Once registered, the tool is immediately visible to MCP clients. `session` is an initialized MCP `ClientSession` on the `/mcp` endpoint, with the caller bearer:
 
 ```python
-from gateway_mcp.server import mcp
-
 # Discovered immediately without server restart
-tool = mcp._tool_manager.get_tool("calculate_spell_falloff")
-assert tool is not None
+tools = {tool.name: tool for tool in (await session.list_tools()).tools}
+assert "calculate_spell_falloff" in tools
 
 # Executable directly by LLM agent action plans
-result = await tool.run({"base_damage": 30, "distance": 5})
-print(result)  # {"effective_damage": 20, "drop": 10}
+result = await session.call_tool("calculate_spell_falloff", {"base_damage": 30, "distance": 5})
+print(result.content[0].text)  # {"effective_damage": 20, "drop": 10}
 ```
 
 ### Declarative Handlers

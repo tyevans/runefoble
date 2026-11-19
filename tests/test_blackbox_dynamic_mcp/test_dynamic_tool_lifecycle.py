@@ -6,9 +6,8 @@ import json
 
 import pytest
 from fastapi.testclient import TestClient
-from gateway_mcp.server import mcp
 
-from tests.helpers.mcp_http import call_tool_json
+from tests.helpers.mcp_http import call_tool_json, listed_tools
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.ws_identity import SIGNING_ISSUER
 from tests.test_blackbox_dynamic_mcp.conftest import caller_headers
@@ -50,10 +49,10 @@ async def test_blackbox_register_dynamic_tool_and_discovery(client: TestClient, 
     assert tool_name in tool_names
 
     # 3. Verify FastMCP public protocol discovers new tool without restart
-    fastmcp_tool = mcp._tool_manager.get_tool(tool_name)
+    fastmcp_tool = (await listed_tools(mcp_endpoint)).get(tool_name)
     assert fastmcp_tool is not None, "Tool must be discovered in FastMCP immediately"
-    assert "base_damage" in fastmcp_tool.parameters["properties"]
-    assert "distance" in fastmcp_tool.parameters["properties"]
+    assert "base_damage" in fastmcp_tool.inputSchema["properties"]
+    assert "distance" in fastmcp_tool.inputSchema["properties"]
 
     # 4. Invoke via FastMCP protocol entrypoint
     mcp_out = await call_tool_json(
@@ -74,7 +73,7 @@ async def test_blackbox_register_dynamic_tool_and_discovery(client: TestClient, 
 
 
 @pytest.mark.asyncio
-async def test_blackbox_deregister_dynamic_tool(client: TestClient):
+async def test_blackbox_deregister_dynamic_tool(client: TestClient, mcp_endpoint: str):
     """Verify unregistering a dynamic tool removes it from REST catalog and FastMCP server."""
     tool_name = "temporary_blessing"
     payload = {
@@ -85,7 +84,7 @@ async def test_blackbox_deregister_dynamic_tool(client: TestClient):
     }
     # Register tool
     client.post("/mcp/tools/register", json=payload)
-    assert mcp._tool_manager.get_tool(tool_name) is not None
+    assert (await listed_tools(mcp_endpoint)).get(tool_name) is not None
 
     # Deregister tool
     del_res = client.delete(f"/mcp/tools/{tool_name}")
@@ -93,7 +92,7 @@ async def test_blackbox_deregister_dynamic_tool(client: TestClient):
     assert del_res.json()["status"] == "deregistered"
 
     # Verify tool is gone from FastMCP and dynamic list
-    assert mcp._tool_manager.get_tool(tool_name) is None
+    assert (await listed_tools(mcp_endpoint)).get(tool_name) is None
     list_res = client.get("/mcp/tools/dynamic")
     tool_names = [t["name"] for t in list_res.json()["tools"]]
     assert tool_name not in tool_names

@@ -15,6 +15,7 @@ from runefoble_events.events import AbsencePenaltyApplied, StandInActionDecided
 from runefoble_platform.redis_bus import deserialize_event
 from the_watcher.main import app as watcher_app
 
+from tests.helpers.campaign_setup import create_owned_campaign_async
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.spicedb_factory import make_table_runner
 from tests.helpers.stand_in_policy import create_character
@@ -113,7 +114,7 @@ async def test_game_session_auto_pilot_turn(
         base_url="http://test",
         headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"},
     ) as client:
-        campaign_id = await _owned_campaign(client)
+        campaign_id = await create_owned_campaign_async(client)
         char_id = create_character(live_character_sheet, "test-user")
 
         # 1. Create session
@@ -252,10 +253,3 @@ async def test_absentee_session_recap_generation():
         assert len(recap_data["highlights"]) == 2
         assert "drunk" in recap_data["penalties_active"]
         assert "foolishness" in recap_data["penalties_active"]
-
-
-async def _owned_campaign(client) -> str:
-    """Create a campaign as the calling user, so that the caller can run sessions in it."""
-    res = await client.post("/api/v1/campaigns", json={"title": "Owned Campaign"})
-    assert res.status_code == 201, res.text
-    return res.json()["id"]

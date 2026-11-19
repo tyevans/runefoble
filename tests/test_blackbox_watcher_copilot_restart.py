@@ -29,6 +29,9 @@ from the_watcher.dependencies import (
     STREAM_WATCHER,
     build_copilot_engine,
     get_copilot_engine,
+    get_disambiguation_repo,
+    get_pending_action_repo,
+    get_whisper_repo,
     set_copilot_engine,
     set_disambiguation_repo,
     set_pending_action_repo,
@@ -37,6 +40,7 @@ from the_watcher.dependencies import (
 from the_watcher.main import app
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.module_state import SeamRestorer
 from tests.helpers.spicedb_factory import bind_session_to_campaign, make_table_runner
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
@@ -56,17 +60,28 @@ def mock_redis() -> MockAsyncRedis:
 
 
 @pytest.fixture(autouse=True)
-def durable_copilot_store(use_redis_client, mock_redis: MockAsyncRedis):
+def durable_copilot_store(
+    use_redis_client, mock_redis: MockAsyncRedis, seam_restorer: SeamRestorer
+):
     """Give each test one event store that survives engine restarts, and a Redis double."""
     use_redis_client(mock_redis)
     store = InMemoryEventStore()
-    set_pending_action_repo(create_aggregate_repository(PendingActionAggregate, event_store=store))
-    set_whisper_repo(create_aggregate_repository(WhisperAggregate, event_store=store))
-    set_disambiguation_repo(create_aggregate_repository(DisambiguationAggregate, event_store=store))
+    seam_restorer.replace(
+        get_pending_action_repo,
+        set_pending_action_repo,
+        create_aggregate_repository(PendingActionAggregate, event_store=store),
+    )
+    seam_restorer.replace(
+        get_whisper_repo,
+        set_whisper_repo,
+        create_aggregate_repository(WhisperAggregate, event_store=store),
+    )
+    seam_restorer.replace(
+        get_disambiguation_repo,
+        set_disambiguation_repo,
+        create_aggregate_repository(DisambiguationAggregate, event_store=store),
+    )
     yield
-    set_pending_action_repo(None)
-    set_whisper_repo(None)
-    set_disambiguation_repo(None)
 
 
 def _restart() -> None:

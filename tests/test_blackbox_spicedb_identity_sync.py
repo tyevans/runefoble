@@ -13,7 +13,6 @@ import os
 from collections.abc import Iterator
 from uuid import uuid4
 
-import httpx
 import pytest
 from fastapi.testclient import TestClient
 from gateway_api.auth import get_spicedb_client
@@ -22,7 +21,7 @@ from runefoble_auth.sync import ZitadelSpiceDBSyncService
 from runefoble_events.events import SessionCreated
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 
-from tests.helpers.campaign_setup import create_campaign
+from tests.helpers.campaign_setup import create_campaign, create_owner_session
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.ws_identity import bearer
 
@@ -69,7 +68,11 @@ async def test_gm_synchronization_dm_override_and_atmosphere(trusted_ws_issuer, 
     gm_id = "gm_elena"
     stranger_id = "stranger_pete"
     campaign_id = create_campaign(client, owner_id, title="Sync Campaign")
-    session_id = _owner_session(campaign_id, bearer(owner_id, issuer=trusted_ws_issuer))
+    session_id = create_owner_session(
+        os.environ["RUNEFOBLE_GAME_SESSION_URL"],
+        bearer(owner_id, issuer=trusted_ws_issuer),
+        campaign_id,
+    )
 
     # 1. Before sync: GM and stranger are rejected with 403
     res_before = client.post(
@@ -136,7 +139,11 @@ async def test_idempotence_and_instant_revocation(trusted_ws_issuer, client) -> 
     """Re-granting produces no duplicates; removal immediately revokes permissions."""
     owner_id = "owner_idem"
     campaign_id = create_campaign(client, owner_id, title="Sync Campaign")
-    session_id = _owner_session(campaign_id, bearer(owner_id, issuer=trusted_ws_issuer))
+    session_id = create_owner_session(
+        os.environ["RUNEFOBLE_GAME_SESSION_URL"],
+        bearer(owner_id, issuer=trusted_ws_issuer),
+        campaign_id,
+    )
     user_id = "test_player_grant"
     owner_headers = bearer(owner_id, issuer=trusted_ws_issuer)
     grant_payload = {"user_id": user_id, "role": "player"}
@@ -228,16 +235,3 @@ async def test_sync_resilience_and_retry() -> None:
     synced = await service.sync_membership("camp_flaky", "user_1", "player")
     assert call_count == 3
     assert len(synced) > 0
-
-
-def _owner_session(campaign_id: str, headers: dict[str, str]) -> str:
-    """Create a game session in a campaign through the owner's public game_session route."""
-    url = os.environ["RUNEFOBLE_GAME_SESSION_URL"]
-    res = httpx.post(
-        f"{url}/api/v1/sessions/create",
-        json={"campaign_id": campaign_id, "title": "Crypt"},
-        headers=headers,
-        timeout=5.0,
-    )
-    assert res.status_code == 200, res.text
-    return res.json()["session_id"]

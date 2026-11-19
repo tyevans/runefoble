@@ -22,7 +22,7 @@ from game_session.campaign.repositories import (
     set_campaign_repositories,
 )
 from game_session.main import app as session_app
-from game_session.settlement.auth.tokens import set_zitadel_auth_service
+from game_session.settlement.auth.tokens import get_zitadel_auth_service, set_zitadel_auth_service
 from runefoble_auth.mock import MockSpiceDBClient
 from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
 from runefoble_platform.config import PlatformSettings
@@ -36,11 +36,10 @@ pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
 @pytest.fixture
-def issuer() -> Iterator[SigningTestIssuer]:
+def issuer(seam_restorer: SeamRestorer) -> Iterator[SigningTestIssuer]:
     signing = SigningTestIssuer()
-    set_zitadel_auth_service(signing.verifier())
+    seam_restorer.replace(get_zitadel_auth_service, set_zitadel_auth_service, signing.verifier())
     yield signing
-    set_zitadel_auth_service(None)
 
 
 @pytest.fixture(autouse=True)

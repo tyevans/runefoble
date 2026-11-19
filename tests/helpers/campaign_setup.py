@@ -12,6 +12,7 @@ from __future__ import annotations
 from uuid import uuid4
 
 import httpx
+from fastapi.testclient import TestClient
 
 from tests.helpers.ws_identity import bearer
 
@@ -58,3 +59,52 @@ def invite_and_join(
         headers=bearer(member_id),
     )
     assert joined.status_code == 200, joined.text
+
+
+def _game_session_client() -> TestClient:
+    """Return a client for the game_session app. It shares the test SpiceDB client by factory."""
+    from game_session.main import app as session_app
+
+    return TestClient(session_app)
+
+
+def create_dm_campaign(dm_id: str = "user-test") -> str:
+    """Create a campaign that `dm_id` owns through `POST /api/v1/campaigns` and return its id.
+
+    The owner holds `run_session`, so the owner runs the boards of the campaign. Board tests call
+    this instead of writing a `dungeon_master` tuple by hand.
+    """
+    return create_campaign(_game_session_client(), dm_id)
+
+
+def add_member(campaign_id: str, owner_id: str, member_id: str, role: str) -> None:
+    """Invite `member_id` as `role` through the public invite and join routes."""
+    invite_and_join(_game_session_client(), campaign_id, owner_id, member_id, role)
+
+
+def create_owned_campaign(client: httpx.Client, title: str = "Owned Campaign") -> str:
+    """Create a campaign with the client's own identity and return its id. The caller owns it."""
+    res = client.post("/api/v1/campaigns", json={"title": title})
+    assert res.status_code == 201, res.text
+    return str(res.json()["id"])
+
+
+async def create_owned_campaign_async(
+    client: httpx.AsyncClient, title: str = "Owned Campaign"
+) -> str:
+    """Async form of `create_owned_campaign` for tests that drive an `AsyncClient`."""
+    res = await client.post("/api/v1/campaigns", json={"title": title})
+    assert res.status_code == 201, res.text
+    return str(res.json()["id"])
+
+
+def create_owner_session(base_url: str, headers: dict[str, str], campaign_id: str) -> str:
+    """Create a game session in a campaign through the owner's public game_session route."""
+    res = httpx.post(
+        f"{base_url}/api/v1/sessions/create",
+        json={"campaign_id": campaign_id, "title": "Crypt"},
+        headers=headers,
+        timeout=5.0,
+    )
+    assert res.status_code == 200, res.text
+    return str(res.json()["session_id"])

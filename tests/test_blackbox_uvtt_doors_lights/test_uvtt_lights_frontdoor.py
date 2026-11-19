@@ -7,8 +7,9 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 
+from tests.helpers.campaign_setup import add_member, create_dm_campaign
 from tests.helpers.ws_identity import ws_subprotocols
-from tests.test_blackbox_uvtt_doors_lights.conftest import create_board, grant_permission
+from tests.test_blackbox_uvtt_doors_lights.conftest import create_board
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
@@ -128,12 +129,10 @@ def test_dynamic_light_placement_http(board_client: TestClient):
 
 def test_light_placement_over_websocket_authorized_and_denied(gateway_client: TestClient):
     """Verify WebSocket Zanzibar authorization for dynamic light placement."""
-    campaign_id = f"camp-lights-{uuid4().hex[:8]}"
     dm_id = "dm_evelyn"
     spectator_id = "spectator_sam"
-
-    grant_permission("campaign", campaign_id, "dungeon_master", dm_id)
-    grant_permission("campaign", campaign_id, "spectator", spectator_id)
+    campaign_id = create_dm_campaign(dm_id)
+    add_member(campaign_id, dm_id, spectator_id, "spectator")
 
     # 1. DM can place light over WebSocket
     with gateway_client.websocket_connect(

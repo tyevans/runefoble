@@ -21,9 +21,10 @@ import httpx
 import pytest
 from gateway_mcp.server import mcp
 from mcp.types import CallToolResult
-from runefoble_auth.factory import set_spicedb_client
+from runefoble_auth.factory import get_spicedb_client, set_spicedb_client
 
 from tests.helpers.mcp_http import call_tool_over_http, serve_mcp
+from tests.helpers.module_state import restored_seam
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 pytestmark = [pytest.mark.authz_live, pytest.mark.usefixtures("trusted_ws_issuer")]
@@ -40,12 +41,11 @@ def live_read_stack(live_spicedb_with_schema, character_sheet_upstream) -> Itera
     checks the same live schema, so both checks read the same tuples.
     """
     live_client = live_spicedb_with_schema.client
-    set_spicedb_client(live_client)
-    try:
-        with serve_mcp(mcp) as endpoint:
-            yield endpoint
-    finally:
-        set_spicedb_client(None)
+    with (
+        restored_seam(get_spicedb_client, set_spicedb_client, live_client, replace=True),
+        serve_mcp(mcp) as endpoint,
+    ):
+        yield endpoint
 
 
 @pytest.fixture

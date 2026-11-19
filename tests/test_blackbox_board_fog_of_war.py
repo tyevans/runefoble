@@ -4,17 +4,17 @@ Governed by Hard Invariant 7 (Blackbox TDD with Frontdoor Setup).
 Interacts strictly through public HTTP routes of board_state.
 """
 
-import asyncio
 from uuid import uuid4
 
 import pytest
 from board_state.main import app
 from fastapi.testclient import TestClient
 
+from tests.helpers.campaign_setup import add_member, create_dm_campaign
 from tests.helpers.ws_identity import bearer
 
 
-def test_fog_of_war_visibility_and_manual_masking():
+def test_fog_of_war_visibility_and_manual_masking(board_campaign: str):
     """Verify fog-of-war visibility filtering, manual reveal, and manual shroud endpoints."""
     client = TestClient(app, headers=bearer("user-test"))
     board_id = f"board-{uuid4().hex[:8]}"
@@ -22,7 +22,7 @@ def test_fog_of_war_visibility_and_manual_masking():
     # 1. Create a 10x10 board
     res = client.post(
         "/api/v1/boards",
-        json={"campaign_id": BOARD_CAMPAIGN, "board_id": board_id, "cols": 10, "rows": 10},
+        json={"campaign_id": board_campaign, "board_id": board_id, "cols": 10, "rows": 10},
     )
     assert res.status_code == 200
 
@@ -105,27 +105,9 @@ def test_fog_of_war_visibility_and_manual_masking():
     assert "goblin-1" not in board_final["tokens"]
 
 
-BOARD_CAMPAIGN = "camp-board-fixture"
-
-
 @pytest.fixture(autouse=True)
-def _board_campaign_dm(spicedb):
-    """Make `user-test` the DM of the campaign that every board in this module belongs to."""
-    asyncio.run(
-        spicedb.write_relationship(
-            resource_type="campaign",
-            resource_id=BOARD_CAMPAIGN,
-            relation="dungeon_master",
-            subject_type="user",
-            subject_id="user-test",
-        )
-    )
-    asyncio.run(
-        spicedb.write_relationship(
-            resource_type="campaign",
-            resource_id=BOARD_CAMPAIGN,
-            relation="player",
-            subject_type="user",
-            subject_id="player-viewer",
-        )
-    )
+def board_campaign(trusted_ws_issuer) -> str:
+    """The campaign that every board in this module belongs to. `user-test` runs it."""
+    campaign_id = create_dm_campaign("user-test")
+    add_member(campaign_id, "user-test", "player-viewer", "player")
+    return campaign_id

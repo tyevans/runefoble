@@ -18,8 +18,9 @@ from runefoble_auth.factory import get_spicedb_client
 from the_watcher.main import app
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.module_state import SeamRestorer
 from tests.helpers.spicedb_factory import bind_session_to_campaign
-from tests.helpers.watcher_copilot_stores import install_fresh_copilot_stores, reset_copilot_stores
+from tests.helpers.watcher_copilot_stores import install_fresh_copilot_stores
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
@@ -33,10 +34,9 @@ class FailingRedis(MockAsyncRedis):
 
 
 @pytest.fixture(autouse=True)
-def clean_environment():
-    install_fresh_copilot_stores()
+def clean_environment(seam_restorer: SeamRestorer):
+    install_fresh_copilot_stores(seam_restorer)
     yield
-    reset_copilot_stores()
 
 
 @pytest.fixture

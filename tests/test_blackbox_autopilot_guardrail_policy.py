@@ -19,6 +19,7 @@ from game_session.character_client import CHARACTER_SHEET_URL_ENV
 from game_session.main import app as session_app
 from httpx import ASGITransport, AsyncClient
 
+from tests.helpers.campaign_setup import create_owned_campaign_async
 from tests.helpers.ports import free_port
 from tests.helpers.stand_in_policy import create_character, store_policy
 from tests.helpers.watcher_double import STAND_IN_ACTION_BODY, serve_watcher_double
@@ -60,18 +61,12 @@ def _capturing_watcher(received: list[dict[str, Any]]) -> FastAPI:
     return app
 
 
-async def _owned_campaign(client: AsyncClient) -> str:
-    res = await client.post("/api/v1/campaigns", json={"title": "Policy Campaign"})
-    assert res.status_code == 201, res.text
-    return res.json()["id"]
-
-
 async def _start_session_with_absent_player(client: AsyncClient, character_id: str) -> str:
     """Create, join, start, and leave a session through public routes. Return its id."""
     create_res = await client.post(
         "/api/v1/sessions/create",
         json={
-            "campaign_id": await _owned_campaign(client),
+            "campaign_id": await create_owned_campaign_async(client),
             "title": "Policy Session",
             "dm_id": "dm_alice",
         },

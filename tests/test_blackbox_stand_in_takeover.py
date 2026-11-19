@@ -14,6 +14,7 @@ from runefoble_auth.mock import MockSpiceDBClient
 from runefoble_events.events import CharacterControlTransferred
 from runefoble_platform.redis_bus import deserialize_event
 
+from tests.helpers.campaign_setup import create_owned_campaign_async
 from tests.helpers.live_services import serve
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.ws_identity import SIGNING_ISSUER, bearer
@@ -243,9 +244,7 @@ async def test_hot_swap_returns_502_when_character_sheet_is_not_configured(
 
 async def _owned_campaign(client, player_id: str | None = None) -> str:
     """Create a campaign as the calling user. A named player redeems a player invite."""
-    res = await client.post("/api/v1/campaigns", json={"title": "Owned Campaign"})
-    assert res.status_code == 201, res.text
-    campaign_id = res.json()["id"]
+    campaign_id = await create_owned_campaign_async(client)
     if player_id is not None:
         await _add_player(client, campaign_id, player_id)
     return campaign_id

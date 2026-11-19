@@ -8,21 +8,23 @@ Governed by:
 
 from __future__ import annotations
 
-import asyncio
 from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
 
+from tests.helpers.campaign_setup import create_dm_campaign
 from tests.helpers.mock_redis import MockAsyncRedis
 
 
-def _create_board(client: TestClient, cols: int = 10, rows: int = 10) -> str:
+def _create_board(
+    client: TestClient, cols: int = 10, rows: int = 10, *, board_campaign: str
+) -> str:
     """Helper to create a fresh tactical board via public frontdoor."""
     resp = client.post(
         "/api/v1/boards",
         json={
-            "campaign_id": BOARD_CAMPAIGN,
+            "campaign_id": board_campaign,
             "cols": cols,
             "rows": rows,
             "session_id": f"session-dice-phys-{uuid4()}",
@@ -48,9 +50,10 @@ def test_simulate_throw_cryptographic_alignment_all_polyhedral_types(
     mock_bus: MockAsyncRedis,
     dice_type: str,
     expected_face: int,
+    board_campaign: str,
 ) -> None:
     """Verify simulate-throw reliably resolves 100% to server-side cryptographic dice roll values."""
-    board_id = _create_board(client)
+    board_id = _create_board(client, board_campaign=board_campaign)
 
     # 1. Post simulated 3D throw specifying cryptographic target face
     throw_resp = client.post(
@@ -98,9 +101,10 @@ def test_simulate_throw_cryptographic_alignment_all_polyhedral_types(
 def test_simulate_throw_boundary_bounce_and_energy_dissipation(
     client: TestClient,
     mock_bus: MockAsyncRedis,
+    board_campaign: str,
 ) -> None:
     """Verify high velocity throw ricochets off tray perimeters and settles within bounds."""
-    board_id = _create_board(client, cols=8, rows=8)
+    board_id = _create_board(client, cols=8, rows=8, board_campaign=board_campaign)
 
     throw_resp = client.post(
         f"/api/v1/boards/{board_id}/physics/simulate-throw",
@@ -132,9 +136,10 @@ def test_simulate_throw_boundary_bounce_and_energy_dissipation(
 def test_simulate_throw_without_target_generates_valid_polyhedral_face(
     client: TestClient,
     mock_bus: MockAsyncRedis,
+    board_campaign: str,
 ) -> None:
     """Verify standard roll without forced target generates valid face within sides range."""
-    board_id = _create_board(client)
+    board_id = _create_board(client, board_campaign=board_campaign)
 
     throw_resp = client.post(
         f"/api/v1/boards/{board_id}/physics/simulate-throw",
@@ -156,18 +161,7 @@ def test_simulate_throw_without_target_generates_valid_polyhedral_face(
     assert data["bounces"] >= 1
 
 
-BOARD_CAMPAIGN = "camp-board-fixture"
-
-
 @pytest.fixture(autouse=True)
-def _board_campaign_dm(spicedb):
-    """Make `user-test` the DM of the campaign that every board in this module belongs to."""
-    asyncio.run(
-        spicedb.write_relationship(
-            resource_type="campaign",
-            resource_id=BOARD_CAMPAIGN,
-            relation="dungeon_master",
-            subject_type="user",
-            subject_id="user-test",
-        )
-    )
+def board_campaign(trusted_ws_issuer) -> str:
+    """The campaign that every board in this module belongs to. `user-test` runs it."""
+    return create_dm_campaign("user-test")

@@ -7,13 +7,13 @@ Governed by:
 - Hard Invariant 7: Blackbox TDD with Frontdoor Setup (strictly HTTP & WebSockets)
 """
 
-import asyncio
 from uuid import uuid4
 
 import pytest
 from board_state.main import app as board_app
 from fastapi.testclient import TestClient
 
+from tests.helpers.campaign_setup import create_dm_campaign
 from tests.helpers.ws_identity import bearer, ws_subprotocols
 
 
@@ -22,14 +22,14 @@ def client():
     return TestClient(board_app, headers=bearer("user-test"))
 
 
-def test_radial_token_action_execution_frontdoor(client):
+def test_radial_token_action_execution_frontdoor(client, board_campaign: str):
     """Verify radial token actions (Dodge, Dash, Attack, Disengage, Cast) via public HTTP routes."""
     board_id = f"board-{uuid4().hex[:8]}"
 
     # Setup board and token via frontdoors
     client.post(
         "/api/v1/boards",
-        json={"campaign_id": BOARD_CAMPAIGN, "board_id": board_id, "cols": 10, "rows": 10},
+        json={"campaign_id": board_campaign, "board_id": board_id, "cols": 10, "rows": 10},
     )
     client.post(
         f"/api/v1/boards/{board_id}/tokens",
@@ -86,12 +86,12 @@ def test_radial_token_action_execution_frontdoor(client):
     assert res_unknown.status_code == 404
 
 
-def test_aoe_rotatable_cone_calculations_and_angle_snapping(client):
+def test_aoe_rotatable_cone_calculations_and_angle_snapping(client, board_campaign: str):
     """Verify 15ft cone mathematical calculations, target tokens, and 15-degree angle snapping."""
     board_id = f"board-{uuid4().hex[:8]}"
     client.post(
         "/api/v1/boards",
-        json={"campaign_id": BOARD_CAMPAIGN, "board_id": board_id, "cols": 12, "rows": 12},
+        json={"campaign_id": board_campaign, "board_id": board_id, "cols": 12, "rows": 12},
     )
 
     # Place caster Marcus at (2, 2)
@@ -150,12 +150,12 @@ def test_aoe_rotatable_cone_calculations_and_angle_snapping(client):
     assert "goblin-east" not in data_south["affected_token_ids"]
 
 
-def test_aoe_sphere_and_line_geometry_evaluations(client):
+def test_aoe_sphere_and_line_geometry_evaluations(client, board_campaign: str):
     """Verify spherical radius and line projection intersection testing."""
     board_id = f"board-{uuid4().hex[:8]}"
     client.post(
         "/api/v1/boards",
-        json={"campaign_id": BOARD_CAMPAIGN, "board_id": board_id, "cols": 12, "rows": 12},
+        json={"campaign_id": board_campaign, "board_id": board_id, "cols": 12, "rows": 12},
     )
 
     # Center token at (5, 5)
@@ -211,12 +211,12 @@ def test_aoe_sphere_and_line_geometry_evaluations(client):
     assert "far-tok" not in line_data["affected_token_ids"]
 
 
-def test_aoe_template_placement_and_lifecycle(client):
+def test_aoe_template_placement_and_lifecycle(client, board_campaign: str):
     """Verify AoE template placement, persistence in aggregate, listing, and deletion."""
     board_id = f"board-{uuid4().hex[:8]}"
     client.post(
         "/api/v1/boards",
-        json={"campaign_id": BOARD_CAMPAIGN, "board_id": board_id, "cols": 10, "rows": 10},
+        json={"campaign_id": board_campaign, "board_id": board_id, "cols": 10, "rows": 10},
     )
     client.post(
         f"/api/v1/boards/{board_id}/tokens",
@@ -257,12 +257,12 @@ def test_aoe_template_placement_and_lifecycle(client):
     assert len(list_after) == 0
 
 
-def test_websocket_radial_action_and_aoe_streaming(client):
+def test_websocket_radial_action_and_aoe_streaming(client, board_campaign: str):
     """Verify real-time WebSocket messaging for radial token actions and live AoE calculations."""
     board_id = f"board-{uuid4().hex[:8]}"
     client.post(
         "/api/v1/boards",
-        json={"campaign_id": BOARD_CAMPAIGN, "board_id": board_id, "cols": 10, "rows": 10},
+        json={"campaign_id": board_campaign, "board_id": board_id, "cols": 10, "rows": 10},
     )
     client.post(
         f"/api/v1/boards/{board_id}/tokens",
@@ -322,18 +322,7 @@ def test_websocket_radial_action_and_aoe_streaming(client):
         assert msg_placed["template"]["template_id"] == "aoe-ws-1"
 
 
-BOARD_CAMPAIGN = "camp-board-fixture"
-
-
 @pytest.fixture(autouse=True)
-def _board_campaign_dm(spicedb):
-    """Make `user-test` the DM of the campaign that every board in this module belongs to."""
-    asyncio.run(
-        spicedb.write_relationship(
-            resource_type="campaign",
-            resource_id=BOARD_CAMPAIGN,
-            relation="dungeon_master",
-            subject_type="user",
-            subject_id="user-test",
-        )
-    )
+def board_campaign(trusted_ws_issuer) -> str:
+    """The campaign that every board in this module belongs to. `user-test` runs it."""
+    return create_dm_campaign("user-test")

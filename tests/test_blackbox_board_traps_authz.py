@@ -20,6 +20,7 @@ from board_state.main import app
 from fastapi.testclient import TestClient
 from runefoble_auth.errors import AuthzSchemaError, AuthzUnavailableError, AuthzWriteError
 
+from tests.helpers.campaign_setup import add_member, create_dm_campaign
 from tests.helpers.ws_identity import bearer, ws_subprotocols
 
 DM = "dm-evelyn"
@@ -36,25 +37,12 @@ def client() -> TestClient:
     return TestClient(app)
 
 
-def _grant(spicedb, campaign_id: str, relation: str, user: str) -> None:
-    asyncio.run(
-        spicedb.write_relationship(
-            resource_type="campaign",
-            resource_id=campaign_id,
-            relation=relation,
-            subject_type="user",
-            subject_id=user,
-        )
-    )
-
-
 @pytest.fixture
-def campaign(spicedb) -> str:
+def campaign(trusted_ws_issuer) -> str:
     """A campaign with a DM, a player and a spectator. The stranger holds no role."""
-    campaign_id = str(uuid4())
-    _grant(spicedb, campaign_id, "dungeon_master", DM)
-    _grant(spicedb, campaign_id, "player", PLAYER)
-    _grant(spicedb, campaign_id, "spectator", SPECTATOR)
+    campaign_id = create_dm_campaign(DM)
+    add_member(campaign_id, DM, PLAYER, "player")
+    add_member(campaign_id, DM, SPECTATOR, "spectator")
     return campaign_id
 
 
@@ -145,11 +133,10 @@ def test_board_creation_needs_run_session_on_the_campaign(
 
 
 def test_creating_an_existing_board_does_not_rebind_it_to_another_campaign(
-    client: TestClient, board: str, spicedb
+    client: TestClient, board: str
 ):
     """A DM of another campaign cannot take over a board by creating its session id again."""
-    other_campaign = str(uuid4())
-    _grant(spicedb, other_campaign, "dungeon_master", STRANGER)
+    other_campaign = create_dm_campaign(STRANGER)
 
     again = client.post(
         "/api/v1/boards",

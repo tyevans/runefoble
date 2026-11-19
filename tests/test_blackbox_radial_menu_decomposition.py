@@ -11,18 +11,18 @@ Governed by:
 
 from __future__ import annotations
 
-import asyncio
 from uuid import uuid4
 
 import pytest
 from board_state.main import app as board_app
 from httpx import ASGITransport, AsyncClient
 
+from tests.helpers.campaign_setup import create_dm_campaign
 from tests.helpers.ws_identity import bearer
 
 
 @pytest.mark.asyncio
-async def test_frontdoor_radial_actions_execution() -> None:
+async def test_frontdoor_radial_actions_execution(board_campaign: str) -> None:
     """Verify all 5 radial menu actions execute successfully via public frontdoor HTTP routes."""
     transport = ASGITransport(app=board_app)
     session_id = f"radial-sess-{uuid4().hex[:8]}"
@@ -33,7 +33,7 @@ async def test_frontdoor_radial_actions_execution() -> None:
         # 1. Create board through the public POST frontdoor
         init_res = await client.post(
             "/api/v1/boards",
-            json={"campaign_id": BOARD_CAMPAIGN, "session_id": session_id, "cols": 12, "rows": 12},
+            json={"campaign_id": board_campaign, "session_id": session_id, "cols": 12, "rows": 12},
         )
         assert init_res.status_code == 200
 
@@ -72,18 +72,7 @@ async def test_frontdoor_radial_actions_execution() -> None:
             assert f"Action '{act}' successfully executed" in act_data["message"]
 
 
-BOARD_CAMPAIGN = "camp-board-fixture"
-
-
 @pytest.fixture(autouse=True)
-def _board_campaign_dm(spicedb):
-    """Make `user-test` the DM of the campaign that every board in this module belongs to."""
-    asyncio.run(
-        spicedb.write_relationship(
-            resource_type="campaign",
-            resource_id=BOARD_CAMPAIGN,
-            relation="dungeon_master",
-            subject_type="user",
-            subject_id="user-test",
-        )
-    )
+def board_campaign(trusted_ws_issuer) -> str:
+    """The campaign that every board in this module belongs to. `user-test` runs it."""
+    return create_dm_campaign("user-test")

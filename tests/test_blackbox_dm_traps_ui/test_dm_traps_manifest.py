@@ -10,14 +10,13 @@ Governed by:
 
 from __future__ import annotations
 
-import asyncio
 import json
 from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
-from runefoble_auth.mock import MockSpiceDBClient
 
+from tests.helpers.campaign_setup import create_dm_campaign
 from tests.helpers.ws_identity import bearer
 
 from .conftest import REPO_ROOT
@@ -56,15 +55,11 @@ def test_manifest_file_matches_advertised_manifest(client: TestClient) -> None:
 
 
 @pytest.mark.asyncio
-async def test_frontdoor_contract_integration(
-    client: TestClient, spicedb: MockSpiceDBClient
-) -> None:
+async def test_frontdoor_contract_integration(client: TestClient, trusted_ws_issuer) -> None:
     """Verify UI action payloads conform with backend board API frontdoors."""
     board_id = f"board-{uuid4().hex[:8]}"
-    campaign_id = f"camp-{uuid4().hex[:8]}"
     dm_user = f"dm-{uuid4().hex[:6]}"
-
-    await spicedb.write_relationship("campaign", campaign_id, "dungeon_master", "user", dm_user)
+    campaign_id = create_dm_campaign(dm_user)
 
     # 1. Initialize board
     init_res = client.post(
@@ -113,18 +108,7 @@ async def test_frontdoor_contract_integration(
     assert switch_data["rows"] == 20
 
 
-BOARD_CAMPAIGN = "camp-board-fixture"
-
-
 @pytest.fixture(autouse=True)
-def _board_campaign_dm(spicedb):
-    """Make `user-test` the DM of the campaign that every board in this module belongs to."""
-    asyncio.run(
-        spicedb.write_relationship(
-            resource_type="campaign",
-            resource_id=BOARD_CAMPAIGN,
-            relation="dungeon_master",
-            subject_type="user",
-            subject_id="user-test",
-        )
-    )
+def board_campaign(trusted_ws_issuer) -> str:
+    """The campaign that every board in this module belongs to. `user-test` runs it."""
+    return create_dm_campaign("user-test")

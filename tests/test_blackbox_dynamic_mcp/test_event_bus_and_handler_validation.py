@@ -18,11 +18,12 @@ from gateway_mcp.dynamic import (
     get_event_bus,
 )
 from gateway_mcp.dynamic.events import publish_system_event
-from gateway_mcp.server import mcp
 from runefoble_events.events import DynamicToolUnregisteredEvent
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.event_bus import EventBusUnavailableError
 from runefoble_platform.redis_bus import RedisStreamsEventBus
+
+from tests.helpers.mcp_http import listed_tools_sync
 
 EVENTS_LOGGER = "runefoble.gateway_mcp.dynamic.events"
 
@@ -49,14 +50,16 @@ def _handler_less_payload(name: str, **overrides: object) -> dict[str, object]:
     [{"handler": None}, {"handler": {}}, {"handler": "   "}, {}],
     ids=["null", "empty", "blank", "missing"],
 )
-def test_blackbox_register_rejects_tool_without_handler(client: TestClient, overrides):
+def test_blackbox_register_rejects_tool_without_handler(
+    client: TestClient, overrides, mcp_endpoint: str
+):
     """A definition with no handler is rejected with 422 and no tool is added."""
     name = "handler_less_probe"
 
     res = client.post("/mcp/tools/register", json=_handler_less_payload(name, **overrides))
 
     assert res.status_code == 422
-    assert mcp._tool_manager.get_tool(name) is None
+    assert listed_tools_sync(mcp_endpoint).get(name) is None
     assert client.get(f"/mcp/tools/{name}").status_code == 404
 
 

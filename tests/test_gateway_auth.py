@@ -11,7 +11,7 @@ import pytest
 from fastapi.testclient import TestClient
 from gateway_api.main import app
 
-from tests.helpers.campaign_setup import create_campaign, invite_and_join
+from tests.helpers.campaign_setup import create_campaign, create_owner_session, invite_and_join
 from tests.helpers.ws_identity import bearer
 
 
@@ -32,7 +32,7 @@ async def test_zanzibar_authorization_enforcement(trusted_ws_issuer, client):
     stranger_id = "stranger_bob"
     stranger = bearer(stranger_id, issuer=trusted_ws_issuer)
     campaign_id = create_campaign(client, owner_id)
-    session_id = _owner_session(campaign_id, owner)
+    session_id = create_owner_session(os.environ["RUNEFOBLE_GAME_SESSION_URL"], owner, campaign_id)
 
     # 1. Unassigned user tries to view session -> 403 Forbidden
     res_unauth = client.get(f"/api/v1/sessions/{session_id}", headers=stranger)
@@ -79,7 +79,7 @@ async def test_zanzibar_board_view_permission(trusted_ws_issuer, client):
     stranger_id = "stranger_mallory"
     stranger = bearer(stranger_id, issuer=trusted_ws_issuer)
     campaign_id = create_campaign(client, owner_id)
-    session_id = _owner_session(campaign_id, owner)
+    session_id = create_owner_session(os.environ["RUNEFOBLE_GAME_SESSION_URL"], owner, campaign_id)
     _owner_board(campaign_id, session_id, owner)
 
     # Owner invites a spectator; the spectator redeems the invite
@@ -103,16 +103,3 @@ def _owner_board(campaign_id: str, session_id: str, headers: dict[str, str]) -> 
         timeout=5.0,
     )
     assert res.status_code == 200, res.text
-
-
-def _owner_session(campaign_id: str, headers: dict[str, str]) -> str:
-    """Create a game session in a campaign through the owner's public game_session route."""
-    url = os.environ["RUNEFOBLE_GAME_SESSION_URL"]
-    res = httpx.post(
-        f"{url}/api/v1/sessions/create",
-        json={"campaign_id": campaign_id, "title": "Crypt"},
-        headers=headers,
-        timeout=5.0,
-    )
-    assert res.status_code == 200, res.text
-    return res.json()["session_id"]

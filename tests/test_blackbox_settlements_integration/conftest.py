@@ -10,6 +10,7 @@ import pytest
 from fastapi.testclient import TestClient
 from game_session.main import app as session_app
 from game_session.settlement import auth as settlement_auth
+from gateway_api.auth import get_zitadel_auth_service as get_gw_verifier
 from gateway_api.auth import set_zitadel_auth_service as set_gw_verifier
 from gateway_api.main import app as gateway_app
 from gateway_api.websocket_manager import ws_campaign_manager
@@ -17,19 +18,20 @@ from runefoble_auth.mock import MockSpiceDBClient
 from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.module_state import SeamRestorer
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 
 @pytest.fixture
-def settlement_issuer() -> Generator[SigningTestIssuer]:
+def settlement_issuer(seam_restorer: SeamRestorer) -> Generator[SigningTestIssuer]:
     """Trust one signing issuer in the game_session and gateway verifiers for one test."""
     issuer = SigningTestIssuer()
     verifier = issuer.verifier()
-    settlement_auth.set_zitadel_auth_service(verifier)
-    set_gw_verifier(verifier)
+    seam_restorer.replace(
+        settlement_auth.get_zitadel_auth_service, settlement_auth.set_zitadel_auth_service, verifier
+    )
+    seam_restorer.replace(get_gw_verifier, set_gw_verifier, verifier)
     yield issuer
-    settlement_auth.set_zitadel_auth_service(None)
-    set_gw_verifier(None)
 
 
 def bearer_headers(issuer: SigningTestIssuer, sub: str) -> dict[str, str]:

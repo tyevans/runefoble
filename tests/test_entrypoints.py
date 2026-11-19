@@ -6,6 +6,7 @@ from contextlib import ExitStack
 import pytest
 from fastapi.testclient import TestClient
 
+from tests.helpers.mcp_http import listed_tools_sync, serve_mcp
 from tests.helpers.process import run_command
 
 
@@ -95,7 +96,8 @@ def test_mcp_gateway_tool_registry():
     from gateway_mcp.server import mcp
 
     # Inspect registered tools on FastMCP server
-    registered_tools = [tool.name for tool in mcp._tool_manager.list_tools()]
+    with serve_mcp(mcp) as endpoint:
+        registered_tools = list(listed_tools_sync(endpoint))
     expected_tools = [
         "roll_dice",
         "inspect_tactical_board",

@@ -6,7 +6,6 @@ event store port for a double that fails on read. No private state is written.
 
 from __future__ import annotations
 
-import asyncio
 from uuid import uuid4
 
 import board_state.dependencies as board_dependencies
@@ -16,6 +15,7 @@ from board_state.main import app as board_app
 from fastapi.testclient import TestClient
 from runefoble_platform.event_sourcing import create_aggregate_repository
 
+from tests.helpers.campaign_setup import create_dm_campaign
 from tests.helpers.ws_identity import bearer
 
 SEEDED_NAMES = {"Valeros", "Kyra", "Goblin Scout"}
@@ -64,13 +64,13 @@ def test_mutating_unknown_board_returns_404(board_client):
     assert res.status_code == 404
 
 
-def test_post_then_get_returns_only_the_created_board(board_client):
+def test_post_then_get_returns_only_the_created_board(board_client, board_campaign: str):
     """POST creates the board. GET returns that board with no extra tokens."""
     session_id = _new_session_id()
 
     created = board_client.post(
         "/api/v1/boards",
-        json={"campaign_id": BOARD_CAMPAIGN, "session_id": session_id, "cols": 6, "rows": 5},
+        json={"campaign_id": board_campaign, "session_id": session_id, "cols": 6, "rows": 5},
     )
     assert created.status_code == 200
 
@@ -84,12 +84,14 @@ def test_post_then_get_returns_only_the_created_board(board_client):
     assert SEEDED_NAMES.isdisjoint(res.text.split())
 
 
-def test_store_load_failure_propagates_as_server_error_and_keeps_board(board_client):
+def test_store_load_failure_propagates_as_server_error_and_keeps_board(
+    board_client, board_campaign: str
+):
     """A store failure on load returns 5xx. The stored board is not replaced."""
     session_id = _new_session_id()
     created = board_client.post(
         "/api/v1/boards",
-        json={"campaign_id": BOARD_CAMPAIGN, "session_id": session_id, "cols": 4, "rows": 4},
+        json={"campaign_id": board_campaign, "session_id": session_id, "cols": 4, "rows": 4},
     )
     assert created.status_code == 200
     before = board_client.get(f"/api/v1/boards/{session_id}").json()
@@ -124,18 +126,7 @@ class _OutageStore:
         raise ConnectionError("event store unavailable")
 
 
-BOARD_CAMPAIGN = "camp-board-fixture"
-
-
 @pytest.fixture(autouse=True)
-def _board_campaign_dm(spicedb):
-    """Make `user-test` the DM of the campaign that every board in this module belongs to."""
-    asyncio.run(
-        spicedb.write_relationship(
-            resource_type="campaign",
-            resource_id=BOARD_CAMPAIGN,
-            relation="dungeon_master",
-            subject_type="user",
-            subject_id="user-test",
-        )
-    )
+def board_campaign(trusted_ws_issuer) -> str:
+    """The campaign that every board in this module belongs to. `user-test` runs it."""
+    return create_dm_campaign("user-test")
