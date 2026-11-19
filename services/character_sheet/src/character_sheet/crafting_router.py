@@ -9,7 +9,7 @@ from dataclasses import asdict
 from typing import Any
 from uuid import UUID
 
-from character_sheet.authz import authorize_character
+from character_sheet.authz import character_denial
 from character_sheet.crafting import (
     CATALYSTS_CATALOGUE,
     KNOWN_RECIPES,
@@ -30,6 +30,7 @@ from character_sheet.dependencies import (
 )
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
+from runefoble_auth.permissions import require_subject
 from runefoble_platform.aggregate_loading import load_if_exists
 
 router = APIRouter(
@@ -99,7 +100,9 @@ async def combine_reagents(
     user_id: CallerId,
 ) -> CombineReagentsResponse:
     """Combine alchemical reagents, calculate volatile risk, and update character state."""
-    await authorize_character(spicedb, req.character_id, "edit", user_id)
+    await require_subject(
+        spicedb, "character", str(req.character_id), "edit", user_id, denial=character_denial
+    )
     service = CombineReagentsService(
         char_repo, crafting_repo, publish_character_event, publish_crafting_event
     )

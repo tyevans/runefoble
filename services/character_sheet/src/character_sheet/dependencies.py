@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-from collections.abc import Awaitable, Callable
+from collections.abc import Callable
 from typing import Annotated, Any
 from uuid import UUID
 
 from character_sheet.aggregate import CharacterAggregate
 from character_sheet.authz import (
-    authorize_character,
+    character_denial,
     replace_character_campaign,
 )
 from character_sheet.crafting import CraftingAggregate
@@ -18,7 +18,7 @@ from character_sheet.schemas import CreateCharacterRequest
 from fastapi import Depends, HTTPException
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.mock import MockSpiceDBClient
-from runefoble_auth.principal import VerifiedPrincipal
+from runefoble_auth.permissions import require_permission
 from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_auth.wiring import (
     build_identity_dependencies,
@@ -80,38 +80,32 @@ get_principal, CallerPrincipal, CallerId, get_caller_or_service, CallerOrService
 )
 
 
-def require_character_permission(
-    permission: str, *, allow_service: bool = False
-) -> Callable[..., Awaitable[None]]:
-    """Build a route dependency that checks one schema permission on the path's character.
+def _character_permission(permission: str, *, allow_service: bool = False) -> list[Any]:
+    """Route dependencies for one schema permission on the path's character (ADR-0001).
 
-    The check runs on every call. A user bearer needs the permission (403 otherwise). With
-    `allow_service`, the service credential passes without a user. A missing or bad
-    credential is a 401. The check fails closed when SpiceDB cannot answer (503).
+    A user bearer needs the permission (403 otherwise). With `allow_service`, the service
+    credential passes without a user. A missing or bad credential is a 401. SpiceDB failures
+    answer 503.
     """
-
-    async def _check_user(
-        character_id: UUID,
-        principal: Annotated[VerifiedPrincipal, Depends(get_principal)],
-        spicedb: SpiceDep,
-    ) -> None:
-        await authorize_character(spicedb, character_id, permission, principal.user_id)
-
-    async def _check_caller(
-        character_id: UUID,
-        caller: CallerOrService,
-        spicedb: SpiceDep,
-    ) -> None:
-        if caller.user_id is not None:
-            await authorize_character(spicedb, character_id, permission, caller.user_id)
-
-    return _check_caller if allow_service else _check_user
+    return [
+        Depends(
+            require_permission(
+                "character",
+                permission,
+                "character_id",
+                principal=get_caller_or_service if allow_service else get_principal,
+                allow_service=allow_service,
+                id_type=UUID,
+                denial=character_denial,
+            )
+        )
+    ]
 
 
-EDIT_CHARACTER = [Depends(require_character_permission("edit"))]
-VIEW_CHARACTER = [Depends(require_character_permission("view"))]
-EDIT_CHARACTER_OR_SERVICE = [Depends(require_character_permission("edit", allow_service=True))]
-VIEW_CHARACTER_OR_SERVICE = [Depends(require_character_permission("view", allow_service=True))]
+EDIT_CHARACTER = _character_permission("edit")
+VIEW_CHARACTER = _character_permission("view")
+EDIT_CHARACTER_OR_SERVICE = _character_permission("edit", allow_service=True)
+VIEW_CHARACTER_OR_SERVICE = _character_permission("view", allow_service=True)
 
 
 async def publish_character_event(event: Any) -> None:
