@@ -5,7 +5,12 @@
  */
 
 import type { APIRequestContext } from '@playwright/test';
-import { APP_BASE_URL } from './environment';
+import { API_BASE_URL } from './env';
+
+/** Builds the `Authorization` header for a bearer token. Every e2e request that carries a token uses it. */
+export function bearerHeader(token: string): Record<string, string> {
+  return { Authorization: `Bearer ${token}` };
+}
 
 export interface CampaignSummary {
   id: string;
@@ -30,13 +35,13 @@ export class FrontdoorApi {
 
   constructor(
     private request: APIRequestContext,
-    baseUrl = APP_BASE_URL
+    baseUrl = API_BASE_URL
   ) {
     this.baseUrl = baseUrl.replace(/\/$/, '');
   }
 
   private authHeaders(token?: string): Record<string, string> {
-    return token ? { Authorization: `Bearer ${token}` } : {};
+    return token ? bearerHeader(token) : {};
   }
 
   async checkHealth(): Promise<{ status: string }> {

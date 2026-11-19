@@ -1,6 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 import { defineBddConfig } from 'playwright-bdd';
-import { APP_BASE_URL } from './e2e/support/environment';
+import { API_BASE_URL } from './e2e/support/env';
 
 /**
  * Runefoble Playwright BDD Configuration
@@ -34,7 +34,7 @@ export default defineConfig({
         ['list'],
       ],
   use: {
-    baseURL: APP_BASE_URL,
+    baseURL: API_BASE_URL,
     trace: 'on-first-retry',
     video: 'retain-on-failure',
     screenshot: 'only-on-failure',

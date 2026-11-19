@@ -6,7 +6,7 @@
  */
 
 import { randomBytes } from 'node:crypto';
-import { APP_BASE_URL } from './environment';
+import { API_BASE_URL } from './env';
 import { PERSONA_KEYS, PERSONA_REGISTRY_ENV, PERSONA_SEEDS, type PersonaRecord } from './personas';
 import { createHumanUser, fetchIssuer, readAdminPat } from './zitadel_admin';
 
@@ -21,7 +21,7 @@ function newPassword(): string {
 
 export default async function globalSetup(): Promise<void> {
   const pat = readAdminPat();
-  const issuer = await fetchIssuer(APP_BASE_URL);
+  const issuer = await fetchIssuer(API_BASE_URL);
   const suffix = newRunSuffix();
 
   const registry: PersonaRecord[] = [];

@@ -7,7 +7,7 @@
 
 import { expect } from '@playwright/test';
 import { Then, When } from '../support/fixtures';
-import { APP_BASE_URL } from '../support/environment';
+import { API_BASE_URL } from '../support/env';
 import { readAppShellSession } from '../support/app_shell_session';
 import { findPersona, resolvePersonaKey } from '../support/personas';
 import type { HostedLoginOutcome } from '../support/zitadel_login';
@@ -57,7 +57,7 @@ When('the signed-in user signs out from the profile page', async ({ page, auth, 
   await page.waitForLoadState('domcontentloaded');
   await page.getByRole('button', { name: 'Sign Out' }).first().click();
   // Sign-out ends the Zitadel session, then Zitadel returns the browser to the App Shell root.
-  await page.waitForURL((url) => url.href.startsWith(`${APP_BASE_URL}/`), { timeout: 30_000 });
+  await page.waitForURL((url) => url.href.startsWith(`${API_BASE_URL}/`), { timeout: 30_000 });
 });
 
 Then('the App Shell holds no session', async ({ page }) => {

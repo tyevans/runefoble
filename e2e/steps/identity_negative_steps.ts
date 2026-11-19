@@ -9,11 +9,8 @@
 import { expect } from '@playwright/test';
 import { createSign, generateKeyPairSync } from 'node:crypto';
 import { Given, When, Then } from '../support/fixtures';
-import { APP_BASE_URL } from '../support/environment';
-
-const API_BASE = APP_BASE_URL;
-const ISSUER = process.env.PLAYWRIGHT_ZITADEL_ISSUER || 'http://auth.localhost';
-const AUDIENCE = process.env.PLAYWRIGHT_ZITADEL_AUDIENCE || 'runefoble-api';
+import { bearerHeader } from '../support/frontdoor_api';
+import { API_BASE_URL, ZITADEL_AUDIENCE, ZITADEL_ISSUER } from '../support/env';
 const ABSENT_STATUSES = [404, 405];
 
 function forgeRs256Token(subject: string): string {
@@ -23,7 +20,7 @@ function forgeRs256Token(subject: string): string {
   ).toString('base64url');
   const now = Math.floor(Date.now() / 1000);
   const payload = Buffer.from(
-    JSON.stringify({ sub: subject, iss: ISSUER, aud: AUDIENCE, iat: now, exp: now + 3600 })
+    JSON.stringify({ sub: subject, iss: ZITADEL_ISSUER, aud: ZITADEL_AUDIENCE, iat: now, exp: now + 3600 })
   ).toString('base64url');
   const signer = createSign('RSA-SHA256');
   signer.update(`${header}.${payload}`);
@@ -40,10 +37,10 @@ Given('I hold a token signed by a key the platform does not trust', async ({ wor
 });
 
 When('I request my profile from the public API with that token', async ({ request, world }) => {
-  const token = world.get<string>('forgedToken');
+  const token = world.get<string>('forgedToken') ?? '';
   expect(token, 'a forged token must be set by the Given step').toBeTruthy();
-  const res = await request.get(`${API_BASE}/api/v1/profile`, {
-    headers: { Authorization: `Bearer ${token}` },
+  const res = await request.get(`${API_BASE_URL}/api/v1/profile`, {
+    headers: bearerHeader(token),
   });
   world.set('lastStatus', res.status());
 });
@@ -53,14 +50,14 @@ Then('the API refuses the request with status {int}', async ({ world }, status: 
 });
 
 When('I call the retired sign-in endpoint {string}', async ({ request, world }, path: string) => {
-  const res = await request.post(`${API_BASE}${path}`, { data: {} });
+  const res = await request.post(`${API_BASE_URL}${path}`, { data: {} });
   world.set('lastStatus', res.status());
 });
 
 When(
   'I send a sync request to {string} that names the role {string}',
   async ({ request, world }, path: string, role: string) => {
-    const res = await request.post(`${API_BASE}${path}`, {
+    const res = await request.post(`${API_BASE_URL}${path}`, {
       data: { user_id: 'user-victim', roles: [role] },
     });
     world.set('lastStatus', res.status());
