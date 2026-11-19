@@ -5,7 +5,8 @@ from __future__ import annotations
 from typing import Any
 
 from board_state.aggregate import BoardAggregate
-from board_state.dependencies import repo
+from board_state.dependencies import get_event_bus, repo
+from board_state.events import save_and_publish
 from board_state.realtime import board_ws_manager
 
 
@@ -64,7 +65,7 @@ async def handle_ws_spell(
         radius_ft=rad,
         damage_type=data.get("damage_type") or p.get("damage_type"),
     )
-    await repo.save(board)
+    await save_and_publish(repo, board, get_event_bus())
     await board_ws_manager.broadcast(
         session_id,
         {

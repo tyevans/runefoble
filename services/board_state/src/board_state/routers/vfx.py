@@ -9,7 +9,8 @@ from board_state.authz import (
     require_board_permission,
     require_campaign_permission,
 )
-from board_state.dependencies import CallerId, get_board, get_principal, repo
+from board_state.dependencies import CallerId, get_board, get_event_bus, get_principal, repo
+from board_state.events import save_and_publish
 from board_state.models import (
     BoardDecalState,
     CastSpellRequest,
@@ -64,7 +65,7 @@ async def cast_spell_vfx(
             damage_type=req.damage_type,
             theme_palette=req.theme_palette,
         )
-        await repo.save(board)
+        await save_and_publish(repo, board, get_event_bus())
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
 

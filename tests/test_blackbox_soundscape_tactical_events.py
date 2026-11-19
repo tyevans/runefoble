@@ -23,7 +23,12 @@ from uuid import uuid4
 import pytest
 import redis.asyncio
 from fastapi.testclient import TestClient
-from runefoble_events.events import PhysicsCollisionOccurred, TokenHazardTriggered
+from runefoble_events.events import (
+    AreaEffectExploded,
+    PhysicsCollisionOccurred,
+    SpellCast,
+    TokenHazardTriggered,
+)
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 
 from tests.helpers.mock_redis import MockAsyncRedis
@@ -170,3 +175,75 @@ def test_recorded_tactical_cue_is_published_on_soundscape_stream(
         payload = json.loads(entry["payload"])
         assert payload["sound_url"].endswith("/hazard_spike_pit.ogg")
         assert payload["cue_type"] == "sfx"
+
+
+def test_spell_cast_on_board_stream_records_cast_cue(
+    redis_double: MockAsyncRedis, use_redis_client: Callable[[object], object]
+) -> None:
+    """A SpellCast on the board stream records a cast cue for the archetype of the spell."""
+    from soundscape.main import app
+
+    session_id = str(uuid4())
+    use_redis_client(redis_double)
+
+    with TestClient(app, headers=bearer("soundscape-tester")) as client:
+        _publish(
+            redis_double,
+            BOARD_STREAM,
+            SpellCast(
+                session_id=session_id,
+                board_id="board-spell",
+                spell_name="Ray of Frost",
+                spell_archetype="conjuration",
+                target_x=4,
+                target_y=5,
+            ),
+        )
+
+        def cast_cue_recorded() -> bool:
+            return any(
+                cue["sound_url"].endswith("/cast_conjuration.ogg")
+                for cue in _recent_cues(client, session_id)
+            )
+
+        assert wait_until(cast_cue_recorded, timeout_s=10.0), "no spell cast cue was recorded"
+        cue = next(
+            cue
+            for cue in _recent_cues(client, session_id)
+            if cue["sound_url"].endswith("/cast_conjuration.ogg")
+        )
+        assert cue["cue_type"] == "sfx"
+
+
+def test_area_effect_on_board_stream_records_burst_cue_for_its_decal(
+    redis_double: MockAsyncRedis, use_redis_client: Callable[[object], object]
+) -> None:
+    """An AreaEffectExploded on the board stream records a burst cue for its decal type."""
+    from soundscape.main import app
+
+    session_id = str(uuid4())
+    use_redis_client(redis_double)
+
+    with TestClient(app, headers=bearer("soundscape-tester")) as client:
+        _publish(
+            redis_double,
+            BOARD_STREAM,
+            AreaEffectExploded(
+                session_id=session_id,
+                board_id="board-blast",
+                spell_name="Cone of Cold",
+                center_x=6,
+                center_y=6,
+                radius_ft=20,
+                affected_cells=[[6, 6]],
+                decal_type="frost",
+            ),
+        )
+
+        def burst_cue_recorded() -> bool:
+            return any(
+                cue["sound_url"].endswith("/burst_frost.ogg")
+                for cue in _recent_cues(client, session_id)
+            )
+
+        assert wait_until(burst_cue_recorded, timeout_s=10.0), "no area burst cue was recorded"
