@@ -64,20 +64,20 @@ export function renderPostureSelector(host: RunefobleStandInGuardrails) {
     <div class="section">
       <div class="section-title">⚠️ Tactical Posture & Risk Thresholds</div>
       <div style="margin-bottom: 10px;">
-        <div class="toggle-label" style="margin-bottom: 4px;">Risk Appetite</div>
-        <select .value=${host.riskThreshold} @change=${(e: Event) => { host.riskThreshold = (e.target as HTMLSelectElement).value as 'cautious' | 'balanced' | 'reckless'; }}>
+        <div class="toggle-label" id="risk-appetite-label" style="margin-bottom: 4px;">Risk Appetite</div>
+        <select aria-labelledby="risk-appetite-label" .value=${host.riskThreshold} @change=${(e: Event) => { host.riskThreshold = (e.target as HTMLSelectElement).value as 'cautious' | 'balanced' | 'reckless'; }}>
           <option value="cautious">Cautious (Favor Defense & Ranged)</option>
           <option value="balanced">Balanced (Standard Tactic)</option>
           <option value="reckless">Reckless (Aggressive Intervention)</option>
         </select>
       </div>
       <div class="toggle-row">
-        <div><div class="toggle-label">Avoid Frontline Melee</div><div class="toggle-desc">Maintain safe tactical distance; favor ranged attacks and spells</div></div>
-        <input type="checkbox" .checked=${host.avoidMelee} @change=${(e: Event) => (host.avoidMelee = (e.target as HTMLInputElement).checked)} />
+        <div><div class="toggle-label" id="avoid-melee-label">Avoid Melee</div><div class="toggle-desc">Maintain safe tactical distance; favor ranged attacks and spells</div></div>
+        <input type="checkbox" aria-labelledby="avoid-melee-label" .checked=${host.avoidMelee} @change=${(e: Event) => (host.avoidMelee = (e.target as HTMLInputElement).checked)} />
       </div>
       <div class="toggle-row">
-        <div><div class="toggle-label">Permadeath Safeguard (Zero-HP Stabilization)</div><div class="toggle-desc">Automatically stabilize at 0 HP without death save failures</div></div>
-        <input type="checkbox" .checked=${host.permadeathSafeguard} @change=${(e: Event) => (host.permadeathSafeguard = (e.target as HTMLInputElement).checked)} />
+        <div><div class="toggle-label" id="permadeath-safeguard-label">Permadeath Safeguard (Zero-HP Stabilization)</div><div class="toggle-desc">Automatically stabilize at 0 HP without death save failures</div></div>
+        <input type="checkbox" aria-labelledby="permadeath-safeguard-label" .checked=${host.permadeathSafeguard} @change=${(e: Event) => (host.permadeathSafeguard = (e.target as HTMLInputElement).checked)} />
       </div>
     </div>
   `;

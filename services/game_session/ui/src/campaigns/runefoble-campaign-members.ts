@@ -93,9 +93,6 @@ export class RunefobleCampaignMembers extends LitElement {
     if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
       await navigator.clipboard.writeText(link).catch(() => {});
     }
-    if (typeof window !== 'undefined') {
-      (window as any).__lastCopiedInviteUrl = link;
-    }
     this.copied = true;
     this.dispatchEvent(new CustomEvent('copy-invite-link', {
       detail: { inviteUrl: link, role: this.selectedInviteRole },
