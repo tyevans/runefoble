@@ -1,7 +1,7 @@
 ---
 id: '0882'
 title: Inference Responses Drop the Always-False degraded Field
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies:
 - TASK-0740
@@ -18,7 +18,7 @@ target_release: 0.9.0
 # TASK-0882: Inference Responses Drop the Always-False degraded Field
 
 ## Status
-Refined
+Complete
 
 Source: TASK-0740 report (`.audit/work/0740.md`).
 

@@ -1,7 +1,7 @@
 ---
 id: '0723'
 title: Audience Studio WebSocket Does Not Leak Internal Errors
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0499
@@ -16,7 +16,7 @@ target_release: 0.9.0
 # TASK-0723: Audience Studio WebSocket Does Not Leak Internal Errors
 
 ## Status
-Refined. Found by the refactor audit round r1 and checked against the code by the orchestrator.
+Complete
 
 ## Summary
 The audience WebSocket sends the raw text of any thrown error to the client. Unknown actions get no reply. The manager mixes registry, command dispatch, mapping and broadcast.

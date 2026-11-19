@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Security
+- The Audience Studio WebSocket sends typed error frames with fixed codes (`invalid_frame`, `unknown_action`, `forbidden`, `rejected`, `internal_error`) and logs internal failures on the server; no internal message reaches the client. (TASK-0723)
 - Token roles and claims grant no SpiceDB relation. The role-to-relation mapping and the claim-driven membership and session sync are removed; memberships come only from the public invite and join routes. (TASK-0855)
 - Removing a dynamic MCP tool revokes its SpiceDB permissions first. A SpiceDB failure answers 503 `authorization_unavailable` and keeps the tool. (TASK-0847)
 - game_session checks `session.control` on `POST /api/v1/sessions/{id}/dm-override` and `/atmosphere`. Before, any signed-in user who called game_session directly could direct any session; only the gateway checked. (found by TASK-0845)
@@ -41,6 +42,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Gateway WebSocket routes admit a connection only with a verified `runefoble.bearer.<jwt>` subprotocol, checked before accept. Refused handshakes close with 1008. Removed the `?user_id=`, `?token=`, `x-user-id`, and `guest_user` identity paths on WebSocket and voice/companion signaling routes. (TASK-0522)
 
 ### Removed
+- Inference worker and Watcher responses drop the `degraded` field, which was always false after TASK-0740. A worker failure is an HTTP error. (TASK-0882)
 - The MCP plan runner lives in `gateway_mcp/tools/plan.py` and reads one key per step field; the `name`, `tool_name`, `arguments` and `args` aliases are removed. (TASK-0747)
 - The inference worker has no mock backend: `RUNEFOBLE_WORKER_BACKEND=mock` is refused at start-up, and a model reply that lacks a required field answers 503 instead of a heuristic result. The Helm default backend is `openai_compatible`. (TASK-0740)
 - Each HTTP route serves one path. The bare duplicates of `/api/v1` routes and other alias paths are removed, and a route inventory test keeps it so. (TASK-0857)
