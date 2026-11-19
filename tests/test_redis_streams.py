@@ -1,12 +1,14 @@
 """Tests for Redis Streams Event Bus infrastructure."""
 
 import datetime
+import json
 import uuid
 from typing import Any
 
 import pytest
 from pydantic import BaseModel
 from runefoble_events.events import SessionCreated, TokenMoved
+from runefoble_platform.event_deserializer import EventDecodeError, UnknownEvent
 from runefoble_platform.event_fields import EventTypeMissingError
 from runefoble_platform.redis_bus import RedisStreamsEventBus, deserialize_event
 
@@ -251,15 +253,46 @@ def test_deserialize_event_helper() -> None:
     }
     assert not isinstance(deserialize_event(retired_fields), SessionCreated)
 
-    # 4. Unregistered event type returns dictionary
+    # 4. Unregistered event type returns an explicit UnknownEvent
     unregistered_fields = {
         "event_type": "NonExistentEvent",
         "payload": '{"key": "value"}',
     }
-    assert deserialize_event(unregistered_fields) == {"key": "value"}
+    unknown = deserialize_event(unregistered_fields)
+    assert isinstance(unknown, UnknownEvent)
+    assert unknown.event_type == "NonExistentEvent"
+    assert unknown.fields == {"key": "value"}
 
-    # 5. Non-dict input
-    assert deserialize_event(42) == 42  # type: ignore[arg-type]
+
+def test_deserialize_event_rejects_undecodable_input() -> None:
+    # A non-JSON string is not an event.
+    with pytest.raises(EventDecodeError):
+        deserialize_event("not json")
+
+    # A JSON value that is not an object is not an event.
+    with pytest.raises(EventDecodeError):
+        deserialize_event(42)  # type: ignore[arg-type]
+
+    # A payload that is not JSON is not an event.
+    with pytest.raises(EventDecodeError):
+        deserialize_event({"event_type": "NonExistentEvent", "payload": "{broken"})
+
+    # Fields without an event type cannot be routed.
+    with pytest.raises(EventDecodeError):
+        deserialize_event({"payload": '{"key": "value"}'})
+
+
+def test_deserialize_event_rejects_registered_event_that_fails_validation() -> None:
+    event = SessionCreated(aggregate_id=uuid.uuid4(), title="Missing Field")
+    payload = event.model_dump(mode="json")
+    del payload["aggregate_id"]
+    fields = {
+        "event_type": "runefoble.events.session.created",
+        "payload": json.dumps(payload),
+    }
+
+    with pytest.raises(EventDecodeError):
+        deserialize_event(fields)
 
 
 @pytest.mark.asyncio
