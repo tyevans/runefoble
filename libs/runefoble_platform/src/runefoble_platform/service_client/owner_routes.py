@@ -23,6 +23,14 @@ def _character(character_id: str, *segments: str) -> str:
     return path("api", "v1", "characters", character_id, *segments)
 
 
+# game_session
+
+
+def get_campaign(campaign_id: str) -> OwnerRoute:
+    """GET: one campaign. The owner checks `view`."""
+    return OwnerRoute("GET", path("api", "v1", "campaigns", campaign_id))
+
+
 # character_sheet
 
 
@@ -52,6 +60,16 @@ def cast_spell(character_id: str) -> OwnerRoute:
 
 
 # board_state
+
+
+def get_token(session_id: str, token_id: str) -> OwnerRoute:
+    """GET: one placed token of a session's board."""
+    return OwnerRoute("GET", path("api", "v1", "boards", session_id, "tokens", token_id))
+
+
+def place_token(session_id: str) -> OwnerRoute:
+    """POST: place a token on the board of a session."""
+    return OwnerRoute("POST", path("api", "v1", "boards", session_id, "tokens"))
 
 
 def move_token(session_id: str, token_id: str) -> OwnerRoute:

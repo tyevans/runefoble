@@ -76,7 +76,20 @@ ProxyRoute(
 )
 ```
 
-Then call `register_proxy_routes(router, ROUTES)` once at the end of the module. Use a row for each route that needs no check and no transform. Keep a hand-written handler for a route with a check, a body transform, or a second owner call. Add an owner route function to `runefoble_platform.service_client.owner_routes` when another caller also uses the route.
+Then call `register_proxy_routes(router, ROUTES)` once at the end of the module. Use a row for each route that needs no check and no transform. Keep a hand-written handler for a route with a Zanzibar check, a body transform, a typed reply, or a second owner call. Add an owner route function to `runefoble_platform.service_client.owner_routes` when another caller also uses the route. A row can name that function in `owner=` instead of repeating the owner path in `owner_segments`:
+
+```python
+ProxyRoute(
+    "GET",
+    "/api/v1/compendium/monsters/{name}",
+    (),
+    "rules_compendium",
+    name="get_monster",
+    doc="Monster stat block by name.",
+    owner=owner_routes.get_monster,
+    principal=True,
+)
+```
 
 ## 4. Test the route through public frontdoors
 

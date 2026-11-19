@@ -122,6 +122,12 @@ Campaign Lore routes require a verified bearer token, except `/health`, `/health
 | `gateway-api` | GET | `/api/v1/settlements/{settlement_id}/bulletin` | Proxies to `game_session`: lists the bulletin notices of a settlement (TASK-0592) |
 | `gateway-api` | DELETE | `/api/v1/settlements/{settlement_id}/bulletin/{notice_id}` | Proxies to `game_session`: removes or fulfills a notice. Query `reason` is optional (TASK-0592) |
 | `gateway-api` | POST | `/api/v1/settlements/{settlement_id}/bulletin/{notice_id}/decrypt` | Proxies to `game_session`: submits a cipher solution for a hidden notice (TASK-0592) |
+| `gateway-api` | POST | `/api/v1/campaigns/{campaign_id}/stronghold/deposit` | Proxies to `game_session`: adds gold and materials to the campaign stronghold (owner checks `stronghold.manage`) |
+| `gateway-api` | POST | `/api/v1/campaigns/{campaign_id}/stronghold/upgrade` | Proxies to `game_session`: upgrades a stronghold facility (owner checks `play` or `upgrade`) |
+| `gateway-api` | POST | `/api/v1/sessions/{session_id}/rest/campfire` | Proxies to `game_session`: runs a campfire rest and returns its boons (owner checks `stronghold.manage`) |
+| `gateway-api` | POST | `/api/v1/sessions/{session_id}/tavern/games` | Proxies to `game_session`: starts a tavern minigame (owner checks session participation) |
+| `gateway-api` | POST | `/api/v1/sessions/{session_id}/merchants/{merchant_id}/haggle` | Proxies to `game_session` `POST /api/v1/haggling/start`. The gateway puts the session and merchant ids in the body |
+| `gateway-api` | POST | `/api/v1/crafting/recipes/combine` | Proxies to `character_sheet`: combines reagents (owner checks `edit` on the character) |
 | `game-session` | POST | `/sessions/{session_id}/contracts/bounties` | Posts a new mercenary bounty contract with gold/item escrow (alias: `/api/v1/sessions/{session_id}/contracts/bounties`, Zanzibar enforced) |
 | `game-session` | GET | `/sessions/{session_id}/contracts/bounties` | Queries open notice board bounties with status, target type, and minimum reward filters (alias: `/api/v1/sessions/{session_id}/contracts/bounties`) |
 | `game-session` | GET | `/sessions/{session_id}/contracts/bounties/{bounty_id}` | Retrieves details and escrow status for a specific bounty contract (alias: `/api/v1/sessions/{session_id}/contracts/bounties/{bounty_id}`) |
@@ -255,7 +261,7 @@ Campaign Lore routes require a verified bearer token, except `/health`, `/health
 | `gateway-api` | GET | `/api/v1/forge/token/{asset_id}` | Proxies to `asset-forge`. Retrieves forged token metadata. Needs a bearer and `forged_asset.view` |
 | `gateway-api` | POST | `/api/v1/forge/token` | Proxies to `asset-forge`. Synthesizes circular transparent character/monster token portrait and stores in Silo S3 |
 | `gateway-api` | POST | `/api/v1/forge/wardrobe` | Proxies to `asset-forge`. Synthesizes a character wardrobe variant with the configured wardrobe generator (default `placeholder`, which preserves no face) and stores it in Silo S3. The response names the `generator` and states `preserves_face` |
-| `gateway-api` | GET | `/api/v1/forge/wardrobe/{id}` | Proxies to `asset-forge`. Retrieves status and image URL of character wardrobe synthesis job |
+| `gateway-api` | GET | `/api/v1/forge/wardrobe/{variant_id}` | Proxies to `asset-forge`. Retrieves status and image URL of character wardrobe synthesis job |
 | `gateway-api` | POST | `/api/v1/forge/print-pdf` | Proxies to `asset-forge`. Slices battlemaps into multi-page print-ready PDFs calibrated to 1-inch grid with crosshairs. Requires `campaign_id` and `campaign.play` |
 | `gateway-api` | POST | `/api/v1/forge/standees` | Proxies to `asset-forge`. Generates folding papercraft miniature sheets with mirrored artwork, nameplates, and base tabs. Requires `campaign_id` and `campaign.play` |
 | `gateway-api` | POST | `/api/v1/forge/stl-token` | Proxies to `asset-forge`. Procedurally generates watertight 3D printable STL miniature bases with condition clips. Requires `campaign_id` and `campaign.play` |

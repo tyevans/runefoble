@@ -6,112 +6,116 @@ contract, ledger, or outpost state. It returns no canned payloads.
 
 Reads use `forward_json`. Writes use `forward_bytes`. The owner validates each request body,
 and the gateway does not import the owner's request models (import-linter contract).
+Each route is a row in `ROUTES` (TASK-0822).
 """
 
 from __future__ import annotations
 
-from typing import Any
-
-from fastapi import APIRouter, Request, Response
-from gateway_api.auth import CallerPrincipal
-from gateway_api.proxy import forward_bytes, forward_json
-from runefoble_platform.service_client import path
+from fastapi import APIRouter
+from gateway_api.proxy_table import ProxyRoute, register_proxy_routes
 
 GAME_SESSION = "game_session"
 CONTRACTS_PREFIX = ("api", "v1", "shared-worlds")
+CONTRACTS = (*CONTRACTS_PREFIX, "{shared_world_id}", "caravans", "contracts")
 
 router = APIRouter(tags=["Caravan Contracts"])
 
+ROUTES = (
+    ProxyRoute(
+        "POST",
+        "/api/v1/shared-worlds",
+        CONTRACTS_PREFIX,
+        GAME_SESSION,
+        name="create_shared_world_gateway",
+        doc="Found a shared world in game_session. The caller becomes its guild officer there.",
+        reply="bytes",
+        body="raw",
+        returns="response",
+        principal=True,
+        status_code=201,
+    ),
+    ProxyRoute(
+        "GET",
+        "/api/v1/shared-worlds/{shared_world_id}/caravans/contracts",
+        CONTRACTS,
+        GAME_SESSION,
+        name="list_caravan_contracts_gateway",
+        doc=(
+            "List notice board contracts in game_session (owner checks `view` on the shared world)."
+        ),
+        query_all=True,
+        principal=True,
+    ),
+    ProxyRoute(
+        "POST",
+        "/api/v1/shared-worlds/{shared_world_id}/caravans/contracts",
+        CONTRACTS,
+        GAME_SESSION,
+        name="post_caravan_contract_gateway",
+        doc="Post a contract to the notice board in game_session (owner checks `trade`).",
+        reply="bytes",
+        body="raw",
+        returns="response",
+        principal=True,
+        status_code=201,
+    ),
+    ProxyRoute(
+        "GET",
+        "/api/v1/shared-worlds/{shared_world_id}/caravans/contracts/{contract_id}",
+        (*CONTRACTS, "{contract_id}"),
+        GAME_SESSION,
+        name="get_caravan_contract_gateway",
+        doc="Read one contract in game_session (owner checks `view` on the contract).",
+        principal=True,
+    ),
+    ProxyRoute(
+        "POST",
+        "/api/v1/shared-worlds/{shared_world_id}/caravans/contracts/{contract_id}/accept",
+        (*CONTRACTS, "{contract_id}", "accept"),
+        GAME_SESSION,
+        name="accept_caravan_contract_gateway",
+        doc="Accept an open contract for a party in game_session (owner checks `claim`).",
+        reply="bytes",
+        body="raw",
+        returns="response",
+        principal=True,
+    ),
+    ProxyRoute(
+        "POST",
+        "/api/v1/shared-worlds/{shared_world_id}/caravans/contracts/{contract_id}/dispatch",
+        (*CONTRACTS, "{contract_id}", "dispatch"),
+        GAME_SESSION,
+        name="dispatch_caravan_contract_gateway",
+        doc="Dispatch the caravan of an accepted contract in game_session (owner checks `claim`).",
+        reply="bytes",
+        body="raw",
+        returns="response",
+        principal=True,
+    ),
+    ProxyRoute(
+        "POST",
+        "/api/v1/shared-worlds/{shared_world_id}/caravans/contracts/{contract_id}/ambush",
+        (*CONTRACTS, "{contract_id}", "ambush"),
+        GAME_SESSION,
+        name="report_caravan_ambush_gateway",
+        doc="Report an ambush outcome in transit in game_session (owner checks `claim`).",
+        reply="bytes",
+        body="raw",
+        returns="response",
+        principal=True,
+    ),
+    ProxyRoute(
+        "POST",
+        "/api/v1/shared-worlds/{shared_world_id}/caravans/contracts/{contract_id}/fulfill",
+        (*CONTRACTS, "{contract_id}", "fulfill"),
+        GAME_SESSION,
+        name="fulfill_caravan_contract_gateway",
+        doc="Deliver cargo and pay the reward in game_session (owner checks `fulfill`).",
+        reply="bytes",
+        body="raw",
+        returns="response",
+        principal=True,
+    ),
+)
 
-@router.post("/api/v1/shared-worlds", status_code=201)
-async def create_shared_world_gateway(request: Request, user: CallerPrincipal) -> Response:
-    """Found a shared world in game_session. The caller becomes its guild officer there."""
-    return await forward_bytes(
-        request,
-        service=GAME_SESSION,
-        method="POST",
-        path=path(*CONTRACTS_PREFIX),
-    )
-
-
-@router.get("/api/v1/shared-worlds/{shared_world_id}/caravans/contracts")
-async def list_caravan_contracts_gateway(
-    shared_world_id: str, request: Request, user: CallerPrincipal
-) -> Any:
-    """List notice board contracts in game_session (owner checks `view` on the shared world)."""
-    return await forward_json(
-        request,
-        service=GAME_SESSION,
-        method="GET",
-        path=path(*CONTRACTS_PREFIX, shared_world_id, "caravans", "contracts"),
-        params=dict(request.query_params),
-    )
-
-
-@router.post("/api/v1/shared-worlds/{shared_world_id}/caravans/contracts", status_code=201)
-async def post_caravan_contract_gateway(
-    shared_world_id: str, request: Request, user: CallerPrincipal
-) -> Response:
-    """Post a contract to the notice board in game_session (owner checks `trade`)."""
-    return await forward_bytes(
-        request,
-        service=GAME_SESSION,
-        method="POST",
-        path=path(*CONTRACTS_PREFIX, shared_world_id, "caravans", "contracts"),
-    )
-
-
-@router.get("/api/v1/shared-worlds/{shared_world_id}/caravans/contracts/{contract_id}")
-async def get_caravan_contract_gateway(
-    shared_world_id: str, contract_id: str, request: Request, user: CallerPrincipal
-) -> Any:
-    """Read one contract in game_session (owner checks `view` on the contract)."""
-    return await forward_json(
-        request,
-        service=GAME_SESSION,
-        method="GET",
-        path=path(*CONTRACTS_PREFIX, shared_world_id, "caravans", "contracts", contract_id),
-    )
-
-
-@router.post("/api/v1/shared-worlds/{shared_world_id}/caravans/contracts/{contract_id}/accept")
-async def accept_caravan_contract_gateway(
-    shared_world_id: str, contract_id: str, request: Request, user: CallerPrincipal
-) -> Response:
-    """Accept an open contract for a party in game_session (owner checks `claim`)."""
-    return await _post_contract_action(shared_world_id, contract_id, "accept", request)
-
-
-@router.post("/api/v1/shared-worlds/{shared_world_id}/caravans/contracts/{contract_id}/dispatch")
-async def dispatch_caravan_contract_gateway(
-    shared_world_id: str, contract_id: str, request: Request, user: CallerPrincipal
-) -> Response:
-    """Dispatch the caravan of an accepted contract in game_session (owner checks `claim`)."""
-    return await _post_contract_action(shared_world_id, contract_id, "dispatch", request)
-
-
-@router.post("/api/v1/shared-worlds/{shared_world_id}/caravans/contracts/{contract_id}/ambush")
-async def report_caravan_ambush_gateway(
-    shared_world_id: str, contract_id: str, request: Request, user: CallerPrincipal
-) -> Response:
-    """Report an ambush outcome in transit in game_session (owner checks `claim`)."""
-    return await _post_contract_action(shared_world_id, contract_id, "ambush", request)
-
-
-@router.post("/api/v1/shared-worlds/{shared_world_id}/caravans/contracts/{contract_id}/fulfill")
-async def fulfill_caravan_contract_gateway(
-    shared_world_id: str, contract_id: str, request: Request, user: CallerPrincipal
-) -> Response:
-    """Deliver cargo and pay the reward in game_session (owner checks `fulfill`)."""
-    return await _post_contract_action(shared_world_id, contract_id, "fulfill", request)
-
-
-async def _post_contract_action(
-    shared_world_id: str, contract_id: str, action: str, request: Request
-) -> Response:
-    return await forward_bytes(
-        request,
-        service=GAME_SESSION,
-        method="POST",
-        path=path(*CONTRACTS_PREFIX, shared_world_id, "caravans", "contracts", contract_id, action),
-    )
+register_proxy_routes(router, ROUTES)

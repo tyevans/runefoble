@@ -261,10 +261,11 @@ class OwningServices:
         is_friendly: bool,
     ) -> dict[str, Any]:
         """Place a token on the board and return its stored state."""
+        route = owner_routes.place_token(session_id)
         return await self._json(
             "board_state",
-            "POST",
-            path("api", "v1", "boards", session_id, "tokens"),
+            route.method,
+            route.path,
             {
                 "name": name,
                 "token_type": token_type,
