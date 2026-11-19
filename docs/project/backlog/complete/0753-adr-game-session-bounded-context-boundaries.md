@@ -1,7 +1,7 @@
 ---
 id: '0753'
 title: 'ADR Spike: Decide Bounded Context Boundaries Inside game_session'
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies: []
 governing_adrs:
@@ -15,7 +15,7 @@ target_release: 0.9.0
 # TASK-0753: ADR Spike: Decide Bounded Context Boundaries Inside game_session
 
 ## Status
-Refined. Found by the refactor audit round refactor-r1 and checked against the code on 2026-11-17.
+Complete
 
 ## Summary
 `game_session` holds about nine domains. `docs/reference/architecture-overview.md:42` lists only sessions, turns, dice, and spectator view. This spike decides the boundaries. It does not move code.

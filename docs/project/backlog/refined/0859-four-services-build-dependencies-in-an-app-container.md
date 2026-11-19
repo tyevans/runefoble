@@ -6,6 +6,7 @@ created: 2026-11-18
 dependencies:
 - TASK-0755
 governing_adrs:
+- ADR-0021
 - ADR-0011
 - ADR-0015
 governing_prds: []

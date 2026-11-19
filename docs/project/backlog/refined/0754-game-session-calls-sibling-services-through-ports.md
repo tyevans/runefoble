@@ -5,6 +5,7 @@ status: Refined
 created: 2026-11-17
 dependencies: []
 governing_adrs:
+- ADR-0021
 - ADR-0015
 governing_prds: []
 governing_stories: []

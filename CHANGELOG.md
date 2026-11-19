@@ -91,6 +91,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Campaign analytics worker `process_event` alias, tracking property wrappers, and package root re-exports. Callers use `handle_event`. (TASK-0500)
 
 ### Added
+ADR-0021 (Accepted): five bounded context packages inside `game_session` (campaign, play, downtime, settlement, world) and a shared kernel, a ports-only import rule enforced by `import-linter`, and the migration order (TASK-0893 to TASK-0899).
 E2E scenarios for a forge prompt that asset_forge refuses with 422, the Launch Session control by campaign capability, the empty-lobby readiness summary, and roster management controls. No `page.route` fault double of our own service.
 The campaign rules tab at `#/campaigns/:campaignId/rules`. The homebrew forge registers rules for the campaign. `#/rules` shows the SRD search and the encounter builder only.
 - `POST /api/v1/sessions/{session_id}/encounters/start` starts combat and records the token placements on one event; board_state places the tokens from that event. A failed placement is dead-lettered and combat stays started. (TASK-0749)

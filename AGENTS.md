@@ -187,7 +187,7 @@ All system documentation outside project records lives in `docs/` and strictly f
 | `libs/runefoble_embeddings/` | Embedding provider factory that builds `redstring` providers from Runefoble settings |
 | `libs/runefoble_ui/` | Lit UI core (`@runefoble/ui-core`): shared asset controllers and tokens |
 | `services/the_watcher/` | The Watcher AI gameplay engine (speech-to-intent, DM, AI stand-ins) & microfrontend |
-| `services/game_session/` | Active session lifecycle, turns, player presence, dice & microfrontends |
+| `services/game_session/` | Campaigns and membership, session lobby, turns, combat and dice, downtime (rests, tavern, merchants), settlements, West Marches and caravans & microfrontends (packages per ADR-0021) |
 | `services/board_state/` | Tactical grid, token coordinates, spatial movement rules & board microfrontend |
 | `services/character_sheet/` | Character stats, HP tracking, session absence penalties & character microfrontends |
 | `services/voice_agent/` | Audio streaming, STT/TTS pipeline, voice persona synthesis & voice controls microfrontend |
