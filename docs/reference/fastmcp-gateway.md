@@ -166,7 +166,7 @@ Every route above requires a verified bearer token. Without one, the route retur
 - `X-User-Id`, the body fields `author_id` and `user_id`, and any other identity-like field are ignored.
 - A new tool's author is the token subject that registered it. The gateway writes the SpiceDB `author` relation for that subject.
 - `PUT` keeps the recorded author. The caller needs `manage` on the tool.
-- `DELETE` requires `manage` and revokes the recorded author relation.
+- `DELETE` requires `manage` and revokes the recorded author relation. The revoke runs first. The tool is removed only after the revoke succeeds. If SpiceDB cannot apply the revoke, the route returns `503` with `authorization_unavailable` and the tool stays registered. Retry the `DELETE` after the outage.
 - `POST .../execute` requires `execute`.
 - A tool called through the MCP protocol runs for the token subject of that MCP request. The transport check runs first, so a call without a token never reaches the tool.
 
