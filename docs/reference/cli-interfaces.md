@@ -37,8 +37,10 @@
 | `make test-mutation` | Runs `mutmut` on the core domain modules (`source_paths` in `[tool.mutmut]`), then prints the mutants that were not killed. Policy: the target fails when `mutmut run` fails or when one or more mutants survive. Mutants with other statuses (for example `no tests`) are printed but do not fail the target |
 | `make test-e2e` | Runs `bddgen`, then the headless Playwright BDD suite. Passes `ARGS` to `playwright test` |
 | `make test-e2e-ui` | Runs `bddgen`, then opens the Playwright UI mode for live debugging. Passes `ARGS` to `playwright test` |
-| `make e2e-lore-up` | Starts campaign_lore for the gateway-down e2e journey. Records its process group in `.e2e/campaign_lore.pid` |
-| `make e2e-lore-down` | Stops only the campaign_lore process group that `make e2e-lore-up` started |
+| `make e2e-lore-up` | Scales `deployment/campaign-lore` on Kind to 1. Waits for the rollout and until the gateway `/healthz` reports `campaign_lore` as `operational` |
+| `make e2e-lore-down` | Scales `deployment/campaign-lore` on Kind to 0. Waits until the gateway `/healthz` reports `campaign_lore` as `unreachable` |
+| `make e2e-game-session-up` | The same as `make e2e-lore-up`, for `deployment/game-session` and `game_session` |
+| `make e2e-game-session-down` | The same as `make e2e-lore-down`, for `deployment/game-session` and `game_session` |
 | `make lint` | Runs Ruff lint and format checks, the hex colour gate (`scripts/check_hex_literals.py`, baseline `scripts/hex_baseline.json`), mypy on the inference worker and the MCP gateway, frontend and e2e typechecks, and `helm lint` |
 | `make lint-fix` | Runs `ruff check --fix` and `ruff format` on the repository |
 | `make pre-commit` | Runs every pre-commit hook on all files with `uv run pre-commit run --all-files` |

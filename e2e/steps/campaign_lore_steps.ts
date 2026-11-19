@@ -6,19 +6,9 @@
  * throws with the response body. Governed by ADR-0013, ADR-0014, and Hard Invariant 7.
  */
 
-import { execFileSync } from 'node:child_process';
 import { expect } from '@playwright/test';
 import { After, Given, When, Then } from '../support/fixtures';
-
-/** Runs a public make target from the repository root. A failed target throws with its output. */
-function runMakeTarget(target: string): void {
-  try {
-    execFileSync('make', [target], { cwd: process.cwd(), stdio: 'pipe' });
-  } catch (error) {
-    const output = error instanceof Error && 'stderr' in error ? String((error as { stderr: unknown }).stderr) : '';
-    throw new Error(`make ${target} failed. ${output}`);
-  }
-}
+import { startService, stopService } from '../support/service_faults';
 
 function requireCampaignId(campaignId: string | null): string {
   if (!campaignId) throw new Error('No campaign id. Create the campaign with a setup step first.');
@@ -59,7 +49,7 @@ When('I select the {string} view', async ({ page }, viewName: string) => {
 
 When('the campaign lore service is stopped', async ({ page }) => {
   await page.waitForLoadState('networkidle');
-  runMakeTarget('e2e-lore-down');
+  stopService('campaign_lore');
 });
 
 When('I click an empty spot on the campaign atlas', async ({ page }) => {
@@ -110,5 +100,5 @@ Then('the campaign atlas does not list the pin {string}', async ({ page }, title
 
 // Restores campaign_lore after a journey that stopped it, so later journeys find the service.
 After({ tags: '@lore-down' }, async () => {
-  runMakeTarget('e2e-lore-up');
+  startService('campaign_lore');
 });

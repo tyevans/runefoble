@@ -1,13 +1,15 @@
 /**
  * Caravan Board Playwright BDD Step Definitions
  *
- * Drives <runefoble-caravan-board> through its UI. The only fault injection is a
- * 403 or 503 response at the network boundary, used to prove the error path (ADR-0015).
- * Governed by ADR-0014 and Hard Invariant 7. TASK-0677, TASK-0807, TASK-0759.
+ * Drives <runefoble-caravan-board> through its UI. The 503 scenarios stop game_session on
+ * Kind, so the gateway itself answers 503 (TASK-0909). The 403 scenario still answers the action
+ * route with page.route in the browser, because no frontdoor setup gives a refusal yet.
+ * Governed by ADR-0014, ADR-0015 and Hard Invariant 7. TASK-0677, TASK-0807, TASK-0759.
  */
 
 import { expect, type Page } from '@playwright/test';
-import { Given, When, Then } from '../support/fixtures';
+import { After, Given, When, Then } from '../support/fixtures';
+import { startService, stopService } from '../support/service_faults';
 import type { FrontdoorApi } from '../support/frontdoor_api';
 import type { World } from '../support/world';
 import { requireValue } from '../support/guards';
@@ -25,14 +27,24 @@ Given('the caravan board is open', async ({ page, frontdoorApi, world }) => {
   await page.waitForSelector('runefoble-caravan-board', { timeout: 15_000 });
 });
 
-Given('the caravan route {string} responds with status {int}', async ({ page }, action: string, status: number) => {
+Given('the caravan route {string} refuses the account', async ({ page }, action: string) => {
   await page.route(`**/caravans/contracts/*/${action}`, (route) =>
     route.fulfill({
-      status,
+      status: 403,
       contentType: 'application/json',
-      body: JSON.stringify({ detail: 'Caravan route service is unavailable.' }),
+      body: JSON.stringify({ detail: 'Forbidden' }),
     })
   );
+});
+
+Given('the game session service is stopped', async ({ page }) => {
+  await page.waitForLoadState('networkidle');
+  stopService('game_session');
+});
+
+// Restarts game_session after a journey that stopped it, so later journeys find the service.
+After({ tags: '@game-session-down' }, async () => {
+  startService('game_session');
 });
 
 Given('I record the caravan {string} request', async ({ page, world }, action: string) => {

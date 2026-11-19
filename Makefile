@@ -1,4 +1,4 @@
-.PHONY: help setup install-tools install-spec-ops cluster-up cluster-down images voice-model-cache helm-lint helm-template helm-check-event-store helm-deploy test test-authz-live test-entrypoints test-gateway test-property test-mutation test-e2e test-e2e-ui test-bdd e2e-lore-up e2e-lore-down lint lint-fix build check-ui-manifests dev dev-frontend dev-storybook dev-audience-studio dev-api dev-worker deploy-remote-worker pre-commit health-check clean-worktrees backlog-worker docs-build docs-serve visualize-project visualize-project-build prd-audit prd-decompose prd-create prd-sync
+.PHONY: help setup install-tools install-spec-ops cluster-up cluster-down images voice-model-cache helm-lint helm-template helm-check-event-store helm-deploy test test-authz-live test-entrypoints test-gateway test-property test-mutation test-e2e test-e2e-ui test-bdd e2e-lore-up e2e-lore-down e2e-game-session-up e2e-game-session-down lint lint-fix build check-ui-manifests dev dev-frontend dev-storybook dev-audience-studio dev-api dev-worker deploy-remote-worker pre-commit health-check clean-worktrees backlog-worker docs-build docs-serve visualize-project visualize-project-build prd-audit prd-decompose prd-create prd-sync
 
 
 CLUSTER_NAME ?= runefoble-local
@@ -236,11 +236,17 @@ test-bdd: ## Typecheck e2e steps, run e2e guard unit tests, reject unused steps,
 	@echo "==> Validating Gherkin feature syntax and step definitions..."
 	@pnpm exec bddgen
 
-e2e-lore-up: ## Start campaign_lore for the gateway-down e2e journey (TASK-0695)
-	@uv run python scripts/e2e_lore_fault.py up
+e2e-lore-up: ## Scale campaign-lore on Kind back to 1 and wait until the gateway reports it operational (TASK-0909)
+	@uv run python scripts/e2e_service_fault.py campaign_lore up
 
-e2e-lore-down: ## Stop the campaign_lore started by e2e-lore-up (TASK-0695)
-	@uv run python scripts/e2e_lore_fault.py down
+e2e-lore-down: ## Scale campaign-lore on Kind to 0 and wait until the gateway reports it unreachable (TASK-0909)
+	@uv run python scripts/e2e_service_fault.py campaign_lore down
+
+e2e-game-session-up: ## Scale game-session on Kind back to 1 and wait until the gateway reports it operational (TASK-0909)
+	@uv run python scripts/e2e_service_fault.py game_session up
+
+e2e-game-session-down: ## Scale game-session on Kind to 0 and wait until the gateway reports it unreachable (TASK-0909)
+	@uv run python scripts/e2e_service_fault.py game_session down
 
 test-e2e: ## Run headless Playwright BDD suite against the Kind stack (real Zitadel sign-in, TASK-0525)
 	@echo "==> Running Playwright BDD end-to-end tests..."
