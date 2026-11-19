@@ -158,8 +158,17 @@ silo:
   image: cgr.dev/chainguard/minio@sha256:7618b82bba99aadd77fcf59eb6cfd89b4b8b8e01ac796c474d57a1c1abf17e79
   port: 9000
   consolePort: 9001
-  # The chart creates no buckets. Create runefoble-assets and runefoble-recordings after Silo starts
-  # (docs/reference/platform-services.md).
+  # Buckets that the bucket Job (silo-buckets-job.yaml) creates after install and upgrade.
+  # The Job skips a bucket that exists.
+  buckets:
+    - runefoble-assets
+    - runefoble-recordings
+  bucketJob:
+    enabled: true
+    # Chainguard builds the MinIO client, from the same source as the Silo image. Pinned by digest.
+    image: cgr.dev/chainguard/minio-client@sha256:47e7c343d1e0f0ae23ebd23d3ed095dffaa0ac397ec75a871829a6f9e075134c
+    # Pod restarts before the Job fails. The Job restarts until Silo answers.
+    backoffLimit: 10
   # The data claim of the StatefulSet. It holds every stored object. An empty storageClass uses the
   # cluster default.
   persistence:
