@@ -1,7 +1,7 @@
 ---
 id: '0438'
 title: Soundscape Tactical Board Event Subscribers for Kinetic Foley Audio Cues
-status: Refined
+status: Complete
 created: 2026-09-28
 dependencies:
 - TASK-0050
@@ -26,7 +26,7 @@ target_release: 0.9.0
 # TASK-0438: Soundscape Tactical Board Event Subscribers for Kinetic Foley Audio Cues
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Expand `services/soundscape/src/soundscape/event_handlers.py` to subscribe to tactical board events (`SpellCast`, `AreaEffectExploded`, `TokenHazardTriggered`, `PhysicsCollisionOccurred`), resolving matching sound effects and publishing `SoundscapeCueTriggered` domain events to provide synchronized tactical audio feedback within 100ms per PRD-0010 checkable outcomes.
@@ -74,3 +74,6 @@ Currently, `services/soundscape/src/soundscape/event_handlers.py` only subscribe
 2. Incoming board events record cue triggers on the aggregate and emit `SoundscapeCueTriggered`.
 3. Frontdoor blackbox test suite `tests/test_blackbox_soundscape_tactical_events.py` passes with 100% assertions.
 4. Code passes `uv run ruff check .` and `uv run ruff format --check .`.
+
+## Completion Note
+Hazard and collision handlers are done. `SpellCast` and `AreaEffectExploded` moved to TASK-0834, because board_state does not publish them.

@@ -48,4 +48,4 @@ Audio stem streaming requires lightweight WebAudio node mixing on the client and
 - [`TASK-0109: Dynamic Soundscape Mixing Panel Microfrontend and WebAudio Ducking Controls`](../../backlog/complete/0109-dynamic-soundscape-mixing-panel-microfrontend.md)
 - [`TASK-0436: Gateway Soundscape API Routing & Zanzibar Authorization Proxy`](../../backlog/refined/0436-gateway-soundscape-api-routing-and-zanzibar-authorization-proxy.md)
 - [`TASK-0437: App Shell Soundscape Real-Time WebSocket Audio Synchronization & Foley Playback`](../../backlog/refined/0437-app-shell-soundscape-websocket-audio-sync.md)
-- [`TASK-0438: Soundscape Tactical Board Event Subscribers for Kinetic Foley Audio Cues`](../../backlog/refined/0438-soundscape-tactile-board-event-handlers.md)
+- [`TASK-0438: Soundscape Tactical Board Event Subscribers for Kinetic Foley Audio Cues`](../../backlog/complete/0438-soundscape-tactile-board-event-handlers.md)
