@@ -6,7 +6,7 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 
-from tests.helpers.campaign_setup import create_dm_campaign
+pytestmark = pytest.mark.usefixtures("board_campaign")
 
 
 def test_ephemeral_decal_decay_over_two_rounds(
@@ -58,9 +58,3 @@ def test_vfx_animation_finished_endpoint(client: TestClient, board_campaign: str
     assert res.status_code == 200
     assert res.json()["status"] == "finished"
     assert res.json()["animation_id"] == "vfx-test-1234"
-
-
-@pytest.fixture(autouse=True)
-def board_campaign(trusted_ws_issuer) -> str:
-    """The campaign that every board in this module belongs to. `user-test` runs it."""
-    return create_dm_campaign("user-test")

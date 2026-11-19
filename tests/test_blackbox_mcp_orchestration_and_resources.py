@@ -24,13 +24,13 @@ from runefoble_auth.sync import ZitadelSpiceDBSyncService
 from runefoble_auth.sync_events import handle_domain_event
 from the_watcher.main import app as watcher_app
 
-from tests.helpers.campaign_setup import create_dm_campaign, create_owned_campaign
+from tests.helpers.campaign_setup import create_owned_campaign
 from tests.helpers.live_services import closed_port_url, serve, unavailable_app
 from tests.helpers.mcp_http import call_tool_over_http, read_resource_over_http, serve_mcp
 from tests.helpers.watcher_engine import select_worker_engine
 from tests.helpers.ws_identity import SIGNING_ISSUER, bearer
 
-pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer", "board_campaign")
 
 
 def _fake_worker() -> FastAPI:
@@ -432,9 +432,3 @@ def test_blackbox_caller_bearer_reads_authorization_header_of_mcp_request():
     assert caller_bearer(no_request) is None
     assert caller_bearer(basic_scheme) is None
     assert caller_bearer(None) is None
-
-
-@pytest.fixture(autouse=True)
-def board_campaign(trusted_ws_issuer) -> str:
-    """The campaign that every board in this module belongs to. `user-test` runs it."""
-    return create_dm_campaign("user-test")

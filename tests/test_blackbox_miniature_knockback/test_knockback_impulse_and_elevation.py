@@ -15,8 +15,9 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 
-from tests.helpers.campaign_setup import create_dm_campaign
 from tests.helpers.mock_redis import MockAsyncRedis
+
+pytestmark = pytest.mark.usefixtures("board_campaign")
 
 
 def _create_board(
@@ -274,9 +275,3 @@ def test_knockback_websocket_broadcast(
         assert payload["status"] == "settled"
         assert payload["knockback"]["token_id"] == "broadcast-tok"
         assert payload["knockback"]["to_y"] == 3
-
-
-@pytest.fixture(autouse=True)
-def board_campaign(trusted_ws_issuer) -> str:
-    """The campaign that every board in this module belongs to. `user-test` runs it."""
-    return create_dm_campaign("user-test")

@@ -9,8 +9,9 @@ from board_state.dependencies import repo
 from fastapi.testclient import TestClient
 from runefoble_platform.identifiers import opaque_aggregate_id
 
-from tests.helpers.campaign_setup import create_dm_campaign
 from tests.helpers.ws_identity import ws_subprotocols
+
+pytestmark = pytest.mark.usefixtures("board_campaign")
 
 
 def test_websocket_realtime_speech_spell_trigger_sub_150ms(
@@ -94,9 +95,3 @@ async def test_event_sourcing_domain_events_persistence() -> None:
     assert loaded_board is not None
     assert loaded_board.state.cols == 10
     assert len(loaded_board.state.active_decals) > 0
-
-
-@pytest.fixture(autouse=True)
-def board_campaign(trusted_ws_issuer) -> str:
-    """The campaign that every board in this module belongs to. `user-test` runs it."""
-    return create_dm_campaign("user-test")

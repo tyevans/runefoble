@@ -11,8 +11,9 @@ import pytest
 from board_state.main import app
 from fastapi.testclient import TestClient
 
-from tests.helpers.campaign_setup import create_dm_campaign
 from tests.helpers.ws_identity import bearer
+
+pytestmark = pytest.mark.usefixtures("board_campaign")
 
 
 def test_board_state_microfrontend_manifest_3d_components():
@@ -149,9 +150,3 @@ def test_3d_miniature_knockback_impulse_and_wall_collision(board_campaign: str):
     assert board["tokens"]["mini-valeros"]["x"] == kb_data["to_x"]
     assert board["last_collision"] is not None
     assert board["last_collision"]["entity_id"] == "mini-valeros"
-
-
-@pytest.fixture(autouse=True)
-def board_campaign(trusted_ws_issuer) -> str:
-    """The campaign that every board in this module belongs to. `user-test` runs it."""
-    return create_dm_campaign("user-test")

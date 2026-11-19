@@ -21,6 +21,8 @@ from tests.helpers.ws_identity import bearer
 
 from .conftest import REPO_ROOT
 
+pytestmark = pytest.mark.usefixtures("board_campaign")
+
 
 def test_dm_traps_manifest_endpoint(client: TestClient) -> None:
     """Verify GET /ui/manifest frontdoor exposes dm trap controls and map switcher."""
@@ -99,9 +101,3 @@ async def test_frontdoor_contract_integration(client: TestClient, trusted_ws_iss
     assert switch_data["new_map_id"] == "dungeon_lvl2"
     assert switch_data["cols"] == 20
     assert switch_data["rows"] == 20
-
-
-@pytest.fixture(autouse=True)
-def board_campaign(trusted_ws_issuer) -> str:
-    """The campaign that every board in this module belongs to. `user-test` runs it."""
-    return create_dm_campaign("user-test")

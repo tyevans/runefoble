@@ -20,7 +20,7 @@ from runefoble_auth.mock import MockSpiceDBClient
 from runefoble_auth.sync import ZitadelSpiceDBSyncService
 from runefoble_auth.sync_events import handle_domain_event
 
-from tests.helpers.campaign_setup import create_campaign, create_dm_campaign
+from tests.helpers.campaign_setup import create_campaign
 from tests.helpers.game_session_setup import start_session_with_player
 from tests.helpers.live_services import closed_port_url, serve, unavailable_app
 from tests.helpers.mcp_http import call_tool_over_http, listed_tools, serve_mcp
@@ -28,6 +28,8 @@ from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.service_harness import routed_event_bus
 from tests.helpers.spicedb_factory import shared_spicedb_client
 from tests.helpers.ws_identity import SIGNING_ISSUER, bearer
+
+pytestmark = pytest.mark.usefixtures("board_campaign")
 
 _MCP: dict[str, str] = {}
 
@@ -420,9 +422,3 @@ async def test_blackbox_calculate_encounter_balance_rejects_empty_party():
     )
     assert result.isError is True
     assert "rejected the request (422)" in tool_text(result)
-
-
-@pytest.fixture(autouse=True)
-def board_campaign(trusted_ws_issuer) -> str:
-    """The campaign that every board in this module belongs to. `user-test` runs it."""
-    return create_dm_campaign("user-test")

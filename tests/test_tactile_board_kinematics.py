@@ -10,8 +10,9 @@ import pytest
 from board_state.main import app
 from fastapi.testclient import TestClient
 
-from tests.helpers.campaign_setup import create_dm_campaign
 from tests.helpers.ws_identity import bearer, ws_subprotocols
+
+pytestmark = pytest.mark.usefixtures("board_campaign")
 
 
 def test_tactile_kinematics_route_previews(board_campaign: str):
@@ -110,9 +111,3 @@ def test_tactile_kinematics_websocket_flow(board_campaign: str):
     # Verify board state
     board = client.get(f"/api/v1/boards/{board_id}").json()
     assert board["tokens"]["merisiel"]["x"] == 4
-
-
-@pytest.fixture(autouse=True)
-def board_campaign(trusted_ws_issuer) -> str:
-    """The campaign that every board in this module belongs to. `user-test` runs it."""
-    return create_dm_campaign("user-test")

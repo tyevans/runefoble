@@ -12,6 +12,7 @@ from __future__ import annotations
 from uuid import uuid4
 
 import httpx
+import pytest
 from fastapi.testclient import TestClient
 from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
 
@@ -82,6 +83,21 @@ def create_dm_campaign(dm_id: str = "user-test") -> str:
     this instead of writing a `dungeon_master` tuple by hand.
     """
     return create_campaign(_game_session_client(), dm_id)
+
+
+@pytest.fixture
+def board_campaign(trusted_ws_issuer) -> str:
+    """The campaign that the board test modules share. `user-test` runs it.
+
+    Not autouse. A module that needs it lists it in `pytestmark` or takes it as a parameter.
+    """
+    return create_dm_campaign("user-test")
+
+
+@pytest.fixture
+def board_campaign_viewer(board_campaign: str) -> None:
+    """Join `player-viewer` to the board campaign as a player, through the public invite route."""
+    add_member(board_campaign, "user-test", "player-viewer", "player")
 
 
 def add_member(campaign_id: str, owner_id: str, member_id: str, role: str) -> None:

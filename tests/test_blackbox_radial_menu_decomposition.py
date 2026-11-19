@@ -17,8 +17,9 @@ import pytest
 from board_state.main import app as board_app
 from httpx import ASGITransport, AsyncClient
 
-from tests.helpers.campaign_setup import create_dm_campaign
 from tests.helpers.ws_identity import bearer
+
+pytestmark = pytest.mark.usefixtures("board_campaign")
 
 
 @pytest.mark.asyncio
@@ -70,9 +71,3 @@ async def test_frontdoor_radial_actions_execution(board_campaign: str) -> None:
             assert act_data["action"] == act
             assert act_data["status"] == "executed"
             assert f"Action '{act}' successfully executed" in act_data["message"]
-
-
-@pytest.fixture(autouse=True)
-def board_campaign(trusted_ws_issuer) -> str:
-    """The campaign that every board in this module belongs to. `user-test` runs it."""
-    return create_dm_campaign("user-test")

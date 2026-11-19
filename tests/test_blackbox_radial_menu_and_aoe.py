@@ -13,8 +13,9 @@ import pytest
 from board_state.main import app as board_app
 from fastapi.testclient import TestClient
 
-from tests.helpers.campaign_setup import create_dm_campaign
 from tests.helpers.ws_identity import bearer, ws_subprotocols
+
+pytestmark = pytest.mark.usefixtures("board_campaign")
 
 
 @pytest.fixture
@@ -320,9 +321,3 @@ def test_websocket_radial_action_and_aoe_streaming(client, board_campaign: str):
         msg_placed = ws.receive_json()
         assert msg_placed["type"] == "aoe_template_placed"
         assert msg_placed["template"]["template_id"] == "aoe-ws-1"
-
-
-@pytest.fixture(autouse=True)
-def board_campaign(trusted_ws_issuer) -> str:
-    """The campaign that every board in this module belongs to. `user-test` runs it."""
-    return create_dm_campaign("user-test")

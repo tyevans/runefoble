@@ -10,8 +10,9 @@ import pytest
 from board_state.main import app as board_app
 from fastapi.testclient import TestClient
 
-from tests.helpers.campaign_setup import create_dm_campaign
 from tests.helpers.ws_identity import bearer, ws_subprotocols
+
+pytestmark = pytest.mark.usefixtures("board_campaign")
 
 
 @pytest.fixture
@@ -201,9 +202,3 @@ def test_board_state_previews_modular_frontdoors(board_client, board_campaign: s
         cancel_msg = ws.receive_json()
         assert cancel_msg["type"] == "preview_cancelled"
         assert cancel_msg["token_id"] == "valeros"
-
-
-@pytest.fixture(autouse=True)
-def board_campaign(trusted_ws_issuer) -> str:
-    """The campaign that every board in this module belongs to. `user-test` runs it."""
-    return create_dm_campaign("user-test")

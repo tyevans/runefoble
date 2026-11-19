@@ -11,8 +11,9 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 
-from tests.helpers.campaign_setup import create_dm_campaign
 from tests.helpers.ws_identity import ws_subprotocols
+
+pytestmark = pytest.mark.usefixtures("board_campaign")
 
 BOARD_COLS = 20
 BOARD_ROWS = 20
@@ -107,9 +108,3 @@ def test_socket_aoe_evaluate_rejects_fractional_origin(client: TestClient, board
 
     assert frame["type"] == "error"
     assert frame["status"] == 422
-
-
-@pytest.fixture(autouse=True)
-def board_campaign(trusted_ws_issuer) -> str:
-    """The campaign that every board in this module belongs to. `user-test` runs it."""
-    return create_dm_campaign("user-test")

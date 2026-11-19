@@ -7,8 +7,9 @@ from board_state.aggregate import BoardAggregate
 from board_state.main import app as board_app
 from httpx import ASGITransport, AsyncClient
 
-from tests.helpers.campaign_setup import add_member, create_dm_campaign
 from tests.helpers.ws_identity import bearer
+
+pytestmark = pytest.mark.usefixtures("board_campaign", "board_campaign_viewer")
 
 
 async def _create_seeded_party_board(
@@ -114,11 +115,3 @@ async def test_board_visibility_api_filtering(board_campaign: str):
         data_dm = vis_dm.json()
         token_names_dm = [t["name"] for t in data_dm["tokens"]]
         assert "Goblin Scout" in token_names_dm
-
-
-@pytest.fixture(autouse=True)
-def board_campaign(trusted_ws_issuer) -> str:
-    """The campaign that every board in this module belongs to. `user-test` runs it."""
-    campaign_id = create_dm_campaign("user-test")
-    add_member(campaign_id, "user-test", "player-viewer", "player")
-    return campaign_id

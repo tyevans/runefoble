@@ -13,10 +13,11 @@ from asset_forge.main import app as asset_app
 from fastapi.testclient import TestClient
 from runefoble_platform.storage import get_storage_service
 
-from tests.helpers.campaign_setup import create_dm_campaign
 from tests.helpers.silo_fixtures import PNG_SAMPLE_BYTES
 from tests.helpers.ws_identity import bearer
 from tests.test_blackbox_uvtt_import.conftest import build_sample_dd2vtt_dict
+
+pytestmark = pytest.mark.usefixtures("board_campaign")
 
 
 def _create_board(client: TestClient, board_id: str, board_campaign: str) -> None:
@@ -156,9 +157,3 @@ def test_blackbox_uvtt_background_is_an_authorized_asset_path(
 
     stranger = TestClient(asset_app, headers=bearer("stranger-mallory"))
     assert stranger.get(path).status_code == 403
-
-
-@pytest.fixture(autouse=True)
-def board_campaign(trusted_ws_issuer) -> str:
-    """The campaign that every board in this module belongs to. `user-test` runs it."""
-    return create_dm_campaign("user-test")

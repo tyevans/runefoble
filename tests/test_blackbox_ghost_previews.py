@@ -13,10 +13,9 @@ from fastapi.testclient import TestClient
 from gateway_api.main import app as gateway_app
 from runefoble_auth.factory import get_spicedb_client
 
-from tests.helpers.campaign_setup import create_dm_campaign
 from tests.helpers.ws_identity import bearer, ws_subprotocols
 
-pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer", "board_campaign")
 
 
 @pytest.fixture(autouse=True)
@@ -358,9 +357,3 @@ def test_gateway_campaign_websocket_ghost_preview_authorization():
         assert err["type"] == "error"
         assert err["code"] == "PERMISSION_DENIED"
         assert err["action"] == "ghost_preview"
-
-
-@pytest.fixture(autouse=True)
-def board_campaign(trusted_ws_issuer) -> str:
-    """The campaign that every board in this module belongs to. `user-test` runs it."""
-    return create_dm_campaign("user-test")
