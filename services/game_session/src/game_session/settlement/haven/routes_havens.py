@@ -34,7 +34,6 @@ router = APIRouter(dependencies=[Depends(get_principal)])
 
 
 @router.post("/api/v1/campaigns/{campaign_id}/settlements", status_code=201)
-@router.post("/campaigns/{campaign_id}/settlements", status_code=201)
 async def found_settlement(
     caller_id: CallerId,
     campaign_id: str,
@@ -74,7 +73,6 @@ async def found_settlement(
 
 
 @router.get("/api/v1/campaigns/{campaign_id}/settlements/{settlement_id}")
-@router.get("/campaigns/{campaign_id}/settlements/{settlement_id}")
 async def get_campaign_settlement_projection(
     caller_id: CallerId,
     campaign_id: str,
@@ -90,7 +88,6 @@ async def get_campaign_settlement_projection(
 
 
 @router.get("/api/v1/campaigns/{campaign_id}/settlements")
-@router.get("/campaigns/{campaign_id}/settlements")
 async def list_campaign_settlements(
     caller_id: CallerId,
     campaign_id: str,

@@ -17,7 +17,6 @@ router = APIRouter(dependencies=[Depends(get_principal)], tags=["settlement-npc-
 
 
 @router.get("/api/v1/npcs/{npc_id}/inventory")
-@router.get("/npcs/{npc_id}/inventory")
 async def get_worker_inventory(npc_id: str, caller_id: CallerId) -> dict[str, Any]:
     """Retrieve storefront shelf stock and accessible workplace inventory."""
     agg = await load_worker(npc_id, "view", caller_id)
@@ -29,7 +28,6 @@ async def get_worker_inventory(npc_id: str, caller_id: CallerId) -> dict[str, An
 
 
 @router.get("/api/v1/npcs/{npc_id}/inventory/vault")
-@router.get("/npcs/{npc_id}/inventory/vault")
 async def get_worker_vault(npc_id: str, caller_id: CallerId) -> list[WorkerInventoryItem]:
     """Retrieve backroom vault inventory requiring manager authorization."""
     agg = await load_worker(npc_id, "manage", caller_id)
@@ -37,7 +35,6 @@ async def get_worker_vault(npc_id: str, caller_id: CallerId) -> list[WorkerInven
 
 
 @router.get("/api/v1/npcs/{npc_id}/inventory/{item_id}")
-@router.get("/npcs/{npc_id}/inventory/{item_id}")
 async def get_inventory_item(npc_id: str, item_id: str, caller_id: CallerId) -> WorkerInventoryItem:
     """Lookup specific workplace shelf item pricing, stock count, and contraband status."""
     agg = await load_worker(npc_id, "view", caller_id)
@@ -51,7 +48,6 @@ async def get_inventory_item(npc_id: str, item_id: str, caller_id: CallerId) -> 
 
 
 @router.post("/api/v1/npcs/{npc_id}/inventory/restock")
-@router.post("/npcs/{npc_id}/inventory/restock")
 async def restock_worker_inventory(
     caller_id: CallerId,
     npc_id: str,

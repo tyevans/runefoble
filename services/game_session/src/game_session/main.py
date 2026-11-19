@@ -102,12 +102,10 @@ app.include_router(west_marches_router)
 app.include_router(caravan_trade_router)
 app.include_router(chronicle_router)
 app.include_router(caravan_contracts_router)
-app.include_router(settlements_router)
 app.include_router(settlements_router, prefix="/api/v1")
 app.include_router(settlement_haven_router)
 app.include_router(settlement_workers_router)
 app.include_router(settlement_haggling_router)
-app.include_router(bounties_router)
 app.include_router(bounties_router, prefix="/api/v1")
 app.include_router(profile_router)
 install_publish_failure_handler(app)
@@ -126,7 +124,6 @@ async def health_check(request: Request):
 
 
 @app.get("/ui/manifest")
-@app.get("/game_session/ui/manifest")
 def get_ui_manifest():
     """Advertise vendored microfrontend components for game session."""
     return UI_MANIFEST

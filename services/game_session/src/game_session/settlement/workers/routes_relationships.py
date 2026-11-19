@@ -23,7 +23,6 @@ router = APIRouter(dependencies=[Depends(get_principal)], tags=["settlement-npc-
 
 
 @router.patch("/api/v1/npcs/{npc_id}/mood")
-@router.patch("/npcs/{npc_id}/mood")
 async def update_worker_mood(
     caller_id: CallerId,
     npc_id: str,
@@ -40,7 +39,6 @@ async def update_worker_mood(
 
 
 @router.post("/api/v1/npcs/{npc_id}/relationships", status_code=201)
-@router.post("/npcs/{npc_id}/relationships", status_code=201)
 async def form_npc_relationship(
     caller_id: CallerId,
     npc_id: str,
@@ -59,7 +57,6 @@ async def form_npc_relationship(
 
 
 @router.get("/api/v1/npcs/{npc_id}/relationships")
-@router.get("/npcs/{npc_id}/relationships")
 async def get_npc_relationships(npc_id: str, caller_id: CallerId) -> list[WorkerRelationship]:
     """Query interpersonal ties and social graph connections for an NPC worker."""
     agg = await load_worker(npc_id, "view", caller_id)
@@ -67,7 +64,6 @@ async def get_npc_relationships(npc_id: str, caller_id: CallerId) -> list[Worker
 
 
 @router.get("/api/v1/npcs/{npc_id}/rumors")
-@router.get("/npcs/{npc_id}/rumors")
 async def get_worker_rumors(npc_id: str, caller_id: CallerId) -> list[dict[str, Any]]:
     """Discover workplace rumors, secrets, and grievances overheard by this NPC worker."""
     agg = await load_worker(npc_id, "view", caller_id)

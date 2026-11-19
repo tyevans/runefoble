@@ -36,7 +36,6 @@ router = APIRouter(tags=["traps"], dependencies=[Depends(get_principal)])
 
 
 @router.post("/api/v1/boards/{board_id}/traps", response_model=SecretTrapState, status_code=201)
-@router.post("/boards/{board_id}/traps", response_model=SecretTrapState, status_code=201)
 async def create_trap(
     board_id: str,
     req: CreateTrapRequest,
@@ -72,7 +71,6 @@ async def create_trap(
 
 
 @router.get("/api/v1/boards/{board_id}/traps", response_model=TrapListResponse)
-@router.get("/boards/{board_id}/traps", response_model=TrapListResponse)
 async def list_traps(
     board_id: str,
     user_id: CallerId,
@@ -89,7 +87,6 @@ async def list_traps(
 
 
 @router.post("/api/v1/boards/{board_id}/switch-map", response_model=SwitchMapResponse)
-@router.post("/boards/{board_id}/switch-map", response_model=SwitchMapResponse)
 async def switch_map_endpoint(
     board_id: str,
     req: SwitchMapRequest,
@@ -111,7 +108,6 @@ async def switch_map_endpoint(
 
 
 @router.post("/api/v1/boards/{board_id}/traps/{trap_id}/disarm")
-@router.post("/boards/{board_id}/traps/{trap_id}/disarm")
 async def disarm_trap_endpoint(
     board_id: str,
     trap_id: str,

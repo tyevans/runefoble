@@ -43,7 +43,6 @@ def _determine_audio_stinger(archetype: str, spell_name: str, damage_type: str |
 
 
 @router.post("/api/v1/boards/{session_id}/spells/cast", response_model=CastSpellResponse)
-@router.post("/api/v1/boards/{session_id}/vfx/spell", response_model=CastSpellResponse)
 async def cast_spell_vfx(
     session_id: str, req: CastSpellRequest, user_id: CallerId
 ) -> CastSpellResponse:

@@ -17,7 +17,6 @@ UI_MANIFEST: dict[str, Any] = load_ui_manifest(
 
 
 @router.get("/ui/manifest")
-@router.get("/the-watcher/ui/manifest")
 def get_ui_manifest() -> dict[str, Any]:
     """Advertise vendored microfrontend components for The Watcher."""
     return UI_MANIFEST

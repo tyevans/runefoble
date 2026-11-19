@@ -21,10 +21,6 @@ router = APIRouter(dependencies=[Depends(get_principal)], tags=["turf_war"])
 
 
 @router.post(
-    "/the-watcher/factions/skirmish/simulate",
-    response_model=SkirmishSimulateResponse,
-)
-@router.post(
     "/api/v1/factions/skirmish/simulate",
     response_model=SkirmishSimulateResponse,
 )
@@ -37,10 +33,6 @@ async def simulate_skirmish(
     return await execute_skirmish_simulation(req)
 
 
-@router.get(
-    "/the-watcher/regions/{region_id}/unrest",
-    response_model=RegionalUnrestResponse,
-)
 @router.get(
     "/api/v1/regions/{region_id}/unrest",
     response_model=RegionalUnrestResponse,

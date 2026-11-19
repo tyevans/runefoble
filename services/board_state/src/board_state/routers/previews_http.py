@@ -43,7 +43,6 @@ async def preview_token_move(
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
-@router.post("/api/v1/boards/{session_id}/preview", response_model=PreviewMoveResponse)
 @router.post("/api/v1/boards/{session_id}/preview-move", response_model=PreviewMoveResponse)
 async def preview_move(session_id: str, req: PreviewMoveRequest, user_id: CallerId):
     if not req.token_id:

@@ -78,7 +78,6 @@ app.include_router(leitmotif_router)
 
 
 @app.get("/healthz", tags=["Health"])
-@app.get("/health", tags=["Health"])
 def health_check(request: Request) -> JSONResponse:
     """Report service health and the status of each supervised stream consumer."""
     statuses = consumer_statuses(getattr(request.app.state, "consumers", {}))

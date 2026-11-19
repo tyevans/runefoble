@@ -31,7 +31,7 @@ export RUNEFOBLE_AUTH_DEV_MODE="true"
 export RUNEFOBLE_REDIS_URL="${RUNEFOBLE_REDIS_URL:-redis://localhost:6379/0}"
 
 # 2. Check if background services should be started or are already running
-if curl -sf http://localhost:8000/api/v1/health >/dev/null 2>&1 && curl -sf http://localhost:5173 >/dev/null 2>&1; then
+if curl -sf http://localhost:8000/healthz >/dev/null 2>&1 && curl -sf http://localhost:5173 >/dev/null 2>&1; then
   echo "==> [Local CI Runner] Detected running services on :8000 and :5173. Reusing existing servers."
 else
   echo "==> [Local CI Runner] Starting local services in background via dev_server.py..."
@@ -43,7 +43,7 @@ else
   START_TIME=$(date +%s)
   READY=false
   while [[ $(($(date +%s) - START_TIME)) -lt $TIMEOUT ]]; do
-    if curl -sf http://localhost:8000/api/v1/health >/dev/null 2>&1 && curl -sf http://localhost:5173 >/dev/null 2>&1; then
+    if curl -sf http://localhost:8000/healthz >/dev/null 2>&1 && curl -sf http://localhost:5173 >/dev/null 2>&1; then
       READY=true
       break
     fi

@@ -217,7 +217,7 @@ jobs:
         run: |
           echo "Waiting for API Gateway and Vite Frontend to become ready..."
           timeout 60 bash -c '
-            until curl -sf http://localhost:8000/api/v1/health > /dev/null && curl -sf http://localhost:5173 > /dev/null; do
+            until curl -sf http://localhost:8000/healthz > /dev/null && curl -sf http://localhost:5173 > /dev/null; do
               echo "Services pending readiness, sleeping 2s..."
               sleep 2
             done

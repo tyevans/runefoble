@@ -38,7 +38,6 @@ def init_reaction_dependencies(
         _registry = registry
 
 
-@router.post("/sessions/{session_id}/reactions/declare", response_model=DeclareReactionResponse)
 @router.post(
     "/api/v1/sessions/{session_id}/reactions/declare", response_model=DeclareReactionResponse
 )
@@ -63,7 +62,6 @@ async def declare_reaction_interrupt(
         raise HTTPException(status_code=404, detail=f"Session not found: {e}") from e
 
 
-@router.post("/sessions/{session_id}/reactions/ready-action", response_model=ReadyActionResponse)
 @router.post(
     "/api/v1/sessions/{session_id}/reactions/ready-action", response_model=ReadyActionResponse
 )
@@ -89,10 +87,6 @@ async def register_ready_action_trigger(
         raise HTTPException(status_code=404, detail=f"Session not found: {e}") from e
 
 
-@router.post(
-    "/sessions/{session_id}/reactions/{reaction_id}/resolve",
-    response_model=ResolveReactionResponse,
-)
 @router.post(
     "/api/v1/sessions/{session_id}/reactions/{reaction_id}/resolve",
     response_model=ResolveReactionResponse,
@@ -120,10 +114,6 @@ async def resolve_reaction_interrupt(
 
 
 @router.post(
-    "/sessions/{session_id}/reactions/evaluate-triggers",
-    response_model=EvaluateTriggersResponse,
-)
-@router.post(
     "/api/v1/sessions/{session_id}/reactions/evaluate-triggers",
     response_model=EvaluateTriggersResponse,
 )
@@ -146,7 +136,6 @@ async def evaluate_ready_action_triggers(
         raise HTTPException(status_code=404, detail=f"Session not found: {e}") from e
 
 
-@router.get("/sessions/{session_id}/reactions/active")
 @router.get("/api/v1/sessions/{session_id}/reactions/active")
 async def get_active_reaction(session_id: UUID, _observer: SessionObserver):
     """Retrieve currently active paused reaction interrupt if any."""

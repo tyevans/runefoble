@@ -84,7 +84,6 @@ async def backend_unavailable_handler(
 
 
 @app.get("/healthz")
-@app.get("/health")
 async def health_check():
     """Health check reporting active backend status."""
     return {

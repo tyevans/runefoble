@@ -20,8 +20,6 @@ DOWNSTREAM_HEALTH_SERVICES = (
 
 
 @router.get("/healthz")
-@router.get("/health")
-@router.get("/api/v1/health")
 async def health_check(request: Request) -> dict:
     """Return health status, probed downstream service status, and Zanzibar engine.
 

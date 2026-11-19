@@ -33,7 +33,6 @@ router = APIRouter(dependencies=[Depends(get_principal)])
 
 
 @router.post("/api/v1/settlements/{settlement_id}/establishments", status_code=201)
-@router.post("/settlements/{settlement_id}/establishments", status_code=201)
 async def construct_establishment(
     caller_id: CallerId,
     settlement_id: str,
@@ -88,7 +87,6 @@ async def construct_establishment(
 
 
 @router.get("/api/v1/settlements/{settlement_id}/establishments")
-@router.get("/settlements/{settlement_id}/establishments")
 async def list_settlement_establishments(
     caller_id: CallerId,
     settlement_id: str,
@@ -106,7 +104,6 @@ async def list_settlement_establishments(
 
 
 @router.get("/api/v1/establishments/{establishment_id}")
-@router.get("/establishments/{establishment_id}")
 async def get_establishment(
     caller_id: CallerId,
     establishment_id: str,

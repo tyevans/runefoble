@@ -24,7 +24,7 @@ ROUTES = (
     ProxyRoute(
         "POST",
         "/api/v1/watcher/speak-and-act",
-        ("api", "v1", "watcher", "intent"),
+        ("api", "v1", "watcher", "transcribe-and-act"),
         SERVICE,
         name="speak_and_act",
         doc=(
