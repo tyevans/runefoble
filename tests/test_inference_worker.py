@@ -148,7 +148,6 @@ async def test_intent_api_endpoint(fake_llm, worker_api):
         assert data["action"]["target_token_id"] == "tok-skel-1"
         assert data["execution_time_ms"] >= 0
         assert data["source"] == "llm"
-        assert data["degraded"] is False
 
 
 @pytest.mark.asyncio

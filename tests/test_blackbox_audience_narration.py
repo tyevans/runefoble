@@ -52,7 +52,6 @@ class WorkerDouble:
 
     url: str = ""
     status: int = 200
-    degraded: bool = False
     requests: list[dict[str, Any]] = field(default_factory=list)
 
 
@@ -71,7 +70,6 @@ def _worker_app(double: WorkerDouble) -> FastAPI:
             "suggested_dm_prompts": ["Who rings the bell?"],
             "tension_level": "rising",
             "source": "llm",
-            "degraded": double.degraded,
         }
         return JSONResponse(body)
 
@@ -235,23 +233,6 @@ def test_worker_503_records_an_unavailable_notice_and_no_narration(
     (notice,) = _unavailable(client, session_id, campaign_id)
     assert NARRATION not in notice["content"]
     assert notice["content"].strip()
-    assert _dispatched_events(mock_bus, session_id) == []
-
-
-def test_degraded_worker_reply_is_recorded_as_unavailable(
-    client: TestClient, mock_bus: MockAsyncRedis, worker: WorkerDouble
-) -> None:
-    campaign_id, session_id = _create_session()
-    worker.degraded = True
-
-    _publish(mock_bus, _approved(campaign_id, session_id))
-
-    assert wait_until(
-        lambda: len(_unavailable(client, session_id, campaign_id)) == 1,
-        timeout_s=10.0,
-        interval_s=0.05,
-    )
-    assert _narrations(client, session_id, campaign_id) == []
     assert _dispatched_events(mock_bus, session_id) == []
 
 

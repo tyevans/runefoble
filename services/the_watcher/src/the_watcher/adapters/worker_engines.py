@@ -49,7 +49,6 @@ class WorkerIntentParser(IntentParser):
             details=action.get("narrative_flavor", req.transcript),
             watcher_reply=action.get("narrative_flavor", ""),
             source=data["source"],
-            degraded=data["degraded"],
         )
 
 
@@ -87,7 +86,6 @@ class WorkerStandInDecider(StandInDecider):
             guardrails_applied=data["guardrails_applied"],
             flavor_text=data["narrative_flavor"],
             source=data["source"],
-            degraded=data["degraded"],
         )
 
 
@@ -119,5 +117,4 @@ class WorkerSceneNarrator(SceneNarrator):
             suggested_dm_prompts=data["suggested_dm_prompts"],
             tension_level=data["tension_level"],
             source=data["source"],
-            degraded=data["degraded"],
         )

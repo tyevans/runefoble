@@ -20,4 +20,3 @@ class StandInAction(BaseModel):
     guardrails_applied: list[GuardrailName] = Field(default_factory=list)
     flavor_text: str = ""
     source: str = "watcher_rules"  # "llm" from the worker
-    degraded: bool = False

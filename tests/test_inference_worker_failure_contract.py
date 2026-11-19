@@ -99,7 +99,6 @@ async def test_model_output_with_action_reports_llm_source(use_worker_backend, f
     assert resp.status_code == 200
     body = resp.json()
     assert body["source"] == "llm"
-    assert body["degraded"] is False
     assert body["action"]["action_type"] == "dodge"
 
 

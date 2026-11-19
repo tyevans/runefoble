@@ -18,7 +18,7 @@ The worker implements stateful reasoning pipelines using **LangGraph** and **Lan
 
 The worker selects one backend at start-up. It checks that the selected server answers. When the server does not answer, or the backend name is unknown, the worker refuses to start. The value `mock` is refused in every environment. The worker has no canned engine.
 
-Backend failures are never masked. A failed backend, or model output without a required field, returns HTTP 503 with `{"error": "backend_unavailable", "backend": "<name>"}`. Every response reports `source` (always `llm`) and `degraded` (always `false`). See `docs/reference/inference-worker-response-contract.md`.
+Backend failures are never masked. A failed backend, or model output without a required field, returns HTTP 503 with `{"error": "backend_unavailable", "backend": "<name>"}`. Every response reports `source` (always `llm`). See `docs/reference/inference-worker-response-contract.md`.
 
 ## Remote Deployment on Dedicated GPU Node
 
