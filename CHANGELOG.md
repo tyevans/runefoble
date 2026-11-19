@@ -497,8 +497,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Added frontdoor blackbox test suite `tests/test_blackbox_board_state.py` verifying line length invariants (< 200 lines per file), backward-compatible facade re-exports, modular submodule imports, and BoardState transitions.
 
 ### Added
-- Soundscape reacts to board hazards and collisions (`TokenHazardTriggered`, `PhysicsCollisionOccurred`). (TASK-0438)
-- App Shell route `#/rules` mounts the rules compendium; `pnpm lint` in frontend/ reports components that no view mounts. (TASK-0648)
 - Voice agent speech engine `whisper-cpp`: posts each utterance to a whisper.cpp server (`RUNEFOBLE_VOICE_STT_BASE_URL`); an unreachable server is 503 and `/healthz` reports not ready. Helm `voiceAgent.sttEngine` and `sttBaseUrl`; the model cache volume exists only for `faster-whisper`. (TASK-0833)
 - **Tabletop 3D Physics Engine & Mesh Collision Integration (`TASK-0150`, `ADR-0003`, `ADR-0006`, `ADR-0011`, `PRD-0013`, `US-0061`)**:
   - Implemented foundational 3D tabletop physics and mesh collision simulation backend in `services/board_state/src/board_state/physics/`:
@@ -756,8 +754,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 
 ### Added
-- Soundscape reacts to board hazards and collisions (`TokenHazardTriggered`, `PhysicsCollisionOccurred`). (TASK-0438)
-- App Shell route `#/rules` mounts the rules compendium; `pnpm lint` in frontend/ reports components that no view mounts. (TASK-0648)
 - Voice agent speech engine `whisper-cpp`: posts each utterance to a whisper.cpp server (`RUNEFOBLE_VOICE_STT_BASE_URL`); an unreachable server is 503 and `/healthz` reports not ready. Helm `voiceAgent.sttEngine` and `sttBaseUrl`; the model cache volume exists only for `faster-whisper`. (TASK-0833)
 - **Radial Token Action Menu & Rotatable AoE Spell Templates (`TASK-0125`, `PRD-0013`, `US-0056`, `ADR-0004`, `ADR-0006`, `ADR-0013`)**:
   - Implemented interactive contextual radial action dial `<runefoble-radial-menu>` blooming in under 120ms with Bauhaus geometric icons for Attack, Dash, Disengage, Dodge, and Cast.
@@ -1132,8 +1128,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Enforced Hard Invariant 6 (< 500 lines limit) ensuring all asset forge test suites stay strictly under 250 lines.
 
 ### Added
-- Soundscape reacts to board hazards and collisions (`TokenHazardTriggered`, `PhysicsCollisionOccurred`). (TASK-0438)
-- App Shell route `#/rules` mounts the rules compendium; `pnpm lint` in frontend/ reports components that no view mounts. (TASK-0648)
 - Voice agent speech engine `whisper-cpp`: posts each utterance to a whisper.cpp server (`RUNEFOBLE_VOICE_STT_BASE_URL`); an unreachable server is 503 and `/healthz` reports not ready. Helm `voiceAgent.sttEngine` and `sttBaseUrl`; the model cache volume exists only for `faster-whisper`. (TASK-0833)
 - **Stand-In Policy Guardrails and Mid-Session Hot-Swap Takeover (`TASK-0055`, `PRD-0002`, `US-0025`, `US-0026`)**:
   - Implemented configurable tactical guardrail profiles on character aggregates (`StandInGuardrails`) supporting spell slot reservation limits, ally protection affinities, melee avoidance, and risk threshold flags.

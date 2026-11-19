@@ -45,7 +45,7 @@ Several microfrontends are declared or imported but never mounted. The rules com
 
 ## Detailed Specification & Implementation Plan
 1. Add a route `#/rules` (or a campaign tab, decided at refinement) that mounts `<runefoble-rules-compendium>` and `<runefoble-encounter-builder>` from the package root.
-2. Delete the orphaned frontend-local components listed above, with their stories and tests. The six forwarding modules are deleted by TASK-0502, not here. Remove any import of a deleted file from `frontend/src/index.ts`. Do not touch the other forwarders.
+2. Delete the orphaned frontend-local components listed above, with their stories and tests. The six forwarding modules are deleted by TASK-0502, not here. Remove any import of a deleted file from `frontend/src/index.ts` (removed). Do not touch the other forwarders.
 3. Remove `@runefoble/rules-compendium-ui` from `frontend/package.json` only if it is no longer imported; otherwise keep it.
 4. Add a check to `frontend/` that fails when a `*.ts` file under `frontend/src/components` has no importer (excluding `index.ts` and stories). Run it in `pnpm run lint`.
 5. Record in the task file which orphans were deleted, so later audits do not recreate them.
@@ -57,7 +57,7 @@ Playwright BDD (`e2e/features/rules_compendium_route.feature`):
   - When the player searches "goblin"
   - Then the results list contains "Goblin" from the public compendium route.
 - Before the change the route does not exist and the scenario FAILS. After the change it PASSES.
-- The orphan check is a unit test in `frontend/test/no-orphan-components.test.ts`. It is a repository check, not a behaviour test.
+- The orphan check is a unit test in `frontend/test/no-orphan-components.test.ts` (removed). It is a repository check, not a behaviour test.
 
 ## Definition of Done
 1. The rules compendium is reachable from the App Shell through its route, and the BDD scenario passes.
