@@ -3,9 +3,7 @@ id: '0649'
 title: E2E Steps Remove Injected Component State, Synthetic Events, and Direct DOM Theme Writes
 status: Refined
 created: 2026-11-17
-dependencies:
-- TASK-0512
-- TASK-0447
+dependencies: []
 governing_adrs:
 - ADR-0014
 governing_prds:
@@ -22,10 +20,10 @@ target_release: 0.9.0
 ## Status
 Refined
 
-Audit 2026-11-17: blocked by proposed TASK-0512 and TASK-0447. The step files must be decomposed first.
+Review 2026-11-18: not blocked. Every step file is under 500 lines (largest: `e2e/steps/campaign_hub_steps.ts`, 445). Removing the backdoors makes the files shorter. TASK-0512 and TASK-0447 are optional clean-ups and do not block this task.
 
 ## Summary
-Several Playwright BDD steps change the application from the inside: they write private component fields, dispatch synthetic DOM events, set the URL hash to skip a flow, and write `data-theme` and `localStorage` directly. Each one breaks ADR-0014 and Hard Invariant 7. Remove every such backdoor. Each step must act through a visible control or a public route, and it must fail when that control is missing. Campaign hub setup (TASK-0512) and the character sheet steps (TASK-0447) are split first, so the files stay under 500 lines during this work.
+Several Playwright BDD steps change the application from the inside: they write private component fields, dispatch synthetic DOM events, set the URL hash to skip a flow, and write `data-theme` and `localStorage` directly. Each one breaks ADR-0014 and Hard Invariant 7. Remove every such backdoor. Each step must act through a visible control or a public route, and it must fail when that control is missing.
 
 ## Problem Statement
 - `e2e/steps/campaign_hub_steps.ts:168-170` swallows role-assignment errors with `catch { // In-memory fallback }`.
