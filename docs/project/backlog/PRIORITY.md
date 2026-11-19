@@ -870,3 +870,4 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 864. **TASK-0880 (Complete)**: [`0880-campaign-analytics-token-verifier-uses-create-app-settings.md`](complete/0880-campaign-analytics-token-verifier-uses-create-app-settings.md) — Campaign Analytics Token Verifier Uses the Settings Passed to create_app
 865. **TASK-0879 (Proposed)**: [`0879-audience-poll-binding-runs-through-the-outbox.md`](proposed/0879-audience-poll-binding-runs-through-the-outbox.md) — Audience Poll Binding Runs Through the Outbox
 866. **TASK-0886 (Refined)**: [`0886-remaining-game-session-publish-sites-use-one-helper.md`](refined/0886-remaining-game-session-publish-sites-use-one-helper.md) — Remaining Game Session Publish Sites Use One Helper
+867. **TASK-0887 (Refined)**: [`0887-campaign-members-show-verified-names.md`](refined/0887-campaign-members-show-verified-names.md) — Campaign Members Show Verified Names, Not Derived IDs
