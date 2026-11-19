@@ -40,7 +40,7 @@ def make_dynamic_tool_callable(
         if caller_id is None:
             raise ToolAuthzError("Authentication required: the request carries no verified caller.")
         await check_requirement(caller_id, tool_execute(definition.name))
-        return registry.execute_tool(definition.name, ba.arguments, user_id=caller_id)
+        return registry.execute_tool(definition.name, ba.arguments)
 
     dynamic_runner.__signature__ = sig  # type: ignore[attr-defined]
     dynamic_runner.__doc__ = definition.description

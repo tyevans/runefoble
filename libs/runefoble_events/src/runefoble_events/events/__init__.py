@@ -6,10 +6,6 @@ Importing this package also registers every event class with the event registry.
 
 # ruff: noqa: F401
 
-from runefoble_events.aec import (
-    AECBenchmarkCompletedEvent,
-    EchoSuppressionEngagedEvent,
-)
 from runefoble_events.analytics import (
     ChronicleMilestoneRecorded,
     CombatTelemetrySnapshotCreated,
@@ -90,8 +86,6 @@ from runefoble_events.character import (
     CharacterPortraitUpdated,
     ConditionApplied,
     ConditionRemoved,
-    CriticalHitScored,
-    DeathSaveStarted,
     EquipmentSlotUpdated,
     ItemAddedToInventory,
     ItemRemovedFromInventory,
@@ -124,7 +118,6 @@ from runefoble_events.contracts import (
     MercenaryBountyPosted,
 )
 from runefoble_events.downtime import (
-    CampfireRestCompleted,
     CraftingAttempted,
     CraftingMishapOccurred,
     CraftingSucceeded,
@@ -161,11 +154,6 @@ from runefoble_events.lore import (
     RelicRuneTranslated,
     WaxSealBroken,
 )
-from runefoble_events.mcp_tools import (
-    DynamicToolInvokedEvent,
-    DynamicToolRegisteredEvent,
-    DynamicToolUnregisteredEvent,
-)
 from runefoble_events.session import (
     AtmosphereUpdated,
     CharacterControlTransferred,
@@ -176,14 +164,12 @@ from runefoble_events.session import (
     DMOverrideApplied,
     InitiativeRolled,
     InitiativeTurnAdvanced,
-    ParticipantJoined,
     PlayerJoinedSession,
     PlayerLeftSession,
     ReadinessToggled,
     SessionCreated,
     SessionEnded,
     SessionStarted,
-    SpectatorSessionConnected,
     TurnAdvanced,
     TurnStarted,
 )
@@ -251,18 +237,9 @@ from runefoble_events.vocal_dsp import (
     VoiceFilterToggledEvent,
 )
 from runefoble_events.voice import (
-    MobileAudioProfileAdapted,
-    MobileCompanionConnected,
-    MobileHapticPingDispatched,
     VoicePeerJoined,
     VoicePeerLeft,
     VoicePeerMuteToggled,
-    VoiceSpeechInterrupted,
-    VoiceTranscriptionFailed,
-)
-from runefoble_events.voice_barge_in import (
-    NeuralSpeechBargeInDetectedEvent,
-    TTSStreamAttenuatedEvent,
 )
 from runefoble_events.voice_playback import (
     VoicePlaybackAttenuated,
@@ -271,22 +248,10 @@ from runefoble_events.voice_playback import (
 )
 from runefoble_events.voice_stream_quality import (
     VoiceStreamCodecAdaptedEvent,
-    VoiceStreamQualityDegradedEvent,
     VoiceStreamQualityMeasured,
-)
-from runefoble_events.watcher_events.actions import (
-    CompoundActionResolved,
-    IntentDisambiguationRequested,
-    VoiceAudioConditioned,
-    WatcherActionApproved,
-    WatcherActionExpired,
-    WatcherActionModified,
-    WatcherActionProposed,
-    WatcherActionVetoed,
 )
 from runefoble_events.watcher_events.combat import (
     AutonomousActionResolved,
-    CandidateGhostPreviewEmitted,
     DiceRolled,
     EncounterSpawned,
 )
@@ -313,12 +278,10 @@ from runefoble_events.watcher_events.factions import (
 )
 from runefoble_events.watcher_events.narrative import (
     AbsenteeRecapGenerated,
-    DMNarrativeWhispered,
     PlayerSpokeEvent,
     SceneAtmosphereSet,
     SpeechIntentParsed,
     StandInActionDecided,
-    WatcherNarrationGenerated,
 )
 from runefoble_events.west_marches import (
     CampaignRegisteredToSharedWorld,

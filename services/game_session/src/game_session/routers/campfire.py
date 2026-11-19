@@ -11,14 +11,11 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
 from game_session.auth import check_session_participation
-from game_session.dependencies import get_event_bus, get_stronghold_repository, repo
-from game_session.events import STREAM_SESSION
+from game_session.dependencies import get_stronghold_repository, repo
 from game_session.settlement.auth.tokens import CallerId, get_principal
 from pydantic import BaseModel, Field
 from runefoble_auth.factory import get_spicedb_client
-from runefoble_events.events import CampfireRestCompleted
 from runefoble_platform.aggregate_loading import load_if_exists
-from runefoble_platform.event_publish import publish_or_fail
 from runefoble_platform.identifiers import opaque_aggregate_id
 
 router = APIRouter(dependencies=[Depends(get_principal)], tags=["campfire"])
@@ -117,21 +114,6 @@ async def campfire_rest(
         for b in stronghold.get_active_boons():
             if b not in boons:
                 boons.append(b)
-
-    # Record event on event bus
-    rest_event = CampfireRestCompleted(
-        aggregate_id=opaque_aggregate_id(session_id, field="session_id"),
-        session_id=session_id,
-        campaign_id=campaign_id,
-        rest_type=req.rest_type,
-        storytelling_prompt=prompt,
-        boons_applied=boons,
-        participants_healed=participants_healed,
-    )
-
-    bus = get_event_bus()
-    if bus:
-        await publish_or_fail(bus, STREAM_SESSION, rest_event)
 
     return CampfireRestResponse(
         session_id=session_id,

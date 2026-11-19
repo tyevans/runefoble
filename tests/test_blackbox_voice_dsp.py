@@ -7,13 +7,10 @@ metadata, audio payloads, processing latency (<50ms), and emitted domain events.
 
 import asyncio
 import base64
-import json
 import time
 
 import pytest
 from fastapi.testclient import TestClient
-from runefoble_events.events import VoiceAudioConditioned
-from runefoble_platform.redis_bus import RedisStreamsEventBus
 from voice_agent.main import app
 
 from tests.helpers.audio_synth import generate_pcm_sine
@@ -260,47 +257,3 @@ def test_benchmark_dsp_latency_sub_50ms(client: TestClient, mock_event_bus):
     max_latency = max(latencies)
     assert avg_latency < 50.0, f"Average latency {avg_latency:.2f}ms exceeded 50ms limit"
     assert max_latency < 100.0, f"Peak latency {max_latency:.2f}ms exceeded 100ms limit"
-
-
-# ---------------------------------------------------------------------------
-# 4. Domain Event Dispatch Verification
-# ---------------------------------------------------------------------------
-
-
-def test_dsp_apply_dispatches_voice_audio_conditioned_event(
-    client: TestClient, mock_event_bus: RedisStreamsEventBus, mock_redis: MockAsyncRedis
-):
-    """Verify event dispatch of VoiceAudioConditioned upon DSP conditioning."""
-    payload = {
-        "audio_base64": INPUT_AUDIO_B64,
-        "filters": ["whisper", "ethereal"],
-        "session_id": "session-conditioned-99",
-        "speaker_id": "speaker-sarah-42",
-        "speaker_name": "Sarah",
-    }
-    response = client.post("/api/v1/voice/dsp/apply", json=payload)
-    assert response.status_code == 200, response.text
-
-    # Verify event published in Redis stream
-    streams = mock_redis.streams
-    found_event = False
-    for _stream_name, entries in streams.items():
-        for _entry_id, fields in entries:
-            event_type = fields.get("event_type") or fields.get("type")
-            if event_type == "runefoble.events.voice.audio_conditioned":
-                found_event = True
-                payload_data = json.loads(fields["payload"])
-                assert payload_data["session_id"] == "session-conditioned-99"
-                assert payload_data["speaker_id"] == "speaker-sarah-42"
-                assert payload_data["speaker_name"] == "Sarah"
-                assert "whisper" in payload_data["filters_applied"]
-                assert "ethereal" in payload_data["filters_applied"]
-                assert float(payload_data["latency_ms"]) < 100.0
-                assert int(payload_data["audio_bytes_length"]) > 0
-                # Verify schema conformity via VoiceAudioConditioned
-                event_model = VoiceAudioConditioned.model_validate(payload_data)
-                assert event_model.session_id == "session-conditioned-99"
-
-    assert found_event, (
-        f"VoiceAudioConditioned event not found in Redis streams: {list(streams.keys())}"
-    )

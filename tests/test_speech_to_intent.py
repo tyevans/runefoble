@@ -8,7 +8,6 @@ from httpx import ASGITransport, AsyncClient
 from runefoble_events.events import (
     PlayerSpokeEvent,
     SpeechIntentParsed,
-    WatcherNarrationGenerated,
 )
 from runefoble_platform.redis_bus import deserialize_event
 from the_watcher.main import app as watcher_app
@@ -228,10 +227,10 @@ async def test_watcher_redis_stream_event_emission(
         assert intent["action_type"] == "move"
         assert intent["parameters"]["steps"] == 3
 
-    # Verify runefoble.events.watcher stream received SpeechIntentParsed & WatcherNarrationGenerated
+    # Verify runefoble.events.watcher stream received SpeechIntentParsed
     assert "runefoble.events.watcher" in mock_redis.streams
     watcher_entries = mock_redis.streams["runefoble.events.watcher"]
-    assert len(watcher_entries) == 2
+    assert len(watcher_entries) == 1
 
     # First event: SpeechIntentParsed
     _id1, fields1 = watcher_entries[0]
@@ -240,12 +239,6 @@ async def test_watcher_redis_stream_event_emission(
     assert parsed1.speaker_name == "Valeros"
     assert parsed1.action_type == "move"
     assert parsed1.raw_transcript == "step 15 feet south"
-
-    # Second event: WatcherNarrationGenerated
-    _id2, fields2 = watcher_entries[1]
-    parsed2 = deserialize_event(fields2)
-    assert isinstance(parsed2, WatcherNarrationGenerated)
-    assert "Valeros" in parsed2.narrative_text
 
     # The proposal is a preview. The board stream gets no TokenMoved, and the token stays put.
     assert token_position(board_state_upstream, session_id, "tok-valeros", "test-user") == (3, 2)

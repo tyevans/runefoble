@@ -7,11 +7,9 @@ import logging
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
-from runefoble_events.events import AECBenchmarkCompletedEvent, EchoSuppressionEngagedEvent
 from voice_agent.aec.pipeline import AECPipeline
 from voice_agent.auth import CallerPrincipal, get_principal
 from voice_agent.authz import require_action
-from voice_agent.dependencies import publish_voice_event
 
 logger = logging.getLogger("runefoble.voice_agent.aec_diagnostics")
 router = APIRouter(dependencies=[Depends(get_principal)], tags=["Acoustic Echo Cancellation"])
@@ -64,26 +62,6 @@ async def run_aec_benchmark(
         step_size=req.step_size,
     )
     res = pipeline.benchmark(ref_pcm, mic_pcm, target_erle_db=req.erle_target_db)
-
-    b_ev = AECBenchmarkCompletedEvent(
-        session_id=req.session_id,
-        erle_db=res["erle_db"],
-        target_erle_db=req.erle_target_db,
-        passed=res["passed"],
-        double_talk_detected=res["double_talk_detected"],
-        filter_length=req.filter_length,
-    )
-    await publish_voice_event(b_ev)
-
-    if res["echo_detected"]:
-        e_ev = EchoSuppressionEngagedEvent(
-            session_id=req.session_id,
-            speaker_id=req.speaker_id,
-            erle_db=res["erle_db"],
-            attenuation_db=res["erle_db"],
-            is_double_talk=res["double_talk_detected"],
-        )
-        await publish_voice_event(e_ev)
 
     clean_b64 = base64.b64encode(res["cleaned_pcm"]).decode("ascii")
     return AECBenchmarkResponse(

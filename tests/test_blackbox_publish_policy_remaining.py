@@ -1,8 +1,8 @@
 """Blackbox tests for the publish failure policy at the remaining sites (TASK-0693).
 
 Domain-state sites fail the request with 503 and record nothing. Notification sites succeed
-and count each failed delivery on ``/healthz``. A failed transcription engine publishes
-``VoiceTranscriptionFailed`` through the public transcribe route.
+and count each failed delivery on ``/healthz``. A failed transcription engine returns 503 from
+the public transcribe route and records no speech.
 
 The failing Redis client is a process-boundary double. Every other path uses public HTTP,
 WebSocket or stream frontdoors.
@@ -18,17 +18,8 @@ from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
-from gateway_mcp.dynamic import get_event_bus as get_dynamic_event_bus
-from gateway_mcp.dynamic.events import publish_system_event
-from gateway_mcp.server import configure_dynamic_event_bus, mcp
-from runefoble_events.events import (
-    DynamicToolUnregisteredEvent,
-    PlayerSpokeEvent,
-    VoiceTranscriptionFailed,
-)
-from runefoble_platform.config import PlatformSettings
-from runefoble_platform.event_bus import EventBusUnavailableError
-from runefoble_platform.redis_bus import RedisStreamsEventBus, deserialize_event
+from runefoble_events.events import PlayerSpokeEvent
+from runefoble_platform.redis_bus import deserialize_event
 from voice_agent.main import app as voice_app
 from voice_agent.stt import get_streaming_pipeline, set_streaming_pipeline
 
@@ -43,7 +34,6 @@ pytestmark = pytest.mark.usefixtures("trusted_voice_issuer")
 TRANSCRIBE_URL = "/api/v1/voice/transcribe"
 BARGE_IN_URL = "/api/v1/voice/filters/barge-in/evaluate"
 SESSION_STREAM = "runefoble.events.session"
-VOICE_STREAM = "runefoble.events.voice"
 
 
 class FailingRedis(MockAsyncRedis):
@@ -80,12 +70,6 @@ def _transcribe_body(**extra) -> dict:
 
 
 @pytest.fixture
-def restore_dynamic_event_bus() -> Generator[None]:
-    """Clear the gateway_mcp dynamic tool bus after a test that replaces it."""
-    yield
-
-
-@pytest.fixture
 def production_engine_client(
     monkeypatch: pytest.MonkeyPatch,
     mock_redis: MockAsyncRedis,
@@ -117,10 +101,10 @@ def test_transcribe_returns_503_and_records_nothing_when_player_event_unpublishe
     ]
 
 
-def test_notification_route_succeeds_and_counts_each_failed_delivery(
+def test_barge_in_route_succeeds_when_redis_is_down_and_publishes_nothing(
     client: TestClient, use_redis_client
 ):
-    """Notification: barge-in events succeed when Redis is down. Each failed delivery is counted."""
+    """Barge-in evaluation succeeds when Redis is down. It publishes no event, so none is counted."""
     speech_pcm = generate_pcm_sine(duration_ms=100, freq=440.0, amplitude=9000)
     payload = {
         "session_id": _granted_session("spk-marcus", "sess-policy-barge"),
@@ -137,14 +121,13 @@ def test_notification_route_succeeds_and_counts_each_failed_delivery(
 
     assert resp.status_code == 200, resp.text
     assert resp.json()["barge_in_detected"] is True
-    # Two events, each published to two streams. Every failed delivery adds one.
-    assert _publish_failures(client) == before + 4
+    assert _publish_failures(client) == before
 
 
-def test_engine_failure_on_transcribe_route_publishes_transcription_failed(
+def test_engine_failure_on_transcribe_route_returns_503_and_records_no_speech(
     production_engine_client: TestClient, mock_redis: MockAsyncRedis
 ):
-    """A transcription engine error is published as VoiceTranscriptionFailed, then returns 503."""
+    """A transcription engine error returns 503 and records no player speech."""
     body = _transcribe_body(
         audio_base64=base64.b64encode(generate_pcm_sine(duration_ms=300)).decode("ascii"),
     )
@@ -154,14 +137,6 @@ def test_engine_failure_on_transcribe_route_publishes_transcription_failed(
 
     assert resp.status_code == 503, resp.text
     assert resp.json()["detail"]["engine"] == "faster-whisper"
-    failures = [
-        e
-        for e in _stream_events(mock_redis, VOICE_STREAM)
-        if isinstance(e, VoiceTranscriptionFailed)
-    ]
-    assert len(failures) == 1
-    assert failures[0].engine == "faster-whisper"
-    assert failures[0].speaker_name == "Valeros"
     assert not [
         e for e in _stream_events(mock_redis, SESSION_STREAM) if isinstance(e, PlayerSpokeEvent)
     ]
@@ -192,37 +167,6 @@ def test_stream_chunk_publish_failure_is_reported_on_socket_and_not_recorded(
     assert not [
         e for e in _stream_events(mock_redis, SESSION_STREAM) if isinstance(e, PlayerSpokeEvent)
     ]
-
-
-def test_dropped_dynamic_tool_event_is_counted_on_gateway_mcp_healthz(
-    restore_dynamic_event_bus: None, use_redis_client
-):
-    """Dropped system events are counted and reported on the gateway_mcp health route."""
-    client = TestClient(mcp.streamable_http_app())
-    before = client.get("/healthz").json()["event_publish_failures"]
-    use_redis_client(FailingRedis())
-    event = DynamicToolUnregisteredEvent(tool_name="probe", unregistered_by=None, campaign_id=None)
-
-    asyncio.run(publish_system_event(event))
-
-    body = client.get("/healthz").json()
-    assert body["service"] == "gateway_mcp"
-    assert body["event_publish_failures"] == before + 1
-
-
-def test_gateway_mcp_standalone_injects_redis_streams_bus(restore_dynamic_event_bus: None):
-    """Standalone gateway_mcp injects the Redis bus that dynamic tool events use."""
-    configure_dynamic_event_bus(PlatformSettings(redis_url="redis://redis.example:6379/4"))
-
-    bus = get_dynamic_event_bus()
-    assert isinstance(bus, RedisStreamsEventBus)
-    assert bus.redis_url == "redis://redis.example:6379/4"
-
-
-def test_gateway_mcp_standalone_refuses_missing_redis_url(restore_dynamic_event_bus: None):
-    """Standalone gateway_mcp fails at start-up when no Redis URL is configured."""
-    with pytest.raises(EventBusUnavailableError, match="RUNEFOBLE_REDIS_URL"):
-        configure_dynamic_event_bus(PlatformSettings(redis_url=""))
 
 
 @pytest.mark.parametrize(

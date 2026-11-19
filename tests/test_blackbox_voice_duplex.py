@@ -20,8 +20,6 @@ import uuid
 
 import pytest
 from fastapi.testclient import TestClient
-from runefoble_events.events import VoiceSpeechInterrupted
-from runefoble_platform.redis_bus import deserialize_event
 from voice_agent.dsp.cosine_crossfade import apply_cosine_crossfade
 
 from tests.helpers.audio_synth import generate_pcm_silence, generate_pcm_sine
@@ -68,11 +66,6 @@ def test_barge_in_cancels_playback_within_100ms(client: TestClient, mock_redis: 
         assert f3["type"] == "playback_canceled" and len(f3["remaining_narration_text"]) > 0
 
     assert not client.get(f"/api/v1/voice/duplex/status/{session_id}").json()["playback_active"]
-    assert "runefoble.events.voice" in mock_redis.streams
-    event = deserialize_event(mock_redis.streams["runefoble.events.voice"][0][1])
-    assert isinstance(event, VoiceSpeechInterrupted)
-    assert event.session_id == session_id and event.speaker_id == speaker_id
-    assert event.remaining_narration_text is not None and event.timestamp > 0
 
 
 def test_acoustic_echo_cancellation_suppresses_false_barge_in(

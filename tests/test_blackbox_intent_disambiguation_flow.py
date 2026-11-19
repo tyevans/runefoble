@@ -11,16 +11,6 @@ from uuid import uuid4
 
 import pytest
 from httpx import ASGITransport, AsyncClient
-from runefoble_events.events import (
-    CandidateGhostPreviewEmitted,
-    CompoundActionResolved,
-    IntentDisambiguationRequested,
-)
-from runefoble_platform.redis_bus import deserialize_event
-from the_watcher.dependencies import (
-    STREAM_BOARD,
-    STREAM_WATCHER,
-)
 from the_watcher.main import app as watcher_app
 
 from tests.helpers.mock_redis import MockAsyncRedis
@@ -129,10 +119,8 @@ async def test_unambiguous_target_with_distinguishing_descriptor(sample_board_en
 
 
 @pytest.mark.asyncio
-async def test_redis_streams_events_on_disambiguation_request(
-    mock_redis: MockAsyncRedis, sample_board_entities
-):
-    """Verify IntentDisambiguationRequested and CandidateGhostPreviewEmitted events are emitted."""
+async def test_disambiguation_request_returns_candidates_over_http(sample_board_entities):
+    """A spoken target that matches two entities returns both candidates and a clarification."""
     s_id, c_id = str(uuid4()), str(uuid4())
     async with AsyncClient(
         transport=ASGITransport(app=watcher_app),
@@ -143,33 +131,19 @@ async def test_redis_streams_events_on_disambiguation_request(
             client, "I attack the goblin", s_id, c_id, sample_board_entities, from_x=0, from_y=0
         )
         assert resp.status_code == 200
-        disambig_id = resp.json()["disambiguation_id"]
 
-    assert STREAM_WATCHER in mock_redis.streams
-    d_events = [
-        deserialize_event(f)
-        for _, f in mock_redis.streams[STREAM_WATCHER]
-        if isinstance(deserialize_event(f), IntentDisambiguationRequested)
-    ]
-    assert len(d_events) == 1 and d_events[0].disambiguation_id == disambig_id
-    assert d_events[0].speaker_name == "Marcus" and len(d_events[0].candidates) == 2
-
-    assert STREAM_BOARD in mock_redis.streams
-    g_events = [
-        deserialize_event(f)
-        for _, f in mock_redis.streams[STREAM_BOARD]
-        if isinstance(deserialize_event(f), CandidateGhostPreviewEmitted)
-    ]
-    assert len(g_events) == 2
-    g_ids = [g.candidate_id for g in g_events]
-    assert "goblin_1" in g_ids and "goblin_2" in g_ids
+    body = resp.json()
+    assert body["requires_disambiguation"] is True
+    assert body["speaker_name"] == "Marcus"
+    assert body["clarification_prompt"]
+    assert sorted(c["id"] for c in body["candidates"]) == ["goblin_1", "goblin_2"]
 
 
 @pytest.mark.asyncio
 async def test_resolve_intent_disambiguation_flow(
     mock_redis: MockAsyncRedis, sample_board_entities
 ):
-    """Verify player disambiguation selection updates action target and emits CompoundActionResolved."""
+    """Verify player disambiguation selection updates action target and returns the resolved compound action."""
     s_id, c_id = str(uuid4()), str(uuid4())
     async with AsyncClient(
         transport=ASGITransport(app=watcher_app),
@@ -193,14 +167,6 @@ async def test_resolve_intent_disambiguation_flow(
         assert data["disambiguation_id"] == d_id and data["status"] == "ready"
         assert "shaman on the altar" in data["resolved_target"]
         assert "shaman" in data["actions"][0]["target"]
-
-    r_events = [
-        deserialize_event(f)
-        for _, f in mock_redis.streams[STREAM_WATCHER]
-        if isinstance(deserialize_event(f), CompoundActionResolved)
-    ]
-    assert len(r_events) == 1 and r_events[0].disambiguation_id == d_id
-    assert "shaman on the altar" in r_events[0].resolved_target
 
 
 @pytest.mark.asyncio

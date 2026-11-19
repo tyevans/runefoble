@@ -1,8 +1,8 @@
 """DM Co-Pilot engine for the pre-execution veto window (TASK-0568).
 
-State lives in ``PendingActionAggregate``. This engine runs the commands, publishes the public
-decision events, and owns only the expiry timers, which are process handles and not state. A
-restarted process re-arms the timers from the deadlines in the event store.
+State lives in ``PendingActionAggregate``. This engine runs the commands and owns only the
+expiry timers, which are process handles and not state. A restarted process re-arms the timers
+from the deadlines in the event store.
 """
 
 from __future__ import annotations
@@ -17,16 +17,9 @@ from uuid import NAMESPACE_DNS, UUID, uuid4, uuid5
 from eventsource.application.aggregates.repository import AggregateRepository
 from runefoble_events.events import (
     PENDING_ACTIONS_AGGREGATE,
-    WatcherActionApproved,
-    WatcherActionExpired,
-    WatcherActionModified,
-    WatcherActionProposed,
-    WatcherActionVetoed,
 )
 from runefoble_platform.aggregate_loading import load_if_exists, load_or_create
-from runefoble_platform.event_publish import publish_best_effort, publish_or_fail
 from runefoble_platform.event_sourcing import FullEventStore
-from runefoble_platform.identifiers import opaque_aggregate_id
 from the_watcher.copilot_state.errors import PendingActionNotFoundError
 from the_watcher.copilot_state.pending_actions import OPEN_STATUSES, PendingActionAggregate
 from the_watcher.models import PendingAction, ProposeActionRequest
@@ -54,12 +47,8 @@ class CopilotEngine:
     def __init__(
         self,
         *,
-        bus: Callable[[], Any],
-        watcher_stream: str,
         pending_repo: Callable[[], AggregateRepository[PendingActionAggregate]],
     ) -> None:
-        self._bus = bus
-        self._stream = watcher_stream
         self._pending_repo = pending_repo
         self._timer_tasks: dict[str, asyncio.Task[None]] = {}
         self._callbacks: dict[str, Callback] = {}
@@ -109,19 +98,6 @@ class CopilotEngine:
             self._callbacks[action.action_id] = on_execute
         self._arm_timer(action.session_id, action.action_id, action.expires_at)
 
-        event = WatcherActionProposed(
-            aggregate_id=opaque_aggregate_id(req.session_id, field="session_id"),
-            action_id=action.action_id,
-            session_id=str(req.session_id),
-            campaign_id=str(req.campaign_id) if req.campaign_id else "",
-            actor_name=req.actor_name,
-            action_type=req.action_type,
-            description=req.description,
-            target=req.target,
-            parameters=req.parameters,
-            pause_window_ms=pause_window_ms,
-        )
-        await publish_best_effort(self._bus(), self._stream, event)
         logger.info(
             "Proposed action %s (%s) with %dms pause window",
             action.action_id,
@@ -133,21 +109,11 @@ class CopilotEngine:
     async def veto_action(
         self, session_id: str, action_id: str, vetoed_by: str, reason: str = ""
     ) -> PendingAction:
-        """Cancel a pending action before it mutates state. The veto event must publish."""
+        """Cancel a pending action before it mutates state."""
         repo = self._pending_repo()
         agg = await _load_session(repo, session_id)
         agg.veto(action_id, vetoed_by=vetoed_by, reason=reason)
         action = agg.find(action_id)
-        event = WatcherActionVetoed(
-            aggregate_id=opaque_aggregate_id(session_id, field="session_id"),
-            action_id=action.action_id,
-            session_id=str(action.session_id),
-            campaign_id=str(action.campaign_id) if action.campaign_id else "",
-            vetoed_by=vetoed_by,
-            reason=reason,
-            original_action=action.model_dump(),
-        )
-        await publish_or_fail(self._bus(), self._stream, event)
         await repo.save(agg)
         self._release(action_id)
         logger.info("Action %s vetoed by %s: %s", action_id, vetoed_by, reason)
@@ -156,21 +122,11 @@ class CopilotEngine:
     async def approve_action(
         self, session_id: str, action_id: str, approved_by: str
     ) -> PendingAction:
-        """Commit a pending action now. The approval event must publish before the callback."""
+        """Commit a pending action now, then run its callback."""
         repo = self._pending_repo()
         agg = await _load_session(repo, session_id)
         agg.approve(action_id, approved_by=approved_by)
         action = agg.find(action_id)
-        event = WatcherActionApproved(
-            aggregate_id=opaque_aggregate_id(session_id, field="session_id"),
-            action_id=action.action_id,
-            session_id=str(action.session_id),
-            campaign_id=str(action.campaign_id) if action.campaign_id else "",
-            approved_by=approved_by,
-            action_type=action.action_type,
-            parameters=action.parameters,
-        )
-        await publish_or_fail(self._bus(), self._stream, event)
         await repo.save(agg)
         self._release(action_id)
         logger.info("Action %s immediately approved by %s", action_id, approved_by)
@@ -196,18 +152,6 @@ class CopilotEngine:
             target=target,
             parameters=parameters,
         )
-        action = agg.find(action_id)
-        event = WatcherActionModified(
-            aggregate_id=opaque_aggregate_id(session_id, field="session_id"),
-            action_id=action.action_id,
-            session_id=str(action.session_id),
-            campaign_id=str(action.campaign_id) if action.campaign_id else "",
-            modified_by=modified_by,
-            description=action.description,
-            target=action.target,
-            parameters=action.parameters,
-        )
-        await publish_or_fail(self._bus(), self._stream, event)
         if auto_approve:
             agg.approve(action_id, approved_by=modified_by)
         await repo.save(agg)
@@ -284,15 +228,6 @@ class CopilotEngine:
 
         agg.expire(action_id)
         expired = agg.find(action_id)
-        event = WatcherActionExpired(
-            aggregate_id=opaque_aggregate_id(session_id, field="session_id"),
-            action_id=action_id,
-            session_id=str(expired.session_id),
-            campaign_id=str(expired.campaign_id) if expired.campaign_id else "",
-            action_type=expired.action_type,
-            original_action=expired.model_dump(),
-        )
-        await publish_or_fail(self._bus(), self._stream, event)
         await repo.save(agg)
         self._timer_tasks.pop(action_id, None)
         logger.info("Pending action %s auto-executed after timeout", action_id)

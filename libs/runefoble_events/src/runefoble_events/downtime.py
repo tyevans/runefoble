@@ -61,21 +61,6 @@ class CraftingMishapOccurred(BaseRunefobleEvent):
     reagents_lost: list[str] = Field(default_factory=list)
 
 
-@register_event("runefoble.events.downtime.campfire_rest_completed")
-class CampfireRestCompleted(BaseRunefobleEvent):
-    """Fired when a party finishes resting around the campfire interlude."""
-
-    event_type: str = "runefoble.events.downtime.campfire_rest_completed"
-
-    aggregate_type: str = "GameSession"
-    session_id: UUID | str | None = None
-    campaign_id: UUID | None = None
-    rest_type: str = "long"
-    storytelling_prompt: str
-    boons_applied: list[str] = Field(default_factory=list)
-    participants_healed: list[str] = Field(default_factory=list)
-
-
 @register_event("runefoble.events.downtime.stronghold_created")
 class StrongholdCreated(BaseRunefobleEvent):
     """Fired when a persistent campsite or base is established."""
@@ -128,7 +113,6 @@ class StrongholdTreasuryContributed(BaseRunefobleEvent):
 
 
 __all__ = [
-    "CampfireRestCompleted",
     "CraftingAttempted",
     "CraftingMishapOccurred",
     "CraftingSucceeded",

@@ -10,16 +10,8 @@ import asyncio
 from uuid import uuid4
 
 import pytest
-from eventsource.domain.event_registry import get_event_class_or_none
 from fastapi.testclient import TestClient
 from runefoble_auth.factory import get_spicedb_client
-from runefoble_events.events import (
-    WatcherActionApproved,
-    WatcherActionExpired,
-    WatcherActionModified,
-    WatcherActionProposed,
-    WatcherActionVetoed,
-)
 from the_watcher.main import app
 
 from tests.helpers.mock_redis import MockAsyncRedis
@@ -72,32 +64,6 @@ def _propose(
     res = client.post("/api/v1/watcher/actions/propose", json=body, headers=headers)
     assert res.status_code == 200
     return res.json()["action_id"]
-
-
-def test_copilot_action_cloudevents_registration():
-    """Verify action domain events are registered in EventRegistry and conform to CloudEvents."""
-    events = [
-        ("runefoble.events.watcher.action_proposed", WatcherActionProposed),
-        ("runefoble.events.watcher.action_vetoed", WatcherActionVetoed),
-        ("runefoble.events.watcher.action_approved", WatcherActionApproved),
-        ("runefoble.events.watcher.action_modified", WatcherActionModified),
-        ("runefoble.events.watcher.action_expired", WatcherActionExpired),
-    ]
-    for type_name, expected_cls in events:
-        assert get_event_class_or_none(type_name) == expected_cls
-
-    veto = WatcherActionVetoed(
-        action_id="act-1",
-        session_id="sess-1",
-        campaign_id="camp-1",
-        vetoed_by="dm_evelyn",
-        reason="Pacing",
-        original_action={"action_type": "attack", "target": "Valeros"},
-    )
-    ce = veto.to_cloudevent_dict()
-    assert ce["specversion"] == "1.0"
-    assert ce["type"] == "runefoble.events.watcher.action_vetoed"
-    assert ce["data"]["action_id"] == "act-1"
 
 
 @pytest.mark.asyncio

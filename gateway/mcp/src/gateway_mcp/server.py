@@ -8,14 +8,12 @@ import uvicorn
 from mcp.server.fastmcp import FastMCP
 from runefoble_auth.principal import require_principal
 from runefoble_platform.config import PlatformSettings
-from runefoble_platform.event_bus import create_event_bus
 from runefoble_platform.event_publish import event_publish_failures
 from runefoble_platform.telemetry import init_telemetry
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
 from gateway_mcp.dynamic import dynamic_registry
-from gateway_mcp.dynamic import set_event_bus as set_dynamic_event_bus
 from gateway_mcp.identity import BearerTransportAuth, get_verifier
 from gateway_mcp.prompts import (
     dm_narrative_guidance,
@@ -67,15 +65,6 @@ def build_http_app() -> BearerTransportAuth:
     return BearerTransportAuth(app)
 
 
-def configure_dynamic_event_bus(settings: PlatformSettings) -> None:
-    """Inject the Redis Streams bus that dynamic tool events publish to.
-
-    Raises EventBusUnavailableError when no Redis URL is configured, so the gateway never
-    runs dynamic tools with events that cannot reach the system stream.
-    """
-    set_dynamic_event_bus(create_event_bus(settings))
-
-
 @mcp.custom_route("/healthz", methods=["GET"])
 async def healthz(_request: Request) -> JSONResponse:
     """Report liveness and the count of publish failures seen by this process."""
@@ -93,7 +82,6 @@ __all__ = [
     "apply_absentee_penalty",
     "apply_condition",
     "calculate_encounter_balance",
-    "configure_dynamic_event_bus",
     "cast_spell",
     "create_encounter",
     "dm_narrative_guidance",
@@ -126,7 +114,6 @@ def main() -> None:
     load_settings()
     platform_settings = PlatformSettings()
     init_telemetry("gateway-mcp", settings=platform_settings)
-    configure_dynamic_event_bus(platform_settings)
     listen = load_listen_settings()
     uvicorn.run(build_http_app(), host=listen.host, port=listen.port, log_level="info")
 

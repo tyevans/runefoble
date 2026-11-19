@@ -7,7 +7,7 @@ Governed by ADR-0004, ADR-0007, ADR-0012, ADR-0013, and Hard Invariants 6 & 7.
 from __future__ import annotations
 
 from fastapi.testclient import TestClient
-from game_session.events import STREAM_SESSION, STREAM_STRONGHOLD
+from game_session.events import STREAM_STRONGHOLD
 
 from tests.helpers.campaign_setup import create_owned_campaign
 
@@ -45,11 +45,6 @@ def test_blackbox_campfire_crafting_frontdoor_integration(
     )
     assert rest_res.status_code == 200 and rest_res.json()["status"] == "completed"
 
-    session_entries = mock_bus.streams.get(STREAM_SESSION, [])
-    assert any(
-        "runefoble.events.downtime.campfire_rest_completed" in e[1].get("event_type", "")
-        for e in session_entries
-    )
     stronghold_entries = mock_bus.streams.get(STREAM_STRONGHOLD, [])
     assert any(
         "runefoble.events.downtime.stronghold_upgraded" in e[1].get("event_type", "")

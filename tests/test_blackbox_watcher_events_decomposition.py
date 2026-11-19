@@ -16,8 +16,6 @@ from runefoble_events.events import (
     DiceRolled,
     FactionCreated,
     PlayerSpokeEvent,
-    WatcherActionProposed,
-    WatcherNarrationGenerated,
     WorldTickExecuted,
 )
 from runefoble_platform.consumer_group import deserialize_event
@@ -49,11 +47,6 @@ def test_event_cloudevent_and_serialization_roundtrip():
             speaker_name="Aria",
             transcript="I inspect the altar",
         ),
-        WatcherNarrationGenerated(
-            aggregate_id=uuid4(),
-            narrative_text="A cold draft chills the chamber.",
-            tone="eerie",
-        ),
         DiceRolled(
             session_id=session_id,
             roller_id="p-1",
@@ -61,13 +54,6 @@ def test_event_cloudevent_and_serialization_roundtrip():
             formula="1d20+5",
             total=18,
             rolls=[13],
-        ),
-        WatcherActionProposed(
-            action_id="act-1",
-            session_id=session_id,
-            actor_name="The Watcher",
-            action_type="spawn_monster",
-            description="Spawn shadowy phantom",
         ),
         FactionCreated(
             campaign_id="camp-1",

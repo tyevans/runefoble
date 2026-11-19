@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
-from runefoble_events.events import PlayerSpokeEvent, VoiceTranscriptionFailed
+from runefoble_events.events import PlayerSpokeEvent
 from runefoble_platform.redis_bus import deserialize_event
 from voice_agent.main import app as voice_app
 from voice_agent.stt import get_streaming_pipeline, set_streaming_pipeline
@@ -96,12 +96,6 @@ def test_unavailable_engine_returns_error_and_publishes_no_player_spoke(
 
     session_events = _stream_events(mock_redis, "runefoble.events.session")
     assert not [e for e in session_events if isinstance(e, PlayerSpokeEvent)]
-
-    voice_events = _stream_events(mock_redis, "runefoble.events.voice")
-    failures = [e for e in voice_events if isinstance(e, VoiceTranscriptionFailed)]
-    assert len(failures) == 1
-    assert failures[0].engine == "faster-whisper"
-    assert failures[0].speaker_name == "Valeros"
 
 
 def test_utterance_uses_configured_engine_transcript(

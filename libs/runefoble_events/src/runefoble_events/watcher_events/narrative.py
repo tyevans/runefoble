@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any, Literal
 from uuid import UUID, uuid4
 
 from pydantic import Field
@@ -33,18 +32,6 @@ class SpeechIntentParsed(BaseRunefobleEvent):
     confidence: float | None = None
     flavor_text: str = ""
     raw_transcript: str = ""
-
-
-@register_event("runefoble.events.watcher.narration_generated")
-class WatcherNarrationGenerated(BaseRunefobleEvent):
-    event_type: str = "runefoble.events.watcher.narration_generated"
-
-    aggregate_type: str = "GameSession"
-    narrative_text: str
-    tone: str = "dark_fantasy"
-    sensory_details: list[str] = Field(default_factory=list)
-    suggested_prompts: list[str] = Field(default_factory=list)
-    tension_level: Literal["calm", "rising", "climax", "aftermath"] = "rising"
 
 
 @register_event("runefoble.events.watcher.stand_in_action_decided")
@@ -90,26 +77,10 @@ class SceneAtmosphereSet(BaseRunefobleEvent):
     ambient_audio_prompt: str
 
 
-@register_event("runefoble.events.watcher.narrative_whispered")
-class DMNarrativeWhispered(BaseRunefobleEvent):
-    aggregate_type: str = "GameSession"
-    aggregate_id: UUID = Field(default_factory=uuid4)
-    event_type: str = "runefoble.events.watcher.narrative_whispered"
-    whisper_id: str
-    session_id: str
-    campaign_id: str = ""
-    whisper_type: str = "atmospheric_hint"
-    content: str
-    recipient_role: str = "dungeon_master"
-    metadata: dict[str, Any] = Field(default_factory=dict)
-
-
 __all__ = [
     "AbsenteeRecapGenerated",
-    "DMNarrativeWhispered",
     "PlayerSpokeEvent",
     "SceneAtmosphereSet",
     "SpeechIntentParsed",
     "StandInActionDecided",
-    "WatcherNarrationGenerated",
 ]

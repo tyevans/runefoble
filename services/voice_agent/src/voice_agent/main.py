@@ -24,7 +24,6 @@ from voice_agent.companion_socket_routes import router as companion_socket_route
 from voice_agent.dependencies import (
     STREAM_SESSION,
     STREAM_VOICE,
-    _dispatch_voice_audio_conditioned,
     dsp_pipeline,
     platform_settings,
 )
@@ -151,7 +150,6 @@ __all__ = [
     "TranscribeRequest",
     "TranscribeResponse",
     "VoicePersona",
-    "_dispatch_voice_audio_conditioned",
     "app",
     "dsp_pipeline",
     "get_event_bus",

@@ -7,7 +7,6 @@ from gateway_mcp.dynamic.auth import (
     revoke_tool_permissions,
 )
 from gateway_mcp.dynamic.builder import make_dynamic_tool_callable
-from gateway_mcp.dynamic.events import get_event_bus, set_event_bus
 from gateway_mcp.dynamic.models import (
     TYPE_MAP,
     DynamicToolDefinition,
@@ -24,10 +23,8 @@ __all__ = [
     "check_tool_permission",
     "dynamic_registry",
     "enforce_tool_auth",
-    "get_event_bus",
     "grant_tool_permissions",
     "make_dynamic_tool_callable",
     "revoke_tool_permissions",
-    "set_event_bus",
     "validate_parameter_schema",
 ]

@@ -10,7 +10,6 @@ from typing import Any
 from fastapi import APIRouter, Depends
 from runefoble_events.events import (
     VoiceStreamCodecAdaptedEvent,
-    VoiceStreamQualityDegradedEvent,
 )
 from voice_agent.auth import CallerPrincipal, get_principal
 from voice_agent.authz import require_action
@@ -77,18 +76,6 @@ async def submit_rtcp_report(
         session_id, principal.user_id, req
     )
     m, codec = outcome.metrics, outcome.codec
-    if m.is_degraded:
-        await publish_voice_event(
-            VoiceStreamQualityDegradedEvent(
-                session_id=session_id,
-                peer_id=req.peer_id,
-                user_id=principal.user_id,
-                packet_loss=m.packet_loss,
-                round_trip_time_ms=m.rtt_ms,
-                jitter_ms=m.jitter_ms,
-                severity=m.severity,
-            )
-        )
     if outcome.adapted:
         await publish_voice_event(
             VoiceStreamCodecAdaptedEvent(

@@ -95,7 +95,7 @@ SERVICE_SEAMS: tuple[ServiceSeams, ...] = (
         verifier="gateway_api.auth",
         verifier_scope="on_demand",
     ),
-    ServiceSeams("gateway_mcp", bus="gateway_mcp.dynamic.events"),
+    ServiceSeams("gateway_mcp", spicedb="gateway_mcp.dynamic.auth"),
     ServiceSeams(
         "rules_compendium",
         verifier="rules_compendium.dependencies",

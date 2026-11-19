@@ -9,12 +9,7 @@ Governed by:
 from __future__ import annotations
 
 from eventsource.domain.event_registry import get_event_class_or_none
-from runefoble_events.events import (
-    CriticalHitScored,
-    DeathSaveStarted,
-    LeitmotifProfileConfigured,
-    LeitmotifTriggered,
-)
+from runefoble_events.events import LeitmotifProfileConfigured, LeitmotifTriggered
 
 
 def test_leitmotif_cloudevents_registration() -> None:
@@ -26,14 +21,6 @@ def test_leitmotif_cloudevents_registration() -> None:
     triggered_cls = get_event_class_or_none("runefoble.events.soundscape.leitmotif_triggered")
     assert triggered_cls is not None
     assert triggered_cls is LeitmotifTriggered
-
-    crit_cls = get_event_class_or_none("runefoble.events.character.critical_hit_scored")
-    assert crit_cls is not None
-    assert crit_cls is CriticalHitScored
-
-    death_cls = get_event_class_or_none("runefoble.events.character.death_save_started")
-    assert death_cls is not None
-    assert death_cls is DeathSaveStarted
 
 
 def test_leitmotif_triggered_cloudevent_serialization() -> None:

@@ -59,24 +59,8 @@ class AutonomousActionResolved(BaseRunefobleEvent):
     hp_impact: int = 0
 
 
-@register_event("runefoble.events.board.ghost_preview_candidate")
-class CandidateGhostPreviewEmitted(BaseRunefobleEvent):
-    aggregate_type: str = "BoardState"
-    aggregate_id: UUID = Field(default_factory=uuid4)
-    event_type: str = "runefoble.events.board.ghost_preview_candidate"
-    session_id: str
-    disambiguation_id: str
-    candidate_id: str
-    token_id: str
-    target_x: int
-    target_y: int
-    descriptor: str
-    path: list[list[int]] = Field(default_factory=list)
-
-
 __all__ = [
     "AutonomousActionResolved",
-    "CandidateGhostPreviewEmitted",
     "DiceRolled",
     "EncounterSpawned",
 ]

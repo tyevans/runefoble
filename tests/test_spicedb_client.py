@@ -12,7 +12,7 @@ from runefoble_auth.sync_tuples import (
     format_tuple,
     normalize_campaign_role,
 )
-from runefoble_events.events import CharacterCreated, ParticipantJoined, SessionCreated
+from runefoble_events.events import CharacterCreated, SessionCreated
 from runefoble_platform.event_fields import event_type_of
 
 
@@ -92,19 +92,8 @@ async def test_handle_domain_event_dispatch() -> None:
     synced_session = await service.handle_domain_event(evt_session)
     assert any("campaign:" in t and "#game_master@" in t for t in synced_session)
 
-    # 2. Pydantic ParticipantJoined
-    user_id = f"player-{uuid4().hex[:6]}"
-    evt_joined = ParticipantJoined(
-        aggregate_id=uuid4(),
-        campaign_id=camp_id,
-        session_id=sess_id,
-        user_id=user_id,
-        role="player",
-    )
-    synced_joined = await service.handle_domain_event(evt_joined)
-    assert any("campaign:" in t and "#player@" in t for t in synced_joined)
-
     # 3. Pydantic CharacterCreated
+    user_id = f"player-{uuid4().hex[:6]}"
     char_id = uuid4()
     evt_char = CharacterCreated(
         aggregate_id=char_id,

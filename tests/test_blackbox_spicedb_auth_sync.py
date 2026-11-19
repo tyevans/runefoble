@@ -8,7 +8,7 @@ from gateway_api.auth import get_spicedb_client
 from gateway_api.main import app
 from runefoble_auth.mock import MockSpiceDBClient, Relationship
 from runefoble_auth.sync import ZitadelSpiceDBSyncService
-from runefoble_events.events import CharacterCreated, ParticipantJoined, SessionCreated
+from runefoble_events.events import CharacterCreated, SessionCreated
 
 client = TestClient(app)
 
@@ -66,18 +66,6 @@ async def test_auth_sync_domain_event_orchestration() -> None:
         SessionCreated(aggregate_id=uuid4(), campaign_id=camp_id, session_id=sess_id, dm_id=dm_id)
     )
     assert await spicedb.check_permission("session", sess_id, "control", "user", dm_id)
-
-    # 2. Participant joined
-    await service.handle_domain_event(
-        ParticipantJoined(
-            aggregate_id=uuid4(),
-            campaign_id=camp_id,
-            session_id=sess_id,
-            user_id=player_id,
-            role="player",
-        )
-    )
-    assert await spicedb.check_permission("session", sess_id, "participate", "user", player_id)
 
     # 3. Character created
     await service.handle_domain_event(

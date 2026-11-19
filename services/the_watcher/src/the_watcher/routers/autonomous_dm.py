@@ -38,8 +38,6 @@ async def generate_scene(caller_id: CallerId, req: SceneGenerateRequest) -> Scen
         location_type=req.location_type,
         mood=req.mood,
     )
-    bus = get_event_bus()
-    await publish_or_fail(bus, STREAM_WATCHER, event)
     return event
 
 
@@ -70,8 +68,6 @@ async def execute_npc_turn(caller_id: CallerId, req: NpcTurnRequest) -> Autonomo
         targets=req.targets,
         round_number=req.round_number,
     )
-    bus = get_event_bus()
-    await publish_or_fail(bus, STREAM_WATCHER, event)
     return event
 
 

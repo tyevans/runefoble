@@ -24,7 +24,6 @@ pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 SPECTATOR = "spectator_sol"
 STRANGER = "stranger_eve"
 SPECTATE_PATHS = ("/api/v1/spectate/{sid}", "/api/v1/spectator/sessions/{sid}")
-SPECTATOR_EVENT_STREAM = "runefoble.events.spectator"
 
 
 @pytest.fixture(autouse=True)
@@ -99,29 +98,6 @@ def test_spectate_passes_the_owner_404_when_the_session_has_no_board(
     res = gateway.get(SPECTATE_PATHS[0].format(sid=session_id), headers=bearer(SPECTATOR))
     assert res.status_code == 404
     assert "Valeros" not in res.text
-
-
-def test_spectate_publishes_no_event_on_get(gateway, table, mock_bus):
-    _, session_id = table
-    assert gateway.get(SPECTATE_PATHS[0].format(sid=session_id), headers=bearer(SPECTATOR))
-    assert mock_bus.streams.get(SPECTATOR_EVENT_STREAM, []) == []
-
-
-def test_spectator_connection_event_is_published_when_the_socket_is_admitted(
-    gateway, table, mock_bus
-):
-    _, session_id = table
-    with gateway.websocket_connect(
-        f"/ws/spectator/{session_id}", subprotocols=ws_subprotocols(SPECTATOR)
-    ) as ws:
-        assert ws.receive_json()["type"] == "overlay_connected"
-
-    events = mock_bus.streams.get(SPECTATOR_EVENT_STREAM, [])
-    assert len(events) == 1
-    _event_id, payload = events[0]
-    assert payload["event_type"] == "runefoble.events.spectator.connected"
-    assert session_id in payload["payload"]
-    assert SPECTATOR in payload["payload"]
 
 
 def test_spectator_websocket_sends_the_owner_party_without_monsters(gateway, table):

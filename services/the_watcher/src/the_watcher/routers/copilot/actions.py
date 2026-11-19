@@ -30,7 +30,7 @@ async def propose_action(caller_id: CallerId, req: ProposeActionRequest) -> Pend
 
 @router.post("/api/v1/watcher/veto")
 async def veto_action(caller_id: CallerId, req: VetoActionRequest):
-    """Cancel pending action execution and emit WatcherActionVetoed. Requires DM permission."""
+    """Cancel pending action execution. Requires DM permission."""
     await require_dm(caller_id, req.campaign_id, req.session_id)
     action = await get_copilot_engine().veto_action(
         req.session_id, req.action_id, vetoed_by=caller_id or "unknown", reason=req.reason

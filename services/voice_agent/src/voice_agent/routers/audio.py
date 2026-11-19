@@ -8,7 +8,6 @@ import binascii
 from fastapi import APIRouter, Depends, HTTPException
 from voice_agent.auth import CallerPrincipal, get_principal
 from voice_agent.authz import require_speaker
-from voice_agent.dependencies import _dispatch_voice_audio_conditioned
 from voice_agent.filters import apply_audio_filters
 from voice_agent.models import DSPApplyRequest, DSPApplyResponse
 
@@ -34,15 +33,6 @@ async def apply_dsp(req: DSPApplyRequest, principal: CallerPrincipal):
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     audio_b64 = base64.b64encode(out_bytes).decode("ascii")
-
-    await _dispatch_voice_audio_conditioned(
-        session_id=req.session_id,
-        speaker_id=req.speaker_id,
-        speaker_name=req.speaker_name,
-        filters_applied=filters,
-        latency_ms=round(latency_ms, 2),
-        audio_bytes_length=len(out_bytes),
-    )
 
     return DSPApplyResponse(
         audio_base64=audio_b64,

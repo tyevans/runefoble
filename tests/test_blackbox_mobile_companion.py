@@ -18,11 +18,6 @@ import pytest
 from fastapi import WebSocketDisconnect
 from fastapi.testclient import TestClient
 from runefoble_auth.factory import get_spicedb_client
-from runefoble_events.events import (
-    MobileAudioProfileAdapted,
-    MobileCompanionConnected,
-    MobileHapticPingDispatched,
-)
 from voice_agent.companion_registry import mobile_companion_manager
 from voice_agent.mobile import HapticVibrationPattern, MobileAudioProfileTier
 
@@ -209,39 +204,3 @@ def test_adaptive_audio_degradation_over_constrained_cellular(client: TestClient
         ws.send_json({"type": "audio_frame", "frame_seq": 101, "sample_rate": 16000})
         ack = ws.receive_json()
         assert ack["type"] == "audio_frame_ack" and ack["frame_seq"] == 101
-
-
-def test_mobile_companion_cloudevents_conformance():
-    """Verify companion domain events conform to CloudEvents specification."""
-    conn_event = MobileCompanionConnected(
-        session_id="sess-ce-1",
-        peer_id="peer-1",
-        user_id="user-1",
-        connected_at="2026-09-26T20:00:00Z",
-    )
-    ce_conn = conn_event.to_cloudevent_dict()
-    assert ce_conn["specversion"] == "1.0"
-    assert ce_conn["type"] == "runefoble.events.voice.mobile_connected"
-
-    adapt_event = MobileAudioProfileAdapted(
-        session_id="sess-ce-1",
-        peer_id="peer-1",
-        user_id="user-1",
-        previous_tier="mobile_optimized",
-        current_tier="cellular_constrained",
-        bitrate_kbps=12,
-        reason="high_packet_loss",
-    )
-    assert adapt_event.to_cloudevent_dict()["type"] == "runefoble.events.voice.profile_adapted"
-
-    haptic_event = MobileHapticPingDispatched(
-        session_id="sess-ce-1",
-        recipient_id="user-1",
-        alert_type="secret_whisper",
-        vibration_pattern=[200, 100, 200],
-        whisper_content="Secret clue",
-        dispatched_at="2026-09-26T20:00:00Z",
-    )
-    ce_haptic = haptic_event.to_cloudevent_dict()
-    assert ce_haptic["type"] == "runefoble.events.voice.haptic_ping"
-    assert ce_haptic["data"]["vibration_pattern"] == [200, 100, 200]

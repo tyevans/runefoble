@@ -14,7 +14,6 @@ from typing import Annotated, Literal
 import httpx
 from fastapi import APIRouter, Depends, Header, HTTPException
 from runefoble_events.events import PlayerSpokeEvent
-from runefoble_platform.engine_ports import EngineUnavailableError
 from runefoble_platform.event_publish import publish_or_fail
 from runefoble_platform.identifiers import opaque_aggregate_id
 from voice_agent.auth import CallerPrincipal, caller_headers, get_principal
@@ -37,8 +36,7 @@ async def _transcript_from_request(req: TranscribeRequest) -> tuple[str, Transcr
     """Return the player's words and where they came from. Never invents text.
 
     Audio wins when both audio and typed text are sent. Malformed or empty input returns 422.
-    Engine failures publish VoiceTranscriptionFailed, then propagate as EngineUnavailableError,
-    which the app maps to 503.
+    Engine failures propagate as EngineUnavailableError, which the app maps to 503.
     """
     if req.audio_base64 is not None:
         try:
@@ -49,13 +47,7 @@ async def _transcript_from_request(req: TranscribeRequest) -> tuple[str, Transcr
         if not pcm:
             raise HTTPException(status_code=422, detail="audio_base64 holds no audio")
         pipeline = get_streaming_pipeline()
-        try:
-            spoken = await pipeline.transcriber.transcribe(pcm, sample_rate=sample_rate)
-        except EngineUnavailableError as exc:
-            await pipeline.publish_transcription_failed(
-                req.session_id, req.speaker_id, req.speaker_name, exc
-            )
-            raise
+        spoken = await pipeline.transcriber.transcribe(pcm, sample_rate=sample_rate)
         return spoken.strip(), "audio"
 
     typed = (req.transcript or "").strip()

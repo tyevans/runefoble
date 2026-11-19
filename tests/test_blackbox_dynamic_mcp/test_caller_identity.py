@@ -6,8 +6,6 @@ request body. The author recorded on a tool is the token subject.
 
 from __future__ import annotations
 
-import json
-
 import pytest
 from fastapi.testclient import TestClient
 from runefoble_auth.mock import MockSpiceDBClient
@@ -90,7 +88,7 @@ async def test_author_relation_is_written_for_token_subject_only(
 
 
 def test_execute_body_user_id_is_ignored(client: TestClient, mock_redis: MockAsyncRedis):
-    """The execute body cannot name the caller. The event records the token subject."""
+    """The execute body cannot name the caller. The token subject is the caller."""
     client.post("/mcp/tools/register", json=_payload(), headers=caller_headers("alex"))
 
     res = client.post(
@@ -100,10 +98,3 @@ def test_execute_body_user_id_is_ignored(client: TestClient, mock_redis: MockAsy
     )
     assert res.status_code == 200
     assert res.json()["result"] == {"pulse": 30}
-
-    invoked = [
-        json.loads(fields["payload"])
-        for _, fields in mock_redis.streams.get("runefoble.events.system", [])
-        if fields.get("event_type") == "runefoble.events.mcp_tools.dynamic_tool_invoked"
-    ]
-    assert invoked and invoked[-1]["user_id"] == "alex"

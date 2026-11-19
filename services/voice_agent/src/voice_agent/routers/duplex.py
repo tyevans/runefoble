@@ -11,12 +11,10 @@ import logging
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from runefoble_auth.websocket import admit_websocket
-from runefoble_platform.event_publish import publish_best_effort
 from voice_agent.auth import CallerPrincipal, get_voice_verifier
 from voice_agent.authz import require_action, speaker_authorizer
 from voice_agent.barge_in import BargeInDetector
 from voice_agent.coordinator import VoiceRoomCoordinator, get_voice_room_coordinator
-from voice_agent.dependencies import STREAM_SESSION, STREAM_VOICE, get_event_bus
 from voice_agent.echo_canceller import AcousticEchoCanceller
 from voice_agent.models import PlaybackStartRequest
 
@@ -53,11 +51,6 @@ async def _handle_interruption(
     res = await coord.interrupt_playback(sess_id, spk_id, spk_name, audio_tail=pcm)
     if res is None:
         return False
-    ev = res.to_event()
-    bus = get_event_bus()
-    for s in (STREAM_VOICE, STREAM_SESSION):
-        await publish_best_effort(bus, s, ev)
-
     frames = [
         {
             "type": "barge_in_detected",

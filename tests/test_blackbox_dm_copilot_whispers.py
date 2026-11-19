@@ -3,7 +3,6 @@
 Governed by Hard Invariant 7 (Blackbox TDD with Frontdoor Setup).
 All assertions and setup operate strictly through public frontdoors:
 - Public HTTP REST API whisper endpoints in the_watcher.main
-- Standard CloudEvent publication (DMNarrativeWhispered)
 - Object-level Zanzibar authorization via SpiceDB schema (dungeon_master relation)
 - Microfrontend manifest exposure
 """
@@ -13,11 +12,9 @@ from __future__ import annotations
 from uuid import uuid4
 
 import pytest
-from eventsource.domain.event_registry import get_event_class_or_none
 from fastapi.testclient import TestClient
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.spicedb import SpiceDBClient
-from runefoble_events.events import DMNarrativeWhispered
 from the_watcher.main import app
 
 from tests.helpers.module_state import SeamRestorer
@@ -38,27 +35,6 @@ def clean_environment(seam_restorer: SeamRestorer):
 @pytest.fixture
 def client() -> TestClient:
     return TestClient(app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"})
-
-
-def test_narrative_whispered_cloudevent_registration():
-    """Verify DMNarrativeWhispered is registered in EventRegistry and conforms to CloudEvents."""
-    cls = get_event_class_or_none("runefoble.events.watcher.narrative_whispered")
-    assert cls is not None
-    assert cls == DMNarrativeWhispered
-
-    event = DMNarrativeWhispered(
-        whisper_id="whisp-123",
-        session_id="sess-456",
-        campaign_id="camp-789",
-        whisper_type="monster_tactics",
-        content="Goblins plan a flank attack.",
-        recipient_role="dungeon_master",
-    )
-    ce = event.to_cloudevent_dict()
-    assert ce["specversion"] == "1.0"
-    assert ce["type"] == "runefoble.events.watcher.narrative_whispered"
-    assert ce["data"]["whisper_id"] == "whisp-123"
-    assert ce["data"]["recipient_role"] == "dungeon_master"
 
 
 @pytest.mark.asyncio

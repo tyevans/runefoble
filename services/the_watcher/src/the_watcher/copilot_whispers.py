@@ -1,7 +1,7 @@
 """DM whisper log service: list, record, and generate private narrative suggestions (TASK-0568).
 
 Whispers live in the ``WhisperAggregate`` for each session and recipient. The service runs
-the commands and publishes the public ``DMNarrativeWhispered`` events.
+the commands over that aggregate. Clients read whispers through the whisper routes.
 """
 
 from __future__ import annotations
@@ -13,10 +13,7 @@ from typing import Any
 from uuid import uuid4
 
 from eventsource.application.aggregates.repository import AggregateRepository
-from runefoble_events.events import DMNarrativeWhispered
 from runefoble_platform.aggregate_loading import load_or_create
-from runefoble_platform.event_publish import publish_best_effort, publish_or_fail
-from runefoble_platform.identifiers import opaque_aggregate_id
 from the_watcher.copilot_state.whispers import WhisperAggregate, whisper_log_id
 from the_watcher.models import WhisperSuggestion
 
@@ -85,12 +82,8 @@ class WhisperService:
     def __init__(
         self,
         *,
-        bus: Callable[[], Any],
-        watcher_stream: str,
         whisper_repo: Callable[[], AggregateRepository[WhisperAggregate]],
     ) -> None:
-        self._bus = bus
-        self._stream = watcher_stream
         self._whisper_repo = whisper_repo
 
     async def list_whispers(
@@ -120,7 +113,7 @@ class WhisperService:
         return matches[start : start + limit], total
 
     async def add_whisper(self, whisper: WhisperSuggestion) -> WhisperSuggestion:
-        """Record a private narrative suggestion for the DM. The audit event must publish."""
+        """Record a private narrative suggestion for the DM."""
         if not whisper.timestamp:
             whisper.timestamp = datetime.now(UTC).isoformat()
         if not whisper.whisper_id:
@@ -128,7 +121,6 @@ class WhisperService:
         repo = self._whisper_repo()
         log = await load_or_create(repo, whisper_log_id(whisper.session_id), _new_whisper_log)
         log.record(whisper)
-        await publish_or_fail(self._bus(), self._stream, _whispered_event(whisper))
         await repo.save(log)
         return whisper
 
@@ -140,7 +132,7 @@ class WhisperService:
         location_type: str = "dungeon",
         threat_level: str = "medium",
     ) -> list[WhisperSuggestion]:
-        """Generate default suggestions, record them, and publish each one best effort."""
+        """Generate default suggestions and record them."""
         whispers = build_default_whispers(
             session_id, campaign_id, scene_context, location_type, threat_level
         )
@@ -149,19 +141,4 @@ class WhisperService:
         for whisper in whispers:
             log.record(whisper)
         await repo.save(log)
-        for whisper in whispers:
-            await publish_best_effort(self._bus(), self._stream, _whispered_event(whisper))
         return whispers
-
-
-def _whispered_event(whisper: WhisperSuggestion) -> DMNarrativeWhispered:
-    return DMNarrativeWhispered(
-        aggregate_id=opaque_aggregate_id(whisper.session_id, field="session_id"),
-        whisper_id=whisper.whisper_id,
-        session_id=str(whisper.session_id),
-        campaign_id=str(whisper.campaign_id) if whisper.campaign_id else "",
-        whisper_type=whisper.whisper_type,
-        content=whisper.content,
-        recipient_role=whisper.recipient_role,
-        metadata=whisper.metadata,
-    )

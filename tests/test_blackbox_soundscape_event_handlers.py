@@ -14,9 +14,9 @@ from uuid import uuid4
 
 import pytest
 from runefoble_events.events import (
+    CharacterHealthChanged,
     CombatEncounterStarted,
-    CriticalHitScored,
-    DeathSaveStarted,
+    DiceRolled,
     InitiativeTurnAdvanced,
     PlayerSpokeEvent,
 )
@@ -92,13 +92,16 @@ async def test_player_spoke_triggers_voice_ducking():
 
 @pytest.mark.asyncio
 async def test_critical_hit_triggers_triumphant_leitmotif():
-    """Verify CriticalHitScored triggers triumphant leitmotif playback."""
+    """Verify a natural 20 (DiceRolled with is_crit) triggers triumphant leitmotif playback."""
     session_id = "session-test-crit"
-    event = CriticalHitScored(
+    event = DiceRolled(
         session_id=session_id,
-        character_id="char-valeros",
-        character_name="Valeros",
-        roll_total=20,
+        roller_id="char-valeros",
+        roller_name="Valeros",
+        formula="1d20",
+        total=20,
+        rolls=[20],
+        is_crit=True,
     )
     await handle_incoming_domain_event(event)
 
@@ -110,14 +113,16 @@ async def test_critical_hit_triggers_triumphant_leitmotif():
 
 
 @pytest.mark.asyncio
-async def test_death_save_triggers_somber_leitmotif():
-    """Verify DeathSaveStarted triggers somber leitmotif."""
+async def test_zero_hp_triggers_somber_leitmotif():
+    """Verify a health change to 0 HP triggers the somber death-save leitmotif."""
     session_id = "session-test-death"
-    event = DeathSaveStarted(
+    character_uuid = uuid4()
+    event = CharacterHealthChanged(
+        aggregate_id=character_uuid,
         session_id=session_id,
-        character_id="char-merisiel",
-        character_name="Merisiel",
+        delta=-12,
         current_hp=0,
+        max_hp=12,
     )
     await handle_incoming_domain_event(event)
 
@@ -125,4 +130,4 @@ async def test_death_save_triggers_somber_leitmotif():
     active = engine.get_active_status()
     assert active is not None
     assert active.motif_type == "somber"
-    assert active.character_id == "char-merisiel"
+    assert active.character_id == str(character_uuid)

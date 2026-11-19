@@ -4,17 +4,9 @@ from __future__ import annotations
 
 import logging
 import threading
-import time
 from typing import TYPE_CHECKING, Any
 
-from runefoble_events.events import (
-    DynamicToolInvokedEvent,
-    DynamicToolRegisteredEvent,
-    DynamicToolUnregisteredEvent,
-)
-
 from gateway_mcp.dynamic.builder import make_dynamic_tool_callable
-from gateway_mcp.dynamic.events import safe_dispatch_event
 from gateway_mcp.dynamic.handlers import evaluate_handler, validate_handler
 from gateway_mcp.dynamic.models import (
     DynamicToolDefinition,
@@ -56,16 +48,6 @@ class DynamicToolRegistry:
                 self.mcp._tool_manager.add_tool(
                     runner, name=record.name, description=record.description
                 )
-        safe_dispatch_event(
-            DynamicToolRegisteredEvent(
-                tool_name=record.name,
-                description=record.description,
-                parameters=record.parameters,
-                author_id=author_id,
-                campaign_id=record.campaign_id,
-                metadata=record.metadata,
-            )
-        )
         return record
 
     def update_tool(self, name: str, definition: DynamicToolDefinition) -> DynamicToolRecord:
@@ -77,18 +59,13 @@ class DynamicToolRegistry:
         definition.name = name
         return self.register_tool(definition, author_id=existing.author_id)
 
-    def deregister_tool(self, name: str, unregistered_by: str | None = None) -> bool:
+    def deregister_tool(self, name: str) -> bool:
         with self._lock:
             if name not in self._tools:
                 return False
-            tool_def = self._tools.pop(name)
+            self._tools.pop(name)
             if self.mcp is not None and self.mcp._tool_manager.get_tool(name):
                 self.mcp._tool_manager.remove_tool(name)
-        safe_dispatch_event(
-            DynamicToolUnregisteredEvent(
-                tool_name=name, unregistered_by=unregistered_by, campaign_id=tool_def.campaign_id
-            )
-        )
         return True
 
     def get_tool(self, name: str) -> DynamicToolRecord | None:
@@ -99,35 +76,11 @@ class DynamicToolRegistry:
         with self._lock:
             return list(self._tools.values())
 
-    def execute_tool(
-        self,
-        name: str,
-        arguments: dict[str, Any],
-        user_id: str | None = None,
-        session_id: str | None = None,
-    ) -> Any:
+    def execute_tool(self, name: str, arguments: dict[str, Any]) -> Any:
         tool_def = self.get_tool(name)
         if not tool_def:
             raise ValueError(f"Dynamic tool '{name}' not found")
-        t0, success, err_msg = time.perf_counter(), True, None
-        try:
-            return evaluate_handler(tool_def.handler, arguments)
-        except Exception as exc:
-            success, err_msg = False, str(exc)
-            raise
-        finally:
-            safe_dispatch_event(
-                DynamicToolInvokedEvent(
-                    tool_name=name,
-                    user_id=user_id,
-                    session_id=session_id,
-                    campaign_id=tool_def.campaign_id,
-                    arguments=arguments,
-                    duration_ms=(time.perf_counter() - t0) * 1000.0,
-                    success=success,
-                    error=err_msg,
-                )
-            )
+        return evaluate_handler(tool_def.handler, arguments)
 
 
 dynamic_registry = DynamicToolRegistry()

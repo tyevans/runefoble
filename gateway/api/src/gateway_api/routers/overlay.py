@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
 from typing import Any
 
 from fastapi import (
@@ -27,7 +26,7 @@ from gateway_api.cinematic_director import (
     DEFAULT_EASING,
     get_cinematic_director,
 )
-from gateway_api.dependencies import get_event_bus, get_upstreams
+from gateway_api.dependencies import get_upstreams
 from gateway_api.overlay_models import (
     PartyMemberVitals,
     PartyVitalsData,
@@ -49,8 +48,6 @@ from runefoble_auth.websocket import (
     send_socket_error,
     serve_authorized_socket,
 )
-from runefoble_events.events import SpectatorSessionConnected
-from runefoble_platform.event_publish import publish_best_effort
 from runefoble_platform.service_client import UpstreamError
 from runefoble_platform.ws_groups import WebSocketGroups
 
@@ -112,19 +109,6 @@ async def _read_source_for_socket(websocket: WebSocket, session_id: str) -> dict
         return None
 
 
-async def _publish_spectator_connected(session_id: str, principal: VerifiedPrincipal) -> None:
-    """Publish the connection event once, when the socket is admitted. No GET publishes it."""
-    event = SpectatorSessionConnected(
-        session_id=session_id,
-        viewer_id=principal.user_id,
-        viewer_name=principal.username,
-        connected_at=datetime.now(UTC).isoformat(),
-    )
-    bus = get_event_bus()
-    if bus is not None:
-        await publish_best_effort(bus, "runefoble.events.spectator", event)
-
-
 @dataclass
 class _OverlayFeed:
     """The source state that one overlay socket reads when it opens."""
@@ -141,7 +125,6 @@ async def _open_overlay(
         return False
     feed.raw = raw
     ws_overlay_manager.register(session_id, websocket)
-    await _publish_spectator_connected(session_id, principal)
     director = get_cinematic_director(session_id)
     initial = sanitize_party_vitals({**raw, "tokens": party_tokens(raw)}, director.current_target)
     await websocket.send_json(

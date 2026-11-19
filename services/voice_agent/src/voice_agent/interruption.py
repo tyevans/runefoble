@@ -6,9 +6,7 @@ Halts active TTS narration within < 100ms with a 20ms soft crossfade to silence.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import UTC, datetime
 
-from runefoble_events.events import VoiceSpeechInterrupted
 from voice_agent.dsp.cosine_crossfade import apply_cosine_crossfade
 from voice_agent.room_aggregate import VoicePlaybackState
 
@@ -27,21 +25,6 @@ class InterruptionResult:
     original_text: str
     timestamp: float
     faded_audio_bytes: bytes | None = None
-
-    def to_event(self) -> VoiceSpeechInterrupted:
-        iso_now = datetime.fromtimestamp(self.timestamp, tz=UTC).isoformat()
-        return VoiceSpeechInterrupted(
-            session_id=self.session_id,
-            speaker_id=self.interrupted_by_speaker_id,
-            speaker_name=self.interrupted_by_speaker_name,
-            timestamp=self.timestamp,
-            interrupted_at=iso_now,
-            remaining_narration_text=self.remaining_narration_text,
-            original_text=self.original_text,
-            playback_duration_ms=self.playback_duration_ms,
-            cutoff_position_ms=self.cutoff_position_ms,
-            reason="player_barge_in",
-        )
 
 
 def build_interruption(

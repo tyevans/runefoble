@@ -22,7 +22,6 @@ import pytest
 from fastapi.testclient import TestClient
 from runefoble_events.events import (
     VoiceStreamCodecAdaptedEvent,
-    VoiceStreamQualityDegradedEvent,
 )
 from voice_agent.main import app
 
@@ -114,7 +113,6 @@ def test_packet_loss_steps_down_bitrate_under_200ms(client: TestClient, clean_en
                 assert payload["new_bitrate_kbps"] == 12
                 assert payload["codec_mode"] == "cellular_constrained"
 
-    assert "runefoble.events.voice.stream_quality_degraded" in event_types
     assert "runefoble.events.voice.stream_codec_adapted" in event_types
 
 
@@ -196,18 +194,6 @@ def test_multi_peer_stream_isolation(client: TestClient):
 
 def test_cloudevents_conformance():
     """Verify stream quality domain events conform to CloudEvents 1.0 schema."""
-    deg_event = VoiceStreamQualityDegradedEvent(
-        session_id="sess-ce",
-        peer_id="peer-1",
-        packet_loss=0.08,
-        round_trip_time_ms=130.0,
-        severity="degraded",
-    )
-    ce_deg = deg_event.to_cloudevent_dict()
-    assert ce_deg["specversion"] == "1.0"
-    assert ce_deg["type"] == "runefoble.events.voice.stream_quality_degraded"
-    assert ce_deg["data"]["packet_loss"] == 0.08
-
     adapt_event = VoiceStreamCodecAdaptedEvent(
         session_id="sess-ce",
         peer_id="peer-1",
