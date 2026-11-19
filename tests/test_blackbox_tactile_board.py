@@ -13,8 +13,9 @@ from board_state.main import app
 from fastapi.testclient import TestClient
 from runefoble_platform.event_sourcing import AggregateRepository, InMemoryEventStore
 
-from tests.helpers.campaign_setup import create_dm_campaign
 from tests.helpers.ws_identity import bearer
+
+pytestmark = pytest.mark.usefixtures("board_campaign")
 
 client = TestClient(app, headers=bearer("user-test"))
 
@@ -147,9 +148,3 @@ def test_blackbox_tactile_board_http_frontdoor_lifecycle(board_campaign: str):
     # Remove token through public route
     res_remove = client.delete(f"/api/v1/boards/{board_id}/tokens/kyra")
     assert res_remove.status_code == 200
-
-
-@pytest.fixture(autouse=True)
-def board_campaign(trusted_ws_issuer) -> str:
-    """The campaign that every board in this module belongs to. `user-test` runs it."""
-    return create_dm_campaign("user-test")

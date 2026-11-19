@@ -9,8 +9,9 @@ import pytest
 from board_state.main import app
 from fastapi.testclient import TestClient
 
-from tests.helpers.campaign_setup import create_dm_campaign
 from tests.helpers.ws_identity import bearer
+
+pytestmark = pytest.mark.usefixtures("board_campaign")
 
 
 def test_board_terrain_elevation_difficult_movement_and_hazard_flow(board_campaign: str):
@@ -240,9 +241,3 @@ def test_board_token_leaves_hazard_clears_hazard_status(board_campaign: str):
     monk = board_res.json()["tokens"]["monk-1"]
     assert monk["active_hazard"] is None
     assert monk["hazard_status"] is None
-
-
-@pytest.fixture(autouse=True)
-def board_campaign(trusted_ws_issuer) -> str:
-    """The campaign that every board in this module belongs to. `user-test` runs it."""
-    return create_dm_campaign("user-test")

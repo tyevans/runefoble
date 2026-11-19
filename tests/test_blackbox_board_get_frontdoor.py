@@ -15,8 +15,9 @@ from board_state.main import app as board_app
 from fastapi.testclient import TestClient
 from runefoble_platform.event_sourcing import create_aggregate_repository
 
-from tests.helpers.campaign_setup import create_dm_campaign
 from tests.helpers.ws_identity import bearer
+
+pytestmark = pytest.mark.usefixtures("board_campaign")
 
 SEEDED_NAMES = {"Valeros", "Kyra", "Goblin Scout"}
 
@@ -124,9 +125,3 @@ class _OutageStore:
 
     def read_stream(self, *args, **kwargs):
         raise ConnectionError("event store unavailable")
-
-
-@pytest.fixture(autouse=True)
-def board_campaign(trusted_ws_issuer) -> str:
-    """The campaign that every board in this module belongs to. `user-test` runs it."""
-    return create_dm_campaign("user-test")

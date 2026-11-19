@@ -13,8 +13,9 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 
-from tests.helpers.campaign_setup import create_dm_campaign
 from tests.helpers.mock_redis import MockAsyncRedis
+
+pytestmark = pytest.mark.usefixtures("board_campaign")
 
 
 def _create_board(
@@ -159,9 +160,3 @@ def test_simulate_throw_without_target_generates_valid_polyhedral_face(
     assert 1 <= data["face_value"] <= 12
     assert data["status"] == "settled"
     assert data["bounces"] >= 1
-
-
-@pytest.fixture(autouse=True)
-def board_campaign(trusted_ws_issuer) -> str:
-    """The campaign that every board in this module belongs to. `user-test` runs it."""
-    return create_dm_campaign("user-test")

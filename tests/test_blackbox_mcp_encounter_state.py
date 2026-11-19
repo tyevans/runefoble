@@ -15,10 +15,12 @@ import pytest
 from gateway_mcp.server import mcp
 from mcp.types import CallToolResult
 
-from tests.helpers.campaign_setup import create_dm_campaign, create_owned_campaign
+from tests.helpers.campaign_setup import create_owned_campaign
 from tests.helpers.live_services import serve, unavailable_app
 from tests.helpers.mcp_http import call_tool_over_http, serve_mcp
 from tests.helpers.ws_identity import SIGNING_ISSUER, bearer
+
+pytestmark = pytest.mark.usefixtures("board_campaign")
 
 _MCP: dict[str, str] = {}
 
@@ -202,9 +204,3 @@ async def test_encounter_reads_refuse_a_caller_with_no_session_access(
     assert "403" in tool_text(result)
     assert "Goblin Archer" not in tool_text(result)
     assert "Valeros" not in tool_text(result)
-
-
-@pytest.fixture(autouse=True)
-def board_campaign(trusted_ws_issuer) -> str:
-    """The campaign that every board in this module belongs to. `user-test` runs it."""
-    return create_dm_campaign("user-test")

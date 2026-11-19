@@ -8,8 +8,9 @@ import pytest
 from board_state.main import app as board_app
 from httpx import ASGITransport, AsyncClient
 
-from tests.helpers.campaign_setup import create_dm_campaign
 from tests.helpers.ws_identity import bearer
+
+pytestmark = pytest.mark.usefixtures("board_campaign")
 
 
 def test_board_state_transitions_behavior():
@@ -98,9 +99,3 @@ async def test_frontdoor_board_endpoints(board_campaign: str):
             json={"x": 3, "y": 3, "elevation": 1, "terrain_type": "stone", "hazard": None},
         )
         assert terrain_res.status_code == 200
-
-
-@pytest.fixture(autouse=True)
-def board_campaign(trusted_ws_issuer) -> str:
-    """The campaign that every board in this module belongs to. `user-test` runs it."""
-    return create_dm_campaign("user-test")

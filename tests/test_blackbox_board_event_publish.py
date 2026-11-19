@@ -31,7 +31,7 @@ WORLD_TICK_TYPE = "runefoble.events.watcher.world_tick_executed"
 AOE_PLACED_TYPE = "runefoble.events.board.aoe_template_placed"
 
 
-pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer", "board_campaign")
 
 
 def _entries(redis: MockAsyncRedis, stream: str) -> list[dict[str, str]]:
@@ -127,9 +127,3 @@ async def test_world_tick_publishes_world_tick_executed_to_watcher_stream(
         e for e in _entries(watcher_redis, WATCHER_STREAM) if e["event_type"] == WORLD_TICK_TYPE
     ]
     assert len(ticks) == 1
-
-
-@pytest.fixture(autouse=True)
-def board_campaign(trusted_ws_issuer) -> str:
-    """The campaign that every board in this module belongs to. `user-test` runs it."""
-    return create_dm_campaign("user-test")

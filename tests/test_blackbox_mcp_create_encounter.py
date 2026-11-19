@@ -15,11 +15,12 @@ import pytest
 from gateway_mcp.server import mcp
 from mcp.types import CallToolResult
 
-from tests.helpers.campaign_setup import create_dm_campaign
 from tests.helpers.game_session_setup import start_session_with_player
 from tests.helpers.live_services import serve, unavailable_app
 from tests.helpers.mcp_http import call_tool_over_http, serve_mcp
 from tests.helpers.ws_identity import SIGNING_ISSUER, bearer
+
+pytestmark = pytest.mark.usefixtures("board_campaign")
 
 _MCP: dict[str, str] = {}
 
@@ -186,9 +187,3 @@ async def test_blackbox_create_encounter_game_session_503_is_error_not_board_id(
     assert "503" in tool_text(result)
     assert "encounter_id" not in tool_text(result)
     assert board_status(wired["board"], session_id) == 404
-
-
-@pytest.fixture(autouse=True)
-def board_campaign(trusted_ws_issuer) -> str:
-    """The campaign that every board in this module belongs to. `user-test` runs it."""
-    return create_dm_campaign("user-test")

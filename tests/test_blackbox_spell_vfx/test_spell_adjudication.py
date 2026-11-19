@@ -7,7 +7,7 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 
-from tests.helpers.campaign_setup import create_dm_campaign
+pytestmark = pytest.mark.usefixtures("board_campaign")
 
 
 def test_evocation_fireball_spell_vfx_frontdoor_and_scorched_decals(
@@ -123,9 +123,3 @@ def test_abjuration_shield_and_conjuration_portal_archetypes(
     assert portal_data["spell_archetype"] == "conjuration"
     assert portal_data["decal_type"] == "portal_residue"
     assert portal_data["audio_stinger"] == "conjuration_portal_drone"
-
-
-@pytest.fixture(autouse=True)
-def board_campaign(trusted_ws_issuer) -> str:
-    """The campaign that every board in this module belongs to. `user-test` runs it."""
-    return create_dm_campaign("user-test")

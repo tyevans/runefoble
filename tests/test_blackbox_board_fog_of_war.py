@@ -10,8 +10,9 @@ import pytest
 from board_state.main import app
 from fastapi.testclient import TestClient
 
-from tests.helpers.campaign_setup import add_member, create_dm_campaign
 from tests.helpers.ws_identity import bearer
+
+pytestmark = pytest.mark.usefixtures("board_campaign", "board_campaign_viewer")
 
 
 def test_fog_of_war_visibility_and_manual_masking(board_campaign: str):
@@ -103,11 +104,3 @@ def test_fog_of_war_visibility_and_manual_masking(board_campaign: str):
     # Verify goblin is removed from board
     board_final = client.get(f"/api/v1/boards/{board_id}").json()
     assert "goblin-1" not in board_final["tokens"]
-
-
-@pytest.fixture(autouse=True)
-def board_campaign(trusted_ws_issuer) -> str:
-    """The campaign that every board in this module belongs to. `user-test` runs it."""
-    campaign_id = create_dm_campaign("user-test")
-    add_member(campaign_id, "user-test", "player-viewer", "player")
-    return campaign_id
