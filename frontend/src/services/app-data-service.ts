@@ -10,7 +10,7 @@ import type { CampaignCapabilities } from './campaign-capabilities.ts';
 import { dataFailure, dataOk, isNotFound, type DataResult } from './data-result.ts';
 import type { SessionBoard } from './session-board.ts';
 import { requestData } from './shell-request.ts';
-import { isArray, malformedResponse, requireFields } from './required-fields.ts';
+import { isArray, isString, malformedResponse, requireFields } from './required-fields.ts';
 import {
   SESSION_REQUIRED_FIELDS, sessionFromOwner, lobbyParticipantsFromOwner, boardFromOwner,
 } from './owner-wire-mappers.ts';
@@ -169,6 +169,15 @@ export class AppDataService {
   /** Seats the verified caller in the lobby through the gateway join route (TASK-0889). */
   async joinSession(sessionId: string, seat: { character_id: string; character_name: string; character_class: string }): Promise<DataResult<unknown>> {
     return this.request<unknown>(`${this.apiBase}/sessions/${sessionId}/join`, { method: 'POST', body: JSON.stringify(seat) });
+  }
+
+  /**
+   * Moves a lobby session to `active` through the gateway start route (TASK-0910). game_session
+   * checks `session.control`. The gateway then sends `session_started` to every session socket.
+   */
+  async startSession(sessionId: string): Promise<DataResult<{ status: string }>> {
+    const res = await this.request<{ status: string }>(`${this.apiBase}/sessions/${sessionId}/start`, { method: 'POST' });
+    return res.ok ? requireFields(res.data, { status: isString }) : res;
   }
 
   /**

@@ -1,7 +1,8 @@
 """Session real-time WebSocket: admit, authorize `session.observe`, then relay per session.
 
-Observers receive frames. Inbound frames need `session.participate` (TASK-0810). Each inbound
-frame is validated against the session frame contract before the permission check.
+Observers receive frames. Each inbound frame is validated against the session frame contract,
+then the sender must hold the permission that the contract names for its kind (TASK-0810,
+TASK-0910). The gateway start route is the only source of `session_started`.
 """
 
 from __future__ import annotations
@@ -11,7 +12,11 @@ import logging
 from fastapi import WebSocket
 from gateway_api.dependencies import ws_manager
 from gateway_api.session_access import may_publish_frame
-from gateway_api.session_frames import InboundFrameError, read_session_frame
+from gateway_api.session_frames import (
+    CLIENT_FRAME_PERMISSIONS,
+    InboundFrameError,
+    read_session_frame,
+)
 from gateway_api.websocket_auth import admit_gateway_websocket
 from runefoble_auth.principal import VerifiedPrincipal
 from runefoble_auth.websocket import action_authorizer, send_socket_error, serve_authorized_socket
@@ -39,7 +44,8 @@ async def session_websocket_endpoint(websocket: WebSocket, session_id: str) -> N
         except InboundFrameError as exc:
             await send_socket_error(websocket, exc.code, exc.message)
             return
-        if not await may_publish_frame(websocket, session_id, principal.user_id, kind):
+        permission = CLIENT_FRAME_PERMISSIONS[kind]
+        if not await may_publish_frame(websocket, session_id, principal.user_id, kind, permission):
             return
         await ws_manager.broadcast(session_id, payload)
 

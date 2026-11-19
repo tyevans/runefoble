@@ -54,7 +54,7 @@ Status: `Available` for sign-in, campaign, session, and lobby. The table route s
 3. Open the campaign. Create a session.
 4. Open the session lobby (`#/campaigns/<campaign id>/lobby/<session id>`). Check the participant list.
 5. Choose a character for your seat.
-6. As the DM, select launch. The App Shell sends a `session_started` message and opens the session route (`#/campaigns/<campaign id>/sessions/<session id>`).
+6. As the DM, select launch. The App Shell calls `POST /api/v1/sessions/<session id>/start`. The session moves from `lobby` to `active`. The gateway sends a `session_started` message to the other browsers in the lobby, and the App Shell opens the session route (`#/campaigns/<campaign id>/sessions/<session id>`).
 
 On the session route, the App Shell calls `GET /api/v1/boards/<session id>`. No board exists for a new session, so the gateway returns `404`. The App Shell then shows a data error with a retry control. It does not show the table.
 

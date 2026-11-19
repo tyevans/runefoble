@@ -26,6 +26,9 @@ from pydantic import ValidationError
 from runefoble_auth.principal import VerifiedPrincipal
 from runefoble_auth.websocket import send_socket_error
 
+# Every overlay frame changes what spectators see, so the sender must take part in the session.
+OVERLAY_FRAME_PERMISSION = "participate"
+
 FrameHandler = Callable[[WebSocket, str, OverlayFeed, OverlayFrame, str], Awaitable[None]]
 
 
@@ -62,7 +65,9 @@ async def handle_overlay_frame(
 ) -> None:
     """Check the publish right, validate one inbound frame, then run its handler."""
     action = frame_kind(data)
-    if not await may_publish_frame(websocket, session_id, principal.user_id, action):
+    if not await may_publish_frame(
+        websocket, session_id, principal.user_id, action, OVERLAY_FRAME_PERMISSION
+    ):
         return
     try:
         frame = OverlayFrame.model_validate(data)

@@ -111,6 +111,8 @@ runefoble/
 
 The App Shell forwards incoming session WebSocket messages to microfrontends as window events. The shell does not query service element tags or call their methods (TASK-0826, audit F-07). Each owner subscribes to the events it needs.
 
+The gateway refuses `dice_rolled`, `turn_advanced` and `dm_whisper` from clients (TASK-0910). No server code sends these kinds on the session socket yet, so their listeners receive no message today. `aoe_placed` and `spell_vfx` are client kinds that need `session.participate`. See "Session WebSocket inbound frames" in [`ports-and-endpoints.md`](ports-and-endpoints.md).
+
 | Session message `type` | Window event | Detail | Subscribers |
 |---|---|---|---|
 | `dice_rolled` | `runefoble:dice-rolled` | the session message | `<runefoble-dice-tray-3d>` (rolls the tray), `<runefoble-dice-roller>` (sets `forcedResult` from `result`), `<runefoble-board>` (`roll3DDice`) |

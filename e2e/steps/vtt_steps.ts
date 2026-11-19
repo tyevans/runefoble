@@ -8,8 +8,8 @@
 
 import { expect, type Locator, type Page } from '@playwright/test';
 import { When, Then } from '../support/fixtures';
-import { exactText, fillRouteTemplate } from '../support/guards';
-import { lobbyRoute } from '../support/lobby_session';
+import { exactText, fillRouteTemplate, requireValue } from '../support/guards';
+import { lobbyRoute, personaToken } from '../support/lobby_session';
 
 /** The lobby card of one participant. Strict mode fails the step when the name matches no card or several cards. */
 function participantCard(lobby: Locator, name: string): Locator {
@@ -106,6 +106,18 @@ Then(
     await expect
       .poll(async () => valerosPage.evaluate(() => window.location.hash), { timeout: 15_000 })
       .toBe(expectedHash);
+  }
+);
+
+Then(
+  'the gateway reports the session status as {string}',
+  async ({ frontdoorApi, world }, expected: string) => {
+    // The launch control calls the start route. The owner moves the session out of the lobby (TASK-0910).
+    const token = personaToken(world, 'evelyn');
+    const sessionId = requireValue(world.sessionId, 'The Background created no session.');
+    await expect
+      .poll(async () => frontdoorApi.getSessionStatus(sessionId, token), { timeout: 10_000 })
+      .toBe(expected);
   }
 );
 
