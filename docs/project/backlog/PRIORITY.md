@@ -893,3 +893,4 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 887. **TASK-0907 (Refined)**: [`0907-campaign-list-reads-run-concurrently.md`](refined/0907-campaign-list-reads-run-concurrently.md) — The Campaign List Reads Campaigns and Permissions Without N+1 Sequential Calls
 888. **TASK-0908 (Refined)**: [`0908-ui-state-changes-replace-objects-and-never-show-success-after-error.md`](refined/0908-ui-state-changes-replace-objects-and-never-show-success-after-error.md) — UI State Changes Replace Objects and Never Show Success After an Error
 889. **TASK-0909 (Refined)**: [`0909-e2e-harness-runs-green-on-kind.md`](refined/0909-e2e-harness-runs-green-on-kind.md) — The E2E Harness Runs Green on Kind: Fault Injection, Locators and Ports
+890. **TASK-0922 (Refined)**: [`0922-dm-sets-up-the-session-battlemap.md`](refined/0922-dm-sets-up-the-session-battlemap.md) — The DM Sets Up the Session Battlemap and Places the Party Tokens
