@@ -1,7 +1,7 @@
 """Blackbox TDD tests for Voice Agent Dynamic DSP Audio Conditioning Pipeline.
 
 Interacts strictly through public HTTP frontdoors (POST /api/v1/voice/dsp/apply,
-POST /api/v1/voice/tts) and validates observable responses, DSP frequency modulation
+POST /api/v1/voice/synthesize) and validates observable responses, DSP frequency modulation
 metadata, audio payloads, processing latency (<50ms), and emitted domain events.
 """
 
@@ -80,10 +80,10 @@ def mock_event_bus(mock_redis: MockAsyncRedis, use_redis_client):
 
 
 def test_dsp_apply_whisper_filter(client: TestClient):
-    """POST /api/v1/voice/dsp/apply with filter='whisper' produces reduced dynamic range and high-pass shimmer."""
+    """POST /api/v1/voice/dsp/apply with filters=['whisper'] produces reduced dynamic range and high-pass shimmer."""
     payload = {
         "audio_base64": INPUT_AUDIO_B64,
-        "filter": "whisper",
+        "filters": ["whisper"],
         "session_id": "sess-whisper-1",
         "speaker_id": "spk-sarah",
         "speaker_name": "Sarah Stand-in",
@@ -93,15 +93,15 @@ def test_dsp_apply_whisper_filter(client: TestClient):
     data = response.json()
 
     # Verify audio payload
-    assert "audio_payload" in data
-    assert len(data["audio_payload"]) > 0
-    audio_bytes = base64.b64decode(data["audio_payload"])
+    assert "audio_base64" in data
+    assert len(data["audio_base64"]) > 0
+    audio_bytes = base64.b64decode(data["audio_base64"])
     assert len(audio_bytes) > 0
     assert data["audio_bytes_length"] == len(audio_bytes)
 
     # Verify filter metadata
     assert "whisper" in data["filters_applied"]
-    metadata = data["dsp_metadata"]
+    metadata = data["dsp_parameters"]
     assert metadata.get("reduced_dynamic_range") is True
     assert metadata.get("high_pass_shimmer") is True
     assert "dynamic_range_ratio" in metadata
@@ -110,10 +110,10 @@ def test_dsp_apply_whisper_filter(client: TestClient):
 
 
 def test_dsp_apply_underwater_filter(client: TestClient):
-    """POST /api/v1/voice/dsp/apply with filter='underwater' produces muffled low-pass and sub-bass resonance."""
+    """POST /api/v1/voice/dsp/apply with filters=['underwater'] produces muffled low-pass and sub-bass resonance."""
     payload = {
         "audio_base64": INPUT_AUDIO_B64,
-        "filter": "underwater",
+        "filters": ["underwater"],
         "session_id": "sess-underwater-1",
         "speaker_id": "spk-marcus",
         "speaker_name": "Marcus Adventurer",
@@ -123,13 +123,13 @@ def test_dsp_apply_underwater_filter(client: TestClient):
     data = response.json()
 
     # Verify audio payload
-    assert len(data["audio_payload"]) > 0
-    audio_bytes = base64.b64decode(data["audio_payload"])
+    assert len(data["audio_base64"]) > 0
+    audio_bytes = base64.b64decode(data["audio_base64"])
     assert len(audio_bytes) > 0
 
     # Verify filter metadata
     assert "underwater" in data["filters_applied"]
-    metadata = data["dsp_metadata"]
+    metadata = data["dsp_parameters"]
     assert metadata.get("muffled_low_pass") is True
     assert metadata.get("sub_bass_resonance") is True
     assert "low_pass_cutoff_hz" in metadata
@@ -138,10 +138,10 @@ def test_dsp_apply_underwater_filter(client: TestClient):
 
 
 def test_dsp_apply_ethereal_filter(client: TestClient):
-    """POST /api/v1/voice/dsp/apply with filter='ethereal' produces ghostly echo modulation and delay tail."""
+    """POST /api/v1/voice/dsp/apply with filters=['ethereal'] produces ghostly echo modulation and delay tail."""
     payload = {
         "audio_base64": INPUT_AUDIO_B64,
-        "filter": "ethereal",
+        "filters": ["ethereal"],
         "session_id": "sess-ethereal-1",
         "speaker_id": "spk-watcher",
         "speaker_name": "The Watcher",
@@ -151,13 +151,13 @@ def test_dsp_apply_ethereal_filter(client: TestClient):
     data = response.json()
 
     # Verify audio payload
-    assert len(data["audio_payload"]) > 0
-    audio_bytes = base64.b64decode(data["audio_payload"])
+    assert len(data["audio_base64"]) > 0
+    audio_bytes = base64.b64decode(data["audio_base64"])
     assert len(audio_bytes) > 0
 
     # Verify filter metadata
     assert "ethereal" in data["filters_applied"]
-    metadata = data["dsp_metadata"]
+    metadata = data["dsp_parameters"]
     assert metadata.get("ghostly_echo_modulation") is True
     assert metadata.get("delay_tail") is True
     assert "echo_delay_ms" in metadata or "delay_ms" in metadata
@@ -165,10 +165,10 @@ def test_dsp_apply_ethereal_filter(client: TestClient):
 
 
 def test_dsp_apply_drunk_filter(client: TestClient):
-    """POST /api/v1/voice/dsp/apply with filter='drunk' produces slurred formant modulation and pitch sway."""
+    """POST /api/v1/voice/dsp/apply with filters=['drunk'] produces slurred formant modulation and pitch sway."""
     payload = {
         "audio_base64": INPUT_AUDIO_B64,
-        "filter": "drunk",
+        "filters": ["drunk"],
         "session_id": "sess-drunk-1",
         "speaker_id": "spk-valeros",
         "speaker_name": "Valeros Fighter",
@@ -178,13 +178,13 @@ def test_dsp_apply_drunk_filter(client: TestClient):
     data = response.json()
 
     # Verify audio payload
-    assert len(data["audio_payload"]) > 0
-    audio_bytes = base64.b64decode(data["audio_payload"])
+    assert len(data["audio_base64"]) > 0
+    audio_bytes = base64.b64decode(data["audio_base64"])
     assert len(audio_bytes) > 0
 
     # Verify filter metadata
     assert "drunk" in data["filters_applied"]
-    metadata = data["dsp_metadata"]
+    metadata = data["dsp_parameters"]
     assert metadata.get("slurred_formant_modulation") is True
     assert metadata.get("pitch_sway") is True
     assert "pitch_sway_cents" in metadata
@@ -196,8 +196,8 @@ def test_dsp_apply_drunk_filter(client: TestClient):
 # ---------------------------------------------------------------------------
 
 
-def test_tts_multiple_filters_audio_payload_and_metadata(client: TestClient):
-    """POST /api/v1/voice/tts accepting filters=['drunk', 'ethereal'] returns audio payload and DSP metadata."""
+def test_tts_multiple_filters_audio_and_parameters(client: TestClient):
+    """POST /api/v1/voice/synthesize accepting filters=['drunk', 'ethereal'] returns audio payload and DSP metadata."""
     payload = {
         "text": "By the gods of the sun, we shall breach this dungeon gate!",
         "persona_id": "kyra_stand_in",
@@ -206,18 +206,18 @@ def test_tts_multiple_filters_audio_payload_and_metadata(client: TestClient):
         "speaker_id": "spk-kyra",
         "speaker_name": "Kyra Stand-in",
     }
-    response = client.post("/api/v1/voice/tts", json=payload)
+    response = client.post("/api/v1/voice/synthesize", json=payload)
     assert response.status_code == 200, response.text
     data = response.json()
 
     # Check audio payload and DSP metadata presence
-    assert "audio_payload" in data
-    assert len(data["audio_payload"]) > 0
-    audio_bytes = base64.b64decode(data["audio_payload"])
+    assert "audio_base64" in data
+    assert len(data["audio_base64"]) > 0
+    audio_bytes = base64.b64decode(data["audio_base64"])
     assert len(audio_bytes) > 0
 
-    assert "dsp_metadata" in data
-    metadata = data["dsp_metadata"]
+    assert "dsp_parameters" in data
+    metadata = data["dsp_parameters"]
     assert metadata.get("pitch_sway") is True or metadata.get("slurred_formant_modulation") is True
     assert metadata.get("delay_tail") is True or metadata.get("ghostly_echo_modulation") is True
 

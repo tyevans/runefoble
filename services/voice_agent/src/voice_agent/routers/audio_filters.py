@@ -49,7 +49,6 @@ class BargeInEvaluationResponse(BaseModel):
     diagnostics: dict[str, float | int | bool] = Field(default_factory=dict)
 
 
-@router.post("/voice/filters/barge-in/evaluate", response_model=BargeInEvaluationResponse)
 @router.post("/api/v1/voice/filters/barge-in/evaluate", response_model=BargeInEvaluationResponse)
 async def evaluate_barge_in(
     req: BargeInEvaluationRequest, principal: CallerPrincipal

@@ -22,7 +22,7 @@ import pytest
 from fastapi.testclient import TestClient
 from runefoble_events.events import VoiceSpeechInterrupted
 from runefoble_platform.redis_bus import deserialize_event
-from voice_agent.interruption import apply_soft_crossfade
+from voice_agent.dsp.cosine_crossfade import apply_cosine_crossfade
 
 from tests.helpers.audio_synth import generate_pcm_silence, generate_pcm_sine
 from tests.helpers.mock_redis import MockAsyncRedis
@@ -102,7 +102,7 @@ def test_acoustic_echo_cancellation_suppresses_false_barge_in(
 def test_soft_20ms_crossfade_eliminates_audio_clipping():
     """Soft 20ms crossfade smooths waveform to zero amplitude without abrupt popping."""
     raw_audio = generate_pcm_sine(duration_ms=100, freq=440.0, amplitude=16000)
-    faded = apply_soft_crossfade(raw_audio, fade_duration_ms=20.0, sample_rate=16000)
+    faded = apply_cosine_crossfade(raw_audio, fade_duration_ms=20.0, sample_rate=16000)
     assert len(faded) == len(raw_audio)
 
     samples = array.array("h", faded)

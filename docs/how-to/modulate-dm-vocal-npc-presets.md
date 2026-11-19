@@ -43,7 +43,7 @@ To eliminate vocal fatigue during marathon sessions, `services/voice_agent` prov
 
 ## 2. Available Creature Archetype Presets
 
-Query the preset catalog via the frontdoor endpoint `GET /voice/presets`:
+Query the preset catalog via the frontdoor endpoint `GET /api/v1/voice/presets`:
 
 | Preset ID | Pitch Scale | Formant Shift | Resonance | Special FX |
 |---|---|---|---|---|
@@ -56,38 +56,40 @@ Query the preset catalog via the frontdoor endpoint `GET /voice/presets`:
 
 ## 3. Applying Vocal Modulation via Frontdoor REST API
 
-`POST /voice/modulate` checks `session.participate` for the token subject. The DM passes because the DM holds `campaign#dungeon_master`. A spectator gets `403`. See [Voice Agent Permissions](../reference/ports-and-endpoints.md#voice-agent-permissions-task-0558).
+`POST /api/v1/voice/modulate` checks `session.participate` for the token subject. The DM passes because the DM holds `campaign#dungeon_master`. A spectator gets `403`. See [Voice Agent Permissions](../reference/ports-and-endpoints.md#voice-agent-permissions-task-0558).
 
 ### Inspecting Presets
 ```bash
-curl -X GET "https://runefoble.local/voice/presets" \
+curl -X GET "https://runefoble.local/api/v1/voice/presets" \
   -H "Authorization: Bearer <jwt-token>"
 ```
 
 ### Applying a Preset to an Active Session
 ```bash
-curl -X POST "https://runefoble.local/voice/modulate" \
+curl -X POST "https://runefoble.local/api/v1/voice/modulate" \
   -H "Authorization: Bearer <jwt-token>" \
   -H "Content-Type: application/json" \
   -d '{
     "session_id": "session-camp-01",
-    "preset_id": "ancient_dragon",
-    "filter_enabled": true
+    "peer_id": "dm_speaker",
+    "preset_name": "Ancient Dragon",
+    "enabled": true
   }'
 ```
 
 ### Overriding DSP Parameters Dynamically
 DMs can fine-tune pitch scale and formant shift directly while keeping a base archetype:
 ```bash
-curl -X POST "https://runefoble.local/voice/modulate" \
+curl -X POST "https://runefoble.local/api/v1/voice/modulate" \
   -H "Authorization: Bearer <jwt-token>" \
   -H "Content-Type: application/json" \
   -d '{
     "session_id": "session-camp-01",
-    "preset_id": "goblin_skulker",
-    "pitch_scale": 1.55,
+    "peer_id": "dm_speaker",
+    "preset_name": "Goblin Skulker",
+    "pitch_shift_semitones": 6.0,
     "formant_shift": 1.40,
-    "filter_enabled": true
+    "enabled": true
   }'
 ```
 

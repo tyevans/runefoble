@@ -97,6 +97,14 @@ def test_stream_quality_query_reaches_the_owner_with_peer_filter(
     assert res.status_code == 403, res.text
 
 
+def test_unprefixed_stream_diagnostics_are_not_served_by_the_gateway(
+    owner_gateway: TestClient,
+) -> None:
+    """Stream diagnostics are served only under /api/v1/voice/streams."""
+    assert owner_gateway.get("/voice/streams/session-x/quality").status_code == 404
+    assert owner_gateway.post("/voice/streams/session-x/report", json={}).status_code == 404
+
+
 # --- WebSocket relay to voice_agent (TASK-0593) ---------------------------------------------
 
 

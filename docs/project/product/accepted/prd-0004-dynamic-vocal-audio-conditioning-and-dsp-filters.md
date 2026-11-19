@@ -23,7 +23,7 @@ Voice immersion is paramount in collaborative tabletop roleplaying. When charact
 ## Checkable Outcomes
 1. The `voice_agent` service provides real-time DSP audio transforms: whisper (reduced dynamic range, high-pass shimmer), underwater (muffled low-pass, sub-bass resonance), ethereal (ghostly echo modulation, delay tail), and drunk (slurred formant modulation, pitch sway).
 2. The `POST /api/v1/voice/dsp/apply` endpoint applies filter chains to raw audio streams or generates conditioned synthetic carriers under 50ms latency.
-3. The `POST /api/v1/voice/tts` endpoint synthesizes persona audio streams applying active affliction filters, returning audio payloads, duration, and DSP metadata.
+3. The `POST /api/v1/voice/synthesize` endpoint synthesizes persona audio streams applying active affliction filters, returning audio payloads, duration, and DSP metadata.
 4. Each DSP conditioning cycle dispatches `VoiceAudioConditioned` CloudEvents-compliant domain events to Redis Streams.
 5. Blackbox TDD test suite verifies filter presets, execution latency benchmarks (<50ms), and event dispatch via public frontdoors.
 

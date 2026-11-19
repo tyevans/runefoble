@@ -186,7 +186,7 @@ def _voice_agent_row() -> ImageRow:
 @pytest.mark.docker
 @pytest.mark.skipif(not docker_daemon_available(), reason="Docker daemon is not reachable")
 def test_voice_agent_image_synthesizes_speech_with_espeak():
-    """The voice-agent image ships espeak-ng. `POST /api/v1/voice/tts` returns a WAV payload."""
+    """The voice-agent image ships espeak-ng. `POST /api/v1/voice/synthesize` returns a WAV payload."""
     row = _voice_agent_row()
     assert "espeak-ng" in row.system_packages.split()
     build_image(row)
@@ -200,7 +200,7 @@ def test_voice_agent_image_synthesizes_speech_with_espeak():
     try:
         _wait_for_openapi(f"http://127.0.0.1:{host_port}/openapi.json", container_id)
         request = urllib.request.Request(
-            f"http://127.0.0.1:{host_port}/api/v1/voice/tts",
+            f"http://127.0.0.1:{host_port}/api/v1/voice/synthesize",
             data=json.dumps({"text": "The gate creaks open.", "persona_id": "watcher_dm"}).encode(
                 "utf-8"
             ),

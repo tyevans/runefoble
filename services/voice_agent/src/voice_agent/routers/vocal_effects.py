@@ -43,14 +43,12 @@ class ModulateVoiceResponse(BaseModel):
     status: str = "success"
 
 
-@router.get("/voice/presets", response_model=list[NPCVoicePreset])
 @router.get("/api/v1/voice/presets", response_model=list[NPCVoicePreset])
 async def get_presets():
     """List all available NPC voice presets."""
     return list_presets()
 
 
-@router.post("/voice/modulate", response_model=ModulateVoiceResponse)
 @router.post("/api/v1/voice/modulate", response_model=ModulateVoiceResponse)
 async def modulate_voice(
     req: ModulateVoiceRequest,

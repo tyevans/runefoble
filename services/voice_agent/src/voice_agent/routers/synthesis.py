@@ -14,7 +14,7 @@ from voice_agent.dependencies import (
     _dispatch_voice_audio_conditioned,
     dsp_pipeline,
 )
-from voice_agent.dsp import apply_audio_filters
+from voice_agent.filters import apply_audio_filters
 from voice_agent.models import (
     AVAILABLE_PERSONAS,
     TTSRequest,
@@ -38,7 +38,6 @@ async def list_personas():
 
 
 @router.post("/api/v1/voice/synthesize", response_model=TTSResponse)
-@router.post("/api/v1/voice/tts", response_model=TTSResponse)
 async def synthesize_voice(req: TTSRequest, principal: CallerPrincipal):
     """Synthesize persona speech, apply DSP filters to that audio, and return the audio it describes."""
     await require_speaker(req.session_id, req.speaker_id, principal.user_id)
@@ -90,8 +89,6 @@ async def synthesize_voice(req: TTSRequest, principal: CallerPrincipal):
         conditioned_text=processed.conditioned_text,
         effects_applied=sorted(set(effects)),
         dsp_parameters=dsp_params,
-        dsp_metadata=dsp_params,
-        audio_payload=audio_b64,
         audio_base64=audio_b64,
         latency_ms=total_latency,
     )
