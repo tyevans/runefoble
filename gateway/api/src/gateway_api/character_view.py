@@ -4,8 +4,9 @@ character_sheet owns character state. The gateway keeps no character state. It t
 public request body into the owner's create request and the owner's roster view into the
 public `CharacterResponse` (snake_case and camelCase fields).
 
-The owner does not store `level`, a starting HP other than the maximum, a portrait, the
-stand-in flag at creation, or a client-chosen id. A create request that sets one of these
+The owner stores `level` and the portrait at creation and validates both (TASK-0905).
+The owner does not store a starting HP other than the maximum, the stand-in flag at
+creation, or a client-chosen id. A create request that sets one of these
 to a value the owner cannot keep returns 422. It is never dropped silently.
 """
 
@@ -57,12 +58,8 @@ def unsupported_create_fields(req: CreateCharacterRequest) -> list[str]:
     fields = req.model_fields_set
     if "id" in fields and req.id is not None:
         rejected.append("id")
-    if "level" in fields and req.level != 1:
-        rejected.append("level")
     if "current_hp" in fields and req.current_hp is not None and req.current_hp != req.max_hp:
         rejected.append("currentHp")
-    if "portrait_url" in fields and req.portrait_url is not None:
-        rejected.append("portraitUrl")
     if req.is_stand_in_active:
         rejected.append("isAiStandIn")
     return rejected
@@ -85,6 +82,8 @@ def to_owner_create_payload(req: CreateCharacterRequest) -> dict[str, Any]:
         "character_class": req.character_class,
         "subclass": req.subclass,
         "max_hp": req.max_hp,
+        "level": req.level,
+        "portrait_url": req.portrait_url,
         "armor_class": req.armor_class,
         "speed_ft": req.speed,
         "campaign_id": req.campaign_id,

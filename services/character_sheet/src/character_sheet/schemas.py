@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Literal
 
+from character_sheet.portrait_reference import PortraitUrl
 from pydantic import BaseModel, Field
 
 
@@ -11,6 +12,8 @@ class CreateCharacterRequest(BaseModel):
     name: str
     character_class: str
     max_hp: int = 30
+    level: int = Field(default=1, ge=1, le=20)
+    portrait_url: PortraitUrl | None = None
     player_id: str | None = None
     personality_traits: list[str] = ["brave", "curious"]
     campaign_id: str | None = None

@@ -8,7 +8,8 @@ Verifies:
 2. Listing returns only characters the caller may view.
 3. Read returns 403 to a stranger and the owner's permission body.
 4. Campaign assignment grants and revokes party view. The owner withholds the title from non-members.
-5. Create refuses fields that character_sheet cannot store, with 422 (never a silent drop).
+5. Create stores level and portrait. A bad level or portrait returns 422.
+6. Create refuses fields that character_sheet cannot store, with 422 (never a silent drop).
 """
 
 import pytest
@@ -175,18 +176,60 @@ def test_character_campaign_assignment_and_view_propagation(trusted_ws_issuer, c
     )
 
 
-def test_create_refuses_fields_character_sheet_cannot_store(trusted_ws_issuer, client):
-    """A level or a starting HP that character_sheet cannot keep returns 422, not a silent drop."""
+def test_create_stores_level_and_portrait_and_read_returns_them(trusted_ws_issuer, client):
+    """Level and portrait set at creation come back on create and on read (TASK-0905)."""
     headers = _auth(trusted_ws_issuer, "user_valeros")
-
-    res = client.post(
-        "/api/v1/characters",
-        json={"name": "Too Strong", "characterClass": "Fighter", "level": 4, "maxHp": 45},
-        headers=headers,
+    portrait = (
+        "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%2F%3E"
     )
+    payload = {
+        "name": "Valeros",
+        "characterClass": "Fighter",
+        "level": 4,
+        "maxHp": 45,
+        "portraitUrl": portrait,
+    }
+
+    res = client.post("/api/v1/characters", json=payload, headers=headers)
+
+    assert res.status_code == 201, res.text
+    assert res.json()["level"] == 4
+    assert res.json()["portraitUrl"] == portrait
+    read = client.get(f"/api/v1/characters/{res.json()['id']}", headers=headers)
+    assert read.status_code == 200
+    assert read.json()["level"] == 4
+    assert read.json()["portrait_url"] == portrait
+
+
+@pytest.mark.parametrize("level", [0, 21])
+def test_create_refuses_a_level_outside_one_to_twenty(trusted_ws_issuer, client, level):
+    headers = _auth(trusted_ws_issuer, "user_valeros")
+    body = {"name": "Odd", "characterClass": "Fighter", "level": level, "maxHp": 10}
+    assert client.post("/api/v1/characters", json=body, headers=headers).status_code == 422
+
+
+def test_create_refuses_a_portrait_that_is_not_a_url_or_asset_reference(trusted_ws_issuer, client):
+    """character_sheet refuses the portrait and the gateway passes the 422 on."""
+    headers = _auth(trusted_ws_issuer, "user_valeros")
+    body = {"name": "Odd", "characterClass": "Fighter", "portraitUrl": "javascript:alert(1)"}
+    assert client.post("/api/v1/characters", json=body, headers=headers).status_code == 422
+
+
+def test_create_refuses_fields_character_sheet_cannot_store(trusted_ws_issuer, client):
+    """A starting HP or a stand-in flag that character_sheet cannot keep returns 422, not a drop."""
+    headers = _auth(trusted_ws_issuer, "user_valeros")
+    body = {
+        "name": "Too Hurt",
+        "characterClass": "Fighter",
+        "maxHp": 45,
+        "currentHp": 20,
+        "isAiStandIn": True,
+    }
+
+    res = client.post("/api/v1/characters", json=body, headers=headers)
 
     assert res.status_code == 422
-    assert res.json()["detail"]["fields"] == ["level"]
+    assert res.json()["detail"]["fields"] == ["currentHp", "isAiStandIn"]
 
 
 def test_character_without_portrait_answers_null_portrait_url(trusted_ws_issuer, client):

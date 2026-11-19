@@ -14,7 +14,7 @@ from character_sheet.models.conditions import ConditionState, ConditionsTransiti
 from character_sheet.models.inventory import InventoryItem, InventoryTransitionsMixin
 from character_sheet.models.progression import ProgressionTransitionsMixin
 from character_sheet.portrait import compute_condition_badges, resolve_active_portrait_url
-from character_sheet.rules import SPELL_SLOTS_TABLE
+from character_sheet.rules import get_spell_slots_max
 from pydantic import BaseModel, Field
 from runefoble_platform.stand_in_guardrails import StandInGuardrailPolicy
 
@@ -67,6 +67,8 @@ class CharacterState(
         character_class: str,
         max_hp: int,
         current_hp: int,
+        level: int = 1,
+        portrait_url: str | None = None,
         player_id: str | None = None,
         personality_traits: list[str] | None = None,
         campaign_id: str | None = None,
@@ -81,6 +83,7 @@ class CharacterState(
             character_class=character_class,
             max_hp=max_hp,
             current_hp=current_hp,
+            level=level,
             player_id=player_id,
             personality_traits=personality_traits or [],
             campaign_id=campaign_id,
@@ -88,8 +91,9 @@ class CharacterState(
             armor_class=armor_class,
             speed_ft=speed_ft,
             ability_scores=ability_scores if ability_scores is not None else dict(DEFAULT_SCORES),
-            spell_slots=dict(SPELL_SLOTS_TABLE.get(1, {1: 2})),
-            active_portrait_url=resolve_active_portrait_url(None, current_hp, max_hp, {}),
+            spell_slots=get_spell_slots_max(level),
+            base_portrait_url=portrait_url,
+            active_portrait_url=resolve_active_portrait_url(portrait_url, current_hp, max_hp, {}),
             condition_badges=compute_condition_badges(current_hp, max_hp, {}),
         )
 
