@@ -64,11 +64,10 @@ async def revoke_member(spicedb: SpiceDB, campaign_id: str, user_id: str) -> Non
 
 
 async def link_session(spicedb: SpiceDB, session_id: str, campaign_id: str) -> None:
-    """Link a session to its campaign for both the session and game_session object types."""
-    for object_type in ("session", "game_session"):
-        await _guarded(
-            "session link write",
-            lambda t=object_type: spicedb.write_relationship(
-                t, session_id, "campaign", "campaign", campaign_id
-            ),
-        )
+    """Write the one campaign link of a session, `game_session#campaign` (ADR-0015 (a))."""
+    await _guarded(
+        "session link write",
+        lambda: spicedb.write_relationship(
+            "game_session", session_id, "campaign", "campaign", campaign_id
+        ),
+    )

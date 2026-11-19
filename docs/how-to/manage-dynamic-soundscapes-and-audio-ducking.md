@@ -141,7 +141,7 @@ curl -X POST http://localhost:8009/api/v1/soundscape/stems/override \
 
 The override records `StemProfileOverridden` and, when `master_volume` is set, `MasterVolumeChanged`. A restart keeps both values because they live in the event store.
 
-This operation checks `session.control` on `session:session-tomb-14`. When the request names a `campaign_id`, `campaign.run_session` on that campaign also grants it. A player receives `403`.
+This operation checks `session.control` on `game_session:session-tomb-14`. When the request names a `campaign_id`, `campaign.run_session` on that campaign also grants it. A player receives `403`.
 
 ---
 

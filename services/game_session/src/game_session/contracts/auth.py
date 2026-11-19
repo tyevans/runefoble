@@ -19,7 +19,7 @@ Spicedb = SpiceDBClient | MockSpiceDBClient
 async def check_bounty_view(spicedb: Spicedb, sid: str, bid: str, uid: str) -> None:
     """Allow a viewer of the bounty or an observer of its session."""
     ok_b = bool(bid) and await check_subject(spicedb, "bounty_contract", str(bid), "view", uid)
-    ok_s = await check_subject(spicedb, "session", str(sid), "observe", uid)
+    ok_s = await check_subject(spicedb, "game_session", str(sid), "observe", uid)
     if not (ok_b or ok_s):
         raise HTTPException(status_code=403, detail=f"User '{uid}' cannot view bounty '{bid}'")
 
@@ -28,7 +28,7 @@ async def check_bounty_post(spicedb: Spicedb, sid: str, uid: str) -> None:
     """Allow a session participant to post a bounty (session.participate is campaign.play)."""
     await require_subject(
         spicedb,
-        "session",
+        "game_session",
         str(sid),
         "participate",
         uid,
@@ -63,7 +63,7 @@ async def check_bounty_disburse(spicedb: Spicedb, bid: str, uid: str) -> None:
 async def write_bounty_relationships(
     spicedb: Spicedb, bid: str, sid: str, cid: str, uid: str
 ) -> None:
-    await spicedb.write_relationship("bounty_contract", bid, "session", "session", sid)
+    await spicedb.write_relationship("bounty_contract", bid, "session", "game_session", sid)
     if cid:
         await spicedb.write_relationship("bounty_contract", bid, "campaign", "campaign", cid)
     await spicedb.write_relationship("bounty_contract", bid, "creator", "user", uid)

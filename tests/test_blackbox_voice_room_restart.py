@@ -50,7 +50,7 @@ def test_joined_peer_is_still_present_after_a_coordinator_restart(
     restart_stack.grant(
         [
             ("campaign", campaign_id, "player", "user", PEER_USER),
-            ("session", session_id, "campaign", "campaign", campaign_id),
+            ("game_session", session_id, "campaign", "campaign", campaign_id),
         ]
     )
 
@@ -119,7 +119,7 @@ def test_joined_peers_keep_their_seats_through_a_graceful_restart(
         [
             ("campaign", campaign_id, "player", "user", RESTART_PEER_A),
             ("campaign", campaign_id, "player", "user", RESTART_PEER_B),
-            ("session", session_id, "campaign", "campaign", campaign_id),
+            ("game_session", session_id, "campaign", "campaign", campaign_id),
         ]
     )
 
@@ -172,7 +172,7 @@ def test_rejoining_peer_keeps_its_mute_and_preset_after_a_graceful_restart(
     restart_stack.grant(
         [
             ("campaign", campaign_id, "player", "user", RESTART_REJOIN_PEER),
-            ("session", session_id, "campaign", "campaign", campaign_id),
+            ("game_session", session_id, "campaign", "campaign", campaign_id),
         ]
     )
 

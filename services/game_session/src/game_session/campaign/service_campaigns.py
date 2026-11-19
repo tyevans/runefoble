@@ -24,11 +24,12 @@ from game_session.campaign.schemas import (
     CampaignSummaryResponse,
     CreateCampaignRequest,
     CreateCampaignSessionRequest,
+    SessionLinkReconcileResponse,
     UpdateCampaignRequest,
 )
 from game_session.campaign.session_aggregate import CampaignSessionsAggregate
 from game_session.campaign.session_bootstrap import open_game_session
-from game_session.campaign.tuples import SpiceDB, grant_owner
+from game_session.campaign.tuples import SpiceDB, grant_owner, link_session
 from runefoble_auth.permissions import check_subject
 from runefoble_platform.aggregate_loading import load_if_exists, save_or_conflict
 from runefoble_platform.identifiers import parse_uuid
@@ -210,6 +211,22 @@ async def list_sessions(
         )
         for record in sessions.state.sessions
     ]
+
+
+async def reconcile_session_links(
+    repos: CampaignRepositories, spicedb: SpiceDB, campaign_id: str
+) -> SessionLinkReconcileResponse:
+    """Write the campaign link for every session of a campaign.
+
+    The link write is idempotent. A session that already has its link is written again with
+    the same tuple. Use this to repair a campaign whose sessions predate `game_session#campaign`.
+    """
+    cid = parse_campaign_id(campaign_id)
+    await load_campaign(repos, cid)
+    sessions = await load_sessions(repos, cid)
+    for record in sessions.state.sessions:
+        await link_session(spicedb, record.id, str(cid))
+    return SessionLinkReconcileResponse(campaign_id=str(cid), linked=len(sessions.state.sessions))
 
 
 async def create_session(

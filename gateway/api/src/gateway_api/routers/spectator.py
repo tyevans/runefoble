@@ -18,7 +18,7 @@ from gateway_api.spectator_source import read_audience_views
 router = APIRouter(tags=["Spectator"])
 
 
-_OBSERVE = Depends(require_zanzibar_permission("observe", "session", "session_id"))
+_OBSERVE = Depends(require_zanzibar_permission("observe", "game_session", "session_id"))
 
 
 @router.get(

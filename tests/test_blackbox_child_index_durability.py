@@ -37,7 +37,9 @@ async def _grant_session_play(spicedb: MockSpiceDBClient, session_id: str, user:
     """Make the user a campaign player and link the session to that campaign (schema relations)."""
     campaign_id = str(uuid4())
     await spicedb.write_relationship("campaign", campaign_id, "player", "user", user)
-    await spicedb.write_relationship("session", session_id, "campaign", "campaign", campaign_id)
+    await spicedb.write_relationship(
+        "game_session", session_id, "campaign", "campaign", campaign_id
+    )
 
 
 @pytest.mark.asyncio

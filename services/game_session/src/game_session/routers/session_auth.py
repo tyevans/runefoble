@@ -23,7 +23,7 @@ def session_permission(permission: str) -> Callable[..., Awaitable[str]]:
     async def dependency(session_id: UUID, caller_id: CallerId) -> str:
         await require_subject(
             get_spicedb_client(),
-            "session",
+            "game_session",
             str(session_id),
             permission,
             caller_id,

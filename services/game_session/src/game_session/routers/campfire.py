@@ -54,10 +54,12 @@ async def get_storytelling_prompts(session_id: UUID) -> dict[str, Any]:
 async def _campaign_for_session(session_id: str) -> UUID | None:
     """Return the campaign linked to a session in SpiceDB, or None when no link exists.
 
-    Campaign sessions carry a `session#campaign` tuple (campaign/tuples.py). They have no
+    Campaign sessions carry a `game_session#campaign` tuple (campaign/tuples.py). They have no
     GameSessionAggregate, so the link is the only campaign source for a campaign session.
     """
-    relations = await get_spicedb_client().read_relationships("session", session_id, "campaign")
+    relations = await get_spicedb_client().read_relationships(
+        "game_session", session_id, "campaign"
+    )
     for relation in relations:
         return UUID(str(relation.subject_id))
     return None

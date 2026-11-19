@@ -12,13 +12,13 @@ The Watcher checks only permissions that the schema defines. Each check uses a n
 
 | Route | Action | Schema check |
 |---|---|---|
-| `GET /api/v1/watcher/whispers`, `POST /api/v1/watcher/whispers`, `POST /api/v1/watcher/whispers/generate` | `session.control` on the session | `session:<session_id>#control` (DM, GM, or owner through `campaign->run_session`) |
+| `GET /api/v1/watcher/whispers`, `POST /api/v1/watcher/whispers`, `POST /api/v1/watcher/whispers/generate` | `session.control` on the session | `game_session:<session_id>#control` (DM, GM, or owner through `campaign->run_session`) |
 | `POST /api/v1/watcher/veto`, `approve`, `modify` | `session.control` on the session. `session_id` is required in the body | same as above |
 | `GET /api/v1/watcher/actions/pending` | `session.control` | same as above |
 
 To make a user the DM of a session, the setup must write two schema tuples:
 - `campaign:<campaign_id>#dungeon_master@user:<user_id>`: the DM relation. `run_session` includes it.
-- `session:<session_id>#campaign@campaign:<campaign_id>`: links the session to the campaign. `session.control` walks this link.
+- `game_session:<session_id>#campaign@campaign:<campaign_id>`: links the session to the campaign. `session.control` walks this link.
 
 A user without the DM role gets HTTP `403 Forbidden`. A missing or invalid bearer token gets HTTP `401`. The Watcher does not return `200` for an unknown principal.
 

@@ -48,7 +48,9 @@ def _use_postgres_event_store(dsn: str):
 async def _seed_dm(session_id: str, campaign_id: str) -> None:
     spicedb = get_spicedb_client()
     await spicedb.write_relationship("campaign", campaign_id, "dungeon_master", "user", DM)
-    await spicedb.write_relationship("session", session_id, "campaign", "campaign", campaign_id)
+    await spicedb.write_relationship(
+        "game_session", session_id, "campaign", "campaign", campaign_id
+    )
 
 
 def _restart_read(dsn: str, session_id: str, *, with_aggregate_id: bool = False) -> dict:

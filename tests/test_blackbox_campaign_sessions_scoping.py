@@ -68,12 +68,17 @@ async def test_backend_create_campaign_seeds_initial_staging_lobby_with_spicedb(
 
     # 2. Verify SpiceDB Zanzibar permissions on the seeded session
     session_id = seeded["id"]
-    # Owner has control permission on both session and game_session
-    assert await spicedb.check_permission("session", session_id, "control", "user", "dm_evelyn")
+    # The campaign link is one tuple on game_session (ADR-0015 (a)). No session tuple exists.
+    links = await spicedb.read_relationships(
+        resource_type="game_session", resource_id=session_id, relation="campaign"
+    )
+    assert [(r.subject_type, r.subject_id) for r in links] == [("campaign", campaign_id)]
     assert await spicedb.check_permission(
         "game_session", session_id, "control", "user", "dm_evelyn"
     )
-    assert await spicedb.check_permission("session", session_id, "observe", "user", "dm_evelyn")
+    assert await spicedb.check_permission(
+        "game_session", session_id, "observe", "user", "dm_evelyn"
+    )
 
     # 3. Add player via invite and verify player permissions on seeded session
     res_inv = client.post(
@@ -93,12 +98,49 @@ async def test_backend_create_campaign_seeds_initial_staging_lobby_with_spicedb(
 
     # Player has participate & observe, but lacks control
     assert await spicedb.check_permission(
-        "session", session_id, "participate", "user", "player_drizzt"
+        "game_session", session_id, "participate", "user", "player_drizzt"
     )
-    assert await spicedb.check_permission("session", session_id, "observe", "user", "player_drizzt")
+    assert await spicedb.check_permission(
+        "game_session", session_id, "observe", "user", "player_drizzt"
+    )
     assert not await spicedb.check_permission(
-        "session", session_id, "control", "user", "player_drizzt"
+        "game_session", session_id, "control", "user", "player_drizzt"
     )
+
+
+@pytest.mark.asyncio
+async def test_reconcile_links_writes_one_game_session_link_per_campaign_session(
+    client: TestClient, trusted_ws_issuer
+):
+    """The reconcile route re-applies the game_session link for every session of a campaign.
+
+    It uses the same link write as campaign creation, so an existing link is not duplicated.
+    """
+    headers_owner = _auth(trusted_ws_issuer, "owner_reconcile")
+    spicedb = get_spicedb_client()
+    camp = client.post(
+        "/api/v1/campaigns", json={"title": "Reconcile Vale"}, headers=headers_owner
+    ).json()
+    campaign_id = camp["id"]
+    seeded = client.get(f"/api/v1/campaigns/{campaign_id}/sessions", headers=headers_owner).json()
+    session_id = seeded[0]["id"]
+
+    res = client.post(
+        f"/api/v1/campaigns/{campaign_id}/sessions/reconcile-links", headers=headers_owner
+    )
+    assert res.status_code == 200
+    assert res.json() == {"campaign_id": campaign_id, "linked": 1}
+
+    links = await spicedb.read_relationships(
+        resource_type="game_session", resource_id=session_id, relation="campaign"
+    )
+    assert [(r.subject_type, r.subject_id) for r in links] == [("campaign", campaign_id)]
+
+    stranger = client.post(
+        f"/api/v1/campaigns/{campaign_id}/sessions/reconcile-links",
+        headers=_auth(trusted_ws_issuer, "stranger_reconcile"),
+    )
+    assert stranger.status_code == 403
 
 
 @pytest.mark.asyncio

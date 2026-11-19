@@ -130,6 +130,15 @@ ROUTES = (
     ),
     ProxyRoute(
         "POST",
+        "/api/v1/campaigns/{campaign_id}/sessions/reconcile-links",
+        ("api", "v1", "campaigns", "{campaign_id}", "sessions", "reconcile-links"),
+        SERVICE,
+        name="reconcile_campaign_session_links",
+        doc="Rewrite the campaign link of every session. Requires `run_session` (game_session).",
+        principal=True,
+    ),
+    ProxyRoute(
+        "POST",
         "/api/v1/campaigns/{campaign_id}/sessions",
         ("api", "v1", "campaigns", "{campaign_id}", "sessions"),
         SERVICE,

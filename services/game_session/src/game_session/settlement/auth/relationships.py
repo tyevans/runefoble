@@ -69,7 +69,7 @@ async def write_negotiation_relationships(
     nid = str(negotiation_id)
     await _rel(spicedb, "negotiation", nid, "establishment", "establishment", establishment_id)
     await _rel(spicedb, "negotiation", nid, "campaign", "campaign", campaign_id)
-    await _rel(spicedb, "negotiation", nid, "session", "session", session_id)
+    await _rel(spicedb, "negotiation", nid, "session", "game_session", session_id)
     await _rel(spicedb, "negotiation", nid, "participant", "user", participant_id)
     await _rel(spicedb, "negotiation", nid, "arbitrator", "user", arbitrator_id)
 

@@ -61,7 +61,9 @@ Run it with `uv run pytest -q libs/runefoble_auth/tests/test_production_name_con
 
 ### Retired Definitions
 
-`game_session#campaign` is kept. `campaign.tuples.link_session` writes it, and ADR-0015 (a) names it the authoritative link between a session and its campaign. A definition stays only while a check or a write uses it.
+The `session` definition is removed (TASK-0856). `game_session#campaign` is the one campaign link for a session. `campaign.tuples.link_session` writes it, and ADR-0015 (a) names it the authoritative link. Session actions (`session.control`, `session.participate`, `session.observe`) check `game_session`. A definition stays only while a check or a write uses it.
+
+The schema change does not rewrite stored tuples. A deployment that holds `session#campaign` tuples must write `game_session#campaign` for each session. `POST /api/v1/campaigns/{campaign_id}/sessions/reconcile-links` does this for every session of one campaign, and it requires `run_session`. Bounty and negotiation tuples with a `session` subject are not rewritten by this route.
 
 `runefoble_auth.contract` parses the schema once. `require_permission`, `require_relation`, and `require_subject_type` raise `SchemaContractError` for a name that the schema does not define. `SchemaContractError` is an `AuthzSchemaError`. The live client raises `AuthzSchemaError` for the same call.
 
@@ -302,7 +304,7 @@ router = APIRouter()
 @router.get(
     "/api/v1/spectate/{session_id}",
     dependencies=[
-        Depends(require_zanzibar_permission("observe", resource_type="session", resource_param="session_id"))
+        Depends(require_zanzibar_permission("observe", resource_type="game_session", resource_param="session_id"))
     ],
 )
 async def get_spectator_state(session_id: str):

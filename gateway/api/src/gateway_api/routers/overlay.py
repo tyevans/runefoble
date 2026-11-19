@@ -68,7 +68,7 @@ def _wants_html(request: Request, format: str | None) -> bool:
 @router.get(
     "/overlay/party-vitals/{session_id}",
     response_model=None,
-    dependencies=[Depends(require_zanzibar_permission("observe", "session", "session_id"))],
+    dependencies=[Depends(require_zanzibar_permission("observe", "game_session", "session_id"))],
 )
 async def get_party_vitals_overlay(
     request: Request,

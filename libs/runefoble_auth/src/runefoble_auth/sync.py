@@ -98,11 +98,12 @@ class ZitadelSpiceDBSyncService:
         return [await self._write_tuple(*x) for x in t]
 
     async def sync_session_campaign(self, session_id: str | UUID, campaign_id: str) -> list[str]:
-        t = [
-            ("session", str(session_id), "campaign", "campaign", campaign_id),
-            ("game_session", str(session_id), "campaign", "campaign", campaign_id),
+        """Write the one campaign link, `game_session#campaign` (ADR-0015 (a))."""
+        return [
+            await self._write_tuple(
+                "game_session", str(session_id), "campaign", "campaign", campaign_id
+            )
         ]
-        return [await self._write_tuple(*x) for x in t]
 
     async def sync_board_token(
         self, token_id: str, character_id: str | UUID | None = None, campaign_id: str | None = None

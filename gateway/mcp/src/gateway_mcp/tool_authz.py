@@ -50,7 +50,7 @@ def token_move(token_id: str) -> Requirement:
 
 
 def session_control(session_id: str) -> Requirement:
-    return Requirement("session", session_id, "control")
+    return Requirement("game_session", session_id, "control")
 
 
 def tool_execute(tool_name: str) -> Requirement:

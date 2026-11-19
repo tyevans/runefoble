@@ -77,4 +77,4 @@ A tool that calls a new Watcher HTTP route inherits that route's checks. Every W
    - `require_dm(caller_id, campaign_id, session_id)` when a handler accepts either scope.
 4. Do not compare role names or add `if not caller: return` branches. A missing principal gets HTTP 401 from the router dependency. A denied check gets HTTP 403.
 
-Tests for the route set up the caller through schema tuples. Write `campaign:<id>#dungeon_master@user:<id>` and `session:<id>#campaign@campaign:<id>` with `bind_session_to_campaign` or `make_table_runner` from `tests/helpers/spicedb_factory.py`.
+Tests for the route set up the caller through schema tuples. Write `campaign:<id>#dungeon_master@user:<id>` and `game_session:<id>#campaign@campaign:<id>` with `bind_session_to_campaign` or `make_table_runner` from `tests/helpers/spicedb_factory.py`.
