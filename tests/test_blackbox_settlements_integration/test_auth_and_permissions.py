@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 from typing import Annotated
 
 import pytest
@@ -11,9 +10,9 @@ from fastapi.testclient import TestClient
 from game_session.main import app as session_app
 from game_session.settlement import auth as sa
 from game_session.settlement.auth.tokens import get_principal
-from runefoble_auth.mock import MockSpiceDBClient
 from runefoble_auth.zitadel import ZitadelAuthService
 
+from tests.helpers.campaign_setup import create_campaign
 from tests.helpers.module_state import restored_seam
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
@@ -41,7 +40,7 @@ def test_missing_bearer_token_is_refused_without_fallback():
         assert response.status_code == 401
 
 
-def test_fastapi_route_dependencies(spicedb: MockSpiceDBClient, settlement_issuer):
+def test_fastapi_route_dependencies(settlement_issuer):
     """Verify FastAPI dependency factories enforce Zanzibar object-level permissions."""
     r = APIRouter(prefix="/api/v1/test_auth")
 
@@ -57,16 +56,27 @@ def test_fastapi_route_dependencies(spicedb: MockSpiceDBClient, settlement_issue
     tc = TestClient(
         session_app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"}
     )
-    asyncio.run(spicedb.write_relationship("settlement", "h1", "founder", "user", "builder"))
-    asyncio.run(spicedb.write_relationship("establishment", "e1", "manager", "user", "builder"))
-
     builder = bearer_headers(settlement_issuer, "builder")
     intruder = bearer_headers(settlement_issuer, "intruder")
-    assert tc.get("/api/v1/test_auth/h/h1", headers=builder).status_code == 200
-    assert tc.get("/api/v1/test_auth/e/e1", headers=builder).status_code == 200
-    assert tc.get("/api/v1/test_auth/h/h1", headers=intruder).status_code == 403
-    assert tc.get("/api/v1/test_auth/e/e1", headers=intruder).status_code == 403
-    assert tc.get("/api/v1/test_auth/h/h1").status_code == 401
+
+    # The builder founds a haven and builds an establishment through the public routes.
+    cid = create_campaign(tc, "builder", issuer=settlement_issuer)
+    sid = tc.post(
+        f"/api/v1/campaigns/{cid}/settlements",
+        json={"name": "Keep", "scale": "village", "districts": ["commons"]},
+        headers=builder,
+    ).json()["settlement_id"]
+    eid = tc.post(
+        f"/api/v1/settlements/{sid}/establishments",
+        json={"district_id": "commons", "category": "commerce", "name": "Forge"},
+        headers=builder,
+    ).json()["establishment_id"]
+
+    assert tc.get(f"/api/v1/test_auth/h/{sid}", headers=builder).status_code == 200
+    assert tc.get(f"/api/v1/test_auth/e/{eid}", headers=builder).status_code == 200
+    assert tc.get(f"/api/v1/test_auth/h/{sid}", headers=intruder).status_code == 403
+    assert tc.get(f"/api/v1/test_auth/e/{eid}", headers=intruder).status_code == 403
+    assert tc.get(f"/api/v1/test_auth/h/{sid}").status_code == 401
 
 
 def test_frontdoor_settlement_auth_lifecycle(session_client: TestClient):

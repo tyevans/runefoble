@@ -9,7 +9,6 @@ Governed by ADR-0007, ADR-0011, PRD-0024, and Hard Invariant 7 (frontdoor blackb
 from __future__ import annotations
 
 from fastapi.testclient import TestClient
-from runefoble_auth.mock import MockSpiceDBClient
 
 from .conftest import setup_campaign_settlement
 
@@ -35,10 +34,10 @@ def _create_worker(tc: TestClient, eid: str, dm_h: dict[str, str], body: dict) -
 
 
 def test_shelf_inventory_accepts_canonical_quantity_and_unit_price(
-    session_client: TestClient, spicedb: MockSpiceDBClient
+    session_client: TestClient,
 ) -> None:
     """A worker assigned with `quantity` and `unit_price` stocks that exact quantity and price."""
-    _, sid, _, dm_h, _ = setup_campaign_settlement(session_client, spicedb, ["artisan"])
+    _, sid, _, dm_h, _ = setup_campaign_settlement(session_client, ["artisan"])
     eid = _create_establishment(session_client, sid, dm_h)
     nid = _create_worker(
         session_client,
@@ -56,10 +55,10 @@ def test_shelf_inventory_accepts_canonical_quantity_and_unit_price(
 
 
 def test_shelf_inventory_ignores_retired_stock_and_price_gp_names(
-    session_client: TestClient, spicedb: MockSpiceDBClient
+    session_client: TestClient,
 ) -> None:
     """Retired `stock` and `price_gp` keys do not set quantity or unit price."""
-    _, sid, _, dm_h, _ = setup_campaign_settlement(session_client, spicedb, ["artisan"])
+    _, sid, _, dm_h, _ = setup_campaign_settlement(session_client, ["artisan"])
     eid = _create_establishment(session_client, sid, dm_h)
     nid = _create_worker(
         session_client,
@@ -74,10 +73,10 @@ def test_shelf_inventory_ignores_retired_stock_and_price_gp_names(
 
 
 def test_relationship_accepts_canonical_target_npc_id_and_relation_type(
-    session_client: TestClient, spicedb: MockSpiceDBClient
+    session_client: TestClient,
 ) -> None:
     """Forming a tie with `target_npc_id` and `relation_type` records that tie."""
-    _, sid, _, dm_h, _ = setup_campaign_settlement(session_client, spicedb, ["artisan"])
+    _, sid, _, dm_h, _ = setup_campaign_settlement(session_client, ["artisan"])
     eid = _create_establishment(session_client, sid, dm_h)
     nid = _create_worker(session_client, eid, dm_h, {})
 
@@ -93,10 +92,10 @@ def test_relationship_accepts_canonical_target_npc_id_and_relation_type(
 
 
 def test_relationship_ignores_retired_target_npc_and_relation_names(
-    session_client: TestClient, spicedb: MockSpiceDBClient
+    session_client: TestClient,
 ) -> None:
     """Retired `target_npc` and `relation` keys do not record a tie to the named NPC."""
-    _, sid, _, dm_h, _ = setup_campaign_settlement(session_client, spicedb, ["artisan"])
+    _, sid, _, dm_h, _ = setup_campaign_settlement(session_client, ["artisan"])
     eid = _create_establishment(session_client, sid, dm_h)
     nid = _create_worker(session_client, eid, dm_h, {})
 
@@ -112,10 +111,10 @@ def test_relationship_ignores_retired_target_npc_and_relation_names(
 
 
 def test_haggling_dm_override_ignores_retired_override_price_name(
-    session_client: TestClient, spicedb: MockSpiceDBClient
+    session_client: TestClient,
 ) -> None:
     """Only `override_price_gp` sets the forced price. Retired `override_price` is ignored."""
-    cid, sid, p_id, dm_h, p_h = setup_campaign_settlement(session_client, spicedb, ["artisan"])
+    cid, sid, p_id, dm_h, p_h = setup_campaign_settlement(session_client, ["artisan"])
     eid = _create_establishment(session_client, sid, dm_h)
     haggle = session_client.post(
         f"/api/v1/establishments/{eid}/haggle",
@@ -142,10 +141,10 @@ def test_haggling_dm_override_ignores_retired_override_price_name(
 
 
 def test_haggling_dm_override_accepts_canonical_override_price_gp(
-    session_client: TestClient, spicedb: MockSpiceDBClient
+    session_client: TestClient,
 ) -> None:
     """`override_price_gp` sets the forced price on a DM accept."""
-    cid, sid, _, dm_h, p_h = setup_campaign_settlement(session_client, spicedb, ["artisan"])
+    cid, sid, _, dm_h, p_h = setup_campaign_settlement(session_client, ["artisan"])
     eid = _create_establishment(session_client, sid, dm_h)
     neg_id = session_client.post(
         f"/api/v1/establishments/{eid}/haggle",

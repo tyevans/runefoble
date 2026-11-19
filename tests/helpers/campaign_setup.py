@@ -13,16 +13,22 @@ from uuid import uuid4
 
 import httpx
 from fastapi.testclient import TestClient
+from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
 
-from tests.helpers.ws_identity import bearer
+from tests.helpers.ws_identity import SIGNING_ISSUER, bearer
 
 
-def create_campaign(client: httpx.Client, owner_id: str, title: str | None = None) -> str:
+def create_campaign(
+    client: httpx.Client,
+    owner_id: str,
+    title: str | None = None,
+    issuer: SigningTestIssuer = SIGNING_ISSUER,
+) -> str:
     """Create a campaign as `owner_id` through `POST /api/v1/campaigns` and return its id."""
     res = client.post(
         "/api/v1/campaigns",
         json={"title": title or f"Campaign {uuid4().hex[:8]}"},
-        headers=bearer(owner_id),
+        headers=bearer(owner_id, issuer),
     )
     assert res.status_code == 201, res.text
     return str(res.json()["id"])
@@ -45,18 +51,19 @@ def invite_and_join(
     owner_id: str,
     member_id: str,
     role: str = "player",
+    issuer: SigningTestIssuer = SIGNING_ISSUER,
 ) -> None:
     """Owner issues an invite for `role`; `member_id` redeems it through the public join route."""
     invite = client.post(
         f"/api/v1/campaigns/{campaign_id}/invites",
         json={"role": role},
-        headers=bearer(owner_id),
+        headers=bearer(owner_id, issuer),
     )
     assert invite.status_code == 201, invite.text
     joined = client.post(
         "/api/v1/campaigns/join",
         json={"invite_token": invite.json()["token"]},
-        headers=bearer(member_id),
+        headers=bearer(member_id, issuer),
     )
     assert joined.status_code == 200, joined.text
 
