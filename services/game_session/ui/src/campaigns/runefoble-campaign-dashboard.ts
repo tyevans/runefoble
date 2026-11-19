@@ -1,6 +1,7 @@
 import { LitElement, html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { campaignDashboardStyles } from './runefoble-campaign-dashboard.styles.ts';
+import { ROLE_SHORT_LABELS, isCoordinatorRole, isSpectatorRole, normalizeRole } from '../lobby/roles.ts';
 import type { CampaignItem, RoleFilter, SelectCampaignEventDetail, CreateCampaignPayload } from './types.ts';
 import './runefoble-campaign-creator.ts';
 
@@ -97,20 +98,14 @@ export class RunefobleCampaignDashboard extends LitElement {
   }
 
   private getRoleBadgeClass(role?: string): string {
-    const r = (role || '').toLowerCase();
-    if (r === 'owner' || r === 'dungeon_master' || r === 'dm') return 'role-dm';
-    if (r === 'player') return 'role-player';
-    if (r === 'spectator') return 'role-spectator';
+    if (isCoordinatorRole(role)) return 'role-dm';
+    if (isSpectatorRole(role)) return 'role-spectator';
     return 'role-player';
   }
 
   private getRoleBadgeLabel(role?: string): string {
-    const r = (role || '').toLowerCase();
-    if (r === 'owner') return 'Owner';
-    if (r === 'dungeon_master' || r === 'dm') return 'DM';
-    if (r === 'player') return 'Player';
-    if (r === 'spectator') return 'Spectator';
-    return role || 'Member';
+    const known = normalizeRole(role);
+    return known === 'unknown' ? role || 'Member' : ROLE_SHORT_LABELS[known];
   }
 
   private renderCampaignCard(campaign: CampaignItem) {

@@ -4,6 +4,8 @@
  * Governed by ADR-0004, ADR-0012, ADR-0013.
  */
 
+import { isCoordinatorRole, isSpectatorRole } from './roles.ts';
+
 export interface LobbyCharacterOption {
   id: string;
   name: string;
@@ -61,34 +63,31 @@ export interface LaunchSessionEventDetail {
 
 /**
  * Computes readiness metrics across session participants.
- * Non-spectator players are evaluated:
+ * Non-spectator, non-coordinator participants are players. Owner and DM roles coordinate
+ * the session and are never counted as players (TASK-0870).
  * - Active players: isAbsent == false
  * - Ready players: isAbsent == false && isReady == true
  * - Stand-in players: isAbsent == true
+ * With no player present, the summary reports zero players.
  */
 export function computeReadinessSummary(participants: LobbyParticipant[]): ReadinessSummary {
-  // Exclude spectators and DM/owner coordinators from player count if players exist
-  const players = participants.filter((p) => {
-    const role = (p.role || '').toLowerCase();
-    return role !== 'spectator' && role !== 'dm' && role !== 'dungeon_master' && role !== 'owner';
-  });
+  const players = participants.filter((p) => !isSpectatorRole(p.role) && !isCoordinatorRole(p.role));
 
-  // Fallback: If only DMs or all roles are present without explicit 'player'
-  const evaluated = players.length > 0 ? players : participants.filter((p) => (p.role || '').toLowerCase() !== 'spectator');
-
-  const absentList = evaluated.filter((p) => p.isAbsent);
-  const activeList = evaluated.filter((p) => !p.isAbsent);
+  const absentList = players.filter((p) => p.isAbsent);
+  const activeList = players.filter((p) => !p.isAbsent);
   const readyList = activeList.filter((p) => p.isReady);
 
   const readyCount = readyList.length;
   const totalActivePlayers = activeList.length;
   const absentCount = absentList.length;
-  const totalPlayers = evaluated.length;
+  const totalPlayers = players.length;
 
   const allReady = totalActivePlayers > 0 && readyCount === totalActivePlayers;
 
   let summaryText = '';
-  if (absentCount > 0) {
+  if (totalPlayers === 0) {
+    summaryText = 'No players have joined';
+  } else if (absentCount > 0) {
     const standInPlural = absentCount === 1 ? '1 absent stand-in' : `${absentCount} absent stand-ins`;
     summaryText = `${readyCount} of ${totalPlayers} players ready, ${standInPlural}`;
   } else {

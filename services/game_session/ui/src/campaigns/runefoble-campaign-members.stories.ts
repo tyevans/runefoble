@@ -93,3 +93,15 @@ export const CustomInviteLink: Story = {
     ></runefoble-campaign-members>
   `,
 };
+
+export const ManagerWithDmAliasRole: Story = {
+  render: () => html`
+    <runefoble-campaign-members
+      campaign-id="camp-drakkenheim-001"
+      campaign-title="Shadows of Drakkenheim"
+      current-user-id="usr-evelyn"
+      .canManage=${true}
+      .members=${[{ ...sampleMembers[0], role: 'owner' }, { ...sampleMembers[1], role: 'dm' }]}
+    ></runefoble-campaign-members>
+  `,
+};

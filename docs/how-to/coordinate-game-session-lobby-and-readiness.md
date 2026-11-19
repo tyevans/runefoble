@@ -37,6 +37,18 @@ The `<runefoble-session-lobby>` component is vendored in `@runefoble/game-sessio
 | `can-launch` | `boolean` | Zanzibar-derived permission to launch the session |
 | `is-loading` | `boolean` | Loading indicator disabling interactive triggers |
 
+### Readiness Summary
+
+The readiness pill counts players only. A participant with the `owner` role or a DM role (`dm` or `dungeon_master`) coordinates the session. The lobby never counts that participant as a player. A spectator is never counted. The lobby reads role strings through one normalizer, `services/game_session/ui/src/lobby/roles.ts`.
+
+| Participants present | Pill text |
+|---|---|
+| Only a DM, or only an owner and spectators | `No players have joined` |
+| Two players, one ready | `1 of 2 players ready` |
+| Two players, one ready, one absent stand-in | `1 of 2 players ready, 1 absent stand-in` |
+
+With no player present, the summary has no fallback count. The pill never counts a DM as a ready player.
+
 ### Embedding the Lit Component
 
 ```html

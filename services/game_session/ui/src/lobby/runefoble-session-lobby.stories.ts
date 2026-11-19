@@ -182,3 +182,17 @@ export const EmptyLobby: Story = {
     ></runefoble-session-lobby>
   `,
 };
+
+export const DmOnlyNoPlayers: Story = {
+  render: () => html`
+    <runefoble-session-lobby
+      session-id="sess-dm-only-1"
+      campaign-id="camp-frontier"
+      session-title="Frontier Staging Area"
+      current-user-id="usr-evelyn"
+      .isDm=${true}
+      .participants=${[{ userId: 'usr-evelyn', username: 'Evelyn (GM)', role: 'dm', isReady: false, isAbsent: false }]}
+      .availableCharacters=${sampleCharacters}
+    ></runefoble-session-lobby>
+  `,
+};
