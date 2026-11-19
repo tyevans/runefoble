@@ -12,8 +12,8 @@ export interface DuckRequest {
 export interface DuckApiContext {
   /** Gateway base URL. An empty string targets the same origin. */
   apiBase: string;
-  /** Full Authorization header value, such as `Bearer <token>`. Empty sends no header. */
-  authorization: string;
+  /** Resolves the caller's auth headers, such as `AuthConsumerController.authHeaders`. Empty sends no header. */
+  authHeaders: () => Promise<Record<string, string>>;
 }
 
 /** Sends `POST /api/v1/soundscape/duck` through the gateway. Never throws. A failure reports the owner detail. */
@@ -23,6 +23,7 @@ export async function postDuck(
   fetchImpl?: FetchLike
 ): Promise<ActionResult> {
   try {
+    const headers = await ctx.authHeaders();
     await postJson(
       `${ctx.apiBase}/api/v1/soundscape/duck`,
       {
@@ -31,7 +32,7 @@ export async function postDuck(
         reason: request.reason,
         duration_ms: request.durationMs,
       },
-      { headers: ctx.authorization ? { Authorization: ctx.authorization } : {}, fetchImpl }
+      { headers, fetchImpl }
     );
     return { ok: true };
   } catch (err) {
