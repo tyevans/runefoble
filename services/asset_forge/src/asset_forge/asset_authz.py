@@ -7,30 +7,34 @@ Silo asset routes. The forge routes keep their own checks in `dependencies.py`.
 
 from __future__ import annotations
 
-from fastapi import HTTPException
+from runefoble_auth.permissions import require_subject
 from runefoble_auth.spicedb import SpiceDBClient
 
 
 async def require_campaign_play(spicedb: SpiceDBClient, user_id: str, campaign_id: str) -> None:
     """Allow an asset to join a campaign only when the user can play in that campaign."""
-    allowed = await spicedb.check_permission("campaign", campaign_id, "play", "user", user_id)
-    if not allowed:
-        raise HTTPException(
-            status_code=403,
-            detail=f"Permission denied: user '{user_id}' lacks 'play' on campaign '{campaign_id}'",
-        )
+    await require_subject(
+        spicedb,
+        "campaign",
+        campaign_id,
+        "play",
+        user_id,
+        detail=f"Permission denied: user '{user_id}' lacks 'play' on campaign '{campaign_id}'",
+    )
 
 
 async def require_asset_permission(
     spicedb: SpiceDBClient, user_id: str, asset_id: str, permission: str
 ) -> None:
     """Allow only when the schema grants `forged_asset.<permission>` on the asset to the user."""
-    allowed = await spicedb.check_permission("forged_asset", asset_id, permission, "user", user_id)
-    if not allowed:
-        raise HTTPException(
-            status_code=403,
-            detail=f"Permission denied: user '{user_id}' lacks '{permission}' on asset '{asset_id}'",
-        )
+    await require_subject(
+        spicedb,
+        "forged_asset",
+        asset_id,
+        permission,
+        user_id,
+        detail=f"Permission denied: user '{user_id}' lacks '{permission}' on asset '{asset_id}'",
+    )
 
 
 async def write_asset_ownership(

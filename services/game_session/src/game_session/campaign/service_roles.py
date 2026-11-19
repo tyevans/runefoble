@@ -18,6 +18,7 @@ from game_session.campaign.service_campaigns import (
     parse_campaign_id,
 )
 from game_session.campaign.tuples import SpiceDB, grant_member, relation_for_role
+from runefoble_auth.permissions import check_subject
 from runefoble_platform.aggregate_loading import save_or_conflict
 
 CAPABILITY_PERMISSIONS: tuple[str, ...] = ("manage", "run_session", "play", "view")
@@ -49,9 +50,7 @@ async def capabilities(
 ) -> CampaignCapabilitiesResponse:
     """Check each capability. Non-members receive all false."""
     flags = {
-        permission: await spicedb.check_permission(
-            "campaign", campaign_id, permission, "user", user_id
-        )
+        permission: await check_subject(spicedb, "campaign", campaign_id, permission, user_id)
         for permission in CAPABILITY_PERMISSIONS
     }
     return CampaignCapabilitiesResponse(**flags)

@@ -11,27 +11,24 @@ from collections.abc import Awaitable, Callable
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import Depends, HTTPException
+from fastapi import Depends
 from game_session.settlement.auth.tokens import CallerId, CallerOrService
 from runefoble_auth.factory import get_spicedb_client
+from runefoble_auth.permissions import require_subject
 
 
 def session_permission(permission: str) -> Callable[..., Awaitable[str]]:
     """Build a dependency that requires `permission` on the `session_id` path parameter."""
 
     async def dependency(session_id: UUID, caller_id: CallerId) -> str:
-        allowed = await get_spicedb_client().check_permission(
-            resource_type="session",
-            resource_id=str(session_id),
-            permission=permission,
-            subject_type="user",
-            subject_id=caller_id,
+        await require_subject(
+            get_spicedb_client(),
+            "session",
+            str(session_id),
+            permission,
+            caller_id,
+            detail=f"User '{caller_id}' lacks '{permission}' on session '{session_id}'",
         )
-        if not allowed:
-            raise HTTPException(
-                status_code=403,
-                detail=f"User '{caller_id}' lacks '{permission}' on session '{session_id}'",
-            )
         return caller_id
 
     return dependency

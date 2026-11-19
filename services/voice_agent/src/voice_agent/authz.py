@@ -18,6 +18,7 @@ from typing import Any
 from fastapi import HTTPException
 from runefoble_auth.contract import permission_for_action
 from runefoble_auth.factory import get_spicedb_client
+from runefoble_auth.permissions import check_subject
 from runefoble_auth.websocket import WebSocketAuthorizer
 
 logger = logging.getLogger("runefoble.voice_agent.authz")
@@ -26,8 +27,8 @@ logger = logging.getLogger("runefoble.voice_agent.authz")
 async def action_allowed(action: str, resource_id: str, subject_id: str) -> bool:
     """Return True when SpiceDB grants the action on the resource to the user subject."""
     resource_type, permission = permission_for_action(action)
-    return await get_spicedb_client().check_permission(
-        resource_type, resource_id, permission, "user", subject_id
+    return await check_subject(
+        get_spicedb_client(), resource_type, resource_id, permission, subject_id
     )
 
 

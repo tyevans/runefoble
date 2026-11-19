@@ -229,7 +229,7 @@ if not can_view:
 Routes do not write their own lookup. Use the two helpers in `runefoble_auth.permissions`:
 
 - `check_subject(spicedb, resource_type, resource_id, permission, user_id)` returns `True` or `False`. Use it when the route decides between two outcomes.
-- `require_subject(spicedb, resource_type, resource_id, permission, user_id, *, detail=None)` raises `PermissionDenied`, an `HTTPException` with status `403`. The default detail names the subject, the permission, and the resource. Pass `detail` only when a route must keep its own wording.
+- `require_subject(spicedb, resource_type, resource_id, permission, user_id, *, detail=None, denial=None)` raises `PermissionDenied`, an `HTTPException` with status `403`. The default detail names the subject, the permission, and the resource. Pass `detail` only when a route must keep its own wording. Pass `denial` only when a route must keep its own 403 body.
 
 ```python
 from runefoble_auth.permissions import require_subject
@@ -238,6 +238,35 @@ await require_subject(spicedb, "campaign", campaign_id, "view", caller_id)
 ```
 
 Both helpers pass the user subject to SpiceDB. Neither helper turns a SpiceDB failure into a denial. A failure raises `AuthzError`, and the handlers in the section below map it to `503`.
+
+### Guard a Route by Path Resource
+When a route names the resource in its path, use `require_permission` in a service. It builds a route dependency. The check runs before the handler, so a refused caller never reaches the handler body:
+
+```python
+from uuid import UUID
+
+from fastapi import Depends
+from runefoble_auth.permissions import require_permission
+
+EDIT_CHARACTER = [
+    Depends(
+        require_permission(
+            "character",
+            "edit",
+            "character_id",
+            principal=get_principal,
+            id_type=UUID,
+        )
+    )
+]
+```
+
+- `principal` is the service identity dependency. It returns an object with a `user_id`.
+- `id_param` is the path parameter name. `id_type` sets its type, so an invalid value answers `422`.
+- Pass `allow_service=True` with the service identity dependency (`get_caller_or_service`) to let the service credential pass without a user. A call with no user and no service credential is denied.
+- Pass `denial=` to keep a route-specific 403 body. The callable receives `(resource_type, resource_id, permission, user_id)` and returns the `HTTPException`.
+
+The standard 403 detail, the `401` for a missing credential, and the `503` for a SpiceDB failure stay the same as for `require_subject`.
 
 ### HTTP Failure Mapping
 

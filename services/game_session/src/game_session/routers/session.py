@@ -40,6 +40,7 @@ from game_session.settlement.auth.tokens import (
     CallerId,
 )
 from runefoble_auth.factory import get_spicedb_client
+from runefoble_auth.permissions import require_subject
 from runefoble_platform.aggregate_loading import load_or_404
 from runefoble_platform.dice import parse_and_roll
 
@@ -62,18 +63,14 @@ async def create_session(req: CreateSessionRequest, caller_id: CallerId) -> Game
     and before the campaign link is written, so a refused caller leaves no state behind.
     """
     spicedb = get_spicedb_client()
-    allowed = await spicedb.check_permission(
-        resource_type="campaign",
-        resource_id=str(req.campaign_id),
-        permission="run_session",
-        subject_type="user",
-        subject_id=caller_id,
+    await require_subject(
+        spicedb,
+        "campaign",
+        str(req.campaign_id),
+        "run_session",
+        caller_id,
+        detail=f"User '{caller_id}' lacks 'run_session' on campaign '{req.campaign_id}'",
     )
-    if not allowed:
-        raise HTTPException(
-            status_code=403,
-            detail=f"User '{caller_id}' lacks 'run_session' on campaign '{req.campaign_id}'",
-        )
     session_id = uuid4()
     session = GameSessionAggregate(session_id)
     session.create(campaign_id=req.campaign_id, title=req.title, dm_id=req.dm_id)
@@ -217,18 +214,14 @@ async def hot_swap_session(
 
     The caller needs `session.participate` and `character.edit` on the character taken over.
     """
-    allowed = await get_spicedb_client().check_permission(
-        resource_type="character",
-        resource_id=str(req.character_id),
-        permission="edit",
-        subject_type="user",
-        subject_id=player_id,
+    await require_subject(
+        get_spicedb_client(),
+        "character",
+        str(req.character_id),
+        "edit",
+        player_id,
+        detail=f"User '{player_id}' does not have permission to take control of character '{req.character_id}'",
     )
-    if not allowed:
-        raise HTTPException(
-            status_code=403,
-            detail=f"User '{player_id}' does not have permission to take control of character '{req.character_id}'",
-        )
 
     session = await _load_session(session_id)
     try:

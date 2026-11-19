@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from fastapi import HTTPException
 from runefoble_auth.mock import MockSpiceDBClient
+from runefoble_auth.permissions import check_subject, require_subject
 from runefoble_auth.spicedb import SpiceDBClient
 
 Spicedb = SpiceDBClient | MockSpiceDBClient
@@ -17,35 +18,46 @@ Spicedb = SpiceDBClient | MockSpiceDBClient
 
 async def check_bounty_view(spicedb: Spicedb, sid: str, bid: str, uid: str) -> None:
     """Allow a viewer of the bounty or an observer of its session."""
-    ok_b = bool(bid) and await spicedb.check_permission(
-        "bounty_contract", str(bid), "view", "user", uid
-    )
-    ok_s = await spicedb.check_permission("session", str(sid), "observe", "user", uid)
+    ok_b = bool(bid) and await check_subject(spicedb, "bounty_contract", str(bid), "view", uid)
+    ok_s = await check_subject(spicedb, "session", str(sid), "observe", uid)
     if not (ok_b or ok_s):
         raise HTTPException(status_code=403, detail=f"User '{uid}' cannot view bounty '{bid}'")
 
 
 async def check_bounty_post(spicedb: Spicedb, sid: str, uid: str) -> None:
     """Allow a session participant to post a bounty (session.participate is campaign.play)."""
-    if not await spicedb.check_permission("session", str(sid), "participate", "user", uid):
-        raise HTTPException(
-            status_code=403, detail=f"User '{uid}' cannot post bounty in session '{sid}'"
-        )
+    await require_subject(
+        spicedb,
+        "session",
+        str(sid),
+        "participate",
+        uid,
+        detail=f"User '{uid}' cannot post bounty in session '{sid}'",
+    )
 
 
 async def check_bounty_claim(spicedb: Spicedb, bid: str, uid: str) -> None:
     """Allow a caller who holds bounty_contract.claim (play in the campaign or session)."""
-    if not await spicedb.check_permission("bounty_contract", str(bid), "claim", "user", uid):
-        raise HTTPException(status_code=403, detail=f"User '{uid}' cannot claim bounty '{bid}'")
+    await require_subject(
+        spicedb,
+        "bounty_contract",
+        str(bid),
+        "claim",
+        uid,
+        detail=f"User '{uid}' cannot claim bounty '{bid}'",
+    )
 
 
 async def check_bounty_disburse(spicedb: Spicedb, bid: str, uid: str) -> None:
     """Allow the creator, a campaign DM, or a session controller to disburse escrow."""
-    if not await spicedb.check_permission("bounty_contract", str(bid), "disburse", "user", uid):
-        raise HTTPException(
-            status_code=403,
-            detail=f"User '{uid}' lacks authorization to complete or disburse bounty '{bid}'",
-        )
+    await require_subject(
+        spicedb,
+        "bounty_contract",
+        str(bid),
+        "disburse",
+        uid,
+        detail=f"User '{uid}' lacks authorization to complete or disburse bounty '{bid}'",
+    )
 
 
 async def write_bounty_relationships(

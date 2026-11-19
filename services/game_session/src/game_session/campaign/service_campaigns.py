@@ -26,6 +26,7 @@ from game_session.campaign.schemas import (
 )
 from game_session.campaign.session_aggregate import CampaignSessionsAggregate
 from game_session.campaign.tuples import SpiceDB, grant_owner, link_session
+from runefoble_auth.permissions import check_subject
 from runefoble_platform.aggregate_loading import load_if_exists, save_or_conflict
 from runefoble_platform.identifiers import parse_uuid
 
@@ -67,7 +68,7 @@ async def load_sessions(
 async def role_for(spicedb: SpiceDB, campaign_id: str, user_id: str) -> str | None:
     """Return the highest role the user holds, read from SpiceDB permissions."""
     for permission, role in ROLE_CHECKS:
-        if await spicedb.check_permission("campaign", campaign_id, permission, "user", user_id):
+        if await check_subject(spicedb, "campaign", campaign_id, permission, user_id):
             return role
     return None
 

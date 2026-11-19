@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from game_session.campaign.schemas import CampaignPermissionsResponse
 from game_session.campaign.tuples import SpiceDB
+from runefoble_auth.permissions import check_subject
 
 # API flag -> schema permission on `campaign` that the matching route guard checks.
 PERMISSION_FLAGS: dict[str, str] = {
@@ -25,7 +26,7 @@ async def campaign_permissions(
 ) -> CampaignPermissionsResponse:
     """Check every flag for the caller. A non-member receives all false."""
     flags = {
-        flag: await spicedb.check_permission("campaign", campaign_id, permission, "user", user_id)
+        flag: await check_subject(spicedb, "campaign", campaign_id, permission, user_id)
         for flag, permission in PERMISSION_FLAGS.items()
     }
     return CampaignPermissionsResponse(**flags)

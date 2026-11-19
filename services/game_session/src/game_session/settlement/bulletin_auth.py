@@ -8,6 +8,7 @@ from __future__ import annotations
 from typing import Any
 
 from fastapi import HTTPException
+from runefoble_auth.permissions import check_subject, require_subject
 
 
 async def check_bulletin_board_view_permission(
@@ -16,14 +17,14 @@ async def check_bulletin_board_view_permission(
     user_id: str,
 ) -> None:
     """Ensure user has permission to view notices on the settlement bulletin board."""
-    allowed = await spicedb.check_permission(
-        "settlement", str(settlement_id), "view", "user", str(user_id)
+    await require_subject(
+        spicedb,
+        "settlement",
+        str(settlement_id),
+        "view",
+        str(user_id),
+        detail=f"Permission denied: subject '{user_id}' cannot view settlement:{settlement_id}",
     )
-    if not allowed:
-        raise HTTPException(
-            status_code=403,
-            detail=f"Permission denied: subject '{user_id}' cannot view settlement:{settlement_id}",
-        )
 
 
 async def check_bulletin_board_edit_permission(
@@ -33,15 +34,9 @@ async def check_bulletin_board_edit_permission(
 ) -> None:
     """Ensure user has permission to pin new notices to the bulletin board."""
     allowed = (
-        await spicedb.check_permission(
-            "settlement", str(settlement_id), "edit", "user", str(user_id)
-        )
-        or await spicedb.check_permission(
-            "settlement", str(settlement_id), "upgrade", "user", str(user_id)
-        )
-        or await spicedb.check_permission(
-            "settlement", str(settlement_id), "manage", "user", str(user_id)
-        )
+        await check_subject(spicedb, "settlement", str(settlement_id), "edit", str(user_id))
+        or await check_subject(spicedb, "settlement", str(settlement_id), "upgrade", str(user_id))
+        or await check_subject(spicedb, "settlement", str(settlement_id), "manage", str(user_id))
     )
     if not allowed:
         raise HTTPException(
@@ -57,11 +52,9 @@ async def check_bulletin_notice_view_permission(
     user_id: str,
 ) -> None:
     """Ensure user has permission to view / decrypt a specific notice."""
-    allowed = await spicedb.check_permission(
-        "bulletin_notice", str(notice_id), "view", "user", str(user_id)
-    ) or await spicedb.check_permission(
-        "settlement", str(settlement_id), "view", "user", str(user_id)
-    )
+    allowed = await check_subject(
+        spicedb, "bulletin_notice", str(notice_id), "view", str(user_id)
+    ) or await check_subject(spicedb, "settlement", str(settlement_id), "view", str(user_id))
     if not allowed:
         raise HTTPException(
             status_code=403,
@@ -77,15 +70,9 @@ async def check_bulletin_notice_edit_permission(
 ) -> None:
     """Ensure user is author or DM/manager to remove or moderate a notice."""
     allowed = (
-        await spicedb.check_permission(
-            "bulletin_notice", str(notice_id), "edit", "user", str(user_id)
-        )
-        or await spicedb.check_permission(
-            "bulletin_notice", str(notice_id), "manage", "user", str(user_id)
-        )
-        or await spicedb.check_permission(
-            "settlement", str(settlement_id), "manage", "user", str(user_id)
-        )
+        await check_subject(spicedb, "bulletin_notice", str(notice_id), "edit", str(user_id))
+        or await check_subject(spicedb, "bulletin_notice", str(notice_id), "manage", str(user_id))
+        or await check_subject(spicedb, "settlement", str(settlement_id), "manage", str(user_id))
     )
     if not allowed:
         raise HTTPException(

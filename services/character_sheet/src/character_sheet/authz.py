@@ -9,21 +9,18 @@ from __future__ import annotations
 from uuid import UUID
 
 from character_sheet.roster import permission_denied
+from fastapi import HTTPException
 from runefoble_auth.mock import MockSpiceDBClient
 from runefoble_auth.spicedb import SpiceDBClient
 
 AuthzClient = SpiceDBClient | MockSpiceDBClient
 
 
-async def authorize_character(
-    spicedb: AuthzClient, character_id: UUID, permission: str, user_id: str
-) -> None:
-    """Allow only when SpiceDB grants `permission` on the character to the user."""
-    allowed = await spicedb.check_permission(
-        "character", str(character_id), permission, "user", user_id
-    )
-    if not allowed:
-        raise permission_denied(user_id, permission, str(character_id))
+def character_denial(
+    resource_type: str, resource_id: str, permission: str, user_id: str
+) -> HTTPException:
+    """Build the character 403 body that the gateway passes through unchanged."""
+    return permission_denied(user_id, permission, resource_id)
 
 
 async def write_character_ownership(
