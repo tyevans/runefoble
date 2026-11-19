@@ -79,4 +79,34 @@ Run one package:
 ```bash
 pnpm --filter @runefoble/ui-core test
 ```
-The packages with element tests are `libs/runefoble_ui` (`@runefoble/ui-core`), `services/character_sheet/ui` (`@runefoble/character-sheet-ui`) and `frontend/`.
+The packages with element tests are `libs/runefoble_ui` (`@runefoble/ui-core`), `services/asset_forge/ui`, `services/board_state/ui`, `services/character_sheet/ui`, `services/game_session/ui`, `services/rules_compendium/ui` and `frontend/`.
+
+### 8. Change State With New Objects
+Lit renders an element again only when a property gets a new value. For an object or an array, a new value is a new reference. Lit compares with `!==`. It does not look inside the object.
+
+If you change an object in place, Lit sees the same reference. A child element that gets the object through a property binding (`.contract=${c}`) does not render again. A call to `requestUpdate()` on the parent does not help, because the child property did not change. `changedProperties.has('tokens')` is also false, so code in `updated()` does not run.
+
+Do these steps:
+1. Build a new object for the changed item: `{ ...item, status: 'in_transit' }`.
+2. Build a new array that holds the new item: `this.items = this.items.map((i) => (i.id === id ? updated : i))`.
+3. Assign the new array to the reactive property. Do not call `requestUpdate()` for this change.
+4. Do not change an object that you got from a property. The parent still holds it.
+5. Let an API helper return the new object. Do not let it change its argument.
+
+```typescript
+const result = await apiDispatchCaravan(ctx, contract);
+if (!result.ok) {
+  this.showError(`Dispatch failed: ${result.message}`);
+  return;
+}
+this.contracts = this.contracts.map((c) => (c.contract_id === result.data.contract_id ? result.data : c));
+```
+
+### 9. Never Show Success After an Error
+ADR-0015 requires that failures are visible: an error, not a false success.
+- Set a success state only after the call succeeds. Do not set it in a `catch` block or after a swallowed error (`.catch(() => {})`).
+- Check every `DataResult`. Show the success toast only when `result.ok` is true.
+- On failure, keep the old state and show the error text.
+- Test both paths. The failure test must assert that the success text is absent.
+
+Examples are `services/game_session/ui/test-dom/caravan-board-transport.test.ts` and `services/game_session/ui/test-dom/campaign-members-copy.test.ts`.
