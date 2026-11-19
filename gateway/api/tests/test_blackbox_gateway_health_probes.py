@@ -23,6 +23,7 @@ DOWNSTREAM_URL_ENV = {
     "board_state": "RUNEFOBLE_BOARD_STATE_URL",
     "character_sheet": "RUNEFOBLE_CHARACTER_SHEET_URL",
     "voice_agent": "RUNEFOBLE_VOICE_AGENT_URL",
+    "campaign_lore": "RUNEFOBLE_CAMPAIGN_LORE_URL",
 }
 
 
@@ -77,6 +78,9 @@ def test_health_route_reports_the_probe_result_for_each_downstream(downstream_en
             doubles.enter_context(serve(unavailable_app(500))),
         )
         downstream_env.setenv(DOWNSTREAM_URL_ENV["voice_agent"], closed_port_url())
+        downstream_env.setenv(
+            DOWNSTREAM_URL_ENV["campaign_lore"], doubles.enter_context(serve(_healthy_service()))
+        )
 
         with TestClient(gateway_app) as client:
             body = _health(client)
@@ -88,6 +92,7 @@ def test_health_route_reports_the_probe_result_for_each_downstream(downstream_en
         "board_state": "operational",
         "character_sheet": "degraded",
         "voice_agent": "unreachable",
+        "campaign_lore": "operational",
     }
 
 
@@ -99,7 +104,13 @@ def test_stopped_downstream_reports_unreachable_on_the_next_request(downstream_e
             DOWNSTREAM_URL_ENV["game_session"],
             game_session_double.enter_context(serve(_healthy_service())),
         )
-        for service in ("the_watcher", "board_state", "character_sheet", "voice_agent"):
+        for service in (
+            "the_watcher",
+            "board_state",
+            "character_sheet",
+            "voice_agent",
+            "campaign_lore",
+        ):
             downstream_env.setenv(
                 DOWNSTREAM_URL_ENV[service], doubles.enter_context(serve(_healthy_service()))
             )
@@ -134,3 +145,22 @@ def test_downstream_slower_than_the_probe_timeout_reports_unreachable(downstream
 
     assert body["status"] == "healthy"
     assert body["downstream_services"]["game_session"] == "unreachable"
+
+
+def test_stopped_campaign_lore_reports_unreachable(downstream_env):
+    """The e2e fault script waits on this report after it scales campaign_lore down (TASK-0909)."""
+    with ExitStack() as doubles:
+        lore_double = ExitStack()
+        doubles.push(lore_double)
+        downstream_env.setenv(
+            DOWNSTREAM_URL_ENV["campaign_lore"],
+            lore_double.enter_context(serve(_healthy_service())),
+        )
+
+        with TestClient(gateway_app) as client:
+            first = _health(client)["downstream_services"]["campaign_lore"]
+            lore_double.close()
+            second = _health(client)["downstream_services"]["campaign_lore"]
+
+    assert first == "operational"
+    assert second == "unreachable"

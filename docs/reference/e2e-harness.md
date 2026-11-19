@@ -30,6 +30,7 @@ e2e/
 | `e2e/support/campaign_capabilities.ts` | `openAndRecordCapabilities` opens an App Shell route and records the `GET /api/v1/campaigns/{campaign_id}/capabilities` reply. `recordedCapabilities` returns it. Steps compare a role-gated control with the server flag. |
 | `e2e/support/world.ts` | Scenario context: the current user, campaign and session ids, one page per persona, and extra browser contexts. `getPage(name)` throws when no step opened a page for that persona. |
 | `e2e/support/lobby_session.ts` | Lobby setup state. `rememberLobbySession` and `lobbySessionId` keep the session id with the title that the feature uses. `lobbyRoute` builds the lobby route from the stored ids. `personaToken` returns the bearer token of a persona that setup signed in. |
+| `e2e/support/service_faults.ts` | `stopService` and `startService` stop and start an owning service on Kind through the fault make targets (see "Service Faults"). |
 | `e2e/support/guards.ts` | Fail-loud guards. `requireValue` throws when a setup value is missing. `assertOk` throws with the status and body of a failed response. `fillRouteTemplate` puts the ids from `world` into a route shape such as `#/campaigns/{campaignId}/sessions/{sessionId}`, and throws when an id is missing. `exactText` builds a whole-text match for `hasText`. |
 
 ## Global Setup and Personas
@@ -106,6 +107,8 @@ Source: `playwright.config.ts`.
 | `make test-bdd` | `pnpm run e2e:typecheck`, then `node --test e2e/unit/*.test.ts`, then `scripts/check_e2e_unused_steps.py`, then `pnpm exec bddgen` | No |
 | `make test-e2e` | `pnpm exec bddgen`, then `pnpm exec playwright test $(ARGS)` with `ZITADEL_ADMIN_PAT` read from the `zitadel-admin` Secret | Yes, all three projects |
 | `make test-e2e-ui` | `pnpm exec bddgen`, then `pnpm exec playwright test --ui $(ARGS)` with the same token | Yes |
+| `make e2e-lore-down`, `make e2e-lore-up` | `scripts/e2e_service_fault.py campaign_lore down` or `up` (see "Service Faults") | No |
+| `make e2e-game-session-down`, `make e2e-game-session-up` | `scripts/e2e_service_fault.py game_session down` or `up` | No |
 | `scripts/test_ci_e2e.sh` | Starts the dev servers on `:8000` and `:5173`. It does not start Zitadel or the Kind stack, so it cannot run the real sign-in flow. | Yes |
 
 `make test-e2e` runs this command to read the admin token. The token exists only in the environment of that one process:
@@ -119,6 +122,32 @@ Pass Playwright options through `ARGS`. For example:
 ```bash
 make test-e2e ARGS="--project=chromium -g 'Dungeon Master'"
 ```
+
+## Service Faults
+
+A journey that must see an unavailable owner stops that owner on Kind. It does not fake a reply in the browser (ADR-0014). Source: `scripts/e2e_service_fault.py`, `e2e/support/service_faults.ts`.
+
+| Service | Kind deployment | Make targets | Tag of the restart hook |
+|---|---|---|---|
+| `campaign_lore` | `campaign-lore` | `e2e-lore-down`, `e2e-lore-up` | `@lore-down` |
+| `game_session` | `game-session` | `e2e-game-session-down`, `e2e-game-session-up` | `@game-session-down` |
+
+`down` does these steps:
+
+1. Runs `kubectl --context kind-runefoble-local scale deployment/<name> --replicas=0`.
+2. Reads `GET <base URL>/healthz` until `downstream_services.<service>` is `unreachable`.
+
+`up` does these steps:
+
+1. Runs `kubectl --context kind-runefoble-local scale deployment/<name> --replicas=1`.
+2. Runs `kubectl --context kind-runefoble-local rollout status deployment/<name>`.
+3. Reads `GET <base URL>/healthz` until `downstream_services.<service>` is `operational`.
+
+The base URL is `PLAYWRIGHT_BASE_URL` (default `http://localhost`). Each wait stops after `RUNEFOBLE_E2E_FAULT_TIMEOUT_S` seconds (default `180`). A failed `kubectl` call, a gateway that does not report the service, or a wait that runs out exits with status 1 and a message. The script changes no data. It can scale only the two deployments in the table.
+
+The step that stops a service is `the campaign lore service is stopped` or `the game session service is stopped`. Tag the scenario with the restart tag. The `After` hook for that tag runs the `up` target, also when the scenario fails. The suite runs with one worker, so no other scenario sees the stopped service.
+
+`tests/test_e2e_service_fault.py` tests the script with a fake `kubectl` on `PATH` and a loopback gateway double.
 
 ## CI Job
 
@@ -135,4 +164,6 @@ The `e2e-playwright` job in `.github/workflows/ci.yml` runs the suite on each pu
 
 The feature files live in `e2e/features/`. They cover the campaign hub, the campaign roster management controls, the campaign rules tab and its homebrew forge, the character sheet, the session lobby and VTT, the lobby role gate and readiness summary, the session chronicle feed, asset forge, the caravan board, the app shell routes, identity negative paths and smoke checks. Read the files for the scenarios. This page does not repeat them.
 
-The asset forge error scenario sends a prompt that asset_forge refuses with `422`. It fakes no reply. The caravan board `403` and `503` scenarios still answer the action route with `page.route` in the browser. The caravan bearer scenario reads the request headers that leave the browser (TASK-0759).
+The asset forge error scenario sends a prompt that asset_forge refuses with `422`. It fakes no reply. The caravan board `503` scenarios stop game_session (see "Service Faults"), so the gateway answers `503` with `Upstream service is unavailable`. The caravan board `403` scenario still answers the action route with `page.route` in the browser, because no frontdoor setup gives a refusal yet. The caravan bearer scenario reads the request headers that leave the browser (TASK-0759).
+
+The smoke step `the top navigation shows the signed-in user` expects `TestUser.username`. The user menu shows the `preferred_username` claim (TASK-0890).

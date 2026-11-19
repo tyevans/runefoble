@@ -59,7 +59,7 @@ import { domTestConfig } from '../../../vitest.dom.config.ts';
 
 export default domTestConfig(import.meta.dirname);
 ```
-Adjust the relative path to reach the repository root. Put element tests in `test-dom/*.test.ts` in the package. Node unit tests stay in `test/`. The package `test` script runs both:
+Adjust the relative path to reach the repository root. The browser API server listens on `127.0.0.1` at a free port that the operating system gives, so element tests in parallel worktrees do not block each other. Put element tests in `test-dom/*.test.ts` in the package. Node unit tests stay in `test/`. The package `test` script runs both:
 ```json
 "test": "node --experimental-strip-types --test test/*.test.ts && vitest run"
 ```

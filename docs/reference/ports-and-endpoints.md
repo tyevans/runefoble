@@ -445,7 +445,7 @@ Campaign Lore routes require a verified bearer token, except `/healthz`, `/opena
 | Field | Value |
 |---|---|
 | `status` | `healthy` while the gateway process runs. A downstream failure does not change it. |
-| `downstream_services` | One key for each of `the_watcher`, `game_session`, `board_state`, `character_sheet`, and `voice_agent`. Each value is `operational`, `degraded`, `unreachable`, or `not_configured` |
+| `downstream_services` | One key for each of `the_watcher`, `game_session`, `board_state`, `character_sheet`, `voice_agent`, and `campaign_lore`. Each value is `operational`, `degraded`, `unreachable`, or `not_configured` |
 | `event_publish_failures` | Count of failed event publishes in this process |
 | `event_bus` | `connected` or `disconnected` |
 | `authorization_engine` | `SpiceDB Zanzibar` |

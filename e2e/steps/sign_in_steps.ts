@@ -41,12 +41,13 @@ Then('the App Shell stores a session for {string}', async ({ page }, roleOrName:
   expect(session?.tokens.accessToken).toBeTruthy();
 });
 
+// The user menu shows the token's preferred_username, the persona's Zitadel user name (TASK-0890).
 Then('the top navigation shows the signed-in user', async ({ page, world }) => {
-  const userId = world.currentUser?.userId;
-  expect(userId, 'a persona must be signed in first').toBeTruthy();
+  const username = world.currentUser?.username;
+  expect(username, 'a persona must be signed in first').toBeTruthy();
   const userMenu = page.locator('runefoble-user-menu');
   await expect(userMenu).toBeVisible({ timeout: 10_000 });
-  await expect(userMenu).toContainText(userId as string);
+  await expect(userMenu).toContainText(username as string);
 });
 
 When('the signed-in user signs out from the profile page', async ({ page, auth, world }) => {

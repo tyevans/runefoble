@@ -16,6 +16,7 @@ DOWNSTREAM_HEALTH_SERVICES = (
     "board_state",
     "character_sheet",
     "voice_agent",
+    "campaign_lore",
 )
 
 

@@ -4,7 +4,9 @@
 # Governing ADRs: ADR-0004, ADR-0013, ADR-0014, ADR-0015. PRD: PRD-0018. User story: US-0058.
 #
 # The board opens at #/caravans/:sharedWorldId?campaign=:campaignId. Contracts are seeded through
-# the public gateway routes (ADR-0014). The 403 and 503 scenarios answer the action route at the network boundary.
+# the public gateway routes (ADR-0014). The 503 scenarios stop game_session on Kind with
+# `make e2e-game-session-down`, so the gateway answers 503 (TASK-0909). An After hook starts it again.
+# The 403 scenario still answers the action route in the browser: no frontdoor setup gives a refusal yet.
 
 Feature: Caravan Board Reports Failed Dispatch and Fulfilment
   As a mercenary player escorting a caravan
@@ -15,26 +17,28 @@ Feature: Caravan Board Reports Failed Dispatch and Fulfilment
     Given I am logged in as a "player"
     And the caravan board is open
 
-  Scenario: Dispatch fails when the server returns 503
+  @game-session-down
+  Scenario: Dispatch fails when the owning service is unavailable
     Given an accepted caravan contract "Ironford to Bastion Cross" is on the board
-    And the caravan route "dispatch" responds with status 503
+    And the game session service is stopped
     When I click the "Dispatch" button
-    Then I should see the caravan notice "Dispatch failed: Service unavailable: Caravan route service is unavailable."
+    Then I should see the caravan notice "Dispatch failed: Service unavailable: Upstream service is unavailable."
     And the contract card should show status "accepted"
     And the contract card should not show "in transit"
 
   Scenario: Dispatch refused with 403 shows the not-authorized text
     Given an accepted caravan contract "Ironford to Bastion Cross" is on the board
-    And the caravan route "dispatch" responds with status 403
+    And the caravan route "dispatch" refuses the account
     When I click the "Dispatch" button
     Then I should see the caravan notice "Dispatch failed: Your account is not authorized for this caravan action."
     And the contract card should show status "accepted"
 
-  Scenario: Fulfilment fails when the server returns 503
+  @game-session-down
+  Scenario: Fulfilment fails when the owning service is unavailable
     Given a caravan contract "Ironford to Bastion Cross" is in transit on the board
-    And the caravan route "fulfill" responds with status 503
+    And the game session service is stopped
     When I click the "Fulfill" button
-    Then I should see the caravan notice "Fulfilment failed: Service unavailable: Caravan route service is unavailable."
+    Then I should see the caravan notice "Fulfilment failed: Service unavailable: Upstream service is unavailable."
     And the contract card should show status "in transit"
     And the contract card should not show "fulfilled"
 
