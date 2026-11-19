@@ -25,11 +25,14 @@ The package exports `ServiceClient`, `UpstreamReply`, `UpstreamError`, `Upstream
 
 | Function | Route |
 |---|---|
+| `get_campaign(campaign_id)` | `GET /api/v1/campaigns/{id}` (game_session) |
 | `get_character(character_id)` | `GET /api/v1/characters/{id}` (character_sheet) |
 | `change_health(character_id)` | `POST /api/v1/characters/{id}/health` |
 | `apply_penalty(character_id)` | `POST /api/v1/characters/{id}/penalties` |
 | `apply_condition(character_id)` | `POST /api/v1/characters/{id}/conditions` |
 | `cast_spell(character_id)` | `POST /api/v1/characters/{id}/spells/cast` |
+| `get_token(session_id, token_id)` | `GET /api/v1/boards/{session_id}/tokens/{token_id}` (board_state) |
+| `place_token(session_id)` | `POST /api/v1/boards/{session_id}/tokens` (board_state) |
 | `move_token(session_id, token_id)` | `POST /api/v1/boards/{session_id}/tokens/{token_id}/move` (board_state) |
 | `get_monster(name)` | `GET /api/v1/compendium/monsters/{name}` (rules_compendium) |
 | `balance_encounter()` | `POST /api/v1/compendium/encounters/balance` (rules_compendium) |
@@ -38,9 +41,11 @@ Path segments are encoded with `path()`. A value cannot change the route.
 
 ## Gateway proxy table
 
-A pure pass-through route is a row of `ProxyRoute` in `gateway_api/proxy_table.py`. Each module in `gateway_api/routers/` that holds only pass-through routes lists its rows in `ROUTES` and calls `register_proxy_routes(router, ROUTES)`. A row names the method, the public path, the owner path as segments, the service, the reply mode (`json` or `bytes`), the body mode (`none`, `raw`, or `json`), the query mode, the caller check, and the timeout. The generated endpoint declares its path parameters, query defaults, and body to FastAPI, so the OpenAPI document keeps the same parameters and schemas.
+A pure pass-through route is a row of `ProxyRoute` in `gateway_api/proxy_table.py`. Each module in `gateway_api/routers/` that holds only pass-through routes lists its rows in `ROUTES` and calls `register_proxy_routes(router, ROUTES)`. A row names the method, the public path, the owner path, the service, the reply mode (`json` or `bytes`), the body mode (`none`, `raw`, or `json`), the query mode, the caller check, and the timeout. The generated endpoint declares its path parameters, query defaults, and body to FastAPI, so the OpenAPI document keeps the same parameters and schemas.
 
-A route with a check, a transform, or a second owner call stays hand-written. Example: the haggling route in `downtime_proxy.py`.
+The owner path is either `owner_segments` (a tuple, where `{name}` takes a path parameter) or `owner` (a function of `owner_routes`, so the path has one definition). Give exactly one. A function takes the path parameters of the public path, by name.
+
+The caller check of a row (`principal=True`) verifies the bearer token only. A route with a Zanzibar permission check, a transform, a typed reply, or a second owner call stays hand-written. Examples: the haggling route in `downtime_proxy.py`, and the session routes in `sessions_proxy.py`, which check a permission on each route.
 
 A row whose owner path has a segment that the owner cannot encode (`.`, `..`, or empty) returns `404`.
 
