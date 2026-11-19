@@ -153,9 +153,10 @@ Each service starts its consumers in its FastAPI lifespan. A start-up failure st
 | `soundscape` | `soundscape` | `runefoble.events.session`, `runefoble.events.watcher`, `runefoble.events.character`, `runefoble.events.board` | `soundscape_workers` | `handle_incoming_domain_event` | `consumers.soundscape` |
 | `board_state` | `board_state` | `runefoble.events.asset` | `board_state_workers` | `apply_forged_battlemap_event` (applies `BattlemapForged` layout to the board of its session) | `consumers.board_state` |
 | `game_session` | `game_session` | `runefoble.events.audience` | `game_session_workers` | `apply_audience_weather_event` (records `WeatherChanged` for an approved `weather_change` modifier; other modifiers are ignored) | `consumers.game_session` |
+| `session_frames` | `gateway-api` | `runefoble.events.session` | `gateway_session_frames_<host name>` (one group per replica, starts at `$`) | `SessionFrameRelay.handle` (sends `turn_advanced` and `dice_rolled` to the session sockets; skips an event id that it already sent) | `consumers.session_frames` |
 | `character_sheet` | `character_sheet` | `runefoble.events.audience` | `character_sheet_workers` | `apply_audience_status_event` (applies a buff condition to the character of an approved `status_buff` modifier; other modifiers are ignored) | `consumers.character_sheet` |
 
-`/healthz` returns `200` with `"status": "ok"` when every consumer is `running`. It returns `503` with `"status": "degraded"` when any consumer is `failed`.
+`/healthz` returns `200` with `"status": "ok"` when every consumer is `running`. It returns `503` with `"status": "degraded"` when any consumer is `failed`. The gateway `/healthz` reports `"status": "healthy"` in place of `"ok"`.
 
 ### Removed Consumers and Decisions
 

@@ -14,7 +14,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from gateway_api.auth_sync import router as auth_sync_router
 from gateway_api.cors import install_cors
-from gateway_api.dependencies import event_bus_provider, platform_settings
+from gateway_api.dependencies import event_bus_provider, get_event_bus, platform_settings
 from gateway_api.routers import (
     analytics_views_router,
     auth_router,
@@ -42,6 +42,7 @@ from gateway_api.routers.watcher_proxy_dm import router as watcher_dm_router
 from gateway_api.routers.watcher_proxy_factions import router as watcher_factions_router
 from gateway_api.routers.watcher_proxy_intent import router as watcher_intent_router
 from gateway_api.routers.watcher_speech_proxy import router as watcher_speech_router
+from gateway_api.session_frame_consumer import SESSION_FRAMES, start_session_frame_consumers
 from gateway_api.upstream_errors import register_upstream_error_handlers
 from gateway_api.upstreams import UpstreamRegistry
 from runefoble_auth.authz_http import install_authz_error_handlers
@@ -51,11 +52,16 @@ from runefoble_platform.telemetry import init_telemetry
 
 @asynccontextmanager
 async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
-    """Build the upstream service clients from settings at start-up. Close them at shutdown."""
+    """Build the upstream clients and start the session frame consumer. Stop both at shutdown."""
     app.state.upstreams = UpstreamRegistry.from_settings(PlatformSettings())
     try:
         async with event_bus_provider.lifespan(app):
-            yield
+            consumers = await start_session_frame_consumers(get_event_bus())
+            app.state.consumers = {SESSION_FRAMES: consumers}
+            try:
+                yield
+            finally:
+                await consumers.stop()
     finally:
         await app.state.upstreams.aclose()
 
