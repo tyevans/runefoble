@@ -62,9 +62,12 @@ export class RunefobleCaravanBoard extends LitElement {
   private showError(message: string): void {
     this.notificationMessage = message;
     this.notificationType = 'danger';
-    this.requestUpdate();
   }
   public dismissNotification(): void { this.notificationMessage = null; }
+  /** Puts a new contract object in a new list, so that each child card renders again. */
+  private replaceContract(updated: CaravanContractItem): void {
+    this.contracts = this.contracts.map(c => (c.contract_id === updated.contract_id ? updated : c));
+  }
 
   public async acceptContract(contract: CaravanContractItem, e?: Event): Promise<void> {
     if (e) e.stopPropagation();
@@ -73,9 +76,9 @@ export class RunefobleCaravanBoard extends LitElement {
       this.showError(`Accept failed: ${result.message}`);
       return;
     }
+    this.replaceContract(result.data);
     this.notificationMessage = `Contract accepted by ${this.partyName}! Ready to dispatch.`;
     this.notificationType = 'success';
-    this.requestUpdate();
     this.dispatchEvent(new CustomEvent('contract-accepted', { bubbles: true, composed: true, detail: { contractId: contract.contract_id, sharedWorldId: this.sharedWorldId, campaignId: this.campaignId, partyName: this.partyName } }));
   }
 
@@ -86,9 +89,9 @@ export class RunefobleCaravanBoard extends LitElement {
       this.showError(`Dispatch failed: ${result.message}`);
       return;
     }
+    this.replaceContract(result.data);
     this.notificationMessage = `Caravan dispatched from ${contract.origin_outpost}!`;
     this.notificationType = 'info';
-    this.requestUpdate();
     this.dispatchEvent(new CustomEvent('caravan-dispatched', { bubbles: true, composed: true, detail: { contractId: contract.contract_id, sharedWorldId: this.sharedWorldId } }));
   }
 
@@ -99,9 +102,9 @@ export class RunefobleCaravanBoard extends LitElement {
       this.showError(`Fulfilment failed: ${result.message}`);
       return;
     }
+    this.replaceContract(result.data);
     this.notificationMessage = `Caravan arrived at ${contract.destination_outpost}! Payout: +${contract.reward_gold}g & +${contract.reward_reputation} rep.`;
     this.notificationType = 'success';
-    this.requestUpdate();
     this.dispatchEvent(new CustomEvent('contract-fulfilled', { bubbles: true, composed: true, detail: { contractId: contract.contract_id, sharedWorldId: this.sharedWorldId } }));
   }
 

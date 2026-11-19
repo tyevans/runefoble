@@ -96,6 +96,36 @@ describe('runefoble-caravan-board transport', () => {
     expect(JSON.parse(request.body)).toEqual({ dispatched_by_campaign_id: 'camp-amber' });
   });
 
+  it('shows the card badge as in transit after a dispatch succeeds', async () => {
+    await upstream.upstreamReply(200, { status: 'in_transit' });
+    const board = await mount('accepted');
+
+    await clickCardButton(board, 'Dispatch');
+
+    expect(await bannerText(board)).toBe('Caravan dispatched from Ironford!');
+    await expect.poll(() => statusBadge(board)).toBe('in transit');
+  });
+
+  it('shows the card badge as accepted after an accept succeeds', async () => {
+    await upstream.upstreamReply(200, { contract: { status: 'accepted', contractor_party_name: 'The Amber Vanguard' } });
+    const board = await mount('open');
+
+    await clickCardButton(board, 'Accept Escort Contract');
+
+    expect(await bannerText(board)).toBe('Contract accepted by The Amber Vanguard! Ready to dispatch.');
+    await expect.poll(() => statusBadge(board)).toBe('accepted');
+  });
+
+  it('shows the card badge as fulfilled after a fulfilment succeeds', async () => {
+    await upstream.upstreamReply(200, {});
+    const board = await mount('in_transit');
+
+    await clickCardButton(board, 'Fulfill');
+
+    expect(await bannerText(board)).toMatch(/^Caravan arrived at Bastion Cross!/);
+    await expect.poll(() => statusBadge(board)).toBe('fulfilled');
+  });
+
   it('shows the not-authorized text on a 403 and keeps the contract accepted', async () => {
     await upstream.upstreamReply(403, { detail: 'Forbidden' });
     const board = await mount('accepted');

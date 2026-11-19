@@ -150,7 +150,7 @@ describe('refused caravan requests show distinct messages', () => {
   });
 });
 
-describe('successful caravan requests', () => {
+describe('successful caravan requests return a new contract and leave the input unchanged', () => {
   it('accept posts the contractor and takes the status from the reply', async () => {
     upstream.reply(200, { contract: { status: 'accepted', contractor_party_name: 'The Amber Vanguard' } });
     const contract = makeContract('open');
@@ -161,8 +161,11 @@ describe('successful caravan requests', () => {
     const call = onlyCall();
     assert.equal(call.path, '/api/v1/shared-worlds/world-1/caravans/contracts/contract-7/accept');
     assert.deepEqual(call.body, { contractor_campaign_id: 'camp-1', contractor_party_name: 'The Amber Vanguard' });
-    assert.equal(contract.status, 'accepted');
-    assert.equal(contract.contractor_party_name, 'The Amber Vanguard');
+    const updated = result.ok ? result.data : contract;
+    assert.notEqual(updated, contract);
+    assert.equal(updated.status, 'accepted');
+    assert.equal(updated.contractor_party_name, 'The Amber Vanguard');
+    assert.equal(contract.status, 'open');
   });
 
   it('dispatch posts the campaign and marks the contract in transit', async () => {
@@ -175,8 +178,11 @@ describe('successful caravan requests', () => {
     const call = onlyCall();
     assert.equal(call.path, '/api/v1/shared-worlds/world-1/caravans/contracts/contract-7/dispatch');
     assert.deepEqual(call.body, { dispatched_by_campaign_id: 'camp-1' });
-    assert.equal(contract.status, 'in_transit');
-    assert.equal(contract.current_stage, 1);
+    const updated = result.ok ? result.data : contract;
+    assert.notEqual(updated, contract);
+    assert.equal(updated.status, 'in_transit');
+    assert.equal(updated.current_stage, 1);
+    assert.equal(contract.status, 'accepted');
   });
 
   it('fulfil posts to the fulfil route and marks the contract fulfilled', async () => {
@@ -187,7 +193,10 @@ describe('successful caravan requests', () => {
 
     assert.equal(result.ok, true);
     assert.equal(onlyCall().path, '/api/v1/shared-worlds/world-1/caravans/contracts/contract-7/fulfill');
-    assert.equal(contract.status, 'fulfilled');
-    assert.equal(contract.current_stage, contract.transit_stages);
+    const updated = result.ok ? result.data : contract;
+    assert.notEqual(updated, contract);
+    assert.equal(updated.status, 'fulfilled');
+    assert.equal(updated.current_stage, contract.transit_stages);
+    assert.equal(contract.status, 'in_transit');
   });
 });
