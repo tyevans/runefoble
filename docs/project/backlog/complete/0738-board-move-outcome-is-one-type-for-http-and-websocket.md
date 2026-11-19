@@ -1,7 +1,7 @@
 ---
 id: '0738'
 title: Board Move Outcome Is One Typed Result for HTTP and WebSocket Moves
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0547
@@ -19,7 +19,7 @@ target_release: 0.9.0
 # TASK-0738: Board Move Outcome Is One Typed Result for HTTP and WebSocket Moves
 
 ## Status
-Refined. Found by the refactor audit round refactor-r1 and checked against the code on 2026-11-17.
+Complete
 
 ## Summary
 A move over the WebSocket drops the trap and pause fields, so a client that moves onto a trap gets no pause signal. `move_token` returns a tuple subclass and checks for a collaborator with `hasattr`.

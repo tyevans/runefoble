@@ -1311,6 +1311,7 @@ The App Shell auth service keeps JWT claim handling, session storage and session
 - **Documentation & Build Navigation**: Featured the Platform Showcase and Changelog in `zensical.toml` and root documentation landing page (`docs/index.md`), and enhanced `scripts/build_docs.py` to synchronize `CHANGELOG.md` to `docs/changelog.md` during documentation compilation.
 
 ### Fixed
+A board socket `confirm_move` onto a trapped path sends `trap_triggered` and `movement_paused` in its `token_moved` frame. HTTP and WebSocket moves send the same typed `MoveOutcome` fields.
 - Campaign Analytics keys its rows by campaign once the session-to-campaign mapping arrives. (TASK-0756)
 - Atlas pin placement is checked once, by campaign_lore (`campaign.play`, which matches `atlas.place_pin`). The gateway no longer requires `run_session`, so players can place pins as the schema intends. (TASK-0768)
 - A crafting combine commits its outcome on the crafting aggregate first; the character applies it once, keyed by the crafting event id. A failed character save answers 503 and the outcome stays pending; the next combine or character read applies it. The optional `attempt_id` makes a client retry safe. ADR-0011 has a "Commands across two aggregates" amendment. (TASK-0772)
