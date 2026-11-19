@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "components": [
     "runefoble-board",
+    "runefoble-board-empty",
     "runefoble-map-uploader",
     "runefoble-radial-menu",
     "runefoble-aoe-template",
@@ -14,6 +15,7 @@
   ],
   "tags": [
     "runefoble-board",
+    "runefoble-board-empty",
     "runefoble-map-uploader",
     "runefoble-radial-menu",
     "runefoble-aoe-template",
