@@ -8,6 +8,7 @@ import {
   forgeBattlemap,
   forgeToken,
   forgeFailureMessage,
+  NO_CAMPAIGN_MESSAGE,
   placeBoardToken,
   type ForgedMapData,
   type ForgedTokenData,
@@ -19,7 +20,8 @@ export class RunefobleAssetForge extends LitElement {
 
   private readonly auth = new AuthConsumerController(this);
 
-  @property({ type: String })
+  /** Campaign that owns every forged asset. The App Shell sets the `campaign-id` attribute. */
+  @property({ type: String, attribute: 'campaign-id' })
   campaignId = '';
 
   /** Base URL prepended to the forge routes (for example, the gateway origin). */
@@ -98,7 +100,7 @@ export class RunefobleAssetForge extends LitElement {
     await this.runForge(async () => {
       const map = await forgeBattlemap({
         prompt: this.mapPrompt,
-        campaignId: this.campaignId || undefined,
+        campaignId: this.campaignId,
         widthCells: 20,
         heightCells: 20,
       }, this.transport());
@@ -129,7 +131,7 @@ export class RunefobleAssetForge extends LitElement {
         prompt: this.tokenPrompt,
         tokenName: this.tokenName,
         tokenType: this.tokenType,
-        campaignId: this.campaignId || undefined,
+        campaignId: this.campaignId,
       }, this.transport());
       const preview = await fetchAssetObjectUrl(token.image_url, () => this.auth.authHeaders());
       revokeAssetObjectUrl(this.tokenPreviewUrl);
@@ -205,10 +207,14 @@ export class RunefobleAssetForge extends LitElement {
       </div>
 
       ${this.activeTab === 'battlemap' ? this.renderBattlemapTab() : this.renderTokenTab()}
-      ${this.errorMessage
-        ? html`<div class="error-banner" role="alert">${this.errorMessage}</div>`
-        : ''}
+      ${this.renderAlert()}
     `;
+  }
+
+  /** With no campaign the forge buttons are disabled and this message says why (ADR-0015). */
+  private renderAlert() {
+    const message = this.campaignId ? this.errorMessage : NO_CAMPAIGN_MESSAGE;
+    return message ? html`<div class="error-banner" role="alert">${message}</div>` : '';
   }
 
   private renderBattlemapTab() {
@@ -226,7 +232,7 @@ export class RunefobleAssetForge extends LitElement {
 
       <button
         class="submit-btn"
-        ?disabled=${this.isGenerating}
+        ?disabled=${this.isGenerating || !this.campaignId}
         @click=${this.handleForgeMap}
       >
         ${this.isGenerating ? 'Synthesizing Map...' : 'Forge Tactical Battlemap'}
@@ -296,7 +302,7 @@ export class RunefobleAssetForge extends LitElement {
 
       <button
         class="submit-btn"
-        ?disabled=${this.isGenerating}
+        ?disabled=${this.isGenerating || !this.campaignId}
         @click=${this.handleForgeToken}
       >
         ${this.isGenerating ? 'Synthesizing Portrait...' : 'Forge Token Portrait'}

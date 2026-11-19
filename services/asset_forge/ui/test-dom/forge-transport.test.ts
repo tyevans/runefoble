@@ -23,13 +23,20 @@ const upstream = commands as unknown as {
 
 const TOKEN = 'dom-token';
 const CAMPAIGN = '6f1d7c2e-0000-4000-8000-000000000001';
+const NO_CAMPAIGN = 'Open a campaign to use the forge. The forge saves each asset to a campaign.';
 
-async function mount(tag: 'runefoble-asset-forge' | 'runefoble-print-forge'): Promise<HTMLElement> {
+type ForgeTag = 'runefoble-asset-forge' | 'runefoble-print-forge';
+
+/**
+ * Mounts a forge element the way the App Shell does: the campaign comes in through the
+ * `campaign-id` attribute. Pass `null` to mount the element with no campaign.
+ */
+async function mount(tag: ForgeTag, campaign: string | null = CAMPAIGN): Promise<HTMLElement> {
   const provider = document.createElement('runefoble-story-auth-provider') as HTMLElement & { token: string };
   provider.token = TOKEN;
-  const el = document.createElement(tag) as HTMLElement & { apiBaseUrl: string; campaignId: string };
+  const el = document.createElement(tag) as HTMLElement & { apiBaseUrl: string };
   el.apiBaseUrl = await upstream.upstreamUrl();
-  el.campaignId = CAMPAIGN;
+  if (campaign !== null) el.setAttribute('campaign-id', campaign);
   provider.append(el);
   document.body.append(provider);
   await (el as unknown as { updateComplete: Promise<boolean> }).updateComplete;
@@ -51,6 +58,37 @@ beforeEach(() => upstream.upstreamReset());
 
 afterEach(() => {
   document.querySelectorAll('runefoble-story-auth-provider').forEach((el) => el.remove());
+});
+
+describe('runefoble-asset-forge campaign id (TASK-0903)', () => {
+  it('reads the campaign-id attribute into the campaignId property', async () => {
+    const el = await mount('runefoble-asset-forge');
+
+    expect((el as HTMLElement & { campaignId: string }).campaignId).toBe(CAMPAIGN);
+  });
+
+  it('sends the token request with the campaign id from the attribute', async () => {
+    await upstream.upstreamReply(503, { detail: 'Silo asset storage is unavailable. The asset was not stored.' });
+    const el = await mount('runefoble-asset-forge');
+
+    clickButton(el, 'Token Portrait');
+    await (el as unknown as { updateComplete: Promise<boolean> }).updateComplete;
+    clickButton(el, 'Forge Token Portrait');
+    await alertText(el);
+
+    const [request] = await upstream.upstreamRequests();
+    expect(request.path).toBe('/api/v1/forge/token');
+    expect(JSON.parse(request.body).campaign_id).toBe(CAMPAIGN);
+  });
+
+  it('shows a message and sends no request without a campaign id', async () => {
+    const el = await mount('runefoble-asset-forge', null);
+
+    clickButton(el, 'Forge Tactical Battlemap');
+
+    expect(await alertText(el)).toBe(NO_CAMPAIGN);
+    expect(await upstream.upstreamRequests()).toEqual([]);
+  });
 });
 
 describe('runefoble-asset-forge transport', () => {
@@ -85,6 +123,35 @@ describe('runefoble-asset-forge transport', () => {
     clickButton(el, 'Forge Tactical Battlemap');
 
     expect(await alertText(el)).toBe('Your account does not have permission for this forge action.');
+  });
+});
+
+describe('runefoble-print-forge campaign id (TASK-0903)', () => {
+  it('reads the campaign-id attribute into the campaignId property', async () => {
+    const el = await mount('runefoble-print-forge');
+
+    expect((el as HTMLElement & { campaignId: string }).campaignId).toBe(CAMPAIGN);
+  });
+
+  it('sends the PDF export with the campaign id from the attribute', async () => {
+    await upstream.upstreamReply(503, { detail: 'Silo asset storage is unavailable. The asset was not stored.' });
+    const el = await mount('runefoble-print-forge');
+
+    clickButton(el, 'Export Grid-Calibrated Multi-Page PDF');
+    await alertText(el);
+
+    const [request] = await upstream.upstreamRequests();
+    expect(request.path).toBe('/api/v1/forge/print-pdf');
+    expect(JSON.parse(request.body).campaign_id).toBe(CAMPAIGN);
+  });
+
+  it('shows a message and sends no request without a campaign id', async () => {
+    const el = await mount('runefoble-print-forge', null);
+
+    clickButton(el, 'Export Grid-Calibrated Multi-Page PDF');
+
+    expect(await alertText(el)).toBe(NO_CAMPAIGN);
+    expect(await upstream.upstreamRequests()).toEqual([]);
   });
 });
 

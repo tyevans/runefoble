@@ -5,7 +5,7 @@ import { LitElement, html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { printForgeStyles } from './runefoble-print-forge.styles.ts';
 import {
-  exportPrintPdf, exportStandees, exportStlToken, forgeFailureMessage, type ForgedDownload,
+  exportPrintPdf, exportStandees, exportStlToken, forgeFailureMessage, NO_CAMPAIGN_MESSAGE, type ForgedDownload,
 } from './forge-api.ts';
 
 export type PrintForgeTab = 'tiled-map' | 'standees' | 'stl-tokens';
@@ -23,7 +23,8 @@ export class RunefoblePrintForge extends LitElement {
 
   private readonly auth = new AuthConsumerController(this);
 
-  @property({ type: String })
+  /** Campaign that owns every forged asset. The App Shell sets the `campaign-id` attribute. */
+  @property({ type: String, attribute: 'campaign-id' })
   campaignId = '';
 
   /** Base URL prepended to the forge routes (for example, the gateway origin). */
@@ -106,7 +107,7 @@ export class RunefoblePrintForge extends LitElement {
         widthCells: this.widthCells,
         heightCells: this.heightCells,
         pageSize: this.pageSize,
-        campaignId: this.campaignId || undefined,
+        campaignId: this.campaignId,
       }, this.transport());
       this.lastExport = await this.downloadable(`Tiled map PDF (${pdf.total_pages} pages)`, pdf);
       this.dispatchEvent(
@@ -116,7 +117,7 @@ export class RunefoblePrintForge extends LitElement {
             width_cells: this.widthCells,
             height_cells: this.heightCells,
             page_size: this.pageSize,
-            campaign_id: this.campaignId || undefined,
+            campaign_id: this.campaignId,
             asset: pdf,
           },
           bubbles: true,
@@ -133,7 +134,7 @@ export class RunefoblePrintForge extends LitElement {
         sheetTitle,
         standees: [{ name: this.standeeName, type: 'pc', hp: this.standeeHp, color: '#2a9d8f' }],
         pageSize: this.pageSize,
-        campaignId: this.campaignId || undefined,
+        campaignId: this.campaignId,
       }, this.transport());
       this.lastExport = await this.downloadable(
         `Papercraft standees (${standees.pages} page${standees.pages === 1 ? '' : 's'})`,
@@ -145,7 +146,7 @@ export class RunefoblePrintForge extends LitElement {
             sheet_title: sheetTitle,
             standees: [{ name: this.standeeName, type: 'pc', hp: this.standeeHp, color: '#2a9d8f' }],
             page_size: this.pageSize,
-            campaign_id: this.campaignId || undefined,
+            campaign_id: this.campaignId,
             asset: standees,
           },
           bubbles: true,
@@ -161,7 +162,7 @@ export class RunefoblePrintForge extends LitElement {
         diameterMm: this.stlDiameterMm,
         conditionLabel: this.stlCondition,
         numSlots: 4,
-        campaignId: this.campaignId || undefined,
+        campaignId: this.campaignId,
       }, this.transport());
       this.lastExport = await this.downloadable(`Watertight STL token (${stl.facet_count} facets)`, stl);
       this.dispatchEvent(
@@ -170,7 +171,7 @@ export class RunefoblePrintForge extends LitElement {
             diameter_mm: this.stlDiameterMm,
             condition_label: this.stlCondition,
             num_slots: 4,
-            campaign_id: this.campaignId || undefined,
+            campaign_id: this.campaignId,
             asset: stl,
           },
           bubbles: true,
@@ -181,6 +182,9 @@ export class RunefoblePrintForge extends LitElement {
   }
 
   private renderExportResult() {
+    if (!this.campaignId) {
+      return html`<div class="error-banner" role="alert">${NO_CAMPAIGN_MESSAGE}</div>`;
+    }
     if (this.errorMessage) {
       return html`<div class="error-banner" role="alert">${this.errorMessage}</div>`;
     }
@@ -248,7 +252,7 @@ export class RunefoblePrintForge extends LitElement {
           </select>
         </div>
       </div>
-      <button class="action-btn" ?disabled=${this.isExporting} @click=${this.handleExportPdf}>
+      <button class="action-btn" ?disabled=${this.isExporting || !this.campaignId} @click=${this.handleExportPdf}>
         ${this.isExporting ? 'Generating PDF...' : 'Export Grid-Calibrated Multi-Page PDF'}
       </button>
 
@@ -304,7 +308,7 @@ export class RunefoblePrintForge extends LitElement {
           </select>
         </div>
       </div>
-      <button class="action-btn" ?disabled=${this.isExporting} @click=${this.handleExportStandees}>
+      <button class="action-btn" ?disabled=${this.isExporting || !this.campaignId} @click=${this.handleExportStandees}>
         ${this.isExporting ? 'Rendering...' : 'Export Foldable Papercraft Standees'}
       </button>
 
@@ -350,7 +354,7 @@ export class RunefoblePrintForge extends LitElement {
           </select>
         </div>
       </div>
-      <button class="action-btn" ?disabled=${this.isExporting} @click=${this.handleExportStl}>
+      <button class="action-btn" ?disabled=${this.isExporting || !this.campaignId} @click=${this.handleExportStl}>
         ${this.isExporting ? 'Generating Mesh...' : 'Export Watertight 3D STL Mesh'}
       </button>
 
