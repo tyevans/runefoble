@@ -21,7 +21,7 @@ from runefoble_auth.caller import CallerIdentity, require_user_or_service_creden
 from runefoble_auth.principal import VerifiedPrincipal, require_principal
 from runefoble_auth.zitadel import ZitadelAuthService
 
-VerifierGetter = Callable[[], ZitadelAuthService]
+VerifierGetter = Callable[..., ZitadelAuthService]
 VerifierSetter = Callable[[ZitadelAuthService | None], None]
 
 
@@ -40,7 +40,9 @@ def make_verifier_holder(
     """Return (get, set) for one process-wide verifier.
 
     `get` builds the verifier on first use with `build`. `set` replaces it. Pass None to
-    reset, so the next `get` builds again.
+    reset, so the next `get` builds again. A service that builds its verifier per app writes
+    its own getter that takes `Request` and reads `app.state`. It passes that getter to
+    `build_identity_dependencies` in the same way.
     """
     current: ZitadelAuthService | None = None
 

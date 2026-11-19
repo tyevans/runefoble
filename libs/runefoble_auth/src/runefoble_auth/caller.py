@@ -7,13 +7,11 @@ credential. A service call has no user id. Routes that act for a user must not u
 dependency. They keep `require_principal`, so a service call cannot take a user's action.
 """
 
-from __future__ import annotations
-
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Annotated
 
-from fastapi import Header
+from fastapi import Depends, Header
 from runefoble_platform.service_credential import (
     SERVICE_CREDENTIAL_HEADER,
     service_credential_matches,
@@ -31,17 +29,21 @@ class CallerIdentity:
 
 
 def require_user_or_service_credential(
-    get_verifier: Callable[[], BearerVerifier],
+    get_verifier: Callable[..., BearerVerifier],
     expected_credential: str,
 ) -> Callable[..., CallerIdentity]:
-    """Build a dependency that accepts a verified user bearer or the service credential."""
+    """Build a dependency that accepts a verified user bearer or the service credential.
+
+    `get_verifier` is a FastAPI dependency, as in `require_principal`.
+    """
 
     def _dependency(
+        verifier: Annotated[BearerVerifier, Depends(get_verifier)],
         authorization: Annotated[str | None, Header(alias="Authorization")] = None,
         service_credential: Annotated[str | None, Header(alias=SERVICE_CREDENTIAL_HEADER)] = None,
     ) -> CallerIdentity:
         if authorization is not None:
-            principal = authenticate_authorization(get_verifier(), authorization)
+            principal = authenticate_authorization(verifier, authorization)
             return CallerIdentity(user_id=principal.user_id, via_service_credential=False)
         if service_credential_matches(service_credential, expected_credential):
             return CallerIdentity(user_id=None, via_service_credential=True)

@@ -26,7 +26,8 @@ from runefoble_platform.redis_bus import RedisStreamsEventBus
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.module_state import restored_seam
 from tests.helpers.spicedb_factory import shared_spicedb_client
-from tests.helpers.ws_identity import bearer
+from tests.helpers.ws_identity import SIGNING_ISSUER, bearer
+from tests.helpers.zitadel_stand_in import zitadel_stand_in
 
 SESSION_STREAM = "runefoble.events.session"
 BOARD_STREAM = "runefoble.events.board"
@@ -94,7 +95,11 @@ def analytics_service(
 
     spicedb = MockSpiceDBClient()
     with (
+        zitadel_stand_in(SIGNING_ISSUER) as stand_in,
         shared_spicedb_client(spicedb),
         restored_seam(get_event_store, set_event_store, None, replace=True),
     ):
+        monkeypatch.setenv("RUNEFOBLE_ZITADEL_ISSUER", SIGNING_ISSUER.issuer)
+        monkeypatch.setenv("RUNEFOBLE_ZITADEL_AUDIENCE", SIGNING_ISSUER.audience)
+        monkeypatch.setenv("RUNEFOBLE_ZITADEL_INTERNAL_URL", stand_in.url)
         yield AnalyticsService(dsn=dsn, redis=double, spicedb=spicedb)
