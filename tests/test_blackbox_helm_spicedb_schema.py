@@ -9,23 +9,17 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import yaml
-
-from tests.helpers.process import run_command
+from tests.helpers.helm import render_chart
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SOURCE_SCHEMA = REPO_ROOT / "libs" / "runefoble_auth" / "schema" / "runefoble.zed"
-CHART = REPO_ROOT / "deployments" / "helm" / "runefoble"
 
 
 def test_rendered_schema_job_carries_the_service_schema() -> None:
-    rendered = run_command(
-        ["helm", "template", "runefoble", str(CHART)], check=True, timeout=120
-    ).stdout
     schemas = [
         doc["data"]["runefoble.zed"]
-        for doc in yaml.safe_load_all(rendered)
-        if doc and doc.get("kind") == "ConfigMap" and "runefoble.zed" in doc.get("data", {})
+        for doc in render_chart()
+        if doc.get("kind") == "ConfigMap" and "runefoble.zed" in doc.get("data", {})
     ]
     assert len(schemas) == 1, f"expected one schema ConfigMap, found {len(schemas)}"
     assert schemas[0].strip() == SOURCE_SCHEMA.read_text().strip(), (

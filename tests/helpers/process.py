@@ -6,9 +6,15 @@
 
 from __future__ import annotations
 
+import os
 import subprocess
+import sys
 from collections.abc import Mapping, Sequence
 from pathlib import Path
+
+# The service credential is refused at import time unless set. Child processes that test the
+# refusal must start without it, so this helper removes it before applying any override.
+SERVICE_CREDENTIAL_ENV = "RUNEFOBLE_SERVICE_CREDENTIAL"
 
 
 def run_command(
@@ -34,3 +40,19 @@ def run_command(
         check=check,
         timeout=timeout,
     )
+
+
+def run_python_child(
+    code: str,
+    env_overrides: Mapping[str, str | None] | None = None,
+    cwd: Path | str | None = None,
+) -> subprocess.CompletedProcess[str]:
+    """Run `python -c <code>` in a child process without the service credential.
+
+    An override with the value None is ignored. Any other value sets that variable.
+    """
+    env = {key: value for key, value in os.environ.items() if key != SERVICE_CREDENTIAL_ENV}
+    for key, value in (env_overrides or {}).items():
+        if value is not None:
+            env[key] = value
+    return run_command([sys.executable, "-c", code], cwd=cwd, env=env, timeout=120)

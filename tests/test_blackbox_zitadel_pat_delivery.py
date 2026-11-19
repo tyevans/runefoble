@@ -9,14 +9,12 @@ manifests.
 
 from __future__ import annotations
 
-import shutil
 import threading
 import time
 from pathlib import Path
 from typing import Any
 
 import pytest
-import yaml
 from helpers.local_http_server import LocalHttpServer, RecordedRequest
 from runefoble_auth.kubernetes_secret import KubernetesApiError
 from runefoble_auth.zitadel_pat_publisher import (
@@ -26,9 +24,8 @@ from runefoble_auth.zitadel_pat_publisher import (
     run,
 )
 
-from tests.helpers.process import run_command
+from tests.helpers.helm import render_chart
 
-HELM_CHART = Path("deployments/helm/runefoble")
 PAT_PATH = "/zitadel/bootstrap/admin.pat"
 PAT_VALUE = "pat-issued-by-zitadel"
 ADMIN_SECRET = "zitadel-admin"
@@ -144,12 +141,7 @@ def test_missing_setting_is_named_in_the_error(tmp_path, service_account):
 
 
 def _render() -> list[dict]:
-    if not shutil.which("helm"):
-        pytest.skip("helm CLI not available")
-    proc = run_command(
-        ["helm", "template", "runefoble", str(HELM_CHART)], check=True, timeout=240.0
-    )
-    return [doc for doc in yaml.safe_load_all(proc.stdout) if doc]
+    return render_chart()
 
 
 def _find(docs: list[dict], kind: str, name: str) -> dict:

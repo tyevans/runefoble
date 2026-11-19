@@ -6,16 +6,10 @@ which value it gets. They also check the settings that read those names, through
 public `PlatformSettings` model, with no code default.
 """
 
-import shutil
-from pathlib import Path
-
 import pytest
-import yaml
 from runefoble_platform.config import PlatformSettings
 
-from tests.helpers.process import run_command
-
-HELM_CHART = Path("deployments/helm/runefoble")
+from tests.helpers.helm import render_chart
 
 # Every service URL setting. Each one is read from RUNEFOBLE_<SERVICE>_URL with no default.
 SERVICE_URL_SETTINGS: dict[str, str] = {
@@ -84,13 +78,7 @@ EXPECTED_SERVICE_URLS: dict[str, dict[str, str]] = {
 
 def _render_deployments() -> dict[str, dict]:
     """Render the chart and return every Deployment keyed by its name."""
-    if not shutil.which("helm"):
-        pytest.skip("helm CLI not available")
-
-    proc = run_command(
-        ["helm", "template", "runefoble", str(HELM_CHART)], check=True, timeout=240.0
-    )
-    docs = [doc for doc in yaml.safe_load_all(proc.stdout) if doc]
+    docs = render_chart()
     return {doc["metadata"]["name"]: doc for doc in docs if doc.get("kind") == "Deployment"}
 
 

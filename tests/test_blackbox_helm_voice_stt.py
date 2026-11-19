@@ -5,26 +5,16 @@ output. The engine choice decides the environment variables and whether the pod 
 faster-whisper model cache.
 """
 
-import shutil
-from pathlib import Path
+from tests.helpers.helm import render_chart
 
-import pytest
-import yaml
-
-from tests.helpers.process import run_command
-
-HELM_CHART = Path("deployments/helm/runefoble")
 WHISPER_BASE_URL = "http://whisper.test:8080"
 
 
 def _render(*set_args: str) -> list[dict]:
-    if not shutil.which("helm"):
-        pytest.skip("helm CLI not available")
-    args = ["helm", "template", "runefoble", str(HELM_CHART)]
+    args: list[str] = []
     for value in set_args:
         args += ["--set-string", value]
-    proc = run_command(args, check=True, timeout=240.0)
-    return [doc for doc in yaml.safe_load_all(proc.stdout) if doc]
+    return render_chart(*args)
 
 
 def _voice_deployment(docs: list[dict]) -> dict:
