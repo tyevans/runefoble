@@ -15,18 +15,13 @@ from runefoble_platform.aggregate_loading import register_store_unavailable_hand
 from runefoble_platform.config import EmbeddingEndpointSettings, RulesCompendiumSettings
 from runefoble_platform.event_publish import event_publish_failures
 from runefoble_platform.event_sourcing import get_event_store
-from runefoble_platform.ui_manifest import load_ui_manifest
+from runefoble_platform.ui_manifest import ui_manifest_router
 
 from rules_compendium.projection import rebuild_homebrew_projection
 from rules_compendium.retrieval_factory import build_retrieval_engine
 from rules_compendium.routers.encounters import router as encounters_router
 from rules_compendium.routers.homebrew import router as homebrew_router
 from rules_compendium.routers.rules import router as rules_router
-
-# Start-up fails when the manifest is missing or invalid. No fallback manifest exists (ADR-0015 4).
-UI_MANIFEST = load_ui_manifest(
-    Path(__file__).resolve().parent.parent.parent / "ui" / "manifest.json"
-)
 
 
 @asynccontextmanager
@@ -69,6 +64,12 @@ def create_app() -> FastAPI:
     app.include_router(encounters_router)
     app.include_router(homebrew_router)
     app.include_router(platform_router)
+    app.include_router(
+        ui_manifest_router(
+            Path(__file__).resolve().parents[2] / "ui" / "manifest.json",
+            summary="Advertise compendium service manifest",
+        )
+    )
     return app
 
 
@@ -83,12 +84,6 @@ def health_check() -> dict[str, Any]:
         "service": "rules_compendium",
         "event_publish_failures": event_publish_failures(),
     }
-
-
-@platform_router.get("/ui/manifest", tags=["Microfrontends"])
-def get_ui_manifest() -> dict[str, Any]:
-    """Advertise compendium service manifest."""
-    return UI_MANIFEST
 
 
 # Build the event store now. A deployed service without a reachable store refuses to start (TASK-0707).

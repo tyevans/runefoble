@@ -1,8 +1,9 @@
-"""Load a service microfrontend manifest. A missing or invalid manifest is a start-up error.
+"""Load and serve a service microfrontend manifest. A missing or invalid manifest is a start-up error.
 
 ADR-0013: the manifest is the contract for the App Shell. ADR-0015 (4): a broken
-manifest must not fall back to hardcoded data. Run as a module to check manifests in
-the build: `python -m runefoble_platform.ui_manifest <manifest.json>...`.
+manifest must not fall back to hardcoded data. Services mount `ui_manifest_router` to
+serve `GET /ui/manifest`. Run as a module to check manifests in the build:
+`python -m runefoble_platform.ui_manifest <manifest.json>...`.
 """
 
 from __future__ import annotations
@@ -11,6 +12,8 @@ import json
 import sys
 from pathlib import Path
 from typing import Any
+
+from fastapi import APIRouter
 
 
 class UIManifestError(RuntimeError):
@@ -34,6 +37,22 @@ def load_ui_manifest(path: Path) -> dict[str, Any]:
     if not isinstance(manifest, dict):
         raise UIManifestError(f"UI manifest must be a JSON object: {path}")
     return manifest
+
+
+def ui_manifest_router(manifest_path: Path, *, summary: str) -> APIRouter:
+    """Return a router that serves the manifest at `manifest_path` on `GET /ui/manifest`.
+
+    The manifest is read once, when this function runs. A missing or invalid file raises
+    UIManifestError here, so the service app fails when it is built.
+    """
+    manifest = load_ui_manifest(manifest_path)
+    router = APIRouter(tags=["Microfrontends"])
+
+    @router.get("/ui/manifest", summary=summary)
+    def get_ui_manifest() -> dict[str, Any]:
+        return manifest
+
+    return router
 
 
 def main(argv: list[str]) -> int:

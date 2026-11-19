@@ -9,7 +9,6 @@ from __future__ import annotations
 import contextlib
 from collections.abc import AsyncIterator
 from pathlib import Path
-from typing import Any
 
 from character_sheet.audience_status import start_audience_status_consumers
 from character_sheet.crafting_router import router as crafting_router
@@ -30,12 +29,7 @@ from runefoble_platform.domain_errors_http import install_domain_error_handlers
 from runefoble_platform.event_publish import event_publish_failures
 from runefoble_platform.event_sourcing import event_store_kind, get_event_store
 from runefoble_platform.stream_consumer import consumer_statuses
-from runefoble_platform.ui_manifest import load_ui_manifest
-
-# Start-up fails when the manifest is missing or invalid. No fallback manifest exists (ADR-0015 4).
-UI_MANIFEST = load_ui_manifest(
-    Path(__file__).resolve().parent.parent.parent / "ui" / "manifest.json"
-)
+from runefoble_platform.ui_manifest import ui_manifest_router
 
 # Build the event store now. A deployed service without a reachable store refuses to start (TASK-0707).
 get_event_store()
@@ -65,6 +59,12 @@ app = FastAPI(
 app.include_router(router)
 app.include_router(crafting_router)
 app.include_router(wardrobe_router)
+app.include_router(
+    ui_manifest_router(
+        Path(__file__).resolve().parents[2] / "ui" / "manifest.json",
+        summary="Advertise vendored microfrontend components for character sheet",
+    )
+)
 register_store_unavailable_handlers(app)
 install_authz_error_handlers(app)
 install_domain_error_handlers(app)
@@ -79,12 +79,6 @@ async def health_check(request: Request):
         "event_publish_failures": event_publish_failures(),
         "consumers": consumer_statuses(getattr(request.app.state, "consumers", {})),
     }
-
-
-@app.get("/ui/manifest")
-def get_ui_manifest() -> dict[str, Any]:
-    """Advertise vendored microfrontend components for character sheet."""
-    return UI_MANIFEST
 
 
 def main():

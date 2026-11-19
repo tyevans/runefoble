@@ -17,7 +17,7 @@ from runefoble_platform.aggregate_loading import register_store_unavailable_hand
 from runefoble_platform.engine_ports import EngineUnavailableError, engine_unavailable_handler
 from runefoble_platform.event_publish import event_publish_failures
 from runefoble_platform.event_sourcing import get_event_store
-from runefoble_platform.ui_manifest import load_ui_manifest
+from runefoble_platform.ui_manifest import ui_manifest_router
 
 from asset_forge.dependencies import event_bus_provider, get_wardrobe_generator
 from asset_forge.map_generation_engine import get_map_generator
@@ -27,11 +27,6 @@ from asset_forge.routers.campaign_records import router as campaign_records_rout
 from asset_forge.routers.print_forge import router as print_forge_router
 from asset_forge.routers.token import router as token_router
 from asset_forge.routers.wardrobe import router as wardrobe_router
-
-# Start-up fails when the manifest is missing or invalid. No fallback manifest exists (ADR-0015 4).
-UI_MANIFEST = load_ui_manifest(
-    Path(__file__).resolve().parent.parent.parent / "ui" / "manifest.json"
-)
 
 
 @asynccontextmanager
@@ -76,6 +71,12 @@ app.include_router(token_router)
 app.include_router(print_forge_router)
 app.include_router(wardrobe_router)
 app.include_router(campaign_records_router)
+app.include_router(
+    ui_manifest_router(
+        Path(__file__).resolve().parents[2] / "ui" / "manifest.json",
+        summary="Advertise vendored microfrontend components for procedural asset forge",
+    )
+)
 
 
 @app.get("/healthz", tags=["Health"])
@@ -86,12 +87,6 @@ def health_check() -> dict[str, Any]:
         "service": "asset_forge",
         "event_publish_failures": event_publish_failures(),
     }
-
-
-@app.get("/ui/manifest", tags=["Microfrontends"])
-def get_ui_manifest() -> dict[str, Any]:
-    """Advertise vendored microfrontend components for procedural asset forge."""
-    return UI_MANIFEST
 
 
 def main() -> None:

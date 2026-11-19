@@ -28,7 +28,7 @@ from runefoble_platform.event_bus import EventBusProvider
 from runefoble_platform.event_publish import event_publish_failures
 from runefoble_platform.event_sourcing import create_aggregate_repository
 from runefoble_platform.stream_consumer import consumer_statuses
-from runefoble_platform.ui_manifest import load_ui_manifest
+from runefoble_platform.ui_manifest import ui_manifest_router
 from sqlalchemy.exc import SQLAlchemyError
 
 from campaign_analytics.aggregate import CampaignChronicleAggregate
@@ -45,11 +45,6 @@ from campaign_analytics.storage import (
     require_postgresql,
 )
 from campaign_analytics.worker import CampaignAnalyticsWorker
-
-# Start-up fails when the manifest is missing or invalid. No fallback manifest exists (ADR-0015 4).
-UI_MANIFEST = load_ui_manifest(
-    Path(__file__).resolve().parent.parent.parent / "ui" / "manifest.json"
-)
 
 system_router = APIRouter()
 
@@ -88,12 +83,6 @@ async def get_metrics() -> dict[str, Any]:
         **(await storage.counts()),
         "events_processed": worker.processed_count if worker else 0,
     }
-
-
-@system_router.get("/ui/manifest", tags=["Microfrontends"])
-def get_ui_manifest() -> dict[str, Any]:
-    """Advertise vendored microfrontend components for campaign telemetry and timeline."""
-    return UI_MANIFEST
 
 
 def create_app(settings: PlatformSettings, event_bus: EventBusProvider) -> FastAPI:
@@ -167,6 +156,12 @@ def create_app(settings: PlatformSettings, event_bus: EventBusProvider) -> FastA
     app.include_router(mvp_router)
     app.include_router(timeline_router)
     app.include_router(system_router)
+    app.include_router(
+        ui_manifest_router(
+            Path(__file__).resolve().parents[2] / "ui" / "manifest.json",
+            summary="Advertise vendored microfrontend components for campaign telemetry and timeline",
+        )
+    )
     return app
 
 

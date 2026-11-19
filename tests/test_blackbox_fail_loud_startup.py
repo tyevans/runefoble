@@ -44,7 +44,13 @@ def _import_module(module: str, pythonpath: Path | None, env_overrides: dict[str
 
 @pytest.mark.parametrize(
     ("service", "module"),
-    [("character_sheet", "character_sheet.main"), ("soundscape", "soundscape.main")],
+    [
+        ("character_sheet", "character_sheet.main"),
+        ("soundscape", "soundscape.main"),
+        ("rules_compendium", "rules_compendium.main"),
+        ("the_watcher", "the_watcher.main"),
+        ("board_state", "board_state.main"),
+    ],
 )
 def test_service_refuses_to_start_when_ui_manifest_is_missing(
     tmp_path: Path, service: str, module: str
@@ -63,7 +69,13 @@ def test_service_refuses_to_start_when_ui_manifest_is_missing(
 
 @pytest.mark.parametrize(
     "module",
-    ["character_sheet.main", "soundscape.main"],
+    [
+        "character_sheet.main",
+        "soundscape.main",
+        "rules_compendium.main",
+        "the_watcher.main",
+        "board_state.main",
+    ],
 )
 def test_service_starts_when_ui_manifest_is_present(module: str) -> None:
     """With the vendored manifest in place, the same import succeeds."""

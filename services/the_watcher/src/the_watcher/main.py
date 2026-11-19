@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI, Request
 from runefoble_auth.authz_http import install_authz_error_handlers
@@ -14,6 +15,7 @@ from runefoble_platform.event_publish import (
     install_publish_failure_handler,
 )
 from runefoble_platform.stream_consumer import consumer_statuses
+from runefoble_platform.ui_manifest import ui_manifest_router
 from the_watcher.audience_narration import CONSUMER_NAME, start_audience_narration_consumers
 from the_watcher.container import WatcherContainer, build_container
 from the_watcher.copilot_state import install_copilot_state_error_handlers
@@ -27,7 +29,6 @@ from the_watcher.routers import (
     intent_router,
     stand_in_router,
     turf_war_router,
-    ui_manifest_router,
 )
 
 ContainerBuilder = Callable[[], WatcherContainer]
@@ -79,7 +80,12 @@ def create_app(build: ContainerBuilder = build_container) -> FastAPI:
     app.include_router(factions_router)
     app.include_router(faction_resources_router)
     app.include_router(turf_war_router)
-    app.include_router(ui_manifest_router)
+    app.include_router(
+        ui_manifest_router(
+            Path(__file__).resolve().parents[2] / "ui" / "manifest.json",
+            summary="Advertise vendored microfrontend components for The Watcher",
+        )
+    )
     install_publish_failure_handler(app)
     install_authz_error_handlers(app)
     install_copilot_state_error_handlers(app)
