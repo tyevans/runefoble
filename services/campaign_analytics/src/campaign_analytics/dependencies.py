@@ -4,21 +4,15 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import Depends
+from fastapi import Depends, Request
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.permissions import check_subject
 from runefoble_auth.spicedb import SpiceDBClient
-from runefoble_auth.wiring import (
-    build_identity_dependencies,
-    make_verifier_holder,
-    verifier_from_settings,
-)
-from runefoble_platform.config import PlatformSettings
+from runefoble_auth.wiring import build_identity_dependencies
+from runefoble_auth.zitadel import ZitadelAuthService
 
 from campaign_analytics.storage import CampaignAnalyticsStorage, StorageUnavailableError
 from campaign_analytics.worker import CampaignAnalyticsWorker
-
-platform_settings = PlatformSettings()
 
 _storage: CampaignAnalyticsStorage | None = None
 _worker: CampaignAnalyticsWorker | None = None
@@ -48,11 +42,17 @@ def set_worker(worker: CampaignAnalyticsWorker | None) -> None:
     _worker = worker
 
 
-get_zitadel_auth_service, set_zitadel_auth_service = make_verifier_holder(
-    lambda: verifier_from_settings(platform_settings)
-)
+def get_request_verifier(request: Request) -> ZitadelAuthService:
+    """Provide the verifier that `create_app` built from the settings it received.
+
+    The verifier lives on the app that serves the request, so two apps never share one.
+    """
+    verifier: ZitadelAuthService = request.app.state.zitadel_verifier
+    return verifier
+
+
 get_principal, CallerPrincipal, CallerId, get_caller_or_service, CallerOrService = (
-    build_identity_dependencies(get_zitadel_auth_service, None)
+    build_identity_dependencies(get_request_verifier, None)
 )
 
 

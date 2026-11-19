@@ -8,17 +8,20 @@ grant identity. Authorization setup uses the SpiceDB double that the services re
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from uuid import uuid4
 
 import pytest
 from board_state.main import app as board_app
-from campaign_analytics.main import app as analytics_app
+from campaign_analytics.main import create_app_from_environment
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from rules_compendium.dependencies import get_spicedb_client
 from rules_compendium.main import app as compendium_app
 from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
 
 from tests.helpers.ws_identity import SIGNING_ISSUER
+from tests.helpers.zitadel_stand_in import zitadel_stand_in
 
 UNTRUSTED_ISSUER = SigningTestIssuer()
 
@@ -48,11 +51,22 @@ def _protected_calls(campaign_id: str) -> list[tuple[str, str, str, dict | None]
     ]
 
 
-SERVICE_APPS = {"board": board_app, "compendium": compendium_app, "analytics": analytics_app}
+@pytest.fixture(scope="module")
+def service_apps() -> Iterator[dict[str, FastAPI]]:
+    """The three token-verifying apps. Campaign Analytics trusts the test issuer through its settings."""
+    with zitadel_stand_in(SIGNING_ISSUER) as stand_in, pytest.MonkeyPatch.context() as env:
+        env.setenv("RUNEFOBLE_ZITADEL_ISSUER", SIGNING_ISSUER.issuer)
+        env.setenv("RUNEFOBLE_ZITADEL_AUDIENCE", SIGNING_ISSUER.audience)
+        env.setenv("RUNEFOBLE_ZITADEL_INTERNAL_URL", stand_in.url)
+        yield {
+            "board": board_app,
+            "compendium": compendium_app,
+            "analytics": create_app_from_environment(),
+        }
 
 
-def _anonymous(service: str) -> TestClient:
-    return TestClient(SERVICE_APPS[service])
+def _anonymous(apps: dict[str, FastAPI], service: str) -> TestClient:
+    return TestClient(apps[service])
 
 
 @pytest.mark.parametrize(
@@ -63,12 +77,14 @@ def _anonymous(service: str) -> TestClient:
         pytest.param(UNTRUSTED_ISSUER.mint("dm1"), id="forged-token-from-untrusted-key"),
     ],
 )
-def test_protected_routes_refuse_missing_or_forged_bearer(credential: str | None) -> None:
+def test_protected_routes_refuse_missing_or_forged_bearer(
+    credential: str | None, service_apps: dict[str, FastAPI]
+) -> None:
     """Every protected route in the three services returns 401 without a verified bearer."""
     campaign_id = str(uuid4())
     for service, method, path, body in _protected_calls(campaign_id):
         headers = {} if credential is None else _auth(credential)
-        client = TestClient(SERVICE_APPS[service], headers=headers)
+        client = TestClient(service_apps[service], headers=headers)
         res = client.request(method, path, json=body)
         assert res.status_code == 401, f"{service} {method} {path} returned {res.status_code}"
         assert res.headers.get("www-authenticate") == "Bearer"
@@ -90,9 +106,11 @@ PUBLIC_ROUTES = [
 
 
 @pytest.mark.parametrize(("service", "path"), PUBLIC_ROUTES)
-def test_health_openapi_and_manifest_stay_public(service: str, path: str) -> None:
+def test_health_openapi_and_manifest_stay_public(
+    service: str, path: str, service_apps: dict[str, FastAPI]
+) -> None:
     """Health, OpenAPI, and microfrontend discovery need no bearer. Other routes do."""
-    res = _anonymous(service).get(path)
+    res = _anonymous(service_apps, service).get(path)
     assert res.status_code == 200, f"{service} {path} returned {res.status_code}"
 
 

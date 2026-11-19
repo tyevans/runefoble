@@ -14,7 +14,6 @@ from __future__ import annotations
 from uuid import uuid4
 
 import pytest
-from campaign_analytics.main import app
 from fastapi.testclient import TestClient
 from runefoble_auth.mock import MockSpiceDBClient
 from runefoble_events.events import (
@@ -141,7 +140,7 @@ async def test_spatial_heatmap_spicedb_zanzibar_authorization(
     """Verify SpiceDB Zanzibar object authorization protects telemetry endpoints."""
     campaign_id = "camp-secure-999"
 
-    anonymous = TestClient(app)
+    anonymous = TestClient(client.app)
     resp_anon = anonymous.get(f"/api/v1/analytics/campaigns/{campaign_id}/heatmap")
     assert resp_anon.status_code == 401
 

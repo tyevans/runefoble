@@ -66,11 +66,7 @@ SERVICE_SEAMS: tuple[ServiceSeams, ...] = (
         verifier="board_state.dependencies",
         verifier_scope="session",
     ),
-    ServiceSeams(
-        "campaign_analytics",
-        verifier="campaign_analytics.dependencies",
-        verifier_scope="session",
-    ),
+    ServiceSeams("campaign_analytics"),
     ServiceSeams(
         "campaign_lore",
         bus="campaign_lore.dependencies",

@@ -20,6 +20,7 @@ from fastapi import APIRouter, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from runefoble_auth.authz_http import install_authz_error_handlers
+from runefoble_auth.wiring import verifier_from_settings
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.consumer_group import RedisConsumerGroup
 from runefoble_platform.event_bus import EventBusProvider
@@ -150,6 +151,7 @@ def create_app(settings: PlatformSettings, event_bus: EventBusProvider) -> FastA
         openapi_url="/openapi.json",
         lifespan=lifespan,
     )
+    app.state.zitadel_verifier = verifier_from_settings(settings)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],

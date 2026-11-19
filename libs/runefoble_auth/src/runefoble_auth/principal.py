@@ -8,7 +8,7 @@ of the principal: roles are not authority (see Hard Invariant 1).
 from collections.abc import Callable
 from typing import Annotated, Protocol
 
-from fastapi import Header, HTTPException, Request
+from fastapi import Depends, Header, HTTPException, Request
 from pydantic import BaseModel, ConfigDict
 
 UNAUTHORIZED_HEADERS = {"WWW-Authenticate": "Bearer"}
@@ -68,9 +68,12 @@ def authenticate_authorization(
 
 
 def require_principal(
-    get_verifier: Callable[[], BearerVerifier],
+    get_verifier: Callable[..., BearerVerifier],
 ) -> Callable[..., VerifiedPrincipal]:
     """Build a FastAPI dependency that yields the verified principal for a request.
+
+    `get_verifier` is a FastAPI dependency. It may take `Request` to read a verifier
+    that the app stored on `app.state`. A zero-argument getter works too.
 
     The dependency is synchronous on purpose. FastAPI runs it in a worker
     thread, so a JWKS fetch never blocks the event loop.
@@ -78,9 +81,10 @@ def require_principal(
 
     def _dependency(
         request: Request,
+        verifier: Annotated[BearerVerifier, Depends(get_verifier)],
         authorization: Annotated[str | None, Header(alias="Authorization")] = None,
     ) -> VerifiedPrincipal:
-        principal = authenticate_authorization(get_verifier(), authorization)
+        principal = authenticate_authorization(verifier, authorization)
         request.state.principal = principal
         return principal
 
