@@ -1,7 +1,7 @@
 /**
  * Event store contract for Audience Studio aggregates (ADR-0011 event sourcing).
- * Two implementations exist: PostgreSQL for deployed environments and an
- * in-memory store for tests only.
+ * Production code has one implementation: PostgreSQL. Tests inject an in-memory fake
+ * from `test/fakes/`.
  */
 
 export interface NewEvent {
@@ -30,7 +30,6 @@ export class ConcurrencyConflictError extends Error {
 }
 
 export interface EventStore {
-  readonly kind: 'postgresql' | 'memory';
   /** Create storage objects and verify the connection. Throws when the store is unusable. */
   init(): Promise<void>;
   ping(): Promise<boolean>;

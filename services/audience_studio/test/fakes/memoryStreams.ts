@@ -1,11 +1,12 @@
 /**
- * In-memory stream publisher. Used only in tests (RUNEFOBLE_REDIS_URL=mock://...). It can simulate an
- * outage and publish failures, so tests can exercise the rejection path.
+ * In-memory stream publisher for tests. Tests inject it through `createAdapters` in `buildServer`.
+ * It can simulate an outage and publish failures, so tests can exercise the rejection path.
+ * Production code cannot select it (ADR-0015 decision f).
  */
 
-import { DependencyUnavailableError } from './errors.js';
-import type { StreamPublisher } from './streamPublisher.js';
-import type { CloudEvent } from './types.js';
+import { DependencyUnavailableError } from '../../src/errors.js';
+import type { StreamPublisher } from '../../src/streamPublisher.js';
+import type { CloudEvent } from '../../src/types.js';
 
 export class InMemoryStreamPublisher implements StreamPublisher {
   readonly published: CloudEvent[] = [];

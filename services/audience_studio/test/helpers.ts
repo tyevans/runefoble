@@ -9,8 +9,8 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { exportJWK, generateKeyPair, SignJWT, type CryptoKey, type JWK } from 'jose';
-import { MemoryEventStore } from '../src/eventStore/memoryEventStore.js';
-import { InMemoryStreamPublisher } from '../src/memoryStreams.js';
+import { MemoryEventStore } from './fakes/memoryEventStore.js';
+import { InMemoryStreamPublisher } from './fakes/memoryStreams.js';
 import type { AppContext } from '../src/server.js';
 import { buildServer } from '../src/server.js';
 import type { SpiceDbPort } from '../src/spicedb/spicedbPort.js';

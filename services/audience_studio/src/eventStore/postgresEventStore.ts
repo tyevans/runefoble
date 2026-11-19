@@ -38,7 +38,6 @@ function isEventVersionViolation(err: unknown): boolean {
 }
 
 export class PostgresEventStore implements EventStore {
-  readonly kind = 'postgresql' as const;
   private readonly pool: pg.Pool;
 
   constructor(connectionString: string) {

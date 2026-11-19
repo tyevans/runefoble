@@ -1,11 +1,11 @@
 /**
- * Developer entrypoint test. The `dev` script starts the service from TypeScript source and
- * must serve the public health route (ADR-0015 decision c keeps the health probes public).
+ * Developer entrypoint test. The `dev` script starts the service from TypeScript source. The
+ * source applies the start-up checks, so a missing event store stops the dev server before it
+ * listens (ADR-0015 decision f). The built-process tests in `tests/` cover `GET /healthz`.
  */
 
 import assert from 'node:assert/strict';
 import { spawn, type ChildProcess } from 'node:child_process';
-import { createServer as createHttpServer, type Server } from 'node:http';
 import { createServer } from 'node:net';
 import { after, test } from 'node:test';
 import { fileURLToPath } from 'node:url';
@@ -32,60 +32,48 @@ async function freePort(): Promise<number> {
   });
 }
 
-/** Stands in for Zitadel's discovery document and JWKS endpoint. Start-up reads both. */
-async function startJwksStub(): Promise<Server> {
-  const server = createHttpServer((req, res) => {
-    if (req.url === '/.well-known/openid-configuration') {
-      res.writeHead(200, { 'content-type': 'application/json' });
-      res.end(JSON.stringify({ jwks_uri: 'http://zitadel.test/oauth/v2/keys' }));
-      return;
-    }
-    res.writeHead(200, { 'content-type': 'application/json' });
-    res.end(JSON.stringify({ keys: [] }));
+/** Collects the child's stderr until it contains `pattern`, or fails after `timeoutMs`. */
+async function waitForStderr(child: ChildProcess, pattern: RegExp, timeoutMs: number): Promise<string> {
+  let output = '';
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(`dev server never printed ${pattern}:\n${output}`)), timeoutMs);
+    child.stderr?.on('data', (chunk: Buffer) => {
+      output += chunk.toString();
+      if (pattern.test(output)) {
+        clearTimeout(timer);
+        resolve(output);
+      }
+    });
   });
-  await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
-  return server;
 }
 
-async function waitForHealth(url: string, timeoutMs: number): Promise<Response> {
-  const deadline = Date.now() + timeoutMs;
-  let lastError: unknown;
-  while (Date.now() < deadline) {
-    try {
-      return await fetch(url);
-    } catch (err) {
-      lastError = err;
-      await new Promise((resolve) => setTimeout(resolve, 250));
-    }
-  }
-  throw new Error(`dev server did not answer ${url}: ${String(lastError)}`);
-}
-
-test('the dev script starts the service and serves GET /healthz', async () => {
+test('the dev script runs the TypeScript start-up checks and refuses to start without the event store', async () => {
   const port = await freePort();
-  const jwks = await startJwksStub();
-  after(() => jwks.close());
-  const jwksPort = (jwks.address() as { port: number }).port;
-  // NODE_ENV=test selects the in-memory adapters, so the dev server needs no Postgres or Redis.
+  // The source has no in-memory store (ADR-0015 decision f), so NODE_ENV=test does not help.
+  const { RUNEFOBLE_DATABASE_URL: _unset, ...inherited } = process.env;
   const child = spawn('pnpm', ['run', 'dev'], {
     cwd: PACKAGE_ROOT,
     detached: true,
-    stdio: 'ignore',
+    stdio: ['ignore', 'ignore', 'pipe'],
     env: {
-      ...process.env,
+      ...inherited,
       NODE_ENV: 'test',
       PORT: String(port),
       HOST: '127.0.0.1',
+      RUNEFOBLE_REDIS_URL: 'redis://127.0.0.1:1/0',
       RUNEFOBLE_ZITADEL_ISSUER: 'http://zitadel.test',
       RUNEFOBLE_ZITADEL_AUDIENCE: 'runefoble-api',
-      RUNEFOBLE_ZITADEL_INTERNAL_URL: `http://127.0.0.1:${jwksPort}`,
       RUNEFOBLE_SPICEDB_ENDPOINT: '127.0.0.1:50051',
       RUNEFOBLE_SPICEDB_PRESHARED_KEY: 'test-only',
     },
   });
   children.push(child);
 
-  const response = await waitForHealth(`http://127.0.0.1:${port}/healthz`, 60_000);
-  assert.equal(response.status, 200);
-  assert.deepEqual(await response.json(), { status: 'ok', service: 'audience_studio' });
+  const stderr = await waitForStderr(child, /RUNEFOBLE_DATABASE_URL is not set/, 60_000);
+  assert.match(stderr, /src\/config\.ts/);
+  const health = await fetch(`http://127.0.0.1:${port}/healthz`).then(
+    () => 'answered',
+    () => 'refused'
+  );
+  assert.equal(health, 'refused');
 });

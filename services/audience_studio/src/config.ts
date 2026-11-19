@@ -56,3 +56,40 @@ export function readZitadelSettings(env: NodeJS.ProcessEnv): ZitadelSettings {
   const internalUrl = env.RUNEFOBLE_ZITADEL_INTERNAL_URL || undefined;
   return { issuer, audience, internalUrl };
 }
+
+export const DATABASE_URL_VAR = 'RUNEFOBLE_DATABASE_URL';
+export const REDIS_URL_VAR = 'RUNEFOBLE_REDIS_URL';
+/** Same flag name as the Python services and the Helm gate (scripts/check_helm_event_store.py). */
+export const EVENT_STORE_BACKEND_VAR = 'RUNEFOBLE_EVENT_STORE_BACKEND';
+
+/** Where the event store and the stream bus live. Both are required in every environment. */
+export interface StoreSettings {
+  databaseUrl: string;
+  redisUrl: string;
+}
+
+/**
+ * Read the PostgreSQL and Redis URLs (ADR-0015 decision f). No value has a default, and NODE_ENV
+ * changes nothing. Production code has no in-memory store and no mock stream bus. Tests inject
+ * fakes through `createAdapters` in `buildServer`.
+ */
+export function readStoreSettings(env: NodeJS.ProcessEnv): StoreSettings {
+  const backend = env[EVENT_STORE_BACKEND_VAR];
+  if (backend !== undefined && backend !== 'postgresql') {
+    throw new Error(
+      `${EVENT_STORE_BACKEND_VAR} must be "postgresql". Got '${backend}'. Audience Studio has no in-memory event store.`
+    );
+  }
+  const databaseUrl = env[DATABASE_URL_VAR];
+  if (!databaseUrl) {
+    throw new Error(`${DATABASE_URL_VAR} is not set. Audience Studio needs the PostgreSQL event store.`);
+  }
+  const redisUrl = env[REDIS_URL_VAR];
+  if (!redisUrl) {
+    throw new Error(`${REDIS_URL_VAR} is not set. Audience Studio needs Redis Streams.`);
+  }
+  if (!redisUrl.startsWith('redis://') && !redisUrl.startsWith('rediss://')) {
+    throw new Error(`${REDIS_URL_VAR} must start with redis:// or rediss://. Got '${redisUrl}'.`);
+  }
+  return { databaseUrl, redisUrl };
+}

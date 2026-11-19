@@ -1,6 +1,6 @@
 /**
- * In-memory event store. Used only in tests (NODE_ENV=test without a database URL).
- * Deployed services never select it (ADR-0015 decision f).
+ * In-memory event store for tests. Tests inject it through `createAdapters` in `buildServer`.
+ * Production code cannot select it (ADR-0015 decision f).
  */
 
 import {
@@ -8,10 +8,9 @@ import {
   type AppendChange,
   type EventStore,
   type StoredEvent,
-} from './types.js';
+} from '../../src/eventStore/types.js';
 
 export class MemoryEventStore implements EventStore {
-  readonly kind = 'memory' as const;
   private readonly streams = new Map<string, StoredEvent[]>();
   /** Outbox: events committed and not yet sent, in commit order. */
   private unsent: StoredEvent[] = [];
