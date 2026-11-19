@@ -2,26 +2,20 @@
 
 from __future__ import annotations
 
-from uuid import uuid4
-
 import pytest
 from fastapi.testclient import TestClient
-from runefoble_auth.mock import MockSpiceDBClient
 
+from tests.helpers.campaign_setup import create_campaign
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
-@pytest.mark.asyncio
-async def test_frontdoor_worker_modular_endpoints(
-    session_client: TestClient, spicedb: MockSpiceDBClient, mock_bus: MockAsyncRedis
-):
+def test_frontdoor_worker_modular_endpoints(session_client: TestClient, mock_bus: MockAsyncRedis):
     """Verify frontdoor execution across roster, relationships, rumors, and shelf inventory routers."""
-    cid, gm_id = str(uuid4()), "gm_w"
-    await spicedb.write_relationship("campaign", cid, "dungeon_master", "user", gm_id)
-    await spicedb.write_relationship("campaign", cid, "player", "user", gm_id)
+    gm_id = "gm_w"
+    cid = create_campaign(session_client, gm_id)
     h = {"Authorization": f"Bearer {SIGNING_ISSUER.mint(gm_id)}"}
 
     s_res = session_client.post(

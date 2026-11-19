@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from fastapi.testclient import TestClient
 from game_session.events import STREAM_TAVERN, STREAM_WEST_MARCHES
-from runefoble_auth.mock import MockSpiceDBClient
 from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
 
 from tests.helpers.mock_redis import MockAsyncRedis
@@ -14,10 +13,10 @@ from .conftest import setup_campaign_settlement, ws_subprotocols
 
 
 def test_merchant_haggling_gambits_and_dm_override(
-    session_client: TestClient, spicedb: MockSpiceDBClient, mock_bus: MockAsyncRedis
+    session_client: TestClient, mock_bus: MockAsyncRedis
 ) -> None:
     """Simulate persuasion rolls against merchant temperament and verify DM mood adjustment."""
-    cid, sid, _, dm_h, p_h = setup_campaign_settlement(session_client, spicedb, ["artisan"])
+    cid, sid, _, dm_h, p_h = setup_campaign_settlement(session_client, ["artisan"])
     eid = session_client.post(
         f"/api/v1/settlements/{sid}/establishments",
         json={"district_id": "artisan", "category": "commerce", "name": "Bram's Anvil"},
@@ -70,14 +69,11 @@ def test_merchant_haggling_gambits_and_dm_override(
 def test_bulletin_board_pin_and_cipher_decrypt(
     session_client: TestClient,
     gateway_client: TestClient,
-    spicedb: MockSpiceDBClient,
     mock_bus: MockAsyncRedis,
     settlement_issuer: SigningTestIssuer,
 ) -> None:
     """Post bounty, decrypt hidden cipher notice, and verify WebSocket party broadcast."""
-    cid, sid, p_id, dm_h, p_h = setup_campaign_settlement(
-        session_client, spicedb, issuer=settlement_issuer
-    )
+    cid, sid, p_id, dm_h, p_h = setup_campaign_settlement(session_client, issuer=settlement_issuer)
 
     bulletin = f"/api/v1/settlements/{sid}/bulletin"
 

@@ -9,20 +9,18 @@ from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
-from runefoble_auth.mock import MockSpiceDBClient
 
+from tests.helpers.campaign_setup import create_campaign, invite_and_join
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
-@pytest.mark.asyncio
-async def test_construct_establishments_across_all_categories(
-    client: TestClient, spicedb: MockSpiceDBClient
-) -> None:
+def test_construct_establishments_across_all_categories(client: TestClient) -> None:
     """Verify constructing establishments across Hospitality, Commerce, Civic, Faith, and Underworld."""
-    cid, uid = str(uuid4()), f"mayor_{uuid4().hex[:8]}"
-    await spicedb.write_relationship("campaign", cid, "player", "user", uid)
+    owner_id, uid = f"owner_{uuid4().hex[:8]}", f"mayor_{uuid4().hex[:8]}"
+    cid = create_campaign(client, owner_id)
+    invite_and_join(client, cid, owner_id, uid, "player")
 
     districts = ["commons", "bazaar", "sanctuary", "forum", "shadows"]
     s_res = client.post(
@@ -67,14 +65,11 @@ async def test_construct_establishments_across_all_categories(
     assert len(proj.json()["establishments"]) == 5
 
 
-@pytest.mark.asyncio
-async def test_establishment_construction_invariants_and_auth(
-    client: TestClient, spicedb: MockSpiceDBClient
-) -> None:
+def test_establishment_construction_invariants_and_auth(client: TestClient) -> None:
     """Verify district zoning invariants, capacity validation, and authorization."""
-    cid, uid = str(uuid4()), f"dm_{uuid4().hex[:8]}"
+    uid = f"dm_{uuid4().hex[:8]}"
     intruder_id = f"intruder_{uuid4().hex[:8]}"
-    await spicedb.write_relationship("campaign", cid, "dungeon_master", "user", uid)
+    cid = create_campaign(client, uid)
 
     s_res = client.post(
         f"/api/v1/campaigns/{cid}/settlements",

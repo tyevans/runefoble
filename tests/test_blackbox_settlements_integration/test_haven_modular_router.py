@@ -7,21 +7,16 @@ from __future__ import annotations
 
 from uuid import uuid4
 
-import pytest
 from fastapi.testclient import TestClient
-from runefoble_auth.mock import MockSpiceDBClient
 
+from tests.helpers.campaign_setup import create_campaign
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 
-@pytest.mark.asyncio
-async def test_haven_modular_routes_frontdoor_journey(
-    session_client: TestClient, spicedb: MockSpiceDBClient
-):
+def test_haven_modular_routes_frontdoor_journey(session_client: TestClient):
     """Verify full haven lifecycle, establishment creation, and tier upgrading through frontdoor."""
-    cid, dm_id = str(uuid4()), f"dm_{uuid4().hex[:6]}"
-    await spicedb.write_relationship("campaign", cid, "dungeon_master", "user", dm_id)
-    await spicedb.write_relationship("campaign", cid, "player", "user", dm_id)
+    dm_id = f"dm_{uuid4().hex[:6]}"
+    cid = create_campaign(session_client, dm_id)
     headers = {"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_id)}"}
 
     # 1. Haven creation via havens_router

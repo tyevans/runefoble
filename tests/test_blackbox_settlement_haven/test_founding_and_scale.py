@@ -9,20 +9,18 @@ from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
-from runefoble_auth.mock import MockSpiceDBClient
 
+from tests.helpers.campaign_setup import create_campaign, invite_and_join
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
-@pytest.mark.asyncio
-async def test_found_settlement_and_projection_query(
-    client: TestClient, spicedb: MockSpiceDBClient
-) -> None:
+def test_found_settlement_and_projection_query(client: TestClient) -> None:
     """Verify settlement founding and subsequent projection retrieval."""
-    cid, mayor_id = str(uuid4()), f"mayor_{uuid4().hex[:8]}"
-    await spicedb.write_relationship("campaign", cid, "player", "user", mayor_id)
+    owner_id, mayor_id = f"owner_{uuid4().hex[:8]}", f"mayor_{uuid4().hex[:8]}"
+    cid = create_campaign(client, owner_id)
+    invite_and_join(client, cid, owner_id, mayor_id, "player")
 
     payload = {
         "name": "Oakhaven",
@@ -50,13 +48,11 @@ async def test_found_settlement_and_projection_query(
     assert proj.status_code == 200 and proj.json()["settlement_id"] == sid
 
 
-@pytest.mark.asyncio
-async def test_district_capacity_and_scale_validation(
-    client: TestClient, spicedb: MockSpiceDBClient
-) -> None:
+def test_district_capacity_and_scale_validation(client: TestClient) -> None:
     """Verify district capacity limits per civic scale and scale validation."""
-    cid, mayor_id = str(uuid4()), f"mayor_{uuid4().hex[:8]}"
-    await spicedb.write_relationship("campaign", cid, "player", "user", mayor_id)
+    owner_id, mayor_id = f"owner_{uuid4().hex[:8]}", f"mayor_{uuid4().hex[:8]}"
+    cid = create_campaign(client, owner_id)
+    invite_and_join(client, cid, owner_id, mayor_id, "player")
 
     # Hamlet permits at most 2 districts: 3 districts should fail
     cap_res = client.post(
@@ -77,14 +73,10 @@ async def test_district_capacity_and_scale_validation(
     assert "Invalid settlement scale" in scale_res.json()["detail"]
 
 
-@pytest.mark.asyncio
-async def test_settlement_authorization_enforcement(
-    client: TestClient, spicedb: MockSpiceDBClient
-) -> None:
+def test_settlement_authorization_enforcement(client: TestClient) -> None:
     """Verify Zanzibar authorization guards founding and viewing settlements."""
-    cid = str(uuid4())
     dm_id, intruder_id = f"dm_{uuid4().hex[:8]}", f"intruder_{uuid4().hex[:8]}"
-    await spicedb.write_relationship("campaign", cid, "dungeon_master", "user", dm_id)
+    cid = create_campaign(client, dm_id)
 
     # Intruder founding denied
     res = client.post(

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 from collections.abc import Generator
 from uuid import uuid4
 
@@ -17,6 +16,7 @@ from gateway_api.websocket_manager import ws_campaign_manager
 from runefoble_auth.mock import MockSpiceDBClient
 from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
 
+from tests.helpers.campaign_setup import create_campaign, invite_and_join
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.module_state import SeamRestorer
 from tests.helpers.ws_identity import SIGNING_ISSUER
@@ -75,21 +75,19 @@ def clean_gateway_ws() -> Generator[None]:
 
 def setup_campaign_settlement(
     tc: TestClient,
-    db: MockSpiceDBClient,
     dist: list[str] | None = None,
     issuer: SigningTestIssuer | None = None,
 ) -> tuple[str, str, str, dict[str, str], dict[str, str]]:
-    """Create a campaign and a haven. Pass `issuer` to send signed bearer tokens instead."""
-    cid, dm_id, p_id = str(uuid4()), f"dm_{uuid4().hex[:6]}", f"p_{uuid4().hex[:6]}"
-    for r, u in [("player", p_id), ("player", dm_id), ("dungeon_master", dm_id)]:
-        asyncio.run(db.write_relationship("campaign", cid, r, "user", u))
-    if issuer is None:
-        h, p_h = (
-            {"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_id)}"},
-            {"Authorization": f"Bearer {SIGNING_ISSUER.mint(p_id)}"},
-        )
-    else:
-        h, p_h = bearer_headers(issuer, dm_id), bearer_headers(issuer, p_id)
+    """Create a campaign with an owner and a player, then found a haven.
+
+    The owner creates the campaign and the player joins through the invite and join routes.
+    Pass `issuer` to send signed bearer tokens from that issuer instead.
+    """
+    signer = issuer or SIGNING_ISSUER
+    dm_id, p_id = f"dm_{uuid4().hex[:6]}", f"p_{uuid4().hex[:6]}"
+    cid = create_campaign(tc, dm_id, issuer=signer)
+    invite_and_join(tc, cid, dm_id, p_id, "player", issuer=signer)
+    h, p_h = bearer_headers(signer, dm_id), bearer_headers(signer, p_id)
     b = {"name": "Haven", "scale": "village", **({"districts": dist} if dist else {})}
     sid = tc.post(f"/api/v1/campaigns/{cid}/settlements", json=b, headers=h).json()["settlement_id"]
     return cid, sid, p_id, h, p_h

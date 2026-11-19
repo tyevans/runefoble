@@ -9,7 +9,6 @@ from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
-from runefoble_auth.mock import MockSpiceDBClient
 from runefoble_events.events import (
     EstablishmentConstructedEvent,
     EstablishmentUpgradedEvent,
@@ -17,6 +16,7 @@ from runefoble_events.events import (
     SettlementTierUpgradedEvent,
 )
 
+from tests.helpers.campaign_setup import create_campaign, invite_and_join
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.stream_events import assert_stream_events
 from tests.helpers.ws_identity import SIGNING_ISSUER
@@ -24,14 +24,11 @@ from tests.helpers.ws_identity import SIGNING_ISSUER
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
-@pytest.mark.asyncio
-async def test_settlement_tier_upgrade_and_events(
-    client: TestClient, spicedb: MockSpiceDBClient, mock_bus: MockAsyncRedis
-) -> None:
+def test_settlement_tier_upgrade_and_events(client: TestClient, mock_bus: MockAsyncRedis) -> None:
     """Verify settlement tier upgrades, prosperity validation, and domain events."""
-    cid, uid = str(uuid4()), f"mayor_{uuid4().hex[:8]}"
+    uid = f"mayor_{uuid4().hex[:8]}"
     h = {"Authorization": f"Bearer {SIGNING_ISSUER.mint(uid)}"}
-    await spicedb.write_relationship("campaign", cid, "dungeon_master", "user", uid)
+    cid = create_campaign(client, uid)
 
     b = {"name": "Pine", "scale": "hamlet", "prosperity": 50, "districts": ["commons"]}
     res = client.post(f"/api/v1/campaigns/{cid}/settlements", json=b, headers=h)
@@ -63,14 +60,12 @@ async def test_settlement_tier_upgrade_and_events(
     assert tier_ce["specversion"] == "1.0" and "settlement_tier_upgraded" in tier_ce["type"]
 
 
-@pytest.mark.asyncio
-async def test_establishment_upgrade_and_events(
-    client: TestClient, spicedb: MockSpiceDBClient, mock_bus: MockAsyncRedis
-) -> None:
+def test_establishment_upgrade_and_events(client: TestClient, mock_bus: MockAsyncRedis) -> None:
     """Verify establishment upgrades, amenity modifications, and domain events."""
-    cid, uid = str(uuid4()), f"innkeeper_{uuid4().hex[:8]}"
+    owner_id, uid = f"owner_{uuid4().hex[:8]}", f"innkeeper_{uuid4().hex[:8]}"
     h = {"Authorization": f"Bearer {SIGNING_ISSUER.mint(uid)}"}
-    await spicedb.write_relationship("campaign", cid, "player", "user", uid)
+    cid = create_campaign(client, owner_id)
+    invite_and_join(client, cid, owner_id, uid, "player")
 
     s_body = {"name": "River", "scale": "village", "districts": ["commons", "trading_post"]}
     s_res = client.post(f"/api/v1/campaigns/{cid}/settlements", json=s_body, headers=h)
