@@ -1,7 +1,7 @@
 ---
 id: '0913'
 title: Audience Studio Requires the SpiceDB Key in Every Mode
-status: Refined
+status: Complete
 created: 2026-11-19
 dependencies: []
 governing_adrs:
@@ -15,7 +15,7 @@ target_release: 0.9.0
 # TASK-0913: Audience Studio Requires the SpiceDB Key in Every Mode
 
 ## Status
-Refined
+Complete
 
 ## Summary
 `readSpicedbPresharedKey` returns an empty key when `NODE_ENV` is `test`. The file header says that neither value has a default. An environment variable must not turn off a fail-fast check. The entrypoint also reads all settings at module load, outside `main`.

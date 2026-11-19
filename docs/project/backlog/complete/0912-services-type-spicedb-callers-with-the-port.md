@@ -1,7 +1,7 @@
 ---
 id: '0912'
 title: Services Type Their SpiceDB Callers With the Port, Not the Mock Union
-status: Refined
+status: Complete
 created: 2026-11-19
 dependencies:
 - TASK-0911
@@ -16,7 +16,7 @@ target_release: 0.9.0
 # TASK-0912: Services Type Their SpiceDB Callers With the Port, Not the Mock Union
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Eight service modules import `MockSpiceDBClient` and annotate their SpiceDB dependency as `SpiceDBClient | MockSpiceDBClient`. After TASK-0911 adds `SpiceDBPort`, these modules use the port and no longer import the mock package.

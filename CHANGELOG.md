@@ -188,6 +188,11 @@ The campaign rules tab at `#/campaigns/:campaignId/rules`. The homebrew forge re
   - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
 
 ### Changed
+Every Python service serves `GET /ui/manifest` through one shared `ui_manifest_router`. A missing or invalid `ui/manifest.json` fails when the app is built.
+Service code types its SpiceDB dependency against `SpiceDBPort`. No service source imports `runefoble_auth.mock`.
+The Watcher builds its engines, repositories and event bus provider in one app container (`WatcherContainer`) at start-up, and routes read them through `Depends` providers.
+`runefoble_auth` production code types SpiceDB clients against the `SpiceDBPort` Protocol and imports no mock. `Relationship` moves to `runefoble_auth.relationship`.
+game_session `POST /api/v1/sessions/{id}/encounters/start` resolves enemy challenge ratings from rules_compendium itself. An enemy with no rating answers 400, and a compendium failure answers 503. The MCP `create_encounter` tool reads no stat block.
 The App Shell restores focus after the settings modal closes through the public `restoreFocus()` method of `<runefoble-header>`, not through the header shadow root. Lobby handlers take a typed `LobbyHost`.
 game_session builds its repositories, child index repository and event bus provider in one app container (`GameSessionContainer`) at start-up, and routes read them through FastAPI `Depends` providers (ADR-0021 step 2). An unreachable or in-memory event store in a deployed environment stops start-up. `game_session.dependencies` is removed.
 Audience Studio production code builds only the PostgreSQL event store and the Redis Streams publisher. Start-up needs `RUNEFOBLE_DATABASE_URL` and a `redis://` or `rediss://` `RUNEFOBLE_REDIS_URL` for every `NODE_ENV`. Memory adapters live only in the test fakes.
@@ -1322,6 +1327,10 @@ The App Shell auth service keeps JWT claim handling, session storage and session
 - **Documentation & Build Navigation**: Featured the Platform Showcase and Changelog in `zensical.toml` and root documentation landing page (`docs/index.md`), and enhanced `scripts/build_docs.py` to synchronize `CHANGELOG.md` to `docs/changelog.md` during documentation compilation.
 
 ### Fixed
+The audio stream WebSocket requires `session_id` and `speaker_id` in the path and `campaign_id` and `speaker_name` in the query; a missing value closes the socket with 1008, with no default ids. Voice, Watcher and inference worker code catches only typed errors.
+The shared domain error handler maps only typed domain errors: `DomainRefusedError` to 400 and `DomainNotFoundError` to 404. A `ValueError` in service code answers 500 with no exception text.
+The campfire rest heals no invented names: a session with no seated characters and no ids heals an empty list. Opening a tavern table without `establishment_id` answers 422.
+Audience Studio requires `RUNEFOBLE_SPICEDB_PRESHARED_KEY` in every `NODE_ENV`. `NODE_ENV=test` no longer gives an empty key.
 `make docs-build` exits non-zero on a failed step (no fake inotify shim). `make clean-worktrees` removes no worktree when it cannot read the process table. `make test-mutation` fails when mutmut fails or a mutant survives. `make lint` runs `helm-lint`.
 Board and character mutation routes map errors in one place. A storage outage answers 503, never 400 or 500. A token, trap or AoE template that is not on the board answers 404.
 An NPC worker restock raises `NPCWorkerInventoryRestocked`, so the stock survives a reload. A `destination` other than `shelf` or `backroom` answers 422. Worker routes save the establishment summary before they publish, and a repeated relationship call adds no second tie.

@@ -1,7 +1,7 @@
 ---
 id: '0916'
 title: The Watcher Builds Its Dependencies in an App Container, Not Module Globals
-status: Refined
+status: Complete
 created: 2026-11-19
 dependencies: []
 governing_adrs:
@@ -17,7 +17,7 @@ target_release: 0.9.0
 # TASK-0916: The Watcher Builds Its Dependencies in an App Container, Not Module Globals
 
 ## Status
-Refined
+Complete
 
 ## Summary
 `the_watcher` builds its engines, settings and repositories at import time and keeps them in module globals with `get_`/`set_` seams. TASK-0755 (complete) moved `game_session` to an app container, and TASK-0859 does the same for four other services. The Watcher is not in either task.

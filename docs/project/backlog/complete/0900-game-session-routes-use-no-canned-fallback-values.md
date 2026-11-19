@@ -1,7 +1,7 @@
 ---
 id: '0900'
 title: Campfire and Tavern Routes Use No Canned Fallback Values
-status: Refined
+status: Complete
 created: 2026-11-19
 dependencies: []
 governing_adrs:
@@ -16,7 +16,7 @@ target_release: 0.9.0
 
 ## Status
 
-Refined.
+Complete
 
 ## Summary
 

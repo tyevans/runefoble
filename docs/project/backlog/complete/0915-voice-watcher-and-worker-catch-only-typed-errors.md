@@ -1,7 +1,7 @@
 ---
 id: '0915'
 title: Voice, The Watcher, and the Inference Worker Catch Only Typed Errors
-status: Refined
+status: Complete
 created: 2026-11-19
 dependencies: []
 governing_adrs:
@@ -16,7 +16,7 @@ target_release: 0.9.0
 # TASK-0915: Voice, The Watcher, and the Inference Worker Catch Only Typed Errors
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Four `except Exception` blocks hide defects. A failed voice kick still answers "kicked". A malformed audio frame is dropped and the client is not told. The copilot expiry timer retries a permanent error forever. The worker turns every exception, programming errors included, into a 503. The audio stream route also fills missing ids with canned values, and uses the session id as the campaign id.

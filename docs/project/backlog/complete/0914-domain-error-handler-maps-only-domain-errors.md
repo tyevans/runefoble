@@ -1,7 +1,7 @@
 ---
 id: '0914'
 title: The Domain Error Handler Maps Only Domain Errors to 400
-status: Refined
+status: Complete
 created: 2026-11-19
 dependencies: []
 governing_adrs:
@@ -15,7 +15,7 @@ target_release: 0.9.0
 # TASK-0914: The Domain Error Handler Maps Only Domain Errors to 400
 
 ## Status
-Refined
+Complete
 
 ## Summary
 `install_domain_error_handlers` maps every `ValueError` to 400 and sends the exception text to the client. A programming error that raises `ValueError`, or a `pydantic.ValidationError` raised inside service code, becomes a client error with internal text. Only refused domain commands may answer 400.

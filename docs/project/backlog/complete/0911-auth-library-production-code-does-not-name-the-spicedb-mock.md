@@ -1,7 +1,7 @@
 ---
 id: '0911'
 title: Auth Library Production Code Does Not Name the SpiceDB Mock
-status: Refined
+status: Complete
 created: 2026-11-19
 dependencies: []
 governing_adrs:
@@ -15,7 +15,7 @@ target_release: 0.9.0
 # TASK-0911: Auth Library Production Code Does Not Name the SpiceDB Mock
 
 ## Status
-Refined
+Complete
 
 ## Summary
 The production SpiceDB modules in `libs/runefoble_auth` import their `Relationship` type from the mock package. The client factory and the sync service name `MockSpiceDBClient` in their types, and the sync health check detects the backend with `isinstance` on the mock and a read of a private attribute. Production code must not depend on a test double. This task adds one client port and moves the shared type out of the mock package.

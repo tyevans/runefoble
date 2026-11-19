@@ -1,7 +1,7 @@
 ---
 id: '0920'
 title: Services Share One UI Manifest Router
-status: Refined
+status: Complete
 created: 2026-11-19
 dependencies: []
 governing_adrs:
@@ -15,14 +15,14 @@ target_release: 0.9.0
 # TASK-0920: Services Share One UI Manifest Router
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Ten services copy the same `GET /ui/manifest` handler and the same module-level `UI_MANIFEST = load_ui_manifest(...)` line. The loader already lives in `runefoble_platform`. One router factory removes the copies.
 
 ## Problem Statement
 - `libs/runefoble_platform/src/runefoble_platform/ui_manifest.py:20`: `load_ui_manifest(path)` is shared. No router is shared.
-- Copies: `services/asset_forge/src/asset_forge/main.py:31-32`, `:91-94`; `services/campaign_analytics/src/campaign_analytics/main.py:48-50`, `:93-96`; `services/campaign_lore/src/campaign_lore/main.py:41-44`, `:132-135`; `services/character_sheet/src/character_sheet/main.py:35-36`, `:84-87`; `services/game_session/src/game_session/main.py:48-49`, `:112-115`; `services/rules_compendium/src/rules_compendium/main.py:26-27`, `:88-91`; `services/soundscape/src/soundscape/main.py:29-30`, `:96-99`; `services/voice_agent/src/voice_agent/main.py:63-64`, `:125-128`; `services/board_state/src/board_state/routers/boards.py:31-32`, `:41-44`; `services/the_watcher/src/the_watcher/routers/ui_manifest.py:19-22`.
+- Copies: `services/asset_forge/src/asset_forge/main.py:31-32`, `:91-94`; `services/campaign_analytics/src/campaign_analytics/main.py:48-50`, `:93-96`; `services/campaign_lore/src/campaign_lore/main.py:41-44`, `:132-135`; `services/character_sheet/src/character_sheet/main.py:35-36`, `:84-87`; `services/game_session/src/game_session/main.py:48-49`, `:112-115`; `services/rules_compendium/src/rules_compendium/main.py:26-27`, `:88-91`; `services/soundscape/src/soundscape/main.py:29-30`, `:96-99`; `services/voice_agent/src/voice_agent/main.py:63-64`, `:125-128`; `services/board_state/src/board_state/routers/boards.py:31-32`, `:41-44`; `services/the_watcher/src/the_watcher/routers/ui_manifest.py:19-22` (removed).
 
 ## Documentation & Architecture Review
 - ADR-0013 and `docs/reference/microfrontend-architecture.md` (`/ui/manifest` discovery). `docs/how-to/authoring-service-microfrontends.md` and `docs/how-to/create-a-new-service-bc.md` show the handler: update them.

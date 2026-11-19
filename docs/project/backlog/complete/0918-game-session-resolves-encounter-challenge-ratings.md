@@ -1,7 +1,7 @@
 ---
 id: '0918'
 title: game_session Resolves Encounter Challenge Ratings, Not the MCP Gateway
-status: Refined
+status: Complete
 created: 2026-11-19
 dependencies: []
 governing_adrs:
@@ -18,7 +18,7 @@ target_release: 0.9.0
 # TASK-0918: game_session Resolves Encounter Challenge Ratings, Not the MCP Gateway
 
 ## Status
-Refined
+Complete
 
 ## Summary
 The MCP `create_encounter` tool reads each enemy stat block from rules_compendium, one call after another, and decides in the gateway that an enemy without a rating is invalid. That is a domain rule in the gateway. game_session owns the encounter start, so it resolves the ratings.
