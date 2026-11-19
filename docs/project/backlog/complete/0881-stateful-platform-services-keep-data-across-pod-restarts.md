@@ -1,7 +1,7 @@
 ---
 id: '0881'
 title: Stateful Platform Services Keep Their Data Across Pod Restarts
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies: []
 governing_adrs:
@@ -17,7 +17,7 @@ target_release: 0.9.0
 # TASK-0881: Stateful Platform Services Keep Their Data Across Pod Restarts
 
 ## Status
-Refined
+Complete
 
 Found by the orchestrator on 2026-11-18 during a Kind redeploy.
 
@@ -45,3 +45,6 @@ Small: chart templates and values. Testable through the chart render and one clu
 
 ## Definition of Done
 1. Data survives a PostgreSQL pod restart on Kind. 2. `helm lint` and `make helm-template` pass. 3. Docs updated. 4. `make health-check` passes.
+
+## Completion Note
+Migrated on Kind on 2026-11-18 with the user's approval: the old data (no volume) was lost once. Check: a marker row in a scratch database survived a postgres-0 pod deletion. The gateway campaign check waits for a real Zitadel token (TASK-0525).

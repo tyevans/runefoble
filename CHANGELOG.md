@@ -40,6 +40,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Gateway WebSocket routes admit a connection only with a verified `runefoble.bearer.<jwt>` subprotocol, checked before accept. Refused handshakes close with 1008. Removed the `?user_id=`, `?token=`, `x-user-id`, and `guest_user` identity paths on WebSocket and voice/companion signaling routes. (TASK-0522)
 
 ### Removed
+- Each HTTP route serves one path. The bare duplicates of `/api/v1` routes and other alias paths are removed, and a route inventory test keeps it so. (TASK-0857)
 - The Redis bus drops its unused consumer-group methods and the raw-field fallback. `deserialize_event` lives in `runefoble_platform.event_deserializer`. (TASK-0852)
 - `POST /api/v1/sessions/create` is removed. A game session is created only through the campaign session create, so every session is in its campaign list. (TASK-0844)
 - The Redis URL has one environment name, `RUNEFOBLE_REDIS_URL`; the `REDIS_URL` alias is removed from the platform settings, Audience Studio, the dev orchestrator, CI and Helm. Audience Studio no longer rewrites `postgresql+asyncpg://` URLs. (TASK-0839)
@@ -173,6 +174,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
 
 ### Changed
+- The Campaign Analytics token verifier comes from the settings passed to `create_app`; the module-level settings object is removed. (TASK-0880)
 - Campaign Analytics is built through `create_app(settings, event_bus)`. Start-up tests use the public factory instead of patching module state. (TASK-0873)
 - Blackbox tests restore every seam they replace, and dead fixtures are removed. (TASK-0872)
 - The campaign link of a session lives only on `game_session#campaign`; the duplicate `session` SpiceDB definition is removed. `POST /api/v1/campaigns/{id}/sessions/reconcile-links` writes missing links for a campaign. (TASK-0856)
@@ -1284,6 +1286,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **Documentation & Build Navigation**: Featured the Platform Showcase and Changelog in `zensical.toml` and root documentation landing page (`docs/index.md`), and enhanced `scripts/build_docs.py` to synchronize `CHANGELOG.md` to `docs/changelog.md` during documentation compilation.
 
 ### Fixed
+- PostgreSQL, Silo and Redis run as StatefulSets with persistent volume claims, so their data survives pod restarts. Redis writes an append-only file. (TASK-0881)
 - Lobby readiness counts players only (an owner or DM is never counted) and shows "No players have joined" for an empty session. The members view shows management controls only from the server can-manage flag. (TASK-0870)
 - SpiceDB sync retries only transient failures. A write outage raises `AuthzWriteUnavailableError`, which callers still catch as a write error and sync retries. (TASK-0853)
 - The voice audio parser refuses a malformed WAV (RIFF) body: HTTP routes answer 400 `audio_format_invalid`, and the audio WebSocket sends a typed error frame. (TASK-0850)

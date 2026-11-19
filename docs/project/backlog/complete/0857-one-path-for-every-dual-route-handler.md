@@ -1,7 +1,7 @@
 ---
 id: '0857'
 title: Each Route Serves One Path, With an Inventory Test That Keeps It So
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies: []
 governing_adrs:
@@ -15,7 +15,7 @@ target_release: 0.9.0
 # TASK-0857: Each Route Serves One Path, With an Inventory Test That Keeps It So
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Forty-nine handlers in thirteen router files carry two route decorators: a bare path and an `/api/v1` path. Both paths are live. Two `game_session` routers are also included twice, once with and once without the `/api/v1` prefix. DoR 9 forbids aliases. This task keeps the `/api/v1` path, removes the bare path and the extra include, and adds an inventory test. The test fails when any operation has two paths.

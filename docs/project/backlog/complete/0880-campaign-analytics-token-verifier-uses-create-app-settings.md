@@ -1,7 +1,7 @@
 ---
 id: '0880'
 title: Campaign Analytics Token Verifier Uses the Settings Passed to create_app
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies:
 - TASK-0873
@@ -17,7 +17,7 @@ target_release: 0.9.0
 # TASK-0880: Campaign Analytics Token Verifier Uses the Settings Passed to create_app
 
 ## Status
-Refined
+Complete
 
 Source: TASK-0873 report (`.audit/work/0873.md`).
 
