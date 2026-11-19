@@ -139,3 +139,13 @@ def test_caller_with_no_campaigns_gets_an_empty_list(client, trusted_ws_issuer) 
     listed = client.get("/api/v1/campaigns", headers=_auth(trusted_ws_issuer, "nobody"))
     assert listed.status_code == 200, listed.text
     assert listed.json() == []
+
+
+def test_campaigns_are_listed_oldest_first(client, trusted_ws_issuer) -> None:
+    """The list order is the creation order, not the order of the random campaign ids."""
+    owner = _auth(trusted_ws_issuer, "dm-order")
+    ids = [_create(client, owner, f"Ordered {n}") for n in range(6)]
+
+    listed = client.get("/api/v1/campaigns", headers=owner)
+    assert listed.status_code == 200, listed.text
+    assert [c["id"] for c in listed.json()] == ids

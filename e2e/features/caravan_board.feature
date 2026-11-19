@@ -22,7 +22,7 @@ Feature: Caravan Board Reports Failed Dispatch and Fulfilment
     Given an accepted caravan contract "Ironford to Bastion Cross" is on the board
     And the game session service is stopped
     When I click the "Dispatch" button
-    Then I should see the caravan notice "Dispatch failed: Service unavailable: Upstream service is unavailable."
+    Then I should see the caravan notice "Dispatch failed: Service unavailable: Upstream service is unavailable"
     And the contract card should show status "accepted"
     And the contract card should not show "in transit"
 
@@ -38,7 +38,7 @@ Feature: Caravan Board Reports Failed Dispatch and Fulfilment
     Given a caravan contract "Ironford to Bastion Cross" is in transit on the board
     And the game session service is stopped
     When I click the "Fulfill" button
-    Then I should see the caravan notice "Fulfilment failed: Service unavailable: Upstream service is unavailable."
+    Then I should see the caravan notice "Fulfilment failed: Service unavailable: Upstream service is unavailable"
     And the contract card should show status "in transit"
     And the contract card should not show "fulfilled"
 
