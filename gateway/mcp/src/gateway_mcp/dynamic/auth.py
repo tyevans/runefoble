@@ -38,13 +38,19 @@ async def grant_tool_permissions(
 async def revoke_tool_permissions(
     author_id: str, tool_name: str, campaign_id: str | None = None, client: Any = None
 ) -> None:
-    """Revoke Zanzibar relationships upon dynamic tool deregistration."""
+    """Revoke Zanzibar relationships upon dynamic tool deregistration.
+
+    A failed revoke raises the same 503 as a failed grant, so the caller can retry.
+    """
     spicedb = client or get_spicedb_client()
-    await spicedb.delete_relationship("mcp_tool", tool_name, "author", "user", author_id)
-    if campaign_id:
-        await spicedb.delete_relationship(
-            "mcp_tool", tool_name, "campaign", "campaign", campaign_id
-        )
+    try:
+        await spicedb.delete_relationship("mcp_tool", tool_name, "author", "user", author_id)
+        if campaign_id:
+            await spicedb.delete_relationship(
+                "mcp_tool", tool_name, "campaign", "campaign", campaign_id
+            )
+    except AuthzError as exc:
+        raise authorization_unavailable() from exc
 
 
 async def check_tool_permission(

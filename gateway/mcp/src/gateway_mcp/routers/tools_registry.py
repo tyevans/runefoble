@@ -104,14 +104,14 @@ def build_tools_registry_router(
         tool_name: str,
         caller: Caller,
     ) -> dict[str, Any]:
-        """Unregister a dynamic tool from FastMCP discovery and revoke its author relation."""
+        """Revoke the author relation, then unregister the tool. A failed revoke keeps the tool (503)."""
         record = dynamic_registry.get_tool(tool_name)
         if record is None:
             raise HTTPException(status_code=404, detail=f"Tool '{tool_name}' not found")
         await enforce_tool_auth(caller.user_id, tool_name, "manage")
-        dynamic_registry.deregister_tool(tool_name)
         if record.author_id is not None:
             await revoke_tool_permissions(record.author_id, tool_name, record.campaign_id)
+        dynamic_registry.deregister_tool(tool_name)
         return {"status": "deregistered", "name": tool_name}
 
     @router.post("/{name}/execute", response_model=dict[str, Any])
