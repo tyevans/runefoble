@@ -381,6 +381,8 @@ services:
     image: runefoble/audience-studio:0.1.0
     replicas: 1
     port: 8010
+    urlEnv: RUNEFOBLE_AUDIENCE_STUDIO_URL
+    consumers: [gateway-api]
     # Expected token `aud` claim. The service refuses to start without it.
     databaseDriver: postgresql
     eventStore: true
