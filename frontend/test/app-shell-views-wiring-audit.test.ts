@@ -33,6 +33,7 @@ const VIEW_COMPONENT_MANIFEST: Record<AppActiveView, string[]> = {
   'session-active': ['runefoble-board', 'runefoble-character-card', 'runefoble-watcher-feed', 'runefoble-voice-controls'],
   'profile': ['runefoble-user-profile'],
   'caravan-board': ['runefoble-caravan-board'],
+  'rules': ['runefoble-rules-compendium'],
 };
 
 interface RouteMatrixCase {

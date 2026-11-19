@@ -39,6 +39,7 @@ The unified App Shell subscribes to the client SPA router (`Router`) and mounts 
 | `#/characters` | `characters` | `<runefoble-character-roster>` |
 | `#/characters/:characterId` | `character-sheet` | `<runefoble-character-sheet>`, `<runefoble-stand-in-guardrails>` |
 | `#/profile` | `profile` | `<runefoble-user-profile>` (User claims, role badges, theme selection) |
+| `#/rules` | `rules` | `<runefoble-rules-compendium>` (rules search, encounter builder tab, homebrew tab). The view passes the gateway origin as `apiBaseUrl`. |
 | `#/campaigns/:campaignId/lobby/:sessionId` | `session-lobby` | `<runefoble-session-lobby>` |
 | `#/campaigns/:campaignId/sessions/:sessionId` | `session-active` | `<runefoble-vtt-view>` (Tactical board, card, feed, voice) |
 

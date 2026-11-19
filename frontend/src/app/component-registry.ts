@@ -27,6 +27,7 @@ const BUNDLES = {
   campaignLore: () => import('@runefoble/campaign-lore-ui'),
   campaignAnalytics: () => import('@runefoble/campaign-analytics-ui'),
   assetForge: () => import('@runefoble/asset-forge-ui'),
+  rulesCompendium: () => import('@runefoble/rules-compendium-ui'),
 } satisfies Record<string, BundleLoader>;
 
 type BundleName = keyof typeof BUNDLES;
@@ -47,6 +48,7 @@ export const VIEW_BUNDLES: Record<AppActiveView, BundleName[]> = {
   'session-lobby': SESSION_BUNDLES,
   'session-active': SESSION_BUNDLES,
   'profile': [],
+  'rules': ['rulesCompendium'],
   'caravan-board': ['gameSession'],
   'party-vitals-overlay': ['gameSession'],
 };

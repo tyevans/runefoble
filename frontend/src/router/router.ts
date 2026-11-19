@@ -30,7 +30,7 @@ export const STANDARD_ROUTES = [
   '#/campaigns/:campaignId/characters', '#/campaigns/:campaignId/codex',
   '#/campaigns/:campaignId/analytics', '#/campaigns/:campaignId/forge', '#/campaigns/:campaignId/lobby/:sessionId',
   '#/campaigns/:campaignId/sessions/:sessionId', '#/characters', '#/characters/:characterId', '#/profile',
-  '#/caravans/:sharedWorldId', '#/overlay/party-vitals/:sessionId',
+  '#/caravans/:sharedWorldId', '#/overlay/party-vitals/:sessionId', '#/rules',
 ] as const;
 
 export class Router {
