@@ -42,7 +42,7 @@ DMs and players need immediate visual feedback when clandestine operations or co
    - Lit component rendering real-time alert streams, urgency badges, and intercepted dossier snippets (< 150 lines).
 2. **Espionage UI Styles & Bauhaus Tokens (`services/the_watcher/ui/src/runefoble-faction-espionage.styles.ts`)**:
    - Scoped CSS using semantic design tokens with dark/light mode contrast invariants (< 120 lines).
-3. **UI Manifest Registration (`services/the_watcher/src/the_watcher/routers/ui_manifest.py`)**:
+3. **UI Manifest Registration (`services/the_watcher/src/the_watcher/routers/ui_manifest.py` (removed))**:
    - Register `<runefoble-faction-espionage>` in `/ui/manifest` (< 80 lines).
 4. **Storybook Stories (`services/the_watcher/ui/src/runefoble-faction-espionage.stories.ts`)**:
    - Interactive stories demonstrating high-urgency alerts, intercepted dispatches, and theme switching (< 130 lines).
