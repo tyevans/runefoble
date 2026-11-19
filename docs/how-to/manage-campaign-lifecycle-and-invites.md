@@ -91,7 +91,7 @@ curl -X GET "http://localhost:8000/api/v1/campaigns" \
 ]
 ```
 
-Each campaign object carries a `permissions` object. `GET /api/v1/campaigns/{id}` returns the same object for one campaign. `game_session` computes every flag with a SpiceDB `check` for the caller. Each flag names the permission that the matching route checks:
+Each campaign object carries a `permissions` object. `GET /api/v1/campaigns/{id}` returns the same object for one campaign. `game_session` computes `role` and every flag from the SpiceDB permissions that the caller holds. Each flag names the permission that the matching route checks:
 
 | Flag | SpiceDB permission | Route that the flag gates |
 |---|---|---|
@@ -102,6 +102,14 @@ Each campaign object carries a `permissions` object. `GET /api/v1/campaigns/{id}
 | `assign_roles` | `manage` | `POST /api/v1/campaigns/{id}/roles` |
 
 The App Shell reads these flags and never compares role names. A flag only hides a control. The server checks every mutating route again, so a stale flag cannot grant access.
+
+The cost of the list does not grow in SpiceDB calls with the number of campaigns (TASK-0907):
+
+- The list sends one SpiceDB `LookupResources` call for each distinct permission (`manage`, `run_session`, `play`, `view`). The calls run concurrently. The service makes no per-campaign `check`.
+- The detail route sends one concurrent `check` for each of the same permissions.
+- The service loads the campaign and membership records concurrently, with at most 5 loads at a time. This limit matches the default PostgreSQL pool size.
+- The span `game_session.list_viewable_campaigns` records the duration of the list. Its attributes `runefoble.campaign.viewable_count` and `runefoble.campaign.listed_count` give the number of campaigns.
+- A SpiceDB failure fails the whole list. The service does not return a partial list.
 
 ---
 
