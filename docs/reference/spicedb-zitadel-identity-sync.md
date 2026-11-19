@@ -7,7 +7,7 @@ Runefoble enforces object-level access control with the Zanzibar schema in Spice
 Relations are written in two ways:
 
 - A domain service writes a tuple after an authorized action. For example, `game_session` writes the membership tuple when an invite is redeemed (`services/game_session/src/game_session/campaign/service_membership.py`).
-- The sync library in `libs/runefoble_auth` holds handlers that build tuples from domain events. Its only production caller is the health probe. See [Production Callers](#production-callers).
+- The sync library in `libs/runefoble_auth` holds handlers that build character and board token tuples from domain events. It holds no role table and grants no campaign role (TASK-0855). Its only production caller is the health probe. See [Production Callers](#production-callers).
 
 ```mermaid
 flowchart LR
@@ -71,10 +71,10 @@ definition board_token {
 | Token claim (any role, `is_admin`) | None | Claims never write a tuple. The verified principal carries identity only. |
 | Campaign role grant (`POST /api/v1/campaigns/{id}/roles`, requires `manage`) and invite redemption (`POST /api/v1/campaigns/join`) | `campaign:<id>#<role>@user:<sub_id>` | Grants the membership role after an authorized domain action. `game_session` writes it (`service_membership.py`). |
 | Character binding (`sync_character_ownership`) | `character:<char_id>#owner@user:<sub_id>`<br/>`character:<char_id>#campaign@campaign:<id>` | Binds a character to its owning player and campaign |
-| Session binding (`sync_session_campaign`) | `game_session:<sess_id>#campaign@campaign:<id>` | Links the session to its campaign. This is the one campaign link (ADR-0015 (a)). The campaign policies apply to the session. |
+| Session binding | `game_session:<sess_id>#campaign@campaign:<id>` | Links the session to its campaign. This is the one campaign link (ADR-0015 (a)). `game_session` writes it (`campaign/tuples.py`, `link_session`). The campaign policies apply to the session. |
 | Board token binding (`sync_board_token`) | `board_token:<token_id>#character@character:<char_id>`<br/>`board_token:<token_id>#campaign@campaign:<id>` | Lets only the character owner or a game master move the token |
 
-Domain role names map to relations through `CAMPAIGN_ROLE_RELATIONS` (`libs/runefoble_auth/src/runefoble_auth/sync_tuples.py`). For example, `dm` and `gm` map to `game_master`. The map reads role names from domain events. It never reads token claims.
+The sync library has no role table, and no role name maps to a relation there. A token claim or a domain event never writes a campaign role. `game_session` writes a campaign role only in the grant route or on invite redemption. It uses `relation_for_role` (`campaign/tuples.py`). That function accepts `spectator`, `dungeon_master`, and `game_master` as relation names. Any other role name becomes `player`. (ADR-0015 (d), TASK-0855.)
 
 ## Public Synchronization Endpoints
 
@@ -133,8 +133,8 @@ Only SpiceDB failures (`AuthzError`) produce `unhealthy`. Any other exception is
 
 | Event type | Handler | Tuples |
 |---|---|---|
-| `runefoble.events.session.created` | `handle_session_created` | Game master and session campaign tuples |
-| `runefoble.events.session.player_joined_session` | `handle_participant_joined` | Campaign role tuple. Character ownership when a `character_id` is present. |
+| `runefoble.events.session.created` | None (no handler) | None. A session event grants no campaign role. `game_session` writes the session link. |
+| `runefoble.events.session.player_joined_session` | `handle_participant_joined` | Character ownership when a `character_id` is present. No campaign role. |
 | `runefoble.events.character.created` | `handle_character_created` | Character owner and campaign tuples |
 | `runefoble.events.board.token_placed` | `handle_token_placed` | Board token character and campaign tuples |
 
@@ -146,22 +146,22 @@ There is no event listener class. The Redis Streams subscriber that once wired t
 
 The constructor requires both adapters: `spicedb_client` and `zitadel_auth`. It builds neither one. Calling it without either argument raises `TypeError`.
 
-The write methods (`sync_membership`, `sync_character_ownership`, `sync_session_campaign`, `sync_board_token`, and `handle_domain_event`) have no production caller in this repository. Tests call them. TASK-0534 step 4 asks for the modules and exports that have no callers to be removed. That removal is open.
+The write methods (`sync_character_ownership`, `sync_board_token`, `batch_write_relationships`, `reconcile_relationships`, and `handle_domain_event`) have no production caller in this repository. Tests call them. TASK-0855 removed `sync_membership` and `sync_session_campaign`. They had no caller once the role grants left the library. Removing the remaining test-only methods is open (TASK-0534 step 4).
 
 ## Modular Architecture
 
 The sync code is split into three modules. Each module stays under the 500-line limit (Hard Invariant 6).
 
 1. **Tuple formatting and operations (`sync_tuples.py`)**:
-   - `SyncResult` model, `format_tuple`, and `normalize_campaign_role`.
-   - `CAMPAIGN_ROLE_RELATIONS` map.
-   - `execute_with_retry`, `write_relationship_tuple`, and `delete_relationship_tuple`.
+   - `SyncResult` model and `format_tuple`.
+   - `execute_with_retry` and `write_relationship_tuple`.
    - `batch_write_tuples` and `reconcile_tuples`.
+   - No role table. No role name maps to a relation.
 
 2. **Domain event handlers (`sync_events.py`)**:
    - `event_type_of` and `event_field` from `runefoble_platform.event_fields`, which read domain event models and CloudEvent JSON dictionaries. An event without a type raises `EventTypeMissingError`. No handler runs for it.
    - `handle_domain_event`, the dispatcher in the table above.
-   - The four handlers: `handle_session_created`, `handle_participant_joined`, `handle_character_created`, and `handle_token_placed`.
+   - The handlers `handle_participant_joined`, `handle_character_created`, and `handle_token_placed`.
 
 3. **Service coordinator (`sync.py`)**:
    - `ZitadelSpiceDBSyncService`. It delegates to `sync_tuples` and `sync_events`.
@@ -170,7 +170,7 @@ The sync code is split into three modules. Each module stays under the 500-line 
 
 ## Resilience and Retry Policy
 
-`ZitadelSpiceDBSyncService` runs each SpiceDB write and delete through `execute_with_retry` (`sync.py`, `sync_tuples.py`). Only a transport failure is retried. Every other error is permanent.
+`ZitadelSpiceDBSyncService` runs each SpiceDB write through `execute_with_retry` (`sync.py`, `sync_tuples.py`). Only a transport failure is retried. Every other error is permanent.
 
 | Error | Retried | Behaviour |
 |---|---|---|

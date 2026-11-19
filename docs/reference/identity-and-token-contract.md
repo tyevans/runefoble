@@ -87,7 +87,7 @@ The following services verify only user tokens. They pass `None` for the service
 - `email` comes from the `email` claim. It is `None` when the claim is absent.
 - `VerifiedPrincipal` has three fields: `user_id`, `username`, and `email` (`principal.py`). It has no roles and no admin flag.
 - Roles and admin flags in a token grant nothing. No code reads them for authorization. Authorization uses only SpiceDB relations in `libs/runefoble_auth/schema/runefoble.zed` (ADR-0015 d, Hard Invariant 1).
-- Token claims never write a SpiceDB relation. The claim sync route was removed (TASK-0534). See [SpiceDB and Zitadel Identity Sync](spicedb-zitadel-identity-sync.md).
+- Token claims never write a SpiceDB relation. The claim sync route was removed (TASK-0534). The sync library has no role-to-relation mapping (TASK-0855). Campaign memberships come only from the campaign roles route (`POST /api/v1/campaigns/{id}/roles`, requires `manage`) and the join route (`POST /api/v1/campaigns/join`). See [SpiceDB and Zitadel Identity Sync](spicedb-zitadel-identity-sync.md).
 - Identity headers and fields do not set the caller. Examples are `X-User-Id`, `x-user-id`, a `user_id` query parameter, and a body field such as `author_id` or `user_id`. Services ignore them (for example `services/the_watcher/src/the_watcher/identity.py`, module docstring).
 
 ---
@@ -164,6 +164,7 @@ The paths in this table are absent from `/openapi.json` of `gateway-api`. Use th
 | `POST /api/v1/auth/dev/send-test`, `POST /api/v1/auth/test-email`, `DELETE /api/v1/auth/dev/emails` (test mail routes) | Let any caller send or clear test mail | Read captured mail in Mailpit at `/mail` ([Test Email Signups with Mailpit](../how-to/test-email-signups-with-mailpit.md)) | TASK-0523 |
 | `POST /api/v1/auth/sync/user` | Wrote campaign roles from body claims with no authentication | None. Token claims grant no relation. | TASK-0534 |
 | `POST /api/v1/auth/sync/membership`, `/character-ownership`, `/token-binding` | Wrote SpiceDB tuples with no authentication | `POST /api/v1/campaigns/{id}/roles`, `POST /api/v1/characters`, `POST /api/v1/campaigns/join` | TASK-0543 |
+| Role-name mapping in the sync library (`CAMPAIGN_ROLE_RELATIONS`, `normalize_campaign_role`, and `sync_membership`) | Mapped role names such as `dm`, `gm`, and `owner` from domain events to campaign relations | None. Role names grant nothing. Memberships come from `POST /api/v1/campaigns/{id}/roles` and `POST /api/v1/campaigns/join`. | TASK-0855 |
 | `runefoble-dev-signature` signing key and the `dev-user-001` fallback | Signed or accepted development tokens | Zitadel RS256 tokens only | TASK-0520, TASK-0523 |
 | `RUNEFOBLE_AUTH_DEV_MODE`, `AUTH_DEV_MODE` | Turned off verification | None. No setting disables verification. | TASK-0520 |
 | `X-User-Id` and `x-user-id` identity | Set the caller | `Authorization: Bearer <jwt>` | TASK-0521, TASK-0529 |
