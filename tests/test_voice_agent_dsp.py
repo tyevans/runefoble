@@ -12,6 +12,8 @@ from voice_agent.dsp import (
     DSPFilterConfig,
     ProcessedSpeechResult,
     VoiceDSPPipeline,
+)
+from voice_agent.filters import (
     apply_audio_filters,
     drunk_filter,
     ethereal_filter,
@@ -88,7 +90,7 @@ def test_dsp_pipeline_latency():
 def test_voice_tts_endpoints():
     """Test FastAPI TTS endpoints with affliction filters."""
     res = client.post(
-        "/api/v1/voice/tts",
+        "/api/v1/voice/synthesize",
         json={
             "text": "I charge forward with sword held high!",
             "persona_id": "valeros_fighter",

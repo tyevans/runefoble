@@ -86,7 +86,7 @@ def test_barge_in_onset_sub_40ms_and_halt_latency_sub_80ms(client: TestClient):
         "energy_threshold": 350.0,
     }
 
-    response = client.post("/voice/filters/barge-in/evaluate", json=payload)
+    response = client.post("/api/v1/voice/filters/barge-in/evaluate", json=payload)
     assert response.status_code == 200, response.text
     data = response.json()
 
@@ -140,7 +140,7 @@ def test_silence_and_low_noise_suppressed_without_barge_in(
         "energy_threshold": 350.0,
     }
 
-    res = client.post("/voice/filters/barge-in/evaluate", json=payload)
+    res = client.post("/api/v1/voice/filters/barge-in/evaluate", json=payload)
     assert res.status_code == 200
     data = res.json()
 
@@ -150,7 +150,7 @@ def test_silence_and_low_noise_suppressed_without_barge_in(
 
     low_noise_pcm = generate_pcm_sine(duration_ms=100, freq=100.0, amplitude=150)
     payload["audio_base64"] = base64.b64encode(low_noise_pcm).decode("ascii")
-    res_noise = client.post("/voice/filters/barge-in/evaluate", json=payload)
+    res_noise = client.post("/api/v1/voice/filters/barge-in/evaluate", json=payload)
     assert res_noise.status_code == 200
     assert res_noise.json()["barge_in_detected"] is False
 
@@ -168,7 +168,7 @@ def test_cloudevents_dispatched_on_barge_in(client: TestClient, mock_redis: Mock
         "fade_duration_ms": 20.0,
     }
 
-    res = client.post("/voice/filters/barge-in/evaluate", json=payload)
+    res = client.post("/api/v1/voice/filters/barge-in/evaluate", json=payload)
     assert res.status_code == 200
 
     assert "runefoble.events.voice" in mock_redis.streams
@@ -201,7 +201,7 @@ def test_configurable_fade_duration(client: TestClient):
             "audio_base64": audio_b64,
             "fade_duration_ms": fade_ms,
         }
-        res = client.post("/voice/filters/barge-in/evaluate", json=payload)
+        res = client.post("/api/v1/voice/filters/barge-in/evaluate", json=payload)
         assert res.status_code == 200
         data = res.json()
         assert data["fade_duration_ms"] == fade_ms

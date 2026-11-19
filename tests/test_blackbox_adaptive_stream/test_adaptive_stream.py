@@ -5,8 +5,8 @@ Product Requirements: PRD-0019.
 User Stories: US-0059.
 
 Frontdoor Entrypoints:
-- HTTP `GET /voice/streams/{session_id}/quality`
-- HTTP `POST /voice/streams/{session_id}/report`
+- HTTP `GET /api/v1/voice/streams/{session_id}/quality`
+- HTTP `POST /api/v1/voice/streams/{session_id}/report`
 - Domain Events: `runefoble.events.voice.stream_quality_degraded`,
                  `runefoble.events.voice.stream_codec_adapted`
 """
@@ -51,7 +51,7 @@ def test_initial_stream_quality_query(client: TestClient):
     asyncio.run(grant_voice_session(session_id, players=[]))
     peer_id = "peer_marcus"
 
-    res = client.get(f"/voice/streams/{session_id}/quality?peer_id={peer_id}")
+    res = client.get(f"/api/v1/voice/streams/{session_id}/quality?peer_id={peer_id}")
     assert res.status_code == 200
     data = res.json()
     assert data["session_id"] == session_id
@@ -71,7 +71,7 @@ def test_packet_loss_steps_down_bitrate_under_200ms(client: TestClient, clean_en
 
     t0 = time.perf_counter()
     report_res = client.post(
-        f"/voice/streams/{session_id}/report",
+        f"/api/v1/voice/streams/{session_id}/report",
         json={
             "peer_id": peer_id,
             "user_id": "marcus",
@@ -92,7 +92,7 @@ def test_packet_loss_steps_down_bitrate_under_200ms(client: TestClient, clean_en
     assert rep_data["fec_enabled"] is True
 
     # Verify query reflects adapted state
-    query_res = client.get(f"/voice/streams/{session_id}/quality?peer_id={peer_id}")
+    query_res = client.get(f"/api/v1/voice/streams/{session_id}/quality?peer_id={peer_id}")
     assert query_res.status_code == 200
     q_data = query_res.json()
     assert q_data["bitrate_kbps"] == 12
@@ -125,7 +125,7 @@ def test_severe_loss_and_delay_steps_down_to_ultra_low(client: TestClient):
     peer_id = "peer_remote"
 
     res = client.post(
-        f"/voice/streams/{session_id}/report",
+        f"/api/v1/voice/streams/{session_id}/report",
         json={
             "peer_id": peer_id,
             "packet_loss": 0.18,  # 18% severe loss
@@ -150,13 +150,13 @@ def test_network_recovery_steps_up_bitrate(client: TestClient):
 
     # Step down first
     client.post(
-        f"/voice/streams/{session_id}/report",
+        f"/api/v1/voice/streams/{session_id}/report",
         json={"peer_id": peer_id, "packet_loss": 0.10, "rtt_ms": 150.0},
     )
 
     # Stabilize
     res = client.post(
-        f"/voice/streams/{session_id}/report",
+        f"/api/v1/voice/streams/{session_id}/report",
         json={"peer_id": peer_id, "packet_loss": 0.01, "rtt_ms": 50.0},
     )
     assert res.status_code == 200
@@ -175,16 +175,16 @@ def test_multi_peer_stream_isolation(client: TestClient):
 
     # Mobile participant experiences packet loss
     client.post(
-        f"/voice/streams/{session_id}/report",
+        f"/api/v1/voice/streams/{session_id}/report",
         json={"peer_id": peer_mobile, "packet_loss": 0.09, "rtt_ms": 110.0},
     )
     # Desktop participant experiences nominal network
     client.post(
-        f"/voice/streams/{session_id}/report",
+        f"/api/v1/voice/streams/{session_id}/report",
         json={"peer_id": peer_desktop, "packet_loss": 0.00, "rtt_ms": 25.0},
     )
 
-    res = client.get(f"/voice/streams/{session_id}/quality")
+    res = client.get(f"/api/v1/voice/streams/{session_id}/quality")
     assert res.status_code == 200
     streams = {s["peer_id"]: s for s in res.json()["streams"]}
 

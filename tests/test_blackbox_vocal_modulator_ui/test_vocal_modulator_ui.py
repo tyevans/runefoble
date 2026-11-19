@@ -74,7 +74,7 @@ async def test_frontdoor_presets_and_modulate_integration(
     voice_client: TestClient, setup_coordinator: dict
 ) -> None:
     """Verify frontdoor /voice/presets and /voice/modulate endpoints used by UI."""
-    resp_presets = voice_client.get("/voice/presets")
+    resp_presets = voice_client.get("/api/v1/voice/presets")
     assert resp_presets.status_code == 200
     presets = resp_presets.json()
     preset_names = {p["name"] for p in presets}
@@ -86,7 +86,7 @@ async def test_frontdoor_presets_and_modulate_integration(
     await grant_voice_session(session_id, dm=user_id)
 
     mod_resp = voice_client.post(
-        "/voice/modulate",
+        "/api/v1/voice/modulate",
         json={
             "session_id": session_id,
             "peer_id": "dm_speaker",

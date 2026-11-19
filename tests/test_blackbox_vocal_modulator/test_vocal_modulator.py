@@ -53,9 +53,9 @@ def test_setup():
 
 @pytest.mark.asyncio
 async def test_get_npc_voice_presets(test_setup):
-    """Verify GET /voice/presets lists all available NPC creature presets."""
+    """Verify GET /api/v1/voice/presets lists all available NPC creature presets."""
     client = test_setup["client"]
-    resp = client.get("/voice/presets")
+    resp = client.get("/api/v1/voice/presets")
     assert resp.status_code == 200
     presets = resp.json()
     assert len(presets) >= 4
@@ -66,15 +66,10 @@ async def test_get_npc_voice_presets(test_setup):
     assert "celestial-spirit" in preset_ids
     assert "robotic-construct" in preset_ids
 
-    # Also verify /api/v1/voice/presets alias
-    alias_resp = client.get("/api/v1/voice/presets")
-    assert alias_resp.status_code == 200
-    assert alias_resp.json() == presets
-
 
 @pytest.mark.asyncio
 async def test_modulate_voice_with_synthetic_pcm_frames(test_setup):
-    """Verify POST /voice/modulate applies DSP transformations to PCM audio under 50ms latency."""
+    """Verify POST /api/v1/voice/modulate applies DSP transformations to PCM audio under 50ms latency."""
     client = test_setup["client"]
     bus = test_setup["bus"]
 
@@ -98,7 +93,7 @@ async def test_modulate_voice_with_synthetic_pcm_frames(test_setup):
     }
 
     resp = client.post(
-        "/voice/modulate",
+        "/api/v1/voice/modulate",
         json=req_payload,
         headers=voice_auth_headers(user_id),
     )
@@ -149,7 +144,7 @@ async def test_modulate_all_creature_archetypes(test_setup):
 
     for name, expected_pitch, expected_formant, expected_res in archetypes:
         resp = client.post(
-            "/voice/modulate",
+            "/api/v1/voice/modulate",
             json={
                 "session_id": session_id,
                 "preset_name": name,
@@ -182,7 +177,7 @@ async def test_modulate_custom_overrides_and_toggle(test_setup):
 
     # 1. Manual override without preset
     resp = client.post(
-        "/voice/modulate",
+        "/api/v1/voice/modulate",
         json={
             "session_id": session_id,
             "pitch_shift_semitones": -4.5,
@@ -200,7 +195,7 @@ async def test_modulate_custom_overrides_and_toggle(test_setup):
 
     # 2. Toggle filter off (enabled=False)
     resp_off = client.post(
-        "/voice/modulate",
+        "/api/v1/voice/modulate",
         json={
             "session_id": session_id,
             "preset_name": "Ancient Dragon",
@@ -227,7 +222,7 @@ async def test_spicedb_zanzibar_authorization_enforcement(test_setup):
 
     # Unauthorized intruder attempts to modulate voice
     resp = client.post(
-        "/voice/modulate",
+        "/api/v1/voice/modulate",
         json={"session_id": session_id, "preset_name": "Ancient Dragon"},
         headers=voice_auth_headers("unauthorized-stranger"),
     )
@@ -237,7 +232,7 @@ async def test_spicedb_zanzibar_authorization_enforcement(test_setup):
 
     # Authorized DM succeeds
     resp_auth = client.post(
-        "/voice/modulate",
+        "/api/v1/voice/modulate",
         json={"session_id": session_id, "preset_name": "Ancient Dragon"},
         headers=voice_auth_headers("dm-evelyn"),
     )
@@ -254,7 +249,7 @@ def test_vocal_modulator_error_handling(test_setup):
 
     # Unknown preset
     resp = client.post(
-        "/voice/modulate",
+        "/api/v1/voice/modulate",
         json={"session_id": session_id, "preset_name": "Nonexistent Gorgon"},
         headers=voice_auth_headers(user_id),
     )
@@ -262,7 +257,7 @@ def test_vocal_modulator_error_handling(test_setup):
 
     # Invalid base64 audio
     resp_bad = client.post(
-        "/voice/modulate",
+        "/api/v1/voice/modulate",
         json={
             "session_id": session_id,
             "preset_name": "Ancient Dragon",

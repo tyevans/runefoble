@@ -2,7 +2,7 @@
 
 Governing ADRs: ADR-0002, ADR-0003, ADR-0006, ADR-0007.
 Verifies:
-  - Hardware AEC benchmark endpoint POST /voice/aec/benchmark returns ERLE > 35dB.
+  - Hardware AEC benchmark endpoint POST /api/v1/voice/aec/benchmark returns ERLE > 35dB.
   - Zero false speech-to-intent or barge-in triggers during room loudspeaker playback.
   - CloudEvents AECBenchmarkCompletedEvent and EchoSuppressionEngagedEvent dispatched.
   - Double-talk detection prevents filter divergence and preserves human speech without distortion.
@@ -98,7 +98,7 @@ def test_aec_benchmark_endpoint_erle_over_35db(client: TestClient, mock_redis: M
         "erle_target_db": 35.0,
     }
 
-    res = client.post("/voice/aec/benchmark", json=payload)
+    res = client.post("/api/v1/voice/aec/benchmark", json=payload)
     assert res.status_code == 200, res.text
     data = res.json()
 
@@ -123,24 +123,6 @@ def test_aec_benchmark_endpoint_erle_over_35db(client: TestClient, mock_redis: M
     assert len(suppression_events) >= 1
     assert suppression_events[0].erle_db >= 35.0
     assert suppression_events[0].is_double_talk is False
-
-
-def test_aec_benchmark_versioned_path(client: TestClient):
-    """Verify versioned endpoint /api/v1/voice/aec/benchmark operates identically."""
-    ref_pcm = generate_pcm_sine(duration_ms=250, freq=350.0, amplitude=10000)
-    mic_echo = _simulate_room_acoustic_echo(ref_pcm, delay_samples=8, gain=0.55)
-
-    payload = {
-        "session_id": "sess-benchmark-v1",
-        "speaker_id": "spk-marcus",
-        "reference_audio_base64": base64.b64encode(ref_pcm).decode("ascii"),
-        "microphone_audio_base64": base64.b64encode(mic_echo).decode("ascii"),
-    }
-
-    res = client.post("/api/v1/voice/aec/benchmark", json=payload)
-    assert res.status_code == 200
-    assert res.json()["passed"] is True
-    assert res.json()["erle_db"] >= 35.0
 
 
 def test_zero_false_intent_triggers_during_loudspeaker_playback(
@@ -169,7 +151,7 @@ def test_zero_false_intent_triggers_during_loudspeaker_playback(
         "audio_base64": base64.b64encode(cleaned_pcm).decode("ascii"),
         "energy_threshold": 350.0,
     }
-    barge_res = client.post("/voice/filters/barge-in/evaluate", json=barge_payload)
+    barge_res = client.post("/api/v1/voice/filters/barge-in/evaluate", json=barge_payload)
     assert barge_res.status_code == 200
     assert barge_res.json()["barge_in_detected"] is False
 
@@ -202,7 +184,7 @@ def test_double_talk_preserves_voice_fidelity_without_distortion(client: TestCli
         "microphone_audio_base64": base64.b64encode(composite_mic_pcm).decode("ascii"),
     }
 
-    res = client.post("/voice/aec/benchmark", json=payload)
+    res = client.post("/api/v1/voice/aec/benchmark", json=payload)
     assert res.status_code == 200
     data = res.json()
 
@@ -239,7 +221,7 @@ def test_near_end_only_speech_transparency(client: TestClient):
         "microphone_audio_base64": base64.b64encode(speech_pcm).decode("ascii"),
     }
 
-    res = client.post("/voice/aec/benchmark", json=payload)
+    res = client.post("/api/v1/voice/aec/benchmark", json=payload)
     assert res.status_code == 200
     data = res.json()
 

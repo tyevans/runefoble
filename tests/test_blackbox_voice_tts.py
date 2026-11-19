@@ -1,6 +1,6 @@
 """Blackbox TDD tests for the Voice Agent TTS adapter and honest synthesis output (TASK-0601).
 
-Drive only public HTTP routes: POST /api/v1/voice/tts, POST /api/v1/voice/dsp/apply
+Drive only public HTTP routes: POST /api/v1/voice/synthesize, POST /api/v1/voice/dsp/apply
 and GET /healthz. The fake engine is injected at the composition root. The production
 engine is driven through configuration, with a process-boundary stand-in for the binary.
 """
@@ -35,7 +35,7 @@ def _voice_session_grants() -> None:
 
 pytestmark = pytest.mark.usefixtures("trusted_voice_issuer")
 
-TTS_URL = "/api/v1/voice/tts"
+TTS_URL = "/api/v1/voice/synthesize"
 DSP_URL = "/api/v1/voice/dsp/apply"
 SHORT_TEXT = "Hi."
 LONG_TEXT = "The ancient dragon exhales a searing blast across the tactical grid."
@@ -103,7 +103,7 @@ def test_duration_matches_sample_count_and_rate(client: TestClient):
 def test_response_carries_no_stream_urls(client: TestClient):
     """No response field points at a route that does not exist."""
     tts = client.post(TTS_URL, json={"text": LONG_TEXT, "persona_id": "watcher_dm"})
-    dsp = client.post(DSP_URL, json={"filter": "whisper", "audio_base64": _pcm_b64()})
+    dsp = client.post(DSP_URL, json={"filters": ["whisper"], "audio_base64": _pcm_b64()})
 
     for resp in (tts, dsp):
         assert resp.status_code == 200, resp.text
@@ -133,6 +133,19 @@ def test_filters_change_the_synthesised_audio(client: TestClient):
     assert "underwater" in filtered["effects_applied"]
 
 
+def test_responses_carry_one_audio_field_and_one_parameter_field(client: TestClient):
+    """Speech and DSP responses carry audio_base64 and dsp_parameters, with no duplicate fields."""
+    speech = _speak(client, LONG_TEXT, filters=["ethereal"])
+    dsp = client.post(DSP_URL, json={"filters": ["whisper"], "audio_base64": _pcm_b64()})
+    assert dsp.status_code == 200, dsp.text
+
+    for body in (speech, dsp.json()):
+        assert "audio_base64" in body
+        assert "dsp_parameters" in body
+        assert "audio_payload" not in body
+        assert "dsp_metadata" not in body
+
+
 def test_empty_text_is_rejected(client: TestClient):
     """An empty text is a client error. The engine is not asked for audio."""
     resp = client.post(TTS_URL, json={"text": "", "persona_id": "watcher_dm"})
@@ -142,7 +155,7 @@ def test_empty_text_is_rejected(client: TestClient):
 
 def test_dsp_apply_without_audio_is_rejected(client: TestClient):
     """The DSP route filters supplied audio. Without input it returns 422 and no tone."""
-    resp = client.post(DSP_URL, json={"filter": "whisper"})
+    resp = client.post(DSP_URL, json={"filters": ["whisper"]})
 
     assert resp.status_code == 422, resp.text
     assert "audio_payload" not in resp.json()
