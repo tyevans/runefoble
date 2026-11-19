@@ -9,8 +9,7 @@ import httpx
 import pytest
 from board_state.main import app as board_app
 from fastapi.testclient import TestClient
-from gateway_mcp.dynamic import dynamic_registry
-from gateway_mcp.server import mcp
+from gateway_mcp.container import GatewayMcpContainer
 
 from tests.helpers.mcp_http import serve_mcp
 from tests.helpers.silo_fixtures import PNG_SAMPLE_BYTES
@@ -22,10 +21,16 @@ def board_client() -> TestClient:
     return TestClient(board_app, headers=bearer("user-test"))
 
 
-@pytest.fixture(scope="module")
-def mcp_endpoint() -> Iterator[str]:
-    """Serve the gateway MCP server over HTTP. The endpoint trusts the shared signing issuer."""
-    with serve_mcp(mcp) as endpoint:
+@pytest.fixture
+def container() -> GatewayMcpContainer:
+    """A fresh gateway container for one test. No registry state carries over between tests."""
+    return GatewayMcpContainer.default()
+
+
+@pytest.fixture
+def mcp_endpoint(container: GatewayMcpContainer) -> Iterator[str]:
+    """Serve this test's gateway app over HTTP. The endpoint trusts the shared signing issuer."""
+    with serve_mcp(container) as endpoint:
         yield endpoint
 
 
@@ -36,16 +41,6 @@ def tools_client(mcp_endpoint: str) -> Iterator[httpx.Client]:
         base_url=mcp_endpoint.removesuffix("/mcp"), headers=bearer("user-test")
     ) as client:
         yield client
-
-
-@pytest.fixture(autouse=True)
-def clean_environment():
-    """Ensure clean storage and dynamic registry for each test."""
-    for step in range(2):
-        for t in list(dynamic_registry.list_tools()):
-            dynamic_registry.deregister_tool(t.name)
-        if step == 0:
-            yield
 
 
 def build_sample_dd2vtt_dict(

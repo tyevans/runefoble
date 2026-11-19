@@ -13,7 +13,6 @@ from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
-from gateway_mcp.server import mcp
 from rules_compendium.dependencies import get_spicedb_client
 from rules_compendium.main import app
 
@@ -250,7 +249,7 @@ async def test_blackbox_fastmcp_compendium_tools(monkeypatch: pytest.MonkeyPatch
 
     The MCP request carries the caller's signed bearer, which the tool forwards upstream.
     """
-    with serve(app, lifespan="on") as compendium_url, serve_mcp(mcp) as mcp_url:
+    with serve(app, lifespan="on") as compendium_url, serve_mcp() as mcp_url:
         monkeypatch.setenv("RUNEFOBLE_RULES_COMPENDIUM_URL", compendium_url)
         result = await call_tool_over_http(
             mcp_url,

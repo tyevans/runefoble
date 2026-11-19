@@ -13,7 +13,8 @@ from typing import Any
 
 import httpx
 import pytest
-from gateway_mcp.server import mcp
+from gateway_mcp.container import GatewayMcpContainer
+from gateway_mcp.server import build_mcp
 from mcp.types import CallToolResult
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.mock import MockSpiceDBClient
@@ -42,7 +43,7 @@ def bearer_token(sub: str) -> str:
 @pytest.fixture(scope="module", autouse=True)
 def mcp_endpoint() -> Iterator[None]:
     """Serve the gateway MCP server over HTTP so each call carries the caller bearer."""
-    with serve_mcp(mcp) as endpoint:
+    with serve_mcp() as endpoint:
         _MCP["url"] = endpoint
         yield
     _MCP.clear()
@@ -182,6 +183,7 @@ async def test_blackbox_mcp_tool_discovery():
 @pytest.mark.asyncio
 async def test_blackbox_prompt_templates():
     """Verify prompt templates dm_narrative_guidance and tactical_action_adviser."""
+    mcp = build_mcp(GatewayMcpContainer.default())
     prompts = await mcp.list_prompts()
     prompt_names = [p.name for p in prompts]
     assert "dm_narrative_guidance" in prompt_names

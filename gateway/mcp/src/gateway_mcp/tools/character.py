@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, Any
 from mcp.server.fastmcp import Context
 
 from gateway_mcp.caller import caller_bearer
+from gateway_mcp.container import GatewayMcpContainer, bind_container
 from gateway_mcp.owning_services import OwningServices
 from gateway_mcp.tool_authz import (
     authorize_tool_call,
@@ -22,10 +23,14 @@ if TYPE_CHECKING:
     from mcp.server.fastmcp import FastMCP
 
 
-async def inspect_inventory(character_id: str, ctx: Context | None = None) -> dict[str, Any]:
+async def inspect_inventory(
+    container: GatewayMcpContainer, character_id: str, ctx: Context | None = None
+) -> dict[str, Any]:
     """Inspect a character's equipped items and carried inventory."""
-    await authorize_tool_call(ctx, character_view(character_id))
-    sheet = await OwningServices(bearer=caller_bearer(ctx)).get_character(character_id)
+    await authorize_tool_call(ctx, container.permissions, character_view(character_id))
+    sheet = await OwningServices(
+        container.service_clients, bearer=caller_bearer(ctx)
+    ).get_character(character_id)
     return {
         "character_id": sheet["character_id"],
         "equipped": sheet["equipment"],
@@ -33,10 +38,14 @@ async def inspect_inventory(character_id: str, ctx: Context | None = None) -> di
     }
 
 
-async def get_character_sheet(character_id: str, ctx: Context | None = None) -> dict[str, Any]:
+async def get_character_sheet(
+    container: GatewayMcpContainer, character_id: str, ctx: Context | None = None
+) -> dict[str, Any]:
     """Retrieve complete character sheet details including stats, hit points, equipment, and conditions."""
-    await authorize_tool_call(ctx, character_view(character_id))
-    sheet = await OwningServices(bearer=caller_bearer(ctx)).get_character(character_id)
+    await authorize_tool_call(ctx, container.permissions, character_view(character_id))
+    sheet = await OwningServices(
+        container.service_clients, bearer=caller_bearer(ctx)
+    ).get_character(character_id)
     return {
         "character_id": sheet["character_id"],
         "name": sheet["name"],
@@ -56,13 +65,17 @@ async def get_character_sheet(character_id: str, ctx: Context | None = None) -> 
 
 
 async def apply_absentee_penalty(
-    character_id: str, penalty_type: str, explanation: str, ctx: Context | None = None
+    container: GatewayMcpContainer,
+    character_id: str,
+    penalty_type: str,
+    explanation: str,
+    ctx: Context | None = None,
 ) -> dict[str, Any]:
     """Impose a session miss penalty (e.g. 'drunk', 'foolishness', 'cowardice') on an absent player's PC."""
-    await authorize_tool_call(ctx, dm_action_on_character(character_id))
-    sheet = await OwningServices(bearer=caller_bearer(ctx)).apply_penalty(
-        character_id, penalty_type=penalty_type, description=explanation
-    )
+    await authorize_tool_call(ctx, container.permissions, dm_action_on_character(character_id))
+    sheet = await OwningServices(
+        container.service_clients, bearer=caller_bearer(ctx)
+    ).apply_penalty(character_id, penalty_type=penalty_type, description=explanation)
     return {
         "status": "applied",
         "character_id": sheet["character_id"],
@@ -73,14 +86,15 @@ async def apply_absentee_penalty(
 
 
 async def cast_spell(
+    container: GatewayMcpContainer,
     character_id: str,
     spell_name: str,
     spell_level: int = 1,
     ctx: Context | None = None,
 ) -> dict[str, Any]:
     """Cast a spell from a spell slot. Use spell_level 0 for a cantrip. The character sheet tracks slot expenditure."""
-    await authorize_tool_call(ctx, character_edit(character_id))
-    sheet = await OwningServices(bearer=caller_bearer(ctx)).cast_spell(
+    await authorize_tool_call(ctx, container.permissions, character_edit(character_id))
+    sheet = await OwningServices(container.service_clients, bearer=caller_bearer(ctx)).cast_spell(
         character_id, spell_name=spell_name, slot_level=spell_level
     )
     return {
@@ -93,6 +107,7 @@ async def cast_spell(
 
 
 async def modify_character_hp(
+    container: GatewayMcpContainer,
     character_id: str,
     delta: int,
     damage_type: str = "untyped",
@@ -100,10 +115,10 @@ async def modify_character_hp(
     ctx: Context | None = None,
 ) -> dict[str, Any]:
     """Modify a character or token's hit points (negative for damage, positive for healing)."""
-    await authorize_tool_call(ctx, dm_action_on_character(character_id))
-    sheet = await OwningServices(bearer=caller_bearer(ctx)).change_health(
-        character_id, delta=delta, source=f"{reason} [{damage_type}]"
-    )
+    await authorize_tool_call(ctx, container.permissions, dm_action_on_character(character_id))
+    sheet = await OwningServices(
+        container.service_clients, bearer=caller_bearer(ctx)
+    ).change_health(character_id, delta=delta, source=f"{reason} [{damage_type}]")
     return {
         "status": "success",
         "character_id": sheet["character_id"],
@@ -118,6 +133,7 @@ async def modify_character_hp(
 
 
 async def add_condition(
+    container: GatewayMcpContainer,
     character_id: str,
     condition: str,
     duration_rounds: int | None = None,
@@ -125,10 +141,11 @@ async def add_condition(
     ctx: Context | None = None,
 ) -> dict[str, Any]:
     """Impose an active status condition or DM penalty on a character (e.g. 'blinded', 'prone', 'drunk', 'frightened')."""
-    return await _impose_condition(character_id, condition, duration_rounds, source, ctx)
+    return await _impose_condition(container, character_id, condition, duration_rounds, source, ctx)
 
 
 async def apply_condition(
+    container: GatewayMcpContainer,
     character_id: str,
     condition: str,
     duration_rounds: int | None = None,
@@ -136,10 +153,11 @@ async def apply_condition(
     ctx: Context | None = None,
 ) -> dict[str, Any]:
     """Impose an active status condition or DM penalty on a character (e.g. 'blinded', 'prone', 'drunk', 'frightened')."""
-    return await _impose_condition(character_id, condition, duration_rounds, source, ctx)
+    return await _impose_condition(container, character_id, condition, duration_rounds, source, ctx)
 
 
 async def _impose_condition(
+    container: GatewayMcpContainer,
     character_id: str,
     condition: str,
     duration_rounds: int | None,
@@ -147,11 +165,11 @@ async def _impose_condition(
     ctx: Context | None,
 ) -> dict[str, Any]:
     """Send a condition to character_sheet and return the conditions it now stores."""
-    await authorize_tool_call(ctx, dm_action_on_character(character_id))
+    await authorize_tool_call(ctx, container.permissions, dm_action_on_character(character_id))
     name = condition.lower().strip()
-    sheet = await OwningServices(bearer=caller_bearer(ctx)).apply_condition(
-        character_id, condition=name, duration_rounds=duration_rounds, source=source
-    )
+    sheet = await OwningServices(
+        container.service_clients, bearer=caller_bearer(ctx)
+    ).apply_condition(character_id, condition=name, duration_rounds=duration_rounds, source=source)
     return {
         "status": "condition_applied",
         "character_id": sheet["character_id"],
@@ -162,12 +180,12 @@ async def _impose_condition(
     }
 
 
-def register_character_tools(mcp: "FastMCP") -> None:
+def register_character_tools(mcp: "FastMCP", container: GatewayMcpContainer) -> None:
     """Register character and inventory tools on the FastMCP application."""
-    mcp.tool()(get_character_sheet)
-    mcp.tool()(inspect_inventory)
-    mcp.tool()(apply_absentee_penalty)
-    mcp.tool()(cast_spell)
-    mcp.tool()(modify_character_hp)
-    mcp.tool()(add_condition)
-    mcp.tool()(apply_condition)
+    mcp.tool()(bind_container(get_character_sheet, container))
+    mcp.tool()(bind_container(inspect_inventory, container))
+    mcp.tool()(bind_container(apply_absentee_penalty, container))
+    mcp.tool()(bind_container(cast_spell, container))
+    mcp.tool()(bind_container(modify_character_hp, container))
+    mcp.tool()(bind_container(add_condition, container))
+    mcp.tool()(bind_container(apply_condition, container))

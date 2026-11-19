@@ -10,6 +10,7 @@ from mcp.server.fastmcp import Context
 from pydantic import BaseModel
 
 from gateway_mcp.caller import caller_bearer
+from gateway_mcp.container import GatewayMcpContainer, bind_container
 from gateway_mcp.owning_services import OwningServices, ServiceRejectedError
 from gateway_mcp.tool_authz import authorize_tool_call, session_control, token_move
 
@@ -95,13 +96,18 @@ async def _challenge_rating(
     return float(rating)
 
 
-async def inspect_tactical_board(session_id: str, ctx: Context | None = None) -> dict[str, Any]:
+async def inspect_tactical_board(
+    container: GatewayMcpContainer, session_id: str, ctx: Context | None = None
+) -> dict[str, Any]:
     """Retrieve all tokens, coordinates, and grid dimensions for the active session."""
-    board = await OwningServices(bearer=caller_bearer(ctx)).get_board(session_id)
+    board = await OwningServices(container.service_clients, bearer=caller_bearer(ctx)).get_board(
+        session_id
+    )
     return _board_summary(board)
 
 
 async def move_board_token(
+    container: GatewayMcpContainer,
     session_id: str,
     token_id: str,
     to_x: int,
@@ -109,8 +115,8 @@ async def move_board_token(
     ctx: Context | None = None,
 ) -> dict[str, Any]:
     """Move a token to target coordinates (x, y) on the tactical map."""
-    await authorize_tool_call(ctx, token_move(token_id))
-    result = await OwningServices(bearer=caller_bearer(ctx)).move_token(
+    await authorize_tool_call(ctx, container.permissions, token_move(token_id))
+    result = await OwningServices(container.service_clients, bearer=caller_bearer(ctx)).move_token(
         session_id,
         token_id,
         to_x=to_x,
@@ -128,19 +134,22 @@ async def move_board_token(
     }
 
 
-async def query_encounter_state(encounter_id: str, ctx: Context | None = None) -> dict[str, Any]:
+async def query_encounter_state(
+    container: GatewayMcpContainer, encounter_id: str, ctx: Context | None = None
+) -> dict[str, Any]:
     """Query an encounter: round, turn order, active combatant, tokens, grid, and hazards.
 
     Round and turn order come from game_session. Tokens, grid, and hazards come from
     board_state. The encounter id is the game session id.
     """
-    client = OwningServices(bearer=caller_bearer(ctx))
+    client = OwningServices(container.service_clients, bearer=caller_bearer(ctx))
     board = await client.get_board(encounter_id)
     combat = await client.get_combat_state(encounter_id)
     return {**_board_summary(board), **_combat_view(combat)}
 
 
 async def create_encounter(
+    container: GatewayMcpContainer,
     session_id: str,
     campaign_id: str | None = None,
     enemies: list[EnemyPlacement] | None = None,
@@ -153,8 +162,8 @@ async def create_encounter(
     The session id is the encounter id. game_session starts combat first, so an
     unknown or unavailable session creates no board.
     """
-    await authorize_tool_call(ctx, session_control(session_id))
-    client = OwningServices(bearer=caller_bearer(ctx))
+    await authorize_tool_call(ctx, container.permissions, session_control(session_id))
+    client = OwningServices(container.service_clients, bearer=caller_bearer(ctx))
     enemy_list = enemies or []
     # Resolve every rating before combat starts, so a refused enemy leaves no combat behind.
     ratings = [await _challenge_rating(client, enemy, campaign_id) for enemy in enemy_list]
@@ -193,12 +202,12 @@ async def create_encounter(
     }
 
 
-def register_board_tools(mcp: "FastMCP") -> None:
+def register_board_tools(mcp: "FastMCP", container: GatewayMcpContainer) -> None:
     """Register board and encounter tools on the FastMCP application."""
-    mcp.tool()(inspect_tactical_board)
-    mcp.tool()(move_board_token)
-    mcp.tool()(query_encounter_state)
-    mcp.tool()(create_encounter)
+    mcp.tool()(bind_container(inspect_tactical_board, container))
+    mcp.tool()(bind_container(move_board_token, container))
+    mcp.tool()(bind_container(query_encounter_state, container))
+    mcp.tool()(bind_container(create_encounter, container))
 
 
 __all__ = [

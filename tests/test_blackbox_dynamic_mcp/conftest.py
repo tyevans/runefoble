@@ -11,11 +11,8 @@ from collections.abc import Iterator
 
 import pytest
 from fastapi.testclient import TestClient
-from gateway_mcp.dynamic import (
-    dynamic_registry,
-)
+from gateway_mcp.container import GatewayMcpContainer
 from gateway_mcp.identity import BearerTransportAuth
-from gateway_mcp.server import mcp
 from runefoble_auth.mock import MockSpiceDBClient
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 
@@ -41,9 +38,15 @@ def event_bus(mock_redis: MockAsyncRedis, use_redis_client) -> RedisStreamsEvent
 
 
 @pytest.fixture
-def test_app() -> BearerTransportAuth:
+def container() -> GatewayMcpContainer:
+    """A fresh gateway container for one test. No registry state carries over between tests."""
+    return GatewayMcpContainer.default()
+
+
+@pytest.fixture
+def test_app(container: GatewayMcpContainer) -> BearerTransportAuth:
     """The MCP app as the gateway-mcp process serves it: bearer check, `/mcp`, tool routes."""
-    return mcp_http_app(mcp)
+    return mcp_http_app(container)
 
 
 @pytest.fixture
@@ -60,19 +63,8 @@ def anonymous_client(
     return TestClient(test_app)
 
 
-@pytest.fixture(autouse=True)
-def clean_registry(spicedb: MockSpiceDBClient, event_bus: RedisStreamsEventBus):
-    """Ensure clean registry and FastMCP server before and after each test."""
-    dynamic_registry.set_mcp_server(mcp)
-    for tool_def in list(dynamic_registry.list_tools()):
-        dynamic_registry.deregister_tool(tool_def.name)
-    yield
-    for tool_def in list(dynamic_registry.list_tools()):
-        dynamic_registry.deregister_tool(tool_def.name)
-
-
-@pytest.fixture(scope="module")
-def mcp_endpoint() -> Iterator[str]:
-    """Serve the gateway MCP server over HTTP. The endpoint trusts the shared signing issuer."""
-    with serve_mcp(mcp) as endpoint:
+@pytest.fixture
+def mcp_endpoint(container: GatewayMcpContainer) -> Iterator[str]:
+    """Serve this test's gateway app over HTTP. The endpoint trusts the shared signing issuer."""
+    with serve_mcp(container) as endpoint:
         yield endpoint

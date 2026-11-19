@@ -7,16 +7,13 @@ build the routes, map upstream failures to tool errors, and never return a subst
 
 from __future__ import annotations
 
-import asyncio
-import weakref
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
 from uuid import UUID
 
 from opentelemetry import trace
 from opentelemetry.trace import SpanKind
 from runefoble_platform.service_client import (
     OWNER_URL_FIELDS,
-    ServiceClient,
     UpstreamFailureError,
     UpstreamReply,
     UpstreamUnavailableError,
@@ -28,16 +25,13 @@ from runefoble_platform.service_client import (
 
 from gateway_mcp.settings import GatewayMcpSettings, load_settings
 
+if TYPE_CHECKING:
+    from gateway_mcp.service_clients import ServiceClientPool
+
 TIMEOUT_SECONDS = 5.0
 
 TokenType = Literal["pc", "monster", "npc", "obstacle", "loot"]
 InitiatedBy = Literal["player", "the_watcher", "stand_in"]
-
-# One shared client per event loop, service, base URL, and credential. The HTTP connections of a
-# client belong to the loop that opened them, so a loop never reuses another loop's clients.
-_shared_clients: weakref.WeakKeyDictionary[
-    asyncio.AbstractEventLoop, dict[tuple[str, str, str], ServiceClient]
-] = weakref.WeakKeyDictionary()
 
 
 class ServiceError(Exception):
@@ -57,17 +51,6 @@ class ServiceRejectedError(ServiceError):
         self.status_code = status_code
 
 
-def _shared_client(service: str, base_url: str, credential: str) -> ServiceClient:
-    """Return the shared client of the running event loop for one service, creating it on first use."""
-    clients = _shared_clients.setdefault(asyncio.get_running_loop(), {})
-    key = (service, base_url, credential)
-    client = clients.get(key)
-    if client is None:
-        client = ServiceClient(service, base_url, credential)
-        clients[key] = client
-    return client
-
-
 def _canonical_character_id(character_id: str) -> str:
     """Return the canonical UUID of a character id. A malformed id is refused before any call."""
     try:
@@ -81,14 +64,20 @@ def _canonical_character_id(character_id: str) -> str:
 class OwningServices:
     """Calls the public routes of the owning services for one MCP tool call.
 
-    `bearer` is the MCP caller's Zitadel token, forwarded as is. Without a bearer the call
-    sends no Authorization header. The upstream service decides whether that call is allowed.
+    `clients` is the service client pool of the gateway container. `bearer` is the MCP
+    caller's Zitadel token, forwarded as is. Without a bearer the call sends no Authorization
+    header. The upstream service decides whether that call is allowed.
     """
 
     def __init__(
-        self, settings: GatewayMcpSettings | None = None, *, bearer: str | None = None
+        self,
+        clients: ServiceClientPool,
+        settings: GatewayMcpSettings | None = None,
+        *,
+        bearer: str | None = None,
     ) -> None:
         """Read the upstream settings. Each tool call builds one instance."""
+        self._clients = clients
         self._settings = settings or load_settings()
         self._bearer = bearer
 
@@ -102,7 +91,7 @@ class OwningServices:
     ) -> UpstreamReply:
         """Send one call through the shared client, inside a client span, and map failures."""
         base_url = getattr(self._settings, OWNER_URL_FIELDS[service])
-        client = _shared_client(
+        client = self._clients.client(
             service, base_url, self._settings.service_credential.get_secret_value()
         )
         authorization = f"Bearer {self._bearer}" if self._bearer else None

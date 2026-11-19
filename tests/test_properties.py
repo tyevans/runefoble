@@ -1,6 +1,6 @@
 """Property-based invariant testing with Hypothesis."""
 
-from gateway_mcp.server import roll_dice
+from gateway_mcp.tools.dice import roll_dice
 from hypothesis import given
 from hypothesis import strategies as st
 

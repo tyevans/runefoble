@@ -19,7 +19,6 @@ from typing import Any
 
 import httpx
 import pytest
-from gateway_mcp.server import mcp
 from mcp.types import CallToolResult
 from runefoble_auth.factory import get_spicedb_client, set_spicedb_client
 
@@ -43,7 +42,7 @@ def live_read_stack(live_spicedb_with_schema, character_sheet_upstream) -> Itera
     live_client = live_spicedb_with_schema.client
     with (
         restored_seam(get_spicedb_client, set_spicedb_client, live_client, replace=True),
-        serve_mcp(mcp) as endpoint,
+        serve_mcp() as endpoint,
     ):
         yield endpoint
 
