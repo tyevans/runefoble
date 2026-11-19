@@ -32,7 +32,7 @@ Four services each define `to_uuid`. All four return a random `uuid4()` for `Non
 None. Platform quality work.
 
 ## Detailed Specification & Implementation Plan
-1. Add `libs/runefoble_platform/src/runefoble_platform/ids.py` (removed; never created, TASK-0816 put the helper in `runefoble_platform.identifiers`) with one `to_uuid(value: str | UUID) -> UUID`. `None` raises `ValueError`. A non-UUID string maps through `uuid5` as today.
+1. Add `libs/runefoble_platform/src/runefoble_platform/ids.py` (removed) with one `to_uuid(value: str | UUID) -> UUID`. `None` raises `ValueError`. A non-UUID string maps through `uuid5` as today. The file was never created. TASK-0816 put the helper in `runefoble_platform.identifiers`.
 2. Update every call site in `services/` (all six copies). Delete the old functions. Add no re-export (DoR 9).
 3. Each caller that can receive `None` handles the missing id explicitly: reject the request with 422, or carry a null value. Do not create a random identity.
 
