@@ -1,8 +1,9 @@
 """Blackbox test: a voice room load failure answers 503 and never replaces the stored room (TASK-0561).
 
-Governed by ADR-0011, ADR-0015 (fail closed) and Hard Invariant 7. The room exists in the
-event store. The store then fails reads. Routes must answer 503. They must not answer 200 with
-an empty room, and must not write a new room over the stored one.
+Governed by ADR-0011, ADR-0015 (fail closed) and Hard Invariant 7. The peer joins through the
+voice signaling WebSocket, so the room reaches the event store through a public frontdoor. The
+store then fails reads. Routes must answer 503. They must not answer 200 with an empty room,
+and must not write a new room over the stored one.
 
 `store_outage` routes the process event store reads to an unreachable store.
 No application code is mocked.
@@ -16,31 +17,22 @@ from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
-from runefoble_platform.event_sourcing import create_aggregate_repository
-from runefoble_platform.identifiers import opaque_aggregate_id
 from voice_agent.coordinator import (
     VoiceRoomCoordinator,
     get_voice_room_coordinator,
     set_voice_room_coordinator,
 )
 from voice_agent.main import app as voice_app
-from voice_agent.room_aggregate import VoiceRoomAggregate
 
 from tests.helpers.event_store_seam import store_outage
 from tests.helpers.module_state import SeamRestorer
 from tests.helpers.spicedb_factory import grant_voice_session
 from tests.helpers.voice_identity import voice_auth_headers
+from tests.helpers.voice_signaling import next_frame, voice_socket
 
 pytestmark = pytest.mark.usefixtures("trusted_voice_issuer")
 
 DM_USER = "user-dm"
-
-
-async def _seed_room_with_one_peer(session_id: str) -> None:
-    repo = create_aggregate_repository(VoiceRoomAggregate)
-    agg = VoiceRoomAggregate(opaque_aggregate_id(session_id, field="session_id"))
-    agg.join_peer(session_id, "peer-stored", DM_USER, "dm", None)
-    await repo.save(agg)
 
 
 @pytest.fixture
@@ -67,14 +59,24 @@ def client() -> TestClient:
     return TestClient(voice_app, headers=voice_auth_headers(DM_USER))
 
 
+@pytest.fixture
+def stored_peer(client: TestClient, session_id: str, fresh_coordinator: None) -> Iterator[None]:
+    """Join `peer-stored` through the voice signaling socket. The socket stays open for the test.
+
+    Closing the socket removes the peer from the room, so the socket must outlive the outage.
+    """
+    with voice_socket(client, session_id, "peer-stored", DM_USER) as ws:
+        joined = next_frame(ws, "webrtc_joined")
+        assert joined["peer_id"] == "peer-stored"
+        yield
+
+
 def test_room_read_answers_503_and_recovers_the_stored_room(
     client: TestClient,
     session_id: str,
-    fresh_coordinator: None,
+    stored_peer: None,
 ) -> None:
     """A failed room load answers 503. After recovery the stored peer is still there."""
-    asyncio.run(_seed_room_with_one_peer(session_id))
-
     with store_outage():
         resp = client.get(f"/api/v1/voice/rooms/{session_id}")
     assert resp.status_code == 503, resp.text
@@ -89,11 +91,9 @@ def test_room_read_answers_503_and_recovers_the_stored_room(
 def test_room_kick_answers_503_and_keeps_the_stored_room(
     client: TestClient,
     session_id: str,
-    fresh_coordinator: None,
+    stored_peer: None,
 ) -> None:
     """A kick on a stored room during a store outage answers 503 and changes nothing."""
-    asyncio.run(_seed_room_with_one_peer(session_id))
-
     with store_outage():
         resp = client.post(
             f"/api/v1/voice/rooms/{session_id}/kick",

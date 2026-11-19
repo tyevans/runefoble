@@ -22,6 +22,8 @@ from runefoble_events.events import (
     TokenPlaced,
     TurnAdvanced,
 )
+from runefoble_platform.identifiers import opaque_aggregate_id
+from soundscape.aggregate import SoundscapeAggregate
 
 
 def test_domain_events_registered_in_eventsource_registry():
@@ -172,3 +174,213 @@ async def test_character_aggregate_with_penalties():
     final = await repo.load(char_id)
     assert "drunk" not in final.state.penalties
     assert "foolishness" in final.state.penalties
+
+
+@pytest.mark.asyncio
+async def test_unit_board_aggregate_modular_handlers_round_trip():
+    """Verify event-sourced BoardAggregate reconstitution using modular handler mixins."""
+    store = InMemoryEventStore()
+    repo = AggregateRepository(event_store=store, aggregate_factory=BoardAggregate)
+
+    board_id = uuid4()
+    board = BoardAggregate(board_id)
+    board.initialize_grid(cols=10, rows=10, session_id="test-session-modular")
+
+    # 1. Configure difficult terrain and lava hazard
+    board.configure_terrain(x=3, y=3, elevation=1, terrain_type="difficult", hazard="lava")
+    assert board.get_terrain(3, 3).terrain_type == "difficult"
+    assert board.get_terrain(3, 3).hazard == "lava"
+
+    # 2. Place friendly player token
+    board.place_token(
+        token_id="valeros",
+        name="Valeros",
+        token_type="pc",
+        x=1,
+        y=1,
+        hp=35,
+        is_friendly=True,
+        vision_radius=2,
+    )
+    assert "valeros" in board.state.tokens
+    assert board.state.tokens["valeros"].x == 1
+    assert board.state.tokens["valeros"].y == 1
+
+    # 3. Move token across hazard at (3, 3) to (4, 4)
+    cost, hazard, damage = board.move_token("valeros", to_x=4, to_y=4)
+    assert board.state.tokens["valeros"].x == 4
+    assert board.state.tokens["valeros"].y == 4
+    assert hazard == "lava"
+    assert damage == "2d10"
+    assert cost > 0
+
+    # 4. Execute tactical token action
+    board.execute_token_action(
+        token_id="valeros",
+        action="dodge",
+        details={"stance": "defensive"},
+        initiated_by="player",
+    )
+    assert board.state.tokens["valeros"].active_action == "dodge"
+
+    # 5. Place AoE spell template
+    board.place_aoe_template(
+        template_id="fireball-1",
+        shape="circle",
+        origin_x=4.0,
+        origin_y=4.0,
+        radius_ft=20.0,
+        spell_name="Fireball",
+        affected_token_ids=["valeros"],
+    )
+    assert len(board.state.active_aoe_templates) == 1
+    assert board.state.active_aoe_templates[0].template_id == "fireball-1"
+
+    # 6. Save aggregate to event store
+    await repo.save(board)
+
+    # 7. Reconstitute from event stream and verify all modular handler states match
+    reconstituted = await repo.load(board_id)
+    assert reconstituted.state.cols == 10
+    assert reconstituted.state.rows == 10
+    assert reconstituted.state.tokens["valeros"].x == 4
+    assert reconstituted.state.tokens["valeros"].y == 4
+    assert reconstituted.state.tokens["valeros"].active_action == "dodge"
+    assert len(reconstituted.state.active_aoe_templates) == 1
+    assert reconstituted.get_terrain(3, 3).hazard == "lava"
+
+    # 8. Remove AoE template and token on reconstituted aggregate
+    reconstituted.remove_aoe_template("fireball-1")
+    assert len(reconstituted.state.active_aoe_templates) == 0
+
+    reconstituted.remove_token("valeros", reason="extracted")
+    assert "valeros" not in reconstituted.state.tokens
+
+
+@pytest.mark.asyncio
+async def test_unit_cast_spell_domain_events_round_trip() -> None:
+    """Verify SpellCast, AreaEffectExploded, and VFXAnimationFinished events are recorded."""
+    repo = AggregateRepository(event_store=InMemoryEventStore(), aggregate_factory=BoardAggregate)
+    sess_id = f"board-{uuid4().hex[:8]}"
+    board_uuid = opaque_aggregate_id(sess_id, field="session_id")
+    board = BoardAggregate(board_uuid)
+    board.initialize_grid(cols=10, rows=10, session_id=sess_id)
+    board.place_token("valeros", "Valeros", "pc", 2, 2, 40, True)
+
+    anim_id, trajectory, affected_tokens, affected_cells, decal = board.cast_spell(
+        spell_name="Chain Lightning",
+        target_x=5,
+        target_y=5,
+        caster_token_id="valeros",
+        spell_archetype="evocation",
+        radius_ft=15,
+        damage_type="lightning",
+    )
+    board.finish_vfx(anim_id, "Chain Lightning", 5, 5, 400)
+    await repo.save(board)
+
+    # Reload aggregate and verify event replay
+    loaded_board = await repo.load(board_uuid)
+    assert loaded_board is not None
+    assert loaded_board.state.cols == 10
+    assert len(loaded_board.state.active_decals) > 0
+
+
+@pytest.mark.asyncio
+async def test_unit_soundscape_aggregate_domain_round_trip():
+    """Verify full domain event sourcing across mixins and event replay via AggregateRepository."""
+    store = InMemoryEventStore()
+    repo = AggregateRepository(event_store=store, aggregate_factory=SoundscapeAggregate)
+
+    agg_id = uuid4()
+    session_id = f"session-modular-{agg_id.hex[:8]}"
+
+    # 1. Instantiate and apply domain commands across all mixins
+    agg = SoundscapeAggregate(agg_id)
+
+    # Stems mixin
+    agg.record_track_change(
+        session_id=session_id,
+        track_id="track-dungeon-01",
+        stem_profile="exploration",
+        tension_score=20,
+        crossfade_duration_ms=2000,
+        active_stems=["ambient"],
+    )
+    assert agg.state.current_track_id == "track-dungeon-01"
+    assert agg.state.stem_profile == "exploration"
+
+    # Tension mixin
+    agg.record_tension_update(
+        session_id=session_id,
+        tension_score=65,
+        stem_profile="combat",
+        combat_round=2,
+        enemy_cr_balance=2.5,
+        lowest_health_ratio=0.5,
+    )
+    assert agg.state.tension_score == 65
+    assert agg.state.stem_profile == "combat"
+
+    # Tension mixin mood override
+    agg.record_stem_profile_overridden(session_id=session_id, mood="boss")
+    assert agg.state.manual_override is True
+    assert agg.state.stem_profile == "boss"
+
+    # Foley mixin
+    agg.record_cue(
+        session_id=session_id,
+        cue_id="cue-sword-clash",
+        sound_url="https://s3.local/foley/sword.wav",
+        volume_gain=0.9,
+        duck_music=True,
+    )
+    assert len(agg.state.cues_history) == 1
+    assert agg.state.cues_history[0]["cue_id"] == "cue-sword-clash"
+
+    agg.record_ducking_engaged(session_id=session_id, reason="speech", duration_ms=0)
+    assert agg.state.is_ducked is True
+    assert agg.state.ducking_attenuation_db == -12.0
+    agg.record_ducking_released(session_id=session_id)
+    assert agg.state.is_ducked is False
+    agg.record_ducking_engaged(session_id=session_id, reason="speech", duration_ms=0)
+    agg.record_channel_volumes(session_id=session_id, channel_volumes={"melody": 0.3})
+    agg.record_master_volume(session_id=session_id, master_volume=0.5)
+    assert agg.state.channel_volumes["melody"] == 0.3
+    assert agg.state.master_volume == 0.5
+
+    # Leitmotif mixin
+    agg.record_leitmotif_profile(
+        session_id=session_id,
+        character_id="char-valeros",
+        character_name="Valeros",
+        instrument_timbre="brass",
+        tempo_multiplier=1.1,
+    )
+    assert "char-valeros" in agg.state.character_profiles
+
+    agg.record_leitmotif_trigger(
+        session_id=session_id,
+        character_id="char-valeros",
+        character_name="Valeros",
+        motif_type="triumphant",
+        instrument_timbre="brass",
+    )
+    assert agg.state.active_leitmotif is not None
+    assert agg.state.active_leitmotif["character_id"] == "char-valeros"
+    assert len(agg.state.leitmotif_history) == 1
+
+    # Save uncommitted events into event store
+    await repo.save(agg)
+
+    # 2. Reconstitute aggregate from event store
+    reconstituted = await repo.load(agg_id)
+    assert reconstituted is not None
+    assert reconstituted.state.current_track_id == "track-dungeon-01"
+    assert reconstituted.state.tension_score == 65
+    assert reconstituted.state.manual_override is True
+    assert reconstituted.state.stem_profile == "boss"
+    assert reconstituted.state.is_ducked is True
+    assert len(reconstituted.state.cues_history) == 1
+    assert "char-valeros" in reconstituted.state.character_profiles
+    assert reconstituted.state.active_leitmotif["character_id"] == "char-valeros"
