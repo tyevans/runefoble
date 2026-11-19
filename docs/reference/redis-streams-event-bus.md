@@ -74,9 +74,13 @@ Call `publish_event(stream, event)` on `RedisStreamsEventBus` for every event. D
 
 ### Aggregate Event Publication
 
-Routers do not publish events that an aggregate commits. The `AggregateRepository` publishes every committed event through its event publisher.
+Game session uses two publication paths. Each aggregate uses one of them.
 
-- The game session repository uses `SessionEventPublisher` (`services/game_session/src/game_session/events.py`).
+- The session aggregate repository publishes every committed event through `SessionEventPublisher` (`services/game_session/src/game_session/events.py`). Session routers do not publish these events.
+- Every other game session aggregate (settlements, havens, establishments, NPC workers, caravans, bounties, tavern, stronghold, and west marches) is saved by its route or service. The route then publishes the saved events with `publish_aggregate_events`. See "Publish Failure Policy" below. No game session module keeps a local publish loop.
+
+Rules for the session repository path:
+
 - `SESSION_EVENT_STREAMS` in the same module maps each session event type to its stream.
 - An event type with no mapping raises `UnmappedSessionEventError`. Add the mapping when you add an event.
 - A publish failure raises `DomainEventPublishError`. The API returns HTTP 503 and the client retries.
@@ -111,7 +115,7 @@ Every publish call uses one of two helpers from `runefoble_platform.event_publis
 | `publish_or_fail(bus, stream, event)` | Routes that change state, and DM decisions | Logs at error level, counts the failure, raises `DomainEventPublishError`. The app returns HTTP 503. |
 | `publish_best_effort(bus, stream, event)` | Read-model updates, projections, recaps, and suggestions | Logs at error level and counts the failure. Returns `False`. The request still succeeds. |
 
-`publish_aggregate_events(bus, stream, events)` publishes the events of one aggregate to one stream, in order, with `publish_or_fail`. Use it for route-level save-then-publish. Read `uncommitted_events` before the save, because a save marks them as committed. Save first, then check the bus (`if bus:`), then call the helper. It stops at the first failed publish and raises `DomainEventPublishError`. A route that publishes to two streams calls the helper once per stream. Each stream keeps its event order.
+`publish_aggregate_events(bus, stream, events)` publishes the events of one aggregate to one stream, in order, with `publish_or_fail`. Use it for route-level save-then-publish. Read `uncommitted_events` before the save, because a save marks them as committed. Save first, then check the bus (`if bus:`), then call the helper. A route that creates a record writes its SpiceDB relationships and child index links before it publishes. Then a 503 leaves a record that the caller can read. It stops at the first failed publish and raises `DomainEventPublishError`. A route that publishes to two streams calls the helper once per stream. Each stream keeps its event order.
 
 `deliver_best_effort(destination, event_type, awaitable)` applies the best-effort policy to any delivery that is not a bus publish, such as a WebSocket broadcast or a board fan-out. No in-process event bus exists.
 
@@ -122,7 +126,7 @@ Rules for clients and operators:
 - Each service exposes `event_publish_failures` (a count) on `/healthz`. Watch this value. A rising count means events are being lost. The count covers every failed delivery, so one event sent to two streams can add two.
 - Services that map 503 call `install_publish_failure_handler(app)` in their `main.py`.
 
-Decision routes that return 503 include the Watcher veto, approve, modify, DM whisper, stand-in activation, and autonomous DM routes. Game session routes that return 503 include session start, hot-swap takeover, combat, tavern, bounty, campfire, caravan, stronghold, settlement, and west marches routes. The dice roll route in game session uses `publish_best_effort` until TASK-0565 refactors it.
+Decision routes that return 503 include the Watcher veto, approve, modify, DM whisper, stand-in activation, and autonomous DM routes. Game session routes that return 503 include session start, hot-swap takeover, combat, tavern, bounty, campfire, caravan, stronghold, settlement, haven, establishment, NPC worker, and west marches routes. The dice roll route in game session uses `publish_best_effort` until TASK-0565 refactors it.
 
 #### Site Classes in Voice Agent
 

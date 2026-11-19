@@ -11,12 +11,12 @@ from game_session.dependencies import (
     get_event_bus,
     get_settlement_repository,
 )
+from game_session.events import STREAM_WEST_MARCHES
 from game_session.settlement.auth.tokens import CallerId, get_principal
 from game_session.settlement.haven.loaders import (
     build_settlement_projection,
     load_establishment,
     load_settlement,
-    save_and_publish,
 )
 from game_session.settlement.models import (
     EstablishmentState,
@@ -24,6 +24,7 @@ from game_session.settlement.models import (
     UpgradeEstablishmentRequest,
     UpgradeSettlementTierRequest,
 )
+from runefoble_platform.event_publish import publish_aggregate_events
 
 router = APIRouter(dependencies=[Depends(get_principal)])
 
@@ -46,7 +47,10 @@ async def upgrade_settlement_tier(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
 
-    await save_and_publish(get_settlement_repository(), get_event_bus(), agg)
+    events = list(agg.uncommitted_events)
+    await get_settlement_repository().save(agg)
+    if bus := get_event_bus():
+        await publish_aggregate_events(bus, STREAM_WEST_MARCHES, events)
     return await build_settlement_projection(agg)
 
 
@@ -69,7 +73,10 @@ async def upgrade_establishment(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
 
-    await save_and_publish(get_establishment_repository(), get_event_bus(), agg)
+    events = list(agg.uncommitted_events)
+    await get_establishment_repository().save(agg)
+    if bus := get_event_bus():
+        await publish_aggregate_events(bus, STREAM_WEST_MARCHES, events)
     return agg.state
 
 
