@@ -27,10 +27,10 @@ from gateway_api.auth import (
     set_zitadel_auth_service,
 )
 from gateway_api.main import app
-from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
 from starlette.websockets import WebSocketDisconnect
 
 from tests.helpers.module_state import SeamRestorer
+from tests.helpers.signing_test_issuer import SigningTestIssuer
 
 RUNEFOBLE_PROTOCOL = "runefoble.v1"
 

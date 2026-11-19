@@ -6,10 +6,7 @@ import logging
 from typing import Any, Literal
 from uuid import UUID
 
-from runefoble_platform.config import PlatformSettings
-
 from runefoble_auth.errors import AuthzError
-from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.mock.client import MockSpiceDBClient, Relationship
 from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_auth.sync_events import (
@@ -28,7 +25,6 @@ from runefoble_auth.sync_tuples import (
     reconcile_tuples,
     write_relationship_tuple,
 )
-from runefoble_auth.wiring import verifier_from_settings
 from runefoble_auth.zitadel import ZitadelAuthService
 
 logger = logging.getLogger(__name__)
@@ -42,13 +38,13 @@ class ZitadelSpiceDBSyncService:
 
     def __init__(
         self,
-        spicedb_client: SpiceDBClient | MockSpiceDBClient | None = None,
-        zitadel_auth: ZitadelAuthService | None = None,
+        spicedb_client: SpiceDBClient | MockSpiceDBClient,
+        zitadel_auth: ZitadelAuthService,
         max_retries: int = 3,
         retry_delay_seconds: float = 0.05,
     ) -> None:
-        self.spicedb = spicedb_client or get_spicedb_client()
-        self.zitadel = zitadel_auth or verifier_from_settings(PlatformSettings())
+        self.spicedb = spicedb_client
+        self.zitadel = zitadel_auth
         self.max_retries = max_retries
         self.retry_delay_seconds = retry_delay_seconds
 

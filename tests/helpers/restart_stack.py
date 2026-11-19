@@ -25,11 +25,11 @@ from typing import Any
 import pytest
 from fastapi import FastAPI
 from runefoble_auth.spicedb import SpiceDBClient
-from runefoble_auth.testing.signing_test_issuer import DEFAULT_ISSUER
 
 from tests.helpers.live_services import serve, serve_subprocess
 from tests.helpers.ports import free_port
 from tests.helpers.redis_container import redis_container
+from tests.helpers.signing_test_issuer import DEFAULT_ISSUER
 from tests.helpers.spicedb import LiveSpiceDB
 from tests.helpers.ws_identity import SIGNING_ISSUER
 

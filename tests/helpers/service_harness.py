@@ -25,10 +25,10 @@ from typing import Literal
 import pytest
 from fastapi import FastAPI
 from runefoble_auth.mock import MockSpiceDBClient
-from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
 
 from tests.helpers.live_services import serve
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.signing_test_issuer import SigningTestIssuer
 from tests.helpers.spicedb_factory import shared_spicedb_client
 from tests.helpers.ws_identity import SIGNING_ISSUER
 

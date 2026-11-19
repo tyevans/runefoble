@@ -144,6 +144,8 @@ There is no event listener class. The Redis Streams subscriber that once wired t
 
 `ZitadelSpiceDBSyncService` is built by the gateway health route only (`gateway/api/src/gateway_api/auth_sync.py`). Its `check_health` method is the only method that a production path calls.
 
+The constructor requires both adapters: `spicedb_client` and `zitadel_auth`. It builds neither one. Calling it without either argument raises `TypeError`.
+
 The write methods (`sync_membership`, `sync_character_ownership`, `sync_session_campaign`, `sync_board_token`, and `handle_domain_event`) have no production caller in this repository. Tests call them. TASK-0534 step 4 asks for the modules and exports that have no callers to be removed. That removal is open.
 
 ## Modular Architecture
@@ -186,4 +188,4 @@ There is no fallback to an in-memory client:
 
 - `SpiceDBClient` refuses to run without SpiceDB and does not fall back to `MockSpiceDBClient` (`libs/runefoble_auth/src/runefoble_auth/spicedb.py`).
 - The shared factory `get_spicedb_client` builds only the gRPC client (`libs/runefoble_auth/src/runefoble_auth/factory.py`).
-- `check_health` reports `backend: mock` only when the sync service holds a `MockSpiceDBClient`. The gateway builds the service with the shared factory client, so the deployed backend is `grpc`.
+- `check_health` reports `backend: mock` only when the sync service holds a `MockSpiceDBClient`. The gateway builds the service with the shared factory client and its Zitadel verifier, so the deployed backend is `grpc`.

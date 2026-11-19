@@ -11,8 +11,8 @@ from collections.abc import Iterator
 import pytest
 from fastapi.testclient import TestClient
 from gateway_api.main import app as gateway_app
-from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
 
+from tests.helpers.signing_test_issuer import SigningTestIssuer
 from tests.helpers.silo_fixtures import PNG_SAMPLE_BYTES
 from tests.helpers.ws_identity import bearer
 

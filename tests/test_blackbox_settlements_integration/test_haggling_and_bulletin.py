@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from fastapi.testclient import TestClient
 from game_session.events import STREAM_TAVERN, STREAM_WEST_MARCHES
-from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.signing_test_issuer import SigningTestIssuer
 from tests.helpers.stream_events import assert_stream_events
 
 from .conftest import setup_campaign_settlement, ws_subprotocols

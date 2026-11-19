@@ -23,6 +23,7 @@ from runefoble_platform.event_publish import publish_best_effort, publish_or_fai
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.sync_verifier import sync_test_verifier
 
 
 @pytest.fixture
@@ -120,7 +121,7 @@ def test_event_field_treats_none_as_absent() -> None:
 
 @pytest.mark.asyncio
 async def test_untyped_payload_is_rejected_by_zanzibar_sync() -> None:
-    service = ZitadelSpiceDBSyncService(MockSpiceDBClient())
+    service = ZitadelSpiceDBSyncService(MockSpiceDBClient(), sync_test_verifier())
 
     with pytest.raises(EventTypeMissingError):
         await service.handle_domain_event({"campaign_id": str(uuid.uuid4())})

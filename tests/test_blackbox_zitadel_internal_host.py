@@ -13,8 +13,9 @@ from fastapi import Depends, FastAPI
 from fastapi.testclient import TestClient
 from helpers.local_http_server import LocalHttpServer, RecordedRequest
 from runefoble_auth.principal import VerifiedPrincipal, require_principal
-from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
 from runefoble_auth.zitadel import ZitadelAuthService
+
+from tests.helpers.signing_test_issuer import SigningTestIssuer
 
 ISSUER = "http://auth.localhost"
 PROJECT_ID = "364509876543210987"

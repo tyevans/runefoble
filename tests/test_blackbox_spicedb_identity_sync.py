@@ -24,6 +24,7 @@ from runefoble_platform.redis_bus import RedisStreamsEventBus
 
 from tests.helpers.campaign_setup import create_campaign, create_owner_session
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.sync_verifier import sync_test_verifier
 from tests.helpers.ws_identity import bearer
 
 
@@ -191,7 +192,9 @@ async def test_redis_streams_event_bus_deserialization_and_sync(client) -> None:
     mock_redis = MockAsyncRedis()
     event_bus = RedisStreamsEventBus(client=mock_redis)
     spicedb = get_spicedb_client()
-    sync_service = ZitadelSpiceDBSyncService(spicedb_client=spicedb)
+    sync_service = ZitadelSpiceDBSyncService(
+        spicedb_client=spicedb, zitadel_auth=sync_test_verifier()
+    )
 
     campaign_id = f"camp-redis-{uuid4().hex[:8]}"
     dm_id = "redis_dm_01"
@@ -228,6 +231,7 @@ async def test_sync_resilience_and_retry() -> None:
     flaky_client = FlakySpiceDB()
     service = ZitadelSpiceDBSyncService(
         spicedb_client=flaky_client,  # type: ignore
+        zitadel_auth=sync_test_verifier(),
         max_retries=4,
         retry_delay_seconds=0.01,
     )

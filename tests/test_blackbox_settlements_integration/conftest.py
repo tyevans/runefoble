@@ -14,11 +14,11 @@ from gateway_api.auth import set_zitadel_auth_service as set_gw_verifier
 from gateway_api.main import app as gateway_app
 from gateway_api.websocket_manager import ws_campaign_manager
 from runefoble_auth.mock import MockSpiceDBClient
-from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
 
 from tests.helpers.campaign_setup import create_campaign, invite_and_join
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.module_state import SeamRestorer
+from tests.helpers.signing_test_issuer import SigningTestIssuer
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 

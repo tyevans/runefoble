@@ -20,9 +20,9 @@ import pytest
 from asset_forge.main import app as asset_forge_app
 from character_sheet.main import app as character_app
 from fastapi.testclient import TestClient
-from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
 from soundscape.main import app as soundscape_app
 
+from tests.helpers.signing_test_issuer import SigningTestIssuer
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 PUBLIC_PATHS = {"/healthz", "/ui/manifest", "/openapi.json"}

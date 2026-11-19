@@ -14,8 +14,8 @@ from uuid import uuid4
 import httpx
 import pytest
 from fastapi.testclient import TestClient
-from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
 
+from tests.helpers.signing_test_issuer import SigningTestIssuer
 from tests.helpers.ws_identity import SIGNING_ISSUER, bearer
 
 

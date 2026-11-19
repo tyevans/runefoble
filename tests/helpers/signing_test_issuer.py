@@ -12,7 +12,6 @@ from typing import Any
 
 import jwt
 from cryptography.hazmat.primitives.asymmetric import rsa
-
 from runefoble_auth.zitadel import ZitadelAuthService
 
 DEFAULT_ISSUER = "http://zitadel.test"

@@ -139,7 +139,7 @@ The App Shell sends the access token as `Authorization: Bearer`. The guard treat
 
 ## Bootstrap the Zitadel Project and Application
 
-Zitadel generates the project ID and the client ID when it runs. The chart cannot know them at render time. The Helm hook Job `zitadel-bootstrap` creates them. It runs after `helm install` and `helm upgrade`. The chart template is `deployments/helm/runefoble/templates/zitadel-bootstrap.yaml`. The Job runs the `gateway-api` image and the module `runefoble_auth.zitadel_bootstrap_job`.
+Zitadel generates the project ID and the client ID when it runs. The chart cannot know them at render time. The Helm hook Job `zitadel-bootstrap` creates them. It runs after `helm install` and `helm upgrade`. The chart template is `deployments/helm/runefoble/templates/zitadel-bootstrap.yaml`. The Job runs the `gateway-api` image. Its module `zitadel_bootstrap.job` lives in `deployments/zitadel_bootstrap/src`, and the chart sets `PYTHONPATH` to that folder.
 
 ### What the Job does
 
@@ -198,10 +198,10 @@ The values in `values.yaml` are for local Kind only. Before a shared deployment:
 
 ## Step 5: Test with Signed Tokens
 
-Tests use `SigningTestIssuer` from `runefoble_auth.testing.signing_test_issuer`. It creates an RSA key, mints RS256 tokens, and builds a verifier that trusts only that key.
+Tests use `SigningTestIssuer` from `tests.helpers.signing_test_issuer`. It creates an RSA key, mints RS256 tokens, and builds a verifier that trusts only that key.
 
 ```python
-from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
+from tests.helpers.signing_test_issuer import SigningTestIssuer
 
 issuer = SigningTestIssuer()
 verifier = issuer.verifier()

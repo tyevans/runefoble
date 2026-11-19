@@ -24,12 +24,12 @@ from game_session.campaign.repositories import (
 from game_session.main import app as session_app
 from game_session.settlement.auth.tokens import get_zitadel_auth_service, set_zitadel_auth_service
 from runefoble_auth.mock import MockSpiceDBClient
-from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.event_sourcing import build_event_store, get_event_store, set_event_store
 from runefoble_platform.models import utc_now
 
 from tests.helpers.module_state import SeamRestorer
+from tests.helpers.signing_test_issuer import SigningTestIssuer
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")

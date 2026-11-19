@@ -190,7 +190,7 @@ Do not write a second receive loop in a route. `on_close` runs in a `finally` bl
 ## Test Both Paths With Signed Tokens
 
 ```python
-from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
+from tests.helpers.signing_test_issuer import SigningTestIssuer
 
 issuer = SigningTestIssuer()
 verifier = issuer.verifier()

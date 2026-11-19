@@ -8,7 +8,7 @@ gateway and game_session verifiers for one test.
 
 from __future__ import annotations
 
-from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
+from tests.helpers.signing_test_issuer import SigningTestIssuer
 
 SIGNING_ISSUER = SigningTestIssuer()
 

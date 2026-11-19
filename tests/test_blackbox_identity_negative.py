@@ -33,10 +33,10 @@ from cryptography.hazmat.primitives import serialization
 from fastapi.testclient import TestClient
 from gateway_api.main import app as gateway_app
 from rules_compendium.main import app as compendium_app
-from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
 from starlette.websockets import WebSocketDisconnect
 from voice_agent.main import app as voice_app
 
+from tests.helpers.signing_test_issuer import SigningTestIssuer
 from tests.helpers.silo_fixtures import PNG_SAMPLE_BYTES
 from tests.helpers.ws_identity import SIGNING_ISSUER
 

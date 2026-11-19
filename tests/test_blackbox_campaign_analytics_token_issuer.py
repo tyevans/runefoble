@@ -14,11 +14,11 @@ import pytest
 from campaign_analytics.main import create_app
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.event_bus import EventBusProvider
 
 from tests.helpers.campaign_analytics_service import AnalyticsService
+from tests.helpers.signing_test_issuer import SigningTestIssuer
 from tests.helpers.zitadel_stand_in import zitadel_stand_in
 
 FIRST_ISSUER = SigningTestIssuer(issuer="http://issuer-first.test", audience="runefoble-api")

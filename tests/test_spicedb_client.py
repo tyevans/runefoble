@@ -15,6 +15,8 @@ from runefoble_auth.sync_tuples import (
 from runefoble_events.events import CharacterCreated, SessionCreated
 from runefoble_platform.event_fields import event_type_of
 
+from tests.helpers.sync_verifier import sync_test_verifier
+
 
 @pytest.mark.asyncio
 async def test_spicedb_client_crud_and_permissions(
@@ -76,7 +78,7 @@ def test_sync_tuples_helpers_and_models() -> None:
 async def test_handle_domain_event_dispatch() -> None:
     """Verify handle_domain_event routes domain event instances and CloudEvent dicts."""
     spicedb = MockSpiceDBClient()
-    service = ZitadelSpiceDBSyncService(spicedb_client=spicedb)
+    service = ZitadelSpiceDBSyncService(spicedb_client=spicedb, zitadel_auth=sync_test_verifier())
 
     camp_id = f"camp-evt-{uuid4().hex[:6]}"
     dm_id = f"dm-{uuid4().hex[:6]}"
@@ -141,7 +143,7 @@ async def test_handle_domain_event_dispatch() -> None:
 async def test_reconcile_and_batch_relationships() -> None:
     """Verify batch_write_relationships and reconcile_relationships."""
     client = MockSpiceDBClient()
-    service = ZitadelSpiceDBSyncService(spicedb_client=client)
+    service = ZitadelSpiceDBSyncService(spicedb_client=client, zitadel_auth=sync_test_verifier())
 
     rels = [
         Relationship("campaign", "c1", "player", "user", "u1"),

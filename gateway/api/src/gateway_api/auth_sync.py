@@ -9,7 +9,7 @@ from __future__ import annotations
 import logging
 
 from fastapi import APIRouter, HTTPException, status
-from gateway_api.auth import get_spicedb_client
+from gateway_api.auth import get_spicedb_client, get_zitadel_auth_service
 from pydantic import BaseModel, ValidationError
 from runefoble_auth.sync import ZitadelSpiceDBSyncService
 
@@ -23,8 +23,15 @@ _sync_service: ZitadelSpiceDBSyncService | None = None
 def get_sync_service() -> ZitadelSpiceDBSyncService:
     global _sync_service
     current_spicedb = get_spicedb_client()
-    if _sync_service is None or _sync_service.spicedb is not current_spicedb:
-        _sync_service = ZitadelSpiceDBSyncService(spicedb_client=current_spicedb)
+    current_zitadel = get_zitadel_auth_service()
+    if (
+        _sync_service is None
+        or _sync_service.spicedb is not current_spicedb
+        or _sync_service.zitadel is not current_zitadel
+    ):
+        _sync_service = ZitadelSpiceDBSyncService(
+            spicedb_client=current_spicedb, zitadel_auth=current_zitadel
+        )
     return _sync_service
 
 

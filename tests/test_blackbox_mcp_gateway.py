@@ -27,6 +27,7 @@ from tests.helpers.mcp_http import call_tool_over_http, listed_tools, serve_mcp
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.service_harness import routed_event_bus
 from tests.helpers.spicedb_factory import shared_spicedb_client
+from tests.helpers.sync_verifier import sync_test_verifier
 from tests.helpers.ws_identity import SIGNING_ISSUER, bearer
 
 pytestmark = pytest.mark.usefixtures("board_campaign")
@@ -119,7 +120,9 @@ async def grant_token_to_campaign(session_url: str, session_id: str, token_id: s
     with httpx.Client(base_url=session_url, headers=bearer("user-test")) as http:
         campaign_id = http.get(f"/api/v1/sessions/{session_id}").json()["campaign_id"]
     await handle_domain_event(
-        ZitadelSpiceDBSyncService(spicedb_client=get_spicedb_client()),
+        ZitadelSpiceDBSyncService(
+            spicedb_client=get_spicedb_client(), zitadel_auth=sync_test_verifier()
+        ),
         {
             "event_type": "runefoble.events.board.token_placed",
             "token_id": token_id,

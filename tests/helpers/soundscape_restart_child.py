@@ -24,9 +24,10 @@ def main() -> None:
     )
 
     from fastapi.testclient import TestClient
-    from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
     from soundscape.dependencies import set_zitadel_auth_service
     from soundscape.main import app
+
+    from tests.helpers.signing_test_issuer import SigningTestIssuer
 
     issuer = SigningTestIssuer()
     set_zitadel_auth_service(issuer.verifier())

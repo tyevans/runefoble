@@ -15,6 +15,8 @@ from gateway_api.main import app
 from runefoble_auth.sync import ZitadelSpiceDBSyncService
 from runefoble_events.events import CharacterCreated, SessionCreated
 
+from tests.helpers.sync_verifier import sync_test_verifier
+
 
 def _auth(issuer, sub: str) -> dict[str, str]:
     """Return Bearer headers carrying a token that the gateway verifies for `sub`."""
@@ -25,7 +27,9 @@ def _auth(issuer, sub: str) -> dict[str, str]:
 async def test_domain_events_provision_spicedb_relationships() -> None:
     """Domain events provision SpiceDB Zanzibar relationships through the sync service."""
     spicedb = get_spicedb_client()
-    sync_service = ZitadelSpiceDBSyncService(spicedb_client=spicedb)
+    sync_service = ZitadelSpiceDBSyncService(
+        spicedb_client=spicedb, zitadel_auth=sync_test_verifier()
+    )
 
     campaign_id = f"camp-evt-{uuid4().hex[:8]}"
     dm_id = "watcher_dm_99"
