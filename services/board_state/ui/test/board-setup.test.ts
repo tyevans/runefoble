@@ -1,5 +1,5 @@
 /**
- * DM battlemap set-up flow tests (TASK-0922).
+ * DM battlemap set-up flow tests (TASK-0922, TASK-0928).
  * Fetch is stubbed at the browser boundary only. Assertions check the requests that the flow
  * sends to the public gateway routes and the result that it returns.
  */
@@ -42,34 +42,58 @@ describe('startCells', () => {
 });
 
 describe('setUpSessionBoard', () => {
-  it('uses the grid size that the owner returns for the start cells', async () => {
-    const { fetchImpl, paths } = scriptedFetch([
-      { status: 200, body: { cols: 1, rows: 5 } },
-      { status: 200, body: {} },
-      { status: 200, body: {} },
-    ]);
-    const result = await setUpSessionBoard({ campaignId: 'camp', sessionId: 'sess', seats: SEATS }, { fetchImpl });
+  it('sends one set-up call with the grid and one party token for each seat at free start cells', async () => {
+    const { fetchImpl, paths } = scriptedFetch([{ status: 200, body: { board: {}, tokens: [{}, {}] } }]);
+    const bodies: unknown[] = [];
+    const recording: FetchLike = async (url, init) => {
+      bodies.push(JSON.parse(String(init?.body)));
+      return fetchImpl(url, init);
+    };
+    const result = await setUpSessionBoard(
+      { campaignId: 'camp', sessionId: 'sess', seats: SEATS, cols: 1, rows: 5 },
+      { fetchImpl: recording },
+    );
     assert.deepEqual(result, { ok: true, placed: 2 });
-    assert.deepEqual(paths, ['/api/v1/boards', '/api/v1/boards/sess/tokens', '/api/v1/boards/sess/tokens']);
+    assert.deepEqual(paths, ['/api/v1/boards']);
+    assert.deepEqual(bodies, [{
+      campaign_id: 'camp',
+      session_id: 'sess',
+      cols: 1,
+      rows: 5,
+      tokens: [
+        { name: 'Valeros', token_type: 'pc', x: 0, y: 0, character_id: 'c-1' },
+        { name: 'Sarah', token_type: 'pc', x: 0, y: 1, character_id: 'c-2' },
+      ],
+    }]);
   });
 
-  it('stops at the first refused token and reports that the board exists', async () => {
-    const { fetchImpl, paths } = scriptedFetch([
-      { status: 200, body: { cols: 10, rows: 10 } },
-      { status: 403, body: { detail: 'Forbidden: placing a character token requires character.edit' } },
-    ]);
+  it('reports a refused token after the board exists with the gateway message', async () => {
+    const { fetchImpl } = scriptedFetch([{
+      status: 403,
+      body: { detail: 'Valeros: Forbidden: placing a character token requires character.edit', token: 'Valeros', board_created: true },
+    }]);
     const result = await setUpSessionBoard({ campaignId: 'camp', sessionId: 'sess', seats: SEATS }, { fetchImpl });
     assert.deepEqual(result, {
       ok: false,
       boardCreated: true,
       message: 'Valeros: Forbidden: placing a character token requires character.edit',
     });
-    assert.equal(paths.length, 2);
   });
 
   it('reports a refused board create with the owner message', async () => {
     const { fetchImpl } = scriptedFetch([{ status: 409, body: { detail: 'A board exists for session sess' } }]);
     const result = await setUpSessionBoard({ campaignId: 'camp', sessionId: 'sess', seats: SEATS }, { fetchImpl });
     assert.deepEqual(result, { ok: false, boardCreated: false, message: 'A board exists for session sess' });
+  });
+
+  it('sends nothing when the grid has too few start cells for the party', async () => {
+    const { fetchImpl, paths } = scriptedFetch([]);
+    const result = await setUpSessionBoard(
+      { campaignId: 'camp', sessionId: 'sess', seats: SEATS, cols: 1, rows: 1 },
+      { fetchImpl },
+    );
+    assert.equal(result.ok, false);
+    assert.equal(result.ok === false && result.boardCreated, false);
+    assert.deepEqual(paths, []);
   });
 });

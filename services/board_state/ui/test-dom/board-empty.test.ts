@@ -1,5 +1,5 @@
 /**
- * No-battlemap-yet empty state (TASK-0906) and the DM set-up control (TASK-0922).
+ * No-battlemap-yet empty state (TASK-0906) and the DM set-up control (TASK-0922, TASK-0928).
  * `<runefoble-board-empty>` runs in headless Chromium. The set-up flow posts to a live loopback
  * upstream through `apiBaseUrl`, with the shell bearer from `<runefoble-story-auth-provider>`.
  * Nothing replaces `fetch`. The test reads the upstream log, the rendered text and the
@@ -70,8 +70,8 @@ describe('runefoble-board-empty', () => {
     expect(setUpButton(el)?.textContent?.trim()).toBe('Set up battlemap');
   });
 
-  it('creates the default board, then places one token for each seat at free start cells', async () => {
-    await upstream.upstreamReply(200, { cols: 10, rows: 10 });
+  it('sends one set-up call with the default board and one token for each seat at free start cells', async () => {
+    await upstream.upstreamReply(200, { board: { cols: 10, rows: 10 }, tokens: [{}, {}] });
     const el = await mount(true);
     const done = nextSetUp(el);
 
@@ -79,17 +79,28 @@ describe('runefoble-board-empty', () => {
 
     expect(await done).toEqual({ sessionId: 'sess-1', failure: null });
     const sent = await upstream.upstreamRequests();
-    expect(sent.map((r) => `${r.method} ${r.path}`)).toEqual([
-      'POST /api/v1/boards',
-      'POST /api/v1/boards/sess-1/tokens',
-      'POST /api/v1/boards/sess-1/tokens',
-    ]);
-    expect(sent.every((r) => r.authorization === 'Bearer dm-token')).toBe(true);
-    expect(JSON.parse(sent[0].body)).toEqual({ campaign_id: 'camp-1', session_id: 'sess-1', cols: 10, rows: 10 });
-    expect(sent.slice(1).map((r) => JSON.parse(r.body))).toEqual([
-      { name: 'Valeros the Bold', token_type: 'pc', x: 0, y: 0, character_id: 'char-valeros' },
-      { name: 'Sarah of the Mists', token_type: 'pc', x: 1, y: 0, character_id: 'char-sarah' },
-    ]);
+    expect(sent.map((r) => `${r.method} ${r.path}`)).toEqual(['POST /api/v1/boards']);
+    expect(sent[0].authorization).toBe('Bearer dm-token');
+    expect(JSON.parse(sent[0].body)).toEqual({
+      campaign_id: 'camp-1',
+      session_id: 'sess-1',
+      cols: 10,
+      rows: 10,
+      tokens: [
+        { name: 'Valeros the Bold', token_type: 'pc', x: 0, y: 0, character_id: 'char-valeros' },
+        { name: 'Sarah of the Mists', token_type: 'pc', x: 1, y: 0, character_id: 'char-sarah' },
+      ],
+    });
+  });
+
+  it('dispatches the token failure when the board exists but a token is refused', async () => {
+    await upstream.upstreamReply(403, { detail: 'Sarah of the Mists: Forbidden', token: 'Sarah of the Mists', board_created: true });
+    const el = await mount(true);
+    const done = nextSetUp(el);
+
+    setUpButton(el)?.click();
+
+    expect(await done).toEqual({ sessionId: 'sess-1', failure: 'Sarah of the Mists: Forbidden' });
   });
 
   it('shows the owner error when the board is not created, and places no token', async () => {

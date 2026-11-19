@@ -1,10 +1,11 @@
 /**
- * No-battlemap-yet empty state (TASK-0906) and the DM set-up control (TASK-0922).
+ * No-battlemap-yet empty state (TASK-0906) and the DM set-up control (TASK-0922, TASK-0928).
  *
  * The session view shows this element in the board area while board_state has no board for
  * the session (the board read answers 404). A caller that may run the session sees a hint and
- * the "Set up battlemap" button. The button creates the board with the default grid and places
- * one token for each seated character (`setUpSessionBoard`). board_state checks each call.
+ * the "Set up battlemap" button. The button sends one set-up call that creates the board with the
+ * default grid and places one token for each seated character (`setUpSessionBoard`). board_state
+ * checks the board and each token.
  *
  * The element shows no grid and no tokens, so it never invents board values. When board_state
  * holds a board after the flow, the element dispatches `board-set-up`, and the host reads the

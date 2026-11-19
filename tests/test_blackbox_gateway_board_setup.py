@@ -12,6 +12,7 @@ from collections.abc import Iterator
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import TimeoutError as FutureTimeout
 from typing import Any
+from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
@@ -205,6 +206,78 @@ def test_a_refused_board_create_sends_no_board_ready_frame(gateway: TestClient) 
         assert _create_board(gateway, campaign_id, session_id, PLAYER).status_code == 403
 
         assert _frame_within(dm, SILENCE_SECONDS) is None
+
+
+def _party_token(name: str, character_id: str, x: int) -> dict[str, Any]:
+    return {"name": name, "token_type": "pc", "x": x, "y": 0, "character_id": character_id}
+
+
+def test_dm_set_up_sends_one_board_ready_after_the_party_tokens_are_placed(
+    gateway: TestClient,
+) -> None:
+    """The set-up call creates the board and places the tokens. Then each socket gets one frame."""
+    campaign_id, session_id, character_id = _seated_table(gateway)
+    path = f"/ws/session/{session_id}"
+
+    with (
+        gateway.websocket_connect(path, subprotocols=ws_subprotocols(DM)) as dm,
+        gateway.websocket_connect(path, subprotocols=ws_subprotocols(PLAYER)) as player,
+    ):
+        assert dm.receive_json()["type"] == "connected"
+        assert player.receive_json()["type"] == "connected"
+
+        set_up = gateway.post(
+            "/api/v1/boards",
+            json={
+                "campaign_id": campaign_id,
+                "session_id": session_id,
+                "tokens": [_party_token("Valeros", character_id, 0)],
+            },
+            headers=bearer(DM),
+        )
+        assert set_up.status_code == 200, set_up.text
+        assert [t["name"] for t in set_up.json()["tokens"]] == ["Valeros"]
+
+        expected = {"type": "board_ready", "sessionId": session_id}
+        for ws in (dm, player):
+            assert ws.receive_json() == expected
+            board = gateway.get(f"/api/v1/boards/{session_id}", headers=bearer(PLAYER))
+            assert board.status_code == 200, board.text
+            assert [t["name"] for t in board.json()["tokens"].values()] == ["Valeros"]
+        assert _frame_within(dm, SILENCE_SECONDS) is None
+        assert _frame_within(player, SILENCE_SECONDS) is None
+
+
+def test_a_refused_party_token_stops_the_set_up_and_names_the_token(gateway: TestClient) -> None:
+    """The board exists after a refused token, so the frame still goes out once."""
+    campaign_id, session_id, character_id = _seated_table(gateway)
+    path = f"/ws/session/{session_id}"
+
+    with gateway.websocket_connect(path, subprotocols=ws_subprotocols(PLAYER)) as player:
+        assert player.receive_json()["type"] == "connected"
+
+        set_up = gateway.post(
+            "/api/v1/boards",
+            json={
+                "campaign_id": campaign_id,
+                "session_id": session_id,
+                "tokens": [
+                    _party_token("Valeros", character_id, 0),
+                    _party_token("Ghost", str(uuid4()), 1),
+                    _party_token("Kyra", character_id, 2),
+                ],
+            },
+            headers=bearer(DM),
+        )
+
+        assert set_up.status_code == 403, set_up.text
+        assert set_up.json()["board_created"] is True
+        assert set_up.json()["token"] == "Ghost"
+        assert set_up.json()["detail"].startswith("Ghost: ")
+        assert player.receive_json() == {"type": "board_ready", "sessionId": session_id}
+        assert _frame_within(player, SILENCE_SECONDS) is None
+    board = gateway.get(f"/api/v1/boards/{session_id}", headers=bearer(PLAYER))
+    assert [t["name"] for t in board.json()["tokens"].values()] == ["Valeros"]
 
 
 def test_unreachable_board_owner_gives_503(

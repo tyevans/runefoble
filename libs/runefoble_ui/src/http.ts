@@ -30,16 +30,21 @@ export type RequestSpec = Omit<RequestInit, 'headers' | 'body'> & { body?: strin
 /** Outcome of a write that reports to the user and never throws. */
 export type ActionResult = { ok: true } | { ok: false; message: string };
 
-/** A non-2xx response. `detail` is the server message, or a status message when none exists. */
+/**
+ * A non-2xx response. `detail` is the server message, or a status message when none exists.
+ * `body` is the parsed JSON error body, or undefined when the body is not JSON.
+ */
 export class HttpError extends Error {
   readonly status: number;
   readonly detail: string;
+  readonly body: unknown;
 
-  constructor(status: number, detail: string) {
+  constructor(status: number, detail: string, body?: unknown) {
     super(detail);
     this.name = 'HttpError';
     this.status = status;
     this.detail = detail;
+    this.body = body;
   }
 }
 
@@ -82,19 +87,23 @@ function statusOnlyDetail(status: number): string {
   return `Request failed with status ${status}`;
 }
 
-/** The FastAPI `detail`, else the `message` of an engine-unavailable body, else the status. */
-async function readErrorDetail(res: Response): Promise<string> {
-  const fallback = statusOnlyDetail(res.status);
+/** The HttpError of a non-2xx response. See `errorDetail` for the detail rule. */
+async function httpErrorOf(res: Response): Promise<HttpError> {
   let parsed: unknown;
   try {
     parsed = JSON.parse(await res.text());
   } catch {
-    return fallback;
+    return new HttpError(res.status, statusOnlyDetail(res.status));
   }
+  return new HttpError(res.status, errorDetail(res.status, parsed), parsed);
+}
+
+/** The FastAPI `detail`, else the `message` of an engine-unavailable body, else the status. */
+function errorDetail(status: number, parsed: unknown): string {
   const detail = errorDetailFromBody(parsed);
   if (detail) return detail;
   if (isRecord(parsed) && typeof parsed.message === 'string' && parsed.message.trim()) return parsed.message;
-  return fallback;
+  return statusOnlyDetail(status);
 }
 
 /** Joins the API base and a path. A trailing slash on the base is dropped. */
@@ -121,7 +130,7 @@ export async function request<T>(path: string, spec: RequestSpec = {}, opts: Req
     ...opts.headers,
   };
   const res = await fetchImpl(apiUrl(opts.apiBase, path), { ...spec, headers });
-  if (!res.ok) throw new HttpError(res.status, await readErrorDetail(res));
+  if (!res.ok) throw await httpErrorOf(res);
   const text = await res.text();
   if (!text) return undefined as T;
   try {

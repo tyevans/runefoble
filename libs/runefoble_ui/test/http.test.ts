@@ -48,6 +48,27 @@ describe('postJson', () => {
     assert.deepEqual(calls[0].init.headers, { 'Content-Type': 'application/json', Authorization: 'Bearer t1' });
   });
 
+  it('keeps the parsed error body on HttpError, so a caller can read more fields than detail', async () => {
+    const body = { detail: 'Ghost: Forbidden', token: 'Ghost', board_created: true };
+    const { fetchImpl } = recordingFetch(() => jsonResponse(403, body));
+
+    await assert.rejects(postJson('/api/v1/x', {}, { fetchImpl }), (err: unknown) => {
+      assert.ok(err instanceof HttpError);
+      assert.deepEqual(err.body, body);
+      return true;
+    });
+  });
+
+  it('gives HttpError an undefined body when the error body is not JSON', async () => {
+    const { fetchImpl } = recordingFetch(() => new Response('upstream down', { status: 502 }));
+
+    await assert.rejects(postJson('/api/v1/x', {}, { fetchImpl }), (err: unknown) => {
+      assert.ok(err instanceof HttpError);
+      assert.equal(err.body, undefined);
+      return true;
+    });
+  });
+
   it('throws HttpError carrying the server detail on a rejected request', async () => {
     const { fetchImpl } = recordingFetch(() => jsonResponse(403, { detail: 'Forbidden: DM only' }));
 

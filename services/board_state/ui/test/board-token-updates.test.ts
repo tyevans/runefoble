@@ -43,6 +43,39 @@ describe('board token updates', () => {
     assert.deepEqual([oldValeros.x, oldValeros.y], [1, 1]);
   });
 
+  it('token_placed adds the server token to a new list, and keeps the old list as it was', () => {
+    const host = makeHost();
+    const oldList = host.tokens;
+
+    handleBoardSocketMessage(host, {
+      type: 'token_placed',
+      session_id: 's-1',
+      token: { token_id: 'sarah', name: 'Sarah', x: 0, y: 1, hp: 12, vision_radius: 3, active_action: null },
+    });
+
+    assert.notEqual(host.tokens, oldList);
+    assert.equal(oldList.length, 2);
+    assert.deepEqual(host.tokens[2], { id: 'sarah', name: 'Sarah', x: 0, y: 1, hp: 12, visionRadius: 3, activeAction: null });
+  });
+
+  it('token_placed for a token the host shows replaces that token', () => {
+    const host = makeHost();
+
+    handleBoardSocketMessage(host, { type: 'token_placed', token: { token_id: 'kyra', name: 'Kyra', x: 6, y: 6 } });
+
+    assert.equal(host.tokens.length, 2);
+    assert.deepEqual([host.tokens[1].x, host.tokens[1].y], [6, 6]);
+  });
+
+  it('token_placed without a whole token changes nothing', () => {
+    const host = makeHost();
+    const oldList = host.tokens;
+
+    handleBoardSocketMessage(host, { type: 'token_placed', token: { token_id: 'sarah', name: 'Sarah' } });
+
+    assert.equal(host.tokens, oldList);
+  });
+
   it('the server token_action_executed broadcast puts a new token with the action on the host', () => {
     const host = makeHost();
     const oldValeros = host.tokens[0];

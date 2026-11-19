@@ -1,13 +1,14 @@
 /**
- * DM battlemap set-up flow (TASK-0922).
+ * DM battlemap set-up flow (TASK-0922, TASK-0928).
  *
- * The DM creates the session board through `POST /api/v1/boards`, then places one token for
- * each seated character through `POST /api/v1/boards/{sessionId}/tokens`. board_state checks
- * `campaign.run_session` and the token permissions. The flow keeps no board state of its own:
- * the caller reads the board from the server after the flow ends.
+ * The DM sends one `POST /api/v1/boards` call. Its body holds the grid and one token for each
+ * seated character. The gateway creates the board, places the tokens in order, and then sends
+ * `board_ready` to the session sockets once. Thus a client that reads the board after that frame
+ * gets the party tokens. board_state checks `campaign.run_session` and the token permissions.
+ * The flow keeps no board state of its own: the caller reads the board from the server.
  */
 
-import { postJson, requestFailureMessage, type RequestOptions } from '@runefoble/ui-core';
+import { HttpError, isRecord, postJson, requestFailureMessage, type RequestOptions } from '@runefoble/ui-core';
 
 /** The default grid of a new session board, in cells. */
 export const DEFAULT_BOARD_COLS = 10;
@@ -40,11 +41,6 @@ export type BoardSetUpResult =
   | { ok: true; placed: number }
   | { ok: false; boardCreated: boolean; message: string };
 
-interface CreatedBoard {
-  cols: number;
-  rows: number;
-}
-
 /**
  * Returns `count` free start cells in row order, from the top-left cell. A cell in `occupied` is
  * not free. Throws a RangeError when the grid has fewer free cells than `count`.
@@ -61,18 +57,19 @@ export function startCells(count: number, cols: number, rows: number, occupied: 
   return cells;
 }
 
-/** The body of `POST /api/v1/boards`. */
-export function buildCreateBoardBody(req: BoardSetUpRequest): Record<string, unknown> {
+/** The body of `POST /api/v1/boards`: the grid, and one party token for each seat. */
+export function buildSetUpBoardBody(req: BoardSetUpRequest, cells: GridCell[]): Record<string, unknown> {
   return {
     campaign_id: req.campaignId,
     session_id: req.sessionId,
     cols: req.cols ?? DEFAULT_BOARD_COLS,
     rows: req.rows ?? DEFAULT_BOARD_ROWS,
+    tokens: req.seats.map((seat, index) => buildPartyTokenBody(seat, cells[index])),
   };
 }
 
-/** The body of `POST /api/v1/boards/{sessionId}/tokens` for one seated character. */
-export function buildPlacePartyTokenBody(seat: PartySeat, cell: GridCell): Record<string, unknown> {
+/** One party token of the set-up body, for one seated character. */
+export function buildPartyTokenBody(seat: PartySeat, cell: GridCell): Record<string, unknown> {
   return {
     name: seat.characterName,
     token_type: 'pc',
@@ -82,30 +79,27 @@ export function buildPlacePartyTokenBody(seat: PartySeat, cell: GridCell): Recor
   };
 }
 
+/** True when the gateway reports that the board exists after a refused or failed token. */
+function boardCreatedIn(err: unknown): boolean {
+  return err instanceof HttpError && isRecord(err.body) && err.body.board_created === true;
+}
+
 /**
- * Creates the board, then places the party tokens in seat order. The first failed call stops
- * the flow, and its server message is returned. No call is retried and no value is invented.
+ * Sends the set-up call. A failed call returns the server message. When the gateway reports
+ * `board_created`, the board exists with the tokens before the failed one. No call is retried
+ * and no value is invented.
  */
 export async function setUpSessionBoard(req: BoardSetUpRequest, opts: RequestOptions = {}): Promise<BoardSetUpResult> {
-  let board: CreatedBoard;
-  try {
-    board = await postJson<CreatedBoard>('/api/v1/boards', buildCreateBoardBody(req), opts);
-  } catch (err) {
-    return { ok: false, boardCreated: false, message: requestFailureMessage(err) };
-  }
   let cells: GridCell[];
   try {
-    cells = startCells(req.seats.length, board.cols, board.rows);
+    cells = startCells(req.seats.length, req.cols ?? DEFAULT_BOARD_COLS, req.rows ?? DEFAULT_BOARD_ROWS);
   } catch (err) {
-    return { ok: false, boardCreated: true, message: (err as Error).message };
+    return { ok: false, boardCreated: false, message: (err as Error).message };
   }
-  const tokensPath = `/api/v1/boards/${encodeURIComponent(req.sessionId)}/tokens`;
-  for (const [index, seat] of req.seats.entries()) {
-    try {
-      await postJson(tokensPath, buildPlacePartyTokenBody(seat, cells[index]), opts);
-    } catch (err) {
-      return { ok: false, boardCreated: true, message: `${seat.characterName}: ${requestFailureMessage(err)}` };
-    }
+  try {
+    await postJson('/api/v1/boards', buildSetUpBoardBody(req, cells), opts);
+  } catch (err) {
+    return { ok: false, boardCreated: boardCreatedIn(err), message: requestFailureMessage(err) };
   }
   return { ok: true, placed: req.seats.length };
 }
