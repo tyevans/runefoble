@@ -6,6 +6,7 @@ tool is the token subject that registered it. The registry and the permission po
 the gateway container through `Depends` (TASK-0746).
 """
 
+import logging
 from collections.abc import Callable
 from typing import Annotated, Any
 
@@ -26,6 +27,9 @@ from gateway_mcp.dynamic.models import (
     DynamicToolExecutionRequest,
 )
 from gateway_mcp.permissions import AuthorizationUnavailable, PermissionDenied
+
+logger = logging.getLogger("runefoble.gateway_mcp.routers.tools_registry")
+EXECUTION_FAILED_DETAIL = "Dynamic tool execution failed."
 
 
 def build_tools_registry_router(
@@ -138,7 +142,9 @@ def build_tools_registry_router(
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         except Exception as exc:
-            raise HTTPException(status_code=500, detail=f"Execution error: {exc}") from exc
+            # The cause can hold internal state. Log it here; the caller gets a fixed detail.
+            logger.exception("Dynamic tool '%s' failed to execute", name)
+            raise HTTPException(status_code=500, detail=EXECUTION_FAILED_DETAIL) from exc
 
     return router
 
