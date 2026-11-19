@@ -30,6 +30,9 @@ WAV_SAMPLE_BYTES: bytes = (
 )
 
 SILO_TEST_ENDPOINT = "http://silo.test:9000"
+SILO_TEST_ACCESS_KEY = "silo-test-access"
+SILO_TEST_SECRET_KEY = "silo-test-secret"
+SILO_UNSIGNED_STATUS = 403
 
 
 class FakeSilo:
@@ -38,6 +41,9 @@ class FakeSilo:
     It sits at the HTTP boundary only. The platform SiloStorageService sends real
     PUT, GET and DELETE requests through this transport. Tests can simulate an
     outage (connection refused) or a fixed error status.
+
+    Like the real Silo, it refuses a request without an AWS Signature Version 4
+    `Authorization` header for the test access key with 403 (TASK-0926).
     """
 
     def __init__(self) -> None:
@@ -51,6 +57,8 @@ class FakeSilo:
     def _handle(self, request: httpx.Request) -> httpx.Response:
         if self.outage:
             raise httpx.ConnectError("Silo is unreachable", request=request)
+        if not _is_sigv4_signed(request):
+            return httpx.Response(SILO_UNSIGNED_STATUS, request=request)
         if self.forced_status is not None:
             return httpx.Response(self.forced_status, request=request)
 
@@ -71,6 +79,18 @@ class FakeSilo:
         return httpx.Response(405, request=request)
 
 
+def _is_sigv4_signed(request: httpx.Request) -> bool:
+    """True when the request carries a SigV4 S3 signature for the test access key."""
+    authorization = request.headers.get("Authorization", "")
+    return (
+        authorization.startswith(f"AWS4-HMAC-SHA256 Credential={SILO_TEST_ACCESS_KEY}/")
+        and "/s3/aws4_request" in authorization
+        and "Signature=" in authorization
+        and "x-amz-date" in request.headers
+        and "x-amz-content-sha256" in request.headers
+    )
+
+
 @pytest.fixture(autouse=True)
 def silo_double() -> Generator[FakeSilo]:
     """Route the platform Silo client to a FakeSilo for every test."""
@@ -79,6 +99,8 @@ def silo_double() -> Generator[FakeSilo]:
     set_storage_service(
         SiloStorageService(
             endpoint=SILO_TEST_ENDPOINT,
+            access_key=SILO_TEST_ACCESS_KEY,
+            secret_key=SILO_TEST_SECRET_KEY,
             secure=False,
             bucket_assets="runefoble-assets",
             transport=fake.transport(),

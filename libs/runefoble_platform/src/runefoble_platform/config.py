@@ -90,8 +90,10 @@ class PlatformSettings(BaseSettings):
 
     # Object Storage (Silo / MinIO fork)
     silo_endpoint: str = Field(default="localhost:9000", description="Silo S3 endpoint")
-    silo_access_key: str = Field(default="silo_admin", description="Silo access key")
-    silo_secret_key: str = Field(default="silo_secret_pass", description="Silo secret key")
+    # The keys have no default. A deployed service without them refuses to start (TASK-0926).
+    silo_access_key: str | None = Field(default=None, description="Silo access key (Secret)")
+    silo_secret_key: str | None = Field(default=None, description="Silo secret key (Secret)")
+    silo_region: str = Field(default="us-east-1", description="SigV4 signing region for Silo")
     silo_bucket_assets: str = Field(default="runefoble-assets", description="Silo assets bucket")
     silo_secure: bool = Field(default=False, description="Use TLS for Silo")
 

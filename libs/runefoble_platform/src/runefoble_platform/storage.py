@@ -1,8 +1,9 @@
 """Silo S3-compatible media asset storage service.
 
 Writes and reads go straight to the Silo daemon. There is no in-memory fallback.
-A failed Silo request raises AssetStorageError, so callers never report success
-for bytes that Silo did not store.
+Every request carries an AWS Signature Version 4 signature (TASK-0926). A failed Silo
+request raises AssetStorageError, so callers never report success for bytes that Silo
+did not store.
 """
 
 from __future__ import annotations
@@ -15,7 +16,8 @@ from uuid import uuid4
 import httpx
 
 from runefoble_platform.config import PlatformSettings
-from runefoble_platform.errors import EntityNotFoundError, RunefobleError
+from runefoble_platform.errors import ConfigurationError, EntityNotFoundError, RunefobleError
+from runefoble_platform.silo_signing import sigv4_headers
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +39,9 @@ ALLOWED_MIME_TYPES: frozenset[str] = frozenset(
 MAX_ASSET_SIZE_BYTES: int = 10 * 1024 * 1024  # 10 MB
 
 SILO_TIMEOUT_SECONDS: float = 1.5
+
+ACCESS_KEY_VAR = "RUNEFOBLE_SILO_ACCESS_KEY"
+SECRET_KEY_VAR = "RUNEFOBLE_SILO_SECRET_KEY"
 
 
 class AssetStorageError(RunefobleError):
@@ -70,6 +75,9 @@ class SiloStorageService:
 
     Provides media asset uploads, retrieval, and deletion. It never returns a Silo object
     URL to a caller. Reads go through the authorized asset routes (ADR-0001, ADR-0015).
+    Each request is signed with SigV4 (service ``s3``, region ``silo_region``). In a deployed
+    environment, missing keys raise ConfigurationError at construction. Elsewhere, each
+    request then raises AssetStorageError that names the missing setting.
     The optional ``transport`` argument injects an httpx transport. Tests use it to
     stand in for the Silo HTTP boundary. Production code never sets it.
     """
@@ -82,6 +90,7 @@ class SiloStorageService:
         bucket_assets: str | None = None,
         secure: bool | None = None,
         transport: httpx.BaseTransport | None = None,
+        region: str | None = None,
     ) -> None:
         settings = PlatformSettings()
         raw_endpoint = endpoint or settings.silo_endpoint
@@ -89,6 +98,7 @@ class SiloStorageService:
         self.access_key = access_key or settings.silo_access_key
         self.secret_key = secret_key or settings.silo_secret_key
         self.default_bucket = bucket_assets or settings.silo_bucket_assets
+        self.region = region or settings.silo_region
         self._transport = transport
 
         if raw_endpoint.startswith("http://") or raw_endpoint.startswith("https://"):
@@ -96,6 +106,17 @@ class SiloStorageService:
         else:
             scheme = "https" if self.secure else "http"
             self.base_url = f"{scheme}://{raw_endpoint.lstrip('/')}"
+
+        missing = self._missing_key_vars()
+        if missing and settings.is_deployed:
+            raise ConfigurationError(
+                f"Silo keys are not set in the '{settings.environment}' environment: "
+                f"{', '.join(missing)}. They have no default."
+            )
+
+    def _missing_key_vars(self) -> list[str]:
+        pairs = ((ACCESS_KEY_VAR, self.access_key), (SECRET_KEY_VAR, self.secret_key))
+        return [var for var, value in pairs if not value]
 
     def validate_asset(self, data: bytes, content_type: str) -> None:
         """Validate media payload MIME type and file size."""
@@ -117,11 +138,38 @@ class SiloStorageService:
     def _object_url(self, bucket: str, object_key: str) -> str:
         return f"{self.base_url}/{bucket}/{object_key}"
 
-    def _request(self, method: str, bucket: str, object_key: str, **kwargs: Any) -> httpx.Response:
-        """Send one request to Silo. Transport failures raise AssetStorageError."""
+    def _request(
+        self,
+        method: str,
+        bucket: str,
+        object_key: str,
+        *,
+        content: bytes = b"",
+        headers: dict[str, str] | None = None,
+    ) -> httpx.Response:
+        """Sign and send one request to Silo. Missing keys and transport failures raise
+        AssetStorageError."""
+        missing = self._missing_key_vars()
+        if missing:
+            raise AssetStorageError(
+                f"Silo {method} for '{bucket}/{object_key}' was not sent: "
+                f"{', '.join(missing)} not set.",
+                bucket=bucket,
+                object_key=object_key,
+            )
+        url = self._object_url(bucket, object_key)
+        signed = sigv4_headers(
+            method,
+            url,
+            headers=headers or {},
+            body=content,
+            access_key=self.access_key or "",
+            secret_key=self.secret_key or "",
+            region=self.region,
+        )
         try:
             with httpx.Client(timeout=SILO_TIMEOUT_SECONDS, transport=self._transport) as client:
-                return client.request(method, self._object_url(bucket, object_key), **kwargs)
+                return client.request(method, url, content=content or None, headers=signed)
         except httpx.HTTPError as exc:
             raise AssetStorageError(
                 f"Silo {method} failed for '{bucket}/{object_key}': {exc}",
