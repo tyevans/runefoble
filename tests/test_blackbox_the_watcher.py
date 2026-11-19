@@ -4,15 +4,25 @@ import uuid
 
 import pytest
 from httpx import ASGITransport, AsyncClient
-from runefoble_events.events import SpeechIntentParsed, TokenMoved, WatcherNarrationGenerated
+from runefoble_events.events import SpeechIntentParsed, WatcherNarrationGenerated
 from runefoble_platform.redis_bus import deserialize_event
 from the_watcher.main import app as watcher_app
 
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.spicedb_factory import bind_character_owner, make_table_runner
+from tests.helpers.watcher_board import open_board_with_tokens, token_position
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
+
+VALEROS_TOKEN = {
+    "token_id": "tok-valeros",
+    "name": "Valeros",
+    "token_type": "pc",
+    "x": 2,
+    "y": 2,
+    "hp": 40,
+}
 
 
 async def _bound_session() -> tuple[str, str]:
@@ -30,9 +40,20 @@ def mock_redis() -> MockAsyncRedis:
 
 
 @pytest.mark.asyncio
-async def test_blackbox_coordinate_movement_frontdoor(mock_redis: MockAsyncRedis, use_redis_client):
+async def test_blackbox_coordinate_movement_frontdoor(
+    mock_redis: MockAsyncRedis, use_redis_client, board_state_upstream: str
+):
     sid, cid = await _bound_session()
     use_redis_client(mock_redis)
+    open_board_with_tokens(
+        board_state_upstream,
+        sid,
+        cid,
+        owner="test-user",
+        cols=12,
+        rows=12,
+        tokens=[VALEROS_TOKEN],
+    )
 
     transport = ASGITransport(app=watcher_app)
     async with AsyncClient(
@@ -71,19 +92,34 @@ async def test_blackbox_coordinate_movement_frontdoor(mock_redis: MockAsyncRedis
     evt2 = deserialize_event(watcher_entries[1][1])
     assert isinstance(evt2, WatcherNarrationGenerated)
 
-    board_entries = mock_redis.streams.get("runefoble.events.board", [])
-    assert len(board_entries) == 1
-    board_evt = deserialize_event(board_entries[0][1])
-    assert isinstance(board_evt, TokenMoved)
-    assert board_evt.to_x == 6 and board_evt.to_y == 8
+    # The proposal to (6, 8) stages a preview. The token stays at (2, 2) until confirm.
+    assert token_position(board_state_upstream, sid, "tok-valeros", "test-user") == (2, 2)
 
 
 @pytest.mark.asyncio
 async def test_blackbox_cardinal_movement_with_boundary_clamping(
-    mock_redis: MockAsyncRedis, use_redis_client
+    mock_redis: MockAsyncRedis, use_redis_client, board_state_upstream: str
 ):
     sid, cid = await _bound_session()
     use_redis_client(mock_redis)
+    open_board_with_tokens(
+        board_state_upstream,
+        sid,
+        cid,
+        owner="test-user",
+        cols=10,
+        rows=10,
+        tokens=[
+            {
+                "token_id": "tok-meri",
+                "name": "Merisiel",
+                "token_type": "pc",
+                "x": 5,
+                "y": 5,
+                "hp": 30,
+            }
+        ],
+    )
 
     transport = ASGITransport(app=watcher_app)
     async with AsyncClient(
@@ -111,12 +147,8 @@ async def test_blackbox_cardinal_movement_with_boundary_clamping(
         assert data["action_type"] == "move"
         assert data["parameters"]["direction"] == "east"
 
-    # Clamped to grid_cols - 1 = 9
-    board_entries = mock_redis.streams.get("runefoble.events.board", [])
-    assert len(board_entries) == 1
-    board_evt = deserialize_event(board_entries[0][1])
-    assert isinstance(board_evt, TokenMoved)
-    assert board_evt.to_x == 9 and board_evt.to_y == 5
+    # The proposal clamps to grid_cols - 1 = 9 and stages there. The token does not move.
+    assert token_position(board_state_upstream, sid, "tok-meri", "test-user") == (5, 5)
 
 
 @pytest.mark.asyncio

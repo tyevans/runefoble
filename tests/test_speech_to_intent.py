@@ -8,7 +8,6 @@ from httpx import ASGITransport, AsyncClient
 from runefoble_events.events import (
     PlayerSpokeEvent,
     SpeechIntentParsed,
-    TokenMoved,
     WatcherNarrationGenerated,
 )
 from runefoble_platform.redis_bus import deserialize_event
@@ -23,6 +22,7 @@ from tests.helpers.spicedb_factory import (
     make_table_runner,
 )
 from tests.helpers.voice_identity import voice_auth_headers
+from tests.helpers.watcher_board import open_board_with_tokens, token_position
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 pytestmark = pytest.mark.usefixtures("trusted_voice_issuer", "trusted_ws_issuer")
@@ -174,13 +174,33 @@ def test_sub_200ms_latency_budget(watcher_engine: TheWatcherEngine):
 
 
 @pytest.mark.asyncio
-async def test_watcher_redis_stream_event_emission(mock_redis: MockAsyncRedis, use_redis_client):
+async def test_watcher_redis_stream_event_emission(
+    mock_redis: MockAsyncRedis, use_redis_client, board_state_upstream: str
+):
     use_redis_client(mock_redis)
 
     session_id = str(uuid.uuid4())
-    await make_table_runner("test-user", session_id, str(uuid.uuid4()))
-    await bind_character_owner("test-user", "valeros-1")
     campaign_id = str(uuid.uuid4())
+    await make_table_runner("test-user", session_id, campaign_id)
+    await bind_character_owner("test-user", "valeros-1")
+    open_board_with_tokens(
+        board_state_upstream,
+        session_id,
+        campaign_id,
+        owner="test-user",
+        cols=12,
+        rows=12,
+        tokens=[
+            {
+                "token_id": "tok-valeros",
+                "name": "Valeros",
+                "token_type": "pc",
+                "x": 3,
+                "y": 2,
+                "hp": 40,
+            }
+        ],
+    )
 
     transport = ASGITransport(app=watcher_app)
     async with AsyncClient(
@@ -227,20 +247,9 @@ async def test_watcher_redis_stream_event_emission(mock_redis: MockAsyncRedis, u
     assert isinstance(parsed2, WatcherNarrationGenerated)
     assert "Valeros" in parsed2.narrative_text
 
-    # Verify runefoble.events.board stream received TokenMoved
-    assert "runefoble.events.board" in mock_redis.streams
-    board_entries = mock_redis.streams["runefoble.events.board"]
-    assert len(board_entries) == 1
-
-    _id_board, fields_board = board_entries[0]
-    parsed_board = deserialize_event(fields_board)
-    assert isinstance(parsed_board, TokenMoved)
-    assert parsed_board.token_id == "tok-valeros"
-    assert parsed_board.name == "Valeros"
-    assert parsed_board.from_x == 3
-    assert parsed_board.from_y == 2
-    assert parsed_board.to_x == 3
-    assert parsed_board.to_y == 5  # 2 + 3 squares south
+    # The proposal is a preview. The board stream gets no TokenMoved, and the token stays put.
+    assert token_position(board_state_upstream, session_id, "tok-valeros", "test-user") == (3, 2)
+    assert "runefoble.events.board" not in mock_redis.streams
 
 
 @pytest.mark.asyncio

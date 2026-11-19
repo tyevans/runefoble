@@ -33,12 +33,14 @@ const terrainCells = [
 
 Per PRD-0013 and US-0043 ("Speak and the board obeys"), spoken voice actions staged by The Watcher or players generate a real-time preview before committing to persistent game state:
 
-1. **Sub-200ms Latency**: The board microfrontend receives `runefoble.events.watcher.speech_intent_parsed` or `ghost_preview` events over WebSocket frontdoors (`/ws/boards/{session_id}` or `/ws/campaigns/{campaign_id}`).
+1. **Sub-200ms Latency**: The board microfrontend receives a `ghost_preview` message over the board socket (`/ws/boards/{session_id}`).
+   - **Spoken move source (TASK-0814)**: The client calls `POST /api/v1/watcher/speak-and-act`. For a move, The Watcher proposes it to `board_state` at `POST /api/v1/boards/{session_id}/ghost-previews`, with the speaker's own bearer. The board stages the preview and broadcasts `ghost_preview` (`status: staged`) to every socket of the session. The proposal does not move the token.
+   - **Manual preview**: A socket frame `ghost_preview` with `token_id`, `to_x`, and `to_y` stages the same preview.
 2. **Visual Staging Reticle**:
    - A semi-transparent ghost token (50% opacity with a pulsing Bauhaus accent ring) appears at the destination coordinates.
    - An animated dashed targeting vector line connects the origin cell to the destination with an arrowhead reticle.
 3. **Commit or Discard**:
-   - **Confirm**: Click the ghost token directly, or click the **"✓ Confirm Move"** button in the floating ghost banner. This commits the action and publishes `runefoble.events.board.token_moved` / updates persistent state.
+   - **Confirm**: Click the ghost token directly, or click the **"✓ Confirm Move"** button in the floating ghost banner. The board sends `confirm_move`. Only this message commits the move. The board then publishes `runefoble.events.board.token_moved` and updates persistent state. No other path moves a token from speech.
    - **Cancel**: Click **"✕ Cancel"** or let the 15-second countdown timer expire to rollback the preview without mutating board coordinates.
 
 ---

@@ -17,13 +17,10 @@ from gateway_api.main import app as gateway_app
 from the_watcher.main import app as watcher_app
 
 from tests.helpers.live_services import closed_port_url, serve
-from tests.helpers.mock_redis import MockAsyncRedis
-from tests.helpers.stream_events import assert_stream_events
+from tests.helpers.spectator_table import open_board_table
 from tests.helpers.ws_identity import bearer
-from tests.realtime_session import open_table
 
 SPEAK_PATH = "/api/v1/watcher/speak-and-act"
-BOARD_STREAM = "runefoble.events.board"
 
 
 @pytest.fixture
@@ -38,6 +35,7 @@ def watcher_url(monkeypatch: pytest.MonkeyPatch) -> Iterator[str]:
 def gateway(
     watcher_url: str,
     game_session_upstream: str,
+    board_state_upstream: str,
     character_sheet_upstream: str,
     voice_agent_upstream: str,
 ) -> Iterator[TestClient]:
@@ -47,9 +45,13 @@ def gateway(
 
 
 @pytest.fixture
-def table(gateway: TestClient, game_session_upstream: str) -> tuple[str, str]:
-    """A campaign (campaign id, session id) with one player, created through public routes."""
-    return open_table(gateway, game_session_upstream, "dm_dora", {"valeros": "player"})
+def table(
+    gateway: TestClient, game_session_upstream: str, board_state_upstream: str
+) -> tuple[str, str]:
+    """A campaign and board with one player, created through public routes."""
+    return open_board_table(
+        gateway, game_session_upstream, board_state_upstream, "dm_dora", {"valeros": "player"}
+    )
 
 
 def _speech(campaign_id: str, session_id: str, transcript: str) -> dict[str, Any]:
@@ -91,18 +93,6 @@ def test_move_transcript_is_parsed_as_a_move(gateway: TestClient, table: tuple[s
     intent = res.json()
     assert intent["action_type"] == "move"
     assert intent["parameters"]["dy"] == -3
-
-
-def test_move_intent_publishes_a_token_moved_event_to_the_board_stream(
-    gateway: TestClient, table: tuple[str, str], mock_bus: MockAsyncRedis
-) -> None:
-    campaign_id, session_id = table
-    body = _speech(campaign_id, session_id, "move 3 squares north")
-
-    res = gateway.post(SPEAK_PATH, json=body, headers=bearer("valeros"))
-
-    assert res.status_code == 200, res.text
-    assert_stream_events(mock_bus, "runefoble.events.board.token_moved", stream=BOARD_STREAM)
 
 
 def test_missing_transcript_returns_the_watchers_422(
