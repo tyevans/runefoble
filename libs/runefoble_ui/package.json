@@ -11,7 +11,9 @@
     "./auth-context": "./src/auth-context.ts",
     "./auth-consumer-controller": "./src/auth-consumer-controller.ts",
     "./story-auth-provider": "./src/story-auth-provider.ts",
-    "./story-fetch": "./src/story-fetch.ts"
+    "./story-fetch": "./src/story-fetch.ts",
+    "./testing/loopback-upstream": "./testing/loopback-upstream.ts",
+    "./testing/loopback-commands": "./testing/loopback-commands.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
