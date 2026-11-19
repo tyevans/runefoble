@@ -31,6 +31,8 @@ from soundscape.main import app
 from tests.helpers.process import run_command
 from tests.helpers.ws_identity import bearer
 
+pytestmark = pytest.mark.usefixtures("reset_event_store")
+
 REPO_ROOT = Path(__file__).resolve().parents[1]
 CHILD_SCRIPT = REPO_ROOT / "tests" / "helpers" / "soundscape_restart_child.py"
 DM = "soundscape-restart-dm"
@@ -58,13 +60,6 @@ def _restart_read(dsn: str, session_id: str, *, with_aggregate_id: bool = False)
     completed = run_command(args, cwd=REPO_ROOT, env=env, timeout=120, check=False)
     assert completed.returncode == 0, completed.stderr
     return json.loads(completed.stdout.strip().splitlines()[-1])
-
-
-@pytest.fixture(autouse=True)
-def reset_event_store_singleton():
-    set_event_store(None)
-    yield
-    set_event_store(None)
 
 
 @pytest.mark.asyncio

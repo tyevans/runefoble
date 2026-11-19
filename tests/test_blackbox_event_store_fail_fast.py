@@ -35,14 +35,13 @@ from runefoble_platform.event_sourcing import (
     EventStoreInitializationError,
     build_event_store,
     event_store_kind,
-    get_event_store,
-    set_event_store,
 )
 
-from tests.helpers.module_state import SeamRestorer
 from tests.helpers.ports import free_port
 from tests.helpers.process import run_command
 from tests.helpers.ws_identity import bearer
+
+pytestmark = pytest.mark.usefixtures("reset_event_store")
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CHART_DIR = REPO_ROOT / "deployments" / "helm" / "runefoble"
@@ -58,13 +57,6 @@ AGGREGATE_OWNING_DEPLOYMENTS = [
     "the-watcher",
     "voice-agent",
 ]
-
-
-@pytest.fixture(autouse=True)
-def reset_event_store_singleton(seam_restorer: SeamRestorer):
-    """Reset the event store to its settings default for a test, then restore the previous store."""
-    seam_restorer.replace(get_event_store, set_event_store, None)
-    yield
 
 
 def _clean_env() -> dict[str, str]:

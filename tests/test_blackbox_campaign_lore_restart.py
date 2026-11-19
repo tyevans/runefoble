@@ -21,17 +21,18 @@ from campaign_lore.main import create_app
 from fastapi.testclient import TestClient
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_platform.config import PlatformSettings
-from runefoble_platform.event_sourcing import build_event_store, get_event_store, set_event_store
+from runefoble_platform.event_sourcing import build_event_store, set_event_store
 
 from tests.helpers.lore_backends import (
     LORE_DOCUMENTS,
     TREASURE_QUERY,
     UNDEAD_QUERY,
 )
-from tests.helpers.module_state import SeamRestorer
 from tests.helpers.ports import free_port
 from tests.helpers.process import run_command
 from tests.helpers.ws_identity import bearer
+
+pytestmark = pytest.mark.usefixtures("reset_event_store")
 
 VISITOR_SUBJECT = "lore-test-visitor"
 
@@ -71,12 +72,6 @@ def _ranked_titles(client: TestClient, campaign_id: str, query: str) -> list[str
     )
     assert resp.status_code == 200, resp.text
     return [result["document_title"] for result in resp.json()["results"]]
-
-
-@pytest.fixture(autouse=True)
-def reset_event_store_singleton(seam_restorer: SeamRestorer):
-    seam_restorer.replace(get_event_store, set_event_store, None)
-    yield
 
 
 @pytest.mark.asyncio

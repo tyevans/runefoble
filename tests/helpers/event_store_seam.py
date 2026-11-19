@@ -17,6 +17,8 @@ import pytest
 from eventsource.adapters.memory.store import InMemoryEventStore
 from runefoble_platform.event_sourcing import get_event_store, set_event_store
 
+from tests.helpers.module_state import restored_seam
+
 
 class OutageEventStore(InMemoryEventStore):
     """An event store whose reads fail, as when PostgreSQL is unreachable at request time."""
@@ -49,3 +51,14 @@ def default_event_store() -> Iterator[InMemoryEventStore]:
         yield store
     finally:
         set_event_store(previous)
+
+
+@pytest.fixture
+def reset_event_store() -> Iterator[None]:
+    """Unset the process event store for one test, so the settings default builds the next store.
+
+    A test that restarts a durable store requests this fixture with
+    `pytest.mark.usefixtures("reset_event_store")`. The previous store is restored afterwards.
+    """
+    with restored_seam(get_event_store, set_event_store, None, replace=True):
+        yield
