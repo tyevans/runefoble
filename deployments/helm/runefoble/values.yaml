@@ -127,13 +127,22 @@ postgres:
   database: runefoble
   username: runefoble_user
   port: 5432
-  storageSize: 5Gi
+  # The data claim of the StatefulSet. It holds every event store, the Zitadel and SpiceDB data,
+  # and the OpenPanel data. Deleting the claim deletes the data. An empty storageClass uses the
+  # cluster default (the Kind default is `standard`).
+  persistence:
+    size: 5Gi
+    storageClass: ""
 
 # Event Streaming & In-Memory Cache (Redis)
 redis:
   enabled: true
   image: redis:7.2-alpine
   port: 6379
+  # The append-only file lives on this claim. Stream entries and consumer group positions survive a restart.
+  persistence:
+    size: 1Gi
+    storageClass: ""
   resources:
     limits:
       cpu: 500m
@@ -151,6 +160,11 @@ silo:
   consolePort: 9001
   # The chart creates no buckets. Create runefoble-assets and runefoble-recordings after Silo starts
   # (docs/reference/platform-services.md).
+  # The data claim of the StatefulSet. It holds every stored object. An empty storageClass uses the
+  # cluster default.
+  persistence:
+    size: 10Gi
+    storageClass: ""
 
 # Identity & Authentication (Zitadel self-hosted)
 zitadel:

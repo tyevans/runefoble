@@ -67,6 +67,25 @@ Call with (dict "root" $ "name" "ENV_NAME" "key" "secret-key") and pipe to ninde
 {{- end -}}
 
 {{/*
+Data claim template for a stateful workload. The claim is named `data`. Call with
+(dict "persistence" .Values.<service>.persistence) and pipe to nindent 2 under volumeClaimTemplates.
+storageClassName is rendered only when the value is set. An empty value uses the cluster default.
+*/}}
+{{- define "runefoble.dataClaimTemplate" -}}
+- metadata:
+    name: data
+  spec:
+    accessModes:
+      - ReadWriteOnce
+    {{- if .persistence.storageClass }}
+    storageClassName: {{ .persistence.storageClass | quote }}
+    {{- end }}
+    resources:
+      requests:
+        storage: {{ .persistence.size | quote }}
+{{- end -}}
+
+{{/*
 Service-to-service credential (ADR-0015 e), read from the credentials Secret, key service-credential.
 */}}
 {{- define "runefoble.serviceCredentialEnv" -}}
