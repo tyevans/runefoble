@@ -64,15 +64,23 @@ def store_append_outage(stream_category: str) -> Iterator[None]:
 
 
 @contextmanager
-def store_outage() -> Iterator[None]:
+def store_outage(*, record_appends: bool = False) -> Iterator[list[str]]:
     """Route every event store read to an unreachable store, then restore the previous store.
 
     The previous store keeps its events, so a read after the block sees the stored history.
+
+    With `record_appends=True`, the yielded list gets one entry per `append` call made inside
+    the block. Those calls reach the outage store, which the block discards. Without the flag
+    the yielded list stays empty.
     """
     previous = get_event_store()
-    set_event_store(OutageEventStore())
+    outage = OutageEventStore()
+    saved: list[str] = []
+    if record_appends:
+        _spy_appends(outage, saved)
+    set_event_store(outage)
     try:
-        yield
+        yield saved
     finally:
         set_event_store(previous)
 
@@ -98,3 +106,35 @@ def reset_event_store() -> Iterator[None]:
     """
     with restored_seam(get_event_store, set_event_store, None, replace=True):
         yield
+
+
+def _spy_appends(store: InMemoryEventStore, saved: list[str]) -> None:
+    """Wrap `append` on one store instance. Each call adds one entry to `saved`."""
+
+    real_append = store.append
+
+    def recording_append(*args: object, **kwargs: object):
+        saved.append("append")
+        return real_append(*args, **kwargs)
+
+    store.append = recording_append  # type: ignore[method-assign]
+
+
+@contextmanager
+def record_appends() -> Iterator[list[str]]:
+    """Record every `append` on the process event store, without an outage.
+
+    The yielded list gets one entry per call. On exit the store's own `append` is restored.
+    """
+    store = get_event_store()
+    had_own_append = "append" in vars(store)
+    own_append = vars(store).get("append")
+    saved: list[str] = []
+    _spy_appends(store, saved)
+    try:
+        yield saved
+    finally:
+        if had_own_append:
+            store.append = own_append  # type: ignore[method-assign]
+        else:
+            del store.append  # type: ignore[attr-defined]

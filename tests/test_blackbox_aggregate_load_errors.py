@@ -31,15 +31,11 @@ from runefoble_platform.lazy_repository import LazyRepository
 from soundscape.aggregate import SoundscapeAggregate
 from soundscape.main import app
 
-from tests.helpers.event_store_seam import store_outage
+from tests.helpers.event_store_seam import OutageEventStore, store_outage
 from tests.helpers.ws_identity import bearer
 
 TENSION_URL = "/api/v1/soundscape/tension"
 CALCULATE_URL = "/api/v1/soundscape/tension/calculate"
-
-
-def _connection_refused(*_args: object, **_kwargs: object) -> None:
-    raise ConnectionError("event store unreachable")
 
 
 @pytest.fixture
@@ -88,11 +84,9 @@ def test_load_or_create_creates_only_when_stream_is_absent() -> None:
     assert loaded.state.tension_score == 42
 
 
-def test_load_helpers_propagate_store_errors(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_load_helpers_propagate_store_errors() -> None:
     """A store outage raises to the caller. It is not treated as a missing aggregate."""
-    store = InMemoryEventStore()
-    repo = create_aggregate_repository(SoundscapeAggregate, event_store=store)
-    monkeypatch.setattr(store, "read_stream", _connection_refused)
+    repo = create_aggregate_repository(SoundscapeAggregate, event_store=OutageEventStore())
     agg_id = uuid4()
 
     with pytest.raises(ConnectionError):
@@ -188,11 +182,9 @@ def test_load_or_404_returns_stored_aggregate() -> None:
     assert loaded.state.tension_score == 7
 
 
-def test_load_or_404_propagates_store_errors(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_load_or_404_propagates_store_errors() -> None:
     """A store outage is never a 404."""
-    store = InMemoryEventStore()
-    repo = create_aggregate_repository(SoundscapeAggregate, event_store=store)
-    monkeypatch.setattr(store, "read_stream", _connection_refused)
+    repo = create_aggregate_repository(SoundscapeAggregate, event_store=OutageEventStore())
 
     with pytest.raises(ConnectionError):
         _run(load_or_404(repo, uuid4(), "unused"))

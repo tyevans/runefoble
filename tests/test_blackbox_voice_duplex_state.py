@@ -8,9 +8,9 @@ Interacts through public HTTP frontdoors only:
   - `GET /api/v1/voice/duplex/status/{session_id}` (playback status)
   - `POST /api/v1/voice/rooms/{session_id}/kick` (room command)
 
-The restart is a new coordinator over the same process event store. The store doubles patch
-`read_stream` (load failure) and wrap `append` (save spy) on the process event store. No
-application code is mocked.
+The restart is a new coordinator over the same process event store. `store_outage` makes the
+store reads fail (load failure) and records each `append` (save spy). No application code is
+mocked.
 """
 
 from __future__ import annotations
@@ -21,7 +21,6 @@ from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
-from runefoble_platform.event_sourcing import get_event_store
 from voice_agent.coordinator import (
     VoiceRoomCoordinator,
     get_voice_room_coordinator,
@@ -29,6 +28,7 @@ from voice_agent.coordinator import (
 )
 from voice_agent.main import app as voice_app
 
+from tests.helpers.event_store_seam import store_outage
 from tests.helpers.module_state import SeamRestorer
 from tests.helpers.spicedb_factory import grant_voice_session
 from tests.helpers.voice_identity import voice_auth_headers
@@ -37,10 +37,6 @@ pytestmark = pytest.mark.usefixtures("trusted_voice_issuer")
 
 DM_USER = "user-dm-state"
 PLAYER_USER = "user-player-state"
-
-
-def _connection_refused(*_args: object, **_kwargs: object) -> None:
-    raise ConnectionError("event store unreachable")
 
 
 @pytest.fixture
@@ -88,17 +84,8 @@ def test_playback_started_before_a_restart_is_still_reported_after_it(granted_se
 def test_playback_start_during_store_outage_answers_503_and_saves_nothing(granted_session: str):
     """A failed room load stops the playback command. No event is saved."""
     player = TestClient(voice_app, headers=voice_auth_headers(PLAYER_USER))
-    store = get_event_store()
-    saved: list[str] = []
-    real_append = store.append
 
-    def recording_append(*args: object, **kwargs: object):
-        saved.append("append")
-        return real_append(*args, **kwargs)
-
-    with pytest.MonkeyPatch.context() as m:
-        m.setattr(store, "read_stream", _connection_refused)
-        m.setattr(store, "append", recording_append)
+    with store_outage(record_appends=True) as saved:
         resp = player.post(
             "/api/v1/voice/duplex/playback/start",
             json={
@@ -117,17 +104,8 @@ def test_playback_start_during_store_outage_answers_503_and_saves_nothing(grante
 def test_kick_during_store_outage_answers_503_and_saves_nothing(granted_session: str):
     """A failed room load stops the kick command before any event is saved."""
     dm = TestClient(voice_app, headers=voice_auth_headers(DM_USER))
-    store = get_event_store()
-    saved: list[str] = []
-    real_append = store.append
 
-    def recording_append(*args: object, **kwargs: object):
-        saved.append("append")
-        return real_append(*args, **kwargs)
-
-    with pytest.MonkeyPatch.context() as m:
-        m.setattr(store, "read_stream", _connection_refused)
-        m.setattr(store, "append", recording_append)
+    with store_outage(record_appends=True) as saved:
         resp = dm.post(
             f"/api/v1/voice/rooms/{granted_session}/kick",
             json={"peer_id": "peer-unknown", "reason": "mic_spam"},
