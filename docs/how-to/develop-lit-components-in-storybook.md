@@ -70,6 +70,7 @@ import '../src/runefoble-character-card.ts';
 
 Rules for element tests:
 - Fake only the network. Stub `fetch` with `vi.stubGlobal('fetch', ...)`. Do not stub the code under test.
+- To test a transport call, use a live loopback upstream instead of a stub. Pass `loopbackUpstreamCommands` from `libs/runefoble_ui/testing/loopback-commands.ts` as `domTestConfig(import.meta.dirname, { commands: loopbackUpstreamCommands })`. In the test, read `commands` from `vitest/browser`. Set the element `apiBaseUrl` to `await commands.upstreamUrl()`. Set the reply with `upstreamReply(status, body)`. Read what arrived with `upstreamRequests()`. See [UI transport](../reference/ui-transport.md).
 - Assert what a user sees: `src` attributes, text, and which elements exist.
 - Check blob URL cleanup with the browser. Fetch the old `blob:` URL and expect it to reject after revocation.
 - Prove the test can fail. Remove the behaviour for a moment and confirm the test turns red.

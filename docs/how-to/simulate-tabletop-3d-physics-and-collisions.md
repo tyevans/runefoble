@@ -132,8 +132,11 @@ The frontend microfrontend in `@runefoble/board-state-ui` provides client-side W
   .tokens="${tokens}"
   .terrainCells="${terrain}"
   theme="dark"
+  apiBaseUrl=""
 ></runefoble-tabletop-3d>
 ```
+
+The physics calls (`simulate-throw`, `knockback`) go through the shared [UI transport](../reference/ui-transport.md). They send the shell bearer. The `apiBaseUrl` property of `<runefoble-tabletop-3d>` or `<runefoble-board>` is the API base. Empty means the page origin. A refused call rejects with `HttpError` that carries the server `detail`. No animation runs for a refused call.
 
 ### Enabling 3D in `<runefoble-board>`
 

@@ -79,6 +79,7 @@ The Runefoble system documentation is organized strictly according to the **Diat
     * [Microfrontend Architecture](reference/microfrontend-architecture.md)
     * [Ports & Endpoints Routing Table](reference/ports-and-endpoints.md)
     * [Service Client (Gateway Upstream Calls)](reference/service-client.md)
+    * [UI Transport (Browser HTTP Client)](reference/ui-transport.md)
     * [Events Schema (CloudEvents)](reference/events-schema.md)
     * [Redis Streams Event Bus](reference/redis-streams-event-bus.md)
     * [Embedding Providers](reference/embedding-providers.md)
