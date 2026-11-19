@@ -22,9 +22,9 @@ export class RunefobleBoardEmpty extends LitElement {
     :host {
       display: block;
       font-family: var(--rf-font-family, system-ui, sans-serif);
-      color: var(--rf-text-primary, #1a1a1a);
-      background: var(--rf-bg-surface, #ffffff);
-      border: var(--rf-border-width, 2px) dashed var(--rf-border-color, #1a1a1a);
+      color: var(--rf-text-primary);
+      background: var(--rf-bg-surface);
+      border: var(--rf-border-width, 2px) dashed var(--rf-border-color);
       padding: 32px 20px;
       text-align: center;
       box-sizing: border-box;
@@ -35,8 +35,8 @@ export class RunefobleBoardEmpty extends LitElement {
       margin-top: 12px;
       display: inline-block;
       padding: 6px 10px;
-      border-left: 4px solid var(--rf-accent-primary, #e63946);
-      background: var(--rf-bg-muted, #f4f4f4);
+      border-left: 4px solid var(--rf-accent-primary);
+      background: var(--rf-bg-inset);
       font-weight: 700;
     }
   `;
