@@ -111,6 +111,8 @@ Every publish call uses one of two helpers from `runefoble_platform.event_publis
 | `publish_or_fail(bus, stream, event)` | Routes that change state, and DM decisions | Logs at error level, counts the failure, raises `DomainEventPublishError`. The app returns HTTP 503. |
 | `publish_best_effort(bus, stream, event)` | Read-model updates, projections, recaps, and suggestions | Logs at error level and counts the failure. Returns `False`. The request still succeeds. |
 
+`publish_aggregate_events(bus, stream, events)` publishes the events of one aggregate to one stream, in order, with `publish_or_fail`. Use it for route-level save-then-publish. Read `uncommitted_events` before the save, because a save marks them as committed. Save first, then check the bus (`if bus:`), then call the helper. It stops at the first failed publish and raises `DomainEventPublishError`. A route that publishes to two streams calls the helper once per stream. Each stream keeps its event order.
+
 `deliver_best_effort(destination, event_type, awaitable)` applies the best-effort policy to any delivery that is not a bus publish, such as a WebSocket broadcast or a board fan-out. No in-process event bus exists.
 
 Rules for clients and operators:
