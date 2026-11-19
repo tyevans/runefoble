@@ -31,7 +31,13 @@ def require_zanzibar_permission(
     resource_type: str = "campaign",
     resource_param: str = "session_id",
 ) -> Callable:
-    """FastAPI dependency factory enforcing Zanzibar permissions on a resource."""
+    """FastAPI dependency factory enforcing Zanzibar permissions on a resource.
+
+    Use it on a composite route, which the gateway builds from several owner reads, so no single
+    owner checks the whole response. A proxy route forwards the bearer token and leaves the check
+    to its owner (TASK-0845). A proxy route that keeps this check is listed in
+    `docs/how-to/call-owning-services-through-the-gateway.md`.
+    """
 
     async def _checker(
         request: Request,

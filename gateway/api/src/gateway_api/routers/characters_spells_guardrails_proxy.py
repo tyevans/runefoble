@@ -1,8 +1,8 @@
 """Character spell and stand-in guardrail routes proxied to character_sheet (TASK-0586).
 
-The gateway keeps the public paths and the Zanzibar check on each route. It forwards the caller's
-bearer token, so character_sheet verifies the caller again and applies the change. The gateway
-holds no character state and returns no substitute value (see `upstream_errors.py`).
+The gateway keeps the public paths and verifies the caller's bearer token on each route. It forwards
+that token, so character_sheet checks `edit` or `view` on the character and applies the change. The
+gateway holds no character state and returns no substitute value (see `upstream_errors.py`).
 
 The guardrail PUT relays the raw body, so character_sheet validates the policy and its 422 reaches
 the caller unchanged.
@@ -13,7 +13,7 @@ from __future__ import annotations
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from gateway_api.auth import require_zanzibar_permission
+from gateway_api.auth import get_principal
 from gateway_api.character_models import (
     CastSpellRequest,
     CharacterResponse,
@@ -35,14 +35,13 @@ from runefoble_platform.service_client import owner_routes
 
 router = APIRouter(tags=["characters-subresources"])
 
-EDIT = [Depends(require_zanzibar_permission("edit", "character", "character_id"))]
-VIEW = [Depends(require_zanzibar_permission("view", "character", "character_id"))]
+_VERIFIED = [Depends(get_principal)]
 
 
 @router.post(
     "/api/v1/characters/{character_id}/spells/cast",
     response_model=CharacterResponse,
-    dependencies=EDIT,
+    dependencies=_VERIFIED,
 )
 async def cast_spell(
     character_id: str, req: CastSpellRequest, request: Request
@@ -57,7 +56,7 @@ async def cast_spell(
 @router.post(
     "/api/v1/characters/{character_id}/spells/prepare",
     response_model=CharacterResponse,
-    dependencies=EDIT,
+    dependencies=_VERIFIED,
 )
 async def prepare_spell(
     character_id: str, req: PrepareSpellRequest, request: Request
@@ -74,7 +73,7 @@ async def prepare_spell(
 @router.put(
     "/api/v1/characters/{character_id}/guardrails",
     response_model=CharacterResponse,
-    dependencies=EDIT,
+    dependencies=_VERIFIED,
 )
 async def update_guardrails(character_id: str, request: Request) -> CharacterResponse:
     """Store stand-in guardrails. The raw body reaches character_sheet, which validates it."""
@@ -91,7 +90,7 @@ async def update_guardrails(character_id: str, request: Request) -> CharacterRes
     return await respond_with_campaign_title(request, view)
 
 
-@router.get("/api/v1/characters/{character_id}/guardrails", dependencies=VIEW)
+@router.get("/api/v1/characters/{character_id}/guardrails", dependencies=_VERIFIED)
 async def get_guardrails(character_id: str, request: Request) -> dict[str, Any]:
     """Read the stand-in guardrails. character_sheet checks `view`."""
     return await forward_json(

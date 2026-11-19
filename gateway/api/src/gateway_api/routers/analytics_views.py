@@ -1,9 +1,9 @@
 """Campaign Analytics proxy routes for heatmap, MVP, and timeline (TASK-0588).
 
-Every route checks the `view` permission on the campaign in the Zanzibar schema. It then
-forwards to the owning `campaign_analytics` service through the shared `ServiceClient`, with
-the caller's bearer token and the query values the caller sent. The gateway never filters or
-substitutes the owner's answer. Upstream failure returns 503 or 502 (ADR-0015 b).
+Every route verifies the caller's bearer token, then forwards to the owning `campaign_analytics`
+service through the shared `ServiceClient`, with the caller's bearer token and the query values the
+caller sent. The owner checks the `view` permission on the campaign (TASK-0845). The gateway never
+filters or substitutes the owner's answer. Upstream failure returns 503 or 502 (ADR-0015 b).
 
 The owner has no campaign summary route, so the gateway has none. A summary with literal
 values would be a canned payload.
@@ -12,13 +12,15 @@ values would be a canned payload.
 from typing import Any
 
 from fastapi import APIRouter, Depends, Query, Request
-from gateway_api.auth import require_zanzibar_permission
+from gateway_api.auth import get_principal
 from gateway_api.proxy import forward_json
 
 SERVICE = "campaign_analytics"
 CAMPAIGNS = "/api/v1/analytics/campaigns"
 
 router = APIRouter(tags=["Campaign Analytics Views"])
+
+_VERIFIED = [Depends(get_principal)]
 
 
 def _query(values: dict[str, str | None]) -> dict[str, str] | None:
@@ -29,7 +31,7 @@ def _query(values: dict[str, str | None]) -> dict[str, str] | None:
 
 @router.get(
     f"{CAMPAIGNS}/{{campaign_id}}/heatmap",
-    dependencies=[Depends(require_zanzibar_permission("view", "campaign", "campaign_id"))],
+    dependencies=_VERIFIED,
 )
 async def get_campaign_heatmap(
     campaign_id: str,
@@ -50,7 +52,7 @@ async def get_campaign_heatmap(
 
 @router.get(
     f"{CAMPAIGNS}/{{campaign_id}}/mvp",
-    dependencies=[Depends(require_zanzibar_permission("view", "campaign", "campaign_id"))],
+    dependencies=_VERIFIED,
 )
 async def get_campaign_mvp(
     campaign_id: str,
@@ -70,7 +72,7 @@ async def get_campaign_mvp(
 
 @router.get(
     f"{CAMPAIGNS}/{{campaign_id}}/timeline",
-    dependencies=[Depends(require_zanzibar_permission("view", "campaign", "campaign_id"))],
+    dependencies=_VERIFIED,
 )
 async def get_campaign_timeline(
     campaign_id: str,
