@@ -9,9 +9,11 @@ from board_state.authz import VIEW, can_on_board
 from board_state.dependencies import (
     BoardNotFoundError,
     get_board,
+    get_event_bus,
     get_zitadel_auth_service,
     repo,
 )
+from board_state.events import save_and_publish
 from board_state.ghost_staging import GhostStageRequest, UnknownGhostToken, stage_ghost_preview
 from board_state.realtime import board_ws_manager
 from board_state.routers.previews_ws_actions import handle_ws_action
@@ -60,7 +62,7 @@ async def _handle_confirm_move(session_id: str, data: dict[str, Any]) -> None:
         initiated_by=data.get("initiated_by", "player"),
         movement_budget=data.get("movement_budget"),
     )
-    await repo.save(board)
+    await save_and_publish(repo, board, get_event_bus())
     tok = board.state.tokens[token_id]
     msg = {
         "type": "token_moved",

@@ -16,9 +16,12 @@ import pytest
 from board_state.main import app as board_app
 from fastapi.testclient import TestClient
 from gateway_api.main import app as gateway_app
+from runefoble_events.events import TokenMoved
+from runefoble_platform.redis_bus import deserialize_event
 from the_watcher.main import app as watcher_app
 
 from tests.helpers.live_services import closed_port_url, serve
+from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.spectator_table import open_board_table
 from tests.helpers.ws_identity import ws_subprotocols
 from tests.realtime_session import bearer
@@ -163,3 +166,37 @@ def test_speak_and_act_fails_when_board_state_is_unreachable(
     assert spoken.status_code in (502, 503), spoken.text
     assert spoken.json().get("upstream") == "the_watcher"
     assert "action_type" not in spoken.text
+
+
+def _committed_moves(mock_bus: MockAsyncRedis, token_id: str) -> list[TokenMoved]:
+    """Return the TokenMoved events for one token that reached the board stream."""
+    entries = mock_bus.streams.get("runefoble.events.board", [])
+    events = [deserialize_event(fields) for _id, fields in entries]
+    return [e for e in events if isinstance(e, TokenMoved) and e.token_id == token_id]
+
+
+def test_confirmed_spoken_move_publishes_one_token_moved_and_the_proposal_publishes_none(
+    gateway: TestClient,
+    table: tuple[str, str],
+    board_socket: TestClient,
+    mock_bus: MockAsyncRedis,
+) -> None:
+    """Analytics reads the board stream. A proposal adds nothing. The confirm adds one move."""
+    campaign_id, session_id = table
+
+    with board_socket.websocket_connect(
+        f"/ws/boards/{session_id}", subprotocols=ws_subprotocols(DM)
+    ) as ws:
+        ws.receive_json()
+        spoken = gateway.post(SPEAK_PATH, json=_speech(session_id, campaign_id), headers=bearer(DM))
+        assert spoken.status_code == 200, spoken.text
+        assert ws.receive_json()["type"] == "ghost_preview"
+        assert _committed_moves(mock_bus, GOBLIN) == []
+
+        ws.send_json({"action": "confirm_move", "token_id": GOBLIN, "to_x": 4, "to_y": 2})
+        assert ws.receive_json()["type"] == "token_moved"
+
+    moves = _committed_moves(mock_bus, GOBLIN)
+    assert len(moves) == 1
+    assert (moves[0].from_x, moves[0].from_y) == GOBLIN_START
+    assert (moves[0].to_x, moves[0].to_y) == GOBLIN_TARGET

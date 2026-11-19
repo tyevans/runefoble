@@ -19,3 +19,15 @@ async def publish_board_events(bus: RedisStreamsEventBus, events: Iterable[Any])
     """
     for evt in events:
         await publish_or_fail(bus, BOARD_EVENTS_STREAM, evt)
+
+
+async def save_and_publish(repo: Any, board: Any, bus: RedisStreamsEventBus | None) -> None:
+    """Save the board, then publish the events that this write committed.
+
+    Every board write uses this path: the REST routes and the WebSocket confirm. The events are
+    read before the save, so a save cannot clear them first.
+    """
+    uncommitted = list(board.uncommitted_events)
+    await repo.save(board)
+    if bus is not None:
+        await publish_board_events(bus, uncommitted)

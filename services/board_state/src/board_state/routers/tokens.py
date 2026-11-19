@@ -18,7 +18,7 @@ from board_state.dependencies import (
     get_event_bus,
     repo,
 )
-from board_state.events import publish_board_events
+from board_state.events import save_and_publish
 from board_state.models import (
     MoveTokenRequest,
     MoveTokenResponse,
@@ -97,11 +97,7 @@ async def move_token_by_id(
         trap_trig = getattr(move_res, "trap_triggered", None)
         movement_paused = getattr(move_res, "movement_paused", False)
 
-        bus = get_event_bus()
-        uncommitted = list(board.uncommitted_events)
-        await repo.save(board)
-        if bus is not None:
-            await publish_board_events(bus, uncommitted)
+        await save_and_publish(repo, board, get_event_bus())
 
         tok = board.state.tokens[token_id]
         return MoveTokenResponse(
