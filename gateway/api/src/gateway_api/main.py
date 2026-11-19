@@ -36,6 +36,7 @@ from gateway_api.routers.audience import router as audience_router
 from gateway_api.routers.caravan_proxy import router as caravan_router
 from gateway_api.routers.characters_wardrobe_proxy import router as wardrobe_router
 from gateway_api.routers.forge_proxy import router as forge_router
+from gateway_api.routers.health import readiness_gate
 from gateway_api.routers.realtime import router as realtime_router
 from gateway_api.routers.settlements_proxy import router as settlements_router
 from gateway_api.routers.watcher_proxy_dm import router as watcher_dm_router
@@ -47,6 +48,7 @@ from gateway_api.upstream_errors import register_upstream_error_handlers
 from gateway_api.upstreams import UpstreamRegistry
 from runefoble_auth.authz_http import install_authz_error_handlers
 from runefoble_platform.config import PlatformSettings
+from runefoble_platform.readiness import set_readiness_gate
 from runefoble_platform.telemetry import init_telemetry
 
 
@@ -54,6 +56,7 @@ from runefoble_platform.telemetry import init_telemetry
 async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Build the upstream clients and start the session frame consumer. Stop both at shutdown."""
     app.state.upstreams = UpstreamRegistry.from_settings(PlatformSettings())
+    set_readiness_gate(app, readiness_gate())
     try:
         async with event_bus_provider.lifespan(app):
             consumers = await start_session_frame_consumers(get_event_bus())

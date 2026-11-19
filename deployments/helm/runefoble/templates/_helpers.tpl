@@ -140,3 +140,27 @@ The values that differ per service come from the services entry: databaseDriver.
 {{- include "runefoble.plainEnv" (dict "name" "RUNEFOBLE_OTEL_EXPORTER_OTLP_ENDPOINT" "value" (printf "http://otel-collector:%v" $root.Values.observability.otelCollector.grpcPort)) | nindent 0 }}
 {{- include "runefoble.zitadelServiceEnv" $root | nindent 0 }}
 {{- end -}}
+
+{{/*
+Container probes of one app service (TASK-0930). Call with the service entry of .Values.services
+and pipe to nindent. Every app container gets an HTTP readiness probe: path readinessPath
+(default /readyz) and time limit readinessTimeoutSeconds (default 3, longer than the 2.5 s limit
+of one dependency check). A liveness probe renders only when livenessPath is set.
+*/}}
+{{- define "runefoble.probes" -}}
+readinessProbe:
+  httpGet:
+    path: {{ .readinessPath | default "/readyz" }}
+    port: {{ .port }}
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  timeoutSeconds: {{ .readinessTimeoutSeconds | default 3 }}
+{{- with .livenessPath }}
+livenessProbe:
+  httpGet:
+    path: {{ . }}
+    port: {{ $.port }}
+  initialDelaySeconds: 5
+  periodSeconds: 10
+{{- end }}
+{{- end -}}

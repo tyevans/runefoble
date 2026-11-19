@@ -187,7 +187,7 @@ each route, and the mode in which the gateway serves it.
 | POST | `/api/v1/watcher/whispers/{whisper_id}/dispatch` | the_watcher | proxy | `gateway_api.routers.watcher_proxy_dm` |
 | GET | `/healthz` | gateway_api | local | `gateway_api.routers.health` |
 | GET | `/overlay/party-vitals/{session_id}` | game_session, board_state | proxy | `gateway_api.routers.overlay` |
-| GET | `/readyz` | gateway_api | local | `gateway_api.routers.health` |
+| GET | `/readyz` | gateway_api | local | `runefoble_platform.readiness` |
 | WS | `/ws/audience/{campaign_id}` | audience_studio | relay | `gateway_api.routers.audience` |
 | WS | `/ws/campaigns/{campaign_id}` | gateway_api | local | `gateway_api.routers.realtime` |
 | WS | `/ws/establishments/{establishment_id}/tables/{table_id}` | game_session | relay | `gateway_api.routers.realtime` |

@@ -5,7 +5,13 @@ import asyncio
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 from gateway_api.dependencies import get_event_bus, get_upstreams
+from runefoble_auth.readiness import spicedb_probe
 from runefoble_platform.event_publish import event_publish_failures
+from runefoble_platform.readiness import (
+    ReadinessGate,
+    add_readiness_route,
+    redis_probe,
+)
 from runefoble_platform.service_client import probe_health
 from runefoble_platform.stream_consumer import RUNNING, consumer_statuses
 
@@ -56,7 +62,13 @@ async def health_check(request: Request) -> JSONResponse:
     return JSONResponse(status_code=200 if healthy else 503, content=body)
 
 
-@router.get("/readyz")
-async def readiness_check() -> dict:
-    """Return readiness status for Kubernetes orchestration."""
-    return {"status": "ready", "gateway": "runefoble-api-gateway"}
+add_readiness_route(router, "gateway_api")
+
+
+def readiness_gate() -> ReadinessGate:
+    """Return a new gate. The session sockets and the composite routes need SpiceDB and Redis.
+
+    The owning services are not probed. An owner that is down gives 502 on its own routes
+    only, and `/healthz` reports it in `downstream_services` (TASK-0930).
+    """
+    return ReadinessGate({"spicedb": spicedb_probe(), "redis": redis_probe(get_event_bus)})

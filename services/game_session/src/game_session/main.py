@@ -14,7 +14,6 @@ from game_session.audience_weather import start_audience_consumers
 from game_session.campaign import campaign_router, register_campaign_error_handlers
 from game_session.container import GameSessionContainer, build_container
 from game_session.profile import profile_router
-from game_session.readiness import build_readiness_gate
 from game_session.routers import (
     autopilot_router,
     bounties_router,
@@ -37,13 +36,20 @@ from game_session.settlement.haggling_router import router as settlement_hagglin
 from game_session.settlement.router import router as settlement_haven_router
 from game_session.settlement.workers_router import router as settlement_workers_router
 from runefoble_auth.authz_http import install_authz_error_handlers
+from runefoble_auth.readiness import spicedb_probe
 from runefoble_platform.aggregate_loading import register_store_unavailable_handlers
 from runefoble_platform.event_publish import (
     event_publish_failures,
     install_publish_failure_handler,
 )
 from runefoble_platform.event_sourcing import event_store_kind
-from runefoble_platform.readiness import add_readiness_route
+from runefoble_platform.readiness import (
+    ReadinessGate,
+    add_readiness_route,
+    event_store_probe,
+    redis_probe,
+    set_readiness_gate,
+)
 from runefoble_platform.stream_consumer import consumer_statuses
 from runefoble_platform.ui_manifest import ui_manifest_router
 
@@ -56,6 +62,13 @@ def _lifespan_for(build: ContainerBuilder):
         """Build the container, open the Redis Streams bus, and start the weather consumer."""
         container = build()
         app.state.container = container
+        # A write route needs the event store, SpiceDB and Redis (TASK-0929).
+        readiness = {
+            "event_store": event_store_probe(),
+            "spicedb": spicedb_probe(),
+            "redis": redis_probe(container.event_bus.get),
+        }
+        set_readiness_gate(app, ReadinessGate(readiness))
         bus = await container.event_bus.connect()
         consumers = await start_audience_consumers(bus, container.play)
         app.state.consumers = {"game_session": consumers}
@@ -123,7 +136,7 @@ def create_app(build: ContainerBuilder = build_container) -> FastAPI:
     )
     _include_routers(app)
     app.add_api_route("/healthz", health_check, methods=["GET"])
-    add_readiness_route(app, "game_session", build_readiness_gate(app))
+    add_readiness_route(app, "game_session")
     app.include_router(
         ui_manifest_router(
             Path(__file__).resolve().parents[2] / "ui" / "manifest.json",

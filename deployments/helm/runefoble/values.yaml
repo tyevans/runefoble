@@ -288,8 +288,11 @@ swaggerUI:
 #   environment
 #   databaseDriver               SQLAlchemy URL driver. Default postgresql+asyncpg.
 #   configMap                    Keys of the <name>-config ConfigMap that is loaded with envFrom.
-#   readinessPath, livenessPath  HTTP probe paths on the service port.
-#   readinessTimeoutSeconds      Time limit of one readiness probe call. Default 1.
+#   readinessPath                Readiness probe path on the service port. Default /readyz, the
+#                                route that answers 200 only after each dependency answered once
+#                                (TASK-0930). A service that has no /readyz yet sets /healthz.
+#   readinessTimeoutSeconds      Time limit of one readiness probe call. Default 3.
+#   livenessPath                 Liveness probe path. No liveness probe when it is not set.
 #   modelCache, podSecurityContext  Volume for model files, and the pod security context.
 services:
   gatewayApi:
@@ -298,11 +301,13 @@ services:
     replicas: 1
     port: 8000
     serviceCredential: true
+    # /readyz (the default) waits for SpiceDB and Redis (TASK-0930).
   theWatcher:
     swaggerName: "The Watcher AI Engine"
     image: runefoble/the-watcher:0.1.0
     replicas: 1
     port: 8001
+    readinessPath: /healthz  # No /readyz yet (TASK-0930 follow-up).
     urlEnv: RUNEFOBLE_WATCHER_URL
     consumers: [game-session, voice-agent, gateway-api, gateway-mcp]
     serviceCredential: true
@@ -315,6 +320,7 @@ services:
     image: runefoble/board-state:0.1.0
     replicas: 1
     port: 8002
+    readinessPath: /healthz  # No /readyz yet (TASK-0930 follow-up).
     urlEnv: RUNEFOBLE_BOARD_STATE_URL
     consumers: [gateway-api, gateway-mcp]
     serviceCredential: true
@@ -325,6 +331,7 @@ services:
     image: runefoble/character-sheet:0.1.0
     replicas: 1
     port: 8003
+    readinessPath: /healthz  # No /readyz yet (TASK-0930 follow-up).
     urlEnv: RUNEFOBLE_CHARACTER_SHEET_URL
     consumers: [game-session, gateway-api, gateway-mcp]
     serviceCredential: true
@@ -336,9 +343,7 @@ services:
     urlEnv: RUNEFOBLE_GAME_SESSION_URL
     consumers: [gateway-api, campaign-lore, gateway-mcp]
     serviceCredential: true
-    # /readyz answers 200 only after the event store, SpiceDB and Redis answered once (TASK-0929).
-    readinessPath: /readyz
-    readinessTimeoutSeconds: 3
+    # /readyz (the default) waits for the event store, SpiceDB and Redis (TASK-0929).
     livenessPath: /healthz
   voiceAgent:
     swaggerName: "Voice Agent Service"
@@ -371,6 +376,7 @@ services:
     image: runefoble/campaign-lore:0.1.0
     replicas: 1
     port: 8006
+    readinessPath: /healthz  # No /readyz yet (TASK-0930 follow-up).
     urlEnv: RUNEFOBLE_CAMPAIGN_LORE_URL
     consumers: [gateway-api]
     serviceCredential: true
@@ -388,6 +394,7 @@ services:
     image: runefoble/rules-compendium:0.1.0
     replicas: 1
     port: 8007
+    readinessPath: /healthz  # No /readyz yet (TASK-0930 follow-up).
     urlEnv: RUNEFOBLE_RULES_COMPENDIUM_URL
     # game-session reads enemy challenge ratings at encounter start (TASK-0918).
     consumers: [game-session, gateway-api, gateway-mcp]
@@ -397,6 +404,7 @@ services:
     image: runefoble/asset-forge:0.1.0
     replicas: 1
     port: 8008
+    readinessPath: /healthz  # No /readyz yet (TASK-0930 follow-up).
     urlEnv: RUNEFOBLE_ASSET_FORGE_URL
     consumers: [gateway-api]
     siloCredentials: true
@@ -411,6 +419,7 @@ services:
     image: runefoble/soundscape:0.1.0
     replicas: 1
     port: 8009
+    readinessPath: /healthz  # No /readyz yet (TASK-0930 follow-up).
     urlEnv: RUNEFOBLE_SOUNDSCAPE_URL
     consumers: [gateway-api]
     siloCredentials: true
@@ -443,6 +452,7 @@ services:
     image: runefoble/campaign-analytics:0.1.0
     replicas: 1
     port: 8011
+    readinessPath: /healthz  # No /readyz yet (TASK-0930 follow-up).
     urlEnv: RUNEFOBLE_CAMPAIGN_ANALYTICS_URL
     consumers: [gateway-api]
     siloEndpoint: false
@@ -461,6 +471,7 @@ services:
     image: runefoble/inference-worker:0.1.0
     replicas: 1
     port: 8100
+    readinessPath: /healthz  # No /readyz yet (TASK-0930 follow-up).
     backend: openai_compatible
     # Required when backend is openai_compatible. Empty means no base URL is set, so the worker
     # refuses to start until an endpoint is configured.
@@ -476,6 +487,7 @@ services:
     image: runefoble/gateway-mcp:0.1.0
     replicas: 1
     port: 8012
+    readinessPath: /healthz  # No /readyz yet (TASK-0930 follow-up).
 
 # Frontend Application
 frontend:
