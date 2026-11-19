@@ -121,7 +121,7 @@ client = SpiceDBClient(
 mock_client = MockSpiceDBClient()
 ```
 
-The preshared key is an operator secret. The library has no literal default. If `RUNEFOBLE_SPICEDB_PRESHARED_KEY` is unset and no `token` is passed, the constructor raises `RuntimeError`. Services read the same setting through `PlatformSettings.spicedb_preshared_key` and fail at startup when it is unset. Tests set a throwaway value in `tests/conftest.py`.
+The preshared key is an operator secret. The library has no literal default. If `RUNEFOBLE_SPICEDB_PRESHARED_KEY` is unset and no `token` is passed, the constructor raises `RuntimeError`. Services read the same setting through `PlatformSettings.spicedb_preshared_key` and fail at startup when it is unset. Tests set a throwaway value in the repository root `conftest.py`.
 
 `SpiceDBClient` communicates strictly over gRPC. If the SpiceDB server is unreachable or fails, operations fail fast and raise exceptions rather than silently degrading to an in-memory mock, preventing permission desynchronization and data loss. For isolated unit tests, instantiate `MockSpiceDBClient` directly.
 
@@ -365,4 +365,4 @@ Container lifetime (`tests/helpers/container_owner.py`):
 
 `tests/test_authz_live_contract.py` runs against this fixture. It checks that a permission name written as a relation is rejected, that `game_master` grants `run_session`, and that an undefined permission check raises `AuthzSchemaError`.
 
-Tests that need the shared client use `tests/helpers/spicedb_factory.py`. The root `tests/conftest.py` autouse fixture swaps the factory client for a fresh strict mock on every test. A test that needs live SpiceDB requests `live_spicedb_with_schema` instead.
+Tests that need the shared client use `tests/helpers/spicedb_factory.py`. The autouse fixture `default_spicedb_client` in `tests/helpers/service_harness.py` swaps the factory client for a fresh strict mock on every test. A test that needs live SpiceDB requests `live_spicedb_with_schema` instead.

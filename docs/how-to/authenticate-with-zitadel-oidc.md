@@ -253,7 +253,7 @@ The `gateway-api`, `board-state`, `campaign-lore`, `character-sheet`, `game-sess
 
 ### Test with a service credential
 
-Set the same value in the test process and mint no user token for a service call. The root `tests/conftest.py` sets `RUNEFOBLE_SERVICE_CREDENTIAL=test-only-service-credential` before any settings load. Send the header from the test client:
+Set the same value in the test process and mint no user token for a service call. The repository root `conftest.py` sets `RUNEFOBLE_SERVICE_CREDENTIAL=test-only-service-credential` before any settings load. Send the header from the test client:
 
 ```python
 import os

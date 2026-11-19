@@ -112,7 +112,7 @@ Use `closed_port_url()` for the unreachable-worker case. This case must return H
 
 The gateway API reads its upstream URLs once, when its lifespan starts (TASK-0580). Set the variable first, then enter the lifespan with `with TestClient(gateway_app)`. A client that skips the lifespan has no upstream registry, and a client left over from an earlier lifespan holds closed HTTP clients.
 
-The shared fixture `game_session_upstream` in `tests/conftest.py` does the setup:
+The shared fixture `game_session_upstream` in `tests/helpers/service_harness.py` does the setup:
 
 1. Serves `game_session` on a loopback port with fresh in-memory campaign state.
 2. Sets `RUNEFOBLE_GAME_SESSION_URL` with `monkeypatch`.
