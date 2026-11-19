@@ -20,7 +20,7 @@ Complete
 Three developer tools hide failures. The inotify shim returns a fake descriptor, worktree cleanup treats an unknown process check as safe, and `make test-mutation` hides its exit code.
 
 ## Problem Statement
-- `scripts/fake_inotify.c:21`: when the real `inotify_add_watch` fails, the shim returns `1000`. `scripts/build_docs.py:26-49` preloads it into every child process. `build_docs.py:44` continues after a compile failure.
+- `scripts/fake_inotify.c:21` (removed): when the real `inotify_add_watch` fails, the shim returns `1000`. `scripts/build_docs.py:26-49` preloads it into every child process. `build_docs.py:44` continues after a compile failure.
 - `scripts/cleanup_worktrees.py:53-72`: `find_active_pids_for_path` returns `[]` when `/proc` is absent, so the active-process guard passes. `:186-267` mixes eligibility, printing and removal.
 - `Makefile:198-199`: `test-mutation` uses `|| true`. `Makefile:136` and `:237` run the same `helm lint`. `.PHONY` (line 1) lacks `dev`, `dev-audience-studio`, `visualize-project`, `visualize-project-build`.
 

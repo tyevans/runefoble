@@ -24,7 +24,7 @@ Seven `__init__.py` files re-export names, a dead `main.py` prints a greeting, t
 
 ## Problem Statement
 - Re-exports: `server.py:78-102` (`__all__`, 25 names), `tools/__init__.py:5-63`, `dynamic/__init__.py:3-37`, `resources/__init__.py:5-19`, `prompts/__init__.py:5-19`, `clients/__init__.py:3-15`, `routers/__init__.py:3-5`.
-- `gateway/mcp/main.py:1-6` prints "Hello from gateway-mcp!" and nothing runs it. `gateway/mcp/README.md` has 0 lines.
+- `gateway/mcp/main.py:1-6` (removed) prints "Hello from gateway-mcp!" and nothing runs it. `gateway/mcp/README.md` has 0 lines.
 - `docs/reference/fastmcp-gateway.md` says `server.py` is under 100 lines (it is 119). `sandbox.py:4` and the reference page cite ADR-0008 as the FastMCP architecture. ADR-0008 covers property and mutation testing.
 - `docs/how-to/add-a-watcher-ai-tool.md:51` runs `gateway/mcp/src/gateway_mcp/main.py` (removed) by path. The reference page uses `python -m gateway_mcp.main`.
 - `docs/project/backlog/refined/0629-*.md` cites `server.py:48`, a line that no longer holds that code.
@@ -40,7 +40,7 @@ Seven `__init__.py` files re-export names, a dead `main.py` prints a greeting, t
 
 ## Detailed Specification & Implementation Plan
 1. Make each `__init__.py` a docstring only. Import from the defining module at every call site (`server.py`, `gateway_api/main.py` if still present, tests).
-2. Delete `gateway/mcp/main.py`. Write a short README or delete it.
+2. Delete `gateway/mcp/main.py` (removed). Write a short README or delete it.
 3. Correct the four doc claims and the ADR citations. Correct the path in the how-to. Update the TASK-0629 text.
 
 ## Frontdoor Blackbox Test Plan
@@ -54,7 +54,7 @@ Seven `__init__.py` files re-export names, a dead `main.py` prints a greeting, t
 
 ## Refactor r3 Addendum (Problem Statement)
 
-Refactor r3 addendum (2026-11-19, done by the orchestrator after the merge): `gateway/mcp/main.py` no longer exists. The second entrypoint is now `gateway/mcp/src/gateway_mcp/main.py:1-6` (removed), which calls `server.main`. `tests/test_blackbox_gateway_mcp_http.py:148` and `:257` run `python -m gateway_mcp.main`. Point both tests to `python -m gateway_mcp.server` and delete `main.py`. Also: `server.main` (`server.py:72`) calls `load_settings()` so that a missing upstream URL stops the process, but the deployed entrypoint `gateway_mcp/asgi.py:10` does not. Move the `load_settings()` call into `GatewayMcpContainer.default()` (or `build_http_app`), so that both start paths fail fast the same way, and drop the discarded call in `server.main`.
+Refactor r3 addendum (2026-11-19, done by the orchestrator after the merge): `gateway/mcp/main.py` (removed) no longer exists. The second entrypoint is now `gateway/mcp/src/gateway_mcp/main.py:1-6` (removed), which calls `server.main`. `tests/test_blackbox_gateway_mcp_http.py:148` and `:257` run `python -m gateway_mcp.main`. Point both tests to `python -m gateway_mcp.server` and delete `main.py`. Also: `server.main` (`server.py:72`) calls `load_settings()` so that a missing upstream URL stops the process, but the deployed entrypoint `gateway_mcp/asgi.py:10` does not. Move the `load_settings()` call into `GatewayMcpContainer.default()` (or `build_http_app`), so that both start paths fail fast the same way, and drop the discarded call in `server.main`.
 
 ## Audit Provenance
 - Severity: low
