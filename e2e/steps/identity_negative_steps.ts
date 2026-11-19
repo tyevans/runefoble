@@ -9,8 +9,9 @@
 import { expect } from '@playwright/test';
 import { createSign, generateKeyPairSync } from 'node:crypto';
 import { Given, When, Then } from '../support/fixtures';
+import { APP_BASE_URL } from '../support/environment';
 
-const API_BASE = (process.env.PLAYWRIGHT_API_BASE_URL || 'http://localhost:8000').replace(/\/$/, '');
+const API_BASE = APP_BASE_URL;
 const ISSUER = process.env.PLAYWRIGHT_ZITADEL_ISSUER || 'http://auth.localhost';
 const AUDIENCE = process.env.PLAYWRIGHT_ZITADEL_AUDIENCE || 'runefoble-api';
 const ABSENT_STATUSES = [404, 405];

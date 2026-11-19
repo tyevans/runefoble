@@ -5,6 +5,7 @@
  */
 
 import type { APIRequestContext } from '@playwright/test';
+import { APP_BASE_URL } from './environment';
 
 export interface CampaignSummary {
   id: string;
@@ -29,7 +30,7 @@ export class FrontdoorApi {
 
   constructor(
     private request: APIRequestContext,
-    baseUrl = 'http://localhost:8000'
+    baseUrl = APP_BASE_URL
   ) {
     this.baseUrl = baseUrl.replace(/\/$/, '');
   }

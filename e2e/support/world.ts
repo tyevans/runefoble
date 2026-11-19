@@ -3,9 +3,7 @@ import type { BrowserContext, Page } from '@playwright/test';
 export interface TestUser {
   userId: string;
   username: string;
-  roles: string[];
   token?: string;
-  isAdmin?: boolean;
 }
 
 export class World {

@@ -7,7 +7,7 @@ import { expect } from '@playwright/test';
 import { Given, When, Then } from '../support/fixtures';
 
 Given('I am logged in as a {string}', async ({ auth, world }, roleOrName: string) => {
-  const user = await auth.injectUser(roleOrName);
+  const user = await auth.signInAs(roleOrName);
   world.currentUser = user;
 });
 

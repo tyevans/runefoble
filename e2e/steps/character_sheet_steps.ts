@@ -25,7 +25,7 @@ async function ensureOnCharacterSheet(
   expectedName = 'Thorne Ironbreaker'
 ): Promise<string> {
   if (!world.currentUser) {
-    const user = await auth.injectUser('Marcus');
+    const user = await auth.signInAs('Marcus');
     world.currentUser = user;
   }
 
@@ -72,7 +72,7 @@ async function ensureOnCharacterSheet(
 Given(
   'an authenticated player {string}',
   async ({ auth, world }, personaName: string) => {
-    const user = await auth.injectUser(personaName);
+    const user = await auth.signInAs(personaName);
     world.currentUser = user;
   }
 );
@@ -81,7 +81,7 @@ When(
   '{word} opens the character roster and clicks "+ Create Character"',
   async ({ page, world, auth }, _persona: string) => {
     if (!world.currentUser) {
-      const user = await auth.injectUser('Marcus');
+      const user = await auth.signInAs('Marcus');
       world.currentUser = user;
     }
 

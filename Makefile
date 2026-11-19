@@ -232,15 +232,15 @@ e2e-lore-up: ## Start campaign_lore for the gateway-down e2e journey (TASK-0695)
 e2e-lore-down: ## Stop the campaign_lore started by e2e-lore-up (TASK-0695)
 	@uv run python scripts/e2e_lore_fault.py down
 
-test-e2e: ## Run headless Playwright BDD suite across standard browsers
+test-e2e: ## Run headless Playwright BDD suite against the Kind stack (real Zitadel sign-in, TASK-0525)
 	@echo "==> Running Playwright BDD end-to-end tests..."
 	@pnpm exec bddgen
-	@pnpm exec playwright test $(ARGS)
+	@ZITADEL_ADMIN_PAT="$$(kubectl --context kind-runefoble-local get secret zitadel-admin -o jsonpath='{.data.pat}' | base64 -d)" pnpm exec playwright test $(ARGS)
 
-test-e2e-ui: ## Launch interactive Playwright UI mode for live debugging
+test-e2e-ui: ## Launch interactive Playwright UI mode for live debugging (needs the same admin token as test-e2e)
 	@echo "==> Launching Playwright interactive UI..."
 	@pnpm exec bddgen
-	@pnpm exec playwright test --ui $(ARGS)
+	@ZITADEL_ADMIN_PAT="$$(kubectl --context kind-runefoble-local get secret zitadel-admin -o jsonpath='{.data.pat}' | base64 -d)" pnpm exec playwright test --ui $(ARGS)
 
 lint: ## Check types, Ruff lint, format, and Helm
 	@echo "==> Checking Ruff lint rules..."

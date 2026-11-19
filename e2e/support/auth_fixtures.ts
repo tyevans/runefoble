@@ -1,255 +1,105 @@
 /**
- * Runefoble Frontdoor Authentication Fixtures
- * Injects valid Zitadel JWT tokens into browser localStorage without backdoor database tampering.
- * Governed by ADR-0014, ADR-0001, and Hard Invariant 7.
+ * Runefoble authentication fixtures for the Playwright BDD suite (TASK-0525, ADR-0014, ADR-0015 d).
+ *
+ * Every signed-in persona comes from a real Zitadel OIDC sign-in in the browser. The suite never forges
+ * a token. The first sign-in of a persona in a worker runs the hosted login. Later scenarios in the same
+ * worker restore the session that Zitadel issued during that first sign-in. The session lives in worker
+ * memory only. It is never written to disk.
  */
 
-import type { BrowserContext, Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
 import type { TestUser } from './world';
+import { findPersona, PERSONA_SEEDS, resolvePersonaKey, type PersonaKey, type PersonaRecord } from './personas';
+import { APP_SHELL_SESSION_KEY, readAppShellSession, type AppShellSession } from './app_shell_session';
+import { signInWithZitadel, type HostedLoginOutcome } from './zitadel_login';
 
-export interface UserClaims {
-  user_id: string;
-  username: string;
-  email?: string;
-  roles: string[];
-  is_admin?: boolean;
-  display_name?: string;
-  avatar_url?: string;
-  bio?: string;
-}
+/** Raw App Shell session JSON per persona, as Zitadel issued it during this worker's first sign-in. */
+const issuedSessions = new Map<PersonaKey, string>();
 
-export const PREDEFINED_PERSONAS: Record<string, UserClaims> = {
-  dm: {
-    user_id: 'user-dm-eldrin',
-    username: 'Dungeon Master Eldrin',
-    email: 'eldrin@runefoble.dev',
-    roles: ['dm', 'player'],
-    is_admin: true,
-    display_name: 'Dungeon Master Eldrin',
-    bio: 'Keeper of ancient lore and arbiter of fates.',
-  },
-  player: {
-    user_id: 'user-valeros',
-    username: 'Valeros of Korvosa',
-    email: 'valeros@runefoble.dev',
-    roles: ['player'],
-    is_admin: false,
-    display_name: 'Valeros of Korvosa',
-    bio: 'Valiant fighter defending the weak with blade and shield.',
-  },
-  spectator: {
-    user_id: 'user-spectator-zephyr',
-    username: 'Spectator Zephyr',
-    email: 'zephyr@runefoble.dev',
-    roles: ['spectator'],
-    is_admin: false,
-    display_name: 'Spectator Zephyr',
-    bio: 'Tavern observer watching epic tabletop battles unfold.',
-  },
-  evelyn: {
-    user_id: 'user-dm-evelyn',
-    username: 'Evelyn',
-    email: 'evelyn@runefoble.dev',
-    roles: ['dm', 'player', 'owner'],
-    is_admin: true,
-    display_name: 'Evelyn Vance',
-    bio: 'Dungeon Master orchestrating campaign adventures.',
-  },
-  valeros: {
-    user_id: 'user-valeros',
-    username: 'Valeros',
-    email: 'valeros@runefoble.dev',
-    roles: ['player'],
-    is_admin: false,
-    display_name: 'Valeros of Korvosa',
-    bio: 'Valiant fighter defending the weak with blade and shield.',
-  },
-  sarah: {
-    user_id: 'user-sarah',
-    username: 'Sarah',
-    email: 'sarah@runefoble.dev',
-    roles: ['player'],
-    is_admin: false,
-    display_name: 'Sarah Shadowstep',
-    bio: 'Shadow rogue navigating the ancient halls.',
-  },
-};
+/** Keeps a token margin, so a restored session does not expire in the middle of a scenario. */
+const MIN_REMAINING_MS = 60_000;
 
-/**
- * Creates a valid 3-part base64url JWT token
- * parsable by frontend AuthService and gateway JWT validation middleware.
- */
-export function createMockJwt(claims: Partial<UserClaims>): string {
-  const header = {
-    alg: 'RS256',
-    typ: 'JWT',
-    kid: 'runefoble-dev-key',
-  };
-
-  const nowSec = Math.floor(Date.now() / 1000);
-  const expSec = nowSec + 86400 * 7; // 7 days
-
-  const payload: Record<string, unknown> = {
-    iss: 'https://auth.runefoble.local',
-    sub: claims.user_id || 'user-valeros',
-    aud: ['runefoble-client', 'runefoble-api'],
-    exp: expSec,
-    nbf: nowSec - 60,
-    iat: nowSec,
-    jti: `jwt-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    username: claims.username || 'Valeros of Korvosa',
-    preferred_username: claims.username || 'Valeros of Korvosa',
-    name: claims.display_name || claims.username || 'Valeros of Korvosa',
-    email: claims.email || 'valeros@runefoble.dev',
-    email_verified: true,
-    roles: claims.roles || ['player'],
-    'urn:zitadel:iam:org:project:roles': claims.roles || ['player'],
-    is_admin: Boolean(claims.is_admin || claims.roles?.includes('admin')),
-    display_name: claims.display_name || claims.username || 'Valeros of Korvosa',
-    bio: claims.bio || '',
-  };
-
-  const encodeBase64Url = (obj: unknown): string => {
-    const json = JSON.stringify(obj);
-    return Buffer.from(json)
-      .toString('base64')
-      .replace(/=/g, '')
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_');
-  };
-
-  const headerB64 = encodeBase64Url(header);
-  const payloadB64 = encodeBase64Url(payload);
-  const mockSignature = Buffer.from('mock-zitadel-signature-for-frontdoor-bdd')
-    .toString('base64')
-    .replace(/=/g, '')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_');
-
-  return `${headerB64}.${payloadB64}.${mockSignature}`;
+function isUsable(raw: string): boolean {
+  const session = JSON.parse(raw) as AppShellSession;
+  return session.tokens.expiresAt - Date.now() > MIN_REMAINING_MS;
 }
 
 export class AuthFixtures {
-  constructor(
-    private page: Page,
-    private _context: BrowserContext
-  ) {}
+  constructor(private page: Page) {}
 
-  public resolvePersona(roleOrName: string): UserClaims {
-    const normalized = roleOrName.toLowerCase().replace(/[^a-z]/g, '');
-    if (normalized.includes('evelyn')) {
-      return PREDEFINED_PERSONAS.evelyn;
+  /** Signs the persona in through Zitadel in the given page (default: the test page). */
+  async signInAs(roleOrName: string, targetPage: Page = this.page): Promise<TestUser> {
+    const persona = findPersona(resolvePersonaKey(roleOrName));
+    const issued = issuedSessions.get(persona.key);
+    if (issued !== undefined && isUsable(issued)) {
+      await this.restoreSession(targetPage, issued);
+    } else {
+      await this.signInThroughZitadel(persona, targetPage);
     }
-    if (normalized.includes('valeros')) {
-      return PREDEFINED_PERSONAS.valeros;
+
+    const session = await readAppShellSession(targetPage);
+    if (!session) {
+      throw new Error(`The App Shell stored no session for persona "${persona.key}".`);
     }
-    if (normalized.includes('sarah')) {
-      return PREDEFINED_PERSONAS.sarah;
-    }
-    if (normalized.includes('dm') || normalized.includes('master') || normalized.includes('gm')) {
-      return PREDEFINED_PERSONAS.dm;
-    }
-    if (normalized.includes('spectator')) {
-      return PREDEFINED_PERSONAS.spectator;
-    }
-    return PREDEFINED_PERSONAS.player;
-  }
-
-  async injectUserIntoPage(targetPage: Page, roleOrName: string, customClaims?: Partial<UserClaims>): Promise<TestUser> {
-    const baseClaims = this.resolvePersona(roleOrName);
-    const normalized = roleOrName.toLowerCase().replace(/[^a-z]/g, '');
-    const isGenericRole = ['player', 'dm', 'master', 'gm', 'spectator'].includes(normalized);
-    const username = isGenericRole ? baseClaims.username : roleOrName;
-    const userId = isGenericRole ? baseClaims.user_id : `user-${normalized}`;
-    const finalClaims: UserClaims = {
-      ...baseClaims,
-      username,
-      display_name: username,
-      user_id: userId,
-      ...customClaims,
-    };
-    const token = createMockJwt(finalClaims);
-
-
-    const sessionPayload = {
-      tokens: {
-        accessToken: token,
-        refreshToken: 'mock-refresh-token-frontdoor',
-        expiresAt: Date.now() + 86400 * 1000 * 7,
-      },
-      user: finalClaims,
-    };
-
-    const sessionJson = JSON.stringify(sessionPayload);
-    const userJson = JSON.stringify(finalClaims);
-
-    // Inject into localStorage for subsequent page loads
-    await targetPage.addInitScript(
-      ({ sJson, uJson }) => {
-        try {
-          window.localStorage.setItem('rf_auth_session', sJson);
-          window.localStorage.setItem('runefoble-user', uJson);
-        } catch {
-          // Ignore restricted localStorage in sandbox
-        }
-      },
-      { sJson: sessionJson, uJson: userJson }
-    );
-
-    // If page is currently navigated to an existing document, update active localStorage
-    try {
-      await targetPage.evaluate(
-        ({ sJson, uJson, detailState }) => {
-          if (typeof window !== 'undefined' && window.localStorage) {
-            window.localStorage.setItem('rf_auth_session', sJson);
-            window.localStorage.setItem('runefoble-user', uJson);
-            window.dispatchEvent(
-              new CustomEvent('rf-auth-changed', {
-                detail: detailState,
-                bubbles: true,
-                composed: true,
-              })
-            );
-          }
-        },
-        {
-          sJson: sessionJson,
-          uJson: userJson,
-          detailState: {
-            isAuthenticated: true,
-            user: finalClaims,
-            tokens: sessionPayload.tokens,
-          },
-        }
+    if (session.user.user_id !== persona.userId) {
+      throw new Error(
+        `The App Shell session belongs to "${session.user.user_id}", not to persona "${persona.key}".`
       );
-    } catch {
-      // Ignored if called before initial page navigation
     }
-
+    const seed = PERSONA_SEEDS[persona.key];
     return {
-      userId: finalClaims.user_id,
-      username: finalClaims.username,
-      roles: finalClaims.roles,
-      token,
-      isAdmin: finalClaims.is_admin,
+      userId: persona.userId,
+      username: `${seed.givenName} ${seed.familyName}`,
+      token: session.tokens.accessToken,
     };
   }
 
-  async injectUser(roleOrName: string, customClaims?: Partial<UserClaims>): Promise<TestUser> {
-    return this.injectUserIntoPage(this.page, roleOrName, customClaims);
+  /** Submits a password through the Zitadel page and reports Zitadel's answer. Used for refusal scenarios. */
+  async attemptSignIn(persona: PersonaRecord, password: string, targetPage: Page = this.page): Promise<HostedLoginOutcome> {
+    await clearBrowserState(targetPage);
+    return signInWithZitadel(targetPage, persona.loginName, password);
   }
 
-  async clearAuth(): Promise<void> {
-    await this.page.evaluate(() => {
-      window.localStorage.removeItem('rf_auth_session');
-      window.localStorage.removeItem('runefoble-user');
-      window.dispatchEvent(
-        new CustomEvent('rf-auth-changed', {
-          detail: { isAuthenticated: false, user: null, tokens: null },
-          bubbles: true,
-          composed: true,
-        })
-      );
-    });
+  /** Drops the stored session of a persona after it signs out, so later scenarios sign in again. */
+  forgetSignedInSession(userId: string): void {
+    for (const [key, raw] of issuedSessions) {
+      if (JSON.parse(raw).user.user_id === userId) issuedSessions.delete(key);
+    }
   }
+
+  private async signInThroughZitadel(persona: PersonaRecord, targetPage: Page): Promise<void> {
+    await clearBrowserState(targetPage);
+    const outcome = await signInWithZitadel(targetPage, persona.loginName, persona.password);
+    if (outcome.kind !== 'session') {
+      throw new Error(`Zitadel refused persona "${persona.key}": ${outcome.message}`);
+    }
+    const raw = await targetPage.evaluate((key) => window.localStorage.getItem(key), APP_SHELL_SESSION_KEY);
+    if (raw === null) {
+      throw new Error(`The App Shell stored no session for persona "${persona.key}".`);
+    }
+    issuedSessions.set(persona.key, raw);
+  }
+
+  /** Puts a session that Zitadel issued earlier in this worker into the App Shell storage. */
+  private async restoreSession(targetPage: Page, raw: string): Promise<void> {
+    // Write the storage from a plain same-origin document. Loading the App Shell first would run its
+    // route guard, which opens the sign-in modal and keeps it open after the restore.
+    await targetPage.goto('/runtime-config.json');
+    await targetPage.evaluate(
+      ([key, value]) => window.localStorage.setItem(key, value),
+      [APP_SHELL_SESSION_KEY, raw] as const
+    );
+    await targetPage.goto('/#/campaigns');
+  }
+}
+
+/** Starts from a state with no Zitadel cookies and no App Shell storage, so the login page is shown. */
+async function clearBrowserState(targetPage: Page): Promise<void> {
+  await targetPage.context().clearCookies();
+  await targetPage.goto('/#/login');
+  await targetPage.evaluate(() => {
+    window.localStorage.clear();
+    window.sessionStorage.clear();
+  });
+  await targetPage.reload();
 }
