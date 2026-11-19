@@ -1,7 +1,7 @@
 """Spectator Stream Overlay and Real-Time Broadcast Blackbox Suite (TASK-0809).
 
 Validates, through public frontdoors and live loopback owners:
-1. GET /api/v1/spectate/{id} and /api/v1/spectator/sessions/{id} need a verified bearer token
+1. GET /api/v1/spectate/{id} needs a verified bearer token
    and `session.observe`. Other viewers get 403. No token gets 401.
 2. The state comes from game_session and board_state. An owner 404 passes on. No fixture data.
 3. The viewer is the verified token subject. No query token or header identifies a viewer.
@@ -13,7 +13,6 @@ from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
-from gateway_api.cinematic_director import clear_cinematic_directors
 from starlette.websockets import WebSocketDisconnect
 
 from tests.helpers.ws_identity import bearer, ws_subprotocols
@@ -23,15 +22,8 @@ pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 SPECTATOR = "spectator_sol"
 STRANGER = "stranger_eve"
-SPECTATE_PATHS = ("/api/v1/spectate/{sid}", "/api/v1/spectator/sessions/{sid}")
+SPECTATE_PATHS = ("/api/v1/spectate/{sid}",)
 SPECTATOR_EVENT_STREAM = "runefoble.events.spectator"
-
-
-@pytest.fixture(autouse=True)
-def clean_directors():
-    clear_cinematic_directors()
-    yield
-    clear_cinematic_directors()
 
 
 @pytest.fixture
@@ -67,7 +59,7 @@ def test_spectate_omits_private_owner_fields(gateway, table):
 
     assert "Goblin Stalker" not in [t["name"] for t in data["tokens"]]
     for tok in data["tokens"]:
-        assert set(tok) <= {"id", "name", "x", "y", "conditions", "color", "is_ai_controlled"}
+        assert set(tok) <= {"id", "name", "x", "y", "token_type"}
     assert "dm_notes" not in data
     assert "monster_stat_blocks" not in data
 

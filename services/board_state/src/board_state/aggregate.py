@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from board_state.camera.models import CameraTarget
 from board_state.handlers import (
     DoorsLightsHandlerMixin,
     FogHandlerMixin,
@@ -18,6 +19,7 @@ from eventsource.domain.aggregate import DeclarativeAggregate
 from eventsource.domain.decorators import handles
 from runefoble_events.events import (
     BoardGridInitialized,
+    CameraFocused,
     TerrainCellModified,
     UniversalVTTImported,
 )
@@ -50,6 +52,22 @@ class BoardAggregate(
             width=cols,
             height=rows,
             session_id_str=session_id,
+        )
+
+    def focus_camera(self, target: CameraTarget) -> None:
+        """Record the spectator camera target for this session."""
+        self.create_event(
+            CameraFocused,
+            session_id=self.aggregate_id,
+            target_x=target.target_x,
+            target_y=target.target_y,
+            zoom=target.zoom,
+            duration_ms=target.duration_ms,
+            easing=target.easing,
+            reason=target.reason,
+            active_token_id=target.active_token_id,
+            active_character_id=target.active_character_id,
+            focused_at=target.timestamp,
         )
 
     def configure_terrain(
@@ -133,6 +151,24 @@ class BoardAggregate(
             portals=event.portals,
             lights=event.lights,
             doors=getattr(event, "doors", {}),
+        )
+
+    @handles(CameraFocused)
+    def _on_camera_focused(self, event: CameraFocused) -> None:
+        self._state = self.state.model_copy(
+            update={
+                "camera": CameraTarget(
+                    target_x=event.target_x,
+                    target_y=event.target_y,
+                    zoom=event.zoom,
+                    duration_ms=event.duration_ms,
+                    easing=event.easing,
+                    active_token_id=event.active_token_id,
+                    active_character_id=event.active_character_id,
+                    reason=event.reason,
+                    timestamp=event.focused_at,
+                )
+            }
         )
 
     @handles(TerrainCellModified)

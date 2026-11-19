@@ -103,7 +103,7 @@ Only the routes in this section take no identity check. Every other route verifi
 | `GET /health`, `GET /healthz`, `GET /api/v1/health`, `GET /readyz` | None | `gateway/api/src/gateway_api/routers/health.py` |
 | `GET /openapi.json`, `GET /docs`, `GET /redoc` | None | `gateway/api/src/gateway_api/main.py` |
 | `GET /api/v1/auth/sync/health` | None | `gateway/api/src/gateway_api/auth_sync.py` |
-The spectator and overlay reads are not public. `GET /api/v1/spectate/{session_id}`, its alias `GET /api/v1/spectator/sessions/{session_id}`, and `GET /overlay/party-vitals/{session_id}` need a verified `Authorization: Bearer` token and `session.observe` on the session (`gateway/api/src/gateway_api/routers/spectator.py`, `gateway/api/src/gateway_api/routers/overlay.py`). A missing or failed token returns `401`. A viewer without the permission gets `403`. The state comes from `game_session` and `board_state`. An owner `404` passes on unchanged. The `token` query parameter is not read.
+The spectator and overlay reads are not public. `GET /api/v1/spectate/{session_id}` and `GET /overlay/party-vitals/{session_id}` need a verified `Authorization: Bearer` token and `session.observe` on the session (`gateway/api/src/gateway_api/routers/spectator.py`, `gateway/api/src/gateway_api/routers/overlay.py`). A missing or failed token returns `401`. A viewer without the permission gets `403`. The state comes from `game_session` and `board_state`, and each owner removes the private fields before the gateway reads them. An owner `404` passes on unchanged. The `token` query parameter is not read.
 
 Proxy routes:
 

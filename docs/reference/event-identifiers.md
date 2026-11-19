@@ -56,6 +56,7 @@ CloudEvents exports (`to_cloudevent_dict()`) lower-case the identifier.
 | `runefoble.events.board.spell_cast` | `SpellCast` | `runefoble_events.board_events.spells` |
 | `runefoble.events.board.terrain_modified` | `TerrainCellModified` | `runefoble_events.board_events.terrain` |
 | `runefoble.events.board.token_action_executed` | `TokenActionExecuted` | `runefoble_events.board_events.token` |
+| `runefoble.events.board.camera_focused` | `CameraFocused` | `runefoble_events.board_events.camera` |
 | `runefoble.events.board.token_moved` | `TokenMoved` | `runefoble_events.board_events.token` |
 | `runefoble.events.board.token_placed` | `TokenPlaced` | `runefoble_events.board_events.token` |
 | `runefoble.events.board.token_removed` | `TokenRemoved` | `runefoble_events.board_events.token` |

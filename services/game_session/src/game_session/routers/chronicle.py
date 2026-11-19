@@ -1,4 +1,4 @@
-"""Read routes for the session chronicle feed and the absentee recap (TASK-0641).
+"""Read routes for the session chronicle feed, the absentee recap (TASK-0641), and the audience view.
 
 Both routes verify the caller's token and require `session.observe` for a user caller (ADR-0001),
 as the session read does. An unknown session returns 404 after the permission check.
@@ -19,6 +19,7 @@ from game_session.chronicle import (
 from game_session.dependencies import repo
 from game_session.routers.session_auth import session_reader
 from game_session.settlement.auth.tokens import CallerOrService
+from game_session.spectator import SpectatorSessionView, project_spectator_session
 from runefoble_platform.aggregate_loading import load_or_404
 
 router = APIRouter(tags=["session"])
@@ -55,3 +56,15 @@ async def get_absentee_recap(session_id: UUID) -> AbsenteeRecap:
     """Return the stand-in turns and penalties that the session recorded. No turns returns an empty recap."""
     session = await _require_session(session_id)
     return build_absentee_recap(session.state)
+
+
+@router.get(
+    "/api/v1/sessions/{session_id}/spectator",
+    dependencies=[Depends(_observer_of_existing_session)],
+    response_model=SpectatorSessionView,
+)
+async def get_spectator_session(session_id: UUID) -> SpectatorSessionView:
+    """Return the audience view: status, round, atmosphere, and the public chronicle."""
+    session = await _require_session(session_id)
+    entries = await read_session_chronicle(session_id)
+    return project_spectator_session(session_id, session.state, entries)

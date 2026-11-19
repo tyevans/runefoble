@@ -17,6 +17,7 @@ import { loadCaravanBoard, renderCaravanBoard } from './caravan-board-view.ts';
 import { renderLobby } from './lobby-view.ts';
 import { renderProfile } from './profile-view.ts';
 import { renderSessionActive } from './session-view.ts';
+import { renderPartyVitalsOverlay } from './party-vitals-overlay-view.ts';
 
 export interface ViewController {
   render(app: RunefobleApp, view: AppActiveView): TemplateResult;
@@ -42,6 +43,7 @@ export const VIEW_CONTROLLERS: Record<AppActiveView, ViewController> = {
   'session-active': { render: renderSessionActive, load: loadActiveSessionData, switcher: true },
   'profile': { render: renderProfile, switcher: true },
   'caravan-board': { render: renderCaravanBoard, load: loadCaravanBoard, switcher: false },
+  'party-vitals-overlay': { render: renderPartyVitalsOverlay, switcher: false },
 };
 
 function renderAuthFallback(): TemplateResult {

@@ -132,6 +132,7 @@ Part of the [Events Schema](events-schema.md). Each event identifier in this pag
   - `x`: Integer, `y`: Integer
   - `hp`: Optional[Integer]
   - `is_friendly`: Boolean
+- **`CameraFocused`** (`runefoble.events.board.camera_focused`): Emitted when the board owner records a new spectator camera target (`turn_started` or `token_moved`). Fields: `target_x`, `target_y`, `zoom`, `duration_ms`, `easing`, `reason`, `active_token_id`, `active_character_id`, `focused_at`. The board aggregate replays it to restore the camera.
 - **`TokenMoved`** (`runefoble.events.board.token_moved`): Emitted when a token traverses grid coordinates.
   - `token_id`: String
   - `name`: String

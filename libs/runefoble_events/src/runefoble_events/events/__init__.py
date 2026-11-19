@@ -30,6 +30,7 @@ from runefoble_events.audience import (
     AudiencePollStarted,
     AudienceVoteCast,
 )
+from runefoble_events.board_events.camera import CameraFocused
 from runefoble_events.board_events.fog import (
     FogOfWarRevealed,
     FogOfWarShrouded,

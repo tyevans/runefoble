@@ -134,6 +134,15 @@ async def require_campaign_permission(user_id: str, session_id: str, permission:
     )
 
 
+async def require_session_participate(user_id: str, session_id: str) -> None:
+    """Raise 403 unless the user holds `session.participate` on the live session.
+
+    The camera follows live play, so a focus change needs the same right as a player action.
+    A spectator holds `session.observe` only and is refused here.
+    """
+    await require_subject(get_spicedb_client(), "session", session_id, "participate", user_id)
+
+
 async def require_token_move(user_id: str, session_id: str, token_id: str) -> None:
     """Raise 403 unless the user holds `board_token.move` on the token or runs the board."""
     if not await can_move_token(user_id, session_id, token_id):

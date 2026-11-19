@@ -33,6 +33,11 @@ export interface OverlayRollAnimation {
   isFumble?: boolean;
 }
 
+/** Accepts the owner's snake case (`max_hp`) and the camel case that the component uses. */
+function toOverlayMember(raw: Record<string, any>): OverlayPartyMember {
+  return { ...raw, maxHp: raw.maxHp ?? raw.max_hp ?? 0 } as OverlayPartyMember;
+}
+
 @customElement('runefoble-spectator-overlay')
 export class RunefobleSpectatorOverlay extends LitElement {
   static styles = [spectatorOverlayStyles];
@@ -86,7 +91,7 @@ export class RunefobleSpectatorOverlay extends LitElement {
       this.ws.onmessage = (event) => {
         try {
           const msg = JSON.parse(event.data);
-          if (msg.party) this.party = msg.party;
+          if (msg.party) this.party = msg.party.map(toOverlayMember);
           if (msg.camera) {
             this.camera = {
               targetX: msg.camera.target_x ?? msg.camera.targetX ?? 0,

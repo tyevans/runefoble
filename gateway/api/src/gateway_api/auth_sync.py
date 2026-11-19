@@ -28,11 +28,6 @@ def get_sync_service() -> ZitadelSpiceDBSyncService:
     return _sync_service
 
 
-def set_sync_service(service: ZitadelSpiceDBSyncService | None) -> None:
-    global _sync_service
-    _sync_service = service
-
-
 # ---------------------------------------------------------------------------
 # Request & Response Models
 # ---------------------------------------------------------------------------

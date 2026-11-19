@@ -92,7 +92,7 @@ def test_signaling_and_companion_sockets_need_session_observe(gateway, table, pa
         assert ws.receive_json()["type"] in ("connected", "mobile_companion_connected")
 
 
-@pytest.mark.parametrize("path", ["/ws/overlay/{sid}", "/overlay/ws/{sid}", "/ws/spectator/{sid}"])
+@pytest.mark.parametrize("path", ["/ws/overlay/{sid}", "/ws/spectator/{sid}"])
 def test_overlay_and_spectator_sockets_need_session_observe(gateway, table, path) -> None:
     _, session_id = table
     target = path.format(sid=session_id)

@@ -42,7 +42,6 @@ ROUTE_GROUPS = [
         "/ws/establishments/est-ws-identity/tables/table-ws-identity", id="establishment-table"
     ),
     pytest.param("/ws/minigames/table-ws-identity", id="standalone-minigame"),
-    pytest.param("/overlay/ws/sess-ws-identity", id="overlay-alias"),
     pytest.param("/ws/overlay/sess-ws-identity", id="overlay"),
     pytest.param("/ws/spectator/sess-ws-identity", id="spectator"),
 ]

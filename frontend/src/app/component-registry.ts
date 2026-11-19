@@ -9,6 +9,7 @@ import '../components/runefoble-header.ts';
 import '../components/runefoble-settings-modal.ts';
 import '../components/runefoble-auth-modal.ts';
 import '../components/runefoble-session-list.ts';
+import '../components/runefoble-party-vitals-page.ts';
 import '../components/plugins/runefoble-plugin-slot.ts';
 import '../components/runefoble-user-profile.ts';
 import '../components/state/runefoble-data-error.ts';
@@ -47,6 +48,7 @@ export const VIEW_BUNDLES: Record<AppActiveView, BundleName[]> = {
   'session-active': SESSION_BUNDLES,
   'profile': [],
   'caravan-board': ['gameSession'],
+  'party-vitals-overlay': ['gameSession'],
 };
 
 /** Loads the bundles for a view. A failed import rejects so that the caller reports it. */
