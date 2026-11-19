@@ -25,14 +25,32 @@ from tests.helpers.audio_synth import (
 )
 from tests.helpers.fixture_transcriber import FixtureTranscriber
 from tests.helpers.mock_redis import MockAsyncRedis
-from tests.helpers.spicedb_factory import VOICE_DM, bind_character_owner, grant_voice_session
+from tests.helpers.spicedb_factory import (
+    VOICE_DM,
+    bind_character_owner,
+    campaign_for,
+    grant_voice_session,
+)
 from tests.helpers.voice_identity import voice_ws_subprotocols
+from tests.helpers.watcher_board import open_board_with_tokens, token_position
 
 pytestmark = pytest.mark.usefixtures("trusted_voice_issuer", "trusted_ws_issuer")
 
+SPEAKER_TOKEN = {
+    "token_id": "t_valeros",
+    "name": "Valeros",
+    "token_type": "pc",
+    "x": 0,
+    "y": 0,
+    "hp": 45,
+}
+
 
 def test_end_to_end_streaming_speech_to_intent_latency_budget(
-    client: TestClient, mock_redis: MockAsyncRedis, speech_engine: FixtureTranscriber
+    client: TestClient,
+    mock_redis: MockAsyncRedis,
+    speech_engine: FixtureTranscriber,
+    board_state_upstream: str,
 ):
     """Verifies end-to-end streaming speech transcription and Watcher intent parsing strictly within 500ms."""
     session_id = str(uuid.uuid4())
@@ -48,6 +66,19 @@ def test_end_to_end_streaming_speech_to_intent_latency_budget(
 
     asyncio.run(_grant())
     campaign_id = str(uuid.uuid4())
+
+    # The Watcher proposes the move to board_state (TASK-0814). The board must exist for the
+    # session, and it must hold the speaking token. The voice route sends the speaker name,
+    # and board_state finds the token by that name.
+    open_board_with_tokens(
+        board_state_upstream,
+        session_id,
+        campaign_for(session_id),
+        owner=VOICE_DM,
+        cols=12,
+        rows=12,
+        tokens=[SPEAKER_TOKEN],
+    )
 
     speech_pcm = generate_pcm_sine(duration_ms=300)
     silence_pcm = generate_pcm_silence(duration_ms=200)
@@ -87,6 +118,9 @@ def test_end_to_end_streaming_speech_to_intent_latency_budget(
     assert data["watcher_intent"]["action_type"] == "move"
     assert data["latency_ms"] < 250.0
     assert elapsed_ms < 500.0, f"Roundtrip {elapsed_ms:.2f}ms exceeded 500ms budget"
+
+    # The proposal does not move the token. Only the player's confirm commits a move.
+    assert token_position(board_state_upstream, session_id, "t_valeros", VOICE_DM) == (0, 0)
 
     # 3. Assert PlayerSpokeEvent in runefoble.events.session
     assert "runefoble.events.session" in mock_redis.streams
