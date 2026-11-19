@@ -24,6 +24,8 @@ from tests.helpers.campaign_setup import create_campaign, create_dm_campaign
 from tests.helpers.game_session_setup import start_session_with_player
 from tests.helpers.live_services import closed_port_url, serve, unavailable_app
 from tests.helpers.mcp_http import call_tool_over_http, listed_tools, serve_mcp
+from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.service_harness import routed_event_bus
 from tests.helpers.spicedb_factory import shared_spicedb_client
 from tests.helpers.ws_identity import SIGNING_ISSUER, bearer
 
@@ -70,6 +72,7 @@ def owning_services() -> Iterator[dict[str, str]]:
             # Setup through public frontdoors: the owner creates the campaign, then the board.
             campaign_roles = MockSpiceDBClient()
             with (
+                routed_event_bus(MockAsyncRedis()),
                 shared_spicedb_client(campaign_roles),
                 httpx.Client(base_url=session_url, headers=bearer("user-test")) as game_http,
                 httpx.Client(base_url=board_url, headers=bearer("user-test")) as http,

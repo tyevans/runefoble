@@ -180,20 +180,30 @@ def mock_bus() -> MockAsyncRedis:
     return MockAsyncRedis()
 
 
+@contextmanager
+def routed_event_bus(redis: MockAsyncRedis) -> Iterator[object]:
+    """Route every service publish to `redis` in this block, then restore the previous buses.
+
+    Use it in module-scoped setup, which runs before the function-scoped default bus exists.
+    """
+    from runefoble_platform.redis_bus import RedisStreamsEventBus
+
+    bus = RedisStreamsEventBus(client=redis)
+    previous = _swap(_modules("bus"), "get_event_bus", "set_event_bus", lambda: bus)
+    try:
+        yield bus
+    finally:
+        _restore(previous, "set_event_bus")
+
+
 @pytest.fixture(autouse=True)
 def default_redis_event_bus(mock_bus: MockAsyncRedis) -> Iterator[object]:
     """Route every service publish to `mock_bus` unless a test overrides it.
 
     Redis is an external process. Tests must not open real connections to localhost:6379.
     """
-    from runefoble_platform.redis_bus import RedisStreamsEventBus
-
-    bus = RedisStreamsEventBus(client=mock_bus)
-    previous = _swap(_modules("bus"), "get_event_bus", "set_event_bus", lambda: bus)
-    try:
+    with routed_event_bus(mock_bus) as bus:
         yield bus
-    finally:
-        _restore(previous, "set_event_bus")
 
 
 @pytest.fixture

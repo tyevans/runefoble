@@ -50,13 +50,15 @@ def test_create_is_refused_for_a_caller_without_run_session(client, stream_redis
     """A stranger cannot create a session in a campaign. No session state is saved."""
     stranger = {"Authorization": f"Bearer {SIGNING_ISSUER.mint('stranger')}"}
     campaign = client.post("/api/v1/campaigns", json={"title": "Tomb"})
+    # The campaign create seeds its first session, which publishes its own event.
+    before = list(stream_redis.streams.get(SESSION_STREAM, []))
     res = client.post(
         "/api/v1/sessions/create",
         json={"campaign_id": campaign.json()["id"], "title": "Uninvited"},
         headers=stranger,
     )
     assert res.status_code == 403, res.text
-    assert stream_redis.streams.get(SESSION_STREAM, []) == []
+    assert stream_redis.streams.get(SESSION_STREAM, []) == before
 
 
 def _published_types(mock_redis: MockAsyncRedis, session_id: str) -> list[str]:
