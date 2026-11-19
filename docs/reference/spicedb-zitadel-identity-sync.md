@@ -181,13 +181,14 @@ The sync code is split into three modules. Each module stays under the 500-line 
 | Error | Retried | Behaviour |
 |---|---|---|
 | `AuthzUnavailableError` (SpiceDB did not answer) | Yes | Makes up to `max_retries` attempts. Logs a warning for each failed attempt. Raises the error after the last attempt. |
+| `AuthzWriteUnavailableError` (write refused by an outage: gRPC `UNAVAILABLE` or `DEADLINE_EXCEEDED`, `ConnectionError`, or `TimeoutError`) | Yes | Same as `AuthzUnavailableError`. It is a subclass of both `AuthzWriteError` and `AuthzUnavailableError`. |
 | `AuthzSchemaError` (name not in `runefoble.zed`) | No | Raised on the first attempt. Not logged as a transient failure. |
-| `AuthzWriteError` (SpiceDB refused the write) | No | Raised on the first attempt. |
+| `AuthzWriteError` (SpiceDB refused the write, for example gRPC `PERMISSION_DENIED`) | No | Raised on the first attempt. |
 | Any other exception | No | Raised on the first attempt. It is a defect. |
 
 - Default `max_retries`: 3 attempts.
 - Default base delay: 50 ms. The delay before retry `n` is `retry_delay * 2^(n - 1)`.
-- Known gap: the gRPC write adapter (`grpc_adapter.py`, `write_error_for`) maps `UNAVAILABLE` and `DEADLINE_EXCEEDED` on a write to `AuthzWriteError`. The read and check paths map them to `AuthzUnavailableError`. A transient write outage is therefore not retried. The adapter classification is open.
+- Write classification (`grpc_adapter.py`, `write_error_for`): schema codes map to `AuthzSchemaError`. Outage codes and transport errors map to `AuthzWriteUnavailableError`. Other gRPC errors map to `AuthzWriteError`. Callers that catch `AuthzWriteError` also catch the outage case.
 
 There is no fallback to an in-memory client:
 

@@ -13,6 +13,7 @@ from runefoble_auth.errors import (
     AuthzSchemaError,
     AuthzUnavailableError,
     AuthzWriteError,
+    AuthzWriteUnavailableError,
 )
 from runefoble_auth.mock.client import Relationship
 
@@ -58,7 +59,11 @@ def write_error_for(exc: BaseException, operation: str) -> AuthzError | None:
     """Translate a failed write, delete, or schema call. Return None for other exceptions."""
     if isinstance(exc, grpc.RpcError) and exc.code() in _SCHEMA_CODES:
         return AuthzSchemaError(f"{operation} rejected by schema. {_describe(exc)}")
-    if isinstance(exc, grpc.RpcError | ConnectionError | TimeoutError):
+    if isinstance(exc, grpc.RpcError) and exc.code() in _UNAVAILABLE_CODES:
+        return AuthzWriteUnavailableError(f"{operation} failed. {_describe(exc)}")
+    if isinstance(exc, ConnectionError | TimeoutError):
+        return AuthzWriteUnavailableError(f"{operation} failed. {_describe(exc)}")
+    if isinstance(exc, grpc.RpcError):
         return AuthzWriteError(f"{operation} failed. {_describe(exc)}")
     return None
 

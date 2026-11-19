@@ -12,9 +12,58 @@ from __future__ import annotations
 
 from typing import Any
 
+import grpc
 import pytest
-from runefoble_auth.errors import AuthzSchemaError, AuthzUnavailableError, AuthzWriteError
+from runefoble_auth.errors import (
+    AuthzSchemaError,
+    AuthzUnavailableError,
+    AuthzWriteError,
+    AuthzWriteUnavailableError,
+)
+from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_auth.sync import ZitadelSpiceDBSyncService
+
+
+class FakeRpcError(grpc.RpcError):
+    """A gRPC failure with a status code, as the authzed stub raises it."""
+
+    def __init__(self, status: grpc.StatusCode, details: str) -> None:
+        super().__init__(details)
+        self._status = status
+        self._details = details
+
+    def code(self) -> grpc.StatusCode:
+        return self._status
+
+    def details(self) -> str:
+        return self._details
+
+
+class WriteStub:
+    """Stands in for the SpiceDB gRPC stub at the process boundary.
+
+    Each WriteRelationships call raises the next preset failure. Once the presets run out,
+    the call succeeds.
+    """
+
+    def __init__(self, failures: list[BaseException]) -> None:
+        self.failures = list(failures)
+        self.calls = 0
+
+    def WriteRelationships(self, request: Any) -> Any:  # noqa: N802 - gRPC method name
+        self.calls += 1
+        if self.failures:
+            raise self.failures.pop(0)
+        return None
+
+
+def _grpc_service(stub: WriteStub, max_retries: int = 3) -> ZitadelSpiceDBSyncService:
+    client = SpiceDBClient(endpoint="spicedb.test:50051", token="test-token", grpc_client=stub)
+    return ZitadelSpiceDBSyncService(
+        spicedb_client=client,
+        max_retries=max_retries,
+        retry_delay_seconds=0.001,
+    )
 
 
 class CountingSpiceDB:
@@ -90,3 +139,37 @@ async def test_unavailable_spicedb_recovers_within_the_retry_budget() -> None:
 
     assert spicedb.calls == 3
     assert synced == ["campaign:camp-1#player@user:user-1"]
+
+
+@pytest.mark.asyncio
+async def test_write_unavailable_over_grpc_is_retried_and_succeeds() -> None:
+    stub = WriteStub([FakeRpcError(grpc.StatusCode.UNAVAILABLE, "connection refused")])
+    service = _grpc_service(stub, max_retries=3)
+
+    synced = await service.sync_membership("camp-1", "user-1", "player")
+
+    assert stub.calls == 2
+    assert synced == ["campaign:camp-1#player@user:user-1"]
+
+
+@pytest.mark.asyncio
+async def test_write_deadline_exceeded_over_grpc_exhausts_the_retry_budget() -> None:
+    stub = WriteStub([FakeRpcError(grpc.StatusCode.DEADLINE_EXCEEDED, "deadline")] * 5)
+    service = _grpc_service(stub, max_retries=3)
+
+    with pytest.raises(AuthzWriteUnavailableError, match="DEADLINE_EXCEEDED"):
+        await service.sync_membership("camp-1", "user-1", "player")
+
+    assert stub.calls == 3
+
+
+@pytest.mark.asyncio
+async def test_write_permission_denied_over_grpc_is_not_retried() -> None:
+    stub = WriteStub([FakeRpcError(grpc.StatusCode.PERMISSION_DENIED, "denied")] * 5)
+    service = _grpc_service(stub, max_retries=3)
+
+    with pytest.raises(AuthzWriteError, match="PERMISSION_DENIED") as info:
+        await service.sync_membership("camp-1", "user-1", "player")
+
+    assert not isinstance(info.value, AuthzUnavailableError)
+    assert stub.calls == 1

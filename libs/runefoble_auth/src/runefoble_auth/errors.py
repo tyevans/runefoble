@@ -22,6 +22,14 @@ class AuthzWriteError(AuthzError):
     """SpiceDB did not apply a relationship write, delete, or schema write."""
 
 
+class AuthzWriteUnavailableError(AuthzWriteError, AuthzUnavailableError):
+    """A write did not apply because SpiceDB was unreachable or did not answer in time.
+
+    It is an `AuthzWriteError` for callers that handle write failures, and an
+    `AuthzUnavailableError` for the retry policy, which retries transient outages.
+    """
+
+
 class SchemaContractError(AuthzSchemaError):
     """A name is not defined in runefoble.zed (type, relation, subject, or permission).
 
