@@ -1,7 +1,7 @@
 ---
 id: '0761'
 title: The App Shell Routes Mesh Messages to Typed Microfrontend Entry Points
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0643
@@ -19,7 +19,7 @@ target_release: 0.9.0
 # TASK-0761: The App Shell Routes Mesh Messages to Typed Microfrontend Entry Points
 
 ## Status
-Refined.
+Complete
 
 ## Summary
 The shell searches the shadow roots of service elements and sets their internal fields. Each owner must expose one public entry point. The shell forwards messages by type and does not read shadow DOM.

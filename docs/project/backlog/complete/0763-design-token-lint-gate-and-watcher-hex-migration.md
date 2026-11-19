@@ -1,7 +1,7 @@
 ---
 id: '0763'
 title: Hex Colour Lint Gate With Baseline and Token Migration of The Watcher Styles
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies: []
 governing_adrs:
@@ -17,7 +17,7 @@ target_release: 0.9.0
 # TASK-0763: Hex Colour Lint Gate With Baseline and Token Migration of The Watcher Styles
 
 ## Status
-Refined.
+Complete
 
 ## Summary
 UI styles hold about 2,200 hex values; about 719 are not inside a `var(--...)` fallback. Add a lint gate that blocks new hex literals. Record the current count as a baseline that can only fall. Migrate the worst file group (The Watcher) as the first slice.

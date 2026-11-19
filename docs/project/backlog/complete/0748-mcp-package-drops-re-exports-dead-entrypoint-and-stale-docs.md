@@ -1,7 +1,7 @@
 ---
 id: '0748'
 title: MCP Package Drops Re-Exports, the Dead Entrypoint, and Stale Documentation Claims
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0629
@@ -17,7 +17,7 @@ target_release: 0.9.0
 # TASK-0748: MCP Package Drops Re-Exports, the Dead Entrypoint, and Stale Documentation Claims
 
 ## Status
-Refined. Found by the refactor audit round refactor-r1 and checked against the code on 2026-11-17.
+Complete
 
 ## Summary
 Seven `__init__.py` files re-export names, a dead `main.py` prints a greeting, the README is empty, and several docs cite wrong files and ADRs.

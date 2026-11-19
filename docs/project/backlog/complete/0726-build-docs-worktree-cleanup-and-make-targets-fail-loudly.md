@@ -1,7 +1,7 @@
 ---
 id: '0726'
 title: Build Docs, Worktree Cleanup and Make Targets Fail Loudly
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies: []
 governing_adrs:
@@ -14,7 +14,7 @@ target_release: 0.9.0
 # TASK-0726: Build Docs, Worktree Cleanup and Make Targets Fail Loudly
 
 ## Status
-Refined. Found by the refactor audit round r1 and checked against the code by the orchestrator.
+Complete
 
 ## Summary
 Three developer tools hide failures. The inotify shim returns a fake descriptor, worktree cleanup treats an unknown process check as safe, and `make test-mutation` hides its exit code.

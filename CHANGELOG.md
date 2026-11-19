@@ -42,6 +42,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Gateway WebSocket routes admit a connection only with a verified `runefoble.bearer.<jwt>` subprotocol, checked before accept. Refused handshakes close with 1008. Removed the `?user_id=`, `?token=`, `x-user-id`, and `guest_user` identity paths on WebSocket and voice/companion signaling routes. (TASK-0522)
 
 ### Removed
+The MCP gateway subpackages re-export no names, and the gateway has one entrypoint (`python -m gateway_mcp.server`, or `gateway_mcp.asgi:app` in the container). Both start paths read the upstream settings in `GatewayMcpContainer.default()` and fail fast.
 - Inference worker and Watcher responses drop the `degraded` field, which was always false after TASK-0740. A worker failure is an HTTP error. (TASK-0882)
 - The MCP plan runner lives in `gateway_mcp/tools/plan.py` and reads one key per step field; the `name`, `tool_name`, `arguments` and `args` aliases are removed. (TASK-0747)
 - The inference worker has no mock backend: `RUNEFOBLE_WORKER_BACKEND=mock` is refused at start-up, and a model reply that lacks a required field answers 503 instead of a heuristic result. The Helm default backend is `openai_compatible`. (TASK-0740)
@@ -91,6 +92,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Campaign analytics worker `process_event` alias, tracking property wrappers, and package root re-exports. Callers use `handle_event`. (TASK-0500)
 
 ### Added
+Hex colour lint gate (`scripts/check_hex_literals.py`) with a per-file baseline that can only fall, run by `make lint`. Semantic status tokens `--rf-status-*` and `--rf-color-green` in every theme. The Watcher UI uses tokens only.
 ADR-0021 (Accepted): five bounded context packages inside `game_session` (campaign, play, downtime, settlement, world) and a shared kernel, a ports-only import rule enforced by `import-linter`, and the migration order (TASK-0893 to TASK-0899).
 E2E scenarios for a forge prompt that asset_forge refuses with 422, the Launch Session control by campaign capability, the empty-lobby readiness summary, and roster management controls. No `page.route` fault double of our own service.
 The campaign rules tab at `#/campaigns/:campaignId/rules`. The homebrew forge registers rules for the campaign. `#/rules` shows the SRD search and the encounter builder only.
@@ -186,6 +188,7 @@ The campaign rules tab at `#/campaigns/:campaignId/rules`. The homebrew forge re
   - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
 
 ### Changed
+The App Shell restores focus after the settings modal closes through the public `restoreFocus()` method of `<runefoble-header>`, not through the header shadow root. Lobby handlers take a typed `LobbyHost`.
 game_session builds its repositories, child index repository and event bus provider in one app container (`GameSessionContainer`) at start-up, and routes read them through FastAPI `Depends` providers (ADR-0021 step 2). An unreachable or in-memory event store in a deployed environment stops start-up. `game_session.dependencies` is removed.
 Audience Studio production code builds only the PostgreSQL event store and the Redis Streams publisher. Start-up needs `RUNEFOBLE_DATABASE_URL` and a `redis://` or `rediss://` `RUNEFOBLE_REDIS_URL` for every `NODE_ENV`. Memory adapters live only in the test fakes.
 Blackbox tests show that a Watcher or voice speech request without `campaign_id` answers 422, an empty one answers 400, and no event is published. The shared identifier policy of TASK-0816 is the only UUID helper.
@@ -1319,6 +1322,7 @@ The App Shell auth service keeps JWT claim handling, session storage and session
 - **Documentation & Build Navigation**: Featured the Platform Showcase and Changelog in `zensical.toml` and root documentation landing page (`docs/index.md`), and enhanced `scripts/build_docs.py` to synchronize `CHANGELOG.md` to `docs/changelog.md` during documentation compilation.
 
 ### Fixed
+`make docs-build` exits non-zero on a failed step (no fake inotify shim). `make clean-worktrees` removes no worktree when it cannot read the process table. `make test-mutation` fails when mutmut fails or a mutant survives. `make lint` runs `helm-lint`.
 Board and character mutation routes map errors in one place. A storage outage answers 503, never 400 or 500. A token, trap or AoE template that is not on the board answers 404.
 An NPC worker restock raises `NPCWorkerInventoryRestocked`, so the stock survives a reload. A `destination` other than `shelf` or `backroom` answers 422. Worker routes save the establishment summary before they publish, and a repeated relationship call adds no second tie.
 Voice streaming chunks, stream WebSocket frames and `POST /api/v1/voice/transcribe` report a failed forward to The Watcher in a `watcher_error` field. The transcript and `PlayerSpokeEvent` are kept. `voice-agent` receives `RUNEFOBLE_SERVICE_CREDENTIAL`.
