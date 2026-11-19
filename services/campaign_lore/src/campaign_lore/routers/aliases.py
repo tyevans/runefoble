@@ -3,12 +3,12 @@
 from typing import Annotated
 from uuid import UUID
 
-from eventsource import AggregateNotFoundError
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from redstring import DoubleMergeError, MergeIntoAliasError
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.spicedb import SpiceDBClient
+from runefoble_platform.aggregate_loading import load_or_404
 from runefoble_platform.event_sourcing import AggregateRepository
 
 from campaign_lore.aggregate import LoreDocumentAggregate
@@ -78,10 +78,7 @@ async def consolidate_alias(
             status_code=403,
             detail="Forbidden: Only campaign run_session members can consolidate aliases.",
         )
-    try:
-        document = await repo.load(req.document_id)
-    except AggregateNotFoundError as exc:
-        raise HTTPException(status_code=404, detail="Lore document not found") from exc
+    document = await load_or_404(repo, req.document_id, "Lore document not found")
     if document.state.campaign_id != req.campaign_id:
         raise HTTPException(status_code=404, detail="Lore document not found")
 

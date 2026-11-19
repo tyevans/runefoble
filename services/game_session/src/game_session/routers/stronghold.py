@@ -7,9 +7,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from eventsource import AggregateNotFoundError
 from fastapi import APIRouter, Depends, HTTPException
-from game_session.dependencies import get_event_bus, stronghold_repo
+from game_session.dependencies import get_event_bus, get_stronghold_repository
 from game_session.events import STREAM_STRONGHOLD
 from game_session.settlement.auth.tokens import CallerId, get_principal
 from game_session.stronghold import (
@@ -21,6 +20,7 @@ from game_session.stronghold import (
 from pydantic import BaseModel, ConfigDict, Field
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.permissions import require_subject
+from runefoble_platform.aggregate_loading import load_if_exists, load_or_create
 from runefoble_platform.event_publish import publish_or_fail
 from runefoble_platform.identifiers import parse_uuid
 
@@ -84,9 +84,10 @@ async def get_stronghold(caller_id: CallerId, campaign_id: str) -> StrongholdSta
         caller_id,
         detail="Campaign view required",
     )
-    try:
-        stronghold = await stronghold_repo.load(parse_uuid(campaign_id, field="campaign_id"))
-    except AggregateNotFoundError:
+    stronghold = await load_if_exists(
+        get_stronghold_repository(), parse_uuid(campaign_id, field="campaign_id")
+    )
+    if stronghold is None:
         # Return default initialized state if none exists yet
         return StrongholdState(campaign_id=str(campaign_id))
     return stronghold.state
@@ -108,14 +109,13 @@ async def initialize_stronghold(
         caller_id,
         detail="DM or owner permission required",
     )
-    camp_uuid = parse_uuid(campaign_id, field="campaign_id")
-    try:
-        stronghold = await stronghold_repo.load(camp_uuid)
-    except AggregateNotFoundError:
-        stronghold = StrongholdAggregate(camp_uuid)
+    repo = get_stronghold_repository()
+    stronghold = await load_or_create(
+        repo, parse_uuid(campaign_id, field="campaign_id"), StrongholdAggregate
+    )
 
     stronghold.create_stronghold(campaign_id=str(campaign_id), name=req.name, location=req.location)
-    await stronghold_repo.save(stronghold)
+    await repo.save(stronghold)
     await _link_stronghold(spicedb, str(campaign_id))
     return stronghold.state
 
@@ -125,14 +125,14 @@ async def _load_or_start_stronghold(
 ) -> StrongholdAggregate:
     """Load the campsite. A new campsite needs a campaign player, and the link lets it resolve."""
     camp_uuid = parse_uuid(campaign_id, field="campaign_id")
-    try:
-        return await stronghold_repo.load(camp_uuid)
-    except AggregateNotFoundError:
-        await require_subject(spicedb, "campaign", campaign_id, "play", caller_id, detail=detail)
-        stronghold = StrongholdAggregate(camp_uuid)
-        stronghold.create_stronghold(campaign_id=str(campaign_id))
-        await _link_stronghold(spicedb, str(campaign_id))
-        return stronghold
+    existing = await load_if_exists(get_stronghold_repository(), camp_uuid)
+    if existing is not None:
+        return existing
+    await require_subject(spicedb, "campaign", campaign_id, "play", caller_id, detail=detail)
+    stronghold = StrongholdAggregate(camp_uuid)
+    stronghold.create_stronghold(campaign_id=str(campaign_id))
+    await _link_stronghold(spicedb, str(campaign_id))
+    return stronghold
 
 
 @router.post("/api/v1/campaigns/{campaign_id}/stronghold/deposit", response_model=StrongholdState)
@@ -152,7 +152,7 @@ async def deposit_stronghold_resources(
     try:
         stronghold.deposit_resources(gold=req.gold, materials=req.materials)
         events_to_publish = list(stronghold.uncommitted_events)
-        await stronghold_repo.save(stronghold)
+        await get_stronghold_repository().save(stronghold)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
 
@@ -180,7 +180,7 @@ async def upgrade_stronghold_facility(
     try:
         upgrade_result = stronghold.upgrade_facility(facility_id=req.facility_id)
         events_to_publish = list(stronghold.uncommitted_events)
-        await stronghold_repo.save(stronghold)
+        await get_stronghold_repository().save(stronghold)
     except InsufficientStrongholdResources as e:
         raise HTTPException(status_code=409, detail=str(e)) from e
     except ValueError as e:
@@ -215,9 +215,10 @@ async def get_stronghold_boons(caller_id: CallerId, campaign_id: str) -> dict[st
         caller_id,
         detail="Campaign view required",
     )
-    try:
-        stronghold = await stronghold_repo.load(parse_uuid(campaign_id, field="campaign_id"))
-    except AggregateNotFoundError:
+    stronghold = await load_if_exists(
+        get_stronghold_repository(), parse_uuid(campaign_id, field="campaign_id")
+    )
+    if stronghold is None:
         return {"campaign_id": campaign_id, "active_boons": [], "catalog": FACILITY_TIERS}
     boons = stronghold.get_active_boons()
     return {"campaign_id": campaign_id, "active_boons": boons, "catalog": FACILITY_TIERS}
@@ -243,18 +244,17 @@ async def contribute_treasury_gold(
     spicedb = get_spicedb_client()
     detail = "DM or stronghold manager permission required to contribute treasury gold"
     await require_subject(spicedb, "stronghold", campaign_id, "manage", caller_id, detail=detail)
-    camp_uuid = parse_uuid(campaign_id, field="campaign_id")
-    try:
-        stronghold = await stronghold_repo.load(camp_uuid)
-    except AggregateNotFoundError:
-        stronghold = StrongholdAggregate(camp_uuid)
+    repo = get_stronghold_repository()
+    stronghold = await load_or_create(
+        repo, parse_uuid(campaign_id, field="campaign_id"), StrongholdAggregate
+    )
 
     try:
         stronghold.contribute_treasury_gold(
             gold=req.gold, destination_outpost_id=req.destination_outpost_id
         )
         events_to_publish = list(stronghold.uncommitted_events)
-        await stronghold_repo.save(stronghold)
+        await repo.save(stronghold)
     except InsufficientStrongholdResources as e:
         raise HTTPException(status_code=409, detail=str(e)) from e
     except ValueError as e:

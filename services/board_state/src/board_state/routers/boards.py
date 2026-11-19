@@ -23,8 +23,8 @@ from board_state.dependencies import (
 )
 from board_state.models import BoardState, CreateBoardRequest
 from board_state.projection import project_board
-from eventsource.domain.exceptions import OptimisticLockError
 from fastapi import APIRouter, HTTPException
+from runefoble_platform.aggregate_loading import save_or_conflict
 from runefoble_platform.identifiers import opaque_aggregate_id
 from runefoble_platform.ui_manifest import load_ui_manifest
 
@@ -61,12 +61,11 @@ async def create_board(req: CreateBoardRequest, user_id: CallerId):
     board_id = opaque_aggregate_id(sess_id, field="sess_id")
     board = BoardAggregate(board_id)
     board.initialize_grid(cols=cols, rows=rows, session_id=sess_id)
-    try:
-        await repo.save(board)
-    except OptimisticLockError as exc:
-        raise HTTPException(
-            status_code=409, detail=f"A board exists for session {sess_id}"
-        ) from exc
+    await save_or_conflict(
+        repo,
+        board,
+        lambda: HTTPException(status_code=409, detail=f"A board exists for session {sess_id}"),
+    )
     await bind_board_to_campaign(sess_id, req.campaign_id)
     return board.state
 

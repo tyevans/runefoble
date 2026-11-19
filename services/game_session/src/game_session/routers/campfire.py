@@ -9,10 +9,9 @@ import random
 from typing import Any, Literal
 from uuid import UUID
 
-from eventsource import AggregateNotFoundError
 from fastapi import APIRouter, Depends, HTTPException
 from game_session.auth import check_session_participation
-from game_session.dependencies import get_event_bus, repo, stronghold_repo
+from game_session.dependencies import get_event_bus, get_stronghold_repository, repo
 from game_session.events import STREAM_SESSION
 from game_session.settlement.auth.tokens import CallerId, get_principal
 from pydantic import BaseModel, Field
@@ -113,10 +112,7 @@ async def campfire_rest(
         )
 
     # Check and apply persistent stronghold boons
-    try:
-        stronghold = await stronghold_repo.load(campaign_id)
-    except AggregateNotFoundError:
-        stronghold = None
+    stronghold = await load_if_exists(get_stronghold_repository(), campaign_id)
     if stronghold is not None:
         for b in stronghold.get_active_boons():
             if b not in boons:

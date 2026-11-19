@@ -7,21 +7,18 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from eventsource.domain.exceptions import AggregateNotFoundError
 from fastapi import APIRouter, Depends, HTTPException
 from game_session.aggregate import GameSessionAggregate
 from game_session.dependencies import repo
 from game_session.models import AtmosphereUpdateRequest, DMOverrideRequest, GameSessionState
 from game_session.settlement.auth.tokens import get_principal
+from runefoble_platform.aggregate_loading import load_or_404
 
 router = APIRouter(dependencies=[Depends(get_principal)], tags=["session"])
 
 
 async def _load_session(session_id: UUID) -> GameSessionAggregate:
-    try:
-        return await repo.load(session_id)
-    except AggregateNotFoundError as e:
-        raise HTTPException(status_code=404, detail=f"Session not found: {session_id}") from e
+    return await load_or_404(repo, session_id, f"Session not found: {session_id}")
 
 
 @router.post("/api/v1/sessions/{session_id}/dm-override", response_model=GameSessionState)

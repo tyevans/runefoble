@@ -9,7 +9,6 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID
 
-from eventsource import AggregateNotFoundError
 from fastapi import APIRouter, Depends, HTTPException
 from game_session.caravan.ledger import CaravanLedgerAggregate
 from game_session.dependencies import get_caravan_ledger_repository, get_event_bus
@@ -21,6 +20,7 @@ from game_session.west_marches_models import (
 )
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.permissions import require_subject
+from runefoble_platform.aggregate_loading import load_or_create
 from runefoble_platform.event_publish import publish_or_fail
 from runefoble_platform.identifiers import parse_uuid
 
@@ -34,10 +34,7 @@ router = APIRouter(
 async def _load_ledger(wid: UUID) -> tuple[Any, CaravanLedgerAggregate]:
     """Load the world's caravan ledger, or start an empty one when none exists yet."""
     repo = get_caravan_ledger_repository()
-    try:
-        return repo, await repo.load(wid)
-    except AggregateNotFoundError:
-        return repo, CaravanLedgerAggregate(wid)
+    return repo, await load_or_create(repo, wid, CaravanLedgerAggregate)
 
 
 @router.post("/{shared_world_id}/caravans/dispatch", status_code=201)

@@ -17,7 +17,7 @@ from game_session.campaign.invite_aggregate import (
     invite_expiry,
     invite_stream_id,
 )
-from game_session.campaign.repositories import CampaignRepositories, load_or_none, save_aggregate
+from game_session.campaign.repositories import CampaignRepositories, concurrent_update
 from game_session.campaign.schemas import (
     CampaignMemberResponse,
     InviteRequest,
@@ -31,6 +31,7 @@ from game_session.campaign.service_campaigns import (
     parse_campaign_id,
 )
 from game_session.campaign.tuples import SpiceDB, grant_member, relation_for_role, revoke_member
+from runefoble_platform.aggregate_loading import load_if_exists, save_or_conflict
 from runefoble_platform.models import utc_now
 
 
@@ -64,7 +65,7 @@ async def create_invite(
         expires_at=expires_at,
         max_uses=req.max_uses,
     )
-    await save_aggregate(repos.invites, invite)
+    await save_or_conflict(repos.invites, invite, concurrent_update)
     return InviteResponse(
         token=token,
         campaign_id=str(cid),
@@ -80,7 +81,7 @@ async def create_invite(
 async def join_campaign(
     repos: CampaignRepositories, spicedb: SpiceDB, token: str, user_id: str
 ) -> JoinCampaignResponse:
-    invite = await load_or_none(repos.invites, invite_stream_id(token))
+    invite = await load_if_exists(repos.invites, invite_stream_id(token))
     if invite is None:
         raise InvalidInviteError("Invalid invite token")
 
@@ -97,9 +98,9 @@ async def join_campaign(
         return _joined(campaign_key, user_id, existing_role, relation_for_role(existing_role))
 
     invite.redeem(user_id, utc_now())
-    await save_aggregate(repos.invites, invite)
+    await save_or_conflict(repos.invites, invite, concurrent_update)
     memberships.add_member(user_id, invite.state.role)
-    await save_aggregate(repos.memberships, memberships)
+    await save_or_conflict(repos.memberships, memberships, concurrent_update)
     await grant_member(spicedb, campaign_key, invite.state.role, user_id)
     return _joined(campaign_key, user_id, invite.state.role, relation_for_role(invite.state.role))
 
@@ -150,6 +151,6 @@ async def remove_member(
     memberships = await load_memberships(repos, cid)
     if memberships.role_of(user_id) is not None:
         memberships.remove_member(user_id)
-        await save_aggregate(repos.memberships, memberships)
+        await save_or_conflict(repos.memberships, memberships, concurrent_update)
     await revoke_member(spicedb, str(cid), user_id)
     return MemberRemovedResponse(campaign_id=str(cid), user_id=user_id)

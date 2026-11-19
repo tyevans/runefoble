@@ -10,7 +10,6 @@ from collections.abc import Awaitable
 from typing import Annotated
 from uuid import UUID, uuid4
 
-from eventsource.domain.exceptions import AggregateNotFoundError
 from fastapi import APIRouter, Header, HTTPException
 from game_session.aggregate import GameSessionAggregate, GameSessionState
 from game_session.campaign.tuples import link_session
@@ -41,6 +40,7 @@ from game_session.settlement.auth.tokens import (
     CallerId,
 )
 from runefoble_auth.factory import get_spicedb_client
+from runefoble_platform.aggregate_loading import load_or_404
 from runefoble_platform.dice import parse_and_roll
 
 router = APIRouter(tags=["session"])
@@ -48,10 +48,7 @@ router = APIRouter(tags=["session"])
 
 async def _load_session(session_id: UUID) -> GameSessionAggregate:
     """Load a session by id. Raise 404 when no session has that id."""
-    try:
-        return await repo.load(session_id)
-    except AggregateNotFoundError as e:
-        raise HTTPException(status_code=404, detail=f"Session not found: {session_id}") from e
+    return await load_or_404(repo, session_id, f"Session not found: {session_id}")
 
 
 @router.post(

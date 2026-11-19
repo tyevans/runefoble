@@ -10,13 +10,13 @@ from collections.abc import Callable
 from typing import Any
 from uuid import UUID
 
-from eventsource import AggregateNotFoundError
 from fastapi import HTTPException
 from game_session.caravan import CaravanContractAggregate
 from game_session.dependencies import get_caravan_contract_repository, get_event_bus
 from game_session.events import STREAM_WEST_MARCHES
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.permissions import check_subject, require_subject
+from runefoble_platform.aggregate_loading import load_or_404
 from runefoble_platform.event_publish import publish_or_fail
 
 
@@ -41,10 +41,7 @@ async def _set_contractor(spicedb, cid: UUID, user_id: str) -> None:
 
 async def _load_contract(cid: UUID, perm: str, user_id: str) -> CaravanContractAggregate:
     await require_subject(get_spicedb_client(), "caravan_contract", str(cid), perm, user_id)
-    try:
-        return await get_caravan_contract_repository().load(cid)
-    except AggregateNotFoundError as e:
-        raise HTTPException(status_code=404, detail="Contract not found") from e
+    return await load_or_404(get_caravan_contract_repository(), cid, "Contract not found")
 
 
 def _val_err(fn: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
