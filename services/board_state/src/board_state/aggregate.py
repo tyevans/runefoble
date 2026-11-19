@@ -12,7 +12,7 @@ from board_state.handlers import (
     TrapsHandlerMixin,
     VFXHandlerMixin,
 )
-from board_state.models import BoardState, PlacedTokenState, TerrainCellState, TerrainDict
+from board_state.models import BoardState, PlacedTokenState, TerrainCellState
 from board_state.rules.grid import extract_wall_obstacles, validate_point_within_bounds
 from eventsource.domain.aggregate import DeclarativeAggregate
 from eventsource.domain.decorators import handles
@@ -24,16 +24,7 @@ from runefoble_events.events import (
 
 __all__ = [
     "BoardAggregate",
-    "BoardState",
-    "DoorsLightsHandlerMixin",
-    "FogHandlerMixin",
-    "PhysicsHandlerMixin",
     "PlacedTokenState",
-    "TerrainCellState",
-    "TerrainDict",
-    "TokensHandlerMixin",
-    "TrapsHandlerMixin",
-    "VFXHandlerMixin",
 ]
 
 

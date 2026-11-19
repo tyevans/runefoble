@@ -5,30 +5,14 @@ Manages tactical maps, token coordinates, collision rules, kinematics, and fog-o
 
 from __future__ import annotations
 
-from board_state.dependencies import (
-    BoardNotFoundError,
-    event_bus_provider,
-    get_board,
-    get_event_bus,
-    repo,
-    set_event_bus,
-)
-from board_state.models import (
-    ConfigureTerrainRequest,
-    CreateBoardRequest,
-    FogOfWarUpdateRequest,
-    MoveTokenRequest,
-    MoveTokenResponse,
-    PlaceTokenRequest,
-    UVTTImportResponse,
-    VisibilityResponse,
-)
+from board_state.dependencies import BoardNotFoundError, event_bus_provider
 from board_state.routers import (
     actions_router,
     aoe_router,
     boards_router,
     physics_router,
-    previews_router,
+    previews_http_router,
+    previews_ws_router,
     terrain_router,
     tokens_router,
     traps_router,
@@ -36,7 +20,6 @@ from board_state.routers import (
     uvtt_import_router,
     vfx_router,
 )
-from board_state.routers.boards import get_ui_manifest
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from runefoble_auth.authz_http import install_authz_error_handlers
@@ -60,7 +43,8 @@ app.include_router(ui_manifest_router)
 app.include_router(boards_router)
 app.include_router(tokens_router)
 app.include_router(terrain_router)
-app.include_router(previews_router)
+app.include_router(previews_http_router)
+app.include_router(previews_ws_router)
 app.include_router(actions_router)
 app.include_router(aoe_router)
 app.include_router(vfx_router)
@@ -94,22 +78,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-__all__ = [
-    "ConfigureTerrainRequest",
-    "CreateBoardRequest",
-    "FogOfWarUpdateRequest",
-    "MoveTokenRequest",
-    "MoveTokenResponse",
-    "PlaceTokenRequest",
-    "UVTTImportResponse",
-    "VisibilityResponse",
-    "app",
-    "BoardNotFoundError",
-    "get_board",
-    "get_event_bus",
-    "get_ui_manifest",
-    "main",
-    "repo",
-    "set_event_bus",
-]

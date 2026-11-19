@@ -6,7 +6,7 @@ import logging
 from pathlib import Path
 from uuid import uuid4
 
-from board_state.aggregate import BoardAggregate, BoardState
+from board_state.aggregate import BoardAggregate
 from board_state.authz import (
     VIEW,
     VIEW_SECRET_LAYER,
@@ -21,7 +21,7 @@ from board_state.dependencies import (
     get_board,
     repo,
 )
-from board_state.models import CreateBoardRequest
+from board_state.models import BoardState, CreateBoardRequest
 from board_state.projection import project_board
 from eventsource.domain.exceptions import OptimisticLockError
 from fastapi import APIRouter, HTTPException

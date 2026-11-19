@@ -5,7 +5,6 @@ from board_state.routers.aoe import router as aoe_router
 from board_state.routers.boards import router as boards_router
 from board_state.routers.boards import ui_manifest_router
 from board_state.routers.physics import router as physics_router
-from board_state.routers.previews import router as previews_router
 from board_state.routers.previews_http import router as previews_http_router
 from board_state.routers.previews_ws import router as previews_ws_router
 from board_state.routers.terrain import router as terrain_router
@@ -21,7 +20,6 @@ __all__ = [
     "ui_manifest_router",
     "physics_router",
     "previews_http_router",
-    "previews_router",
     "previews_ws_router",
     "terrain_router",
     "tokens_router",

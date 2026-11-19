@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from board_state.aggregate import PlacedTokenState, TerrainCellState
 from board_state.authz import (
     MANAGE_TRAPS,
     VIEW,
@@ -14,6 +13,8 @@ from board_state.dependencies import CallerId, get_board, get_principal, repo
 from board_state.models import (
     ConfigureTerrainRequest,
     FogOfWarUpdateRequest,
+    PlacedTokenState,
+    TerrainCellState,
     VisibilityResponse,
 )
 from fastapi import APIRouter, Depends, HTTPException
