@@ -33,7 +33,7 @@ Complete
 None. Platform quality work.
 
 ## Detailed Specification & Implementation Plan
-1. Write ADR-0020 (next free number) in `docs/project/adrs/proposed/`. Decide: the package list, the owner of each current module, whether any package becomes a deployable service, the import rule between packages (ports only), and the migration order.
+1. Write the ADR (ADR-0021, because ADR-0020 was taken) as `docs/project/adrs/accepted/adr-0021-game-session-internal-bounded-contexts.md`. The user accepted it on 2026-11-19. Decide: the package list, the owner of each current module, whether any package becomes a deployable service, the import rule between packages (ports only), and the migration order.
 2. Keep the OpenAPI paths and WebSocket routes unchanged in the first step.
 3. Update the `game_session` row in `docs/reference/architecture-overview.md` and in AGENTS.md if the ADR changes the layout.
 4. Follow-up tasks (file them in the PR, at most two): TASK-0754 (client ports) and TASK-0755 (service container). This spike files no migration plan.
