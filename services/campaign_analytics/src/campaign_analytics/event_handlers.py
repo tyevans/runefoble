@@ -37,24 +37,49 @@ def chronicle_aggregate_id(campaign_id: str) -> UUID:
     return uuid5(NAMESPACE_URL, f"runefoble:campaign-chronicle:{campaign_id}")
 
 
+def pending_chronicle_id(session_id: str) -> UUID:
+    """Return the chronicle aggregate id that holds milestones of a session with no campaign yet."""
+    return uuid5(NAMESPACE_URL, f"runefoble:pending-chronicle:{session_id}")
+
+
 class AnalyticsEventDispatcher:
     """Dispatches domain events to analytical projections inside one projection transaction."""
 
     def __init__(self, chronicle: AggregateRepository[CampaignChronicleAggregate]) -> None:
         self.chronicle = chronicle
 
-    async def extract_context(self, event: Any, tx: ProjectionTx) -> tuple[str, str]:
-        """Extract session_id and campaign_id from the incoming event."""
+    async def extract_context(self, event: Any, tx: ProjectionTx) -> tuple[str, str | None]:
+        """Extract session_id and campaign_id. The campaign is None while the session is unmapped."""
         sid = str(event_field(event, "session_id") or event_field(event, "aggregate_id") or "")
         raw_c = event_field(event, "campaign_id") or event_field(event, "campaign_id_str")
         cid = str(raw_c) if raw_c else await tx.resolve_campaign(sid)
-        return sid, cid
+        return sid, cid or None
+
+    async def _saved_milestone(
+        self, sid: str, cid: str | None, source: str
+    ) -> tuple[CampaignChronicleAggregate | None, Any]:
+        """Find a milestone saved for this stream message, and the aggregate that holds it.
+
+        A milestone saved while its session had no campaign sits in the pending chronicle. After
+        the mapping arrives, a replay looks in both places, so the message is not recorded twice.
+        """
+        owners = [pending_chronicle_id(sid)]
+        if cid:
+            owners.insert(0, chronicle_aggregate_id(cid))
+        for owner in owners:
+            aggregate = await self.chronicle.load_or_create(owner)
+            saved = next(
+                (m for m in aggregate.state.milestones if m.source_message_id == source), None
+            )
+            if saved is not None:
+                return aggregate, saved
+        return None, None
 
     async def _milestone(
         self,
         tx: ProjectionTx,
         sid: str,
-        cid: str,
+        cid: str | None,
         milestone_type: str,
         title: str,
         description: str,
@@ -66,14 +91,15 @@ class AnalyticsEventDispatcher:
         of that message finds the milestone already saved, the saved event is reused. No second
         event is recorded, and the projection writes the same row.
         """
-        campaign = cid or sid
         metadata = meta or {}
         source = f"{tx.stream}/{tx.message_id}/{milestone_type}"
-        aggregate = await self.chronicle.load_or_create(chronicle_aggregate_id(campaign))
-        saved = next((m for m in aggregate.state.milestones if m.source_message_id == source), None)
-        if saved is None:
+        aggregate, saved = await self._saved_milestone(sid, cid, source)
+        if aggregate is None:
+            aggregate = await self.chronicle.load_or_create(
+                chronicle_aggregate_id(cid) if cid else pending_chronicle_id(sid)
+            )
             aggregate.record_milestone(
-                campaign_id=campaign,
+                campaign_id=cid or "",
                 session_id=sid,
                 milestone_type=milestone_type,
                 title=title,
@@ -88,7 +114,7 @@ class AnalyticsEventDispatcher:
             milestone_id, timestamp = saved.id, saved.timestamp
         await tx.add_milestone(
             milestone_id,
-            campaign,
+            cid,
             sid,
             milestone_type,
             title,
@@ -98,16 +124,16 @@ class AnalyticsEventDispatcher:
         )
 
     async def _stat(
-        self, tx: ProjectionTx, sid: str, cid: str, actor: str, name: str, **kwargs: int
+        self, tx: ProjectionTx, sid: str, cid: str | None, actor: str, name: str, **kwargs: int
     ) -> None:
         enc = await tx.get_state(ACTIVE_ENCOUNTER_SCOPE, sid, "default")
-        await tx.add_combatant_stat(cid or sid, sid, enc, actor, name, **kwargs)
+        await tx.add_combatant_stat(cid, sid, enc, actor, name, **kwargs)
 
     async def _spatial(
         self,
         tx: ProjectionTx,
         sid: str,
-        cid: str,
+        cid: str | None,
         tok: str,
         name: str,
         x: int,
@@ -115,10 +141,10 @@ class AnalyticsEventDispatcher:
         event_type: str,
         damage: int = 0,
     ) -> None:
-        await tx.add_spatial(cid or sid, sid, tok, name, x, y, event_type, damage)
+        await tx.add_spatial(cid, sid, tok, name, x, y, event_type, damage)
 
     async def handle_session_lifecycle(
-        self, event: Any, tx: ProjectionTx, sid: str, cid: str
+        self, event: Any, tx: ProjectionTx, sid: str, cid: str | None
     ) -> bool:
         """Handle SessionCreated, SessionStarted, and SessionEnded milestones."""
         if is_event_type(event, ["runefoble.events.session.created"]):
@@ -148,7 +174,7 @@ class AnalyticsEventDispatcher:
             return True
         return False
 
-    async def handle_spatial(self, event: Any, tx: ProjectionTx, sid: str, cid: str) -> bool:
+    async def handle_spatial(self, event: Any, tx: ProjectionTx, sid: str, cid: str | None) -> bool:
         """Handle token placement and movement events."""
         is_p = is_event_type(event, ["runefoble.events.board.token_placed"])
         is_m = is_event_type(event, ["runefoble.events.board.token_moved"])
@@ -169,7 +195,7 @@ class AnalyticsEventDispatcher:
         return True
 
     async def handle_character_health(
-        self, event: Any, tx: ProjectionTx, sid: str, cid: str
+        self, event: Any, tx: ProjectionTx, sid: str, cid: str | None
     ) -> bool:
         """Handle damage, healing, knockout milestones, and combatant efficacy."""
         if not is_event_type(event, ["runefoble.events.character.health_changed"]):
@@ -206,7 +232,7 @@ class AnalyticsEventDispatcher:
             await self._stat(tx, sid, cid, actor, aname, healing_provided=delta)
         return True
 
-    async def handle_dice(self, event: Any, tx: ProjectionTx, sid: str, cid: str) -> bool:
+    async def handle_dice(self, event: Any, tx: ProjectionTx, sid: str, cid: str | None) -> bool:
         """Handle dice rolls, critical strikes, and fumbles."""
         if not is_event_type(event, ["runefoble.events.dice.rolled"]):
             return False
@@ -227,7 +253,7 @@ class AnalyticsEventDispatcher:
             )
         return True
 
-    async def handle_combat(self, event: Any, tx: ProjectionTx, sid: str, cid: str) -> bool:
+    async def handle_combat(self, event: Any, tx: ProjectionTx, sid: str, cid: str | None) -> bool:
         """Handle initiative turn progression and encounter initialization.
 
         InitiativeTurnAdvanced is the turn event that game session emits. Each turn counts for
@@ -268,7 +294,7 @@ class AnalyticsEventDispatcher:
             return True
         return False
 
-    async def handle_recap(self, event: Any, tx: ProjectionTx, sid: str, cid: str) -> bool:
+    async def handle_recap(self, event: Any, tx: ProjectionTx, sid: str, cid: str | None) -> bool:
         """Handle absentee chronicle recaps."""
         if not is_event_type(event, ["runefoble.events.recap.generated"]):
             return False
