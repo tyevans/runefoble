@@ -1,4 +1,4 @@
-"""Redis Streams consumer that applies forged battlemaps to the board of their session (TASK-0704).
+"""Redis Streams consumers that apply forged battlemaps and audience hazards to their board (TASK-0704, TASK-0835).
 
 Governed by ADR-0006 (Redis Streams event bus) and ADR-0015 (fail-fast start-up, no fallbacks).
 A handler that raises routes the message to the dead-letter stream. Nothing is applied then.
@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from board_state.audience_hazard import build_audience_hazard_consumer
 from board_state.authz import board_campaign_id
 from board_state.dependencies import get_board, repo
 from board_state.events import save_and_publish
@@ -52,7 +53,7 @@ async def apply_forged_battlemap_event(event: Any, bus: RedisStreamsEventBus | N
 
 
 async def start_board_consumers(bus: RedisStreamsEventBus) -> SupervisedStreamConsumers:
-    """Create the consumer group and start the read loop on the forge asset stream.
+    """Start the board_state consumers: the forge asset stream and the audience stream.
 
     Raises when the consumer group cannot be created, so the service does not start.
     """
@@ -70,7 +71,8 @@ async def start_board_consumers(bus: RedisStreamsEventBus) -> SupervisedStreamCo
                 group_name=GROUP_NAME,
                 consumer_name=WORKER_NAME,
                 handler=_handle,
-            )
+            ),
+            build_audience_hazard_consumer(consumer_group, bus),
         ],
     )
     await consumers.start()

@@ -21,6 +21,11 @@ HAZARD_DAMAGE: dict[str, str] = {
 DEFAULT_HAZARD_DICE = "1d6"
 
 
+def is_known_hazard(hazard_type: str) -> bool:
+    """Return True when the hazard type is in the hazard damage table. The match is exact."""
+    return hazard_type in HAZARD_DAMAGE
+
+
 def hazard_damage_dice(hazard_type: str | None) -> str:
     """Return the damage dice for a hazard type. Unlisted hazards use DEFAULT_HAZARD_DICE."""
     return HAZARD_DAMAGE.get((hazard_type or "").lower(), DEFAULT_HAZARD_DICE)
