@@ -23,14 +23,12 @@ from fastapi.responses import JSONResponse
 from fastapi.testclient import TestClient
 from runefoble_events.events import AudienceModifierApproved
 from runefoble_platform.redis_bus import RedisStreamsEventBus
-from the_watcher.main import app as watcher_app
 
 from tests.helpers.live_services import closed_port_url, serve
 from tests.helpers.mock_redis import MockAsyncRedis
-from tests.helpers.module_state import SeamRestorer
 from tests.helpers.polling import wait_until
 from tests.helpers.spicedb_factory import make_table_runner
-from tests.helpers.watcher_copilot_stores import install_fresh_copilot_stores
+from tests.helpers.the_watcher_app import app_with_container, fresh_store_container
 from tests.helpers.ws_identity import bearer
 
 AUDIENCE_STREAM = "runefoble.events.audience"
@@ -76,11 +74,10 @@ def _worker_app(double: WorkerDouble) -> FastAPI:
     return app
 
 
-@pytest.fixture(autouse=True)
-def clean_environment(seam_restorer: SeamRestorer) -> Iterator[None]:
-    """Each test gets an empty whisper log, so proposals never leak between tests."""
-    install_fresh_copilot_stores(seam_restorer)
-    yield
+@pytest.fixture
+def watcher_app() -> FastAPI:
+    """Each test gets an app over an empty whisper log, so proposals never leak between tests."""
+    return app_with_container(fresh_store_container())
 
 
 @pytest.fixture
@@ -95,7 +92,7 @@ def worker(monkeypatch: pytest.MonkeyPatch) -> Iterator[WorkerDouble]:
 
 
 @pytest.fixture
-def client(worker: WorkerDouble) -> Iterator[TestClient]:
+def client(watcher_app: FastAPI, worker: WorkerDouble) -> Iterator[TestClient]:
     """Run the real the_watcher lifespan, so the audience narration consumer starts."""
     with TestClient(watcher_app) as test_client:
         assert test_client.get("/healthz").json()["consumers"] == {"the_watcher": "running"}
@@ -237,7 +234,7 @@ def test_worker_503_records_an_unavailable_notice_and_no_narration(
 
 
 def test_unreachable_worker_records_an_unavailable_notice(
-    mock_bus: MockAsyncRedis, monkeypatch: pytest.MonkeyPatch
+    watcher_app: FastAPI, mock_bus: MockAsyncRedis, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     campaign_id, session_id = _create_session()
     monkeypatch.setenv("RUNEFOBLE_WATCHER_ENGINE", "inference_worker")

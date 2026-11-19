@@ -8,7 +8,7 @@
  */
 
 import type { LobbyParticipant } from '@runefoble/game-session-ui';
-import type { BoardToken } from '@runefoble/board-state-ui';
+import type { BoardToken, PartySeat } from '@runefoble/board-state-ui';
 import type { CampaignSessionItem } from '../components/runefoble-session-list.ts';
 import { dataOk, type DataResult } from './data-result.ts';
 import {
@@ -92,6 +92,23 @@ export function lobbyParticipantsFromOwner(state: any, members: MemberLike[]): D
     });
   }
   return dataOk(out);
+}
+
+/**
+ * The seated characters of a GameSessionState, in seat order (TASK-0922). The battlemap set-up
+ * places one token for each. A participant with a missing field fails the read.
+ */
+export function sessionSeatsFromOwner(state: any): DataResult<PartySeat[]> {
+  const participants = state?.participants;
+  if (!isPlainObject(participants)) return malformedResponse('the session participants are not a map');
+  const seats: PartySeat[] = [];
+  for (const entry of Object.values(participants)) {
+    const missing = missingRequiredFields(entry, PARTICIPANT_FIELDS);
+    if (missing.length > 0) return malformedResponse(`a participant is missing or invalid ${missing.join(', ')}`);
+    const player = entry as Record<string, any>;
+    seats.push({ characterId: player.character_id, characterName: player.character_name });
+  }
+  return dataOk(seats);
 }
 
 /** Required fields of a board (BoardState, services/board_state/src/board_state/models/board.py:18). */

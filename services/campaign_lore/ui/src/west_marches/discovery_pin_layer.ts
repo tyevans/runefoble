@@ -1,4 +1,4 @@
-import { LitElement, html } from 'lit';
+import { LitElement, html, svg } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { pinStyles } from './styles/pin.styles.ts';
 import { type WestMarchesDiscovery, type WestMarchesOutpost, PARTY_COLORS } from './types.ts';
@@ -57,7 +57,7 @@ export class RunefobleDiscoveryPinLayer extends LitElement {
     return html`
       <svg class="pins-svg" viewBox="0 0 1000 1000">
         <g transform="translate(${this.panX}, ${this.panY}) scale(${this.zoomLevel})">
-          ${this.outposts.map((outpost, i) => html`
+          ${this.outposts.map((outpost, i) => svg`
             <g class="outpost-marker" transform="translate(${200 + i * 350}, ${300 + (i % 2) * 200})">
               <rect x="-18" y="-18" width="36" height="36" class="outpost-circle" />
               <text x="0" y="28" text-anchor="middle" class="pin-tag">🏰 ${outpost.name}</text>
@@ -66,7 +66,7 @@ export class RunefobleDiscoveryPinLayer extends LitElement {
           ${visiblePins.map((d) => {
             const color = this.getPartyColor(d.discovered_by_party_name);
             const isSelected = this.selectedDiscovery?.discovery_id === d.discovery_id;
-            return html`
+            return svg`
               <g class="pin-marker" transform="translate(${d.coordinates.x}, ${d.coordinates.y})" @click=${(e: Event) => this.selectDiscovery(d, e)}>
                 <circle r=${isSelected ? 14 : 9} class="pin-circle" style="fill: ${color}; stroke-width: ${isSelected ? 3 : 2}px;" />
                 <text y="3" class="pin-danger">${d.danger_level || 1}</text>

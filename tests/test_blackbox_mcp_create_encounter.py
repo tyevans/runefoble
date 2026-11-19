@@ -1,7 +1,7 @@
 """Blackbox TDD tests for the MCP create_encounter tool (TASK-0686, TASK-0885).
 
-create_encounter reads each enemy rating from rules_compendium, then makes one write to the
-game_session owner route that starts combat. board_state consumes that event from the session
+create_encounter makes one write to the game_session owner route that starts combat. game_session
+reads each missing enemy rating from rules_compendium (TASK-0918). board_state consumes that event from the session
 stream and places the tokens. The encounter id is the game session id.
 
 Setup and assertions use public HTTP routes of game_session, board_state and rules_compendium,
@@ -42,7 +42,7 @@ def mcp_endpoint() -> Iterator[None]:
 
 @pytest.fixture(scope="module")
 def compendium_url() -> Iterator[str]:
-    """Run rules_compendium as a real HTTP service. The gateway reads enemy ratings from it."""
+    """Run rules_compendium as a real HTTP service. game_session reads enemy ratings from it."""
     from rules_compendium.main import app as compendium_app
 
     with serve(compendium_app, lifespan="on") as url:
@@ -267,6 +267,27 @@ async def test_blackbox_create_encounter_unknown_monster_starts_no_combat(
     assert "challenge rating" in tool_text(result).lower()
     assert in_combat(wired["session"], session_id) is False
     assert board_status(wired["board"], session_id) == 404
+
+
+@pytest.mark.asyncio
+async def test_blackbox_create_encounter_known_monster_without_cr_gets_compendium_rating(
+    wired: dict[str, str], board_campaign: str
+):
+    """Verify an enemy without a rating starts combat with its compendium stat block rating."""
+    session_id = start_session_with_player(wired["session"])
+
+    result = await call_create_encounter(
+        session_id, [{"name": "Ogre", "x": 2, "y": 2, "hp": 59}], board_campaign
+    )
+
+    assert not result.isError, tool_text(result)
+    with httpx.Client(base_url=wired["session"], headers=bearer("user-test")) as http:
+        combat = http.get(f"/api/v1/sessions/{session_id}/combat")
+    assert combat.status_code == 200, combat.text
+    assert combat.json()["in_combat"] is True
+    assert [(c["name"], c["cr"]) for c in combat.json()["initiative_order"] if c["is_npc"]] == [
+        ("Ogre", 2.0)
+    ]
 
 
 @pytest.mark.asyncio

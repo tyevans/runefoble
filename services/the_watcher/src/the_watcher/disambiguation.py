@@ -7,7 +7,6 @@ open requests in the ``DisambiguationAggregate`` (TASK-0568), so they survive a 
 from __future__ import annotations
 
 import re
-from collections.abc import Callable
 from uuid import uuid4
 
 from eventsource.application.aggregates.repository import AggregateRepository
@@ -175,7 +174,7 @@ class DisambiguationStore:
 
     def __init__(
         self,
-        repo: Callable[[], AggregateRepository[DisambiguationAggregate]],
+        repo: AggregateRepository[DisambiguationAggregate],
         engine: DisambiguationEngine,
     ) -> None:
         self._repo = repo
@@ -196,7 +195,7 @@ class DisambiguationStore:
         actions: list[CompoundActionNode],
     ) -> PendingDisambiguation:
         """Record a new open request for the session and return it."""
-        repo = self._repo()
+        repo = self._repo
         board = await load_or_create(repo, disambiguation_board_id(session_id), _new_board)
         pending = PendingDisambiguation(
             disambiguation_id=f"disambig-{uuid4().hex[:12]}",
@@ -226,7 +225,7 @@ class DisambiguationStore:
 
         Raise DisambiguationNotFoundError when the request is unknown or already resolved.
         """
-        repo = self._repo()
+        repo = self._repo
         board = await load_if_exists(repo, disambiguation_board_id(session_id))
         pending = board.find(disambiguation_id) if board is not None else None
         if board is None or pending is None:

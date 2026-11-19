@@ -16,9 +16,9 @@ from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
-from the_watcher.main import app
 
 from tests.helpers.spicedb_factory import make_table_runner, shared_spicedb_client
+from tests.helpers.the_watcher_app import watcher_app as app
 from tests.helpers.ws_identity import bearer
 
 pytestmark = [pytest.mark.authz_live, pytest.mark.usefixtures("trusted_ws_issuer")]

@@ -98,7 +98,7 @@ runefoble/
 
 | Service Bounded Context | NPM Package Name | Vendored Custom Elements | Storybook Story Path |
 |---|---|---|---|
-| `board_state` | `@runefoble/board-state-ui` | `<runefoble-board>`, `<runefoble-board-empty>` (no-battlemap-yet state, `can-set-up-map` shows the DM hint), `<runefoble-map-uploader>` (subviews: `<runefoble-map-dropzone>`, `<runefoble-map-grid-config>`) | `services/board_state/ui/src/*.stories.ts` |
+| `board_state` | `@runefoble/board-state-ui` | `<runefoble-board>`, `<runefoble-board-empty>` (no-battlemap-yet state; `can-set-up-map` shows the DM hint and the "Set up battlemap" control; properties `campaignId`, `sessionId`, `seats`, `apiBaseUrl`; event `board-set-up` with `{ sessionId, failure }`), `<runefoble-map-uploader>` (subviews: `<runefoble-map-dropzone>`, `<runefoble-map-grid-config>`) | `services/board_state/ui/src/*.stories.ts` |
 | `character_sheet` | `@runefoble/character-sheet-ui` | `<runefoble-character-card>`, `<runefoble-character-sheet>`, `<runefoble-absentee-recap>`, `<runefoble-stand-in-guardrails>` | `services/character_sheet/ui/src/*.stories.ts` |
 | `game_session` | `@runefoble/game-session-ui` | `<runefoble-initiative-tracker>`, `<runefoble-dice-roller>`, `<runefoble-spectator-view>`, `<runefoble-combat-reaction-prompt>`, `<runefoble-ready-action-card>` | `services/game_session/ui/src/*.stories.ts` |
 | `the_watcher` | `@runefoble/the-watcher-ui` | `<runefoble-watcher-feed>`, `<runefoble-autonomous-dm>`, `<runefoble-dm-whisper-bar>`, `<runefoble-faction-radar>`, `<runefoble-faction-espionage>` | `services/the_watcher/ui/src/*.stories.ts` |
@@ -110,6 +110,8 @@ runefoble/
 ## Session Mesh Events
 
 The App Shell forwards incoming session WebSocket messages to microfrontends as window events. The shell does not query service element tags or call their methods (TASK-0826, audit F-07). Each owner subscribes to the events it needs.
+
+The gateway refuses `dice_rolled`, `turn_advanced` and `dm_whisper` from clients (TASK-0910). No server code sends these kinds on the session socket yet, so their listeners receive no message today. `aoe_placed` and `spell_vfx` are client kinds that need `session.participate`. See "Session WebSocket inbound frames" in [`ports-and-endpoints.md`](ports-and-endpoints.md).
 
 | Session message `type` | Window event | Detail | Subscribers |
 |---|---|---|---|

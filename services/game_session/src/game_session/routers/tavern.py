@@ -78,7 +78,7 @@ class HaggleResponse(BaseModel):
 
 class OpenTableRequest(BaseModel):
     table_id: str
-    establishment_id: str = "est-default"
+    establishment_id: str
     game_type: Literal["darts", "liars_dice", "roulette", "craps", "billiards"] = "darts"
 
 

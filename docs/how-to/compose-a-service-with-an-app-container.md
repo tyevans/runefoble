@@ -2,7 +2,7 @@
 
 ## Overview
 
-This guide shows how a service builds its repositories and clients at start-up, in one place, and gives them to its routes. ADR-0021 D6 sets the rules. `game_session` uses this pattern (TASK-0755). TASK-0859 moves `asset_forge`, `campaign_analytics`, `campaign_lore`, and `voice_agent` to it.
+This guide shows how a service builds its repositories and clients at start-up, in one place, and gives them to its routes. ADR-0021 D6 sets the rules. `game_session` (TASK-0755) and `the_watcher` (TASK-0916) use this pattern. TASK-0859 moves `asset_forge`, `campaign_analytics`, `campaign_lore`, and `voice_agent` to it.
 
 The rules:
 
@@ -121,6 +121,33 @@ client = TestClient(app_with_container(outage))
 ```
 
 To check a start-up rule, run the real lifespan in a child process with `start_game_session(env_overrides, cwd)` from `tests/helpers/game_session_startup.py`. The tests are in `tests/test_blackbox_fail_loud_startup.py`.
+
+## The Watcher
+
+The Watcher has one package, so its container is smaller. The paths are relative to `services/the_watcher/src/the_watcher/`.
+
+| Module | Contents |
+|---|---|
+| `container.py` | `WatcherContainer`, `WatcherRepositories`, `WatcherEngines`, `assemble_container(event_bus, repositories)`, and `build_container(settings, *, event_bus=None)` |
+| `container_access.py` | The `Depends` providers `EventBus`, `Repos`, `Engines`, `Copilot`, `Whispers`, and `Disambiguations` |
+| `main.py` | `create_app(build=build_container)` and `app = create_app()` |
+| `dependencies.py` | Stream names, the service logger, and the SpiceDB permission checks. It holds no state. |
+
+`build_container` loads the SpiceDB settings, builds the event store, and builds the engine ports once. A missing preshared key, an unreachable or memory event store in a deployed environment, or `RUNEFOBLE_WATCHER_ENGINE=inference_worker` without `RUNEFOBLE_INFERENCE_URL` stops start-up. The copilot engine, the whisper service, and the disambiguation store get their repositories from `assemble_container`. The lifespan re-arms the open copilot timers, and it gives the whisper repository to the audience narration consumer.
+
+The engine ports are not in the container. The routes build them from the environment on each request (`load_watcher_ports`).
+
+Tests use `tests/helpers/the_watcher_app.py`:
+
+| Name | Use |
+|---|---|
+| `watcher_app` | The shared test app over the process event store, with the harness event bus provider. |
+| `fresh_store_container()` | A test container over one new, empty event store. |
+| `repositories_over(store)` and `container_over(repositories)` | A container over a store that you keep. To simulate a restart, call `container_over` again with the same repositories. |
+| `app_with_container(container)` | A new app that serves `container`, with or without its lifespan. |
+| `app_built_at_start_up()` | A new app whose lifespan runs `build_container`, so the start-up checks run. |
+
+To check a start-up rule in a child process, use `start_the_watcher(env_overrides, cwd)` from `tests/helpers/watcher_startup.py`.
 
 ## Related
 

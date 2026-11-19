@@ -18,10 +18,10 @@ from uuid import uuid4
 import pytest
 from board_state.main import app as board_app
 from fastapi.testclient import TestClient
-from the_watcher.main import app as watcher_app
 
 from tests.helpers.campaign_setup import create_dm_campaign
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.the_watcher_app import watcher_app
 from tests.helpers.ws_identity import SIGNING_ISSUER, bearer
 from tests.test_blackbox_uvtt_import.conftest import build_sample_dd2vtt_dict
 

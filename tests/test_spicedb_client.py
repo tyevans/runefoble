@@ -3,7 +3,8 @@
 from uuid import uuid4
 
 import pytest
-from runefoble_auth.mock import MockSpiceDBClient, Relationship
+from runefoble_auth.mock import MockSpiceDBClient
+from runefoble_auth.relationship import Relationship
 from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_auth.sync import SyncResult, ZitadelSpiceDBSyncService
 from runefoble_auth.sync_events import handle_domain_event

@@ -67,8 +67,10 @@ Given(
     const sessionId = lobbySessionId(world, sessionTitle);
     const token = personaToken(world, persona);
     // No `level`: character_sheet stores no level at creation (TASK-0905 changes that).
+    // The character belongs to the campaign, so the DM may place its token (TASK-0922).
+    const campaignId = requireValue(world.campaignId, 'No campaign. Run "Evelyn creates campaign" first.');
     const created = await frontdoorApi.createCharacter(
-      { name: characterName, characterClass: 'Fighter', maxHp: 24, currentHp: 24, armorClass: 16, speed: 30 },
+      { name: characterName, characterClass: 'Fighter', maxHp: 24, currentHp: 24, armorClass: 16, speed: 30, campaignId },
       token
     );
     const characterId = requireValue(created.id, 'The character reply has no id.');

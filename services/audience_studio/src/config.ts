@@ -1,7 +1,7 @@
 /**
  * Startup configuration for identity and SpiceDB (TASK-0533, TASK-0554, TASK-0625).
  *
- * Neither value has a default. A missing value stops the service at start-up.
+ * No value has a default, and NODE_ENV changes nothing. A missing value stops the service at start-up.
  */
 
 import type { ZitadelSettings } from './identity/zitadelVerifier.js';
@@ -22,18 +22,14 @@ export function readSpicedbEndpoint(env: NodeJS.ProcessEnv): string {
 }
 
 /**
- * Read the SpiceDB preshared key from the environment.
- *
- * Throws at startup when the key is missing, unless NODE_ENV is "test". In test mode
- * the key may be empty, because tests do not reach a live SpiceDB.
+ * Read the SpiceDB preshared key from the environment. It has no default, and NODE_ENV changes
+ * nothing (TASK-0913). An empty value counts as unset. Tests that build the server inject a fake
+ * SpiceDB client through `buildServer`, so they do not read the key.
  */
 export function readSpicedbPresharedKey(env: NodeJS.ProcessEnv): string {
   const key = env[SPICEDB_PRESHARED_KEY_VAR];
   if (key) {
     return key;
-  }
-  if (env.NODE_ENV === 'test') {
-    return '';
   }
   throw new Error(
     `${SPICEDB_PRESHARED_KEY_VAR} is not set. The SpiceDB preshared key is an operator secret and has no default.`

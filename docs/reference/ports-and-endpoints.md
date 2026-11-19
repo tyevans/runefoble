@@ -95,7 +95,7 @@ Campaign Lore routes require a verified bearer token, except `/healthz`, `/opena
 | `game-session` | POST | `/api/v1/sessions/{session_id}/leave` | Records the verified caller's absence, toggling character for AI stand-in takeover. Requires `session.participate`. The body has no player id |
 | `game-session` | POST | `/api/v1/campaigns/{campaign_id}/stronghold/treasury/contribute` | Debits the stronghold treasury for a frontier outpost. Requires `stronghold.manage`. Answers `409` on shortfall and records no event |
 | `game-session` | POST | `/api/v1/sessions/{session_id}/combat/start` | Starts combat encounter with initiative tracking and turn order. Requires `session.control` |
-| `game-session` | POST | `/api/v1/sessions/{session_id}/encounters/start` | Starts combat and records the enemy placements on one `CombatEncounterStarted` event. Requires `session.control`. Answers `200` after that save with the combat state and `placements` (the accepted enemy placements). board_state places the tokens later, from the session stream. A refused placement (off grid, occupied cell) is dead-lettered. Combat stays started, and no compensating write runs (TASK-0749) |
+| `game-session` | POST | `/api/v1/sessions/{session_id}/encounters/start` | Starts combat and records the enemy placements on one `CombatEncounterStarted` event. Requires `session.control`. The body is `{campaign_id?, enemies: [{name, x, y, hp?, cr?}]}`. For each enemy without `cr`, game_session reads the `challenge_rating` of the rules_compendium stat block `GET /api/v1/compendium/monsters/{name}` with the caller's bearer and `campaign_id`. The reads run concurrently. An enemy with no rating in the request or the compendium answers `400`. A compendium that is unconfigured, unreachable, or failing answers `503`. Both start no combat (TASK-0918). Answers `200` after that save with the combat state and `placements` (the accepted enemy placements). board_state places the tokens later, from the session stream. A refused placement (off grid, occupied cell) is dead-lettered. Combat stays started, and no compensating write runs (TASK-0749) |
 | `game-session` | POST | `/api/v1/sessions/{session_id}/combat/initiative` | Submits combatant initiative rolls. Requires `session.control` |
 | `game-session` | POST | `/api/v1/sessions/{session_id}/combat/next-turn` | Advances initiative turn to next active combatant. Requires `session.control` |
 | `game-session` | POST | `/api/v1/sessions/{session_id}/turns/auto-pilot` | Executes automated stand-in turn for absent player using the policy stored on the character, records action, dispatches events, and advances turn. The body takes no policy; a `guardrails` field returns 422. Requires `session.control` |
@@ -388,10 +388,12 @@ Campaign Lore routes require a verified bearer token, except `/healthz`, `/opena
 | `gateway-api` | POST | `/api/v1/characters/{character_id}/wardrobe` | Proxies to `character_sheet`: adds a wardrobe variant (the owner checks `edit`). Body fields as in the owner route |
 | `gateway-api` | POST | `/api/v1/characters/{character_id}/portrait/active` | Proxies to `character_sheet`: switches the active portrait to a wardrobe variant or a custom image (the owner checks `edit`) |
 | `gateway-api` | GET | `/api/v1/auth/sync/health` | Reports Zanzibar synchronization service health and SpiceDB connectivity |
-| `gateway-api` | POST | `/api/v1/sessions/{session_id}/start` | Transitions session from lobby to active and broadcasts launch event over WebSockets (requires `control`, checked by the owner) |
+| `gateway-api` | POST | `/api/v1/sessions/{session_id}/start` | Transitions session from lobby to active and broadcasts `session_started` over the session socket (requires `control`, checked by the owner). It is the only source of that frame. An owner reply without `status` returns `502` |
 | `gateway-api` | POST | `/api/v1/sessions/{session_id}/hot-swap` | Hands off character control from AI stand-in to returning player mid-session. The gateway checks `observe`. The owner checks `participate` and `character.edit` |
 | `gateway-api` | POST | `/api/v1/sessions/{session_id}/dm-override` | Executes DM narrative or encounter rule override. The gateway checks `control`. The owner checks only the token (open gap, TASK-0845) |
 | `gateway-api` | POST | `/api/v1/sessions/{session_id}/atmosphere` | Updates campaign sensory atmosphere, lighting, and ambient audio. The gateway checks `control`. The owner checks only the token (open gap, TASK-0845) |
+| `gateway-api` | POST | `/api/v1/boards` | Proxies to `board_state` (TASK-0922): creates the board of a session. Body: `campaign_id`, `session_id`, and optional `cols` and `rows` (whole numbers above 0). Other fields get `422`. The gateway forwards the caller's bearer. `board_state` checks `campaign.run_session` (`403`) and answers `409` for a second board of the session. `503` when `board_state` is unreachable. After a `2xx` reply the gateway sends `{"type": "board_ready", "sessionId"}` to every socket of `/ws/session/{session_id}`. The DM calls it from the "Set up battlemap" control |
+| `gateway-api` | POST | `/api/v1/boards/{session_id}/tokens` | Proxies to `board_state` (TASK-0922): places one token. Body: `name`, `x`, `y`, and optional `token_id`, `token_type` (`pc`, `monster`, `npc`, `obstacle`, `loot`), `hp`, `is_friendly`, `vision_radius`, `character_id`. A token with `character_id` needs `character.edit` and `campaign.play`. Any other token needs `board.manage_traps`. `404` when no board exists. `503` when `board_state` is unreachable |
 | `gateway-api` | GET | `/api/v1/boards/{session_id}` | Proxies to `board_state`: the board of a session (grid, tokens). `404` when no board exists. Board permissions are checked by `board_state` |
 | `gateway-api` | GET | `/api/v1/boards/{session_id}/tokens/{token_id}` | Proxies to `board_state`: one placed token (`x`, `y`, state). Needs `board.view`. `404` for an unknown token |
 | `gateway-api` | POST | `/api/v1/boards/{session_id}/tokens/{token_id}/move` | Proxies to `board_state`: moves a token. Needs `board_token.move` on the token or `board.manage_traps`. The sessionless `/api/v1/boards/tokens/...` routes were removed (`404`) |
@@ -493,15 +495,37 @@ Frames and replies:
 | `UPSTREAM_UNAVAILABLE` | The owner is unreachable, or it answered `5xx`. The gateway sends no substitute value |
 | `AUTHORIZATION_UNAVAILABLE` | SpiceDB could not read the session link |
 
-### Session WebSocket inbound frames (TASK-0810)
+### Session WebSocket inbound frames (TASK-0810, TASK-0910)
 
 `/ws/session/{id}` admits every `session.observe` caller. Observers receive frames only. Each inbound frame is checked in this order:
 
 1. The text must be a JSON object with a kind. The kind is `type`, or `action` when there is no `type`. Otherwise the gateway sends `INVALID_FRAME` and keeps the socket open.
-2. The kind must be one of: `session_started`, `player_readiness`, `player_stand_in`, `token_action`, `aoe_placed`, `spell_vfx`, `confirm_ghost`, `token_moved`, `dice_rolled`, `turn_advanced`, `dm_whisper`. Otherwise the gateway sends `UNKNOWN_FRAME` and does not relay the frame.
-3. The caller must hold `session.participate` on the session. Otherwise the gateway sends `PERMISSION_DENIED` (with the `action` field set to the kind) and does not relay the frame. A SpiceDB outage sends `AUTHZ_UNAVAILABLE` and does not relay the frame.
+2. The kind must be a client kind in the table below. Otherwise the gateway sends `UNKNOWN_FRAME` and does not relay the frame.
+3. The caller must hold the permission that the table names for the kind. Otherwise the gateway sends `PERMISSION_DENIED` (with the `action` field set to the kind) and does not relay the frame. A SpiceDB outage sends `AUTHZ_UNAVAILABLE` and does not relay the frame.
 
-A frame that passes all three checks goes to every socket of the session, sender included. The overlay socket (`/ws/overlay/{id}`) uses the same participate check (`may_publish_frame` in `gateway_api/session_access.py`).
+| Client kind | Required `game_session` permission |
+|---|---|
+| `player_readiness` | `participate` |
+| `player_stand_in` | `participate` |
+| `token_action` | `participate` |
+| `aoe_placed` | `participate` |
+| `spell_vfx` | `participate` |
+| `confirm_ghost` | `participate` |
+
+The table is `CLIENT_FRAME_PERMISSIONS` in `gateway_api/session_frames.py`. A frame that passes all three checks goes to every socket of the session, sender included.
+
+Server kinds are not client kinds. A client frame of a server kind gets `UNKNOWN_FRAME`, also from the DM:
+
+| Server kind | Decision (TASK-0910) |
+|---|---|
+| `session_started` | The gateway start route `POST /api/v1/sessions/{id}/start` is the only source. It sends `{"type": "session_started", "sessionId", "status"}` after game_session moves the session to `active`. An owner reply without `status` returns `502`. |
+| `turn_advanced` | Removed from the inbound table. The owner route is `POST /api/v1/sessions/{id}/turns/advance` (game_session checks `control`). No server code sends this kind on the session socket. |
+| `dice_rolled` | Removed from the inbound table. game_session owns dice rolls. No server code sends this kind on the session socket. The overlay socket keeps its own `dice_rolled` frame. |
+| `token_moved` | Removed from the inbound table. board_state sends `token_moved` on its own board socket after it saves the move. |
+| `dm_whisper` | Removed from the inbound table. A broadcast reaches every socket of the session, players included, so a whisper on this socket is never private (US-0017). Whispers go through the DM copilot and mobile companion routes. |
+| `board_ready` | The gateway board create route `POST /api/v1/boards` is the only source (TASK-0922). It sends `{"type": "board_ready", "sessionId"}` to the session room after board_state answers `2xx`. A client that shows no board then reads the board again. |
+
+The overlay socket (`/ws/overlay/{id}`) uses the same check, `may_publish_frame` in `gateway_api/session_access.py`, with the permission `participate` for every overlay frame.
 
 ## Voice Agent Identity (TASK-0530)
 
@@ -607,18 +631,19 @@ The response describes the audio it carries. Filters run on the synthesised clip
 
 Engine failure returns `503` with `{"detail": {"error": "speech_synthesis_unavailable", "engine": "espeak-ng", "message": "..."}}`. No audio field is present.
 
-## Board and Character Mutation Errors (TASK-0752)
+## Board and Character Mutation Errors (TASK-0752, TASK-0914)
 
 The `board-state` and `character-sheet` services map errors in one place, at application start-up. Their routes do not catch errors.
 
 | Error | Status | Body |
 |---|---|---|
-| `ValueError` (a refused command or bad input, for example a move out of bounds) | `400` | `{"detail": "<domain message>"}` |
-| A missing board, a token, trap or AoE template that is not on the board, or no matching ghost token | `404` | `{"detail": "<domain message>"}` |
+| `DomainRefusedError` (a refused command, for example a move out of bounds) | `400` | `{"detail": "<domain message>"}` |
+| `DomainNotFoundError` or `AggregateNotFoundError` (a missing board, a token, trap or AoE template that is not on the board, or no matching ghost token) | `404` | `{"detail": "<domain message>"}` |
 | Event store outage (`SQLAlchemyError`, `OSError`) | `503` | `{"detail": "Event store is unavailable"}` |
 | SpiceDB outage (`AuthzError`) | `503` | `{"error": "authorization_unavailable"}` |
+| Any other error, for example a `ValueError` or a `pydantic.ValidationError` in service code | `500` | `Internal Server Error` (plain text, no exception text) |
 
-A storage outage never answers `400` or `500`. The handlers come from `runefoble_platform.domain_errors_http.install_domain_error_handlers` and `runefoble_platform.aggregate_loading.register_store_unavailable_handlers`.
+A storage outage never answers `400` or `500`. A `ValueError` is not a refused command, so it never answers `400`. The error types come from `runefoble_platform.domain_errors`. The handlers come from `runefoble_platform.domain_errors_http.install_domain_error_handlers` and `runefoble_platform.aggregate_loading.register_store_unavailable_handlers`.
 
 ## Service Bearer Token Verification
 

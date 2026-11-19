@@ -1,5 +1,6 @@
 import type { CampaignItem, CampaignMember, CreateCampaignPayload, UpdateCampaignPayload, LobbyCharacterOption, LobbyParticipant } from '@runefoble/game-session-ui';
 import type { CharacterItem, RosterCampaignOption, CreateCharacterPayload } from '@runefoble/character-sheet-ui';
+import type { PartySeat } from '@runefoble/board-state-ui';
 import type { CaravanContractItem } from '@runefoble/game-session-ui';
 import type { WatcherFeedEvent } from '@runefoble/the-watcher-ui';
 import type { CampaignSessionItem } from '../components/runefoble-session-list.ts';
@@ -10,9 +11,9 @@ import type { CampaignCapabilities } from './campaign-capabilities.ts';
 import { dataFailure, dataOk, isNotFound, type DataResult } from './data-result.ts';
 import type { SessionBoard } from './session-board.ts';
 import { requestData } from './shell-request.ts';
-import { isArray, malformedResponse, requireFields } from './required-fields.ts';
+import { isArray, isString, malformedResponse, requireFields } from './required-fields.ts';
 import {
-  SESSION_REQUIRED_FIELDS, sessionFromOwner, lobbyParticipantsFromOwner, boardFromOwner,
+  SESSION_REQUIRED_FIELDS, sessionFromOwner, lobbyParticipantsFromOwner, boardFromOwner, sessionSeatsFromOwner,
 } from './owner-wire-mappers.ts';
 import type { RequestSpec } from '@runefoble/ui-core';
 import {
@@ -172,6 +173,15 @@ export class AppDataService {
   }
 
   /**
+   * Moves a lobby session to `active` through the gateway start route (TASK-0910). game_session
+   * checks `session.control`. The gateway then sends `session_started` to every session socket.
+   */
+  async startSession(sessionId: string): Promise<DataResult<{ status: string }>> {
+    const res = await this.request<{ status: string }>(`${this.apiBase}/sessions/${sessionId}/start`, { method: 'POST' });
+    return res.ok ? requireFields(res.data, { status: isString }) : res;
+  }
+
+  /**
    * Reads the session board (TASK-0906). A 404 means that no board exists yet for the session.
    * It gives the typed `no_board` state. Every other failure stays a failure.
    */
@@ -181,6 +191,12 @@ export class AppDataService {
     if (!res.ok) return res;
     const board = boardFromOwner(res.data);
     return board.ok ? dataOk({ kind: 'board', ...board.data }) : board;
+  }
+
+  /** Reads the seated characters of a session, for the battlemap set-up (TASK-0922). */
+  async fetchSessionSeats(sessionId: string): Promise<DataResult<PartySeat[]>> {
+    const res = await this.request<any>(`${this.apiBase}/sessions/${sessionId}`);
+    return res.ok ? sessionSeatsFromOwner(res.data) : res;
   }
 
   /** Reads the session chronicle feed from the gateway (TASK-0641). An empty session yields []. */

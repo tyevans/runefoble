@@ -12,6 +12,7 @@ from board_state.dependencies import get_board
 from board_state.preview import compute_kinematic_route_preview
 from board_state.realtime import board_ws_manager
 from pydantic import BaseModel
+from runefoble_platform.domain_errors import DomainNotFoundError
 
 
 class GhostStageRequest(BaseModel):
@@ -28,7 +29,7 @@ class GhostStageRequest(BaseModel):
     timeout_seconds: int = 15
 
 
-class UnknownGhostToken(LookupError):
+class UnknownGhostToken(DomainNotFoundError):
     """Raised when no token on the board matches the proposal."""
 
 
@@ -47,7 +48,7 @@ async def stage_ghost_preview(session_id: str, req: GhostStageRequest) -> dict[s
     """Compute the route, broadcast `ghost_preview` to the session, and return that message.
 
     Raises `BoardNotFoundError` when the session has no board, and `UnknownGhostToken` when no
-    token matches. A route that the board cannot compute raises `ValueError`.
+    token matches. A route that the board cannot compute raises `DomainRefusedError`.
     """
     board = await get_board(session_id)
     token_id = find_token_id(board, req.token_id, req.speaker_name)

@@ -13,14 +13,13 @@ from __future__ import annotations
 from uuid import uuid4
 
 import pytest
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from runefoble_auth.factory import get_spicedb_client
-from the_watcher.main import app
 
 from tests.helpers.mock_redis import MockAsyncRedis
-from tests.helpers.module_state import SeamRestorer
 from tests.helpers.spicedb_factory import bind_session_to_campaign
-from tests.helpers.watcher_copilot_stores import install_fresh_copilot_stores
+from tests.helpers.the_watcher_app import app_with_container, fresh_store_container
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
@@ -33,14 +32,14 @@ class FailingRedis(MockAsyncRedis):
         raise ConnectionError("redis unavailable (test double)")
 
 
-@pytest.fixture(autouse=True)
-def clean_environment(seam_restorer: SeamRestorer):
-    install_fresh_copilot_stores(seam_restorer)
-    yield
+@pytest.fixture
+def app() -> FastAPI:
+    """Give each test an app over empty copilot stores."""
+    return app_with_container(fresh_store_container())
 
 
 @pytest.fixture
-def client() -> TestClient:
+def client(app: FastAPI) -> TestClient:
     return TestClient(app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"})
 
 

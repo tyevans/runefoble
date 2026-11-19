@@ -7,8 +7,8 @@ from typing import Any
 from uuid import UUID
 
 from runefoble_auth.errors import AuthzError
-from runefoble_auth.mock.client import MockSpiceDBClient, Relationship
-from runefoble_auth.spicedb import SpiceDBClient
+from runefoble_auth.port import SpiceDBPort
+from runefoble_auth.relationship import Relationship
 from runefoble_auth.sync_events import (
     handle_character_created,
     handle_domain_event,
@@ -35,7 +35,7 @@ class ZitadelSpiceDBSyncService:
 
     def __init__(
         self,
-        spicedb_client: SpiceDBClient | MockSpiceDBClient,
+        spicedb_client: SpiceDBPort,
         zitadel_auth: ZitadelAuthService,
         max_retries: int = 3,
         retry_delay_seconds: float = 0.05,
@@ -89,10 +89,7 @@ class ZitadelSpiceDBSyncService:
         Only SpiceDB failures (`AuthzError`) become an `unhealthy` reply. Every other exception
         is a defect and propagates. The reply always carries the same four keys.
         """
-        is_mock = isinstance(self.spicedb, MockSpiceDBClient) and not getattr(
-            self.spicedb, "_grpc_client", None
-        )
-        backend = "mock" if is_mock else "grpc"
+        backend = self.spicedb.backend_name
         try:
             await self.spicedb.read_relationships(
                 resource_type="campaign", resource_id=HEALTH_PROBE_RESOURCE_ID

@@ -5,16 +5,19 @@ settings `RUNEFOBLE_WATCHER_ENGINE` and `RUNEFOBLE_INFERENCE_URL`. The board sta
 a loopback HTTP fake, which is a process boundary. No private state is changed.
 """
 
+from pathlib import Path
+
 import pytest
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 from pydantic import ValidationError
 from starlette.testclient import TestClient
-from the_watcher.main import app as watcher_app
 
 from tests.helpers.live_services import closed_port_url, serve
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.spicedb_factory import make_table_runner
+from tests.helpers.the_watcher_app import app_built_at_start_up, watcher_app
+from tests.helpers.watcher_startup import STARTED_MARKER, start_the_watcher
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
@@ -87,7 +90,7 @@ def test_start_up_with_inference_worker_and_no_url_fails(monkeypatch):
 
     with (
         pytest.raises(RuntimeError, match="RUNEFOBLE_INFERENCE_URL is not set"),
-        TestClient(watcher_app),
+        TestClient(app_built_at_start_up()),
     ):
         pass
 
@@ -95,5 +98,19 @@ def test_start_up_with_inference_worker_and_no_url_fails(monkeypatch):
 def test_start_up_with_unknown_engine_value_fails(monkeypatch):
     monkeypatch.setenv("RUNEFOBLE_WATCHER_ENGINE", "regex")
 
-    with pytest.raises(ValidationError, match="Input should be"), TestClient(watcher_app):
+    with (
+        pytest.raises(ValidationError, match="Input should be"),
+        TestClient(app_built_at_start_up()),
+    ):
         pass
+
+
+def test_the_watcher_process_refuses_to_start_without_the_inference_url(tmp_path: Path) -> None:
+    """The real app lifespan stops start-up and names the missing setting (TASK-0916)."""
+    result = start_the_watcher(
+        {"RUNEFOBLE_WATCHER_ENGINE": "inference_worker", "RUNEFOBLE_INFERENCE_URL": None},
+        tmp_path,
+    )
+    assert result.returncode != 0
+    assert "RUNEFOBLE_INFERENCE_URL" in result.stderr
+    assert STARTED_MARKER not in result.stdout

@@ -88,16 +88,15 @@ private manageWebSocketLifecycle(route: MatchedRoute) {
 
 When a Dungeon Master starts the session or when an active session start broadcast is received:
 
-1. **DM Launch**: The `<runefoble-session-lobby>` dispatches `@launch-session` with `{ campaignId, sessionId }`. The App Shell broadcasts `session_started` over the WebSocket and navigates the client router to `#/campaigns/:campaignId/sessions/:sessionId`.
-2. **Participant Transition**: Connected players and spectators receive `{ type: 'session_started', campaignId, sessionId }` over the WebSocket. The App Shell router listener intercepts the message and automatically switches their view to the active tabletop session.
+1. **DM Launch**: The `<runefoble-session-lobby>` dispatches `@launch-session` with `{ campaignId, sessionId }`. `launchSession` in `frontend/src/app/session-actions.ts` calls `POST /api/v1/sessions/{sessionId}/start` through `appDataService.startSession`. game_session checks `session.control` and moves the session from `lobby` to `active`. On success, the App Shell navigates to `#/campaigns/:campaignId/sessions/:sessionId`. On failure, it shows the owner message in a toast and stays in the lobby. The App Shell sends no socket frame.
+2. **Participant Transition**: After the owner replies, the gateway start route sends `{ type: 'session_started', sessionId, status }` to every session socket. A client cannot send this frame: the gateway answers `UNKNOWN_FRAME` (TASK-0910). The App Shell navigates only when `sessionId` is its own session id and `status` is `active`. It navigates to its own campaign and session ids, never to ids from the frame.
 
 ```typescript
-private handleIncomingSocketMessage(msg: Record<string, any>) {
-  if (msg.type === 'session_started') {
-    const cId = msg.campaignId || this.campaignId;
-    const sId = msg.sessionId || this.sessionId;
-    router.navigate(`#/campaigns/${cId}/sessions/${sId}`);
-  }
+// frontend/src/app/session-messages.ts
+export function sessionStartedRoute(shell: ShellSessionIds, msg: { sessionId?: unknown; status?: unknown }): string | null {
+  if (!shell.campaignId || !shell.sessionId) return null;
+  if (msg.sessionId !== shell.sessionId || msg.status !== 'active') return null;
+  return `#/campaigns/${shell.campaignId}/sessions/${shell.sessionId}`;
 }
 ```
 
@@ -110,7 +109,7 @@ The App Shell fetches data parameterized by route attributes via `appDataService
 - **Campaign Detail**: Fetches roster from `GET /api/v1/campaigns/:id/members` and sessions from `GET /api/v1/campaigns/:id/sessions`.
 - **Characters**: Fetches player characters from `GET /api/v1/characters` and scopes party roster in `#/campaigns/:id/characters`.
 - **Session Lobby**: Fetches participant readiness from `GET /api/v1/sessions/:id`.
-- **Active Tabletop**: Fetches tactical tokens from `GET /api/v1/boards/:id`. The route returns `404` for an unknown board and never creates one. Create the board first with `POST /api/v1/boards`. A `404` is not a load failure. `fetchBoardState` returns the typed `{ kind: 'no_board' }` result, and the view still renders the feed, the character card and the other panels. The board area shows `<runefoble-board-empty>` ("No battlemap yet"). A caller with the `run_session` capability also sees a hint to set up a map. The DM board controls do not show until the board exists. Other board failures (`401`, `403`, `5xx`, network) still set `loadError`.
+- **Active Tabletop**: Fetches tactical tokens from `GET /api/v1/boards/:id`. The route returns `404` for an unknown board and never creates one. Create the board first with `POST /api/v1/boards`. A `404` is not a load failure. `fetchBoardState` returns the typed `{ kind: 'no_board' }` result, and the view still renders the feed, the character card and the other panels. The board area shows `<runefoble-board-empty>` ("No battlemap yet"). A caller with the `run_session` capability also sees a hint and the "Set up battlemap" control. For that caller the loader also reads the seated characters (`fetchSessionSeats`, `GET /api/v1/sessions/:id`) into `sessionSeats`. See [Set up the session battlemap](interact-with-tactile-board-and-ghost-previews.md#0-set-up-the-session-battlemap). The DM board controls do not show until the board exists. Other board failures (`401`, `403`, `5xx`, network) still set `loadError`.
 - **Session Scheduling & Staging**: Creates new sessions or launches staging lobbies from `POST /api/v1/campaigns/:id/sessions` via `<runefoble-session-modal>`.
 
 ## 5. Character Roster Event Binding & Data Mutations
@@ -180,7 +179,7 @@ In the active session (`session-active`) and pre-game lobby (`session-lobby`), t
      - Slot `hud-widget`: `<runefoble-initiative-tracker>`, `<runefoble-soundscape-controls>`.
      - Slot `dice-panel`: `<runefoble-dice-roller>`, `<runefoble-dice-tray-3d>`.
      - Slot `sidebar-tool`: `<runefoble-combat-reaction-prompt>`, plus `<runefoble-dm-whisper-bar>` and `<runefoble-dm-trap-controls>` when `run_session` is true.
-4. **Expanded WebSocket Message Routing**: The App Shell does not query service elements. It dispatches each message as a window event (`frontend/src/vtt-mesh-handlers.ts`). The owning element subscribes to the event. The event names and payloads are in [`microfrontend-architecture.md`](../reference/microfrontend-architecture.md#session-mesh-events).
+4. **Expanded WebSocket Message Routing**: The App Shell does not query service elements. It dispatches each message as a window event (`frontend/src/vtt-mesh-handlers.ts`). The gateway does not accept `dice_rolled`, `turn_advanced` or `dm_whisper` from clients (TASK-0910), and no server code sends them on the session socket yet. Only `aoe_placed` and `spell_vfx` reach these listeners today. The owning element subscribes to the event. The event names and payloads are in [`microfrontend-architecture.md`](../reference/microfrontend-architecture.md#session-mesh-events).
    - `dice_rolled` (`runefoble:dice-rolled`): `<runefoble-dice-tray-3d>` tosses the dice. `<runefoble-dice-roller>` shows the forced result. `<runefoble-board>` runs the 3D roll.
    - `turn_advanced` (`runefoble:turn-advanced`): `<runefoble-initiative-tracker>` moves the active combatant and round. `<runefoble-board>` marks the active turn token.
    - `aoe_placed` (`runefoble:aoe-placed`): `<runefoble-board>` renders the AoE spell template.

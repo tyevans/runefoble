@@ -63,9 +63,14 @@ export async function loadActiveSessionData(host: RunefobleApp, route: MatchedRo
     appDataService.fetchCampaignCapabilities(cId),
   ]);
   if (!boardData.ok || !events.ok || !chars.ok || !camp.ok || !caps.ok) return failLoad(host, boardData, events, chars, camp, caps);
+  // The DM sets up a missing board with one token for each seat, so the DM view needs the seats (TASK-0922).
+  const needsSeats = boardData.data.kind === 'no_board' && caps.data.run_session === true;
+  const seats = needsSeats ? await appDataService.fetchSessionSeats(sId) : dataOk([]);
+  if (!seats.ok) return failLoad(host, seats);
   setCurrentCampaign(host, camp.data);
   setCampaignCapabilities(host, caps.data);
   applyBoard(host, boardData.data);
+  host.sessionSeats = seats.data;
   host.atmosphere = { location_name: host.sessionTitle };
   const liveEvents = host.events.filter((e) => !events.data.some((ev) => ev.id === e.id));
   host.events = [...events.data, ...liveEvents];

@@ -5,14 +5,12 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID
 
+from eventsource.application.aggregates.repository import AggregateRepository
 from runefoble_platform.aggregate_loading import load_or_create
 from runefoble_platform.event_publish import publish_best_effort
 from runefoble_platform.identifiers import opaque_aggregate_id
-from the_watcher.dependencies import (
-    STREAM_WORLD,
-    get_event_bus,
-    get_regional_unrest_repo,
-)
+from runefoble_platform.redis_bus import RedisStreamsEventBus
+from the_watcher.dependencies import STREAM_WORLD
 from the_watcher.turf_war.aggregate import RegionalUnrestAggregate
 from the_watcher.turf_war.models import (
     SkirmishSimulateRequest,
@@ -21,13 +19,16 @@ from the_watcher.turf_war.models import (
 from the_watcher.turf_war.skirmish_engine import skirmish_engine
 from the_watcher.turf_war.unrest_calculator import unrest_calculator
 
+UnrestRepository = AggregateRepository[RegionalUnrestAggregate]
 
-async def load_or_create_unrest(region_id: str, campaign_id: str = "") -> RegionalUnrestAggregate:
+
+async def load_or_create_unrest(
+    repo: UnrestRepository, region_id: str, campaign_id: str = ""
+) -> RegionalUnrestAggregate:
     """Load an event-sourced RegionalUnrestAggregate. Create one only when its stream is absent.
 
     A store error propagates to the caller (TASK-0699).
     """
-    repo = get_regional_unrest_repo()
     agg_uuid = opaque_aggregate_id(region_id, field="region_id")
 
     def _fresh(aggregate_id: UUID) -> RegionalUnrestAggregate:
@@ -40,9 +41,8 @@ async def load_or_create_unrest(region_id: str, campaign_id: str = "") -> Region
     return await load_or_create(repo, agg_uuid, _fresh)
 
 
-async def publish_turf_events(events: list[Any]) -> None:
+async def publish_turf_events(bus: RedisStreamsEventBus | None, events: list[Any]) -> None:
     """Fan out domain events to the world stream."""
-    bus = get_event_bus()
     if not bus:
         return
     for evt in events:
@@ -50,10 +50,10 @@ async def publish_turf_events(events: list[Any]) -> None:
 
 
 async def execute_skirmish_simulation(
-    req: SkirmishSimulateRequest,
+    repo: UnrestRepository, bus: RedisStreamsEventBus | None, req: SkirmishSimulateRequest
 ) -> SkirmishSimulateResponse:
     """Orchestrate skirmish resolution, mutate aggregate state, and fan out events."""
-    agg = await load_or_create_unrest(req.region_id, req.campaign_id)
+    agg = await load_or_create_unrest(repo, req.region_id, req.campaign_id)
     outcome = skirmish_engine.resolve(req)
 
     agg.record_skirmish(
@@ -98,8 +98,8 @@ async def execute_skirmish_simulation(
     )
 
     uncommitted = list(agg.uncommitted_events)
-    await get_regional_unrest_repo().save(agg)
-    await publish_turf_events(uncommitted)
+    await repo.save(agg)
+    await publish_turf_events(bus, uncommitted)
 
     return SkirmishSimulateResponse(
         skirmish_id=outcome.skirmish_id,

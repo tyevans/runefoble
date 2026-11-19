@@ -79,7 +79,30 @@ Upon challenge, the aggregate counts matching dice across all hands (including w
 
 ---
 
-## 2. Drinking Contests & Voice DSP Conditioning
+## 2. Opening a Shared Minigame Table
+
+A shared table (darts, Liar's Dice, roulette, craps or billiards) belongs to one establishment. Open the table with `POST /api/v1/tavern/tables` before players join its socket. The caller must have `establishment.play` on that establishment.
+
+```bash
+curl -X POST http://localhost:8004/api/v1/tavern/tables \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "table_id": "table-ember-darts",
+    "establishment_id": "est-ember-01",
+    "game_type": "darts"
+  }'
+```
+
+The route answers `201` with the table state.
+
+- `establishment_id` is required. A request without it answers `422`. The route does not fill in a default establishment (ADR-0015).
+- A caller without `establishment.play` on the establishment gets `403`.
+- A second open of the same `table_id` answers `409`.
+
+---
+
+## 3. Drinking Contests & Voice DSP Conditioning
 
 Drinking contests apply escalating Constitution checks and progressive intoxication states (`sober` -> `tipsy` -> `drunk` -> `smashed` -> `blackout`).
 
@@ -128,7 +151,7 @@ If `voice_agent` is unreachable, returns an error, or the variable is not set, t
 
 ---
 
-## 3. Personality-Driven Merchant Haggling
+## 4. Personality-Driven Merchant Haggling
 
 Shopkeepers possess distinct temperament models that influence price tolerance, counter-offers, and emotional volatility:
 
@@ -174,7 +197,7 @@ The first haggle with a merchant id records that merchant. The service emits `ru
 
 ---
 
-## 4. Interactive Merchant Haggling Engine & DM Controls (TASK-0262)
+## 5. Interactive Merchant Haggling Engine & DM Controls (TASK-0262)
 
 The interactive merchant haggling engine provides real-time bartering with a tug-of-war price meter, persuasive bargaining gambits, and Game Master arbitration controls.
 
@@ -218,7 +241,7 @@ curl -X PATCH http://localhost:8004/api/v1/haggling/neg-101/dm-override \
 
 ---
 
-## 5. Web Component & Storybook Verification
+## 6. Web Component & Storybook Verification
 
 Interactive components render with high-contrast Bauhaus tokens and shadow DOM isolation:
 - `<runefoble-tavern-parlor>`: Shaker cups, drinking contest meters, and merchant panels.

@@ -7,12 +7,8 @@ from runefoble_events.events import AbsencePenaltyApplied, StandInActionDecided
 from runefoble_platform.event_publish import publish_or_fail
 from runefoble_platform.identifiers import opaque_aggregate_id
 from runefoble_platform.stand_in_action import StandInAction
-from the_watcher.dependencies import (
-    STREAM_WATCHER,
-    engine,
-    get_event_bus,
-    require_session_permission,
-)
+from the_watcher.container_access import Engines, EventBus
+from the_watcher.dependencies import STREAM_WATCHER, require_session_permission
 from the_watcher.engine_selection import load_watcher_ports
 from the_watcher.identity import CallerId, get_principal
 from the_watcher.models import StandInRecapRequest, StandInRecapResponse, StandInRequest
@@ -21,16 +17,18 @@ router = APIRouter(dependencies=[Depends(get_principal)], tags=["stand_in"])
 
 
 @router.post("/api/v1/watcher/stand-in/act", response_model=StandInAction)
-async def stand_in_act(caller_id: CallerId, req: StandInRequest) -> StandInAction:
+async def stand_in_act(
+    engines: Engines, event_bus: EventBus, caller_id: CallerId, req: StandInRequest
+) -> StandInAction:
     """Simulate an action for an absent player's character with applied penalties.
 
     A failed engine is returned as HTTP 503. The Watcher never substitutes canned output.
     """
     await require_session_permission(caller_id, req.session_id, "session.participate")
-    stand_in = await load_watcher_ports(engine).stand_in.decide(req)
+    stand_in = await load_watcher_ports(engines.watcher).stand_in.decide(req)
 
     # Publish events to Redis Streams
-    bus = get_event_bus()
+    bus = event_bus.get()
     session_uuid = opaque_aggregate_id(req.session_id, field="session_id")
     campaign_uuid = opaque_aggregate_id(req.campaign_id, field="campaign_id")
 
@@ -63,10 +61,12 @@ async def stand_in_act(caller_id: CallerId, req: StandInRequest) -> StandInActio
 
 
 @router.post("/api/v1/watcher/stand-in/recap", response_model=StandInRecapResponse)
-async def stand_in_recap(caller_id: CallerId, req: StandInRecapRequest) -> StandInRecapResponse:
+async def stand_in_recap(
+    engines: Engines, caller_id: CallerId, req: StandInRecapRequest
+) -> StandInRecapResponse:
     """Generate a humorous recap of an absent player's stand-in exploits for when they return."""
     await require_session_permission(caller_id, req.session_id, "session.observe")
-    data = engine.generate_stand_in_recap(
+    data = engines.watcher.generate_stand_in_recap(
         character_name=req.character_name,
         actions=req.actions,
         penalties=req.penalties,

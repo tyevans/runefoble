@@ -22,6 +22,7 @@ from runefoble_events.events import (
     TokenPlaced,
     TurnAdvanced,
 )
+from runefoble_platform.domain_errors import DomainRefusedError
 from runefoble_platform.identifiers import opaque_aggregate_id
 from soundscape.aggregate import SoundscapeAggregate
 
@@ -117,8 +118,8 @@ async def test_board_aggregate_spatial_mechanics():
     assert board.state.tokens["hero-1"].x == 3
     assert board.state.tokens["hero-1"].y == 4
 
-    # Out-of-bounds move must raise ValueError
-    with pytest.raises(ValueError, match="out of bounds"):
+    # Out-of-bounds move is a refused domain command
+    with pytest.raises(DomainRefusedError, match="out of bounds"):
         board.move_token("hero-1", to_x=15, to_y=15)
 
     # Save and reload from event stream

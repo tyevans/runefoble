@@ -18,11 +18,11 @@ from fastapi.testclient import TestClient
 from gateway_api.main import app as gateway_app
 from runefoble_events.events import TokenMoved
 from runefoble_platform.event_deserializer import deserialize_event
-from the_watcher.main import app as watcher_app
 
 from tests.helpers.live_services import closed_port_url, serve
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.spectator_table import open_board_table
+from tests.helpers.the_watcher_app import watcher_app
 from tests.helpers.ws_identity import ws_subprotocols
 from tests.realtime_session import bearer
 

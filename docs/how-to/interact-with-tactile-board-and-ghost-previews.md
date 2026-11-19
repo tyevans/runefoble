@@ -4,6 +4,27 @@ This guide explains how to use tactile token kinematics, interactive 5-foot rout
 
 ---
 
+## 0. Set Up the Session Battlemap
+
+A new session has no board. The live session view shows `<runefoble-board-empty>` ("No battlemap yet") in the board area until the DM sets up the board (TASK-0906, TASK-0922).
+
+To set up the board as the DM:
+
+1. Launch the session from the lobby.
+2. In the board area, click **Set up battlemap**. Only a caller with the `run_session` capability sees this control. A player sees the empty state only.
+3. The control creates the board with the default 10 x 10 grid (`POST /api/v1/boards`).
+4. The control then places one `pc` token for each seated character (`POST /api/v1/boards/{session_id}/tokens`, with `character_id`). The tokens go to free start cells in seat order, in row order from the top-left cell (`startCells`).
+5. After board_state creates the board, the gateway board create route sends the `board_ready` frame to every socket of the session. The App Shell of the DM reads the board from the server. A client cannot send `board_ready` (`UNKNOWN_FRAME`). Each other client that shows no board reads the board again.
+
+`board_state` checks each call. The DM needs `campaign.run_session` to create the board. A character token needs `character.edit` on the character, so the character must belong to the campaign. The DM holds `character.edit` through `campaign->run_session`.
+
+If a call fails:
+
+- The board create fails (for example `403` or `503`): the control shows the server message. No board exists, and the client changes nothing.
+- A token place fails after the board exists: the flow stops at that token. The App Shell shows the server message in a toast and reads the board from the server. The board then shows the tokens that were placed.
+
+The flow code is `setUpSessionBoard` in `services/board_state/ui/src/board-setup.ts`. A forged or uploaded map is applied to an existing board (the map switcher or the UVTT import). Set up the board first.
+
 ## 1. Tactile Token Kinematics & Drag-and-Drop
 
 When dragging a miniature or token across the tactical board:

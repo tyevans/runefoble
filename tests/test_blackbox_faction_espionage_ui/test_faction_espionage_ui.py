@@ -12,8 +12,8 @@ from __future__ import annotations
 
 import pytest
 from fastapi.testclient import TestClient
-from the_watcher.main import app
 
+from tests.helpers.the_watcher_app import watcher_app as app
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")

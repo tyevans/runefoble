@@ -3,7 +3,8 @@
  *
  * Owns the live session WebSocket for the App Shell. It opens the socket on session and
  * lobby routes, closes it on other routes, reconnects after a drop, and applies incoming
- * messages to the host. A session_started message navigates through the router.
+ * messages to the host. A session_started message for the shell's own session, with status
+ * `active`, navigates through the router to the shell's own route (TASK-0910).
  */
 
 import { wsUrl } from '@runefoble/ui-core';
@@ -11,7 +12,7 @@ import { authService } from '../auth/auth-service.ts';
 import { wsProtocols } from '../auth/transport.ts';
 import { router, type MatchedRoute } from '../router/index.ts';
 import type { RunefobleApp } from '../runefoble-app.ts';
-import { handleSessionMessage } from './session-messages.ts';
+import { handleSessionMessage, sessionStartedRoute } from './session-messages.ts';
 
 const RECONNECT_DELAY_MS = 4000;
 /** Close code the gateway sends when it refuses the WebSocket handshake (ADR-0015 c). */
@@ -107,7 +108,8 @@ export class SessionSocket {
     try {
       const msg = JSON.parse(data);
       if (msg.type === 'session_started') {
-        router.navigate(`#/campaigns/${msg.campaignId || this.host.campaignId}/sessions/${msg.sessionId || this.host.sessionId}`);
+        const route = sessionStartedRoute(this.host, msg);
+        if (route) router.navigate(route);
       } else {
         handleSessionMessage(this.host, msg);
       }

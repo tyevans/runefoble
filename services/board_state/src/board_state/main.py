@@ -8,10 +8,8 @@ from __future__ import annotations
 import contextlib
 from collections.abc import AsyncIterator
 
-from board_state.dependencies import BoardNotFoundError, event_bus_provider
-from board_state.errors import BoardElementNotFoundError
+from board_state.dependencies import event_bus_provider
 from board_state.forged_battlemap import start_board_consumers
-from board_state.ghost_staging import UnknownGhostToken
 from board_state.routers import (
     actions_router,
     aoe_router,
@@ -81,9 +79,7 @@ app.include_router(uvtt_import_router)
 install_publish_failure_handler(app)
 install_authz_error_handlers(app)
 register_store_unavailable_handlers(app)
-install_domain_error_handlers(
-    app, not_found=(BoardNotFoundError, BoardElementNotFoundError, UnknownGhostToken)
-)
+install_domain_error_handlers(app)
 
 
 @app.get("/healthz")

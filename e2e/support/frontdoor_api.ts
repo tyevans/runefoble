@@ -267,6 +267,21 @@ export class FrontdoorApi {
    * Seats the caller in a session lobby with one character through `POST /api/v1/sessions/{id}/join`
    * (TASK-0889). game_session checks `participate`. Throws with the response body on refusal.
    */
+  /** Reads the session status through the gateway session route (TASK-0910). */
+  async getSessionStatus(sessionId: string, token?: string): Promise<string> {
+    const res = await this.request.get(`${this.baseUrl}/api/v1/sessions/${sessionId}`, {
+      headers: this.authHeaders(token),
+    });
+    if (!res.ok()) {
+      throw new Error(`Failed to read session ${sessionId}: ${res.status()} ${res.statusText()}`);
+    }
+    const body = (await res.json()) as { status?: unknown };
+    if (typeof body.status !== 'string') {
+      throw new Error(`The session ${sessionId} reply has no status.`);
+    }
+    return body.status;
+  }
+
   async joinSession(
     sessionId: string,
     character: { id: string; name: string; characterClass: string },

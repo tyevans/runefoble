@@ -15,11 +15,11 @@ from inference_worker import api
 from inference_worker.config import WorkerSettings
 from inference_worker.llm_factory import build_llm_port
 from runefoble_platform.service_credential import SERVICE_CREDENTIAL_HEADER
-from the_watcher.main import app as watcher_app
 
 from tests.helpers.inference_worker_port import install_worker_port
 from tests.helpers.live_services import closed_port_url, serve
 from tests.helpers.spicedb_factory import make_table_runner
+from tests.helpers.the_watcher_app import watcher_app
 from tests.helpers.watcher_engine import error_fields, select_worker_engine
 from tests.helpers.ws_identity import SIGNING_ISSUER
 

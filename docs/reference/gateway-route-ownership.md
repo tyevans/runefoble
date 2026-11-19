@@ -43,7 +43,9 @@ each route, and the mode in which the gateway serves it.
 | POST | `/api/v1/audience/proposals/{proposal_id}/approve` | audience_studio | proxy | `gateway_api.routers.audience` |
 | POST | `/api/v1/audience/proposals/{proposal_id}/veto` | audience_studio | proxy | `gateway_api.routers.audience` |
 | GET | `/api/v1/auth/sync/health` | gateway_api | local | `gateway_api.auth_sync` |
+| POST | `/api/v1/boards` | board_state | proxy | `gateway_api.routers.boards_proxy` |
 | GET | `/api/v1/boards/{session_id}` | board_state | proxy | `gateway_api.routers.boards_proxy` |
+| POST | `/api/v1/boards/{session_id}/tokens` | board_state | proxy | `gateway_api.routers.boards_proxy` |
 | GET | `/api/v1/boards/{session_id}/tokens/{token_id}` | board_state | proxy | `gateway_api.routers.boards_proxy` |
 | POST | `/api/v1/boards/{session_id}/tokens/{token_id}/move` | board_state | proxy | `gateway_api.routers.boards_proxy` |
 | GET | `/api/v1/campaigns` | game_session | proxy | `gateway_api.routers.campaigns_proxy` |

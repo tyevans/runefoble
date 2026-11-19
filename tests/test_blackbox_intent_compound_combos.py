@@ -10,10 +10,10 @@ from uuid import uuid4
 
 import pytest
 from httpx import ASGITransport, AsyncClient
-from the_watcher.main import app as watcher_app
 
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.spicedb_factory import make_table_runner
+from tests.helpers.the_watcher_app import watcher_app
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")

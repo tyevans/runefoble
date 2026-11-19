@@ -31,6 +31,7 @@ e2e/
 | `e2e/support/world.ts` | Scenario context: the current user, campaign and session ids, one page per persona, and extra browser contexts. `getPage(name)` throws when no step opened a page for that persona. |
 | `e2e/support/lobby_session.ts` | Lobby setup state. `rememberLobbySession` and `lobbySessionId` keep the session id with the title that the feature uses. `lobbyRoute` builds the lobby route from the stored ids. `personaToken` returns the bearer token of a persona that setup signed in. |
 | `e2e/support/service_faults.ts` | `stopService` and `startService` stop and start an owning service on Kind through the fault make targets (see "Service Faults"). |
+| `e2e/support/board_cells.ts` | Board locators. `boardCell` finds the cell with the label `x,y`. `boardToken` finds the token whose title starts with a character name. The battlemap set-up steps (`e2e/steps/battlemap_setup_steps.ts`, TASK-0922) use them. |
 | `e2e/support/guards.ts` | Fail-loud guards. `requireValue` throws when a setup value is missing. `assertOk` throws with the status and body of a failed response. `fillRouteTemplate` puts the ids from `world` into a route shape such as `#/campaigns/{campaignId}/sessions/{sessionId}`, and throws when an id is missing. `exactText` builds a whole-text match for `hasText`. |
 
 ## Global Setup and Personas

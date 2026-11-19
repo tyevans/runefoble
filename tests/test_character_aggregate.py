@@ -8,6 +8,7 @@ from character_sheet.main import app
 from eventsource.domain.event_registry import default_registry
 from fastapi.testclient import TestClient
 from runefoble_events.events import CharacterAssignedToCampaign
+from runefoble_platform.domain_errors import DomainRefusedError
 from runefoble_platform.event_sourcing import AggregateRepository, InMemoryEventStore
 
 from tests.helpers.ws_identity import bearer
@@ -112,8 +113,8 @@ def test_character_aggregate_stand_in_guardrails_spell_preservation():
     char.update_stand_in_guardrails({"preserve_spell_slots": {1: 2}})
     char.set_stand_in_active(True)
 
-    # Attempting to cast spell when available_slots (2) <= preserve_count (2) raises ValueError
-    with pytest.raises(ValueError, match="STAND_IN_GUARDRAIL_VIOLATION"):
+    # Attempting to cast spell when available_slots (2) <= preserve_count (2) is refused
+    with pytest.raises(DomainRefusedError, match="STAND_IN_GUARDRAIL_VIOLATION"):
         char.cast_spell("Cure Wounds", slot_level=1)
 
 

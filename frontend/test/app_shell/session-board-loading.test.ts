@@ -15,25 +15,30 @@ import type { MatchedRoute } from '../../src/router/index.ts';
 import type { RunefobleApp } from '../../src/runefoble-app.ts';
 import { installFakeGateway, type FakeGateway } from '../support/fake-gateway.ts';
 import { FALLBACK_CAMPAIGNS, FALLBACK_CHARACTERS } from '../support/app-data-service.fixtures.ts';
-import { OWNER_BOARD_STATE } from '../support/owner-wire-fixtures.ts';
+import { OWNER_BOARD_STATE, OWNER_SESSION_STATE } from '../support/owner-wire-fixtures.ts';
 
 const ROUTE = { params: { campaignId: '4', sessionId: 'session-new' } } as unknown as MatchedRoute;
 const CHRONICLE = [{ event_id: 'ev-1', kind: 'session_started', occurred_at: '2026-11-19T15:45:00Z', speaker: 'The Watcher', text: 'The session begins.', penalties: [] }];
 
-function installSessionGateway(board: { status?: number; body?: unknown }): FakeGateway {
+function installSessionGateway(
+  board: { status?: number; body?: unknown },
+  runSession = true,
+  session: { status?: number; body?: unknown } = { body: OWNER_SESSION_STATE },
+): FakeGateway {
   return installFakeGateway({
     'GET /api/v1/boards/session-new': board,
+    'GET /api/v1/sessions/session-new': session,
     'GET /api/v1/sessions/session-new/events': { body: CHRONICLE },
     'GET /api/v1/characters': { body: FALLBACK_CHARACTERS },
     'GET /api/v1/campaigns/4': { body: FALLBACK_CAMPAIGNS[0] },
-    'GET /api/v1/campaigns/4/capabilities': { body: { manage: true, run_session: true, play: true, view: true } },
+    'GET /api/v1/campaigns/4/capabilities': { body: { manage: runSession, run_session: runSession, play: true, view: true } },
   });
 }
 
 function newHost(): RunefobleApp {
   return {
     characters: [], events: [], tokens: [{ id: 'stale', name: 'Stale', x: 0, y: 0 }], loadError: null,
-    boardKind: 'board', boardCols: 10, boardRows: 10, sessionTitle: 'Session', currentCampaign: null,
+    boardKind: 'board', sessionSeats: [], boardCols: 10, boardRows: 10, sessionTitle: 'Session', currentCampaign: null,
     campaignCapabilities: null, resolveActiveCharacter: () => null,
   } as unknown as RunefobleApp;
 }
@@ -71,5 +76,32 @@ describe('Live session load without a board', () => {
     assert.equal(host.boardKind, 'board');
     assert.equal(host.boardCols, OWNER_BOARD_STATE.cols);
     assert.ok(host.tokens.length >= 1);
+  });
+
+  it('reads the seated characters for a DM when the board is 404 (TASK-0922)', async () => {
+    gateway = installSessionGateway({ status: 404, body: { detail: 'Board not found' } });
+    const host = newHost();
+    await loadActiveSessionData(host, ROUTE);
+    assert.equal(host.loadError, null);
+    assert.deepEqual(host.sessionSeats, [
+      { characterId: 'char-valeros', characterName: 'Valeros of Korvosa' },
+      { characterId: 'char-kyra', characterName: 'Kyra the Sun Maiden' },
+    ]);
+  });
+
+  it('does not read the seats for a player, who has no set-up control', async () => {
+    gateway = installSessionGateway({ status: 404, body: { detail: 'Board not found' } }, false, { status: 500, body: { detail: 'not read' } });
+    const host = newHost();
+    await loadActiveSessionData(host, ROUTE);
+    assert.equal(host.loadError, null);
+    assert.deepEqual(host.sessionSeats, []);
+  });
+
+  it('shows the error view when the DM seat read fails', async () => {
+    gateway = installSessionGateway({ status: 404, body: { detail: 'Board not found' } }, true, { status: 503, body: { detail: 'Session service unavailable' } });
+    const host = newHost();
+    await loadActiveSessionData(host, ROUTE);
+    assert.equal(host.loadError?.status, 503);
+    assert.equal(host.loadError?.message, 'Session service unavailable');
   });
 });

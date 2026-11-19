@@ -12,13 +12,13 @@ import pytest
 from httpx import ASGITransport, AsyncClient
 from runefoble_events.events import AbsencePenaltyApplied, StandInActionDecided
 from runefoble_platform.event_deserializer import deserialize_event
-from the_watcher.main import app as watcher_app
 
 from tests.helpers.campaign_setup import create_owned_campaign_async
 from tests.helpers.game_session_app import session_app
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.spicedb_factory import make_table_runner
 from tests.helpers.stand_in_policy import create_character
+from tests.helpers.the_watcher_app import watcher_app
 from tests.helpers.watcher_double import (
     STAND_IN_ACTION_BODY,
     serve_watcher_double,

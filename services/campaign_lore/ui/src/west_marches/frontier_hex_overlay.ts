@@ -1,4 +1,4 @@
-import { LitElement, html } from 'lit';
+import { LitElement, html, svg } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { mapStyles } from './styles/map.styles.ts';
 
@@ -39,7 +39,7 @@ export class RunefobleFrontierHexOverlay extends LitElement {
           </defs>
           <rect width="1000" height="1000" fill="url(#frontier-hex-grid)" />
           ${this.showFog
-            ? html`
+            ? svg`
                 <g class="fog-layers">
                   <polygon points="0,0 350,0 280,220 0,300" class="fog-boundary" />
                   <text x="60" y="70" class="fog-text">Uncharted Mists</text>

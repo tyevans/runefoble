@@ -3,12 +3,8 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Query
-from the_watcher.dependencies import (
-    get_event_bus,
-    get_whisper_repo,
-    get_whisper_service,
-    require_dm,
-)
+from the_watcher.container_access import EventBus, Repos, Whispers
+from the_watcher.dependencies import require_dm
 from the_watcher.identity import CallerId, get_principal
 from the_watcher.models import (
     WhisperCreateRequest,
@@ -24,6 +20,7 @@ router = APIRouter(dependencies=[Depends(get_principal)], tags=["copilot"])
 
 @router.get("/api/v1/watcher/whispers", response_model=WhisperListResponse)
 async def get_whispers(
+    whispers: Whispers,
     caller_id: CallerId,
     session_id: str,
     campaign_id: str | None = None,
@@ -34,7 +31,7 @@ async def get_whispers(
     """Return paginated DM private narrative suggestions. Restricted to dungeon_master relation."""
     await require_dm(caller_id, campaign_id, session_id)
 
-    items, total = await get_whisper_service().list_whispers(
+    items, total = await whispers.list_whispers(
         session_id=session_id,
         campaign_id=campaign_id,
         page=page,
@@ -46,6 +43,7 @@ async def get_whispers(
 
 @router.post("/api/v1/watcher/whispers", response_model=WhisperSuggestion)
 async def create_whisper(
+    whispers: Whispers,
     caller_id: CallerId,
     req: WhisperCreateRequest,
 ) -> WhisperSuggestion:
@@ -60,18 +58,19 @@ async def create_whisper(
         content=req.content,
         metadata=req.metadata,
     )
-    return await get_whisper_service().add_whisper(whisper)
+    return await whispers.add_whisper(whisper)
 
 
 @router.post("/api/v1/watcher/whispers/generate", response_model=list[WhisperSuggestion])
 async def generate_whispers(
+    whispers: Whispers,
     caller_id: CallerId,
     req: WhisperGenerateRequest,
 ) -> list[WhisperSuggestion]:
     """Generate dynamic narrative suggestions, monster tactics, and passive perception cues."""
     await require_dm(caller_id, req.campaign_id, req.session_id)
 
-    return await get_whisper_service().generate_whispers(
+    return await whispers.generate_whispers(
         session_id=req.session_id,
         campaign_id=req.campaign_id,
         scene_context=req.scene_context,
@@ -85,6 +84,8 @@ async def generate_whispers(
     response_model=WhisperSuggestion,
 )
 async def dispatch_whisper(
+    repos: Repos,
+    event_bus: EventBus,
     caller_id: CallerId,
     whisper_id: str,
     req: WhisperDispatchRequest,
@@ -95,8 +96,8 @@ async def dispatch_whisper(
     """
     await require_dm(caller_id, req.campaign_id or None, req.session_id)
     return await dispatch_audience_narration(
-        bus=get_event_bus(),
-        whisper_repo=get_whisper_repo(),
+        bus=event_bus.get(),
+        whisper_repo=repos.whispers,
         session_id=req.session_id,
         campaign_id=req.campaign_id,
         whisper_id=whisper_id,

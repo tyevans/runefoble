@@ -36,7 +36,7 @@ def session_client():
 
 @pytest.fixture
 def watcher_client():
-    from the_watcher.main import app
+    from tests.helpers.the_watcher_app import watcher_app as app
 
     return TestClient(app)
 

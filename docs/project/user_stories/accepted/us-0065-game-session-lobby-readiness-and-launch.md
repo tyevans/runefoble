@@ -70,3 +70,16 @@ Then the lobby readiness summary reads "1 of 1 players ready"
 ```
 
 The Take a Seat control follows the `play` and `run_session` flags of the campaign capabilities reply. The person who runs the session does not see it and does not take a seat (TASK-0889).
+
+## Scenario 6: The DM Sets Up the Battlemap After Launch
+```gherkin
+Given Evelyn launched "Lobby 15" with Valeros and Sarah seated with campaign characters
+When Valeros opens the live session
+Then the board area shows "No battlemap yet" with no set-up control
+When Evelyn clicks "Set up battlemap" on the empty board
+Then "POST /api/v1/boards" is invoked on the gateway
+And one token is placed for each seated character through "POST /api/v1/boards/{sessionId}/tokens"
+And the tactical board on both screens shows the tokens "Valeros the Bold" and "Sarah of the Mists"
+```
+
+A failed board create shows the server message and creates nothing. The executable scenarios are 3 and 4 of `e2e/features/session_lobby_and_vtt.feature` (TASK-0922).

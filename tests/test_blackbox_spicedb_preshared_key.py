@@ -26,6 +26,8 @@ import pytest
 from tests.helpers.game_session_startup import STARTED_MARKER, start_game_session
 from tests.helpers.ports import free_port
 from tests.helpers.process import run_command
+from tests.helpers.watcher_startup import STARTED_MARKER as WATCHER_STARTED
+from tests.helpers.watcher_startup import start_the_watcher
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 KEY_VAR = "RUNEFOBLE_SPICEDB_PRESHARED_KEY"
@@ -35,7 +37,6 @@ SERVICE_DEPENDENCY_MODULES = [
     "asset_forge.dependencies",
     "board_state.dependencies",
     "soundscape.dependencies",
-    "the_watcher.dependencies",
     "campaign_lore.dependencies",
     "character_sheet.dependencies",
     "campaign_analytics.main",
@@ -98,6 +99,15 @@ def test_game_session_startup_fails_without_key(tmp_path: Path) -> None:
     assert STARTED_MARKER not in result.stdout
 
 
+def test_the_watcher_startup_fails_without_key(tmp_path: Path) -> None:
+    """The Watcher builds its container in the lifespan. Its start-up refuses a missing key."""
+    result = start_the_watcher({}, tmp_path, base_env=_env())
+    assert result.returncode != 0
+    assert "ConfigurationError" in result.stderr
+    assert KEY_VAR in result.stderr
+    assert WATCHER_STARTED not in result.stdout
+
+
 def test_rules_compendium_sends_configured_key(tmp_path: Path) -> None:
     """The rules-compendium factory uses the configured key, not the removed 'secret' literal."""
     code = (
@@ -109,8 +119,9 @@ def test_rules_compendium_sends_configured_key(tmp_path: Path) -> None:
     assert result.stdout.strip().splitlines()[-1] == "key-from-environment"
 
 
-def test_audience_studio_config_requires_key(tmp_path: Path) -> None:
-    """The audience-studio key reader throws without the key unless NODE_ENV is test."""
+@pytest.mark.parametrize("node_env", [None, "production", "test"])
+def test_audience_studio_config_requires_key(tmp_path: Path, node_env: str | None) -> None:
+    """The audience-studio key reader throws without the key in every NODE_ENV (TASK-0913)."""
     node = shutil.which("node")
     if node is None:
         pytest.skip("node is not installed")
@@ -121,6 +132,8 @@ def test_audience_studio_config_requires_key(tmp_path: Path) -> None:
     )
     env = _env()
     env.pop("NODE_ENV", None)
+    if node_env is not None:
+        env["NODE_ENV"] = node_env
     result = run_command(
         [node, "--experimental-strip-types", "--input-type=module", "-e", script],
         env=env,

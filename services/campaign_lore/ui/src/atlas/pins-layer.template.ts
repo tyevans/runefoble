@@ -1,4 +1,4 @@
-import { html, type TemplateResult } from 'lit';
+import { svg, type SVGTemplateResult } from 'lit';
 import type { AtlasPin } from './types.ts';
 
 export interface PinsLayerProps {
@@ -34,14 +34,14 @@ export function calculateCanvasCoordinates(
   return { x: Math.round(rawX), y: Math.round(rawY) };
 }
 
-export function renderPinsLayer(props: PinsLayerProps): TemplateResult {
+export function renderPinsLayer(props: PinsLayerProps): SVGTemplateResult {
   const visiblePins = filterVisiblePins(props.pins, props.activeLayer, props.activeEra);
 
-  return html`
+  return svg`
     <g class="pins-layer">
       ${visiblePins.map((pin) => {
         const isSelected = props.selectedPinId === pin.pin_id;
-        return html`
+        return svg`
           <g
             class="pin-marker"
             data-pin-id=${pin.pin_id}

@@ -79,7 +79,7 @@ Run one package:
 ```bash
 pnpm --filter @runefoble/ui-core test
 ```
-The packages with element tests are `libs/runefoble_ui` (`@runefoble/ui-core`), `services/asset_forge/ui`, `services/board_state/ui`, `services/character_sheet/ui`, `services/game_session/ui`, `services/rules_compendium/ui` and `frontend/`.
+The packages with element tests have a `vitest.config.ts`. They are `libs/runefoble_ui`, `frontend/` and the UI packages of `asset_forge`, `board_state`, `campaign_lore`, `character_sheet`, `game_session` and `rules_compendium`.
 
 ### 8. Change State With New Objects
 Lit renders an element again only when a property gets a new value. For an object or an array, a new value is a new reference. Lit compares with `!==`. It does not look inside the object.
@@ -110,3 +110,35 @@ ADR-0015 requires that failures are visible: an error, not a false success.
 - Test both paths. The failure test must assert that the success text is absent.
 
 Examples are `services/game_session/ui/test-dom/caravan-board-transport.test.ts` and `services/game_session/ui/test-dom/campaign-members-copy.test.ts`.
+
+### 10. Bind Attributes and SVG Fragments Correctly
+Two Lit mistakes give no error. The element only shows wrong data, or nothing.
+
+**Kebab-case attributes.** Without `attribute:`, Lit observes the lower-case property name. A property `campaignId` observes `campaignid`, not `campaign-id`. When a parent sets `campaign-id="..."`, the property keeps its default value.
+
+Name the attribute when a template, a story or a test sets the kebab-case form:
+```typescript
+@property({ type: String, attribute: 'campaign-id' }) campaignId = '';
+```
+To pass a value with no attribute, bind the property: `.campaignId=${id}`.
+
+**SVG fragments.** Lit parses an `html` template in the HTML namespace. A `<g>`, `<circle>`, `<polygon>` or `<text>` in an `html` template is an HTML element. It has no geometry and does not show. Write each fragment that goes inside an `<svg>` with the `svg` tag:
+```typescript
+import { svg, type SVGTemplateResult } from 'lit';
+
+export const renderPin = (pin: AtlasPin): SVGTemplateResult =>
+  svg`<g class="pin"><text class="pin-label">${pin.title}</text></g>`;
+```
+The `<svg>` element itself can stay in the `html` template.
+
+**The check.** `make lint` runs `scripts/check_lit_templates.py`. Run it alone:
+```bash
+uv run python scripts/check_lit_templates.py
+```
+The check reads the `@property` declarations of each Runefoble element in `frontend/src`, `services/*/ui/src` and `libs/*/src`. It fails on these cases:
+- A template or HTML string sets a kebab-case attribute on the element, and the matching camelCase property does not observe that attribute.
+- A `setAttribute('kebab-name', ...)` call in a file that names the element sets such an attribute.
+- An `html` template starts with an SVG-only element such as `<g>`, `<circle>` or `<text>`.
+
+The check also reads `test/` and `test-dom/` in each UI package. It skips `data-*` and `aria-*` attributes, and attributes that match no property. It cannot see a template that starts with an interpolation before the first SVG element. In a DOM test, assert `namespaceURI` and `getBBox()` of the SVG element (see `services/campaign_lore/ui/test-dom/atlas-svg-layers.test.ts`).
+
