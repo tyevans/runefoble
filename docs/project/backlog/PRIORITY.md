@@ -872,3 +872,6 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 866. **TASK-0886 (Complete)**: [`0886-remaining-game-session-publish-sites-use-one-helper.md`](complete/0886-remaining-game-session-publish-sites-use-one-helper.md) — Remaining Game Session Publish Sites Use One Helper
 867. **TASK-0887 (Refined)**: [`0887-campaign-members-show-verified-names.md`](refined/0887-campaign-members-show-verified-names.md) — Campaign Members Show Verified Names, Not Derived IDs
 868. **TASK-0888 (Refined)**: [`0888-worker-restock-raises-an-event-and-sync-runs-before-publish.md`](refined/0888-worker-restock-raises-an-event-and-sync-runs-before-publish.md) — Worker Restock Raises an Event, and the Establishment Sync Runs Before the Publish
+869. **TASK-0889 (Refined)**: [`0889-players-take-a-lobby-seat-through-the-gateway.md`](refined/0889-players-take-a-lobby-seat-through-the-gateway.md) — Players Take a Lobby Seat Through the Gateway and the App Shell
+870. **TASK-0890 (Refined)**: [`0890-access-tokens-carry-the-username-claim.md`](refined/0890-access-tokens-carry-the-username-claim.md) — Zitadel Access Tokens Carry the Username Claim
+871. **TASK-0891 (Proposed)**: [`0891-platformsettings-splits-by-concern.md`](proposed/0891-platformsettings-splits-by-concern.md) — PlatformSettings Splits Into Settings per Concern
