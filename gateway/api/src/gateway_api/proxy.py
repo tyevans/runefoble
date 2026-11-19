@@ -19,17 +19,29 @@ body, binary routes such as PDF, PNG and STL exports, and multipart uploads.
 from __future__ import annotations
 
 import logging
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from typing import Any
 
 from fastapi import HTTPException, Request, Response, status
 from gateway_api.dependencies import get_upstreams
 from gateway_api.upstream_errors import UpstreamRejectedError
-from runefoble_platform.service_client import UpstreamReply, decode_json_body
+from runefoble_platform.service_client import OwnerRoute, UpstreamReply, decode_json_body
 
 logger = logging.getLogger("runefoble.gateway.proxy")
 
 UPSTREAM_INVALID_DETAIL = "Upstream service returned an invalid response"
+
+
+def owner_route(build: Callable[..., OwnerRoute], *values: str) -> OwnerRoute:
+    """Build an owner route from the public path values (TASK-0861).
+
+    A value the owner path cannot encode (`.`, `..`, or empty) is a missing resource. The gateway
+    answers 404 and makes no owner call.
+    """
+    try:
+        return build(*values)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from exc
 
 
 async def forward_json(

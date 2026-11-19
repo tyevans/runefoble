@@ -23,8 +23,9 @@ from fastapi import APIRouter, Depends, Request
 from gateway_api.auth import get_principal, require_zanzibar_permission
 from gateway_api.dependencies import ws_manager
 from gateway_api.models import AtmosphereUpdateRequest, DMOverrideRequest
-from gateway_api.proxy import forward_json
+from gateway_api.proxy import forward_json, owner_route
 from pydantic import BaseModel, ConfigDict, Field
+from runefoble_platform.service_client import owner_routes
 
 SERVICE = "game_session"
 SESSIONS = "/api/v1/sessions"
@@ -43,9 +44,8 @@ class HotSwapRequest(BaseModel):
 @router.get("/api/v1/sessions/{session_id}", dependencies=_VERIFIED)
 async def get_session_proxy(session_id: str, request: Request) -> Any:
     """Read session state, participants, and turn index (requires 'observe'; game_session)."""
-    return await forward_json(
-        request, service=SERVICE, method="GET", path=f"{SESSIONS}/{session_id}"
-    )
+    route = owner_route(owner_routes.get_session, session_id)
+    return await forward_json(request, service=SERVICE, method=route.method, path=route.path)
 
 
 @router.post("/api/v1/sessions/{session_id}/start", dependencies=_VERIFIED)

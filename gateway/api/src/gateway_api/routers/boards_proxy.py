@@ -23,10 +23,11 @@ ROUTES = (
     ProxyRoute(
         "GET",
         "/api/v1/boards/{session_id}",
-        ("api", "v1", "boards", "{session_id}"),
+        (),
         SERVICE,
         name="get_board",
         doc="Read the board of a session (board_state).",
+        owner=owner_routes.get_board,
         principal=True,
     ),
     ProxyRoute(

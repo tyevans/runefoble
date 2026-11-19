@@ -12,6 +12,7 @@ from __future__ import annotations
 from fastapi import APIRouter
 from gateway_api.dependencies import platform_settings
 from gateway_api.proxy_table import ProxyRoute, register_proxy_routes
+from runefoble_platform.service_client import owner_routes
 
 SERVICE = "the_watcher"
 LLM_TIMEOUT_S = platform_settings.watcher_llm_proxy_timeout_s
@@ -53,10 +54,11 @@ ROUTES = (
     ProxyRoute(
         "POST",
         "/api/v1/watcher/narrate",
-        ("api", "v1", "watcher", "narrate"),
+        (),
         SERVICE,
         name="watcher_narrate",
         doc="Generate atmospheric narration and DM rulings (The Watcher; DM only).",
+        owner=owner_routes.narrate,
         body="json",
         principal=True,
         timeout=LLM_TIMEOUT_S,
@@ -136,10 +138,11 @@ ROUTES = (
     ProxyRoute(
         "POST",
         "/api/v1/watcher/actions/propose",
-        ("api", "v1", "watcher", "actions", "propose"),
+        (),
         SERVICE,
         name="watcher_propose_action",
         doc="Propose an AI game action with a pre-execution pause window (The Watcher).",
+        owner=owner_routes.propose_action,
         body="json",
         principal=True,
     ),
