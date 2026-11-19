@@ -29,6 +29,7 @@ Runefoble is designed around a Kubernetes-first microservices topology deployed 
 ### 1. PostgreSQL (Relational Datastore & Event Persistence)
 - **Role**: Durable persistence for events (`eventsource-py`), projections, and downstream service databases.
 - **Initialization**: ConfigMap `/docker-entrypoint-initdb.d/init-multidb.sh` automatically provisions dedicated application and platform databases upon container startup with permissions granted to the default user (`runefoble_user`).
+- **Storage**: The Helm chart runs PostgreSQL as a StatefulSet named `postgres`. Its data claim `data` mounts at `/var/lib/postgresql/data`. The data directory is `pgdata` inside the claim (`PGDATA`). Size and storage class come from `postgres.persistence.size` (default `5Gi`) and `postgres.persistence.storageClass` (default empty, which uses the cluster default). The init script runs only on an empty data directory. A pod restart keeps every database. Deleting the claim deletes the data.
 - **Databases**:
   - `runefoble`: Primary application state and domain event tables (`events`, with `runefoble_events` alias/table configuration).
   - `zitadel`: Identity provider database schema.
@@ -51,6 +52,7 @@ Runefoble is designed around a Kubernetes-first microservices topology deployed 
 - **Role**: High-throughput distributed event bus powering pub/sub across bounded contexts.
 - **Topics**: `runefoble.events.session`, `runefoble.events.board`, `runefoble.events.character`, `runefoble.events.voice`.
 - **Environment Variables**: `RUNEFOBLE_REDIS_URL`.
+- **Storage**: The chart runs Redis as a StatefulSet named `runefoble-redis`. The append-only file is on the data claim `data` at `/data` (`--appendonly yes`). Stream entries and consumer group positions survive a pod restart. Size comes from `redis.persistence.size` (default `1Gi`). Decision: persist. Without the file, a restart drops every stream entry and every pending message that a consumer read but did not acknowledge. The domain record stays in PostgreSQL, but the stream projections (for example Campaign Analytics) would lose those messages.
 - **Reference Guide**: [Redis Streams Event Bus](redis-streams-event-bus.md).
 
 ### 3. SpiceDB (Fine-Grained Zanzibar Authorization)
@@ -86,6 +88,7 @@ Runefoble is designed around a Kubernetes-first microservices topology deployed 
 ### 5. Silo S3 (Object Storage)
 - **Role**: S3-compatible media asset storage for character avatars, map images, audio chronicles, and rule compendiums.
 - **Buckets**: `runefoble-assets`, `runefoble-recordings`.
+- **Storage**: The chart runs Silo as a StatefulSet named `silo`. Its data claim `data` mounts at `/data`, the server data path. Size and storage class come from `silo.persistence.size` (default `10Gi`) and `silo.persistence.storageClass` (default empty). A pod restart keeps every object. Deleting the claim deletes every object.
 - **Environment Variables**: `RUNEFOBLE_SILO_ENDPOINT`, `RUNEFOBLE_SILO_ACCESS_KEY`, `RUNEFOBLE_SILO_SECRET_KEY`, `RUNEFOBLE_SILO_BUCKET_ASSETS`.
 - **Buckets**: The chart creates no buckets. Create `runefoble-assets` and `runefoble-recordings` on the Silo endpoint before the first upload, for example with the MinIO client (`mc mb`). Asset Forge stores its objects in `runefoble-assets`.
 - **Failure Behaviour**: Every write, read, and delete goes to Silo. A transport error or a non-2xx status raises `AssetStorageError`. Forge and gateway routes return `503 Service Unavailable`. No object is stored and no asset id is issued. Nothing is written to process memory.
