@@ -41,9 +41,9 @@ def get_session(session_id: str) -> OwnerRoute:
     return OwnerRoute("GET", _session(session_id))
 
 
-def start_combat(session_id: str) -> OwnerRoute:
-    """POST: start a combat encounter in a game session."""
-    return OwnerRoute("POST", _session(session_id, "combat", "start"))
+def start_encounter(session_id: str) -> OwnerRoute:
+    """POST: start combat and record the enemy placements on one event. The owner checks `control`."""
+    return OwnerRoute("POST", _session(session_id, "encounters", "start"))
 
 
 def get_combat_state(session_id: str) -> OwnerRoute:
@@ -145,11 +145,6 @@ def clear_condition(character_id: str, condition: str) -> OwnerRoute:
 
 
 # board_state
-
-
-def create_board() -> OwnerRoute:
-    """POST: create the board of a session."""
-    return OwnerRoute("POST", path("api", "v1", "boards"))
 
 
 def get_board(session_id: str) -> OwnerRoute:

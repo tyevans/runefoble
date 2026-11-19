@@ -29,7 +29,6 @@ if TYPE_CHECKING:
 
 TIMEOUT_SECONDS = 5.0
 
-TokenType = Literal["pc", "monster", "npc", "obstacle", "loot"]
 InitiatedBy = Literal["player", "the_watcher", "stand_in"]
 
 
@@ -141,21 +140,6 @@ class OwningServices:
             raise ServiceUnavailableError(f"{service} returned a JSON value that is not an object")
         return decoded
 
-    async def create_board(
-        self, *, session_id: str, campaign_id: str | None, cols: int, rows: int
-    ) -> dict[str, Any]:
-        """Create the board for a session. The caller checks first that the session has none.
-
-        board_state refuses a request with no campaign and a caller who cannot run the campaign.
-        """
-        route = owner_routes.create_board()
-        return await self._json(
-            "board_state",
-            route.method,
-            route.path,
-            {"session_id": session_id, "campaign_id": campaign_id, "cols": cols, "rows": rows},
-        )
-
     async def get_board(self, session_id: str) -> dict[str, Any]:
         """Read the board state for a session."""
         route = owner_routes.get_board(session_id)
@@ -166,14 +150,16 @@ class OwningServices:
         route = owner_routes.get_session(session_id)
         return await self._json("game_session", route.method, route.path)
 
-    async def start_combat(
-        self, session_id: str, *, combatants: list[dict[str, Any]]
+    async def start_encounter(
+        self, session_id: str, *, enemies: list[dict[str, Any]]
     ) -> dict[str, Any]:
-        """Start a combat encounter in a game session and return its combat state."""
-        route = owner_routes.start_combat(session_id)
-        return await self._json(
-            "game_session", route.method, route.path, {"combatants": combatants}
-        )
+        """Start combat and record the enemy placements in one game_session write.
+
+        board_state places the tokens later, from the session event. The reply holds the
+        combat state and the placements that game_session accepted.
+        """
+        route = owner_routes.start_encounter(session_id)
+        return await self._json("game_session", route.method, route.path, {"enemies": enemies})
 
     async def get_combat_state(self, session_id: str) -> dict[str, Any]:
         """Read the combat round, active combatant, and initiative order from game_session."""
@@ -235,33 +221,6 @@ class OwningServices:
             route.method,
             route.path,
             {"condition": condition, "duration_rounds": duration_rounds, "source": source},
-        )
-
-    async def place_token(
-        self,
-        session_id: str,
-        *,
-        name: str,
-        token_type: TokenType,
-        x: int,
-        y: int,
-        hp: int | None,
-        is_friendly: bool,
-    ) -> dict[str, Any]:
-        """Place a token on the board and return its stored state."""
-        route = owner_routes.place_token(session_id)
-        return await self._json(
-            "board_state",
-            route.method,
-            route.path,
-            {
-                "name": name,
-                "token_type": token_type,
-                "x": x,
-                "y": y,
-                "hp": hp,
-                "is_friendly": is_friendly,
-            },
         )
 
     async def move_token(

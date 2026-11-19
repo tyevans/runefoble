@@ -35,6 +35,12 @@ class EncounterEnemy(BaseModel):
     cr: float = Field(ge=0)
 
 
+class StartEncounterResponse(CombatStateResponse):
+    """The combat state after the start, and the enemy placements that the start recorded."""
+
+    placements: list[dict[str, object]] = Field(default_factory=list)
+
+
 class StartEncounterRequest(BaseModel):
     """The enemies of a new encounter. The gateway reads each challenge rating first."""
 
@@ -70,27 +76,29 @@ def _placements(enemies: list[EncounterEnemy]) -> list[dict[str, object]]:
 
 @router.post(
     "/api/v1/sessions/{session_id}/encounters/start",
-    response_model=CombatStateResponse,
+    response_model=StartEncounterResponse,
 )
 async def start_encounter(
     session_id: UUID,
     req: StartEncounterRequest,
     actor: str = Depends(session_permission("control")),
-) -> CombatStateResponse:
+) -> StartEncounterResponse:
     """Start combat and record the enemy placements on one event. Answer 200 after that save."""
     session = await load_if_exists(_repo, session_id)
     if session is None:
         raise HTTPException(status_code=404, detail=f"Session not found: {session_id}")
     grid = EncounterGridSettings()
+    placements = _placements(req.enemies)
     try:
         session.start_combat(
             combatants=_combatants(req.enemies),
             board_cols=grid.cols,
             board_rows=grid.rows,
-            placements=_placements(req.enemies),
+            placements=placements,
             initiated_by=actor,
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
     await _repo.save(session)
-    return _build_combat_response(session)
+    combat = _build_combat_response(session)
+    return StartEncounterResponse(**combat.model_dump(), placements=placements)
