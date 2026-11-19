@@ -98,6 +98,8 @@ Response (default placeholder):
 
 ## 3. Unlocking and Equipping Wardrobe Variants
 
+The gateway serves the same two routes at the same paths. It forwards each call and holds no wardrobe state. `character_sheet` checks `view` or `edit` for the caller.
+
 ### Adding an Unlocked Variant to a Character
 Register the forged variant on the character's wardrobe gallery:
 ```http

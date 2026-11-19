@@ -375,6 +375,9 @@ Campaign Lore routes require a verified bearer token, except `/health`, `/health
 | `gateway-api` | POST | `/api/v1/characters/{character_id}/spells/prepare` | Proxies to `character_sheet`: prepares or unprepares a spell (requires `edit`) |
 | `gateway-api` | PUT | `/api/v1/characters/{character_id}/guardrails` | Configures tactical guardrail constraints for character stand-in AI (requires `edit`) |
 | `gateway-api` | GET | `/api/v1/characters/{character_id}/guardrails` | Retrieves active tactical guardrails for character stand-in AI (requires `view`) |
+| `gateway-api` | GET | `/api/v1/characters/{character_id}/wardrobe` | Proxies to `character_sheet`: lists the unlocked wardrobe variants (the owner checks `view`) |
+| `gateway-api` | POST | `/api/v1/characters/{character_id}/wardrobe` | Proxies to `character_sheet`: adds a wardrobe variant (the owner checks `edit`). Body fields as in the owner route |
+| `gateway-api` | POST | `/api/v1/characters/{character_id}/portrait/active` | Proxies to `character_sheet`: switches the active portrait to a wardrobe variant or a custom image (the owner checks `edit`) |
 | `gateway-api` | GET | `/api/v1/auth/sync/health` | Reports Zanzibar synchronization service health and SpiceDB connectivity |
 | `gateway-api` | POST | `/api/v1/sessions/{session_id}/start` | Transitions session from lobby to active and broadcasts launch event over WebSockets (requires `run_session`) |
 | `gateway-api` | POST | `/api/v1/sessions/{session_id}/hot-swap` | Hands off character control from AI stand-in to returning player mid-session (requires `play_as_character`) |
