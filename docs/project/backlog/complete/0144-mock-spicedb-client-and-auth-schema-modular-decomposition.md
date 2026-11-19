@@ -23,10 +23,10 @@ pr_url: https://github.com/tyevans/runefoble/pull/163
 Complete
 
 ## Summary
-Decompose `libs/runefoble_auth/src/runefoble_auth/mock_spicedb.py` (457 lines, 91.4% of limit) into clean, single-responsibility submodules under `libs/runefoble_auth/src/runefoble_auth/mock/` (`client.py`, `evaluator.py`, `schema_parser.py`) with facade re-exports in `mock_spicedb.py`, ensuring all auth mock modules remain < 160 lines per Hard Invariant 6.
+Decompose `libs/runefoble_auth/src/runefoble_auth/mock_spicedb.py` (removed) (457 lines, 91.4% of limit) into clean, single-responsibility submodules under `libs/runefoble_auth/src/runefoble_auth/mock/` (`client.py`, `evaluator.py`, `schema_parser.py`) with facade re-exports in `mock_spicedb.py` (removed), ensuring all auth mock modules remain < 160 lines per Hard Invariant 6.
 
 ## Problem Statement
-`libs/runefoble_auth/src/runefoble_auth/mock_spicedb.py` currently contains in-memory relationship tuple stores, Zed schema parsing, recursive graph-reachability checks, caveat evaluations, and gRPC client mock stubs across 457 lines. With new relations added for West Marches guilds, multi-campaign shared frontiers, and caravan trading, this file will soon cross the 500-line hard invariant ceiling.
+`libs/runefoble_auth/src/runefoble_auth/mock_spicedb.py` (removed) currently contains in-memory relationship tuple stores, Zed schema parsing, recursive graph-reachability checks, caveat evaluations, and gRPC client mock stubs across 457 lines. With new relations added for West Marches guilds, multi-campaign shared frontiers, and caravan trading, this file will soon cross the 500-line hard invariant ceiling.
 
 ## Governing Architecture & ADRs
 - **ADR-0001: Fine-Grained Authorization with SpiceDB Zanzibar**: Clean mock implementation of Zanzibar relational authorization supporting local testing without a live SpiceDB container.
@@ -44,7 +44,7 @@ Decompose `libs/runefoble_auth/src/runefoble_auth/mock_spicedb.py` (457 lines, 9
    - Extract recursive Zanzibar permission resolution, arrow expressions, and caveat evaluation (< 140 lines).
 3. **Mock Client Implementation (`libs/runefoble_auth/src/runefoble_auth/mock/client.py`)**:
    - Extract relationship tuple store, read/write relationships, touch tuples, and check permission methods (< 150 lines).
-4. **Mock Client Facade (`libs/runefoble_auth/src/runefoble_auth/mock_spicedb.py`)**:
+4. **Mock Client Facade (`libs/runefoble_auth/src/runefoble_auth/mock_spicedb.py` (removed))**:
    - Re-export `MockSpiceDBClient` maintaining 100% backward compatibility for all callers and test suites (< 50 lines).
 
 ## INVEST Criteria Evaluation
@@ -58,7 +58,7 @@ Decompose `libs/runefoble_auth/src/runefoble_auth/mock_spicedb.py` (457 lines, 9
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
 1. **Modular Architecture**:
    - `libs/runefoble_auth/src/runefoble_auth/mock/` created with `schema_parser.py`, `evaluator.py`, and `client.py`.
-   - `mock_spicedb.py` reduced to < 60 lines facade re-export.
+   - `mock_spicedb.py` (removed) reduced to < 60 lines facade re-export.
 2. **Line Count Invariant**:
    - Zero files exceeding 180 lines within `libs/runefoble_auth/src/runefoble_auth/`.
 3. **Test Suite Verification**:
