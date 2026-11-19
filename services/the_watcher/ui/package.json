@@ -11,6 +11,7 @@
     "./runefoble-watcher-feed": "./src/runefoble-watcher-feed.ts",
     "./runefoble-autonomous-dm": "./src/runefoble-autonomous-dm.ts",
     "./runefoble-dm-whisper-bar": "./src/runefoble-dm-whisper-bar.ts",
+    "./whisper-actions": "./src/whisper-actions.ts",
     "./runefoble-faction-radar": "./src/runefoble-faction-radar.ts",
     "./faction_radar": "./src/faction_radar/index.ts",
     "./faction_radar/radar-svg.template": "./src/faction_radar/radar-svg.template.ts",
@@ -23,6 +24,7 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
+    "test": "node --experimental-strip-types --test test/*.test.ts",
     "build": "tsc --noEmit"
   },
   "dependencies": {
