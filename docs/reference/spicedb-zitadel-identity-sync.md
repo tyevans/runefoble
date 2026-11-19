@@ -176,10 +176,18 @@ The sync code is split into three modules. Each module stays under the 500-line 
 
 ## Resilience and Retry Policy
 
-`ZitadelSpiceDBSyncService` runs each SpiceDB write and delete with exponential backoff (`sync.py`, `sync_tuples.py`):
+`ZitadelSpiceDBSyncService` runs each SpiceDB write and delete through `execute_with_retry` (`sync.py`, `sync_tuples.py`). Only a transport failure is retried. Every other error is permanent.
+
+| Error | Retried | Behaviour |
+|---|---|---|
+| `AuthzUnavailableError` (SpiceDB did not answer) | Yes | Makes up to `max_retries` attempts. Logs a warning for each failed attempt. Raises the error after the last attempt. |
+| `AuthzSchemaError` (name not in `runefoble.zed`) | No | Raised on the first attempt. Not logged as a transient failure. |
+| `AuthzWriteError` (SpiceDB refused the write) | No | Raised on the first attempt. |
+| Any other exception | No | Raised on the first attempt. It is a defect. |
 
 - Default `max_retries`: 3 attempts.
 - Default base delay: 50 ms. The delay before retry `n` is `retry_delay * 2^(n - 1)`.
+- Known gap: the gRPC write adapter (`grpc_adapter.py`, `write_error_for`) maps `UNAVAILABLE` and `DEADLINE_EXCEEDED` on a write to `AuthzWriteError`. The read and check paths map them to `AuthzUnavailableError`. A transient write outage is therefore not retried. The adapter classification is open.
 
 There is no fallback to an in-memory client:
 

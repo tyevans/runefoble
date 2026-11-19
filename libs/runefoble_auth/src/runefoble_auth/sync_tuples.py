@@ -9,6 +9,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
+from runefoble_auth.errors import AuthzUnavailableError
 from runefoble_auth.mock.client import Relationship
 
 logger = logging.getLogger(__name__)
@@ -52,18 +53,22 @@ async def execute_with_retry(
     *args: Any,
     **kwargs: Any,
 ) -> Any:
-    """Execute SpiceDB operation with exponential backoff on transient errors."""
-    last_exc: Exception | None = None
+    """Execute a SpiceDB operation. Retry only `AuthzUnavailableError`, with exponential backoff.
+
+    Every other exception is permanent (a schema rejection, a refused write, or a defect).
+    It propagates on the first attempt and is not logged as a transient failure.
+    """
+    if max_retries < 1:
+        raise ValueError(f"max_retries must be at least 1, got {max_retries}")
     for attempt in range(1, max_retries + 1):
         try:
             return await coro_func(*args, **kwargs)
-        except Exception as exc:
-            last_exc = exc
-            logger.warning("SpiceDB sync failed (attempt %d/%d): %s", attempt, max_retries, exc)
-            if attempt < max_retries:
-                await asyncio.sleep(retry_delay_seconds * (2 ** (attempt - 1)))
-    if last_exc:
-        raise last_exc
+        except AuthzUnavailableError as exc:
+            if attempt == max_retries:
+                raise
+            logger.warning("SpiceDB unavailable (attempt %d/%d): %s", attempt, max_retries, exc)
+            await asyncio.sleep(retry_delay_seconds * (2 ** (attempt - 1)))
+    raise AssertionError("unreachable: the final attempt either returns or raises")
 
 
 async def _mutate(

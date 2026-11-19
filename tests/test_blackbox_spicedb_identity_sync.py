@@ -17,6 +17,7 @@ import pytest
 from fastapi.testclient import TestClient
 from gateway_api.auth import get_spicedb_client
 from gateway_api.main import app
+from runefoble_auth.errors import AuthzUnavailableError
 from runefoble_auth.sync import ZitadelSpiceDBSyncService
 from runefoble_events.events import SessionCreated
 from runefoble_platform.redis_bus import RedisStreamsEventBus
@@ -214,7 +215,7 @@ async def test_redis_streams_event_bus_deserialization_and_sync(client) -> None:
 
 @pytest.mark.asyncio
 async def test_sync_resilience_and_retry() -> None:
-    """Verify that ZitadelSpiceDBSyncService retries on transient connection errors."""
+    """Verify that ZitadelSpiceDBSyncService retries on transient SpiceDB unavailability."""
     call_count = 0
 
     class FlakySpiceDB:
@@ -222,7 +223,7 @@ async def test_sync_resilience_and_retry() -> None:
             nonlocal call_count
             call_count += 1
             if call_count < 3:
-                raise ConnectionError("Transient network timeout")
+                raise AuthzUnavailableError("SpiceDB did not answer")
 
     flaky_client = FlakySpiceDB()
     service = ZitadelSpiceDBSyncService(
