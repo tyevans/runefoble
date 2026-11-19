@@ -19,9 +19,13 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 from voice_agent.main import app
-from voice_agent.synthesis_engine import set_speech_synthesizer
 
-from tests.helpers.audio_synth import generate_pcm_sine
+from tests.helpers.audio_synth import (
+    build_speech_seams_from_env,
+    generate_pcm_sine,
+    keep_speech_seams,
+)
+from tests.helpers.module_state import SeamRestorer
 from tests.helpers.spicedb_factory import grant_voice_session
 from tests.helpers.voice_identity import voice_auth_headers
 
@@ -73,11 +77,10 @@ def client(fake_speech_synthesizer) -> TestClient:
 
 
 @pytest.fixture
-def production_tts() -> Generator[None]:
-    """Route synthesis through the production adapter. Tests set the binary path."""
-    set_speech_synthesizer(None)
+def production_tts(seam_restorer: SeamRestorer) -> Generator[None]:
+    """Route synthesis through the production adapter. Tests set the binary path, then rebuild the engine."""
+    keep_speech_seams(seam_restorer)
     yield
-    set_speech_synthesizer(None)
 
 
 def test_audio_length_grows_with_text_length(client: TestClient):
@@ -166,6 +169,7 @@ def test_unavailable_engine_returns_503_and_no_audio(
 ):
     """When the engine binary is missing, the route fails with 503 and returns no audio."""
     monkeypatch.setenv("RUNEFOBLE_VOICE_TTS_BINARY", str(tmp_path / "missing-espeak-ng"))
+    build_speech_seams_from_env()
     client = TestClient(app, headers=voice_auth_headers())
 
     resp = client.post(TTS_URL, json={"text": LONG_TEXT, "persona_id": "watcher_dm"})
@@ -186,6 +190,7 @@ def test_engine_failure_exit_status_returns_503(
     script.write_text("#!/bin/sh\necho 'voice data missing' >&2\nexit 2\n")
     script.chmod(script.stat().st_mode | stat.S_IXUSR)
     monkeypatch.setenv("RUNEFOBLE_VOICE_TTS_BINARY", str(script))
+    build_speech_seams_from_env()
     client = TestClient(app, headers=voice_auth_headers())
 
     resp = client.post(TTS_URL, json={"text": LONG_TEXT, "persona_id": "watcher_dm"})
@@ -204,6 +209,7 @@ def test_production_adapter_returns_the_audio_the_engine_wrote(
     script.write_text(f'#!/bin/sh\ncat "{engine_wav}"\n')
     script.chmod(script.stat().st_mode | stat.S_IXUSR)
     monkeypatch.setenv("RUNEFOBLE_VOICE_TTS_BINARY", str(script))
+    build_speech_seams_from_env()
     client = TestClient(app, headers=voice_auth_headers())
 
     data = _speak(client, LONG_TEXT)
@@ -224,6 +230,7 @@ def test_health_reports_active_tts_engine(
     script.write_text("#!/bin/sh\necho 'eSpeak NG stub'\nexit 0\n", encoding="utf-8")
     script.chmod(0o755)
     monkeypatch.setenv("RUNEFOBLE_VOICE_TTS_BINARY", str(script))
+    build_speech_seams_from_env()
 
     resp = TestClient(app, headers=voice_auth_headers()).get("/healthz")
 

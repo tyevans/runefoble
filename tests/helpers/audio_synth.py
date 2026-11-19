@@ -18,6 +18,7 @@ from voice_agent.main import (
 from voice_agent.main import (
     set_watcher_client,
 )
+from voice_agent.speech_settings import VoiceAgentSettings, build_synthesizer, build_transcriber
 from voice_agent.stt import (
     StreamingAudioPipeline,
     get_streaming_pipeline,
@@ -123,6 +124,27 @@ def fake_speech_synthesizer(seam_restorer: SeamRestorer) -> Generator[FixtureSyn
     fake = FixtureSynthesizer()
     seam_restorer.replace(get_speech_synthesizer, set_speech_synthesizer, fake)
     yield fake
+
+
+def keep_speech_seams(seam_restorer: SeamRestorer) -> None:
+    """Record the STT pipeline and TTS engine, and put them back at teardown.
+
+    Call this before the test sets its environment. The seam getters build lazily from the
+    environment, so a value built after the environment changed would leak into later tests.
+    """
+    seam_restorer.keep(get_streaming_pipeline, set_streaming_pipeline)
+    seam_restorer.keep(get_speech_synthesizer, set_speech_synthesizer)
+
+
+def build_speech_seams_from_env() -> None:
+    """Build the STT pipeline and TTS engine from the current environment.
+
+    Call this after the test sets its environment. `keep_speech_seams` restores the values at teardown.
+    """
+    set_streaming_pipeline(
+        StreamingAudioPipeline(transcriber=build_transcriber(VoiceAgentSettings()))
+    )
+    set_speech_synthesizer(build_synthesizer(VoiceAgentSettings()))
 
 
 @pytest.fixture

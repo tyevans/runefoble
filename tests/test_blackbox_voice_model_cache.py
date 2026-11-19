@@ -14,9 +14,8 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 from voice_agent.main import app
-from voice_agent.stt import get_streaming_pipeline, set_streaming_pipeline
-from voice_agent.synthesis_engine import get_speech_synthesizer, set_speech_synthesizer
 
+from tests.helpers.audio_synth import build_speech_seams_from_env, keep_speech_seams
 from tests.helpers.module_state import SeamRestorer
 from tests.helpers.voice_identity import voice_auth_headers
 
@@ -59,12 +58,12 @@ def speech_env(
     seam_restorer: SeamRestorer,
 ) -> Generator[None]:
     """Configure the voice agent with the stub binary and a model cache, download disabled."""
+    keep_speech_seams(seam_restorer)
     monkeypatch.setenv("RUNEFOBLE_VOICE_TTS_BINARY", str(espeak_stub))
     monkeypatch.setenv("RUNEFOBLE_VOICE_STT_MODEL_SIZE", MODEL_SIZE)
     monkeypatch.setenv("RUNEFOBLE_VOICE_STT_MODEL_DIR", str(model_dir))
     monkeypatch.setenv("RUNEFOBLE_VOICE_STT_DOWNLOAD_ENABLED", "false")
-    seam_restorer.replace(get_streaming_pipeline, set_streaming_pipeline, None)
-    seam_restorer.replace(get_speech_synthesizer, set_speech_synthesizer, None)
+    build_speech_seams_from_env()
     yield
 
 
@@ -109,7 +108,7 @@ def test_health_is_ready_when_download_is_enabled_and_cache_is_empty(
 ):
     """Local development may download the model on first use, so an empty cache is ready."""
     monkeypatch.setenv("RUNEFOBLE_VOICE_STT_DOWNLOAD_ENABLED", "true")
-    set_streaming_pipeline(None)
+    build_speech_seams_from_env()
 
     resp = TestClient(app, headers=voice_auth_headers()).get("/healthz")
 
@@ -122,7 +121,7 @@ def test_health_is_not_ready_when_speech_binary_is_missing(
     """A missing espeak-ng binary fails the readiness check. It does not degrade silently."""
     _cache_model(model_dir)
     monkeypatch.setenv("RUNEFOBLE_VOICE_TTS_BINARY", str(tmp_path / "absent" / "espeak-ng"))
-    set_speech_synthesizer(None)
+    build_speech_seams_from_env()
 
     resp = TestClient(app, headers=voice_auth_headers()).get("/healthz")
 
@@ -142,7 +141,7 @@ def test_health_is_not_ready_when_speech_binary_version_check_fails(
     broken.write_text("#!/bin/sh\necho 'no audio device' >&2\nexit 3\n", encoding="utf-8")
     broken.chmod(0o755)
     monkeypatch.setenv("RUNEFOBLE_VOICE_TTS_BINARY", str(broken))
-    set_speech_synthesizer(None)
+    build_speech_seams_from_env()
 
     resp = TestClient(app, headers=voice_auth_headers()).get("/healthz")
 
