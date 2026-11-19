@@ -61,6 +61,12 @@ ingress:
           pathType: Prefix
           service: mailpit
           port: 8025
+        # board_state owns the board socket. gateway-api has no /ws/boards route. Traefik gives
+        # the longer prefix the higher priority, so this rule wins over /ws (TASK-0928).
+        - path: /ws/boards
+          pathType: Prefix
+          service: board-state
+          port: 8002
         - path: /ws
           pathType: Prefix
           service: gateway-api
@@ -99,6 +105,12 @@ ingress:
           pathType: Prefix
           service: mailpit
           port: 8025
+        # board_state owns the board socket. gateway-api has no /ws/boards route. Traefik gives
+        # the longer prefix the higher priority, so this rule wins over /ws (TASK-0928).
+        - path: /ws/boards
+          pathType: Prefix
+          service: board-state
+          port: 8002
         - path: /ws
           pathType: Prefix
           service: gateway-api

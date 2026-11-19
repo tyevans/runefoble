@@ -57,3 +57,23 @@ def test_ingress_keeps_api_route_to_gateway():
         api_routes = [p for p in rule["http"]["paths"] if p["path"] == "/api"]
         assert api_routes, f"host {rule['host']} lost its /api route"
         assert api_routes[0]["backend"]["service"]["name"] == "gateway-api"
+
+
+def test_ingress_routes_board_socket_path_to_board_state_on_every_host():
+    """Every application host sends /ws/boards/... to board-state:8002, which owns the board socket.
+
+    gateway-api has no /ws/boards route. Traefik gives the longer prefix the higher priority, and
+    the rule is listed before /ws, so the board socket never reaches the gateway (TASK-0928).
+    """
+    for rule in _app_rules():
+        paths = rule["http"]["paths"]
+        board_routes = [p for p in paths if p["path"] == "/ws/boards"]
+        assert board_routes, f"host {rule['host']} has no /ws/boards path"
+        route = board_routes[0]
+        assert route["pathType"] == "Prefix"
+        assert route["backend"]["service"]["name"] == "board-state"
+        assert route["backend"]["service"]["port"]["number"] == 8002
+        listed = [p["path"] for p in paths]
+        assert listed.index("/ws/boards") < listed.index("/ws"), (
+            f"host {rule['host']} lists /ws/boards after /ws"
+        )
