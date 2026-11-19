@@ -1,7 +1,7 @@
 # ADR-0021: Bounded Context Packages Inside game_session
 
 ## Status
-Proposed
+Accepted (2026-11-19). The user chose five packages, `profile/` in `campaign`, and the stronghold in `downtime`.
 
 ## Context
 `services/game_session` holds about 15,700 lines of Python in a flat layout (`services/game_session/src/game_session/`). The architecture overview describes the service as "active sessions, turns, dice, and spectator view". The code holds more domains than that (TASK-0753, audit `refactor-r1/game-session.md` F4):
@@ -92,7 +92,7 @@ Rules for code that the table does not name:
 6. Domain events and their payloads in `libs/runefoble_events` are published language. Any package can consume them from Redis Streams.
 7. A permission check on a SpiceDB object of another domain is not an import. A package calls `runefoble_auth` with the object type and id from `runefoble.zed`.
 8. Ports to other services (Character Sheet, Voice Agent, The Watcher) follow the same rule. The consumer package declares the port. The adapter uses the shared `ServiceClient` (ADR-0015 (b)) and lives in `game_session/adapters/`.
-9. A lint contract enforces rules 1, 2, and 5. `make lint` runs it.
+9. An `import-linter` contract in `pyproject.toml` (`[tool.importlinter]`) enforces rules 1, 2, and 5. `make lint` runs it through `uv run lint-imports`.
 
 The current cross-package edges become these ports:
 
@@ -142,9 +142,9 @@ Each step is one backlog task. Each step keeps all blackbox suites green and the
 - **Negative**:
   - The moves change import paths across the service and about 170 test files that import `game_session`. Parallel work on `game_session` conflicts during each move. Each move is a short task that the orchestrator schedules alone.
   - Ports add code. `SessionOpener` and `SessionRoster` are small, but each needs an adapter and a container entry.
-  - The lint contract needs a tool or a configuration that the repository does not have now.
+  - Each move adds `import-linter` contracts. The tool is already in use (`pyproject.toml`, `[tool.importlinter]`).
 - **Neutral**:
-  - Two merchant models exist: `MerchantAggregate` (`merchants.py`, PRD-0014) in `downtime` and `NegotiationAggregate` (`settlement/haggling/`, PRD-0024) in `settlement`. This ADR does not merge them.
+  - Two merchant models exist: `MerchantAggregate` (`merchants.py`, PRD-0014) in `downtime` and `NegotiationAggregate` (`settlement/haggling/`, PRD-0024) in `settlement`. This ADR does not merge them. A separate ADR spike (TASK-0892) decides whether to merge them.
   - The UI package stays one package for the service (ADR-0013).
 
 ## References
