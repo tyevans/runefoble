@@ -14,31 +14,17 @@ Only the live SpiceDB client test writes or deletes tuples directly.
 
 import os
 from collections.abc import Iterator
-from contextlib import contextmanager
 from uuid import uuid4
 
 import httpx
 import pytest
 from fastapi.testclient import TestClient
-from game_session.dependencies import get_spicedb_client as get_session_spicedb
-from game_session.dependencies import set_spicedb_client as set_session_spicedb
 from gateway_api.main import app
 from runefoble_auth.bootstrap_schema import bootstrap_schema
 from runefoble_auth.spicedb import SpiceDBClient
 
 from tests.helpers.spicedb_factory import shared_spicedb_client
 from tests.helpers.ws_identity import bearer
-
-
-@contextmanager
-def _game_session_spicedb(client):
-    """Route game_session's own SpiceDB client to `client` for the duration of a live test."""
-    previous = get_session_spicedb()
-    set_session_spicedb(client)
-    try:
-        yield
-    finally:
-        set_session_spicedb(previous)
 
 
 @pytest.fixture
@@ -139,7 +125,7 @@ async def test_live_spicedb_frontdoor_role_assignment_and_checks(
     assert "definition campaign" in schema_text
     assert "relation dungeon_master: user" in schema_text
 
-    with shared_spicedb_client(live_client), _game_session_spicedb(live_client):
+    with shared_spicedb_client(live_client):
         tc = gateway_tc
         dm = bearer("dm_garrick", issuer=trusted_ws_issuer)
         player = bearer("player_talia", issuer=trusted_ws_issuer)
@@ -195,7 +181,7 @@ async def test_live_spicedb_relationship_deletion_and_revocation(
         token="test_deletion_token",
     )
     await bootstrap_schema(client=live_client)
-    with shared_spicedb_client(live_client), _game_session_spicedb(live_client):
+    with shared_spicedb_client(live_client):
         tc = gateway_tc
 
         owner = bearer("owner_revocation", issuer=trusted_ws_issuer)

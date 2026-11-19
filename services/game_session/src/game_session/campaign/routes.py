@@ -35,8 +35,8 @@ from game_session.campaign.schemas import (
     UpdateCampaignRequest,
 )
 from game_session.campaign.tuples import SpiceDB
-from game_session.dependencies import get_spicedb_client
 from game_session.settlement.auth.tokens import CallerPrincipal, get_principal
+from runefoble_auth.factory import get_spicedb_client
 
 router = APIRouter(
     dependencies=[Depends(get_principal)],

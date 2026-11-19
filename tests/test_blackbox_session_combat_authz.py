@@ -9,8 +9,8 @@ from uuid import uuid4
 import pytest
 import pytest_asyncio
 from game_session.main import app as session_app
-from game_session.main import set_spicedb_client as session_set_spicedb
 from httpx import ASGITransport, AsyncClient
+from runefoble_auth.factory import set_spicedb_client
 from runefoble_auth.spicedb import MockSpiceDBClient
 
 from tests.helpers.ws_identity import bearer
@@ -22,7 +22,7 @@ DM, PLAYER, SPECTATOR, STRANGER = "dm-user", "player-user", "spectator-user", "s
 
 @pytest.fixture
 def spicedb() -> Iterator[None]:
-    session_set_spicedb(MockSpiceDBClient())
+    set_spicedb_client(MockSpiceDBClient())
     yield
 
 

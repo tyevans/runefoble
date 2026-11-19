@@ -12,10 +12,8 @@ from game_session.campaign import campaign_router, register_campaign_error_handl
 from game_session.dependencies import (
     event_bus_provider,
     get_event_bus,
-    get_spicedb_client,
     repo,
     set_event_bus,
-    set_spicedb_client,
 )
 from game_session.profile import profile_router
 from game_session.routers import (
@@ -55,10 +53,8 @@ UI_MANIFEST = load_ui_manifest(
 __all__ = [
     "app",
     "get_event_bus",
-    "get_spicedb_client",
     "repo",
     "set_event_bus",
-    "set_spicedb_client",
 ]
 
 # Build the event store now. A deployed service without a reachable store refuses to start (TASK-0707).

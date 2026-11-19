@@ -4,7 +4,7 @@ A later test must see the previous client, not `None`. A `None` seam makes the n
 build a real SpiceDB client, so the check uses the process seam through its public getter.
 """
 
-from game_session.dependencies import get_spicedb_client, set_spicedb_client
+from runefoble_auth.factory import get_spicedb_client, set_spicedb_client
 from runefoble_auth.spicedb import MockSpiceDBClient
 
 from tests.helpers.module_state import restored_seam

@@ -11,12 +11,12 @@ import logging
 from typing import Any
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-from game_session.dependencies import get_spicedb_client
 from game_session.minigame_tables.service import TableNotFoundError, load_table, run_table_command
 from game_session.minigame_tables.ws_commands import table_command_for
 from game_session.minigame_tables.ws_manager import minigame_table_manager
 from game_session.settlement.auth import check_establishment_play_permission
 from game_session.settlement.auth.tokens import get_zitadel_auth_service
+from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.principal import BearerVerifier
 from runefoble_auth.websocket import WebSocketAuthorizer, admit_websocket, send_socket_error
 

@@ -9,11 +9,7 @@ from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException
 from game_session.child_index import ChildIndexKind
-from game_session.dependencies import (
-    get_event_bus,
-    get_settlement_repository,
-    get_spicedb_client,
-)
+from game_session.dependencies import get_event_bus, get_settlement_repository
 from game_session.queries import link_child, list_settlements_for_campaign
 from game_session.settlement.auth import (
     check_campaign_write_permission,
@@ -30,6 +26,7 @@ from game_session.settlement.models import (
     SettlementProjectionResponse,
 )
 from game_session.settlement.settlement_aggregate import SettlementAggregate
+from runefoble_auth.factory import get_spicedb_client
 from runefoble_platform.aggregate_loading import load_if_exists
 from runefoble_platform.identifiers import parse_uuid
 

@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+
 import pytest
-from runefoble_auth import factory
-from runefoble_auth.factory import get_spicedb_client
+from runefoble_auth.factory import get_spicedb_client, set_spicedb_client
+from runefoble_auth.mock.client import MockSpiceDBClient
 from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_platform.errors import ConfigurationError
 
@@ -12,8 +14,10 @@ KEY_VAR = "RUNEFOBLE_SPICEDB_PRESHARED_KEY"
 
 
 @pytest.fixture(autouse=True)
-def _fresh_factory(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(factory, "_client", None)
+def _fresh_factory() -> Iterator[None]:
+    set_spicedb_client(None)
+    yield
+    set_spicedb_client(None)
 
 
 def test_factory_builds_client_from_the_preshared_key_setting(
@@ -42,3 +46,21 @@ def test_factory_raises_configuration_error_when_key_is_missing(
 
     with pytest.raises(ConfigurationError, match=KEY_VAR):
         get_spicedb_client()
+
+
+def test_set_spicedb_client_replaces_the_shared_client(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv(KEY_VAR, "key-from-setting")
+    replacement = MockSpiceDBClient()
+
+    set_spicedb_client(replacement)
+
+    assert get_spicedb_client() is replacement
+
+
+def test_set_spicedb_client_none_forces_a_fresh_build(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv(KEY_VAR, "key-from-setting")
+    set_spicedb_client(MockSpiceDBClient())
+
+    set_spicedb_client(None)
+
+    assert isinstance(get_spicedb_client(), SpiceDBClient)

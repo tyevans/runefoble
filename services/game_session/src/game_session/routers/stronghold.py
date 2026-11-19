@@ -9,7 +9,7 @@ from typing import Any
 
 from eventsource import AggregateNotFoundError
 from fastapi import APIRouter, Depends, HTTPException
-from game_session.dependencies import get_event_bus, get_spicedb_client, stronghold_repo
+from game_session.dependencies import get_event_bus, stronghold_repo
 from game_session.events import STREAM_STRONGHOLD
 from game_session.settlement.auth.tokens import CallerId, get_principal
 from game_session.stronghold import (
@@ -19,6 +19,7 @@ from game_session.stronghold import (
     StrongholdState,
 )
 from pydantic import BaseModel, ConfigDict, Field
+from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.permissions import require_subject
 from runefoble_platform.event_publish import publish_or_fail
 from runefoble_platform.identifiers import parse_uuid

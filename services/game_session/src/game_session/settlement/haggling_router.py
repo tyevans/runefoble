@@ -15,7 +15,6 @@ from game_session.dependencies import (
     get_establishment_repository,
     get_event_bus,
     get_negotiation_repository,
-    get_spicedb_client,
     get_worker_repository,
 )
 from game_session.events import STREAM_TAVERN, STREAM_WEST_MARCHES
@@ -36,6 +35,7 @@ from game_session.settlement.haggling_models import (
     NegotiationSessionState,
     StartNegotiationRequest,
 )
+from runefoble_auth.factory import get_spicedb_client
 from runefoble_platform.aggregate_loading import load_if_exists
 from runefoble_platform.event_publish import publish_or_fail
 from runefoble_platform.identifiers import parse_uuid

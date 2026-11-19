@@ -8,8 +8,8 @@ import pytest
 from character_sheet.main import app as character_app
 from game_session.character_client import CHARACTER_SHEET_URL_ENV
 from game_session.main import app as session_app
-from game_session.main import set_spicedb_client as session_set_spicedb
 from httpx import ASGITransport, AsyncClient
+from runefoble_auth.factory import set_spicedb_client
 from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_events.events import CharacterControlTransferred
 from runefoble_platform.redis_bus import deserialize_event
@@ -58,7 +58,7 @@ async def test_mid_session_hot_swap_takeover_and_turn_continuity(
     """POST /api/v1/sessions/{id}/hot-swap smoothly transfers control in <100ms, preserving combat order."""
     use_redis_client(mock_redis)
     spicedb = MockSpiceDBClient()
-    session_set_spicedb(spicedb)
+    set_spicedb_client(spicedb)
 
     async with AsyncClient(
         transport=ASGITransport(app=session_app),
@@ -155,7 +155,7 @@ async def test_hot_swap_unauthorized_user_rejected_by_spicedb(
     """A player who does not own the character cannot hot-swap into its stand-in."""
     use_redis_client(mock_redis)
     spicedb = MockSpiceDBClient()
-    session_set_spicedb(spicedb)
+    set_spicedb_client(spicedb)
 
     async with AsyncClient(
         transport=ASGITransport(app=session_app),
@@ -195,7 +195,7 @@ async def test_hot_swap_returns_502_when_character_sheet_is_not_configured(
     monkeypatch.delenv(CHARACTER_SHEET_URL_ENV, raising=False)
     use_redis_client(mock_redis)
     spicedb = MockSpiceDBClient()
-    session_set_spicedb(spicedb)
+    set_spicedb_client(spicedb)
 
     async with AsyncClient(
         transport=ASGITransport(app=session_app),

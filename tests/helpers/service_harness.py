@@ -36,8 +36,8 @@ VerifierScope = Literal["session", "test", "on_demand"]
 class ServiceSeams:
     """The seam modules of one service.
 
-    `spicedb` and `bus` name a module that has `get_/set_spicedb_client` or
-    `get_/set_event_bus`. `verifier` names a module that has `get_/set_zitadel_auth_service`.
+    `bus` names a module that has `get_/set_event_bus`. `verifier` names a module that has
+    `get_/set_zitadel_auth_service`. The SpiceDB client has one seam, `runefoble_auth.factory`.
     `verifier_scope` says when the shared test issuer is trusted there:
     - `session`: for the whole session (module-scoped live upstreams send signed requests).
     - `test`: for every test, restored after it.
@@ -45,7 +45,6 @@ class ServiceSeams:
     """
 
     name: str
-    spicedb: str | None = None
     bus: str | None = None
     verifier: str | None = None
     verifier_scope: VerifierScope | None = None
@@ -77,14 +76,12 @@ SERVICE_SEAMS: tuple[ServiceSeams, ...] = (
     ),
     ServiceSeams(
         "character_sheet",
-        spicedb="character_sheet.dependencies",
         bus="character_sheet.dependencies",
         verifier="character_sheet.dependencies",
         verifier_scope="test",
     ),
     ServiceSeams(
         "game_session",
-        spicedb="game_session.dependencies",
         bus="game_session.dependencies",
         verifier="game_session.settlement.auth.tokens",
         verifier_scope="on_demand",
@@ -95,9 +92,7 @@ SERVICE_SEAMS: tuple[ServiceSeams, ...] = (
         verifier="gateway_api.auth",
         verifier_scope="on_demand",
     ),
-    ServiceSeams(
-        "gateway_mcp", spicedb="gateway_mcp.dynamic.auth", bus="gateway_mcp.dynamic.events"
-    ),
+    ServiceSeams("gateway_mcp", bus="gateway_mcp.dynamic.events"),
     ServiceSeams(
         "rules_compendium",
         verifier="rules_compendium.dependencies",
@@ -126,11 +121,11 @@ def _check_seam_modules_at_collection() -> None:
     whole run at collection. No seam is skipped silently.
     """
     for row in SERVICE_SEAMS:
-        for name, setter in ((row.spicedb, "set_spicedb_client"), (row.bus, "set_event_bus")):
-            if name is None:
-                continue
-            module = importlib.import_module(name)
-            assert callable(getattr(module, setter, None)), f"{name} has no {setter}"
+        if row.bus is not None:
+            module = importlib.import_module(row.bus)
+            assert callable(getattr(module, "set_event_bus", None)), (
+                f"{row.bus} has no set_event_bus"
+            )
         if row.verifier is not None:
             importlib.import_module(row.verifier)
 
@@ -231,24 +226,15 @@ def use_redis_client(use_event_bus: Callable[[object], object]) -> Callable[[obj
 def default_spicedb_client(request: pytest.FixtureRequest) -> Iterator[MockSpiceDBClient | None]:
     """Route every SpiceDB call to a fresh strict mock unless a live SpiceDB fixture is requested.
 
-    The shared factory client (`runefoble_auth.factory`) is the one seam. Service modules that
-    keep their own client get the same mock through their setter.
+    The shared factory client (`runefoble_auth.factory`) is the one seam. No service keeps a copy.
     """
     if {"live_spicedb_endpoint", "live_spicedb_with_schema"} & set(request.fixturenames):
         yield None
         return
 
     mock_db = MockSpiceDBClient()
-    previous = _swap(
-        _modules("spicedb"), "get_spicedb_client", "set_spicedb_client", lambda: mock_db
-    )
-    factory_swap = shared_spicedb_client(mock_db)
-    factory_swap.start()
-    try:
+    with shared_spicedb_client(mock_db):
         yield mock_db
-    finally:
-        factory_swap.stop()
-        _restore(previous, "set_spicedb_client")
 
 
 @pytest.fixture

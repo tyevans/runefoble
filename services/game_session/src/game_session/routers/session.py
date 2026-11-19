@@ -19,7 +19,7 @@ from game_session.character_client import (
     activate_stand_in,
     release_stand_in,
 )
-from game_session.dependencies import get_spicedb_client, repo
+from game_session.dependencies import repo
 from game_session.models import (
     CreateSessionRequest,
     HotSwapRequest,
@@ -40,6 +40,7 @@ from game_session.routers.session_auth import (
 from game_session.settlement.auth.tokens import (
     CallerId,
 )
+from runefoble_auth.factory import get_spicedb_client
 from runefoble_platform.dice import parse_and_roll
 
 router = APIRouter(tags=["session"])

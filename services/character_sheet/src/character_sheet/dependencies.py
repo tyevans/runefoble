@@ -17,6 +17,7 @@ from character_sheet.models import CharacterState
 from character_sheet.schemas import CreateCharacterRequest
 from eventsource.domain.exceptions import AggregateNotFoundError
 from fastapi import Depends, HTTPException
+from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.principal import VerifiedPrincipal
 from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
 from runefoble_auth.wiring import (
@@ -42,8 +43,6 @@ STREAM_CHARACTER = "runefoble.events.character"
 STREAM_CRAFTING = "runefoble.events.crafting"
 platform_settings = PlatformSettings()
 
-_spicedb_client: SpiceDBClient | MockSpiceDBClient | None = None
-
 # Global aggregate repositories
 repo: AggregateRepository[CharacterAggregate] = create_aggregate_repository(CharacterAggregate)
 crafting_repo: AggregateRepository[CraftingAggregate] = create_aggregate_repository(
@@ -62,18 +61,6 @@ def get_crafting_repository() -> AggregateRepository[CraftingAggregate]:
 event_bus_provider = EventBusProvider(platform_settings)
 get_event_bus = event_bus_provider.get
 set_event_bus = event_bus_provider.set
-
-
-def get_spicedb_client() -> SpiceDBClient | MockSpiceDBClient:
-    global _spicedb_client
-    if _spicedb_client is None:
-        _spicedb_client = SpiceDBClient()
-    return _spicedb_client
-
-
-def set_spicedb_client(client: SpiceDBClient | MockSpiceDBClient | None) -> None:
-    global _spicedb_client
-    _spicedb_client = client
 
 
 RepoDep = Annotated[AggregateRepository[CharacterAggregate], Depends(get_repository)]

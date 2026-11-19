@@ -9,11 +9,7 @@ from eventsource import AggregateNotFoundError
 from fastapi import APIRouter, Depends
 from game_session.caravan import CaravanContractAggregate
 from game_session.caravan.ledger import CaravanLedgerAggregate
-from game_session.dependencies import (
-    get_caravan_contract_repository,
-    get_caravan_ledger_repository,
-    get_spicedb_client,
-)
+from game_session.dependencies import get_caravan_contract_repository, get_caravan_ledger_repository
 from game_session.routers.caravan_contracts.auth import (
     _check_high_tier_auth,
     _load_contract,
@@ -28,6 +24,7 @@ from game_session.west_marches_models import (
     FulfillContractRequest,
     ReportAmbushRequest,
 )
+from runefoble_auth.factory import get_spicedb_client
 from runefoble_platform.identifiers import parse_uuid
 
 router = APIRouter(

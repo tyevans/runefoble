@@ -12,7 +12,6 @@ from game_session.child_index import ChildIndexKind
 from game_session.dependencies import (
     get_establishment_repository,
     get_event_bus,
-    get_spicedb_client,
     get_worker_repository,
 )
 from game_session.queries import link_child, list_workers_for_establishment
@@ -28,6 +27,7 @@ from game_session.settlement.worker_models import (
     WorkerRelationship,
 )
 from game_session.settlement.workers.loaders import save_and_publish
+from runefoble_auth.factory import get_spicedb_client
 from runefoble_platform.aggregate_loading import load_if_exists
 from runefoble_platform.identifiers import parse_uuid
 

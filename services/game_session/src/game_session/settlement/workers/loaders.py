@@ -8,11 +8,7 @@ from __future__ import annotations
 from typing import Any
 
 from fastapi import HTTPException
-from game_session.dependencies import (
-    get_establishment_repository,
-    get_spicedb_client,
-    get_worker_repository,
-)
+from game_session.dependencies import get_establishment_repository, get_worker_repository
 from game_session.events import STREAM_WEST_MARCHES
 from game_session.settlement.auth import (
     check_establishment_read_permission,
@@ -22,6 +18,7 @@ from game_session.settlement.auth import (
 )
 from game_session.settlement.establishment_aggregate import EstablishmentAggregate
 from game_session.settlement.worker_aggregate import NPCWorkerAggregate
+from runefoble_auth.factory import get_spicedb_client
 from runefoble_platform.event_publish import publish_best_effort
 from runefoble_platform.identifiers import parse_uuid
 

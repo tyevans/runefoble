@@ -98,10 +98,8 @@ def analytics_service(
     monkeypatch.setattr(redis.asyncio, "from_url", lambda *_a, **_k: double)
 
     spicedb = MockSpiceDBClient()
-    factory_swap = shared_spicedb_client(spicedb)
-    factory_swap.start()
-    try:
-        with restored_seam(get_event_store, set_event_store, None, replace=True):
-            yield AnalyticsService(dsn=dsn, redis=double, spicedb=spicedb)
-    finally:
-        factory_swap.stop()
+    with (
+        shared_spicedb_client(spicedb),
+        restored_seam(get_event_store, set_event_store, None, replace=True),
+    ):
+        yield AnalyticsService(dsn=dsn, redis=double, spicedb=spicedb)

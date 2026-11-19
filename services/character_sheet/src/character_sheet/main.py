@@ -15,10 +15,8 @@ from character_sheet.dependencies import (
     event_bus_provider,
     get_event_bus,
     get_repository,
-    get_spicedb_client,
     repo,
     set_event_bus,
-    set_spicedb_client,
 )
 from character_sheet.router import router
 from character_sheet.wardrobe_router import router as wardrobe_router
@@ -81,10 +79,8 @@ __all__ = [
     "app",
     "get_event_bus",
     "get_repository",
-    "get_spicedb_client",
     "main",
     "repo",
     "router",
     "set_event_bus",
-    "set_spicedb_client",
 ]

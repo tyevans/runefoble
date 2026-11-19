@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 from fastapi import HTTPException
-from game_session.dependencies import get_spicedb_client
 from game_session.dependencies import repo as session_repo
+from runefoble_auth.factory import get_spicedb_client
 from runefoble_platform.aggregate_loading import load_if_exists
 from runefoble_platform.identifiers import opaque_aggregate_id
 

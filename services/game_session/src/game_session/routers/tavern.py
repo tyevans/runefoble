@@ -11,11 +11,7 @@ from uuid import uuid4
 
 from fastapi import APIRouter, Depends, Header, HTTPException
 from game_session.auth import check_session_participation
-from game_session.dependencies import (
-    get_event_bus,
-    get_spicedb_client,
-    get_tavern_repository,
-)
+from game_session.dependencies import get_event_bus, get_tavern_repository
 from game_session.events import STREAM_TAVERN
 from game_session.merchants_service import HaggleOffer, haggle, load_merchant_profile
 from game_session.minigame_tables.models import MinigameTableState
@@ -33,6 +29,7 @@ from game_session.settlement.auth import check_establishment_play_permission
 from game_session.settlement.auth.tokens import CallerId, get_principal
 from game_session.voice_client import VoiceAgentUnavailableError
 from pydantic import BaseModel
+from runefoble_auth.factory import get_spicedb_client
 from runefoble_platform.aggregate_loading import load_if_exists
 from runefoble_platform.event_publish import publish_or_fail
 from runefoble_platform.identifiers import opaque_aggregate_id

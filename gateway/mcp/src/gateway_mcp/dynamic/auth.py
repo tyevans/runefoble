@@ -7,24 +7,9 @@ from typing import Any
 
 from fastapi import HTTPException
 from runefoble_auth.errors import AuthzError
-from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
+from runefoble_auth.factory import get_spicedb_client
 
 logger = logging.getLogger("runefoble.gateway_mcp.dynamic.auth")
-_spicedb_client: SpiceDBClient | MockSpiceDBClient | None = None
-
-
-def get_spicedb_client() -> SpiceDBClient | MockSpiceDBClient:
-    """Retrieve active SpiceDB client singleton."""
-    global _spicedb_client
-    if _spicedb_client is None:
-        _spicedb_client = SpiceDBClient()
-    return _spicedb_client
-
-
-def set_spicedb_client(client: SpiceDBClient | MockSpiceDBClient | None) -> None:
-    """Override SpiceDB client for unit tests and blackbox isolation."""
-    global _spicedb_client
-    _spicedb_client = client
 
 
 def authorization_unavailable() -> HTTPException:
