@@ -11,6 +11,7 @@ import { completeSignInCallback } from './app/auth-callback.ts';
 import { router, registerAuthGuard, type BreadcrumbItem, type MatchedRoute, type RouteParams } from './router/index.ts';
 import { resolveActiveView, type AppActiveView } from './router/view-resolver.ts';
 import type { BoardToken } from '@runefoble/board-state-ui';
+import type { SessionBoard } from './services/session-board.ts';
 import type { WatcherFeedEvent } from '@runefoble/the-watcher-ui';
 import type {
   CampaignItem,
@@ -85,6 +86,8 @@ export class RunefobleApp extends LitElement {
   @state() public lobbyParticipants: LobbyParticipant[] = [];
   @state() public lobbyAvailableCharacters: LobbyCharacterOption[] = [];
   @state() public activeCharacter: CharacterItem | null = null;
+  /** `no_board` while the session has no board yet (TASK-0906). The view then shows an empty state. */
+  @state() public boardKind: SessionBoard['kind'] = 'board';
   @state() public boardCols = 10;
   @state() public boardRows = 10;
   @state() public atmosphere: { location_name: string } = { location_name: '' };

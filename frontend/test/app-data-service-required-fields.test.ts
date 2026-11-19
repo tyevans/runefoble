@@ -155,7 +155,7 @@ describe('AppDataService board mapper reads BoardState', () => {
   it('fails when a token has no token_id', async () => {
     const tokens = { 'tok-valeros': without(OWNER_BOARD_TOKENS['tok-valeros'], 'token_id') };
     gateway = installFakeGateway({ [BOARD_URL]: { body: { ...OWNER_BOARD_STATE, tokens } } });
-    assertFailure(await service.fetchBoardTokens('session-tomb-14'), /token_id/);
+    assertFailure(await service.fetchBoardState('session-tomb-14'), /token_id/);
   });
 
   it('fails when the tokens field is a list instead of the owner map', async () => {
