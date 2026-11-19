@@ -80,7 +80,7 @@ def test_unparseable_json_frame_gets_invalid_frame_and_the_stream_stays_open(
     ("query", "missing"),
     [
         ("speaker_name=Valeros", "campaign_id"),
-        (f"campaign_id={uuid.uuid4()}", "speaker_name"),
+        ("campaign_id=7b1c9f0e-3a2d-4e5f-8a6b-1c2d3e4f5a6b", "speaker_name"),
         ("", "campaign_id"),
     ],
 )
