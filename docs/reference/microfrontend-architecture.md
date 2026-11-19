@@ -126,6 +126,16 @@ Rules:
 - A message type that is not in the table is not forwarded.
 - Tests: `frontend/test-dom/session-mesh-events.test.ts` sends each message through the shell and checks the mounted element.
 
+### Shell Chrome Methods
+
+The shell does not read the shadow root of any element that it renders (TASK-0761). It holds a Lit `ref` to its own chrome elements and calls their public methods only.
+
+| Element | Method | The shell calls it when |
+|---|---|---|
+| `<runefoble-header>` | `restoreFocus()`: moves focus to the settings control | the settings modal sends `settings-closed` |
+
+Tests: `frontend/test-dom/settings-focus-restore.test.ts` closes the modal through the shell and checks the focus.
+
 ## Auth Context Contract (`runefoble-auth`)
 
 Microfrontends never read the shell's storage keys. The App Shell gives them the access token through the W3C Context Community Protocol (`@lit/context`).
