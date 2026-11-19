@@ -20,7 +20,7 @@ async function ensureOnCampaignOverview(
   frontdoorApi?: FrontdoorApi
 ): Promise<void> {
   if (auth) {
-    const evelynUser = await auth.injectUserIntoPage(page, 'evelyn');
+    const evelynUser = await auth.signInAs('evelyn', page);
     world.currentUser = evelynUser;
     world.setPage('evelyn', page);
   }
@@ -56,7 +56,7 @@ async function ensureOnCampaignOverview(
 }
 
 Given('Evelyn is logged in as a Dungeon Master', async ({ auth, world, page }) => {
-  const evelynUser = await auth.injectUserIntoPage(page, 'evelyn');
+  const evelynUser = await auth.signInAs('evelyn', page);
   world.currentUser = evelynUser;
   world.setPage('evelyn', page);
 
@@ -132,7 +132,7 @@ Then(
 Given(
   'a campaign exists with members {string} and {string}',
   async ({ auth, world, page, frontdoorApi }, member1: string, member2: string) => {
-    const evelynUser = await auth.injectUserIntoPage(page, 'evelyn');
+    const evelynUser = await auth.signInAs('evelyn', page);
     world.currentUser = evelynUser;
     world.setPage('evelyn', page);
 

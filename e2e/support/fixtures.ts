@@ -21,8 +21,8 @@ export const test = baseTest.extend<BddCustomFixtures>({
     await use(world);
     await world.cleanup();
   },
-  auth: async ({ page, context }, use) => {
-    const auth = new AuthFixtures(page, context);
+  auth: async ({ page }, use) => {
+    const auth = new AuthFixtures(page);
     await use(auth);
   },
   frontdoorApi: async ({ request }, use) => {

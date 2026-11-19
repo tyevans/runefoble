@@ -11,7 +11,7 @@ import { Given, When, Then } from '../support/fixtures';
 Given(
   'Evelyn is hosting session {string} for campaign {string}',
   async ({ auth, world, page }, sessionTitle: string, campaignId: string) => {
-    const evelynUser = await auth.injectUserIntoPage(page, 'evelyn');
+    const evelynUser = await auth.signInAs('evelyn', page);
     world.currentUser = evelynUser;
     world.setPage('evelyn', page);
     world.campaignId = campaignId;
@@ -38,7 +38,7 @@ Given(
     const valerosPage = await valerosContext.newPage();
     world.setPage('valeros', valerosPage);
 
-    await auth.injectUserIntoPage(valerosPage, 'valeros');
+    await auth.signInAs('valeros', valerosPage);
     await valerosPage.goto(`#/campaigns/${campaignId}/lobby/${sessionId}`);
     await valerosPage.waitForLoadState('domcontentloaded');
     await expect(valerosPage.locator('runefoble-session-lobby')).toBeVisible({ timeout: 15_000 });
@@ -86,7 +86,7 @@ When(
     const sarahPage = await sarahContext.newPage();
     world.setPage('sarah', sarahPage);
 
-    await auth.injectUserIntoPage(sarahPage, 'sarah');
+    await auth.signInAs('sarah', sarahPage);
     await sarahPage.goto(`#/campaigns/${campaignId}/lobby/${sessionId}`);
     await sarahPage.waitForLoadState('domcontentloaded');
 
