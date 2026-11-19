@@ -17,8 +17,16 @@ HAZARD_DAMAGE: dict[str, str] = {
     "acid": "2d6",
     "spikes": "2d4",
     "poison": "1d4",
+    "deep_water": "1d6",
+    "chasm": "3d6",
+    "arcane_void": "2d8",
 }
 DEFAULT_HAZARD_DICE = "1d6"
+
+
+def is_known_hazard(hazard_type: str) -> bool:
+    """Return True when the hazard type is in the hazard damage table. The match is exact."""
+    return hazard_type in HAZARD_DAMAGE
 
 
 def hazard_damage_dice(hazard_type: str | None) -> str:

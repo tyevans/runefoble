@@ -81,7 +81,8 @@ When a poll duration expires (or is explicitly closed via `POST /api/v1/audience
      ```
    - Emits `runefoble.events.audience.modifier_approved` with `approved: true`. Each game owner consumes this event for its own effect.
      - `weather_change`: `game_session` consumes it. The `parameters.weather` value is recorded as `WeatherChanged` (`runefoble.events.session.weather_changed`) and appears in `weather` on `GET /api/v1/sessions/{session_id}`. A `weather_change` with no weather value, or for an unknown session, is dead-lettered on `runefoble.events.audience.dlq`.
-     - `hazard_spawn`, `status_buff`, `item_drop`, and narration are applied by their owners in TASK-0835 to TASK-0838.
+     - `hazard_spawn`: `board_state` consumes it. The `parameters.x` and `parameters.y` values name the grid cell, and `parameters.hazard_type` names the hazard. The cell keeps its elevation and terrain type and gains the hazard. The hazard appears in `terrain_cells` on `GET /api/v1/boards/{session_id}`. A `hazard_spawn` with a missing or non-integer `x` or `y`, an unknown `hazard_type`, a cell off the grid, a board that does not exist, or a campaign that does not own the board is dead-lettered on `runefoble.events.audience.dlq`. The accepted hazard types are the keys of the hazard damage table: `lava`, `fire`, `acid`, `spikes`, `poison`, `deep_water`, `chasm`, and `arcane_void`.
+     - `status_buff`, `item_drop`, and narration are applied by their owners in TASK-0836 to TASK-0838.
    - Alternatively, the DM exercises veto power via `POST /api/v1/audience/proposals/{proposal_id}/veto`. A veto emits the same event type with `approved: false`.
    - A proposal can be decided once. A second approve or veto returns `400 Bad Request`.
 
