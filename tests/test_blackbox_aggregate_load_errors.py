@@ -16,10 +16,18 @@ from uuid import uuid4
 
 import pytest
 from eventsource.adapters.memory.store import InMemoryEventStore
+from eventsource.domain.exceptions import OptimisticLockError
+from fastapi import HTTPException
 from fastapi.testclient import TestClient
 from gateway_api.main import app as gateway_app
-from runefoble_platform.aggregate_loading import load_if_exists, load_or_create
+from runefoble_platform.aggregate_loading import (
+    load_if_exists,
+    load_or_404,
+    load_or_create,
+    save_or_conflict,
+)
 from runefoble_platform.event_sourcing import create_aggregate_repository
+from runefoble_platform.lazy_repository import LazyRepository
 from soundscape.aggregate import SoundscapeAggregate
 from soundscape.main import app
 
@@ -150,6 +158,109 @@ def test_tension_write_answers_503_and_keeps_stored_history(
     after = client.get(f"{TENSION_URL}?session_id={session_id}")
     assert after.status_code == 200, after.text
     assert after.json()["tension_score"] == stored_score
+
+
+def test_load_or_404_raises_404_with_detail_for_unknown_stream() -> None:
+    """A missing stream answers 404 with the caller's detail text."""
+    repo = create_aggregate_repository(SoundscapeAggregate, event_store=InMemoryEventStore())
+
+    with pytest.raises(HTTPException) as caught:
+        _run(load_or_404(repo, uuid4(), "Soundscape not found"))
+    assert caught.value.status_code == 404
+    assert caught.value.detail == "Soundscape not found"
+
+
+def test_load_or_404_returns_stored_aggregate() -> None:
+    repo = create_aggregate_repository(SoundscapeAggregate, event_store=InMemoryEventStore())
+    agg_id = uuid4()
+    fresh = SoundscapeAggregate(agg_id)
+    fresh.record_tension_update(
+        session_id="s-404",
+        tension_score=7,
+        stem_profile="explore",
+        combat_round=1,
+        enemy_cr_balance=1.0,
+        lowest_health_ratio=1.0,
+    )
+    _run(repo.save(fresh))
+
+    loaded = _run(load_or_404(repo, agg_id, "unused"))
+    assert loaded.state.tension_score == 7
+
+
+def test_load_or_404_propagates_store_errors(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A store outage is never a 404."""
+    store = InMemoryEventStore()
+    repo = create_aggregate_repository(SoundscapeAggregate, event_store=store)
+    monkeypatch.setattr(store, "read_stream", _connection_refused)
+
+    with pytest.raises(ConnectionError):
+        _run(load_or_404(repo, uuid4(), "unused"))
+
+
+def test_save_or_conflict_maps_version_conflict_to_the_chosen_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A lock failure becomes the error that the caller supplies."""
+    repo = create_aggregate_repository(SoundscapeAggregate, event_store=InMemoryEventStore())
+    agg_id = uuid4()
+    aggregate = SoundscapeAggregate(agg_id)
+
+    async def conflicting_save(_aggregate: SoundscapeAggregate) -> None:
+        raise OptimisticLockError(agg_id, expected_version=0, actual_version=1)
+
+    monkeypatch.setattr(repo, "save", conflicting_save)
+    with pytest.raises(HTTPException) as caught:
+        _run(
+            save_or_conflict(
+                repo,
+                aggregate,
+                lambda: HTTPException(status_code=409, detail="changed"),
+            )
+        )
+    assert caught.value.status_code == 409
+    assert caught.value.detail == "changed"
+
+
+def test_save_or_conflict_saves_without_conflict() -> None:
+    repo = create_aggregate_repository(SoundscapeAggregate, event_store=InMemoryEventStore())
+    agg_id = uuid4()
+    aggregate = SoundscapeAggregate(agg_id)
+    aggregate.record_tension_update(
+        session_id="s-save",
+        tension_score=3,
+        stem_profile="explore",
+        combat_round=1,
+        enemy_cr_balance=1.0,
+        lowest_health_ratio=1.0,
+    )
+
+    _run(save_or_conflict(repo, aggregate, lambda: RuntimeError("must not fire")))
+    assert _run(load_if_exists(repo, agg_id)) is not None
+
+
+def test_lazy_repository_builds_once_and_set_replaces_it() -> None:
+    """`get` builds the repository on first use and returns the same one afterwards."""
+    built: list[object] = []
+
+    def factory():
+        repo = create_aggregate_repository(SoundscapeAggregate, event_store=InMemoryEventStore())
+        built.append(repo)
+        return repo
+
+    lazy = LazyRepository(factory)
+    assert built == []
+    first = lazy.get()
+    assert lazy.get() is first
+    assert len(built) == 1
+
+    replacement = create_aggregate_repository(SoundscapeAggregate, event_store=InMemoryEventStore())
+    lazy.set(replacement)
+    assert lazy.get() is replacement
+
+    lazy.set(None)
+    assert lazy.get() is not replacement
+    assert len(built) == 2
 
 
 def _run[T](awaitable: Awaitable[T]) -> T:

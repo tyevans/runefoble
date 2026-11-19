@@ -4,6 +4,9 @@ Routers must never replace a failed load with an empty aggregate. A storage outa
 creates a new stream with an existing aggregate id, and the next save writes conflicting
 events. These helpers catch only AggregateNotFoundError. Every other error reaches the
 caller. Services map store errors to HTTP 503 with register_store_unavailable_handlers.
+
+Routes use these helpers and never write their own `except AggregateNotFoundError` (TASK-0819).
+A version conflict on save is mapped by `save_or_conflict`, the single conflict mapper.
 """
 
 from __future__ import annotations
@@ -13,8 +16,8 @@ from uuid import UUID
 
 from eventsource.application.aggregates.repository import AggregateRepository
 from eventsource.domain.aggregate import DeclarativeAggregate
-from eventsource.domain.exceptions import AggregateNotFoundError
-from fastapi import FastAPI, Request
+from eventsource.domain.exceptions import AggregateNotFoundError, OptimisticLockError
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -48,6 +51,37 @@ async def load_if_exists[T: DeclarativeAggregate](
         return None
 
 
+async def load_or_404[T: DeclarativeAggregate](
+    repo: AggregateRepository[T],
+    aggregate_id: UUID,
+    detail: str,
+) -> T:
+    """Load the aggregate. Raise HTTP 404 with `detail` when its stream does not exist.
+
+    Any other load error propagates unchanged.
+    """
+    try:
+        return await repo.load(aggregate_id)
+    except AggregateNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=detail) from exc
+
+
+async def save_or_conflict[T: DeclarativeAggregate](
+    repo: AggregateRepository[T],
+    aggregate: T,
+    conflict: Callable[[], Exception],
+) -> None:
+    """Save the aggregate. Raise the error that `conflict` returns on an optimistic lock failure.
+
+    The caller picks the error: an HTTP 409 for a route, or a domain error for a service.
+    Any other save error propagates unchanged.
+    """
+    try:
+        await repo.save(aggregate)
+    except OptimisticLockError as exc:
+        raise conflict() from exc
+
+
 STORE_UNAVAILABLE_ERRORS: tuple[type[BaseException], ...] = (SQLAlchemyError, OSError)
 
 
@@ -68,6 +102,8 @@ def register_store_unavailable_handlers(app: FastAPI) -> None:
 __all__ = [
     "STORE_UNAVAILABLE_ERRORS",
     "load_if_exists",
+    "load_or_404",
     "load_or_create",
     "register_store_unavailable_handlers",
+    "save_or_conflict",
 ]

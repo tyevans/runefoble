@@ -96,18 +96,51 @@ Use the helpers in `runefoble_platform.aggregate_loading`. Do not wrap `repo.loa
 - `load_or_create(repo, aggregate_id, factory)` returns the stored aggregate. It creates a new
   aggregate only when the stream does not exist (`AggregateNotFoundError`).
 - `load_if_exists(repo, aggregate_id)` returns the stored aggregate, or `None` when the stream
-  does not exist. Use it on read routes that answer 404.
+  does not exist. Use it when the caller decides what an absent stream means.
+- `load_or_404(repo, aggregate_id, detail)` returns the stored aggregate, or raises HTTP 404 with
+  `detail` when the stream does not exist. Use it on routes that answer 404.
 - Every other error reaches the caller. A store outage must never create an empty aggregate.
   A new empty stream with an existing id causes conflicting events on the next save.
+- Routes never write their own `except AggregateNotFoundError`. Use these helpers instead.
+- `save_or_conflict(repo, aggregate, conflict)` saves the aggregate. On an optimistic lock
+  failure it raises the error that `conflict` returns. A route passes an `HTTPException` (409).
+  A service passes its domain error. Use it for every save that can race.
 
 Each service registers `register_store_unavailable_handlers(app)` in its `main.py`. The
 handler maps `SQLAlchemyError` and `OSError` to HTTP 503 with no substitute data.
 
 ```python
-from runefoble_platform.aggregate_loading import load_if_exists, load_or_create
+from fastapi import HTTPException
+from runefoble_platform.aggregate_loading import (
+    load_if_exists,
+    load_or_404,
+    load_or_create,
+    save_or_conflict,
+)
 
 agg = await load_or_create(repo, char_id, CharacterInventoryAggregate)  # write path
-found = await load_if_exists(repo, char_id)  # read path: None means not found
+found = await load_if_exists(repo, char_id)  # service read: None means not found
+char = await load_or_404(repo, char_id, "Character not found")  # route read: 404
+await save_or_conflict(
+    repo,
+    agg,
+    lambda: HTTPException(status_code=409, detail="The character changed. Retry."),
+)
+```
+
+### Hold a repository at module level
+
+Keep each repository behind a `LazyRepository` from `runefoble_platform.lazy_repository`. It
+builds the repository on first use. `get` returns it. `set` replaces it, and `set(None)` resets
+it. A test that needs another repository calls `set` and restores the previous value.
+
+```python
+from runefoble_platform.lazy_repository import LazyRepository
+
+character_repository = LazyRepository(
+    lambda: create_aggregate_repository(CharacterInventoryAggregate)
+)
+get_character_repository = character_repository.get
 ```
 
 ## 5. Testing with InMemoryEventStore
