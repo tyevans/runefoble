@@ -48,6 +48,7 @@ CHART_DIR = REPO_ROOT / "deployments" / "helm" / "runefoble"
 
 AGGREGATE_OWNING_DEPLOYMENTS = [
     "asset-forge",
+    "audience-studio",
     "board-state",
     "campaign-lore",
     "character-sheet",
@@ -189,4 +190,6 @@ def test_helm_enables_postgres_event_store_for_aggregate_owners(deployment):
     assert len(matches) == 1, f"deployment {deployment} not rendered exactly once"
     env = _deployment_env(matches[0])
     assert env.get("RUNEFOBLE_EVENT_STORE_BACKEND") == "postgresql"
-    assert env.get("RUNEFOBLE_DATABASE_URL", "").startswith("postgresql+asyncpg://")
+    assert env.get("RUNEFOBLE_DATABASE_URL", "").startswith(
+        ("postgresql+asyncpg://", "postgresql://")
+    )

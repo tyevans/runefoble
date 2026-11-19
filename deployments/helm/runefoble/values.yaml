@@ -375,14 +375,15 @@ services:
       SOUNDSCAPE_DEFAULT_VOLUME: "1.0"
       SOUNDSCAPE_CROSSFADE_MS: "1500"
   audienceStudio:
-    # Node service. It keeps a plain postgresql:// URL for its driver. It has no event store.
+    # Node service. It keeps a plain postgresql:// URL for its driver. It owns aggregate state
+    # (AudienceEventRepository), so the PostgreSQL event store is on.
     swaggerName: "Audience Studio Service"
     image: runefoble/audience-studio:0.1.0
     replicas: 1
     port: 8010
     # Expected token `aud` claim. The service refuses to start without it.
     databaseDriver: postgresql
-    eventStore: false
+    eventStore: true
     siloEndpoint: false
     environment: false
     readinessPath: /readyz
