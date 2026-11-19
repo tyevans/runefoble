@@ -13,7 +13,9 @@ A modular microservice bounded context (or unified API Gateway) is organized int
 3. `models.py`: Pydantic request and response schemas.
 4. `main.py`: Thin orchestration shell (< 100 lines) instantiating FastAPI, mounting routers, exposing `/healthz` and `/ui/manifest`, and re-exporting core symbols.
 
-This pattern is established across the `the_watcher`, `game_session`, `board_state`, `character_sheet`, and `voice_agent` bounded contexts as well as `gateway_api`.
+This pattern is established across the `the_watcher`, `board_state`, `character_sheet`, and `voice_agent` bounded contexts as well as `gateway_api`.
+
+`game_session` has no `dependencies.py`. It builds an app container at start-up and its routers read the container through `Depends` providers (ADR-0021 D6). See [Compose a Service with an App Container](compose-a-service-with-an-app-container.md). TASK-0859 moves the other services to the same pattern.
 
 ```
 services/<service_name>/src/<service_name>/  (or gateway/api/src/gateway_api/)

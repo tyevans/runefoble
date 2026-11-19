@@ -5,7 +5,7 @@ The game session service lists child aggregates under a parent. Examples are bou
 Source:
 
 - `services/game_session/src/game_session/shared/child_index.py`: the aggregate and the stream id. This is the mechanism of the shared kernel (ADR-0021 D2).
-- `services/game_session/src/game_session/shared/child_index_queries.py`: `link_child`, `list_child_ids`, and the index repository.
+- `services/game_session/src/game_session/shared/child_index_queries.py`: `link_child`, `list_child_ids`, `build_child_index_repository`, and the `ChildIndexes` route dependency. The app container holds the one index repository (`container.child_indexes`, ADR-0021 D6).
 - The kinds and the read functions of each domain: `settlement/child_indexes.py`, `caravan/child_indexes.py`, and `contracts/child_indexes.py`.
 - `libs/runefoble_events/src/runefoble_events/child_index.py`: the event.
 
@@ -33,7 +33,7 @@ A store outage raises to the caller. The service returns `503 Service Unavailabl
 
 ## Write Order
 
-A router saves the child aggregate first. It then calls `link_child(kind, parent_id, child_id)`. If the child save fails, no link is written. If the link write fails after the save, the request fails with an error. The child is saved but not listed.
+A router saves the child aggregate first. It then calls `link_child(child_indexes, kind, parent_id, child_id)`. The route gets `child_indexes` from the `ChildIndexes` dependency. The read functions also take it as their first argument. If the child save fails, no link is written. If the link write fails after the save, the request fails with an error. The child is saved but not listed.
 
 ## Read Behaviour
 
