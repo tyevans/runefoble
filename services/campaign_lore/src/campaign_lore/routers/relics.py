@@ -6,7 +6,7 @@ from uuid import UUID, uuid4
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, ConfigDict, Field
 from runefoble_auth.factory import get_spicedb_client
-from runefoble_auth.spicedb import SpiceDBClient
+from runefoble_auth.port import SpiceDBPort
 from runefoble_platform.aggregate_loading import load_if_exists
 from runefoble_platform.event_sourcing import AggregateRepository
 
@@ -62,7 +62,7 @@ class TranslateRuneRequest(BaseModel):
 async def forge_relic(
     payload: ForgeRelicRequest,
     user_id: CallerId,
-    spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)] = None,
+    spicedb: Annotated[SpiceDBPort, Depends(get_spicedb_client)] = None,
     repo: Annotated[AggregateRepository[RelicAggregate], Depends(get_relic_repo)] = None,
 ) -> dict[str, Any]:
     """Forge a new 3D relic model with PBR shader attributes and etched runes."""
@@ -115,7 +115,7 @@ async def forge_relic(
 async def get_relic(
     relic_id: UUID,
     user_id: CallerId,
-    spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)] = None,
+    spicedb: Annotated[SpiceDBPort, Depends(get_spicedb_client)] = None,
     repo: Annotated[AggregateRepository[RelicAggregate], Depends(get_relic_repo)] = None,
 ) -> dict[str, Any]:
     """Retrieve 3D relic geometry, shader properties, and runes."""
@@ -160,7 +160,7 @@ async def inspect_relic(
     relic_id: UUID,
     payload: InspectRelicRequest,
     user_id: CallerId,
-    spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)] = None,
+    spicedb: Annotated[SpiceDBPort, Depends(get_spicedb_client)] = None,
     repo: Annotated[AggregateRepository[RelicAggregate], Depends(get_relic_repo)] = None,
 ) -> dict[str, Any]:
     """Record an interactive 3D inspection and discover engraved runes."""
@@ -198,7 +198,7 @@ async def translate_rune(
     relic_id: UUID,
     payload: TranslateRuneRequest,
     user_id: CallerId,
-    spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)] = None,
+    spicedb: Annotated[SpiceDBPort, Depends(get_spicedb_client)] = None,
     repo: Annotated[AggregateRepository[RelicAggregate], Depends(get_relic_repo)] = None,
 ) -> dict[str, Any]:
     """Translate an engraved rune inscription on the relic."""

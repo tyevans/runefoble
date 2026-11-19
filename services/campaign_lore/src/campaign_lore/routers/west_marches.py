@@ -12,7 +12,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from pydantic import BaseModel, ConfigDict, Field
 from runefoble_auth.factory import get_spicedb_client
-from runefoble_auth.spicedb import SpiceDBClient
+from runefoble_auth.port import SpiceDBPort
 from runefoble_platform.aggregate_loading import load_or_create
 from runefoble_platform.event_sourcing import AggregateRepository
 
@@ -102,7 +102,7 @@ class LinkSharedWorldPayload(BaseModel):
 async def get_west_marches_overview(
     campaign_id: UUID,
     user_id: CallerId,
-    spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
+    spicedb: Annotated[SpiceDBPort, Depends(get_spicedb_client)],
     repo: Annotated[AggregateRepository[WestMarchesAtlasAggregate], Depends(get_west_marches_repo)],
     discovery_type: str | None = Query(default=None),
 ) -> WestMarchesState:
@@ -129,7 +129,7 @@ async def link_shared_world(
     campaign_id: UUID,
     payload: LinkSharedWorldPayload,
     user_id: CallerId,
-    spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
+    spicedb: Annotated[SpiceDBPort, Depends(get_spicedb_client)],
     repo: Annotated[AggregateRepository[WestMarchesAtlasAggregate], Depends(get_west_marches_repo)],
 ) -> WestMarchesState:
     """Link campaign to a shared world frontier or set world properties."""
@@ -172,7 +172,7 @@ async def record_discovery_pin(
     campaign_id: UUID,
     payload: RecordDiscoveryPayload,
     user_id: CallerId,
-    spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
+    spicedb: Annotated[SpiceDBPort, Depends(get_spicedb_client)],
     repo: Annotated[AggregateRepository[WestMarchesAtlasAggregate], Depends(get_west_marches_repo)],
 ) -> dict[str, Any]:
     """Record an expedition milestone pin in the shared frontier atlas."""
@@ -207,7 +207,7 @@ async def upgrade_stronghold_facility(
     campaign_id: UUID,
     payload: UpgradeStrongholdPayload,
     user_id: CallerId,
-    spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
+    spicedb: Annotated[SpiceDBPort, Depends(get_spicedb_client)],
     repo: Annotated[AggregateRepository[WestMarchesAtlasAggregate], Depends(get_west_marches_repo)],
 ) -> dict[str, Any]:
     """Upgrade a communal outpost facility and recalculate shared rest boons."""
@@ -252,7 +252,7 @@ async def contribute_gold_to_outpost(
     payload: ContributeGoldPayload,
     request: Request,
     user_id: CallerId,
-    spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
+    spicedb: Annotated[SpiceDBPort, Depends(get_spicedb_client)],
     repo: Annotated[AggregateRepository[WestMarchesAtlasAggregate], Depends(get_west_marches_repo)],
 ) -> dict[str, Any]:
     """Move gold from the campaign stronghold treasury into an outpost store.
@@ -305,7 +305,7 @@ async def post_tavern_notice(
     campaign_id: UUID,
     payload: PostNoticePayload,
     user_id: CallerId,
-    spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
+    spicedb: Annotated[SpiceDBPort, Depends(get_spicedb_client)],
     repo: Annotated[AggregateRepository[WestMarchesAtlasAggregate], Depends(get_west_marches_repo)],
 ) -> dict[str, Any]:
     """Post an expedition bounty, request, or rumor to the communal tavern notice board."""

@@ -16,8 +16,8 @@ from uuid import uuid4
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from pydantic import BaseModel
 from runefoble_auth.factory import get_spicedb_client
+from runefoble_auth.port import SpiceDBPort
 from runefoble_auth.principal import VerifiedPrincipal
-from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_events.events import AssetDeleted, AssetUploaded
 from runefoble_platform.asset_index import (
     asset_read_path,
@@ -49,7 +49,7 @@ platform_settings = PlatformSettings()
 
 Principal = Annotated[VerifiedPrincipal, Depends(get_principal)]
 Storage = Annotated[SiloStorageService, Depends(get_storage)]
-Spicedb = Annotated[SpiceDBClient, Depends(get_spicedb_client)]
+Spicedb = Annotated[SpiceDBPort, Depends(get_spicedb_client)]
 
 
 class AssetMetadataResponse(BaseModel):
@@ -185,7 +185,7 @@ async def download_asset(
 
 
 async def _viewable_asset(
-    asset_id: str, principal: VerifiedPrincipal, spicedb: SpiceDBClient
+    asset_id: str, principal: VerifiedPrincipal, spicedb: SpiceDBPort
 ) -> dict[str, Any]:
     """Return the stored asset metadata when the principal can view the asset."""
     try:

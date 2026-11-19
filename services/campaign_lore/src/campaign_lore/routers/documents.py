@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 from runefoble_auth.errors import AuthzError
 from runefoble_auth.factory import get_spicedb_client
-from runefoble_auth.spicedb import SpiceDBClient
+from runefoble_auth.port import SpiceDBPort
 from runefoble_platform.aggregate_loading import load_if_exists
 from runefoble_platform.errors import ServiceUnavailableError
 from runefoble_platform.event_sourcing import AggregateRepository
@@ -63,7 +63,7 @@ async def ingest_document(
     user_id: CallerId,
     repo: Annotated[AggregateRepository[LoreDocumentAggregate], Depends(get_repo)],
     retrieval_engine: Annotated[LoreRetrievalEngine, Depends(get_retrieval_engine)],
-    spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
+    spicedb: Annotated[SpiceDBPort, Depends(get_spicedb_client)],
 ) -> IngestDocumentResponse:
     """Ingest a new worldbuilding document, extract knowledge graphs, and build hybrid indices."""
     if not await check_user_can_run_session(user_id, req.campaign_id, spicedb):
@@ -157,7 +157,7 @@ async def get_document(
     document_id: UUID,
     user_id: CallerId,
     repo: Annotated[AggregateRepository[LoreDocumentAggregate], Depends(get_repo)],
-    spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
+    spicedb: Annotated[SpiceDBPort, Depends(get_spicedb_client)],
 ) -> LoreDocumentState:
     """Retrieve an ingested lore document by UUID, enforcing SpiceDB Zanzibar access control."""
     doc = await load_if_exists(repo, document_id)
@@ -170,7 +170,7 @@ async def get_document(
         if not can_read:
             raise HTTPException(
                 status_code=403,
-                detail="Forbidden: SpiceDB Zanzibar policy denies access to DM-only secret lore.",
+                detail="Forbidden: SpiceDBPort Zanzibar policy denies access to DM-only secret lore.",
             )
     else:
         # Public lore needs campaign view (lore_document.read_public).

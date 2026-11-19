@@ -35,7 +35,8 @@ from game_session.campaign.schemas import (
 )
 from game_session.campaign.session_aggregate import CampaignSessionsAggregate
 from game_session.campaign.session_bootstrap import open_game_session
-from game_session.campaign.tuples import SpiceDB, grant_owner, link_session
+from game_session.campaign.tuples import grant_owner, link_session
+from runefoble_auth.port import SpiceDBPort
 from runefoble_platform.aggregate_loading import load_if_exists, save_or_conflict
 from runefoble_platform.identifiers import parse_uuid
 from runefoble_platform.telemetry import get_tracer
@@ -111,7 +112,7 @@ async def _summarize(
 
 
 async def _summarize_for(
-    repos: CampaignRepositories, spicedb: SpiceDB, campaign: CampaignAggregate, user_id: str
+    repos: CampaignRepositories, spicedb: SpiceDBPort, campaign: CampaignAggregate, user_id: str
 ) -> CampaignSummaryResponse:
     granted = await granted_permissions(spicedb, campaign.state.campaign_id, user_id)
     return await _summarize(repos, campaign, granted)
@@ -119,7 +120,7 @@ async def _summarize_for(
 
 async def create_campaign(
     repos: CampaignRepositories,
-    spicedb: SpiceDB,
+    spicedb: SpiceDBPort,
     owner_id: str,
     owner_username: str | None,
     req: CreateCampaignRequest,
@@ -164,7 +165,7 @@ async def create_campaign(
 
 
 async def get_campaign(
-    repos: CampaignRepositories, spicedb: SpiceDB, campaign_id: str, user_id: str
+    repos: CampaignRepositories, spicedb: SpiceDBPort, campaign_id: str, user_id: str
 ) -> CampaignSummaryResponse:
     campaign = await load_campaign(repos, parse_campaign_id(campaign_id))
     return await _summarize_for(repos, spicedb, campaign, user_id)
@@ -172,7 +173,7 @@ async def get_campaign(
 
 async def update_campaign(
     repos: CampaignRepositories,
-    spicedb: SpiceDB,
+    spicedb: SpiceDBPort,
     campaign_id: str,
     req: UpdateCampaignRequest,
     user_id: str,
@@ -184,7 +185,7 @@ async def update_campaign(
 
 
 async def list_viewable_campaigns(
-    repos: CampaignRepositories, spicedb: SpiceDB, user_id: str
+    repos: CampaignRepositories, spicedb: SpiceDBPort, user_id: str
 ) -> list[CampaignSummaryResponse]:
     """List campaigns where SpiceDB grants the caller `view`. Aggregates supply the details.
 
@@ -242,7 +243,7 @@ async def list_sessions(
 
 
 async def reconcile_session_links(
-    repos: CampaignRepositories, spicedb: SpiceDB, campaign_id: str
+    repos: CampaignRepositories, spicedb: SpiceDBPort, campaign_id: str
 ) -> SessionLinkReconcileResponse:
     """Write the campaign link for every session of a campaign.
 
@@ -259,7 +260,7 @@ async def reconcile_session_links(
 
 async def create_session(
     repos: CampaignRepositories,
-    spicedb: SpiceDB,
+    spicedb: SpiceDBPort,
     campaign_id: str,
     req: CreateCampaignSessionRequest,
     game_sessions: AggregateRepository[GameSessionAggregate],

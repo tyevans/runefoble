@@ -6,7 +6,7 @@ from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from runefoble_auth.factory import get_spicedb_client
-from runefoble_auth.spicedb import SpiceDBClient
+from runefoble_auth.port import SpiceDBPort
 from runefoble_platform.models import utc_now
 
 from soundscape.dependencies import (
@@ -72,7 +72,7 @@ async def list_audio_stems(
 async def update_stem_volumes(
     request: StemVolumeUpdateRequest,
     user_id: CallerId,
-    spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
+    spicedb: Annotated[SpiceDBPort, Depends(get_spicedb_client)],
 ) -> dict[str, Any]:
     """Adjust individual volume sliders for multi-channel stem tracks (session control)."""
     allowed = await check_user_can_control_soundscape(
@@ -111,7 +111,7 @@ async def update_stem_volumes(
 async def override_mood(
     request: MoodOverrideRequest,
     user_id: CallerId,
-    spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
+    spicedb: Annotated[SpiceDBPort, Depends(get_spicedb_client)],
 ) -> TensionStatusResponse:
     """Manually force soundscape mood/stem profile (Exploration, Tension, Combat, Boss).
 
@@ -163,7 +163,7 @@ async def override_mood(
 async def toggle_ducking(
     request: DuckingRequest,
     user_id: CallerId,
-    spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
+    spicedb: Annotated[SpiceDBPort, Depends(get_spicedb_client)],
 ) -> dict[str, Any]:
     """Attenuate background stems for a stored duration, or release a duck (session control).
 

@@ -8,7 +8,7 @@ from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, Response
 from runefoble_auth.factory import get_spicedb_client
-from runefoble_auth.spicedb import SpiceDBClient
+from runefoble_auth.port import SpiceDBPort
 from runefoble_events.events import PrintPdfForged, StlTokenForged
 from runefoble_platform.aggregate_loading import load_or_create
 from runefoble_platform.event_sourcing import AggregateRepository
@@ -57,7 +57,7 @@ async def export_print_pdf(
     request: PrintPdfRequest,
     user_id: CallerId,
     storage: Annotated[SiloStorageService, Depends(get_storage)],
-    spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
+    spicedb: Annotated[SpiceDBPort, Depends(get_spicedb_client)],
     repo: Annotated[AggregateRepository[AssetForgeAggregate], Depends(get_forge_repo)],
 ) -> Any:
     """Generate multi-page print-ready PDF sliced to exact 1-inch tabletop grid."""
@@ -153,7 +153,7 @@ async def export_standees(
     request: StandeesRequest,
     user_id: CallerId,
     storage: Annotated[SiloStorageService, Depends(get_storage)],
-    spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
+    spicedb: Annotated[SpiceDBPort, Depends(get_spicedb_client)],
     repo: Annotated[AggregateRepository[AssetForgeAggregate], Depends(get_forge_repo)],
 ) -> Any:
     """Generate folding papercraft miniature standee sheets."""
@@ -231,7 +231,7 @@ async def export_stl_token(
     request: StlTokenRequest,
     user_id: CallerId,
     storage: Annotated[SiloStorageService, Depends(get_storage)],
-    spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
+    spicedb: Annotated[SpiceDBPort, Depends(get_spicedb_client)],
     repo: Annotated[AggregateRepository[AssetForgeAggregate], Depends(get_forge_repo)],
 ) -> Any:
     """Generate watertight 3D printable STL miniature base with status condition clips."""

@@ -7,7 +7,7 @@ from typing import Annotated
 from fastapi import Depends, Request
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.permissions import check_subject
-from runefoble_auth.spicedb import SpiceDBClient
+from runefoble_auth.port import SpiceDBPort
 from runefoble_auth.wiring import build_identity_dependencies
 from runefoble_auth.zitadel import ZitadelAuthService
 
@@ -59,7 +59,7 @@ get_principal, CallerPrincipal, CallerId, get_caller_or_service, CallerOrService
 async def check_user_can_view_campaign(
     user_id: str,
     campaign_id: str,
-    spicedb: SpiceDBClient,
+    spicedb: SpiceDBPort,
 ) -> bool:
     """Evaluate SpiceDB Zanzibar permissions to check whether user can view campaign analytics.
 
@@ -69,4 +69,4 @@ async def check_user_can_view_campaign(
 
 
 StorageDep = Annotated[CampaignAnalyticsStorage, Depends(get_storage)]
-SpiceDep = Annotated[SpiceDBClient, Depends(get_spicedb_client)]
+SpiceDep = Annotated[SpiceDBPort, Depends(get_spicedb_client)]

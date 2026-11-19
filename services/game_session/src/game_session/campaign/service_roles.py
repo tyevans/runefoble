@@ -17,8 +17,9 @@ from game_session.campaign.service_campaigns import (
     load_memberships,
     parse_campaign_id,
 )
-from game_session.campaign.tuples import SpiceDB, grant_member, relation_for_role
+from game_session.campaign.tuples import grant_member, relation_for_role
 from runefoble_auth.permissions import check_subject
+from runefoble_auth.port import SpiceDBPort
 from runefoble_platform.aggregate_loading import save_or_conflict
 
 CAPABILITY_PERMISSIONS: tuple[str, ...] = ("manage", "run_session", "play", "view")
@@ -26,7 +27,7 @@ CAPABILITY_PERMISSIONS: tuple[str, ...] = ("manage", "run_session", "play", "vie
 
 async def assign_role(
     repos: CampaignRepositories,
-    spicedb: SpiceDB,
+    spicedb: SpiceDBPort,
     campaign_id: str,
     req: AssignRoleRequest,
 ) -> RoleAssignedResponse:
@@ -46,7 +47,7 @@ async def assign_role(
 
 
 async def capabilities(
-    spicedb: SpiceDB, campaign_id: str, user_id: str
+    spicedb: SpiceDBPort, campaign_id: str, user_id: str
 ) -> CampaignCapabilitiesResponse:
     """Check each capability. Non-members receive all false."""
     flags = {

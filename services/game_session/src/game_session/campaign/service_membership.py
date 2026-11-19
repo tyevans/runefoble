@@ -30,9 +30,10 @@ from game_session.campaign.service_campaigns import (
     load_memberships,
     parse_campaign_id,
 )
-from game_session.campaign.tuples import SpiceDB, grant_member, relation_for_role, revoke_member
+from game_session.campaign.tuples import grant_member, relation_for_role, revoke_member
 from game_session.profile.aggregate import UserProfileAggregate
 from game_session.profile.repository import load_profile
+from runefoble_auth.port import SpiceDBPort
 from runefoble_platform.aggregate_loading import load_if_exists, save_or_conflict
 from runefoble_platform.event_sourcing import AggregateRepository
 from runefoble_platform.models import utc_now
@@ -73,7 +74,7 @@ async def create_invite(
 
 async def join_campaign(
     repos: CampaignRepositories,
-    spicedb: SpiceDB,
+    spicedb: SpiceDBPort,
     token: str,
     user_id: str,
     username: str | None,
@@ -155,7 +156,7 @@ def _member(campaign_id: str, user_id: str, role: str, name: str | None) -> Camp
 
 
 async def remove_member(
-    repos: CampaignRepositories, spicedb: SpiceDB, campaign_id: str, user_id: str
+    repos: CampaignRepositories, spicedb: SpiceDBPort, campaign_id: str, user_id: str
 ) -> MemberRemovedResponse:
     """Remove a member. The owner cannot be removed. Repeating the call is safe."""
     cid = parse_campaign_id(campaign_id)

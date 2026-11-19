@@ -7,7 +7,7 @@ from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException
 from runefoble_auth.factory import get_spicedb_client
-from runefoble_auth.spicedb import SpiceDBClient
+from runefoble_auth.port import SpiceDBPort
 from runefoble_events.events import BattlemapForged
 from runefoble_platform.aggregate_loading import load_or_create
 from runefoble_platform.asset_index import get_stored_asset
@@ -46,7 +46,7 @@ async def forge_battlemap(
     request: BattlemapForgeRequest,
     user_id: CallerId,
     storage: Annotated[SiloStorageService, Depends(get_storage)],
-    spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
+    spicedb: Annotated[SpiceDBPort, Depends(get_spicedb_client)],
     repo: Annotated[AggregateRepository[AssetForgeAggregate], Depends(get_forge_repo)],
 ) -> BattlemapForgeResponse:
     """Synthesize procedural battlemap texture, extract wall/hazard geometry, and store in Silo S3."""
@@ -159,7 +159,7 @@ async def forge_battlemap(
 async def get_forged_battlemap(
     asset_id: str,
     user_id: CallerId,
-    spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
+    spicedb: Annotated[SpiceDBPort, Depends(get_spicedb_client)],
 ) -> dict:
     """Retrieve metadata for a previously forged battlemap. Requires `forged_asset.view`."""
     try:

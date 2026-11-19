@@ -10,12 +10,13 @@ from uuid import UUID, uuid4
 
 from eventsource.application.aggregates.repository import AggregateRepository
 from game_session.aggregate import GameSessionAggregate
-from game_session.campaign.tuples import SpiceDB, link_session
+from game_session.campaign.tuples import link_session
+from runefoble_auth.port import SpiceDBPort
 
 
 async def open_game_session(
     repo: AggregateRepository[GameSessionAggregate],
-    spicedb: SpiceDB,
+    spicedb: SpiceDBPort,
     campaign_id: UUID,
     *,
     title: str,

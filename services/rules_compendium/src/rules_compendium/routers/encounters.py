@@ -5,9 +5,8 @@ from uuid import uuid4
 
 from fastapi import APIRouter, Depends
 from runefoble_auth.caller import CallerIdentity
-from runefoble_auth.mock import MockSpiceDBClient
 from runefoble_auth.permissions import require_subject
-from runefoble_auth.spicedb import SpiceDBClient
+from runefoble_auth.port import SpiceDBPort
 from runefoble_platform.event_sourcing import AggregateRepository
 
 from rules_compendium.aggregate import EncounterAggregate
@@ -42,7 +41,7 @@ async def balance_encounter(
     caller: CallerOrService,
     encounter_repo: Annotated[AggregateRepository[EncounterAggregate], Depends(get_encounter_repo)],
     engine: Annotated[CompendiumRetrievalEngine, Depends(get_retrieval_engine)],
-    spicedb: Annotated[SpiceDBClient | MockSpiceDBClient, Depends(get_spicedb_client)],
+    spicedb: Annotated[SpiceDBPort, Depends(get_spicedb_client)],
 ) -> EncounterBalanceResponse:
     """Calculate encounter lethality and recommend a synergistic monster group for a given party roster."""
     await _require_play_on_campaign(caller, request, spicedb)
@@ -105,7 +104,7 @@ async def balance_encounter(
 async def _require_play_on_campaign(
     caller: CallerIdentity,
     request: EncounterBalanceRequest,
-    spicedb: SpiceDBClient | MockSpiceDBClient,
+    spicedb: SpiceDBPort,
 ) -> None:
     """A user who names a campaign needs `campaign.play`. A service call acts for no user."""
     if request.campaign_id is None or caller.user_id is None:

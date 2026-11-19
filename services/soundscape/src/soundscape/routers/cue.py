@@ -7,7 +7,7 @@ from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from runefoble_auth.factory import get_spicedb_client
-from runefoble_auth.spicedb import SpiceDBClient
+from runefoble_auth.port import SpiceDBPort
 
 from soundscape.dependencies import (
     CallerId,
@@ -35,7 +35,7 @@ CUE_DUCK_MS = 2000
 async def trigger_sound_cue(
     request: SoundscapeCueRequest,
     user_id: CallerId,
-    spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
+    spicedb: Annotated[SpiceDBPort, Depends(get_spicedb_client)],
 ) -> SoundscapeCueResponse:
     """Trigger a tactical foley cue or sound effect (e.g. fireball, sword slash).
 

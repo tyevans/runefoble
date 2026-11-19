@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from redstring import DoubleMergeError, MergeIntoAliasError
 from runefoble_auth.factory import get_spicedb_client
-from runefoble_auth.spicedb import SpiceDBClient
+from runefoble_auth.port import SpiceDBPort
 from runefoble_platform.aggregate_loading import load_or_404
 from runefoble_platform.event_sourcing import AggregateRepository
 
@@ -70,7 +70,7 @@ async def consolidate_alias(
     user_id: CallerId,
     retrieval_engine: Annotated[LoreRetrievalEngine, Depends(get_retrieval_engine)],
     repo: Annotated[AggregateRepository[LoreDocumentAggregate], Depends(get_repo)],
-    spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
+    spicedb: Annotated[SpiceDBPort, Depends(get_spicedb_client)],
 ) -> ConsolidateAliasResponse:
     """Merge an alias title into a canonical entity node and record it on the document."""
     if not await check_user_can_run_session(user_id, req.campaign_id, spicedb):

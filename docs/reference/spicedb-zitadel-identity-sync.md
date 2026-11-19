@@ -198,4 +198,4 @@ Callers type against the `SpiceDBPort` Protocol (`libs/runefoble_auth/src/runefo
 - The port has a `backend_name: str` attribute. It names the transport.
 - `read_relationships` returns `Relationship` values. `Relationship` is in `libs/runefoble_auth/src/runefoble_auth/relationship.py`.
 - `get_spicedb_client` returns a `SpiceDBPort`. `set_spicedb_client` accepts a `SpiceDBPort` or `None`. `ZitadelSpiceDBSyncService` accepts a `SpiceDBPort`.
-- Production modules do not import `runefoble_auth.mock`. Only tests import the mock package.
+- Production modules do not import `runefoble_auth.mock`. This includes every service under `services/*/src` (TASK-0912). Only tests import the mock package.

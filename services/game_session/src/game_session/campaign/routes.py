@@ -36,12 +36,12 @@ from game_session.campaign.schemas import (
     SessionLinkReconcileResponse,
     UpdateCampaignRequest,
 )
-from game_session.campaign.tuples import SpiceDB
 from game_session.play.repositories import SessionRepo
 from game_session.profile.aggregate import UserProfileAggregate
 from game_session.profile.repository import get_profile_repository
 from game_session.shared.identity import CallerPrincipal, get_principal
 from runefoble_auth.factory import get_spicedb_client
+from runefoble_auth.port import SpiceDBPort
 
 router = APIRouter(
     dependencies=[Depends(get_principal)],
@@ -50,7 +50,7 @@ router = APIRouter(
 )
 
 Repos = Annotated[CampaignRepositories, Depends(campaign_repositories)]
-Spicedb = Annotated[SpiceDB, Depends(get_spicedb_client)]
+Spicedb = Annotated[SpiceDBPort, Depends(get_spicedb_client)]
 GameSessions = SessionRepo
 ProfileRepo = Annotated[AggregateRepository[UserProfileAggregate], Depends(get_profile_repository)]
 

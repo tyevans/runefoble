@@ -13,7 +13,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.permissions import check_subject
-from runefoble_auth.spicedb import SpiceDBClient
+from runefoble_auth.port import SpiceDBPort
 from runefoble_platform.models import utc_now
 
 from soundscape.dependencies import (
@@ -46,7 +46,7 @@ async def check_leitmotif_authorization(
     character_id: str,
     session_id: str,
     campaign_id: UUID | None,
-    spicedb: SpiceDBClient,
+    spicedb: SpiceDBPort,
 ) -> bool:
     """Enforce Zanzibar permissions for character leitmotif configuration & triggers."""
     # 1. Check if user has edit rights for this character
@@ -85,7 +85,7 @@ async def list_timbre_presets() -> dict[str, Any]:
 async def configure_character_leitmotif(
     request: CharacterLeitmotifProfile,
     user_id: CallerId,
-    spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
+    spicedb: Annotated[SpiceDBPort, Depends(get_spicedb_client)],
 ) -> CharacterLeitmotifProfile:
     """Persist and activate character leitmotif configuration.
 
@@ -157,7 +157,7 @@ async def get_character_leitmotif_profile(
 async def trigger_character_leitmotif(
     request: LeitmotifTriggerRequest,
     user_id: CallerId,
-    spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
+    spicedb: Annotated[SpiceDBPort, Depends(get_spicedb_client)],
 ) -> ActiveLeitmotifPlayback:
     """Trigger dynamic stem stinger or audition character leitmotif.
 
