@@ -25,9 +25,11 @@ SPECTATOR = "spectator"
 
 
 @pytest.fixture(scope="module")
-def audience(live_spicedb_with_schema: LiveSpiceDB) -> Generator[AudienceStudioProcess]:
-    """Launch Audience Studio, pointed at the live SpiceDB container."""
-    yield from start_audience_studio_server(live_spicedb_with_schema.env)
+def audience(
+    live_spicedb_with_schema: LiveSpiceDB, audience_stores: dict[str, str]
+) -> Generator[AudienceStudioProcess]:
+    """Launch Audience Studio on PostgreSQL and Redis, pointed at the live SpiceDB container."""
+    yield from start_audience_studio_server({**audience_stores, **live_spicedb_with_schema.env})
 
 
 def _auth(audience: AudienceStudioProcess, sub: str) -> dict[str, str]:

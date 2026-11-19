@@ -70,15 +70,9 @@ def roles(live_spicedb_with_schema: LiveSpiceDB) -> LiveSpiceDB:
     return spicedb
 
 
-def test_poll_and_votes_survive_a_restart(database_url: str, roles: LiveSpiceDB):
+def test_poll_and_votes_survive_a_restart(audience_stores: dict[str, str], roles: LiveSpiceDB):
     """A poll and its votes are read back after the service restarts."""
-    process = AudienceStudioProcess(
-        {
-            "RUNEFOBLE_DATABASE_URL": database_url,
-            "RUNEFOBLE_EVENT_STORE_BACKEND": "postgresql",
-            **roles.env,
-        }
-    )
+    process = AudienceStudioProcess({**audience_stores, **roles.env})
     base_url = process.start()
     try:
         with httpx.Client(base_url=base_url) as client:
@@ -92,13 +86,7 @@ def test_poll_and_votes_survive_a_restart(database_url: str, roles: LiveSpiceDB)
     finally:
         process.stop()
 
-    restarted = AudienceStudioProcess(
-        {
-            "RUNEFOBLE_DATABASE_URL": database_url,
-            "RUNEFOBLE_EVENT_STORE_BACKEND": "postgresql",
-            **roles.env,
-        }
-    )
+    restarted = AudienceStudioProcess({**audience_stores, **roles.env})
     base_url = restarted.start()
     try:
         with httpx.Client(base_url=base_url) as client:

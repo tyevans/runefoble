@@ -20,15 +20,17 @@ from tests.helpers.spicedb import LiveSpiceDB
 
 
 @pytest.fixture(scope="module")
-def audience(live_spicedb_with_schema: LiveSpiceDB) -> Generator[AudienceStudioProcess]:
-    """Launch Audience Studio Fastify server as an isolated subprocess, checking a live SpiceDB."""
+def audience(
+    live_spicedb_with_schema: LiveSpiceDB, audience_stores: dict[str, str]
+) -> Generator[AudienceStudioProcess]:
+    """Launch Audience Studio as a subprocess on PostgreSQL and Redis, checking a live SpiceDB."""
     spicedb = live_spicedb_with_schema
     spicedb.grant("camp-omega", "dungeon_master", "dm-omega")
     for spectator in ("user-twitch-1", "user-youtube-2", "user-web-3"):
         spicedb.grant("camp-omega", "spectator", spectator)
     spicedb.grant("camp-quorum-fail", "dungeon_master", "dm-quorum")
     spicedb.grant("camp-quorum-fail", "spectator", "solo-voter")
-    yield from start_audience_studio_server(spicedb.env)
+    yield from start_audience_studio_server({**audience_stores, **spicedb.env})
 
 
 def _auth(audience: AudienceStudioProcess, sub: str) -> dict[str, str]:

@@ -4,6 +4,9 @@ The service verifies Zitadel tokens (TASK-0533). The helper serves a test JWKS o
 so the service fetches its keys from a real URL. Tests mint tokens with the same issuer.
 Permission checks go to a live SpiceDB container (TASK-0554). Tests pass its env through
 `env_overrides`, for example `LiveSpiceDB.env`.
+
+The service has no in-memory store and no mock stream bus (TASK-0724, ADR-0015 decision f).
+Every test passes a PostgreSQL and a Redis URL, for example from the `audience_stores` fixture.
 """
 
 import json
@@ -12,14 +15,17 @@ import subprocess
 import threading
 import urllib.parse
 from collections.abc import Generator, Mapping
+from contextlib import ExitStack
 from functools import lru_cache
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 import httpx
+import pytest
 
 from tests.helpers.polling import wait_until
 from tests.helpers.ports import free_port
+from tests.helpers.redis_container import redis_container
 from tests.helpers.signing_test_issuer import (
     DEFAULT_AUDIENCE,
     DEFAULT_ISSUER,
@@ -115,8 +121,10 @@ class AudienceStudioProcess:
     def start(self, wait_healthy: bool = True) -> str:
         """Start the process. Wait for /healthz when asked. Raise with the logs if it exits early."""
         env = os.environ.copy()
-        # A developer shell may hold a database URL. Each test opts in explicitly.
+        # A developer shell or the root conftest may hold store settings. Each test opts in explicitly.
         env.pop("RUNEFOBLE_DATABASE_URL", None)
+        env.pop("RUNEFOBLE_REDIS_URL", None)
+        env.pop("RUNEFOBLE_EVENT_STORE_BACKEND", None)
         env.pop("RUNEFOBLE_SPICEDB_ENDPOINT", None)
         env.pop("RUNEFOBLE_SPICEDB_PRESHARED_KEY", None)
         env.update(
@@ -124,7 +132,6 @@ class AudienceStudioProcess:
                 "PORT": str(self.port),
                 "HOST": "127.0.0.1",
                 "NODE_ENV": "test",
-                "RUNEFOBLE_REDIS_URL": "mock://redis",
                 "RUNEFOBLE_ZITADEL_ISSUER": DEFAULT_ISSUER,
                 "RUNEFOBLE_ZITADEL_AUDIENCE": DEFAULT_AUDIENCE,
             }
@@ -166,6 +173,16 @@ class AudienceStudioProcess:
                 return
         raise RuntimeError(f"{path} did not return {status} within {timeout}s:\n{self._logs()}")
 
+    def wait_for_exit(self, timeout: float) -> tuple[int, str]:
+        """Wait for a process that must refuse to start. Return its exit code and stderr."""
+        if self._proc is None:
+            raise RuntimeError("Audience Studio was not started")
+        try:
+            _, stderr = self._proc.communicate(timeout=timeout)
+        except subprocess.TimeoutExpired as error:
+            raise RuntimeError(f"Audience Studio kept running:\n{self._logs()}") from error
+        return self._proc.returncode, stderr.decode()
+
     def _logs(self) -> str:
         if self._proc is None:
             return ""
@@ -202,3 +219,15 @@ def start_audience_studio_server(
         yield process
     finally:
         process.stop()
+
+
+@pytest.fixture(scope="module")
+def audience_stores(postgres_service: Mapping[str, str | int]) -> Generator[dict[str, str]]:
+    """PostgreSQL and Redis settings for Audience Studio, as Helm sets them. One pair per module."""
+    with ExitStack() as stack:
+        redis_url = stack.enter_context(redis_container(free_port()))
+        yield {
+            "RUNEFOBLE_DATABASE_URL": str(postgres_service["dsn"]),
+            "RUNEFOBLE_EVENT_STORE_BACKEND": "postgresql",
+            "RUNEFOBLE_REDIS_URL": redis_url,
+        }

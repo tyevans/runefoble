@@ -119,9 +119,9 @@ Clients and DM dashboards connect to `/ws/audience/{campaign_id}` for sub-500ms 
 
 Poll and proposal state is stored as event streams in PostgreSQL (table `audience_studio_events`). The service keeps no poll state in memory.
 
-- **Required configuration**: set `RUNEFOBLE_DATABASE_URL` and `RUNEFOBLE_REDIS_URL`. Outside `NODE_ENV=test`, the service exits at start-up when either one is missing or unreachable.
+- **Required configuration**: set `RUNEFOBLE_DATABASE_URL` and `RUNEFOBLE_REDIS_URL` in every environment. The service exits at start-up when either one is missing, or when PostgreSQL is unreachable. `NODE_ENV=test` does not select an in-memory store. A Redis that is down at start-up does not stop the service. Readiness stays `503` until Redis answers.
 - **Restart**: open polls and pending proposals load from the store. Each open poll closes at its stored deadline. A poll whose window ended while the service was down closes at start-up and publishes `poll_completed`.
-- **Publish failure**: a command that cannot publish is rejected. The HTTP route returns `503 Service Unavailable`. The WebSocket route sends an `error` frame with code `internal_error`. No state changes.
+- **Publish failure**: the command still succeeds, because the events are in the PostgreSQL outbox. The outbox relay retries every second and publishes each pending event when Redis answers. Delivery is at least once, so consumers dedupe by event id.
 - **Redis outage**: the Redis client reconnects with a backoff of up to five seconds. Writes resume without a restart.
 - **Readiness**: `GET /readyz` returns `503` with a `dependencies` object while Redis or PostgreSQL is unavailable. Liveness (`GET /healthz`) stays `200`.
 
