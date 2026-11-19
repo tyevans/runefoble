@@ -25,7 +25,6 @@ OBSERVE_ROUTES = [
     ("/ws/voice/{sid}", "player_pip", "connected"),
     ("/ws/mobile-companion/{sid}", "player_pip", "mobile_companion_connected"),
     ("/ws/overlay/{sid}", "spectator_sol", "overlay_connected"),
-    ("/overlay/ws/{sid}", "spectator_sol", "overlay_connected"),
     ("/ws/spectator/{sid}", "spectator_sol", "overlay_connected"),
 ]
 STRANGER = "stranger_eve"

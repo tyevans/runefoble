@@ -99,8 +99,6 @@ class WebSocketActionValidator:
             return await self.spicedb.check_permission(
                 "campaign", campaign_id, play, "user", subject_id
             )
-        if action in DM_ACTIONS:
-            return False
         return False
 
 
