@@ -1,6 +1,8 @@
 """Blackbox frontdoor tests for Session Lobby Gathering, Readiness, and Launch (US-0065).
 
-Governed by ADR-0001, ADR-0003, ADR-0006, and Hard Invariants 6 and 7.
+Governed by ADR-0001, ADR-0003, ADR-0006, TASK-0910, and Hard Invariants 6 and 7. A client
+cannot send `session_started`. Only the gateway start route sends it, after the owner moves the
+session from `lobby` to `active`.
 """
 
 from __future__ import annotations
@@ -8,10 +10,14 @@ from __future__ import annotations
 from uuid import uuid4
 
 import pytest
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from game_session.shared.streams import STREAM_SESSION
+from gateway_api.main import app as gateway_app
+from gateway_api.proxy import UPSTREAM_INVALID_DETAIL
 
 from tests.helpers.campaign_setup import create_owned_campaign
+from tests.helpers.live_services import serve
 from tests.helpers.ws_identity import bearer, ws_subprotocols
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
@@ -103,14 +109,26 @@ def test_session_lobby_launch_transition_and_events(
     )
     assert joined.status_code == 200, joined.text
 
-    with client_gw.websocket_connect(
-        f"/ws/session/{session_id}", subprotocols=ws_subprotocols("dm_evelyn")
-    ) as ws:
+    path = f"/ws/session/{session_id}"
+    with (
+        client_gw.websocket_connect(path, subprotocols=ws_subprotocols("dm_evelyn")) as ws,
+        client_gw.websocket_connect(path, subprotocols=ws_subprotocols("player_marcus")) as pws,
+    ):
         assert ws.receive_json()["type"] == "connected"
+        assert pws.receive_json()["type"] == "connected"
+
+        pws.send_json(
+            {"type": "session_started", "campaignId": "camp-elsewhere", "sessionId": session_id}
+        )
+        assert pws.receive_json()["code"] == "UNKNOWN_FRAME"
+        assert _session_status(client_gw, session_id, headers_dm) == "lobby"
+
         gw_launch = client_gw.post(f"/api/v1/sessions/{session_id}/start", headers=headers_dm)
         assert gw_launch.status_code == 200 and gw_launch.json()["status"] == "active"
-        msg = ws.receive_json()
-        assert msg["type"] == "session_started" and msg["status"] == "active"
+        # The next DM frame is the gateway frame, so the forged frame never reached the DM.
+        for socket in (ws, pws):
+            msg = socket.receive_json()
+            assert msg == {"type": "session_started", "sessionId": session_id, "status": "active"}
 
     active_state = client_sess.get(f"/api/v1/sessions/{session_id}", headers=headers_dm).json()
     assert active_state["status"] == "active" and active_state["current_turn"] == 1
@@ -118,6 +136,33 @@ def test_session_lobby_launch_transition_and_events(
 
     session_events = mock_redis.streams.get(STREAM_SESSION, [])
     assert any("runefoble.events.session.started" in str(evt) for evt in session_events)
+
+
+def test_a_start_reply_without_status_is_a_502_not_a_crash(trusted_ws_issuer) -> None:
+    """An owner start reply that breaks the contract gives 502 with a fixed detail (TASK-0910)."""
+    owner = FastAPI()
+
+    @owner.post("/api/v1/sessions/{session_id}/start")
+    async def start(session_id: str) -> dict[str, str]:
+        return {"id": session_id}
+
+    with (
+        serve(owner) as owner_url,
+        pytest.MonkeyPatch.context() as env,
+    ):
+        env.setenv("RUNEFOBLE_GAME_SESSION_URL", owner_url)
+        with TestClient(gateway_app, raise_server_exceptions=False) as gateway:
+            reply = gateway.post("/api/v1/sessions/s-1/start", headers=bearer("dm_evelyn"))
+
+    assert reply.status_code == 502
+    assert reply.json() == {"detail": UPSTREAM_INVALID_DETAIL}
+
+
+def _session_status(client: TestClient, session_id: str, headers: dict[str, str]) -> str:
+    """Read the session status through the gateway session route."""
+    read = client.get(f"/api/v1/sessions/{session_id}", headers=headers)
+    assert read.status_code == 200, read.text
+    return read.json()["status"]
 
 
 def _seat_players(

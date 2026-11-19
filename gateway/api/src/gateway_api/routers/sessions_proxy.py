@@ -17,16 +17,19 @@ does not.
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from gateway_api.auth import get_principal, require_zanzibar_permission
 from gateway_api.dependencies import ws_manager
 from gateway_api.models import AtmosphereUpdateRequest, DMOverrideRequest, JoinSessionRequest
-from gateway_api.proxy import forward_json, owner_route
-from pydantic import BaseModel, ConfigDict, Field
+from gateway_api.proxy import UPSTREAM_INVALID_DETAIL, forward_json, owner_route
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from runefoble_platform.service_client import owner_routes
+
+logger = logging.getLogger("runefoble.gateway.sessions_proxy")
 
 SERVICE = "game_session"
 SESSIONS = "/api/v1/sessions"
@@ -34,6 +37,14 @@ SESSIONS = "/api/v1/sessions"
 router = APIRouter(tags=["Tabletop & Game Sessions"])
 
 _VERIFIED = [Depends(get_principal)]
+
+
+class StartedSessionReply(BaseModel):
+    """The part of the owner's start reply that the gateway reads. Other fields pass through."""
+
+    model_config = ConfigDict(extra="allow")
+
+    status: str
 
 
 class HotSwapRequest(BaseModel):
@@ -66,14 +77,23 @@ async def join_session_proxy(session_id: str, req: JoinSessionRequest, request: 
 async def start_session_proxy(session_id: str, request: Request) -> Any:
     """Move a lobby to active (game_session checks 'control').
 
-    The gateway then tells its WebSocket clients that the session started. The owner's reply
-    supplies the status. The gateway keeps no state.
+    The gateway then tells its WebSocket clients that the session started. This route is the
+    only source of the `session_started` frame (TASK-0910). The owner's reply supplies the
+    status. A reply without a status is an upstream contract error and returns 502. The gateway
+    keeps no state.
     """
     state = await forward_json(
         request, service=SERVICE, method="POST", path=f"{SESSIONS}/{session_id}/start"
     )
+    try:
+        started = StartedSessionReply.model_validate(state)
+    except ValidationError as exc:
+        logger.warning("Upstream %s start reply has no status: session %s", SERVICE, session_id)
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY, detail=UPSTREAM_INVALID_DETAIL
+        ) from exc
     await ws_manager.broadcast(
-        session_id, {"type": "session_started", "sessionId": session_id, "status": state["status"]}
+        session_id, {"type": "session_started", "sessionId": session_id, "status": started.status}
     )
     return state
 

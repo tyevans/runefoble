@@ -51,7 +51,7 @@ def test_message_reaches_own_session_and_never_another(client_gw: TestClient, op
         assert ws_a.receive_json()["session_id"] == session_a
         assert ws_b.receive_json()["session_id"] == session_b
 
-        ws_a.send_json({"type": "token_moved", "tokenId": "token-secret", "x": 4, "y": 9})
+        ws_a.send_json({"type": "token_action", "tokenId": "token-secret", "x": 4, "y": 9})
 
         assert ws_a.receive_json()["tokenId"] == "token-secret"
         assert _receive_within(ws_b, SILENCE_SECONDS) is None
@@ -72,7 +72,7 @@ def test_two_clients_of_one_session_still_share_messages(
     ):
         assert ws_first.receive_json()["type"] == "connected"
         assert ws_second.receive_json()["type"] == "connected"
-        ws_first.send_json({"type": "dice_rolled", "total": 17})
+        ws_first.send_json({"type": "aoe_placed", "total": 17})
         assert ws_second.receive_json()["total"] == 17
 
 

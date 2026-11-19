@@ -14,7 +14,7 @@ from fastapi.testclient import TestClient
 from tests.helpers.ws_identity import ws_subprotocols
 from tests.realtime_session import open_table
 
-DICE = {"type": "dice_rolled", "roller_name": "Pip", "total": 17}
+DICE = {"type": "token_action", "action": "cast", "tokenId": "token-pip", "total": 17}
 
 
 def test_frame_reaches_every_live_socket_after_a_peer_leaves(

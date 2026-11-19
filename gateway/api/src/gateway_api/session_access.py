@@ -35,17 +35,17 @@ async def require_session_permission(session_id: str, user_id: str, permission: 
 
 
 async def may_publish_frame(
-    websocket: WebSocket, session_id: str, user_id: str, action: str
+    websocket: WebSocket, session_id: str, user_id: str, action: str, permission: str
 ) -> bool:
-    """Return whether an inbound socket frame may reach the room (TASK-0810).
+    """Return whether an inbound socket frame may reach the room (TASK-0810, TASK-0910).
 
-    Frames that change what other viewers see need `session.participate`. A refused caller gets
-    a `PERMISSION_DENIED` frame, and the frame is not relayed. A SpiceDB outage gets
+    The caller names the `game_session` permission that the frame kind needs. A refused caller
+    gets a `PERMISSION_DENIED` frame, and the frame is not relayed. A SpiceDB outage gets
     `AUTHZ_UNAVAILABLE`, and the frame is not relayed either. Both the session and the overlay
     sockets call this check.
     """
     try:
-        allowed = await has_session_permission(session_id, user_id, "participate")
+        allowed = await has_session_permission(session_id, user_id, permission)
     except AuthzUnavailableError:
         await send_socket_error(
             websocket, "AUTHZ_UNAVAILABLE", "Authorization unavailable", action=action
@@ -55,7 +55,7 @@ async def may_publish_frame(
         await send_socket_error(
             websocket,
             "PERMISSION_DENIED",
-            f"Action '{action}' needs session.participate",
+            f"Action '{action}' needs session.{permission}",
             action=action,
         )
     return allowed

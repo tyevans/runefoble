@@ -1,31 +1,32 @@
-"""Inbound frame contract for the session WebSocket (TASK-0810).
+"""Inbound frame contract for the session WebSocket (TASK-0810, TASK-0910).
 
 A client frame is a JSON object whose kind is its `type`, or its `action` when it has no `type`.
 Mesh frames carry the kind in `type` and may carry a payload field named `action` (for example
 `{"type": "token_action", "action": "cast"}`). The gateway relays only kinds in
-`SESSION_FRAME_KINDS`. Other fields pass through unchanged, because each kind carries its own
-payload.
+`CLIENT_FRAME_PERMISSIONS`. Each kind maps to the `game_session` permission that the sender must
+hold. Other fields pass through unchanged, because each kind carries its own payload.
+
+Server kinds are not client kinds. `session_started` comes only from the gateway start route.
+`turn_advanced`, `dice_rolled`, `token_moved` and `dm_whisper` have owner routes or owner
+sockets, so a client frame of these kinds is an `UNKNOWN_FRAME`.
 """
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, ValidationError, model_validator
 
-SESSION_FRAME_KINDS: frozenset[str] = frozenset(
+CLIENT_FRAME_PERMISSIONS: Mapping[str, str] = MappingProxyType(
     {
-        "session_started",
-        "player_readiness",
-        "player_stand_in",
-        "token_action",
-        "aoe_placed",
-        "spell_vfx",
-        "confirm_ghost",
-        "token_moved",
-        "dice_rolled",
-        "turn_advanced",
-        "dm_whisper",
+        "player_readiness": "participate",
+        "player_stand_in": "participate",
+        "token_action": "participate",
+        "aoe_placed": "participate",
+        "spell_vfx": "participate",
+        "confirm_ghost": "participate",
     }
 )
 
@@ -60,7 +61,7 @@ class InboundFrameError(Exception):
 
 
 def read_session_frame(text: str) -> tuple[str, dict[str, Any]]:
-    """Validate one inbound text frame. Return (kind, payload) for a known kind.
+    """Validate one inbound text frame. Return (kind, payload) for a client kind.
 
     The payload holds only the fields the client sent. Raises `InboundFrameError` with
     `INVALID_FRAME` for malformed JSON or a missing kind, and `UNKNOWN_FRAME` for an unknown kind.
@@ -71,13 +72,13 @@ def read_session_frame(text: str) -> tuple[str, dict[str, Any]]:
         raise InboundFrameError(
             "INVALID_FRAME", "A frame must be a JSON object with a type or an action"
         ) from exc
-    if frame.kind not in SESSION_FRAME_KINDS:
+    if frame.kind not in CLIENT_FRAME_PERMISSIONS:
         raise InboundFrameError("UNKNOWN_FRAME", "Unknown frame type")
     return frame.kind, frame.model_dump(mode="json", exclude_unset=True)
 
 
 __all__ = [
-    "SESSION_FRAME_KINDS",
+    "CLIENT_FRAME_PERMISSIONS",
     "InboundFrameError",
     "SessionFrame",
     "read_session_frame",

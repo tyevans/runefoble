@@ -70,59 +70,6 @@ def test_vtt_websocket_mesh_multi_client_readiness_and_stand_in(
             assert msg_a_stand_in["isAbsent"] is True
 
 
-def test_vtt_websocket_mesh_dice_rolls_and_turn_advancement(
-    client_gw: TestClient, open_session
-) -> None:
-    """Verify live dice rolls (updating 3D tray) and turn advancements stream across party members."""
-    session_id = open_session("mesh-tester")
-
-    with client_gw.websocket_connect(
-        f"/ws/session/{session_id}", subprotocols=ws_subprotocols("mesh-tester")
-    ) as ws_player:
-        assert ws_player.receive_json()["type"] == "connected"
-
-        with client_gw.websocket_connect(
-            f"/ws/session/{session_id}", subprotocols=ws_subprotocols("mesh-tester")
-        ) as ws_dm:
-            assert ws_dm.receive_json()["type"] == "connected"
-
-            # Player rolls attack dice
-            dice_payload = {
-                "type": "dice_rolled",
-                "diceType": "d20",
-                "formula": "1d20+5",
-                "total": 19,
-                "targetFaceValue": 14,
-                "rollerId": "user-valeros",
-                "rollerName": "Valeros",
-            }
-            ws_player.send_json(dice_payload)
-
-            recv_dm = ws_dm.receive_json()
-            assert recv_dm["type"] == "dice_rolled"
-            assert recv_dm["diceType"] == "d20"
-            assert recv_dm["total"] == 19
-            assert recv_dm["targetFaceValue"] == 14
-
-            # DM advances combat initiative turn
-            turn_payload = {
-                "type": "turn_advanced",
-                "activeCombatantId": "token-valeros",
-                "roundNumber": 2,
-                "turnSecondsRemaining": 60,
-            }
-            ws_dm.send_json(turn_payload)
-
-            recv_player = ws_player.receive_json()
-            # Drain echo of dice roll from player socket first
-            if recv_player.get("type") == "dice_rolled":
-                recv_player = ws_player.receive_json()
-
-            assert recv_player["type"] == "turn_advanced"
-            assert recv_player["activeCombatantId"] == "token-valeros"
-            assert recv_player["roundNumber"] == 2
-
-
 def test_vtt_websocket_mesh_aoe_templates_vfx_and_token_actions(
     client_gw: TestClient, open_session
 ) -> None:
@@ -186,17 +133,3 @@ def test_vtt_websocket_mesh_aoe_templates_vfx_and_token_actions(
             recv_vfx = ws_observer.receive_json()
             assert recv_vfx["type"] == "spell_vfx"
             assert recv_vfx["vfx"]["spellName"] == "Fireball"
-
-            # DM whisper event
-            whisper_payload = {
-                "type": "dm_whisper",
-                "whisper": {
-                    "whisper_id": "whisp-99",
-                    "whisper_type": "monster_tactics",
-                    "content": "Goblins prepare to retreat behind the barricade.",
-                },
-            }
-            ws_caster.send_json(whisper_payload)
-            recv_whisper = ws_observer.receive_json()
-            assert recv_whisper["type"] == "dm_whisper"
-            assert recv_whisper["whisper"]["whisper_id"] == "whisp-99"
