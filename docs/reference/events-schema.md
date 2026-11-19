@@ -63,7 +63,7 @@ Every registered domain event has one wire identifier. The identifier has the fo
 
 [Event Identifiers](event-identifiers.md) lists every registered domain event. The page is generated from the `runefoble_events` registry by `scripts/generate_event_catalogue.py`, which fails when an identifier breaks the rule. Its identifier column is the `event_type` that the code emits. Use it as the source of truth for wire names.
 
-Consumers match on the full identifier. Stream readers do not match on a short name. The event deserializer resolves only the full identifier.
+Consumers match on the full identifier. Stream readers do not match on a short name. The event deserializer resolves only the full identifier. A retired or unknown identifier decodes to `UnknownEvent`. A message that cannot be decoded goes to the dead-letter stream. See [Decode Rules](redis-streams-event-bus.md#decode-rules).
 
 ## Audience Studio Outbox
 

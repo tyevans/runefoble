@@ -37,6 +37,7 @@ Runefoble uses Redis Streams as a high-throughput, distributed event bus for cro
 2. **`RedisConsumerGroup` & `deserialize_event` (`libs/runefoble_platform/src/runefoble_platform/consumer_group.py`, `event_deserializer.py`)**:
    - `RedisConsumerGroup` manages consumer group lifecycles (`create_group`, `read_group`, `ack`, `auto_claim_pending`, `route_to_dead_letter`).
    - `deserialize_event` (`event_deserializer.py`) provides isolated deserialization and CloudEvents/DomainEvent registry resolution with W3C trace context preservation (`traceparent`, `tracestate`).
+   - `deserialize_event` returns a registered `DomainEvent`, or an `UnknownEvent` for an unregistered type. It raises `EventDecodeError` for every other input. See [Decode Rules](#decode-rules).
    - `MockAsyncRedis` is a test double in `tests/helpers/mock_redis.py`. Production code must not import it.
    - Implements competing consumer distribution across horizontally scaled service replicas.
    - Recovers unacknowledged/stuck messages from failed or stalled workers using `XAUTOCLAIM`.
@@ -46,6 +47,7 @@ Runefoble uses Redis Streams as a high-throughput, distributed event bus for cro
    - One consumer reads one stream for one group. It acknowledges a message only after its handler returns.
    - The handler receives `(message_id, payload)`. A consumer may resume its group from a position that the service stored, using `XGROUP SETID`.
    - A handler failure routes the message to `{stream}.dlq`, then acknowledges it.
+   - An undecodable message routes to `{stream}.dlq` and is acknowledged before any handler runs.
    - A set of consumers starts as one unit. Start-up raises when a consumer group cannot be created.
    - `status` is `running` while every read loop lives and the last read succeeded. Otherwise it is `failed`.
    - How-to: [Run Supervised Redis Stream Consumers](../how-to/run-supervised-redis-stream-consumers.md).
@@ -211,7 +213,7 @@ messages = await consumer_group.read_group(
 )
 ```
 - Reads using `XREADGROUP GROUP <group> <consumer> COUNT <count> BLOCK <block_ms> STREAMS <stream> >`.
-- Automatically deserializes payloads into corresponding `DomainEvent` subclasses.
+- Automatically deserializes payloads into corresponding `DomainEvent` subclasses. An undecodable message goes to the DLQ. An unregistered event type reaches the handler as `UnknownEvent`. See [Decode Rules](#decode-rules).
 - Each message is delivered to exactly one active consumer in the group, enabling horizontal load balancing.
 
 ### Acknowledgment (ACK)
@@ -257,6 +259,18 @@ dlq_id = await consumer_group.route_to_dead_letter(
   - `max_retries`: Configured retry threshold before quarantine.
   - `failed_at`: ISO 8601 UTC timestamp.
   - `event_type`: `"DeadLetterEvent"`.
+
+### Decode Rules
+`deserialize_event` gives one of three outcomes. It never returns raw input.
+
+| Input | Outcome |
+|---|---|
+| Registered event type, valid payload | Returns the registered `DomainEvent` subclass. |
+| Event type with no registered class | Returns `UnknownEvent(event_type, fields)`. `fields` holds the decoded payload object. |
+| Anything else (not JSON, payload not a JSON object, no event type, registered type fails validation) | Raises `EventDecodeError`. |
+
+- `read_group` and `auto_claim_pending` catch `EventDecodeError`. They route the message to `{stream}.dlq` with `error_reason` starting `EventDecodeError:`, acknowledge it, and omit it from the result. No handler runs for it.
+- `RedisStreamsEventBus.read_group(auto_deserialize=True)` does not catch `EventDecodeError`. The caller receives the exception.
 
 ---
 
