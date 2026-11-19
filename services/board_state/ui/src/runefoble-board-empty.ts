@@ -69,15 +69,15 @@ export class RunefobleBoardEmpty extends LitElement {
       padding: 8px 16px;
       font: inherit;
       font-weight: 800;
-      color: var(--rf-text-inverse, #ffffff);
-      background: var(--rf-border-color, #1a1a1a);
-      border: var(--rf-border-width, 2px) solid var(--rf-border-color, #1a1a1a);
-      box-shadow: var(--rf-shadow-sm, 2px 2px 0px #1a1a1a);
+      color: var(--rf-text-inverse);
+      background: var(--rf-border-color);
+      border: var(--rf-border-width, 2px) solid var(--rf-border-color);
+      box-shadow: var(--rf-shadow-sm);
       cursor: pointer;
     }
-    .set-up:hover:not([disabled]) { background: var(--rf-accent-primary, #e63946); }
+    .set-up:hover:not([disabled]) { background: var(--rf-accent-primary); }
     .set-up[disabled] { opacity: 0.6; cursor: progress; }
-    .error { margin-top: 12px; color: var(--rf-danger, #b00020); font-weight: 700; }
+    .error { margin-top: 12px; color: var(--rf-status-danger); font-weight: 700; }
   `;
 
   /** Runs the set-up flow once. A second click while it runs does nothing. */
