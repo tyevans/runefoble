@@ -29,7 +29,7 @@ Complete
 Decommission and remove backward-compatibility facades and legacy method aliases in `services/the_watcher` (`autonomous_dm.py` facade, `stand_in_ai.py` facade, and `SpeechIntentParser` backward-compatible methods), migrating all callers and tests directly to modular domain components.
 
 ## Problem Statement
-When The Watcher was decomposed into focused submodules (such as modular copilot routers, stand-in guardrails, and intent processors), legacy facade files (`autonomous_dm.py` and `stand_in_ai.py`) were retained in `services/the_watcher/src/the_watcher/` to forward calls to underlying sub-modules. Additionally, `SpeechIntentParser` retains legacy parser methods tested for backward compatibility in `tests/test_movement_parser.py:test_parser_backward_compatible_methods`. Under the updated DoR, these facades and compatibility shims must be excised.
+When The Watcher was decomposed into focused submodules (such as modular copilot routers, stand-in guardrails, and intent processors), legacy facade files (`autonomous_dm.py` and `stand_in_ai.py`) were retained in `services/the_watcher/src/the_watcher/` to forward calls to underlying sub-modules. Additionally, `SpeechIntentParser` retains legacy parser methods tested for backward compatibility in `tests/test_movement_parser.py:test_parser_backward_compatible_methods` (removed). Under the updated DoR, these facades and compatibility shims must be excised.
 
 ## Documentation & Architecture Review
 - **Documentation Consulted**:
