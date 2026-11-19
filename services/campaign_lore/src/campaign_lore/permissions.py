@@ -6,6 +6,7 @@ None. Each helper names one schema permission from `libs/runefoble_auth/schema/r
 
 from uuid import UUID
 
+from runefoble_auth.permissions import check_subject
 from runefoble_auth.spicedb import SpiceDBClient
 
 
@@ -16,13 +17,7 @@ async def check_user_has_campaign_permission(
     spicedb: SpiceDBClient,
 ) -> bool:
     """Return whether `user_id` holds `permission` on the campaign in the schema."""
-    return await spicedb.check_permission(
-        resource_type="campaign",
-        resource_id=str(campaign_id),
-        permission=permission,
-        subject_type="user",
-        subject_id=user_id,
-    )
+    return await check_subject(spicedb, "campaign", str(campaign_id), permission, user_id)
 
 
 async def check_user_can_read_secrets(

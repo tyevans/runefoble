@@ -9,6 +9,7 @@ from __future__ import annotations
 import logging
 from uuid import UUID
 
+from runefoble_auth.permissions import check_subject
 from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_auth.wiring import (
     build_identity_dependencies,
@@ -56,13 +57,11 @@ async def check_user_can_control_soundscape(
     The subject needs `session.control` on the session, or `campaign.run_session` on the
     campaign when the request names one. A SpiceDB failure raises and is never a denial.
     """
-    if await spicedb.check_permission("session", session_id, "control", "user", user_id):
+    if await check_subject(spicedb, "session", session_id, "control", user_id):
         return True
     if campaign_id is None:
         return False
-    return await spicedb.check_permission(
-        "campaign", str(campaign_id), "run_session", "user", user_id
-    )
+    return await check_subject(spicedb, "campaign", str(campaign_id), "run_session", user_id)
 
 
 async def check_user_can_trigger_cue(
@@ -78,11 +77,11 @@ async def check_user_can_trigger_cue(
     """
     if await check_user_can_control_soundscape(user_id, session_id, campaign_id, spicedb):
         return True
-    if await spicedb.check_permission("session", session_id, "participate", "user", user_id):
+    if await check_subject(spicedb, "session", session_id, "participate", user_id):
         return True
     if campaign_id is None:
         return False
-    return await spicedb.check_permission("campaign", str(campaign_id), "play", "user", user_id)
+    return await check_subject(spicedb, "campaign", str(campaign_id), "play", user_id)
 
 
 async def publish_soundscape_event(event: BaseRunefobleEvent) -> None:

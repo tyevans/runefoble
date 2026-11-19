@@ -3,8 +3,9 @@
 from typing import Annotated
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from runefoble_auth.caller import CallerIdentity
+from runefoble_auth.permissions import require_subject
 from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
 from runefoble_platform.event_sourcing import AggregateRepository
 
@@ -108,15 +109,11 @@ async def _require_play_on_campaign(
     """A user who names a campaign needs `campaign.play`. A service call acts for no user."""
     if request.campaign_id is None or caller.user_id is None:
         return
-    allowed = await spicedb.check_permission(
-        resource_type="campaign",
-        resource_id=str(request.campaign_id),
-        permission="play",
-        subject_type="user",
-        subject_id=caller.user_id,
+    await require_subject(
+        spicedb,
+        "campaign",
+        str(request.campaign_id),
+        "play",
+        caller.user_id,
+        detail=f"Forbidden: User '{caller.user_id}' cannot play campaign '{request.campaign_id}'",
     )
-    if not allowed:
-        raise HTTPException(
-            status_code=403,
-            detail=f"Forbidden: User '{caller.user_id}' cannot play campaign '{request.campaign_id}'",
-        )

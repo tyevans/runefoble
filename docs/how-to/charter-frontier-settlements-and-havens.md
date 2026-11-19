@@ -206,7 +206,7 @@ Per ADR-0001, ADR-0005, and ADR-0013, authorization logic in `services/game_sess
 - **`tokens.py`**: Zitadel OIDC Bearer token decoding, header parsing, and dev-mode fallback.
 - **`permissions.py`**: SpiceDB Zanzibar object authorization helpers for havens, establishments, and workers.
 - **`relationships.py`**: Zanzibar relationship tuple writers.
-- **`dependencies.py`**: FastAPI route dependency injectors (`get_current_settlement_user`, `require_haven_builder`, `require_establishment_manager`).
+- **`dependencies.py`**: FastAPI route dependency injectors (`require_haven_builder`, `require_establishment_manager`).
 - **`auth/` / `__init__.py`**: Authorization package. The former `auth.py` facade is removed (TASK-0793).
 
 ---

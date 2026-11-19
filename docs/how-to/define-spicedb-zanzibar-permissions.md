@@ -223,6 +223,21 @@ if not can_view:
     raise HTTPException(status_code=403, detail="Forbidden")
 ```
 
+### Use the Shared Subject Check
+
+Routes do not write their own lookup. Use the two helpers in `runefoble_auth.permissions`:
+
+- `check_subject(spicedb, resource_type, resource_id, permission, user_id)` returns `True` or `False`. Use it when the route decides between two outcomes.
+- `require_subject(spicedb, resource_type, resource_id, permission, user_id, *, detail=None)` raises `PermissionDenied`, an `HTTPException` with status `403`. The default detail names the subject, the permission, and the resource. Pass `detail` only when a route must keep its own wording.
+
+```python
+from runefoble_auth.permissions import require_subject
+
+await require_subject(spicedb, "campaign", campaign_id, "view", caller_id)
+```
+
+Both helpers pass the user subject to SpiceDB. Neither helper turns a SpiceDB failure into a denial. A failure raises `AuthzError`, and the handlers in the section below map it to `503`.
+
 ### HTTP Failure Mapping
 
 Every service that checks SpiceDB calls `install_authz_error_handlers(app)` from `runefoble_auth.authz_http` once at start-up. Do not add a local handler or a copy of the mapping.

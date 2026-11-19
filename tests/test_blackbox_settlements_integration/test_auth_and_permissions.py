@@ -6,10 +6,11 @@ import asyncio
 from typing import Annotated
 
 import pytest
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from fastapi.testclient import TestClient
 from game_session.main import app as session_app
 from game_session.settlement import auth as sa
+from game_session.settlement.auth.tokens import get_principal
 from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_auth.zitadel import ZitadelAuthService
 
@@ -20,20 +21,22 @@ from .conftest import bearer_headers
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
-def test_bearer_token_extraction_and_decoding():
-    """Verify bearer token extraction and that a missing token is refused without fallback."""
-    assert sa.extract_bearer_token(None) is None
-    assert sa.extract_bearer_token("Basic 12345") is None
-    assert sa.extract_bearer_token("Bearer secret_jwt_token") == "secret_jwt_token"
+def test_missing_bearer_token_is_refused_without_fallback():
+    """A request without a bearer token gets 401 from the route. There is no fallback identity."""
+    r = APIRouter(prefix="/api/v1/test_auth_missing")
 
+    @r.get("/whoami")
+    async def whoami(u: Annotated[sa.VerifiedPrincipal, Depends(get_principal)]):
+        return {"user": u.user_id}
+
+    session_app.include_router(r)
     service = ZitadelAuthService(
         issuer="http://zitadel.test", audience="runefoble-api", internal_url=None
     )
     sa.set_zitadel_auth_service(service)
     try:
-        with pytest.raises(HTTPException) as exc:
-            sa.decode_settlement_token(authorization=None)
-        assert exc.value.status_code == 401
+        response = TestClient(session_app).get("/api/v1/test_auth_missing/whoami")
+        assert response.status_code == 401
     finally:
         sa.set_zitadel_auth_service(None)
 
@@ -43,11 +46,11 @@ def test_fastapi_route_dependencies(spicedb: MockSpiceDBClient, settlement_issue
     r = APIRouter(prefix="/api/v1/test_auth")
 
     @r.get("/h/{s}", dependencies=[Depends(sa.require_haven_builder("s"))])
-    async def h_ep(u: Annotated[sa.VerifiedPrincipal, Depends(sa.get_current_settlement_user)]):
+    async def h_ep(u: Annotated[sa.VerifiedPrincipal, Depends(get_principal)]):
         return {"user": u.user_id}
 
     @r.get("/e/{e}", dependencies=[Depends(sa.require_establishment_manager("e"))])
-    async def e_ep(u: Annotated[sa.VerifiedPrincipal, Depends(sa.get_current_settlement_user)]):
+    async def e_ep(u: Annotated[sa.VerifiedPrincipal, Depends(get_principal)]):
         return {"user": u.user_id}
 
     session_app.include_router(r)

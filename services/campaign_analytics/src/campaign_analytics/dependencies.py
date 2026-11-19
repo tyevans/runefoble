@@ -6,6 +6,7 @@ from typing import Annotated
 
 from fastapi import Depends
 from runefoble_auth.factory import get_spicedb_client
+from runefoble_auth.permissions import check_subject
 from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_auth.wiring import (
     build_identity_dependencies,
@@ -68,13 +69,7 @@ async def check_user_can_view_campaign(
 
     A SpiceDB failure raises AuthzUnavailableError. It never returns False.
     """
-    return await spicedb.check_permission(
-        resource_type="campaign",
-        resource_id=str(campaign_id),
-        permission="view",
-        subject_type="user",
-        subject_id=user_id,
-    )
+    return await check_subject(spicedb, "campaign", str(campaign_id), "view", user_id)
 
 
 StorageDep = Annotated[CampaignAnalyticsStorage, Depends(get_storage)]

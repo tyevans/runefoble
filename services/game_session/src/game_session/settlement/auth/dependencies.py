@@ -8,13 +8,14 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Annotated, Any
 
-from fastapi import Depends, Header, Request
+from fastapi import Depends, Request
 from game_session.settlement.auth.permissions import (
     check_establishment_write_permission,
     check_settlement_read_permission,
     check_settlement_write_permission,
 )
-from game_session.settlement.auth.tokens import VerifiedPrincipal, decode_settlement_token
+from game_session.settlement.auth.tokens import CallerPrincipal
+from runefoble_auth.principal import VerifiedPrincipal
 
 
 def _get_spicedb() -> Any:
@@ -23,19 +24,12 @@ def _get_spicedb() -> Any:
     return get_spicedb_client()
 
 
-async def get_current_settlement_user(
-    authorization: Annotated[str | None, Header(alias="Authorization")] = None,
-) -> VerifiedPrincipal:
-    """FastAPI dependency extracting authenticated settlement user context."""
-    return decode_settlement_token(authorization=authorization)
-
-
 def require_haven_viewer(param_name: str = "settlement_id") -> Callable:
     """Dependency factory verifying caller has permission to view a haven."""
 
     async def _dependency(
         request: Request,
-        user: Annotated[VerifiedPrincipal, Depends(get_current_settlement_user)],
+        user: CallerPrincipal,
         spicedb: Annotated[Any, Depends(_get_spicedb)],
     ) -> VerifiedPrincipal:
         settlement_id = request.path_params.get(param_name)
@@ -51,7 +45,7 @@ def require_haven_builder(param_name: str = "settlement_id") -> Callable:
 
     async def _dependency(
         request: Request,
-        user: Annotated[VerifiedPrincipal, Depends(get_current_settlement_user)],
+        user: CallerPrincipal,
         spicedb: Annotated[Any, Depends(_get_spicedb)],
     ) -> VerifiedPrincipal:
         settlement_id = request.path_params.get(param_name)
@@ -67,7 +61,7 @@ def require_establishment_manager(param_name: str = "establishment_id") -> Calla
 
     async def _dependency(
         request: Request,
-        user: Annotated[VerifiedPrincipal, Depends(get_current_settlement_user)],
+        user: CallerPrincipal,
         spicedb: Annotated[Any, Depends(_get_spicedb)],
     ) -> VerifiedPrincipal:
         establishment_id = request.path_params.get(param_name)
@@ -79,7 +73,6 @@ def require_establishment_manager(param_name: str = "establishment_id") -> Calla
 
 
 __all__ = [
-    "get_current_settlement_user",
     "require_establishment_manager",
     "require_haven_builder",
     "require_haven_viewer",

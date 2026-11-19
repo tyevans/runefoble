@@ -14,17 +14,16 @@ from game_session.campaign.errors import PermissionDeniedError
 from game_session.campaign.repositories import CampaignRepositories, get_campaign_repositories
 from game_session.campaign.service_campaigns import load_campaign, parse_campaign_id
 from game_session.dependencies import get_spicedb_client
-from game_session.settlement.auth.tokens import get_zitadel_auth_service
-from runefoble_auth.principal import VerifiedPrincipal, require_principal
-
-get_principal = require_principal(get_zitadel_auth_service)
-CallerPrincipal = Annotated[VerifiedPrincipal, Depends(get_principal)]
+from game_session.settlement.auth.tokens import CallerPrincipal
+from runefoble_auth.permissions import check_subject
+from runefoble_auth.principal import VerifiedPrincipal
 
 
 async def check_campaign_permission(
     spicedb: Any, campaign_id: str, permission: str, user_id: str
 ) -> None:
-    if not await spicedb.check_permission("campaign", campaign_id, permission, "user", user_id):
+    """Raise the campaign domain denial unless the user holds `permission` on the campaign."""
+    if not await check_subject(spicedb, "campaign", campaign_id, permission, user_id):
         raise PermissionDeniedError(
             f"Subject 'user:{user_id}' lacks '{permission}' on 'campaign:{campaign_id}'."
         )

@@ -13,7 +13,6 @@ from game_session.campaign import service_campaigns as campaigns
 from game_session.campaign import service_membership as membership
 from game_session.campaign import service_roles as roles
 from game_session.campaign.permissions import (
-    CallerPrincipal,
     ManageCampaign,
     RunSessionCampaign,
     ViewCampaign,
@@ -37,7 +36,7 @@ from game_session.campaign.schemas import (
 )
 from game_session.campaign.tuples import SpiceDB
 from game_session.dependencies import get_spicedb_client
-from game_session.settlement.auth.tokens import get_principal
+from game_session.settlement.auth.tokens import CallerPrincipal, get_principal
 
 router = APIRouter(
     dependencies=[Depends(get_principal)],
