@@ -109,6 +109,21 @@ async def _dispatch_action(session_id: str, action: str, is_cast: bool, data: di
             raise UnknownBoardAction(action)
 
 
+async def _connected_frame(session_id: str) -> dict[str, Any]:
+    """The first frame: the board tokens at subscribe time, keyed by token id.
+
+    A client can read the board before its socket opens. The snapshot covers any move that
+    was saved in between.
+    """
+    board = await get_board(session_id)
+    return {
+        "type": "connected",
+        "session_id": session_id,
+        "message": "Connected to tactical board real-time stream.",
+        "tokens": {tid: t.model_dump(mode="json") for tid, t in board.state.tokens.items()},
+    }
+
+
 def _board_view_authorizer(session_id: str) -> WebSocketAuthorizer:
     """Check `board.view` on the session's board."""
 
@@ -127,15 +142,11 @@ async def board_websocket(websocket: WebSocket, session_id: str):
     if principal is None:
         return
     user_id = principal.user_id
+    # Register before the board read. A move saved after the read also reaches this socket,
+    # so the `connected` snapshot plus the later frames miss no move.
     board_ws_manager.register(session_id, websocket)
     try:
-        await websocket.send_json(
-            {
-                "type": "connected",
-                "session_id": session_id,
-                "message": "Connected to tactical board real-time stream.",
-            }
-        )
+        await websocket.send_json(await _connected_frame(session_id))
         while True:
             data = await websocket.receive_json()
             action = data.get("action") or data.get("type") or "unknown"
@@ -166,6 +177,10 @@ async def board_websocket(websocket: WebSocket, session_id: str):
             except (DomainError, ValueError) as exc:
                 # A refused command, or a frame value that does not parse.
                 await send_socket_error(websocket, "INVALID", str(exc), status=422, **context)
+    except BoardNotFoundError as exc:
+        # The view tuple exists, but the board does not: report it and close (4404).
+        await send_socket_error(websocket, "NOT_FOUND", str(exc), status=404, session_id=session_id)
+        await websocket.close(code=4404)
     except WebSocketDisconnect:
         pass
     except Exception:

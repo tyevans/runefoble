@@ -51,6 +51,23 @@ export function boardTokenFromPlaced(token: any): BoardToken | null {
   return mapped;
 }
 
+/**
+ * Applies the token snapshot of the board socket `connected` frame: a map of token id to
+ * PlacedTokenState at subscribe time. The board can be read before its socket opens, so a move
+ * saved in between is only in the snapshot. The server state replaces the shown token list.
+ * A frame without a token map changes nothing.
+ */
+function applyConnectedSnapshot(host: { tokens: BoardToken[] }, tokens: unknown): void {
+  if (tokens === null || typeof tokens !== 'object' || Array.isArray(tokens)) return;
+  const shown = new Map(host.tokens.map((t) => [t.id, t]));
+  const next: BoardToken[] = [];
+  for (const entry of Object.values(tokens)) {
+    const mapped = boardTokenFromPlaced(entry);
+    if (mapped) next.push({ ...shown.get(mapped.id), ...mapped });
+  }
+  host.tokens = next;
+}
+
 /** Puts a placed token on a new list. A token with the same id is replaced. */
 function addPlacedToken(host: { tokens: BoardToken[] }, token: BoardToken): void {
   const shown = host.tokens.some((t) => t.id === token.id);
@@ -178,6 +195,8 @@ export function handleBoardSocketMessage(
         replaceToken(host, data.token_id, { x: data.x, y: data.y });
       }
     }
+  } else if (data.type === 'connected') {
+    applyConnectedSnapshot(host, data.tokens);
   } else if (data.type === 'token_placed') {
     const placed = boardTokenFromPlaced(data.token);
     if (placed) addPlacedToken(host, placed);
