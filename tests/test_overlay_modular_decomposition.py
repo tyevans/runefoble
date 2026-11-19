@@ -156,3 +156,52 @@ def test_duplicate_overlay_socket_alias_is_removed(gateway, table):
         ) as ws,
     ):
         ws.receive_json()
+
+
+SCRIPTED_FRAMES = (
+    {"action": "turn_started", "character_id": "c-hero", "token_id": "t1"},
+    {"action": "token_moved", "token_id": "t1", "to_x": 5, "to_y": 6},
+    {"action": "dice_rolled", "roller_name": "Wizard", "result": 11},
+    {"action": "dice_rolled", "result": "not-a-number"},
+    {"action": "turn_started", "token_id": "no-such-token"},
+)
+
+
+def _replay_frames(gateway: TestClient, path: str) -> list[dict]:
+    """Open one socket, send the scripted frames, and return every frame the socket received."""
+    received: list[dict] = []
+    with gateway.websocket_connect(path, subprotocols=ws_subprotocols("dm_dora")) as ws:
+        received.append(ws.receive_json())
+        for frame in SCRIPTED_FRAMES:
+            ws.send_json(frame)
+            received.append(ws.receive_json())
+    return received
+
+
+def _without_run_identity(value):
+    """Drop the session id and the timestamps. Those differ between two live sessions."""
+    if isinstance(value, dict):
+        return {
+            k: _without_run_identity(v)
+            for k, v in value.items()
+            if k not in ("session_id", "timestamp")
+        }
+    if isinstance(value, list):
+        return [_without_run_identity(v) for v in value]
+    return value
+
+
+def test_spectator_socket_sends_the_same_frames_as_the_overlay_socket(gateway, table):
+    """The spectator route and the overlay route answer the same script with the same frames.
+
+    The board keeps its camera between sockets. The opening frame shows that camera, so only
+    the frames after the open are compared exactly. The opening frame must still name the room.
+    """
+    _, session_id = table
+    overlay_frames = _replay_frames(gateway, f"/ws/overlay/{session_id}")
+    spectator_frames = _replay_frames(gateway, f"/ws/spectator/{session_id}")
+
+    assert len(overlay_frames) == len(SCRIPTED_FRAMES) + 1
+    assert spectator_frames[0]["type"] == overlay_frames[0]["type"] == "overlay_connected"
+    assert spectator_frames[0]["party"] == overlay_frames[0]["party"]
+    assert _without_run_identity(spectator_frames[1:]) == _without_run_identity(overlay_frames[1:])
