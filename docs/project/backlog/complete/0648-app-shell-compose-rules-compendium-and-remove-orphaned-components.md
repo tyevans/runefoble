@@ -1,7 +1,7 @@
 ---
 id: '0648'
 title: App Shell Composes Rules Compendium and Removes Orphaned Microfrontend Imports
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0643
@@ -21,7 +21,7 @@ target_release: 0.9.0
 # TASK-0648: App Shell Composes Rules Compendium and Removes Orphaned Microfrontend Imports
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Several microfrontends are declared or imported but never mounted. The rules compendium package is in `frontend/package.json`, yet no route renders it. Six forwarding modules have no importer. Some frontend-local components have no runtime use. Compose the rules compendium on a route, and delete the orphaned components and their stories. Soundscape composition, the lore atlas, and the minigames are excluded here because TASK-0437, TASK-0446, TASK-0452, and TASK-0371 to TASK-0372 cover them.

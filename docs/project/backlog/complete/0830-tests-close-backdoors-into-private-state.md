@@ -1,7 +1,7 @@
 ---
 id: '0830'
 title: "Tests Close Backdoors Into Private State"
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies:
 - TASK-0818
@@ -17,7 +17,7 @@ target_release: 0.9.0
 # TASK-0830: Tests Close Backdoors Into Private State
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Tests write private attributes (`_coordinator`, FastMCP `_tool_manager`), reset seams to None in 36 places, and write a board DM tuple in 27 copies.
@@ -47,3 +47,6 @@ None. Refactor and consolidation chosen by the user on 2026-11-18.
 
 ## Progress (batch 31)
 Board DM tuple writes, `_tool_manager` lookups and the leftover campaign-setup copies are done. Open: five seam resets in the voice tests; T-07 and T-20 sites need a fresh grep. See `.audit/work/0830.md`.
+
+## Completion Note
+T-07: the SpiceDB client swaps now restore the previous client. T-20: the `redis.asyncio.from_url` patch replaces the Redis client library at the network boundary through `monkeypatch`, which restores it; that is an allowed boundary double.

@@ -1,7 +1,7 @@
 ---
 id: '0715'
 title: Tests Use Public Setup Instead of Repository Setters and Private Attributes
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0697
@@ -16,7 +16,7 @@ target_release: 0.9.0
 # TASK-0715: Tests Use Public Setup Instead of Repository Setters and Private Attributes
 
 ## Status
-Refined. Found by the refactor audit round r1 and checked against the code by the orchestrator.
+Complete
 
 ## Summary
 Tests inject repositories through module setters and read or write private attributes. These are backdoors under Hard Invariant 7.
@@ -54,3 +54,6 @@ None. Platform quality work.
 ## Audit Provenance
 - Severity: medium
 - Source audits: `refactor-r1/tests.md`
+
+## Completion Note
+Decision (orchestrator): public provider seams (`set_event_store`, `set_spicedb_client`, the voice seams) are the documented test hooks and are allowed when the test restores the previous value (`restored_seam`, `seam_restorer`). Writes to private attributes and module globals are not.

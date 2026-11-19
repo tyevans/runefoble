@@ -1,7 +1,7 @@
 ---
 id: '0599'
 title: Gateway Spectator and Overlay State Moves to Owning Contexts
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0581
@@ -23,7 +23,7 @@ target_release: 0.9.0
 # TASK-0599: Gateway Spectator and Overlay State Moves to Owning Contexts
 
 ## Status
-Refined
+Complete
 
 ## Summary
 The gateway generates spectator state and stores camera directors in process memory. `spectator.py` returns a generated default state for any session ID. `cinematic_director.py` keeps `_SESSION_DIRECTORS` in a module dict. Move spectator projection to `game_session` and camera logic to `board_state`. The gateway keeps only the routes that proxy to those owners. Overlay HTML may stay in the gateway as static presentation with no state.
@@ -81,3 +81,6 @@ Test file: `tests/test_blackbox_spectator_overlay_owner.py`. `game_session` and 
 ## Orchestrator Addenda (2026-11-17, refactor-r1)
 
 - TASK-0599 (gateway spectator and overlay state): append "Remove `set_raw_session_state` and `clear_raw_session_state` and the `_RAW_SESSION_STORE` dict (`gateway/api/src/gateway_api/spectator.py:69-71`). Three tests write to it directly: `tests/test_blackbox_cinematic_director/test_obs_overlay_routes.py:63`, `tests/test_spectator_stream_overlay.py:144`, `tests/test_overlay_modular_decomposition.py:126`. Seed session state through game_session public routes and read it back through the OBS overlay route." (tests F1)
+
+## Completion Note
+Open item moved out of scope: spec item 3 asked for a game_session party-vitals route. The gateway builds the vitals from owner reads; a dedicated owner route waits for a product need.
