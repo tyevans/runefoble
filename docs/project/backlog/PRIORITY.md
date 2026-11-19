@@ -908,3 +908,4 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 902. **TASK-0921 (Refined)**: [`0921-storybook-stories-share-one-restoring-fetch-stub.md`](refined/0921-storybook-stories-share-one-restoring-fetch-stub.md) — Storybook Stories Share One Fetch Stub That Restores the Original Fetch
 903. **TASK-0923 (Refined)**: [`0923-session-socket-gets-server-frames-from-domain-events.md`](refined/0923-session-socket-gets-server-frames-from-domain-events.md) — The Session Socket Gets Dice, Turn and Whisper Frames From Domain Events
 904. **TASK-0924 (Refined)**: [`0924-the-chart-creates-the-silo-buckets.md`](refined/0924-the-chart-creates-the-silo-buckets.md) — The Chart Creates the Silo Buckets, and Silo Failures Are Logged
+905. **TASK-0925 (Refined)**: [`0925-campaign-order-guardrails-body-and-caravan-notice.md`](refined/0925-campaign-order-guardrails-body-and-caravan-notice.md) — Campaign List Order, Guardrails Save Body and Caravan Notice Text
