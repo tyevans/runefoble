@@ -27,7 +27,7 @@ Complete
 ## Problem Statement
 - `gateway/mcp/src/gateway_mcp/server.py:89-91` runs stdio only. No `deployments/helm` template mentions mcp (`grep -i mcp deployments/helm` is empty).
 - `docs/reference/ports-and-endpoints.md:299` lists gateway-mcp as a served protocol endpoint. That is false today.
-- Root `gateway/mcp/main.py` prints a placeholder (dead, removed by TASK-0489 family work).
+- Root `gateway/mcp/main.py` (removed) prints a placeholder (dead, removed by TASK-0489 family work).
 
 ## Documentation & Architecture Review
 - `docs/reference/fastmcp-gateway.md` describes transports; update it to the chosen transport.

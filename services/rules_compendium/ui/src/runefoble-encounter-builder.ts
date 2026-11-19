@@ -242,7 +242,7 @@ export class RunefobleEncounterBuilder extends LitElement {
               ${this.loading ? 'Balancing Encounter...' : '⚡ Auto-Balance Encounter'}
             </button>
             ${this.balanceError
-              ? html`<div class="balance-error" role="alert" style="background: #ffccd5; color: #800f2f; border: 1px solid #121212; padding: 8px; font-weight: 700; font-size: 0.8rem;">${this.balanceError}</div>`
+              ? html`<div class="balance-error" role="alert" style="background: var(--rf-status-danger-bg); color: var(--rf-status-danger); border: 1px solid var(--rf-border-color); padding: 8px; font-weight: 700; font-size: 0.8rem;">${this.balanceError}</div>`
               : ''}
           </div>
 

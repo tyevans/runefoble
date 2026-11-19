@@ -57,4 +57,4 @@ Complete
 
 ## Orchestrator Correction (2026-11-17, refactor-r1)
 
-- The `server.py:48` `get_tool` monkeypatch is gone (TASK-0489). The package marker is still missing; that is the remaining scope. TASK-0748 deletes `gateway/mcp/main.py`.
+- The `server.py:48` `get_tool` monkeypatch is gone (TASK-0489). The package marker is still missing; that is the remaining scope. TASK-0748 deletes `gateway/mcp/main.py` (removed).
