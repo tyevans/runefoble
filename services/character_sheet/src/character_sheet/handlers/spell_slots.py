@@ -6,6 +6,7 @@ from character_sheet.models import CharacterState
 from character_sheet.rules import get_spell_slots_max
 from eventsource.domain.decorators import handles
 from runefoble_events.events import SpellSlotsRestored
+from runefoble_platform.domain_errors import DomainRefusedError
 
 
 class SpellSlotRestoreHandlerMixin:
@@ -24,7 +25,7 @@ class SpellSlotRestoreHandlerMixin:
         """
         maximum = get_spell_slots_max(self.state.level)
         if slot_level is not None and slot_level not in maximum:
-            raise ValueError(
+            raise DomainRefusedError(
                 f"INVALID_SPELL_SLOT_LEVEL: Character '{self.aggregate_id}' at level {self.state.level} has no level {slot_level} spell slots."
             )
         slots = dict(self.state.spell_slots)

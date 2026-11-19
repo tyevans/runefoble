@@ -13,6 +13,7 @@ from runefoble_auth.wiring import (
 )
 from runefoble_platform.aggregate_loading import load_if_exists
 from runefoble_platform.config import PlatformSettings
+from runefoble_platform.domain_errors import DomainNotFoundError
 from runefoble_platform.event_bus import EventBusProvider
 from runefoble_platform.event_sourcing import (
     AggregateRepository,
@@ -29,7 +30,7 @@ load_spicedb_settings()
 repo: AggregateRepository[BoardAggregate] = create_aggregate_repository(BoardAggregate)
 
 
-class BoardNotFoundError(LookupError):
+class BoardNotFoundError(DomainNotFoundError):
     """Raised when no board exists for a session id. Routers map it to HTTP 404."""
 
     def __init__(self, session_id: str) -> None:

@@ -24,6 +24,7 @@ from board_state.events import save_and_publish
 from board_state.models import BoardState
 from runefoble_events.session import CombatEncounterStarted
 from runefoble_platform.consumer_group import RedisConsumerGroup
+from runefoble_platform.domain_errors import DomainRefusedError
 from runefoble_platform.identifiers import opaque_aggregate_id
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 from runefoble_platform.stream_consumer import StreamConsumer
@@ -38,7 +39,7 @@ class EncounterCampaignError(RuntimeError):
     """The combat start names a campaign that does not own the session board."""
 
 
-class EncounterPlacementError(ValueError):
+class EncounterPlacementError(DomainRefusedError):
     """A placement is off the grid or on an occupied cell. Nothing is applied."""
 
 

@@ -21,6 +21,7 @@ from board_state.routers.previews_ws_authz import BoardActionDenied, authorize_m
 from board_state.routers.previews_ws_spells import handle_ws_spell
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from runefoble_auth.websocket import WebSocketAuthorizer, admit_websocket, send_socket_error
+from runefoble_platform.domain_errors import DomainError
 
 logger = logging.getLogger("runefoble.board_state.routers.previews_ws")
 
@@ -156,7 +157,8 @@ async def board_websocket(websocket: WebSocket, session_id: str):
                     status=422,
                     session_id=session_id,
                 )
-            except ValueError as exc:
+            except (DomainError, ValueError) as exc:
+                # A refused command, or a frame value that does not parse.
                 await send_socket_error(
                     websocket, "INVALID", str(exc), status=422, session_id=session_id
                 )

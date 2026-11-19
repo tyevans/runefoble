@@ -14,6 +14,7 @@ from board_state.rules.movement import calculate_movement_path
 from board_state.traps.evaluator import evaluate_trap_collision_on_path
 from eventsource.domain.decorators import handles
 from runefoble_events import events as ev
+from runefoble_platform.domain_errors import DomainRefusedError
 
 if TYPE_CHECKING:
     from board_state.models import BoardState
@@ -79,7 +80,7 @@ class TokensHandlerMixin(ActionsHandlerMixin):
         """Move a placed token across the grid, evaluating traps and updating fog-of-war."""
         tid, cur = self._get_token(token_id)
         if not is_within_bounds(to_x, to_y, self.state.cols, self.state.rows):
-            raise ValueError(f"Target coordinates ({to_x}, {to_y}) out of bounds")
+            raise DomainRefusedError(f"Target coordinates ({to_x}, {to_y}) out of bounds")
 
         full_path = self.calculate_movement_path(cur.x, cur.y, to_x, to_y)
         breach = evaluate_trap_collision_on_path(full_path, self.state.traps)
@@ -98,7 +99,9 @@ class TokensHandlerMixin(ActionsHandlerMixin):
         walk = walk_path(effective_path, self.get_terrain)
         cost = walk.cost
         if movement_budget is not None and cost > movement_budget:
-            raise ValueError(f"Movement cost {cost} exceeds movement budget {movement_budget}")
+            raise DomainRefusedError(
+                f"Movement cost {cost} exceeds movement budget {movement_budget}"
+            )
 
         self.create_event(
             ev.TokenMoved,

@@ -15,6 +15,7 @@ from runefoble_events.events import (
     SpellSlotExpended,
     SpellUnprepared,
 )
+from runefoble_platform.domain_errors import DomainRefusedError
 
 
 class SpellsHandlerMixin:
@@ -78,13 +79,13 @@ class SpellsHandlerMixin:
             slot_level = get_known_spell_level(spell_name)
         available_slots = self.state.spell_slots.get(slot_level, 0)
         if available_slots <= 0:
-            raise ValueError(
+            raise DomainRefusedError(
                 f"INSUFFICIENT_SPELL_SLOTS: Character '{self.aggregate_id}' has 0 level {slot_level} spell slots remaining to cast '{spell_name}'"
             )
         if self.state.is_stand_in_active:
             preserve_count = self.state.stand_in_guardrails.preserve_spell_slots.get(slot_level, 0)
             if available_slots <= preserve_count:
-                raise ValueError(
+                raise DomainRefusedError(
                     f"STAND_IN_GUARDRAIL_VIOLATION: Character '{self.aggregate_id}' has {available_slots} level {slot_level} spell slots, but stand-in tactical policy reserves {preserve_count} slot(s)."
                 )
         self.create_event(
