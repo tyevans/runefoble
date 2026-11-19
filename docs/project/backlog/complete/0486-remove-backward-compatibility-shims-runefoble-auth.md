@@ -62,7 +62,7 @@ In `libs/runefoble_auth/src/runefoble_auth/zitadel.py`, `verify_token` (line 153
 
 ## Definition of Done
 1. `zitadel.py` legacy backward-compatibility methods removed.
-2. `libs/runefoble_auth/__init__.py` cleaned of any deprecated alias symbols.
+2. `libs/runefoble_auth/src/runefoble_auth/__init__.py` cleaned of any deprecated alias symbols.
 3. All service and gateway callers migrated to canonical auth methods.
 4. `uv run pytest` passes cleanly with zero deprecation warnings from auth.
 5. Code passes `uv run ruff check .` and file length remains < 500 lines.
