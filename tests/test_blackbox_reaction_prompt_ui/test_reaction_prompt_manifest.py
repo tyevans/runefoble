@@ -28,13 +28,6 @@ def test_reaction_prompt_manifest_endpoint(client: TestClient) -> None:
     assert "runefoble-combat-reaction-prompt" in data["components"]
     assert "runefoble-ready-action-card" in data["components"]
 
-    # Test routed alias /game_session/ui/manifest
-    alias_resp = client.get("/game_session/ui/manifest")
-    assert alias_resp.status_code == 200
-    alias_data = alias_resp.json()
-    assert "runefoble-combat-reaction-prompt" in alias_data["components"]
-    assert "runefoble-ready-action-card" in alias_data["components"]
-
 
 def test_manifest_file_matches_advertised_manifest(client: TestClient) -> None:
     """Verify services/game_session/ui/manifest.json matches runtime advertising."""

@@ -96,11 +96,6 @@ def _format_notice_response(
     status_code=status.HTTP_201_CREATED,
     response_model=BulletinNoticeResponse,
 )
-@router.post(
-    "/settlements/{settlement_id}/bulletin",
-    status_code=status.HTTP_201_CREATED,
-    response_model=BulletinNoticeResponse,
-)
 async def pin_bulletin_notice(
     caller_id: CallerId,
     settlement_id: str,
@@ -149,10 +144,6 @@ async def pin_bulletin_notice(
     "/api/v1/settlements/{settlement_id}/bulletin",
     response_model=list[BulletinNoticeResponse],
 )
-@router.get(
-    "/settlements/{settlement_id}/bulletin",
-    response_model=list[BulletinNoticeResponse],
-)
 async def list_bulletin_notices(
     caller_id: CallerId,
     settlement_id: str,
@@ -179,9 +170,6 @@ async def list_bulletin_notices(
 
 @router.delete(
     "/api/v1/settlements/{settlement_id}/bulletin/{notice_id}",
-)
-@router.delete(
-    "/settlements/{settlement_id}/bulletin/{notice_id}",
 )
 async def remove_bulletin_notice(
     caller_id: CallerId,
@@ -228,9 +216,6 @@ async def remove_bulletin_notice(
 
 @router.post(
     "/api/v1/settlements/{settlement_id}/bulletin/{notice_id}/decrypt",
-)
-@router.post(
-    "/settlements/{settlement_id}/bulletin/{notice_id}/decrypt",
 )
 async def decrypt_cipher_notice(
     caller_id: CallerId,

@@ -55,7 +55,7 @@ async def test_blackbox_cross_campaign_haven_sharing_and_co_upgrading(
 
     # Party Blue charters an outpost
     charter_res = client.post(
-        "/settlements",
+        "/api/v1/settlements",
         json={
             "name": "Azure Redoubt",
             "shared_world_id": world_id,
@@ -69,7 +69,7 @@ async def test_blackbox_cross_campaign_haven_sharing_and_co_upgrading(
 
     # Party Gold queries and views Azure Redoubt through the shared world link
     gold_view = client.get(
-        f"/settlements/{sid}",
+        f"/api/v1/settlements/{sid}",
         headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(gold_player)}"},
     )
     assert gold_view.status_code == 200
@@ -77,7 +77,7 @@ async def test_blackbox_cross_campaign_haven_sharing_and_co_upgrading(
 
     # The founder funds the haven treasury before any co-upgrade
     funded = client.post(
-        f"/settlements/{sid}/deposit",
+        f"/api/v1/settlements/{sid}/deposit",
         json={"gold": 500, "materials": {"timber": 60}},
         headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(blue_player)}"},
     )
@@ -85,7 +85,7 @@ async def test_blackbox_cross_campaign_haven_sharing_and_co_upgrading(
 
     # Party Gold contributes materials to upgrade Azure Redoubt's watchtower
     gold_upgrade = client.post(
-        f"/settlements/{sid}/upgrade",
+        f"/api/v1/settlements/{sid}/upgrade",
         json={
             "facility_id": "watchtower",
             "contributing_campaign_id": camp_gold,
@@ -120,7 +120,7 @@ async def test_blackbox_unauthorized_outsider_isolation(
     await spicedb.write_relationship("campaign", camp_blue, "player", "user", blue_player)
 
     charter_res = client.post(
-        "/settlements",
+        "/api/v1/settlements",
         json={
             "name": "Solitary Haven",
             "shared_world_id": world_id,
@@ -132,11 +132,11 @@ async def test_blackbox_unauthorized_outsider_isolation(
 
     # Outsider cannot view the haven
     h_out = {"Authorization": f"Bearer {SIGNING_ISSUER.mint(outsider)}"}
-    assert client.get(f"/settlements/{sid}", headers=h_out).status_code == 403
+    assert client.get(f"/api/v1/settlements/{sid}", headers=h_out).status_code == 403
 
     # Outsider cannot upgrade the haven
     bad_up = client.post(
-        f"/settlements/{sid}/upgrade",
+        f"/api/v1/settlements/{sid}/upgrade",
         json={"facility_id": "workshop"},
         headers=h_out,
     )
@@ -144,7 +144,7 @@ async def test_blackbox_unauthorized_outsider_isolation(
 
     # Outsider cannot charter havens in a shared world they do not belong to
     bad_charter = client.post(
-        "/settlements",
+        "/api/v1/settlements",
         json={"name": "Hostile Fort", "shared_world_id": world_id},
         headers=h_out,
     )

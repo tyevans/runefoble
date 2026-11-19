@@ -134,8 +134,8 @@ make dev
 
 Expected result: the log prints `API Gateway is healthy and ready!` and `Ready! App Shell available at http://localhost:5173`. Then check both ports in a second terminal:
 ```bash
-curl -fsS -o /dev/null -w "%{http_code}\n" http://localhost:8000/api/v1/health
-curl -fsS -o /dev/null -w "%{http_code}\n" http://localhost:5173/api/v1/health
+curl -fsS -o /dev/null -w "%{http_code}\n" http://localhost:8000/healthz
+curl -fsS -o /dev/null -w "%{http_code}\n" http://localhost:5173/healthz
 ```
 Both print `200`. The second command checks the Vite proxy. Press `Ctrl+C` in the `make dev` terminal to stop all background processes. The port-forwards and the gateway stop with it, even when the orchestrator is killed with `SIGKILL` on Linux.
 

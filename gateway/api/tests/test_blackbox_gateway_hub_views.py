@@ -111,16 +111,15 @@ def test_gateway_campaign_atlas_frontdoor(
 def test_gateway_campaign_codex_frontdoors(
     client: TestClient, created_campaign_id: str, trusted_ws_issuer
 ) -> None:
-    """Verify both codex routes forward the bearer token to campaign_lore entries."""
+    """Verify the codex route forwards the bearer token to campaign_lore entries."""
     headers = _auth(trusted_ws_issuer, "dm_valeros")
 
-    for route in ("codex", "codex/entries"):
-        res = client.get(f"/api/v1/campaigns/{created_campaign_id}/{route}", headers=headers)
-        assert res.status_code == 200
-        data = res.json()
-        assert data["service"] == "campaign-lore"
-        assert data["path"] == f"/api/v1/campaigns/{created_campaign_id}/codex/entries"
-        assert data["authorization"] == headers["Authorization"]
+    res = client.get(f"/api/v1/campaigns/{created_campaign_id}/codex", headers=headers)
+    assert res.status_code == 200
+    data = res.json()
+    assert data["service"] == "campaign-lore"
+    assert data["path"] == f"/api/v1/campaigns/{created_campaign_id}/codex/entries"
+    assert data["authorization"] == headers["Authorization"]
     # The owner checks `view` (Hard Invariant 1). The echo stand-in does not, so a denial is
     # tested against the real campaign_lore in test_blackbox_gateway_owner_permission_checks.py.
 

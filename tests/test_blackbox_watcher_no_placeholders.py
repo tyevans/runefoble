@@ -259,7 +259,7 @@ async def test_speech_sends_board_tokens_and_reports_worker_provenance(bus, monk
     ):
         select_worker_engine(monkeypatch, worker_url)
         monkeypatch.setenv("RUNEFOBLE_BOARD_STATE_URL", board_url)
-        resp = await _post("/api/v1/watcher/intent", SPEECH_PAYLOAD)
+        resp = await _post("/api/v1/watcher/transcribe-and-act", SPEECH_PAYLOAD)
 
     assert resp.status_code == 200
     sent = {t["token_id"]: t for t in captured[0]["visible_tokens"]}
@@ -285,7 +285,7 @@ async def test_speech_board_unavailable_is_503_and_worker_not_called(bus, monkey
     with serve(_recording_worker(captured, 200, body)) as worker_url:
         select_worker_engine(monkeypatch, worker_url)
         monkeypatch.setenv("RUNEFOBLE_BOARD_STATE_URL", closed_port_url())
-        resp = await _post("/api/v1/watcher/intent", SPEECH_PAYLOAD)
+        resp = await _post("/api/v1/watcher/transcribe-and-act", SPEECH_PAYLOAD)
 
     assert resp.status_code == 503
     assert resp.json()["detail"] == {"error": "backend_unavailable", "backend": "board_state"}

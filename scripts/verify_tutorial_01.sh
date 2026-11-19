@@ -52,7 +52,7 @@ make helm-deploy
 
 echo "==> Step 4: wait for the gateway through the ingress (up to 15 minutes)"
 deadline=$((SECONDS + 900))
-until curl -fsS -o /dev/null http://localhost/api/v1/health 2>/dev/null; do
+until curl -fsS -o /dev/null http://localhost/healthz 2>/dev/null; do
   if (( SECONDS >= deadline )); then
     echo "FAIL: gateway health did not return 200 within 15 minutes" >&2
     kubectl get pods >&2 || true
@@ -60,7 +60,7 @@ until curl -fsS -o /dev/null http://localhost/api/v1/health 2>/dev/null; do
   fi
   sleep 5
 done
-expect_status 200 http://localhost/api/v1/health
+expect_status 200 http://localhost/healthz
 
 echo "==> Step 5: endpoints"
 expect_status 200 http://localhost/

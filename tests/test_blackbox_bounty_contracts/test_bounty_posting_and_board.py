@@ -33,7 +33,7 @@ async def test_post_bounty_and_query_board(
 
     # 1. Post a new mercenary monster hunt bounty
     res_post = client.post(
-        f"/sessions/{session_id}/contracts/bounties",
+        f"/api/v1/sessions/{session_id}/contracts/bounties",
         json={
             "title": "Cull the Glacial Wyrm",
             "description": "A frost wyrm is terrorizing the mountain pass.",
@@ -65,7 +65,7 @@ async def test_post_bounty_and_query_board(
 
     # 2. Query open notice board
     res_list = client.get(
-        f"/sessions/{session_id}/contracts/bounties",
+        f"/api/v1/sessions/{session_id}/contracts/bounties",
         headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(creator_id)}"},
     )
     assert res_list.status_code == 200
@@ -75,14 +75,14 @@ async def test_post_bounty_and_query_board(
 
     # 3. Test filtering by target_type
     res_filtered = client.get(
-        f"/sessions/{session_id}/contracts/bounties?target_type=monster_hunt",
+        f"/api/v1/sessions/{session_id}/contracts/bounties?target_type=monster_hunt",
         headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(creator_id)}"},
     )
     assert res_filtered.status_code == 200
     assert len(res_filtered.json()["bounties"]) == 1
 
     res_empty_type = client.get(
-        f"/sessions/{session_id}/contracts/bounties?target_type=resource_retrieval",
+        f"/api/v1/sessions/{session_id}/contracts/bounties?target_type=resource_retrieval",
         headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(creator_id)}"},
     )
     assert res_empty_type.status_code == 200
@@ -90,20 +90,20 @@ async def test_post_bounty_and_query_board(
 
     # 4. Test filtering by min_gold
     res_gold = client.get(
-        f"/sessions/{session_id}/contracts/bounties?min_gold=400",
+        f"/api/v1/sessions/{session_id}/contracts/bounties?min_gold=400",
         headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(creator_id)}"},
     )
     assert len(res_gold.json()["bounties"]) == 1
 
     res_gold_high = client.get(
-        f"/sessions/{session_id}/contracts/bounties?min_gold=500",
+        f"/api/v1/sessions/{session_id}/contracts/bounties?min_gold=500",
         headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(creator_id)}"},
     )
     assert len(res_gold_high.json()["bounties"]) == 0
 
     # 5. Get individual bounty by ID
     res_get = client.get(
-        f"/sessions/{session_id}/contracts/bounties/{bounty_id}",
+        f"/api/v1/sessions/{session_id}/contracts/bounties/{bounty_id}",
         headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(creator_id)}"},
     )
     assert res_get.status_code == 200

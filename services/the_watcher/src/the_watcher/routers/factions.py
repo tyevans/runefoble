@@ -31,10 +31,6 @@ router = APIRouter(dependencies=[Depends(get_principal)], tags=["factions"])
     "/api/v1/campaigns/{campaign_id}/world-tick",
     response_model=WorldTickResponse,
 )
-@router.post(
-    "/api/v1/campaigns/{campaign_id}/factions/tick",
-    response_model=WorldTickResponse,
-)
 async def advance_world_tick(
     caller_id: CallerId,
     campaign_id: str,

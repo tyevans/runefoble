@@ -76,9 +76,9 @@ def test_uvtt_door_geometry_and_secret_portal_extraction(board_client: TestClien
     create_board(board_client, board_id)
     uvtt_data = build_uvtt_with_doors()
 
-    # Frontdoor import via POST /board/{id}/import/uvtt
+    # Frontdoor import via POST /api/v1/boards/{id}/import/uvtt
     response = board_client.post(
-        f"/board/{board_id}/import/uvtt",
+        f"/api/v1/boards/{board_id}/import/uvtt",
         json=uvtt_data,
     )
     assert response.status_code == 200, response.text
@@ -119,8 +119,8 @@ def test_uvtt_door_geometry_and_secret_portal_extraction(board_client: TestClien
     assert arch["status"] == "open"
     assert arch["is_open"] is True
 
-    # Public query projection verification via GET /board/{id}/doors
-    doors_res = board_client.get(f"/board/{board_id}/doors")
+    # Public query projection verification via GET /api/v1/boards/{id}/doors
+    doors_res = board_client.get(f"/api/v1/boards/{board_id}/doors")
     assert doors_res.status_code == 200
     assert len(doors_res.json()["doors"]) == 4
 
@@ -132,28 +132,28 @@ def test_door_toggle_state_transitions_http(board_client: TestClient):
     uvtt_data = build_uvtt_with_doors()
 
     # Import map
-    board_client.post(f"/board/{board_id}/import/uvtt", json=uvtt_data)
+    board_client.post(f"/api/v1/boards/{board_id}/import/uvtt", json=uvtt_data)
 
     # 1. Toggle closed main gate -> should open
-    toggle_res1 = board_client.post(f"/board/{board_id}/doors/main_gate/toggle")
+    toggle_res1 = board_client.post(f"/api/v1/boards/{board_id}/doors/main_gate/toggle")
     assert toggle_res1.status_code == 200, toggle_res1.text
     door_data1 = toggle_res1.json()["door"]
     assert door_data1["status"] == "open"
     assert door_data1["is_open"] is True
 
     # Verify query projection updated
-    get_res1 = board_client.get(f"/board/{board_id}/doors")
+    get_res1 = board_client.get(f"/api/v1/boards/{board_id}/doors")
     assert get_res1.json()["doors"]["main_gate"]["is_open"] is True
 
     # 2. Toggle again -> should close
-    toggle_res2 = board_client.post(f"/board/{board_id}/doors/main_gate/toggle")
+    toggle_res2 = board_client.post(f"/api/v1/boards/{board_id}/doors/main_gate/toggle")
     assert toggle_res2.status_code == 200
     assert toggle_res2.json()["door"]["is_open"] is False
     assert toggle_res2.json()["door"]["status"] == "closed"
 
     # 3. Explicit status toggle to locked
     toggle_res3 = board_client.post(
-        f"/board/{board_id}/doors/main_gate/toggle",
+        f"/api/v1/boards/{board_id}/doors/main_gate/toggle",
         json={"status": "locked", "is_open": False},
     )
     assert toggle_res3.status_code == 200

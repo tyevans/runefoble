@@ -130,7 +130,7 @@ def test_player_speech_intent_is_allowed_for_a_participant(client: TestClient):
     campaign_id, session_id = asyncio.run(_seed_table(dm, player))
 
     res = client.post(
-        "/api/v1/watcher/intent",
+        "/api/v1/watcher/transcribe-and-act",
         json=_speech_body(session_id, campaign_id, speaker=player),
         headers=bearer(player),
     )
@@ -144,7 +144,7 @@ def test_intent_from_a_non_participant_is_forbidden(client: TestClient):
     stranger = f"stranger-{uuid4().hex[:6]}"
 
     res = client.post(
-        "/api/v1/watcher/intent",
+        "/api/v1/watcher/transcribe-and-act",
         json=_speech_body(session_id, campaign_id, speaker=stranger),
         headers=bearer(stranger),
     )
@@ -239,14 +239,14 @@ def test_player_may_speak_for_own_character_only(client: TestClient):
     asyncio.run(bind_character_owner(other, foreign_character))
 
     allowed = client.post(
-        "/api/v1/watcher/intent",
+        "/api/v1/watcher/transcribe-and-act",
         json=_speech_body(session_id, campaign_id, speaker=own_character),
         headers=bearer(player),
     )
     assert allowed.status_code == 200, allowed.text
 
     denied = client.post(
-        "/api/v1/watcher/intent",
+        "/api/v1/watcher/transcribe-and-act",
         json=_speech_body(session_id, campaign_id, speaker=foreign_character),
         headers=bearer(player),
     )

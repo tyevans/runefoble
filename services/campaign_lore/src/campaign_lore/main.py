@@ -121,7 +121,6 @@ async def _service_unavailable_handler(_request: Request, exc: Exception) -> JSO
 def _register_routes(app: FastAPI) -> None:
 
     @app.get("/healthz", tags=["Health"])
-    @app.get("/health", tags=["Health"])
     def health_check() -> dict[str, Any]:
         """Health check endpoint."""
         return {

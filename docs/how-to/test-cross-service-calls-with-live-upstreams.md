@@ -151,11 +151,11 @@ re-import service modules in the test process. Start each process with `serve_su
 
 ```python
 with restart_stack.start("game_session.main:app") as base:
-    posted = _post(f"{base}/sessions/{session_id}/contracts/bounties", json=body, headers=h)
+    posted = _post(f"{base}/api/v1/sessions/{session_id}/contracts/bounties", json=body, headers=h)
     assert posted.status_code == 201
 
 with restart_stack.start("game_session.main:app") as base:
-    listed = _get(f"{base}/sessions/{session_id}/contracts/bounties", headers=h)
+    listed = _get(f"{base}/api/v1/sessions/{session_id}/contracts/bounties", headers=h)
 assert listed.status_code == 200
 ```
 

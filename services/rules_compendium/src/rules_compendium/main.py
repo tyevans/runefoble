@@ -76,7 +76,6 @@ platform_router = APIRouter()
 
 
 @platform_router.get("/healthz", tags=["Health"])
-@platform_router.get("/health", tags=["Health"])
 def health_check() -> dict[str, Any]:
     """Health check endpoint."""
     return {

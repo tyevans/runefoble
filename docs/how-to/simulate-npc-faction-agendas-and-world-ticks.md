@@ -97,7 +97,6 @@ Content-Type: application/json
 }
 ```
 
-*Alias endpoint: `POST /api/v1/campaigns/{campaign_id}/factions/tick`*
 
 ### Register Custom Faction
 ```http
@@ -130,7 +129,7 @@ Authorization: Bearer <dm_evelyn_token>
 
 ### Adjust Faction Treasury & Contraband
 ```http
-POST /factions/{faction_id}/resources/adjust
+POST /api/v1/factions/{faction_id}/resources/adjust
 Authorization: Bearer <dm_evelyn_token>
 Content-Type: application/json
 
@@ -144,7 +143,7 @@ Content-Type: application/json
 
 ### Execute Bribery Resolution
 ```http
-POST /factions/{faction_id}/bribery/resolve
+POST /api/v1/factions/{faction_id}/bribery/resolve
 Authorization: Bearer <dm_evelyn_token>
 Content-Type: application/json
 
@@ -160,7 +159,7 @@ Content-Type: application/json
 
 ### Recruit Mercenary Detachment
 ```http
-POST /factions/{faction_id}/mercenaries/recruit
+POST /api/v1/factions/{faction_id}/mercenaries/recruit
 Authorization: Bearer <dm_evelyn_token>
 Content-Type: application/json
 
@@ -266,7 +265,7 @@ When rival factions clash over territory nodes, trade outposts, or control point
 
 DMs can trigger ad-hoc boundary skirmishes between rival factions via:
 ```http
-POST /the-watcher/factions/skirmish/simulate
+POST /api/v1/factions/skirmish/simulate
 Authorization: Bearer <dm_evelyn_token>
 Content-Type: application/json
 
@@ -314,7 +313,7 @@ Each skirmish escalates regional unrest (`RegionalUnrestEscalatedEvent`) based o
 
 Campaign participants can query regional stability and contested boundary history:
 ```http
-GET /the-watcher/regions/region-valen/unrest?campaign_id=camp-101
+GET /api/v1/regions/region-valen/unrest?campaign_id=camp-101
 Authorization: Bearer <player_valeros_token>
 ```
 

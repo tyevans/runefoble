@@ -53,7 +53,7 @@ def test_registered_tool_is_listed_and_callable_over_mcp(mcp_endpoint: str):
 
 def test_admin_routes_need_a_bearer_on_the_mcp_process(mcp_endpoint: str):
     base = mcp_endpoint.removesuffix("/mcp")
-    assert httpx.get(f"{base}/mcp/tools").status_code == 401
+    assert httpx.get(f"{base}/mcp/tools/dynamic").status_code == 401
 
 
 def test_mcp_process_publishes_its_openapi_spec(mcp_endpoint: str):
@@ -70,6 +70,6 @@ def test_api_gateway_no_longer_serves_the_tool_routes():
     token = SIGNING_ISSUER.mint("alice")
     headers = {"Authorization": f"Bearer {token}"}
     with TestClient(api_app) as gateway:
-        for path in ("/mcp/tools", "/api/v1/mcp/tools"):
+        for path in ("/mcp/tools", "/mcp/tools/dynamic"):
             assert gateway.get(path, headers=headers).status_code == 404
             assert gateway.post(f"{path}/register", json=TOOL, headers=headers).status_code == 404

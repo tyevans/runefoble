@@ -133,7 +133,7 @@ def test_codex_search_parameter_reaches_the_owner(client: TestClient, campaign) 
         assert published.status_code == 201, published.text
 
     res = client.get(
-        f"/api/v1/campaigns/{campaign_id}/codex/entries",
+        f"/api/v1/campaigns/{campaign_id}/codex",
         params={"search": "ashes"},
         headers=campaign["member"],
     )

@@ -28,10 +28,6 @@ def test_ui_manifest_frontdoor_contract(client: TestClient) -> None:
     assert "runefoble-tabletop-3d" in manifest["components"]
     assert "runefoble-board" in manifest["components"]
 
-    alias_resp = client.get("/board_state/ui/manifest")
-    assert alias_resp.status_code == 200
-    assert "runefoble-tabletop-3d" in alias_resp.json()["components"]
-
 
 def test_manifest_file_matches_frontdoor_endpoint(client: TestClient) -> None:
     """Verify services/board_state/ui/manifest.json matches runtime endpoint response."""

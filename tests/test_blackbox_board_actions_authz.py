@@ -116,11 +116,11 @@ ANONYMOUS_ROUTES = [
     ("post", "/api/v1/boards/{b}/tokens/{t}/action", {"action": "dodge"}),
     ("post", "/api/v1/boards/{b}/physics/knockback", {"token_id": "{t}"}),
     ("post", "/api/v1/boards/{b}/physics/simulate-throw", {}),
-    ("post", "/api/v1/boards/{b}/vfx/spell", {"spell_name": "x", "target_x": 1, "target_y": 1}),
+    ("post", "/api/v1/boards/{b}/spells/cast", {"spell_name": "x", "target_x": 1, "target_y": 1}),
     ("post", "/api/v1/boards/{b}/decals/decay", {"rounds": 1}),
     ("post", "/api/v1/boards/{b}/tokens/{t}/preview", MOVE),
-    ("post", "/api/v1/board/{b}/lights", {}),
-    ("post", "/api/v1/board/{b}/doors/d1/toggle", None),
+    ("post", "/api/v1/boards/{b}/lights", {}),
+    ("post", "/api/v1/boards/{b}/doors/d1/toggle", None),
 ]
 
 
@@ -270,7 +270,7 @@ def test_spell_vfx_needs_campaign_play_and_decal_decay_needs_a_board_manager(
     client: TestClient, board: str
 ):
     spell = {"spell_name": "Fireball", "target_x": 5, "target_y": 5}
-    url = f"/api/v1/boards/{board}/vfx/spell"
+    url = f"/api/v1/boards/{board}/spells/cast"
 
     assert client.post(url, json=spell, headers=bearer(SPECTATOR)).status_code == 403
     assert client.post(url, json=spell, headers=bearer(OWNER)).status_code == 200
@@ -306,12 +306,12 @@ def test_previews_need_board_view(client: TestClient, board: str, token: str):
 
 
 def test_lights_need_a_board_manager_and_doors_need_campaign_play(client: TestClient, board: str):
-    lights = f"/api/v1/board/{board}/lights"
-    door = f"/api/v1/board/{board}/doors/missing/toggle"
+    lights = f"/api/v1/boards/{board}/lights"
+    door = f"/api/v1/boards/{board}/doors/missing/toggle"
 
     assert client.post(lights, json={}, headers=bearer(OWNER)).status_code == 403
     assert client.post(lights, json={}, headers=bearer(DM)).status_code == 200
-    assert client.get(f"/boards/{board}/lights", headers=bearer(STRANGER)).status_code == 403
+    assert client.get(f"/api/v1/boards/{board}/lights", headers=bearer(STRANGER)).status_code == 403
     assert client.post(door, headers=bearer(SPECTATOR)).status_code == 403
     assert client.post(door, headers=bearer(OWNER)).status_code != 403
 
@@ -431,8 +431,8 @@ BOARD_READ_ROUTES = [
     "/api/v1/boards/{b}/traps",
     "/api/v1/boards/{b}/aoe",
     "/api/v1/boards/{b}/decals",
-    "/boards/{b}/doors",
-    "/boards/{b}/lights",
+    "/api/v1/boards/{b}/doors",
+    "/api/v1/boards/{b}/lights",
     "/api/v1/boards/{b}/tokens/{t}",
 ]
 

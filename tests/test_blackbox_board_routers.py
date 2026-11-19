@@ -38,7 +38,6 @@ def test_board_state_openapi_routes_completeness(board_client):
         "/api/v1/boards/{session_id}/fog-of-war/reveal",
         "/api/v1/boards/{session_id}/fog-of-war/shroud",
         "/api/v1/boards/{session_id}/tokens/{token_id}/preview",
-        "/api/v1/boards/{session_id}/preview",
         "/api/v1/boards/{session_id}/preview-move",
     ]
 

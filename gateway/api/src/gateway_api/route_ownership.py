@@ -42,9 +42,7 @@ _SPECTATE_OWNERS = "game_session, board_state"
 # Routes whose owners the handler body does not name in one `service=` argument.
 # Each entry names the owners that the module docstring gives for the route.
 DECLARED: dict[tuple[str, str], tuple[str, Mode]] = {
-    ("GET", "/health"): (GATEWAY, "local"),
     ("GET", "/healthz"): (GATEWAY, "local"),
-    ("GET", "/api/v1/health"): (GATEWAY, "local"),
     ("GET", "/readyz"): (GATEWAY, "local"),
     ("GET", "/api/v1/auth/sync/health"): (GATEWAY, "local"),
     (WEBSOCKET, "/ws/campaigns/{campaign_id}"): (GATEWAY, "local"),

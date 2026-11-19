@@ -26,7 +26,7 @@ def client() -> TestClient:
 
 def test_the_watcher_ui_manifest_advertises_faction_espionage(client: TestClient) -> None:
     """Verify GET /ui/manifest frontdoor exposes runefoble-faction-espionage component."""
-    for path in ["/ui/manifest", "/the-watcher/ui/manifest"]:
+    for path in ["/ui/manifest"]:
         resp = client.get(path)
         assert resp.status_code == 200, f"Failed at {path}"
         data = resp.json()

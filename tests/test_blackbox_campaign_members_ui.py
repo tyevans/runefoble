@@ -42,11 +42,6 @@ def test_campaign_members_manifest_frontdoor(client: TestClient) -> None:
     assert data["package"] == "@runefoble/game-session-ui"
     assert "runefoble-campaign-members" in data["components"]
 
-    alias_res = client.get("/game_session/ui/manifest")
-    assert alias_res.status_code == 200
-    alias_data = alias_res.json()
-    assert "runefoble-campaign-members" in alias_data["components"]
-
 
 # ---------------------------------------------------------------------------
 # 2. Campaign Members Component Contracts & UI Invariants

@@ -50,21 +50,13 @@ def test_tactile_kinematics_route_previews(board_campaign: str):
     assert data["total_distance_ft"] == 15
     assert data["movement_cost"] == 3
 
-    # Preview move via /preview endpoint
+    # Preview move via /preview-move endpoint
     res_preview = client.post(
-        f"/api/v1/boards/{board_id}/preview",
+        f"/api/v1/boards/{board_id}/preview-move",
         json={"token_id": "valeros", "to_x": 3, "to_y": 3, "movement_budget": 10},
     )
     assert res_preview.status_code == 200
     assert res_preview.json()["total_distance_ft"] == 15
-
-    # Preview move via /preview-move alias
-    res_preview_alias = client.post(
-        f"/api/v1/boards/{board_id}/preview-move",
-        json={"token_id": "valeros", "to_x": 3, "to_y": 3, "movement_budget": 10},
-    )
-    assert res_preview_alias.status_code == 200
-    assert res_preview_alias.json()["total_distance_ft"] == 15
 
 
 def test_tactile_kinematics_websocket_flow(board_campaign: str):

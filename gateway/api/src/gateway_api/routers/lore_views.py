@@ -72,7 +72,6 @@ async def create_campaign_atlas_pin(
 
 
 @router.get("/api/v1/campaigns/{campaign_id}/codex", dependencies=_VERIFIED)
-@router.get("/api/v1/campaigns/{campaign_id}/codex/entries", dependencies=_VERIFIED)
 async def get_campaign_codex(
     campaign_id: str,
     request: Request,

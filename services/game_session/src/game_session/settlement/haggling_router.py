@@ -67,7 +67,6 @@ async def _load_negotiation(nid: str) -> NegotiationAggregate:
 @router.post(
     "/api/v1/establishments/{establishment_id}/haggle", response_model=NegotiationSessionState
 )
-@router.post("/establishments/{establishment_id}/haggle", response_model=NegotiationSessionState)
 async def haggle_establishment(
     caller_id: CallerId,
     establishment_id: str,
@@ -147,7 +146,6 @@ async def haggle_establishment(
 
 
 @router.post("/api/v1/haggling/start", response_model=NegotiationSessionState)
-@router.post("/haggling/start", response_model=NegotiationSessionState)
 async def start_haggling_session(
     caller_id: CallerId,
     req: StartNegotiationRequest,
@@ -190,7 +188,6 @@ async def start_haggling_session(
 
 
 @router.post("/api/v1/haggling/{negotiation_id}/gambit", response_model=NegotiationSessionState)
-@router.post("/haggling/{negotiation_id}/gambit", response_model=NegotiationSessionState)
 async def execute_gambit_route(
     caller_id: CallerId,
     negotiation_id: str,
@@ -221,7 +218,6 @@ async def execute_gambit_route(
 @router.patch(
     "/api/v1/haggling/{negotiation_id}/dm-override", response_model=NegotiationSessionState
 )
-@router.patch("/haggling/{negotiation_id}/dm-override", response_model=NegotiationSessionState)
 async def dm_negotiation_override(
     caller_id: CallerId,
     negotiation_id: str,
@@ -250,7 +246,6 @@ async def dm_negotiation_override(
 
 
 @router.get("/api/v1/haggling/{negotiation_id}", response_model=NegotiationSessionState)
-@router.get("/haggling/{negotiation_id}", response_model=NegotiationSessionState)
 async def get_negotiation_state(
     caller_id: CallerId,
     negotiation_id: str,
@@ -263,7 +258,6 @@ async def get_negotiation_state(
 
 
 @router.post("/api/v1/haggling/{negotiation_id}/accept", response_model=NegotiationSessionState)
-@router.post("/haggling/{negotiation_id}/accept", response_model=NegotiationSessionState)
 async def accept_negotiation(
     caller_id: CallerId,
     negotiation_id: str,

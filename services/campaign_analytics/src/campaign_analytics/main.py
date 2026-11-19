@@ -62,7 +62,6 @@ async def store_unavailable(_request: Request, _exc: Exception) -> JSONResponse:
 
 
 @system_router.get("/healthz", tags=["Health"])
-@system_router.get("/health", tags=["Health"])
 def health_check(request: Request) -> JSONResponse:
     """Report service health and the status of each supervised stream consumer."""
     statuses = consumer_statuses(getattr(request.app.state, "consumers", {}))

@@ -107,7 +107,7 @@ What works today:
 What does not work today:
 
 - `POST /api/v1/watcher/speak-and-act` proxies to The Watcher intent route. The Watcher parses the transcript. Nothing moves the token on the board yet.
-- No App Shell code calls `POST /api/v1/voice/transcribe`, `POST /api/v1/watcher/intent`, or `POST /api/v1/watcher/speak-and-act`.
+- No App Shell code calls `POST /api/v1/voice/transcribe`, `POST /api/v1/watcher/transcribe-and-act`, or `POST /api/v1/watcher/speak-and-act`.
 - Nothing moves a token from a spoken command.
 
 ## Step 4: Run a Stand-In Turn for an Absent Player

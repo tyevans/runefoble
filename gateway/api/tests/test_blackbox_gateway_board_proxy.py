@@ -112,14 +112,14 @@ def test_get_an_unknown_token_returns_404(client: TestClient, board: str):
 
 def test_the_sessionless_token_move_route_is_gone(client: TestClient, token: str):
     res = client.post(
-        f"/api/v1/board/tokens/{token}/move", json={"to_x": 1, "to_y": 1}, headers=bearer(DM)
+        f"/api/v1/boards/tokens/{token}/move", json={"to_x": 1, "to_y": 1}, headers=bearer(DM)
     )
 
     assert res.status_code == 404, res.text
 
 
 def test_the_sessionless_token_get_route_is_gone(client: TestClient, token: str):
-    res = client.get(f"/api/v1/board/tokens/{token}", headers=bearer(DM))
+    res = client.get(f"/api/v1/boards/tokens/{token}", headers=bearer(DM))
 
     assert res.status_code == 404, res.text
 

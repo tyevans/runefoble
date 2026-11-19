@@ -48,11 +48,6 @@ def test_caravan_board_ui_manifest_frontdoor(client: TestClient) -> None:
     assert data["version"] == "0.1.0"
     assert "runefoble-caravan-board" in data["components"]
 
-    # Also test the routed alias /game_session/ui/manifest
-    alias_res = client.get("/game_session/ui/manifest")
-    assert alias_res.status_code == 200
-    assert "runefoble-caravan-board" in alias_res.json()["components"]
-
 
 # ---------------------------------------------------------------------------
 # 2. Public REST API Frontdoor Acceptance & SpiceDB Zanzibar Authorization

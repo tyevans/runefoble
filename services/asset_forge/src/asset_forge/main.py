@@ -77,7 +77,6 @@ app.include_router(wardrobe_router)
 
 
 @app.get("/healthz", tags=["Health"])
-@app.get("/health", tags=["Health"])
 def health_check() -> dict[str, Any]:
     """Health check endpoint."""
     return {

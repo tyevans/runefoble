@@ -29,7 +29,6 @@ router = APIRouter(dependencies=[Depends(get_principal)])
 
 
 @router.post("/api/v1/settlements/{settlement_id}/upgrade-tier")
-@router.post("/settlements/{settlement_id}/upgrade-tier")
 async def upgrade_settlement_tier(
     caller_id: CallerId,
     settlement_id: str,
@@ -52,7 +51,6 @@ async def upgrade_settlement_tier(
 
 
 @router.post("/api/v1/establishments/{establishment_id}/upgrade")
-@router.post("/establishments/{establishment_id}/upgrade")
 async def upgrade_establishment(
     caller_id: CallerId,
     establishment_id: str,

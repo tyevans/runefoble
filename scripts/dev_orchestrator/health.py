@@ -14,7 +14,6 @@ from .colors import CYAN, GREEN, RED, RESET
 def check_health(host: str, port: int, timeout: float = 1.0) -> bool:
     """Check if the API Gateway health probe responds with HTTP 200."""
     endpoints = [
-        f"http://{host}:{port}/api/v1/health",
         f"http://{host}:{port}/healthz",
     ]
     for url in endpoints:

@@ -53,7 +53,6 @@ async def evaluate_aoe_template(session_id: str, req: AoEEvaluateRequest, user_i
 
 
 @router.post("/api/v1/boards/{session_id}/aoe/place", response_model=AoETemplateResponse)
-@router.post("/api/v1/boards/{session_id}/aoe", response_model=AoETemplateResponse)
 async def place_aoe_template(
     session_id: str,
     req: AoETemplatePlaceRequest,

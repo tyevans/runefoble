@@ -49,20 +49,20 @@ async def test_zanzibar_faction_resource_authorization(client: TestClient):
     fid = f"fact-{uuid4().hex[:8]}"
 
     res = client.post(
-        f"/factions/{fid}/resources/adjust",
+        f"/api/v1/factions/{fid}/resources/adjust",
         json={"treasury_delta": 100, "campaign_id": camp_id},
         headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(player_user)}"},
     )
     assert res.status_code == 403 and "Forbidden" in res.json()["detail"]
 
     view_res = client.get(
-        f"/factions/{fid}/resources?campaign_id={camp_id}",
+        f"/api/v1/factions/{fid}/resources?campaign_id={camp_id}",
         headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(player_user)}"},
     )
     assert view_res.status_code == 200
 
     dm_res = client.post(
-        f"/factions/{fid}/resources/adjust",
+        f"/api/v1/factions/{fid}/resources/adjust",
         json={"treasury_delta": 200, "campaign_id": camp_id},
         headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_user)}"},
     )
@@ -77,7 +77,7 @@ async def test_frontdoor_resource_adjust_deplete_and_query(client: TestClient):
 
     # Deposit treasury and contraband
     res = client.post(
-        f"/factions/{fid}/resources/adjust",
+        f"/api/v1/factions/{fid}/resources/adjust",
         json={"treasury_delta": 250, "contraband_delta": 15, "campaign_id": camp_id},
         headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_user)}"},
     )
@@ -86,14 +86,14 @@ async def test_frontdoor_resource_adjust_deplete_and_query(client: TestClient):
 
     # Query via GET
     get_res = client.get(
-        f"/factions/{fid}/resources?campaign_id={camp_id}",
+        f"/api/v1/factions/{fid}/resources?campaign_id={camp_id}",
         headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_user)}"},
     )
     assert get_res.status_code == 200 and get_res.json()["treasury"] == 350
 
     # Deplete 50 gold
     spend = client.post(
-        f"/factions/{fid}/resources/adjust",
+        f"/api/v1/factions/{fid}/resources/adjust",
         json={"treasury_delta": -50, "campaign_id": camp_id},
         headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_user)}"},
     )
@@ -101,7 +101,7 @@ async def test_frontdoor_resource_adjust_deplete_and_query(client: TestClient):
 
     # Capacity bounds: excessive deduction floors at zero
     drain = client.post(
-        f"/factions/{fid}/resources/adjust",
+        f"/api/v1/factions/{fid}/resources/adjust",
         json={"treasury_delta": -500, "campaign_id": camp_id},
         headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_user)}"},
     )
@@ -128,7 +128,7 @@ def test_faction_resource_adjust_answers_503_on_store_outage(
         replace=True,
     ):
         resp = client.post(
-            f"/factions/fact-{uuid4().hex[:8]}/resources/adjust",
+            f"/api/v1/factions/fact-{uuid4().hex[:8]}/resources/adjust",
             json={"treasury_delta": 100, "campaign_id": str(uuid4())},
         )
     assert resp.status_code == 503, resp.text

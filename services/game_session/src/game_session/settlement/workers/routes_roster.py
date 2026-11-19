@@ -36,7 +36,6 @@ router = APIRouter(dependencies=[Depends(get_principal)], tags=["settlement-npc-
 
 
 @router.post("/api/v1/establishments/{establishment_id}/workers", status_code=201)
-@router.post("/establishments/{establishment_id}/workers", status_code=201)
 async def assign_worker(
     establishment_id: str, req: AssignWorkerRequest, caller_id: CallerId
 ) -> NPCWorkerState:
@@ -46,7 +45,6 @@ async def assign_worker(
 
 
 @router.get("/api/v1/establishments/{establishment_id}/workers")
-@router.get("/establishments/{establishment_id}/workers")
 async def list_establishment_workers(
     establishment_id: str, caller_id: CallerId
 ) -> list[NPCWorkerState]:
@@ -69,7 +67,6 @@ async def list_establishment_workers(
 
 
 @router.get("/api/v1/establishments/{establishment_id}/roster")
-@router.get("/establishments/{establishment_id}/roster")
 async def get_establishment_roster(
     establishment_id: str, caller_id: CallerId
 ) -> EstablishmentRosterResponse:
@@ -87,7 +84,6 @@ async def get_establishment_roster(
 
 
 @router.post("/api/v1/establishments/{establishment_id}/workers/{npc_id}/relieve")
-@router.post("/establishments/{establishment_id}/workers/{npc_id}/relieve")
 async def relieve_worker(
     caller_id: CallerId,
     establishment_id: str,
@@ -104,7 +100,6 @@ async def relieve_worker(
 
 
 @router.get("/api/v1/npcs/{npc_id}")
-@router.get("/npcs/{npc_id}")
 async def get_worker(npc_id: str, caller_id: CallerId) -> NPCWorkerState:
     """Retrieve an NPC worker profile, traits, inventories, and social ties."""
     agg = await load_worker(npc_id, "view", caller_id)

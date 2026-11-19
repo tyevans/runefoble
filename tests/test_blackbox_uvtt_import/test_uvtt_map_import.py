@@ -35,9 +35,9 @@ def test_blackbox_uvtt_multipart_file_upload(board_client: TestClient, board_cam
     uvtt_data = build_sample_dd2vtt_dict(cols=18, rows=14, pixels_per_grid=100)
     file_bytes = json.dumps(uvtt_data).encode("utf-8")
 
-    # Frontdoor invocation: POST /api/v1/board/{id}/import/uvtt
+    # Frontdoor invocation: POST /api/v1/boards/{id}/import/uvtt
     response = board_client.post(
-        f"/api/v1/board/{board_id}/import/uvtt",
+        f"/api/v1/boards/{board_id}/import/uvtt",
         files={"file": ("crypt_dungeon.dd2vtt", file_bytes, "application/json")},
     )
     assert response.status_code == 200, response.text
@@ -118,7 +118,7 @@ def test_blackbox_uvtt_invalid_payload_error(board_client: TestClient, board_cam
     board_id = f"board-{uuid4().hex[:8]}"
     _create_board(board_client, board_id, board_campaign)
     response = board_client.post(
-        f"/api/v1/board/{board_id}/import/uvtt",
+        f"/api/v1/boards/{board_id}/import/uvtt",
         content=b"not-valid-json-file-content",
         headers={"Content-Type": "application/octet-stream"},
     )
@@ -137,7 +137,7 @@ def test_blackbox_uvtt_background_is_an_authorized_asset_path(
     _create_board(board_client, board_id, board_campaign)
     file_bytes = json.dumps(build_sample_dd2vtt_dict(cols=8, rows=8)).encode("utf-8")
     response = board_client.post(
-        f"/api/v1/board/{board_id}/import/uvtt",
+        f"/api/v1/boards/{board_id}/import/uvtt",
         files={"file": ("crypt.dd2vtt", file_bytes, "application/json")},
     )
     assert response.status_code == 200, response.text

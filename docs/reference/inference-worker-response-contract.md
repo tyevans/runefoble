@@ -24,7 +24,7 @@ X-Runefoble-Service-Credential: <RUNEFOBLE_SERVICE_CREDENTIAL>
 | The Zitadel user token of a player in `Authorization` | `401`. A user token is not a service credential. |
 | The configured credential | The route runs. |
 
-The worker refuses to start when `RUNEFOBLE_SERVICE_CREDENTIAL` is unset or blank. The worker sends no CORS headers. The `/healthz` and `/health` routes stay open for probes.
+The worker refuses to start when `RUNEFOBLE_SERVICE_CREDENTIAL` is unset or blank. The worker sends no CORS headers. The `/healthz` routes stay open for probes.
 
 ## Provenance Fields
 
@@ -115,7 +115,7 @@ Configuration:
 
 | Watcher route | Worker call | Result fields |
 |---|---|---|
-| `POST /api/v1/watcher/intent` (and `transcribe-and-act`) | `/inference/v1/intent` | `source`, `degraded`. `confidence` is `null` when the worker omits it. |
+| `POST /api/v1/watcher/transcribe-and-act` (and `transcribe-and-act`) | `/inference/v1/intent` | `source`, `degraded`. `confidence` is `null` when the worker omits it. |
 | `POST /api/v1/watcher/stand-in/act` | `/inference/v1/stand-in-action` | `source`, `degraded`, `guardrails_applied` |
 | `POST /api/v1/watcher/narrate` | `/inference/v1/dm-narration` | `source`, `degraded` |
 

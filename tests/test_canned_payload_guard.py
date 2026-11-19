@@ -26,8 +26,6 @@ OWNER_FREE_ROUTES: frozenset[tuple[str, str]] = frozenset(
         # Liveness. The top-level status stays healthy while the process runs (TASK-0674). Owner
         # probe results appear in `downstream_services`, so the reply is status, not owner data.
         ("/healthz", "get"),
-        ("/health", "get"),
-        ("/api/v1/health", "get"),
         # Kubernetes readiness. It states that this gateway process is ready.
         ("/readyz", "get"),
         # Sync health. It reports the state of the gateway's SpiceDB sync service.

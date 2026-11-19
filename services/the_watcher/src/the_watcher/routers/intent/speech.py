@@ -28,7 +28,6 @@ router = APIRouter(dependencies=[Depends(get_principal)], tags=["intent"])
 
 
 @router.post("/api/v1/watcher/transcribe-and-act", response_model=IntentResult)
-@router.post("/api/v1/watcher/intent", response_model=IntentResult)
 async def process_speech_action(
     caller_id: CallerId, req: SpeechInputRequest, request: Request
 ) -> IntentResult:

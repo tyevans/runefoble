@@ -21,7 +21,6 @@ router = APIRouter(dependencies=[Depends(get_principal)], tags=["copilot"])
 
 
 @router.post("/api/v1/watcher/actions/propose", response_model=PendingAction)
-@router.post("/api/v1/watcher/propose", response_model=PendingAction)
 async def propose_action(caller_id: CallerId, req: ProposeActionRequest) -> PendingAction:
     """Propose an AI game mutation with a pre-execution pause window (default 2000ms)."""
     await require_session_permission(caller_id, req.session_id, "session.participate")

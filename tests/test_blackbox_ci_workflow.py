@@ -81,9 +81,9 @@ def test_e2e_playwright_job_structure() -> None:
     assert "6379" in bg_env.get("RUNEFOBLE_REDIS_URL", "")
 
     # Health & readiness polling
-    readiness_step = next(s for s in steps if "api/v1/health" in s.get("run", ""))
+    readiness_step = next(s for s in steps if "healthz" in s.get("run", ""))
     run_cmd = readiness_step.get("run", "")
-    assert "http://localhost:8000/api/v1/health" in run_cmd
+    assert "http://localhost:8000/healthz" in run_cmd
     assert "http://localhost:5173" in run_cmd
     assert "timeout 60" in run_cmd
 
@@ -113,6 +113,6 @@ def test_local_ci_simulation_script() -> None:
 
     content = LOCAL_CI_SCRIPT_PATH.read_text(encoding="utf-8")
     assert "make test-e2e" in content
-    assert "api/v1/health" in content
+    assert "healthz" in content
     assert "http://localhost:5173" in content
     assert "trap cleanup" in content

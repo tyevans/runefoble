@@ -40,9 +40,6 @@ async def _publish_board_events(events: list) -> None:
         await publish_board_events(bus, events)
 
 
-@router.post("/board/{id}/import/uvtt", response_model=UVTTImportResponse)
-@router.post("/boards/{id}/import/uvtt", response_model=UVTTImportResponse)
-@router.post("/api/v1/board/{id}/import/uvtt", response_model=UVTTImportResponse)
 @router.post("/api/v1/boards/{id}/import/uvtt", response_model=UVTTImportResponse)
 async def import_uvtt_map_endpoint(
     id: str,
@@ -106,9 +103,7 @@ async def import_uvtt_map_endpoint(
     )
 
 
-@router.post("/board/{id}/doors/{door_id}/toggle")
-@router.post("/boards/{id}/doors/{door_id}/toggle")
-@router.post("/api/v1/board/{id}/doors/{door_id}/toggle")
+@router.post("/api/v1/boards/{id}/doors/{door_id}/toggle")
 async def toggle_door_endpoint(
     id: str,
     door_id: str,
@@ -126,8 +121,7 @@ async def toggle_door_endpoint(
     return {"status": "success", "door": board.state.doors.get(door_id, result)}
 
 
-@router.get("/board/{id}/doors")
-@router.get("/boards/{id}/doors")
+@router.get("/api/v1/boards/{id}/doors")
 async def get_doors_endpoint(id: str, user_id: CallerId) -> dict:
     """Query the doors and portals. Secret ones need `board.view_secret_layer`."""
     board = await get_board(id)
@@ -140,9 +134,7 @@ async def get_doors_endpoint(id: str, user_id: CallerId) -> dict:
     }
 
 
-@router.post("/board/{id}/lights")
-@router.post("/boards/{id}/lights")
-@router.post("/api/v1/board/{id}/lights")
+@router.post("/api/v1/boards/{id}/lights")
 async def place_light_endpoint(id: str, req: PlaceLightRequest, user_id: CallerId) -> dict:
     """Place or update a dynamic point light source on the tactical board."""
     board = await get_board(id)
@@ -165,8 +157,7 @@ async def place_light_endpoint(id: str, req: PlaceLightRequest, user_id: CallerI
     return {"status": "success", "light_id": lid}
 
 
-@router.get("/board/{id}/lights")
-@router.get("/boards/{id}/lights")
+@router.get("/api/v1/boards/{id}/lights")
 async def get_lights_endpoint(id: str, user_id: CallerId) -> dict:
     """Query active dynamic light sources on the board."""
     board = await get_board(id)

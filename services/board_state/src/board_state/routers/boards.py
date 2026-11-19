@@ -39,7 +39,6 @@ ui_manifest_router = APIRouter(tags=["boards"])
 
 
 @ui_manifest_router.get("/ui/manifest")
-@ui_manifest_router.get("/board_state/ui/manifest")
 def get_ui_manifest():
     """Advertise vendored microfrontend components for board state."""
     return UI_MANIFEST

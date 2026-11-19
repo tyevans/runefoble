@@ -37,8 +37,6 @@ def build_tools_registry_router(
     )
 
     @router.get("/dynamic", response_model=dict[str, Any])
-    @router.get("", response_model=dict[str, Any])
-    @router.get("/", response_model=dict[str, Any])
     def list_dynamic_tools() -> dict[str, Any]:
         """List all registered dynamic MCP tools."""
         tools = dynamic_registry.list_tools()
@@ -49,8 +47,6 @@ def build_tools_registry_router(
         }
 
     @router.post("/register", response_model=dict[str, Any])
-    @router.post("", response_model=dict[str, Any])
-    @router.post("/", response_model=dict[str, Any])
     async def register_dynamic_tool(
         payload: DynamicToolDefinition,
         caller: Caller,

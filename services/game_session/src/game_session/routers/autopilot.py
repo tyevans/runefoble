@@ -52,10 +52,6 @@ async def _request_stand_in_action(watcher_url: str, payload: dict[str, object])
     "/api/v1/sessions/{session_id}/turns/auto-pilot",
     response_model=AutoPilotResponse,
 )
-@router.post(
-    "/api/v1/sessions/{session_id}/autopilot",
-    response_model=AutoPilotResponse,
-)
 async def auto_pilot_turn(
     session_id: UUID,
     req: AutoPilotRequest | None = None,

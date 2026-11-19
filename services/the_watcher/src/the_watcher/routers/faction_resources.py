@@ -51,7 +51,6 @@ def _to_response(agg: FactionResourceAggregate) -> FactionResourceResponse:
     )
 
 
-@router.post("/factions/{faction_id}/resources/adjust", response_model=FactionResourceResponse)
 @router.post(
     "/api/v1/factions/{faction_id}/resources/adjust", response_model=FactionResourceResponse
 )
@@ -69,7 +68,6 @@ async def adjust_resources(
     return _to_response(agg)
 
 
-@router.post("/factions/{faction_id}/bribery/resolve", response_model=BriberyAttemptResponse)
 @router.post("/api/v1/factions/{faction_id}/bribery/resolve", response_model=BriberyAttemptResponse)
 async def resolve_bribery(
     caller_id: CallerId,
@@ -98,7 +96,6 @@ async def resolve_bribery(
     )
 
 
-@router.post("/factions/{faction_id}/mercenaries/recruit", response_model=FactionResourceResponse)
 @router.post(
     "/api/v1/factions/{faction_id}/mercenaries/recruit", response_model=FactionResourceResponse
 )
@@ -121,7 +118,6 @@ async def recruit_mercenaries(
     return _to_response(agg)
 
 
-@router.get("/factions/{faction_id}/resources", response_model=FactionResourceResponse)
 @router.get("/api/v1/factions/{faction_id}/resources", response_model=FactionResourceResponse)
 async def get_faction_resources(
     caller_id: CallerId,

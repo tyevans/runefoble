@@ -29,7 +29,7 @@ curl -X POST "http://localhost:8002/api/v1/boards" \
 Then send a `POST` request with the `.dd2vtt` file:
 
 ```bash
-curl -X POST "http://localhost:8002/api/v1/board/camp-01/import/uvtt" \
+curl -X POST "http://localhost:8002/api/v1/boards/camp-01/import/uvtt" \
   -F "file=@cavern_lair.dd2vtt;type=application/json"
 ```
 
@@ -40,7 +40,7 @@ import httpx
 
 with open("cavern_lair.dd2vtt", "rb") as f:
     response = httpx.post(
-        "http://localhost:8002/api/v1/board/camp-01/import/uvtt",
+        "http://localhost:8002/api/v1/boards/camp-01/import/uvtt",
         files={"file": ("cavern_lair.dd2vtt", f, "application/json")},
     )
 
@@ -102,7 +102,7 @@ The FastMCP Gateway (`gateway/mcp`) provides dynamic runtime tool registration, 
 
 ### Registering a Tool via REST API
 
-Post a `DynamicToolDefinition` to `/mcp/tools` on the MCP gateway (`http://gateway-mcp:8012` inside the cluster). The API gateway does not serve this route. The request needs a Zitadel bearer token. The gateway records the token subject as the tool's author. The body fields `author_id` and `user_id`, and the `X-User-Id` header, are ignored (TASK-0532).
+Post a `DynamicToolDefinition` to `/mcp/tools/register` on the MCP gateway (`http://gateway-mcp:8012` inside the cluster). The API gateway does not serve this route. The request needs a Zitadel bearer token. The gateway records the token subject as the tool's author. The body fields `author_id` and `user_id`, and the `X-User-Id` header, are ignored (TASK-0532).
 
 The MCP gateway has no ingress path. It is reachable only inside the cluster (ADR-0001). To call it
 from a developer machine, forward its port first. The examples below then use `localhost:8012`:
@@ -134,7 +134,7 @@ tool_spec = {
     "metadata": {"author": "Alex", "version": "1.0.0"},
 }
 
-response = httpx.post("http://localhost:8012/mcp/tools", json=tool_spec, headers=auth)
+response = httpx.post("http://localhost:8012/mcp/tools/register", json=tool_spec, headers=auth)
 assert response.status_code == 200
 print("Tool registered successfully:", response.json())
 ```

@@ -74,7 +74,7 @@ def test_spoken_reaction_interrupt_pauses_turn(client: TestClient, mock_bus: Moc
     session_id, marcus_id, goblin_id = _setup_active_combat(client)
 
     declare_res = client.post(
-        f"/sessions/{session_id}/reactions/declare",
+        f"/api/v1/sessions/{session_id}/reactions/declare",
         json={
             "reacting_combatant_id": marcus_id,
             "reacting_combatant_name": "Marcus",
@@ -109,7 +109,7 @@ def test_spoken_reaction_interrupt_pauses_turn(client: TestClient, mock_bus: Moc
     assert "paused_for_reaction" in ce_dict["type"]
 
     # Verify active reaction query frontdoor
-    active_res = client.get(f"/sessions/{session_id}/reactions/active")
+    active_res = client.get(f"/api/v1/sessions/{session_id}/reactions/active")
     assert active_res.status_code == 200
     active_data = active_res.json()
     assert active_data["turn_paused_for_reaction"] is True
@@ -117,7 +117,7 @@ def test_spoken_reaction_interrupt_pauses_turn(client: TestClient, mock_bus: Moc
 
     # AC: Resolve the reaction interrupt
     resolve_res = client.post(
-        f"/sessions/{session_id}/reactions/{reaction_id}/resolve",
+        f"/api/v1/sessions/{session_id}/reactions/{reaction_id}/resolve",
         json={"action_taken": "cast_shield", "details": {"applied_ac": 5}},
     )
     assert resolve_res.status_code == 200
@@ -139,7 +139,7 @@ def test_spoken_reaction_interrupt_pauses_turn(client: TestClient, mock_bus: Moc
     assert re.resumed is True
 
     # Verify session reflects resumed turn state
-    active_res2 = client.get(f"/sessions/{session_id}/reactions/active")
+    active_res2 = client.get(f"/api/v1/sessions/{session_id}/reactions/active")
     assert active_res2.status_code == 200
     assert active_res2.json()["turn_paused_for_reaction"] is False
     assert active_res2.json()["active_reaction"] is None
@@ -150,7 +150,7 @@ def test_reaction_declare_error_handling(client: TestClient):
     # 1. Non-existent session: the permission check runs first, so the caller is refused
     bad_uuid = str(uuid4())
     res = client.post(
-        f"/sessions/{bad_uuid}/reactions/declare",
+        f"/api/v1/sessions/{bad_uuid}/reactions/declare",
         json={"reacting_combatant_id": "c-1", "trigger_phrase": "Shield!"},
     )
     assert res.status_code == 403
@@ -163,7 +163,7 @@ def test_reaction_declare_error_handling(client: TestClient):
     )
     session_id = c_res.json()["id"]
     res_no_combat = client.post(
-        f"/sessions/{session_id}/reactions/declare",
+        f"/api/v1/sessions/{session_id}/reactions/declare",
         json={"reacting_combatant_id": "c-1", "trigger_phrase": "Counterspell!"},
     )
     assert res_no_combat.status_code == 400

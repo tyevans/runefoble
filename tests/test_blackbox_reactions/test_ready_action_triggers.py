@@ -60,7 +60,7 @@ def test_ready_action_registration_and_triggering(client: TestClient, mock_bus: 
     # 1. Register ready-action trigger:
     # "I ready my crossbow to shoot if the goblin steps into the hallway"
     reg_res = client.post(
-        f"/sessions/{session_id}/reactions/ready-action",
+        f"/api/v1/sessions/{session_id}/reactions/ready-action",
         json={
             "combatant_id": marcus_id,
             "combatant_name": "Marcus",
@@ -91,14 +91,14 @@ def test_ready_action_registration_and_triggering(client: TestClient, mock_bus: 
     assert re.combatant_id == marcus_id
 
     # Verify ready action listed in active query
-    active_res = client.get(f"/sessions/{session_id}/reactions/active")
+    active_res = client.get(f"/api/v1/sessions/{session_id}/reactions/active")
     assert active_res.status_code == 200
     ready_actions = active_res.json()["ready_actions"]
     assert any(a["ready_action_id"] == ready_action_id for a in ready_actions)
 
     # 2. Goblin moves into the corridor (trigger event)
     eval_res = client.post(
-        f"/sessions/{session_id}/reactions/evaluate-triggers",
+        f"/api/v1/sessions/{session_id}/reactions/evaluate-triggers",
         json={
             "event_type": "runefoble.events.board.token_moved",
             "event_data": {
@@ -131,5 +131,5 @@ def test_ready_action_registration_and_triggering(client: TestClient, mock_bus: 
     assert te.triggering_entity_id == goblin_id
 
     # Verify ready action is consumed
-    active_after = client.get(f"/sessions/{session_id}/reactions/active").json()
+    active_after = client.get(f"/api/v1/sessions/{session_id}/reactions/active").json()
     assert not any(a["ready_action_id"] == ready_action_id for a in active_after["ready_actions"])

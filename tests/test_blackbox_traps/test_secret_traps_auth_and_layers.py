@@ -3,7 +3,7 @@
 Governed by Hard Invariant 7 (Blackbox TDD with Frontdoor Setup) and Hard Invariant 1 (SpiceDB Zanzibar).
 Verifies:
 - DM-only secret trap creation enforced via SpiceDB Zanzibar permissions.
-- Player exclusion from secret trap markers on GET /boards/{board_id}/traps.
+- Player exclusion from secret trap markers on GET /api/v1/boards/{board_id}/traps.
 - Authorized DM visibility of both secret and public markers.
 - CloudEvents registration and specification conformance.
 - Trap disarming workflow.

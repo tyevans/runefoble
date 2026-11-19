@@ -52,7 +52,7 @@ async def test_blackbox_charter_frontier_settlement(
     }
 
     res = client.post(
-        "/settlements",
+        "/api/v1/settlements",
         json=charter_payload,
         headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(officer_id)}"},
     )
@@ -71,7 +71,7 @@ async def test_blackbox_charter_frontier_settlement(
 
     # Frontdoor query endpoint verification
     query_res = client.get(
-        f"/settlements/{sid}",
+        f"/api/v1/settlements/{sid}",
         headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(officer_id)}"},
     )
     assert query_res.status_code == 200
@@ -93,7 +93,7 @@ async def test_blackbox_query_nonexistent_settlement(client: TestClient):
     """Scenario 2: Querying a non-existent settlement returns 404."""
     random_id = str(uuid4())
     res = client.get(
-        f"/settlements/{random_id}",
+        f"/api/v1/settlements/{random_id}",
         headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('anyone')}"},
     )
     assert res.status_code == 404

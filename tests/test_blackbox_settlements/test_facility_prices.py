@@ -36,7 +36,7 @@ async def _charter_haven(client: TestClient, spicedb: MockSpiceDBClient) -> tupl
     await spicedb.write_relationship("shared_world", world_id, "participant", "user", FOUNDER)
     await spicedb.write_relationship("campaign", camp, "player", "user", FOUNDER)
     charter = client.post(
-        "/settlements",
+        "/api/v1/settlements",
         json={
             "name": "Cinder Hold",
             "shared_world_id": world_id,
@@ -56,7 +56,7 @@ async def test_deposit_funds_the_haven_treasury(
     sid, _ = await _charter_haven(client, spicedb)
 
     deposit = client.post(
-        f"/settlements/{sid}/deposit",
+        f"/api/v1/settlements/{sid}/deposit",
         json={"gold": 500, "materials": {"timber": 100, "stone": 100}},
         headers=bearer(FOUNDER),
     )
@@ -64,7 +64,7 @@ async def test_deposit_funds_the_haven_treasury(
     assert deposit.json()["gold_treasury"] == 500
     assert deposit.json()["materials_treasury"] == {"timber": 100, "stone": 100}
 
-    view = client.get(f"/settlements/{sid}", headers=bearer(FOUNDER))
+    view = client.get(f"/api/v1/settlements/{sid}", headers=bearer(FOUNDER))
     assert view.json()["gold_treasury"] == 500
     assert_stream_events(mock_bus, "SettlementResourcesDeposited")
 
@@ -76,13 +76,13 @@ async def test_upgrade_spends_the_table_cost_from_the_treasury(
     """A workshop upgrade to tier 2 costs 100 gold and 20 timber from the price table."""
     sid, camp = await _charter_haven(client, spicedb)
     client.post(
-        f"/settlements/{sid}/deposit",
+        f"/api/v1/settlements/{sid}/deposit",
         json={"gold": 500, "materials": {"timber": 100}},
         headers=bearer(FOUNDER),
     )
 
     upgrade = client.post(
-        f"/settlements/{sid}/upgrade",
+        f"/api/v1/settlements/{sid}/upgrade",
         json={"facility_id": "workshop", "contributing_campaign_id": camp},
         headers=bearer(FOUNDER),
     )
@@ -102,14 +102,14 @@ async def test_upgrade_shortfall_answers_409_and_records_no_event(
     """An unfunded haven cannot upgrade. The facility, the balance, and the stream stay put."""
     sid, camp = await _charter_haven(client, spicedb)
     client.post(
-        f"/settlements/{sid}/deposit",
+        f"/api/v1/settlements/{sid}/deposit",
         json={"gold": 50, "materials": {"timber": 100}},
         headers=bearer(FOUNDER),
     )
     events_before = len(mock_bus.streams.get(STREAM_WEST_MARCHES, []))
 
     refused = client.post(
-        f"/settlements/{sid}/upgrade",
+        f"/api/v1/settlements/{sid}/upgrade",
         json={"facility_id": "workshop", "contributing_campaign_id": camp},
         headers=bearer(FOUNDER),
     )
@@ -117,7 +117,7 @@ async def test_upgrade_shortfall_answers_409_and_records_no_event(
     assert "gold" in refused.json()["detail"]
 
     assert len(mock_bus.streams.get(STREAM_WEST_MARCHES, [])) == events_before
-    view = client.get(f"/settlements/{sid}", headers=bearer(FOUNDER)).json()
+    view = client.get(f"/api/v1/settlements/{sid}", headers=bearer(FOUNDER)).json()
     assert view["facilities"]["workshop"] == 1
     assert view["gold_treasury"] == 50
     assert view["materials_treasury"] == {"timber": 100}

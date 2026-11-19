@@ -36,7 +36,7 @@ async def test_zanzibar_turf_war_authorization(client: TestClient):
 
     # Unauthorized player -> 403 Forbidden
     res_player = client.post(
-        "/the-watcher/factions/skirmish/simulate",
+        "/api/v1/factions/skirmish/simulate",
         json=payload,
         headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(player_user)}"},
     )
@@ -45,7 +45,7 @@ async def test_zanzibar_turf_war_authorization(client: TestClient):
 
     # Authorized DM -> 200 OK
     res_dm = client.post(
-        "/the-watcher/factions/skirmish/simulate",
+        "/api/v1/factions/skirmish/simulate",
         json=payload,
         headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_user)}"},
     )
@@ -86,7 +86,7 @@ async def test_turf_war_api_conflict_initiation_and_state_query(
 
     # Query territory state via /the-watcher and /api/v1 endpoints
     res_get = client.get(
-        f"/the-watcher/regions/{region_id}/unrest?campaign_id={camp_id}",
+        f"/api/v1/regions/{region_id}/unrest?campaign_id={camp_id}",
         headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(player_user)}"},
     )
     assert res_get.status_code == 200

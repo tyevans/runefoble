@@ -21,7 +21,6 @@ from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
 from tests.helpers.ws_identity import bearer
 
 PUBLIC_PATHS = {
-    "/health",
     "/healthz",
     "/openapi.json",
     "/ui/manifest",
@@ -174,7 +173,7 @@ def test_every_campaign_lore_route_requires_a_bearer(client: TestClient) -> None
 
 
 def test_public_routes_stay_open(client: TestClient) -> None:
-    assert client.get("/health").status_code == 200
+    assert client.get("/healthz").status_code == 200
     assert client.get("/openapi.json").status_code == 200
     assert client.get("/ui/manifest").status_code == 200
 

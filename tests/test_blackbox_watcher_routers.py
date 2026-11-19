@@ -41,7 +41,7 @@ def test_watcher_openapi_routes_completeness(watcher_client):
         "/healthz",
         "/ui/manifest",
         "/api/v1/watcher/transcribe-and-act",
-        "/api/v1/watcher/intent",
+        "/api/v1/watcher/transcribe-and-act",
         "/api/v1/watcher/intent/parse",
         "/api/v1/watcher/intent/resolve",
         "/api/v1/watcher/intent/execute",
@@ -55,7 +55,7 @@ def test_watcher_openapi_routes_completeness(watcher_client):
         "/api/v1/watcher/veto",
         "/api/v1/watcher/approve",
         "/api/v1/watcher/modify",
-        "/api/v1/watcher/propose",
+        "/api/v1/watcher/actions/propose",
         "/api/v1/watcher/whispers",
     ]
 
@@ -80,7 +80,7 @@ def test_watcher_transcribe_and_act_frontdoor(watcher_client):
     assert res_transcribe.status_code == 200
     assert res_transcribe.json()["action_type"] == "attack"
 
-    res_intent = watcher_client.post("/api/v1/watcher/intent", json=speech_payload)
+    res_intent = watcher_client.post("/api/v1/watcher/transcribe-and-act", json=speech_payload)
     assert res_intent.status_code == 200
     assert res_intent.json()["action_type"] == "attack"
 

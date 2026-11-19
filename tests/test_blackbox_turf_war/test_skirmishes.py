@@ -35,7 +35,7 @@ async def test_skirmish_simulation_attacker_victory(client: TestClient):
     }
 
     res = client.post(
-        "/the-watcher/factions/skirmish/simulate",
+        "/api/v1/factions/skirmish/simulate",
         json=payload,
         headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_user)}"},
     )
@@ -66,7 +66,7 @@ async def test_skirmish_simulation_defender_hold_terrain_advantage(client: TestC
     }
 
     res = client.post(
-        "/the-watcher/factions/skirmish/simulate",
+        "/api/v1/factions/skirmish/simulate",
         json=payload,
         headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_user)}"},
     )
@@ -96,7 +96,7 @@ async def test_skirmish_stalemate_resolution(client: TestClient):
     }
 
     res = client.post(
-        "/the-watcher/factions/skirmish/simulate",
+        "/api/v1/factions/skirmish/simulate",
         json=payload,
         headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_user)}"},
     )
