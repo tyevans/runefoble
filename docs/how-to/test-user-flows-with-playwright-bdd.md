@@ -86,6 +86,36 @@ try {
 
 `make test-bdd` runs the unit tests of these guards (`e2e/unit/guards.test.ts`) with `node --test`.
 
+### Create the Campaign and Session in the Background
+Each feature file creates its own data in its `Background`. A scenario never uses data from another scenario or from a seeded database. Names in feature text are labels only. Do not write an id in feature text, and do not derive an id from a name.
+
+Do these steps in the Background, in this order:
+
+1. Sign in the DM. The DM creates the campaign through `POST /api/v1/campaigns`.
+2. The DM creates the session through `POST /api/v1/campaigns/{campaign_id}/sessions` (`frontdoorApi.createCampaignSession`).
+3. For each player, the DM issues an invite (`createCampaignInvite`). The player redeems it (`joinCampaign`).
+4. Each player creates a character (`createCharacter`). Do not send `level`. The character service does not keep it at creation.
+5. Each player takes a seat through `POST /api/v1/sessions/{session_id}/join` (`frontdoorApi.joinSession`).
+6. Store each id from the replies in `world`.
+
+`e2e/features/session_lobby_and_vtt.feature` and `e2e/steps/vtt_setup_steps.ts` show the pattern:
+
+```gherkin
+Background:
+  Given Evelyn creates campaign "Lobby Campaign" with session "Lobby 15" through the gateway
+  And Valeros and Sarah redeem a player invite to the campaign in separate browsers
+  And Valeros takes a seat in "Lobby 15" with a new character "Valeros the Bold"
+  And Evelyn opens the lobby of "Lobby 15"
+```
+
+`e2e/support/lobby_session.ts` keeps the session id with the title that the feature uses. A step that names another title fails.
+
+To assert a route, write the route shape with placeholders. `fillRouteTemplate` from `e2e/support/guards.ts` puts in the ids from `world`. A placeholder with no stored value fails the step:
+
+```gherkin
+Then both Evelyn and Valeros's browsers navigate automatically to "#/campaigns/{campaignId}/sessions/{sessionId}"
+```
+
 ---
 
 ## 3. Write Step Definitions with Shadow-Piercing Locators
@@ -159,7 +189,7 @@ await auth.signInAs('valeros', page);
 world.setPage('valeros', page);
 ```
 
-`World` closes every context in `world.extraContexts` after the scenario. The steps in `e2e/steps/vtt_steps.ts` show the pattern for a session lobby. The step `Evelyn is hosting session {string} for campaign {string}` opens the first page. The step `Valeros joins {string} in a separate browser` opens a second context.
+`World` closes every context in `world.extraContexts` after the scenario. The steps in `e2e/steps/vtt_setup_steps.ts` show the pattern for a session lobby. The step `Evelyn creates campaign {string} with session {string} through the gateway` signs Evelyn in on the test page. The step `Valeros and Sarah redeem a player invite to the campaign in separate browsers` opens one context for each player and keeps each player's bearer token for setup calls.
 
 ### Personas
 

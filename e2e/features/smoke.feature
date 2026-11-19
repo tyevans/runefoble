@@ -35,12 +35,12 @@ Feature: Platform Baseline Navigation and Theming Smoke Test
     Then I should see the heading "Runefoble"
     And the URL hash should be "#/campaigns"
 
+  # TASK-0652: the scenario uses the campaign that its setup created through the gateway.
   Scenario: Dungeon Master prepares campaign through public frontdoor
     Given I am logged in as a "DM"
     And campaign "The Lost Mine of Phandelver" exists
-    When I navigate to "#/campaigns"
-    Then I should see the heading "Runefoble"
-    And the URL hash should be "#/campaigns"
+    When I open the campaign that setup created
+    Then the campaign header shows the title "The Lost Mine of Phandelver"
 
   Scenario: Player switches design system theme to Dark Fantasy
     Given I am logged in as a "Player"

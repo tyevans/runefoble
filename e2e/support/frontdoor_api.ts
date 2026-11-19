@@ -263,6 +263,30 @@ export class FrontdoorApi {
     return res.json();
   }
 
+  /**
+   * Seats the caller in a session lobby with one character through `POST /api/v1/sessions/{id}/join`
+   * (TASK-0889). game_session checks `participate`. Throws with the response body on refusal.
+   */
+  async joinSession(
+    sessionId: string,
+    character: { id: string; name: string; characterClass: string },
+    token?: string
+  ): Promise<unknown> {
+    const res = await this.request.post(`${this.baseUrl}/api/v1/sessions/${sessionId}/join`, {
+      headers: { 'Content-Type': 'application/json', ...this.authHeaders(token) },
+      data: {
+        character_id: character.id,
+        character_name: character.name,
+        character_class: character.characterClass,
+      },
+    });
+    if (!res.ok()) {
+      const errText = await res.text();
+      throw new Error(`Failed to join session ${sessionId}: ${res.status()} - ${errText}`);
+    }
+    return res.json();
+  }
+
   /** Moves a session from lobby to active through the gateway (requires control). */
   async startSession(sessionId: string, token?: string): Promise<void> {
     const res = await this.request.post(`${this.baseUrl}/api/v1/sessions/${sessionId}/start`, {

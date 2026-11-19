@@ -29,10 +29,18 @@ export async function assertOk(res: SetupResponse, action: string): Promise<void
   throw new Error(`${action} failed: ${res.status()} ${res.statusText()} - ${body}`);
 }
 
-/** Reads the first number in a session title such as "Lobby 15". Throws when the title has no number. */
-export function sessionIdFromTitle(sessionTitle: string): string {
-  const match = sessionTitle.match(/\d+/);
-  return requireValue(match?.[0], `Session title "${sessionTitle}" has no session number.`);
+/**
+ * Replaces each `{name}` in a route template with the id that setup stored under `name`.
+ * Feature text names the route shape. The ids come from setup replies, never from the text.
+ * Throws when setup did not store a value for a placeholder.
+ */
+export function fillRouteTemplate(
+  template: string,
+  values: Record<string, string | null | undefined>
+): string {
+  return template.replace(/\{(\w+)\}/g, (_match, name: string) =>
+    requireValue(values[name], `Route "${template}" needs "${name}", which setup did not store.`)
+  );
 }
 
 /** Escapes text so that it matches literally inside a `RegExp`. */

@@ -20,9 +20,11 @@ governing_prd: PRD-0023
 **So that** the transition into the tactical VTT occurs smoothly and synchronously for everyone once all players are prepared.
 
 ## Scenario 1: Players Gathering and Toggling Readiness
+
+The `{campaignId}` and `{sessionId}` placeholders are the ids from the setup replies (TASK-0652). Names are labels only.
 ```gherkin
-Given Evelyn has scheduled Session 15 for campaign "Tomb of the Star-Eater"
-When Marcus and Sarah join the session lobby at "#/campaigns/4/lobby/15"
+Given Evelyn has created the campaign "Tomb of the Star-Eater" and the session "Session 15" through the gateway
+When Marcus and Sarah join the session lobby at "#/campaigns/{campaignId}/lobby/{sessionId}"
 Then their presence indicators show "Online"
 And Marcus confirms his character "Valeros" and checks "Ready"
 And Sarah indicates she will be absent, enabling the AI Stand-In toggle
@@ -33,10 +35,10 @@ And the lobby summary updates to show 1 of 2 players ready, 1 absent stand-in.
 ```gherkin
 Given Evelyn sees all active players marked as "Ready" in the lobby
 When Evelyn clicks the "Launch Session" button
-Then "POST /api/v1/sessions/15/start" is invoked on the backend
+Then "POST /api/v1/sessions/{sessionId}/start" is invoked on the backend
 And the session state transitions from "lobby" to "active"
 And a "SessionStarted" event is published to Redis Streams
-And all connected lobby browsers transition automatically to the active VTT board at "#/campaigns/4/sessions/15".
+And all connected lobby browsers transition automatically to the active VTT board at "#/campaigns/{campaignId}/sessions/{sessionId}".
 ```
 
 ## Scenario 3: A Player Who Is Not the DM Does Not See the Launch Control

@@ -3,17 +3,13 @@
  *
  * Automates multi-browser testing across Dungeon Master and Player contexts
  * over real WebSockets per ADR-0004, ADR-0005, ADR-0010, ADR-0014, and Hard Invariant 7.
+ * The Background steps in `vtt_setup_steps.ts` create the campaign, session and seats (TASK-0652).
  */
 
-import { expect, test, type Locator, type Page } from '@playwright/test';
-import { Given, When, Then } from '../support/fixtures';
-import { exactText, requireValue, sessionIdFromTitle } from '../support/guards';
-import type { World } from '../support/world';
-
-function lobbyRoute(world: World, sessionTitle: string): string {
-  const campaignId = requireValue(world.campaignId, 'No campaign. Run "Evelyn is hosting session" first.');
-  return `#/campaigns/${campaignId}/lobby/${sessionIdFromTitle(sessionTitle)}`;
-}
+import { expect, type Locator, type Page } from '@playwright/test';
+import { When, Then } from '../support/fixtures';
+import { exactText, fillRouteTemplate } from '../support/guards';
+import { lobbyRoute } from '../support/lobby_session';
 
 /** The lobby card of one participant. Strict mode fails the step when the name matches no card or several cards. */
 function participantCard(lobby: Locator, name: string): Locator {
@@ -28,40 +24,6 @@ function boardCell(board: Locator, x: number, y: number): Locator {
     .locator('.cell')
     .filter({ has: board.page().locator('.coord-label', { hasText: exactText(`${x},${y}`) }) });
 }
-
-Given(
-  'Evelyn is hosting session {string} for campaign {string}',
-  async ({ auth, world, page }, sessionTitle: string, campaignId: string) => {
-    const evelynUser = await auth.signInAs('evelyn', page);
-    world.currentUser = evelynUser;
-    world.setPage('evelyn', page);
-    world.campaignId = campaignId;
-
-    const sessionId = sessionIdFromTitle(sessionTitle);
-    world.sessionId = sessionId;
-
-    await page.goto(`#/campaigns/${campaignId}/lobby/${sessionId}`);
-    await page.waitForLoadState('domcontentloaded');
-    await expect(page.locator('runefoble-session-lobby')).toBeVisible({ timeout: 15_000 });
-  }
-);
-
-Given(
-  'Valeros joins {string} in a separate browser',
-  async ({ browser, auth, world }, sessionTitle: string) => {
-    const route = lobbyRoute(world, sessionTitle);
-
-    const valerosContext = await browser.newContext({ baseURL: test.info().project.use.baseURL });
-    world.extraContexts.push(valerosContext);
-    const valerosPage = await valerosContext.newPage();
-    world.setPage('valeros', valerosPage);
-
-    await auth.signInAs('valeros', valerosPage);
-    await valerosPage.goto(route);
-    await valerosPage.waitForLoadState('domcontentloaded');
-    await expect(valerosPage.locator('runefoble-session-lobby')).toBeVisible({ timeout: 15_000 });
-  }
-);
 
 When('Valeros checks {string}', async ({ world }, controlLabel: string) => {
   const lobby = world.getPage('valeros').locator('runefoble-session-lobby');
@@ -88,16 +50,10 @@ Then(
 
 When(
   'Sarah opens {string} and checks {string}',
-  async ({ browser, auth, world }, sessionTitle: string, controlLabel: string) => {
-    const route = lobbyRoute(world, sessionTitle);
-
-    const sarahContext = await browser.newContext({ baseURL: test.info().project.use.baseURL });
-    world.extraContexts.push(sarahContext);
-    const sarahPage = await sarahContext.newPage();
-    world.setPage('sarah', sarahPage);
-
-    await auth.signInAs('sarah', sarahPage);
-    await sarahPage.goto(route);
+  async ({ world }, sessionTitle: string, controlLabel: string) => {
+    // Sarah signed in and took a seat in the Background. Her browser opens the lobby now.
+    const sarahPage = world.getPage('sarah');
+    await sarahPage.goto(lobbyRoute(world, sessionTitle));
     await sarahPage.waitForLoadState('domcontentloaded');
 
     const lobby = sarahPage.locator('runefoble-session-lobby');
@@ -135,7 +91,12 @@ When('Evelyn clicks {string}', async ({ world }, buttonName: string) => {
 
 Then(
   "both Evelyn and Valeros's browsers navigate automatically to {string}",
-  async ({ world }, expectedHash: string) => {
+  async ({ world }, hashTemplate: string) => {
+    // The feature text names the route shape. The ids come from the Background setup replies.
+    const expectedHash = fillRouteTemplate(hashTemplate, {
+      campaignId: world.campaignId,
+      sessionId: world.sessionId,
+    });
     const evelynPage = world.getPage('evelyn');
     const valerosPage = world.getPage('valeros');
 
