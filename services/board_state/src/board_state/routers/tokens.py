@@ -38,21 +38,18 @@ async def place_token(session_id: str, req: PlaceTokenRequest, user_id: CallerId
     board = await get_board(session_id)
     token_id = req.token_id or str(uuid4())
     await bind_token(session_id, token_id, req.character_id, user_id, req.token_type)
-    try:
-        board.place_token(
-            token_id=token_id,
-            name=req.name,
-            token_type=req.token_type,
-            x=req.x,
-            y=req.y,
-            hp=req.hp,
-            is_friendly=req.is_friendly,
-            vision_radius=req.vision_radius,
-        )
-        await save_and_publish(repo, board, get_event_bus())
-        return board.state.tokens[token_id]
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
+    board.place_token(
+        token_id=token_id,
+        name=req.name,
+        token_type=req.token_type,
+        x=req.x,
+        y=req.y,
+        hp=req.hp,
+        is_friendly=req.is_friendly,
+        vision_radius=req.vision_radius,
+    )
+    await save_and_publish(repo, board, get_event_bus())
+    return board.state.tokens[token_id]
 
 
 @router.get(
@@ -85,35 +82,30 @@ async def move_token_by_id(
 ):
     board = await get_board(session_id)
     await require_token_move(user_id, session_id, token_id)
-    try:
-        outcome = board.move_token(
-            token_id=token_id,
-            to_x=req.to_x,
-            to_y=req.to_y,
-            initiated_by=req.initiated_by,
-            movement_budget=req.movement_budget,
-        )
+    outcome = board.move_token(
+        token_id=token_id,
+        to_x=req.to_x,
+        to_y=req.to_y,
+        initiated_by=req.initiated_by,
+        movement_budget=req.movement_budget,
+    )
 
-        await save_and_publish(repo, board, get_event_bus())
+    await save_and_publish(repo, board, get_event_bus())
 
-        tok = board.state.tokens[token_id]
-        return MoveTokenResponse(
-            token_id=tok.token_id,
-            name=tok.name,
-            token_type=tok.token_type,
-            x=tok.x,
-            y=tok.y,
-            hp=tok.hp,
-            is_friendly=tok.is_friendly,
-            vision_radius=tok.vision_radius,
-            active_hazard=tok.active_hazard,
-            hazard_status=tok.hazard_status,
-            **outcome.as_wire(),
-        )
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e)) from e
+    tok = board.state.tokens[token_id]
+    return MoveTokenResponse(
+        token_id=tok.token_id,
+        name=tok.name,
+        token_type=tok.token_type,
+        x=tok.x,
+        y=tok.y,
+        hp=tok.hp,
+        is_friendly=tok.is_friendly,
+        vision_radius=tok.vision_radius,
+        active_hazard=tok.active_hazard,
+        hazard_status=tok.hazard_status,
+        **outcome.as_wire(),
+    )
 
 
 @router.post(
@@ -135,12 +127,7 @@ async def remove_token(
 ):
     board = await get_board(session_id)
     await require_token_move(user_id, session_id, token_id)
-    try:
-        board.remove_token(token_id=token_id, reason=reason)
-        await repo.save(board)
-        await unbind_token(token_id)
-        return {"token_id": token_id, "status": "removed", "reason": reason}
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e)) from e
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e)) from e
+    board.remove_token(token_id=token_id, reason=reason)
+    await repo.save(board)
+    await unbind_token(token_id)
+    return {"token_id": token_id, "status": "removed", "reason": reason}

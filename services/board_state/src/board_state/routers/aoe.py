@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 from uuid import uuid4
 
 from board_state.aoe import evaluate_aoe_targets
@@ -16,10 +15,8 @@ from board_state.models import (
     AoETemplateState,
 )
 from board_state.realtime import board_ws_manager
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from runefoble_platform.event_publish import deliver_best_effort
-
-logger = logging.getLogger("runefoble.board_state.routers.aoe")
 
 router = APIRouter(tags=["aoe"], dependencies=[Depends(get_principal)])
 
@@ -29,27 +26,23 @@ async def evaluate_aoe_template(session_id: str, req: AoEEvaluateRequest, user_i
     """Compute mathematical intersection of cone/sphere/line with grid tokens without saving."""
     board = await get_board(session_id)
     await require_board_permission(user_id, session_id, VIEW)
-    try:
-        response = evaluate_aoe_targets(
-            tokens=board.state.tokens,
-            cols=board.state.cols,
-            rows=board.state.rows,
-            shape=req.shape,
-            origin_x=req.origin_x,
-            origin_y=req.origin_y,
-            direction_deg=req.direction_deg,
-            radius_ft=req.radius_ft,
-            length_ft=req.length_ft,
-            width_ft=req.width_ft,
-            grid_type=req.grid_type,
-            template_id=req.template_id or str(uuid4()),
-            caster_token_id=req.caster_token_id,
-            spell_name=req.spell_name,
-        )
-        return response
-    except Exception as e:
-        logger.exception("Failed to evaluate AoE template")
-        raise HTTPException(status_code=500, detail=str(e)) from e
+    response = evaluate_aoe_targets(
+        tokens=board.state.tokens,
+        cols=board.state.cols,
+        rows=board.state.rows,
+        shape=req.shape,
+        origin_x=req.origin_x,
+        origin_y=req.origin_y,
+        direction_deg=req.direction_deg,
+        radius_ft=req.radius_ft,
+        length_ft=req.length_ft,
+        width_ft=req.width_ft,
+        grid_type=req.grid_type,
+        template_id=req.template_id or str(uuid4()),
+        caster_token_id=req.caster_token_id,
+        spell_name=req.spell_name,
+    )
+    return response
 
 
 @router.post("/api/v1/boards/{session_id}/aoe/place", response_model=AoETemplateResponse)
@@ -61,63 +54,59 @@ async def place_aoe_template(
     """Place and persist an AoE spell template on the board, emitting AoETemplatePlaced."""
     board = await get_board(session_id)
     await require_campaign_permission(user_id, session_id, PLAY)
-    try:
-        template_id = req.template_id or str(uuid4())
-        evaluated = evaluate_aoe_targets(
-            tokens=board.state.tokens,
-            cols=board.state.cols,
-            rows=board.state.rows,
-            shape=req.shape,
-            origin_x=req.origin_x,
-            origin_y=req.origin_y,
-            direction_deg=req.direction_deg,
-            radius_ft=req.radius_ft,
-            length_ft=req.length_ft,
-            width_ft=req.width_ft,
-            grid_type=req.grid_type,
-            template_id=template_id,
-            caster_token_id=req.caster_token_id,
-            spell_name=req.spell_name,
-        )
+    template_id = req.template_id or str(uuid4())
+    evaluated = evaluate_aoe_targets(
+        tokens=board.state.tokens,
+        cols=board.state.cols,
+        rows=board.state.rows,
+        shape=req.shape,
+        origin_x=req.origin_x,
+        origin_y=req.origin_y,
+        direction_deg=req.direction_deg,
+        radius_ft=req.radius_ft,
+        length_ft=req.length_ft,
+        width_ft=req.width_ft,
+        grid_type=req.grid_type,
+        template_id=template_id,
+        caster_token_id=req.caster_token_id,
+        spell_name=req.spell_name,
+    )
 
-        board.place_aoe_template(
-            template_id=template_id,
-            shape=evaluated.shape,
-            origin_x=evaluated.origin_x,
-            origin_y=evaluated.origin_y,
-            direction_deg=evaluated.direction_deg,
-            radius_ft=evaluated.radius_ft,
-            length_ft=evaluated.length_ft,
-            width_ft=evaluated.width_ft,
-            caster_token_id=evaluated.caster_token_id,
-            spell_name=evaluated.spell_name,
-            affected_token_ids=evaluated.affected_token_ids,
-            affected_cells=evaluated.affected_cells,
-        )
-        events = list(board.uncommitted_events)
-        await repo.save(board)
+    board.place_aoe_template(
+        template_id=template_id,
+        shape=evaluated.shape,
+        origin_x=evaluated.origin_x,
+        origin_y=evaluated.origin_y,
+        direction_deg=evaluated.direction_deg,
+        radius_ft=evaluated.radius_ft,
+        length_ft=evaluated.length_ft,
+        width_ft=evaluated.width_ft,
+        caster_token_id=evaluated.caster_token_id,
+        spell_name=evaluated.spell_name,
+        affected_token_ids=evaluated.affected_token_ids,
+        affected_cells=evaluated.affected_cells,
+    )
+    events = list(board.uncommitted_events)
+    await repo.save(board)
 
-        # Broadcast via WebSocket
-        await deliver_best_effort(
-            f"board_ws:{session_id}",
-            "aoe_template_placed",
-            board_ws_manager.broadcast(
-                session_id,
-                {
-                    "type": "aoe_template_placed",
-                    "template": evaluated.model_dump(),
-                },
-            ),
-        )
+    # Broadcast via WebSocket
+    await deliver_best_effort(
+        f"board_ws:{session_id}",
+        "aoe_template_placed",
+        board_ws_manager.broadcast(
+            session_id,
+            {
+                "type": "aoe_template_placed",
+                "template": evaluated.model_dump(),
+            },
+        ),
+    )
 
-        bus = get_event_bus()
-        if bus is not None:
-            await publish_board_events(bus, events)
+    bus = get_event_bus()
+    if bus is not None:
+        await publish_board_events(bus, events)
 
-        return evaluated
-    except Exception as e:
-        logger.exception("Failed to place AoE template")
-        raise HTTPException(status_code=500, detail=str(e)) from e
+    return evaluated
 
 
 @router.get("/api/v1/boards/{session_id}/aoe", response_model=list[AoETemplateState])
@@ -133,20 +122,17 @@ async def remove_aoe_template(session_id: str, template_id: str, user_id: Caller
     """Remove an active AoE template from the board."""
     board = await get_board(session_id)
     await require_campaign_permission(user_id, session_id, PLAY)
-    try:
-        board.remove_aoe_template(template_id)
-        await repo.save(board)
-        await deliver_best_effort(
-            f"board_ws:{session_id}",
-            "aoe_template_removed",
-            board_ws_manager.broadcast(
-                session_id,
-                {
-                    "type": "aoe_template_removed",
-                    "template_id": template_id,
-                },
-            ),
-        )
-        return {"template_id": template_id, "status": "removed"}
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e)) from e
+    board.remove_aoe_template(template_id)
+    await repo.save(board)
+    await deliver_best_effort(
+        f"board_ws:{session_id}",
+        "aoe_template_removed",
+        board_ws_manager.broadcast(
+            session_id,
+            {
+                "type": "aoe_template_removed",
+                "template_id": template_id,
+            },
+        ),
+    )
+    return {"template_id": template_id, "status": "removed"}

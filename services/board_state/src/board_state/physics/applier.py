@@ -6,6 +6,7 @@ import math
 from typing import Any
 from uuid import uuid4
 
+from board_state.errors import BoardElementNotFoundError
 from board_state.models.physics import KnockbackResponse, SimulateThrowResponse
 from board_state.physics.bounds import HeightfieldTerrain
 from board_state.physics.simulator import simulate_dice_trajectory, simulate_knockback_trajectory
@@ -65,7 +66,7 @@ def apply_token_knockback(
     """Simulate knockback slide, halt upon collision with high walls, and snap to grid cell."""
     tid = str(token_id)
     if tid not in board.state.tokens:
-        raise ValueError(f"Token '{token_id}' not found on grid")
+        raise BoardElementNotFoundError(f"Token '{token_id}' not found on grid")
     tok = board.state.tokens[tid]
     terrain = HeightfieldTerrain.from_board_state(board.state)
     res = simulate_knockback_trajectory(

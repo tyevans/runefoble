@@ -20,7 +20,7 @@ from board_state.models import (
     FinishVFXResponse,
 )
 from board_state.realtime import board_ws_manager
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 
 router = APIRouter(tags=["vfx"], dependencies=[Depends(get_principal)])
 
@@ -50,23 +50,20 @@ async def cast_spell_vfx(
     board = await get_board(session_id)
     await require_campaign_permission(user_id, session_id, PLAY)
 
-    try:
-        anim_id, trajectory, affected_tokens, affected_cells, decal_type = board.cast_spell(
-            spell_name=req.spell_name,
-            target_x=req.target_x,
-            target_y=req.target_y,
-            caster_token_id=req.caster_token_id,
-            spell_archetype=req.spell_archetype,
-            origin_x=req.origin_x,
-            origin_y=req.origin_y,
-            radius_ft=req.radius_ft,
-            damage_dice=req.damage_dice,
-            damage_type=req.damage_type,
-            theme_palette=req.theme_palette,
-        )
-        await save_and_publish(repo, board, get_event_bus())
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
+    anim_id, trajectory, affected_tokens, affected_cells, decal_type = board.cast_spell(
+        spell_name=req.spell_name,
+        target_x=req.target_x,
+        target_y=req.target_y,
+        caster_token_id=req.caster_token_id,
+        spell_archetype=req.spell_archetype,
+        origin_x=req.origin_x,
+        origin_y=req.origin_y,
+        radius_ft=req.radius_ft,
+        damage_dice=req.damage_dice,
+        damage_type=req.damage_type,
+        theme_palette=req.theme_palette,
+    )
+    await save_and_publish(repo, board, get_event_bus())
 
     audio_stinger = _determine_audio_stinger(req.spell_archetype, req.spell_name, req.damage_type)
     ox = (

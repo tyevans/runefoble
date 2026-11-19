@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Literal
 from uuid import uuid4
 
+from board_state.errors import BoardElementNotFoundError
 from board_state.traps.models import SecretTrapState
 from eventsource.domain.decorators import handles
 from runefoble_events import board_traps as bt
@@ -88,7 +89,7 @@ class TrapsHandlerMixin:
     def disarm_trap(self, trap_id: str, disarmed_by: str | None = None) -> None:
         """Disarm an armed trap."""
         if trap_id not in self.state.traps:
-            raise ValueError(f"Trap '{trap_id}' not found on grid")
+            raise BoardElementNotFoundError(f"Trap '{trap_id}' not found on grid")
         self.create_event(
             bt.TrapDisarmedEvent,
             session_id=self.aggregate_id,

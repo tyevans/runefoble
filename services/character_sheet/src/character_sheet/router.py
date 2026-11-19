@@ -10,7 +10,7 @@ from character_sheet.authz import write_character_ownership
 from character_sheet.crafting.process_manager import apply_pending_for_character
 from character_sheet.models import CharacterState
 from character_sheet.roster import CharacterRosterView
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Query
 from runefoble_platform.stand_in_guardrails import StandInGuardrailPolicy
 
 router = APIRouter(tags=["character_sheet"])
@@ -142,12 +142,9 @@ async def set_stand_in_active(
     dependencies=deps.EDIT_CHARACTER_OR_SERVICE,
 )
 async def modify_health(character_id: UUID, req: schemas.HealthChangeRequest, repo: deps.RepoDep):
-    try:
-        return await deps.modify_character_health(
-            repo, character_id, req.delta, req.source, req.is_stand_in, req.session_id
-        )
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
+    return await deps.modify_character_health(
+        repo, character_id, req.delta, req.source, req.is_stand_in, req.session_id
+    )
 
 
 @router.post(
@@ -211,10 +208,7 @@ async def update_guardrails(
     req: StandInGuardrailPolicy,
     repo: deps.RepoDep,
 ):
-    try:
-        return await deps.update_character_guardrails(repo, character_id, req)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
+    return await deps.update_character_guardrails(repo, character_id, req)
 
 
 @router.get(
