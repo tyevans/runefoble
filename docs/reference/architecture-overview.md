@@ -39,7 +39,7 @@ graph TD
 | `the_watcher` | `services/the_watcher` | AI DM arbitration, speech-to-intent, stand-ins, and `@runefoble/the-watcher-ui` |
 | `board_state` | `services/board_state` | Tactical grid, coordinates, movement, fog of war, and `@runefoble/board-state-ui` |
 | `character_sheet` | `services/character_sheet` | Character stats, HP, penalties ("drunk"), and `@runefoble/character-sheet-ui` |
-| `game_session` | `services/game_session` | Active sessions, turns, dice, spectator view, and `@runefoble/game-session-ui` |
+| `game_session` | `services/game_session` | Campaign lifecycle, invites, membership, and user profile. Session lobby, turns, combat, reactions, and spectator view. Campfire rests, stronghold, tavern games, and merchants. Settlement havens, establishments, NPC workers, haggling, and bulletin board. West Marches shared worlds, caravans, and bounties. `@runefoble/game-session-ui`. [ADR-0021](../project/adrs/proposed/adr-0021-game-session-internal-bounded-contexts.md) (Proposed) groups these domains into internal packages |
 | `voice_agent` | `services/voice_agent` | Audio streaming, STT/TTS pipeline, and `@runefoble/voice-agent-ui` |
 | `gateway_api` | `gateway/api` | API Gateway: authentication, routing to owners, WebSocket fan-out, and OpenAPI spec aggregation. It owns no domain state and imports no service package (see [Gateway route ownership](gateway-route-ownership.md)) |
 | `gateway_mcp` | `gateway/mcp` | Model Context Protocol server exposing RPG tools to AI models |
