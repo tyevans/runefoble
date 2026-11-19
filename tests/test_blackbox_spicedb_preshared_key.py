@@ -2,8 +2,8 @@
 
 The key has one source: the RUNEFOBLE_SPICEDB_PRESHARED_KEY environment variable.
 It has no literal default. `SpiceDBSettings` holds it, not `PlatformSettings`. A service that
-checks SpiceDB permissions fails at startup without the key. A process that only builds
-`PlatformSettings` starts without it.
+checks SpiceDB permissions fails at startup without the key. A process that never checks
+permissions and only builds `PlatformSettings` starts without it.
 
 Governed by:
 - ADR-0001: SpiceDB Zanzibar Object Authorization (the key is an operator secret)
@@ -41,6 +41,7 @@ SERVICE_DEPENDENCY_MODULES = [
     "campaign_analytics.main",
     "gateway_api.dependencies",
     "gateway_mcp.asgi",
+    "voice_agent.main",
 ]
 
 
@@ -86,22 +87,6 @@ def test_service_startup_fails_without_key(module_name: str, tmp_path: Path) -> 
     assert result.returncode != 0
     assert "ConfigurationError" in result.stderr
     assert KEY_VAR in result.stderr
-
-
-def test_voice_agent_healthz_without_key(tmp_path: Path) -> None:
-    """voice_agent loads without the key and its health route answers 200 (TASK-0720)."""
-    # The health route needs a speech binary that answers. A stub stands in for espeak-ng.
-    speech_stub = tmp_path / "espeak-ng-version"
-    speech_stub.write_text("#!/bin/sh\necho 'eSpeak NG stub'\nexit 0\n", encoding="utf-8")
-    speech_stub.chmod(0o755)
-    code = (
-        "from fastapi.testclient import TestClient\n"
-        "from voice_agent.main import app\n"
-        "print(TestClient(app).get('/healthz').status_code)\n"
-    )
-    result = _run_python(code, _env(RUNEFOBLE_VOICE_TTS_BINARY=str(speech_stub)), tmp_path)
-    assert result.returncode == 0, result.stderr
-    assert result.stdout.strip().splitlines()[-1] == "200"
 
 
 def test_rules_compendium_sends_configured_key(tmp_path: Path) -> None:
