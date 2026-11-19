@@ -80,7 +80,7 @@ export class RunefobleDmTrapControls extends LitElement {
         dcDetection: this.dcDetection,
         damageDice: this.damageDice,
         isSecret: this.isSecret,
-      }, { headers: await this.auth.authHeaders() });
+      }, { auth: this.auth });
       this.statusMessage = `Armed ${this.selectedTrapType}.`;
       this.dispatchEvent(new CustomEvent('trap-placed', { bubbles: true, composed: true, detail: trap }));
     } catch (err) {

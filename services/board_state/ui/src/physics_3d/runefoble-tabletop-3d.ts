@@ -56,6 +56,8 @@ export class RunefobleTabletop3D extends LitElement {
   @property({ type: Array }) terrainCells: Array<{ x: number; y: number; elevation?: number }> = [];
   @property({ type: String }) theme: 'dark' | 'light' | 'high-contrast' = 'dark';
   @property({ type: String }) boardId: string | null = null;
+  /** API base for the board physics routes. Empty means the page origin. */
+  @property({ type: String }) apiBaseUrl = '';
 
   @query('canvas') private canvasElement!: HTMLCanvasElement;
   public visualizer: TabletopPhysicsVisualizer | null = null;
@@ -70,7 +72,7 @@ export class RunefobleTabletop3D extends LitElement {
       });
       this.visualizer.updateTokens(this.tokens);
       this.visualizer.updateTerrain(this.terrainCells);
-      this.bridge = new PhysicsBridge(this, this.visualizer, () => this.auth.authHeaders());
+      this.bridge = new PhysicsBridge(this, this.visualizer, this.auth);
     }
   }
 

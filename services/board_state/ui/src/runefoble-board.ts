@@ -32,6 +32,8 @@ export class RunefobleBoard extends LitElement {
   @property({ type: Boolean }) enable3D = false;
   @property({ type: String }) activeTurnTokenId: string | null = null;
   @property({ type: String }) websocketUrl: string | null = null;
+  /** API base for the board physics routes. Empty means the page origin. */
+  @property({ type: String }) apiBaseUrl = '';
 
   @state() private selectedTokenId: string | null = null;
   @state() private radialTokenId: string | null = null;
@@ -68,7 +70,7 @@ export class RunefobleBoard extends LitElement {
     const canvas3D = this.shadowRoot?.querySelector('.tabletop-3d-canvas') as HTMLCanvasElement | null;
     if (canvas3D) {
       this.visualizer3D = new TabletopPhysicsVisualizer(canvas3D, { cellSizePx: 56, cols: this.cols, rows: this.rows, theme: 'dark' });
-      this.physicsBridge = new PhysicsBridge(this, this.visualizer3D, () => this.auth.authHeaders());
+      this.physicsBridge = new PhysicsBridge(this, this.visualizer3D, this.auth);
       this.visualizer3D.updateTokens(this.tokens as any);
       this.visualizer3D.updateTerrain(this.terrainCells as any);
       this.resize3DCanvas();

@@ -1,8 +1,12 @@
-import { AuthConsumerController, fetchAssetObjectUrl, revokeAssetObjectUrl } from '@runefoble/ui-core';
+import {
+  AuthConsumerController, fetchAssetObjectUrl, revokeAssetObjectUrl, type RequestOptions,
+} from '@runefoble/ui-core';
 import { LitElement, html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { printForgeStyles } from './runefoble-print-forge.styles.ts';
-import { exportPrintPdf, exportStandees, exportStlToken, type ForgedDownload } from './forge-api.ts';
+import {
+  exportPrintPdf, exportStandees, exportStlToken, forgeFailureMessage, type ForgedDownload,
+} from './forge-api.ts';
 
 export type PrintForgeTab = 'tiled-map' | 'standees' | 'stl-tokens';
 
@@ -77,6 +81,11 @@ export class RunefoblePrintForge extends LitElement {
     return { label, asset_id: asset.asset_id, blobUrl };
   }
 
+  /** The shared transport settings: the API base and the shell bearer. */
+  private transport(): RequestOptions {
+    return { apiBase: this.apiBaseUrl, auth: this.auth };
+  }
+
   /** Runs one export request. Shows the error on failure. Never reports false success. */
   private async runExport(action: () => Promise<void>) {
     this.isExporting = true;
@@ -84,7 +93,7 @@ export class RunefoblePrintForge extends LitElement {
     try {
       await action();
     } catch (err) {
-      this.errorMessage = err instanceof Error ? err.message : 'Export request failed.';
+      this.errorMessage = forgeFailureMessage(err);
     } finally {
       this.isExporting = false;
     }
@@ -92,13 +101,13 @@ export class RunefoblePrintForge extends LitElement {
 
   private async handleExportPdf() {
     await this.runExport(async () => {
-      const pdf = await exportPrintPdf(this.apiBaseUrl, {
+      const pdf = await exportPrintPdf({
         title: this.mapTitle,
         widthCells: this.widthCells,
         heightCells: this.heightCells,
         pageSize: this.pageSize,
         campaignId: this.campaignId || undefined,
-      }, () => this.auth.authHeaders());
+      }, this.transport());
       this.lastExport = await this.downloadable(`Tiled map PDF (${pdf.total_pages} pages)`, pdf);
       this.dispatchEvent(
         new CustomEvent('export-print-pdf', {
@@ -120,12 +129,12 @@ export class RunefoblePrintForge extends LitElement {
   private async handleExportStandees() {
     await this.runExport(async () => {
       const sheetTitle = `${this.standeeName} Standees`;
-      const standees = await exportStandees(this.apiBaseUrl, {
+      const standees = await exportStandees({
         sheetTitle,
         standees: [{ name: this.standeeName, type: 'pc', hp: this.standeeHp, color: '#2a9d8f' }],
         pageSize: this.pageSize,
         campaignId: this.campaignId || undefined,
-      }, () => this.auth.authHeaders());
+      }, this.transport());
       this.lastExport = await this.downloadable(
         `Papercraft standees (${standees.pages} page${standees.pages === 1 ? '' : 's'})`,
         standees
@@ -148,12 +157,12 @@ export class RunefoblePrintForge extends LitElement {
 
   private async handleExportStl() {
     await this.runExport(async () => {
-      const stl = await exportStlToken(this.apiBaseUrl, {
+      const stl = await exportStlToken({
         diameterMm: this.stlDiameterMm,
         conditionLabel: this.stlCondition,
         numSlots: 4,
         campaignId: this.campaignId || undefined,
-      }, () => this.auth.authHeaders());
+      }, this.transport());
       this.lastExport = await this.downloadable(`Watertight STL token (${stl.facet_count} facets)`, stl);
       this.dispatchEvent(
         new CustomEvent('export-stl-token', {

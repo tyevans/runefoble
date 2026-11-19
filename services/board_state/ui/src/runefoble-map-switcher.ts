@@ -83,7 +83,7 @@ export class RunefobleMapSwitcher extends LitElement {
         rows: map.rows,
         backgroundImageUrl: map.backgroundImageUrl || '',
         tokenTeleports: teleports,
-      }, { headers: await this.auth.authHeaders() });
+      }, { auth: this.auth });
       this.errorMessage = '';
       this.dispatchEvent(new CustomEvent('map-switched', {
         bubbles: true,
