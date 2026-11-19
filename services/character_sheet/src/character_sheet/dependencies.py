@@ -140,6 +140,8 @@ async def create_new_character(
         name=req.name,
         character_class=req.character_class,
         max_hp=req.max_hp,
+        level=req.level,
+        portrait_url=req.portrait_url,
         player_id=req.player_id,
         personality_traits=req.personality_traits,
         campaign_id=req.campaign_id,

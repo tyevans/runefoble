@@ -17,6 +17,8 @@ class CharacterCreated(BaseRunefobleEvent):
     character_class: str
     max_hp: int
     current_hp: int
+    level: int = 1
+    portrait_url: str | None = None
     player_id: str | None = None
     campaign_id: UUID | str = ""
     personality_traits: list[str] = Field(default_factory=list)
