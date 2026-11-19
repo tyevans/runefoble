@@ -906,3 +906,4 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 900. **TASK-0919 (Refined)**: [`0919-audience-narration-uses-the-narrator-port.md`](refined/0919-audience-narration-uses-the-narrator-port.md) — Audience Narration Uses the Narrator Port, Not the Engine Name
 901. **TASK-0920 (Refined)**: [`0920-services-share-one-ui-manifest-router.md`](refined/0920-services-share-one-ui-manifest-router.md) — Services Share One UI Manifest Router
 902. **TASK-0921 (Refined)**: [`0921-storybook-stories-share-one-restoring-fetch-stub.md`](refined/0921-storybook-stories-share-one-restoring-fetch-stub.md) — Storybook Stories Share One Fetch Stub That Restores the Original Fetch
+903. **TASK-0923 (Refined)**: [`0923-session-socket-gets-server-frames-from-domain-events.md`](refined/0923-session-socket-gets-server-frames-from-domain-events.md) — The Session Socket Gets Dice, Turn and Whisper Frames From Domain Events
