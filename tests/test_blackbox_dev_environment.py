@@ -19,13 +19,10 @@ from pathlib import Path
 from fastapi.testclient import TestClient
 from gateway_api.main import app as gateway_app
 
-from scripts.dev_server import (
-    check_health,
-    is_port_open,
-    parse_args,
-    terminate_processes,
-    wait_for_gateway,
-)
+from scripts.dev_orchestrator.cli import parse_args
+from scripts.dev_orchestrator.health import check_health, wait_for_gateway
+from scripts.dev_orchestrator.ports import is_port_open
+from scripts.dev_orchestrator.runner import terminate_processes
 from tests.helpers.ports import free_port
 from tests.helpers.process import run_command
 
