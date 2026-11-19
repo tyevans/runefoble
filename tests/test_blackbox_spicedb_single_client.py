@@ -45,8 +45,8 @@ PROBES = [
     pytest.param(
         game_session_app,
         "POST",
-        "/api/v1/sessions/create",
-        {"campaign_id": str(uuid4())},
+        f"/api/v1/sessions/{uuid4()}/start",
+        None,
         id="game_session",
     ),
     pytest.param(

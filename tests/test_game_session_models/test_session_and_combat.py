@@ -5,8 +5,6 @@ from __future__ import annotations
 from uuid import UUID
 
 import game_session.models as models
-import pytest
-from pydantic import ValidationError
 
 from tests.test_game_session_models.conftest import FakeJoinedEvent
 
@@ -26,9 +24,6 @@ def test_session_lifecycle_and_validation(
 
     state = state.with_turn_advanced(2, character_id)
     assert state.current_turn == 2 and state.active_character_id == character_id
-
-    with pytest.raises(ValidationError):
-        models.CreateSessionRequest()
 
 
 def test_combat_transitions(initial_session_state: models.GameSessionState) -> None:

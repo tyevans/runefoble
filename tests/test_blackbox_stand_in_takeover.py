@@ -72,10 +72,10 @@ async def test_mid_session_hot_swap_takeover_and_turn_continuity(
 
         # 1. Setup session, join player, start session & combat encounter
         create_res = await client.post(
-            "/api/v1/sessions/create",
-            json={"campaign_id": campaign_id, "title": "Tomb of Horror", "dm_id": "the_watcher"},
+            f"/api/v1/campaigns/{campaign_id}/sessions",
+            json={"title": "Tomb of Horror"},
         )
-        session_id = create_res.json()["session_id"]
+        session_id = create_res.json()["id"]
         await client.post(
             f"/api/v1/sessions/{session_id}/join",
             json={"character_id": char_id, "character_name": "Kyra", "character_class": "Cleric"},
@@ -166,10 +166,10 @@ async def test_hot_swap_unauthorized_user_rejected_by_spicedb(
         char_id, player_id = str(uuid4()), "sarah-user"
         campaign_id = await _owned_campaign(client, player_id)
         create_res = await client.post(
-            "/api/v1/sessions/create",
-            json={"campaign_id": campaign_id, "title": "Crypt", "dm_id": "the_watcher"},
+            f"/api/v1/campaigns/{campaign_id}/sessions",
+            json={"title": "Crypt"},
         )
-        session_id = create_res.json()["session_id"]
+        session_id = create_res.json()["id"]
         await client.post(
             f"/api/v1/sessions/{session_id}/join",
             json={"character_id": char_id, "character_name": "Kyra", "character_class": "Cleric"},
@@ -206,10 +206,10 @@ async def test_hot_swap_returns_502_when_character_sheet_is_not_configured(
         char_id, player_id = str(uuid4()), "sarah-user"
         campaign_id = await _owned_campaign(client, player_id)
         create_res = await client.post(
-            "/api/v1/sessions/create",
-            json={"campaign_id": campaign_id, "title": "Vault", "dm_id": "the_watcher"},
+            f"/api/v1/campaigns/{campaign_id}/sessions",
+            json={"title": "Vault"},
         )
-        session_id = create_res.json()["session_id"]
+        session_id = create_res.json()["id"]
         await client.post(
             f"/api/v1/sessions/{session_id}/join",
             json={"character_id": char_id, "character_name": "Kyra", "character_class": "Cleric"},

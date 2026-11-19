@@ -26,7 +26,6 @@ from game_session.models.reactions import (
 from game_session.models.session import (
     AutoPilotRequest,
     AutoPilotResponse,
-    CreateSessionRequest,
     GameSessionState,
     HotSwapRequest,
     HotSwapResponse,
@@ -58,7 +57,6 @@ __all__ = [
     "ClaimRestBoonRequest",
     "CombatStateResponse",
     "CombatTransitionsMixin",
-    "CreateSessionRequest",
     "DEFAULT_FACILITIES",
     "DeclareReactionRequest",
     "DMOverrideRequest",

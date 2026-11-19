@@ -62,9 +62,9 @@ def test_health_change_in_combat_reaches_campaign_mvp_through_public_routes(
         char_id = created.json()["character_id"]
 
         session_id = game.post(
-            "/api/v1/sessions/create",
-            json={"campaign_id": campaign_id, "title": "Ambush", "dm_id": "the_watcher"},
-        ).json()["session_id"]
+            f"/api/v1/campaigns/{campaign_id}/sessions",
+            json={"title": "Ambush"},
+        ).json()["id"]
         joined = game.post(
             f"/api/v1/sessions/{session_id}/join",
             json={

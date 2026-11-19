@@ -105,12 +105,12 @@ def test_combat_end_on_game_session_returns_soundscape_tension_to_ambient(
     )
     assert campaign.status_code in (200, 201), campaign.text
     created = _post(
-        f"{game_session}/api/v1/sessions/create",
+        f"{game_session}/api/v1/campaigns/{campaign.json()['id']}/sessions",
         headers=headers,
-        json={"campaign_id": campaign.json()["id"]},
+        json={"title": "Ash Warrens Session 1"},
     )
-    assert created.status_code == 200, created.text
-    session_id = created.json()["session_id"]
+    assert created.status_code == 201, created.text
+    session_id = created.json()["id"]
     started = _post(f"{game_session}/api/v1/sessions/{session_id}/start", headers=headers)
     assert started.status_code == 200, started.text
 

@@ -28,12 +28,12 @@ def open_table(
     for user, role in (members or {}).items():
         invite_and_join(gateway, campaign_id, owner, user, role)
     session = httpx.post(
-        f"{session_upstream_url}/api/v1/sessions/create",
-        json={"campaign_id": campaign_id, "title": "Night", "dm_id": owner},
+        f"{session_upstream_url}/api/v1/campaigns/{campaign_id}/sessions",
+        json={"title": "Night"},
         headers=bearer(owner),
     )
-    assert session.status_code == 200, session.text
-    return campaign_id, session.json()["session_id"]
+    assert session.status_code == 201, session.text
+    return campaign_id, session.json()["id"]
 
 
 @pytest.fixture

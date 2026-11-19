@@ -60,9 +60,8 @@ PROBES = [
     Probe(
         "game_session",
         "POST",
-        "/api/v1/sessions/create",
+        f"/api/v1/sessions/{uuid4()}/start",
         app=game_session_app,
-        json={"campaign_id": str(uuid4())},
     ),
     Probe(
         "the_watcher",

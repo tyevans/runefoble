@@ -40,15 +40,11 @@ def _combat_session_with_two_combatants(client: TestClient) -> tuple[str, str, s
     campaign = client.post("/api/v1/campaigns", json={"title": "Round Events"})
     assert campaign.status_code == 201, campaign.text
     session = client.post(
-        "/api/v1/sessions/create",
-        json={
-            "campaign_id": campaign.json()["id"],
-            "title": "Round Events",
-            "dm_id": "the_watcher",
-        },
+        f"/api/v1/campaigns/{campaign.json()['id']}/sessions",
+        json={"title": "Round Events"},
     )
-    assert session.status_code == 200, session.text
-    session_id = session.json()["session_id"]
+    assert session.status_code == 201, session.text
+    session_id = session.json()["id"]
     assert client.post(f"/api/v1/sessions/{session_id}/start").status_code == 200
     assert client.post(f"/api/v1/sessions/{session_id}/combat/start").status_code == 200
 

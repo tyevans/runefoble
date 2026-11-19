@@ -75,15 +75,11 @@ def test_blackbox_campfire_rest_interlude_with_boons(session_client: TestClient,
     camp_id = create_owned_campaign(session_client)
 
     create_res = session_client.post(
-        "/api/v1/sessions/create",
-        json={
-            "campaign_id": camp_id,
-            "title": "Campfire Rest Chapter",
-            "dm_id": "dm_evelyn",
-        },
+        f"/api/v1/campaigns/{camp_id}/sessions",
+        json={"title": "Campfire Rest Chapter"},
     )
-    assert create_res.status_code == 200
-    session_id = create_res.json()["session_id"]
+    assert create_res.status_code == 201
+    session_id = create_res.json()["id"]
 
     _fund(session_client, camp_id, gold=100, materials={"wood": 20})
     upgrade_res = session_client.post(

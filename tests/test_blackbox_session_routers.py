@@ -35,7 +35,6 @@ def test_game_session_openapi_routes_completeness(session_client):
     expected_routes = [
         "/healthz",
         "/ui/manifest",
-        "/api/v1/sessions/create",
         "/api/v1/sessions/{session_id}",
         "/api/v1/sessions/{session_id}/start",
         "/api/v1/sessions/{session_id}/join",
@@ -65,16 +64,13 @@ def test_game_session_lifecycle_frontdoor(session_client):
     assert session_client.get("/healthz").status_code == 200
     assert session_client.get("/ui/manifest").status_code == 200
 
+    camp_id = create_owned_campaign(session_client)
     create_res = session_client.post(
-        "/api/v1/sessions/create",
-        json={
-            "campaign_id": create_owned_campaign(session_client),
-            "title": "Test Session",
-            "dm_id": "dm_alice",
-        },
+        f"/api/v1/campaigns/{camp_id}/sessions",
+        json={"title": "Test Session"},
     )
-    assert create_res.status_code == 200
-    session_id = create_res.json()["session_id"]
+    assert create_res.status_code == 201
+    session_id = create_res.json()["id"]
 
     get_res = session_client.get(f"/api/v1/sessions/{session_id}")
     assert get_res.status_code == 200 and get_res.json()["title"] == "Test Session"
@@ -83,17 +79,23 @@ def test_game_session_lifecycle_frontdoor(session_client):
     assert start_res.status_code == 200 and start_res.json()["status"] == "active"
 
 
+def test_session_create_route_is_removed(session_client):
+    """The game_session create route is gone. Sessions start only on the campaign route (TASK-0844)."""
+    res = session_client.post(
+        "/api/v1/sessions/create",
+        json={"campaign_id": str(uuid4()), "title": "Removed"},
+    )
+    assert res.status_code in (404, 405), res.text
+
+
 def test_game_session_turns_frontdoor(session_client, live_character_sheet, monkeypatch):
     """Verify turn advancement, combat initiative rotation, and autopilot frontdoors."""
+    camp_id = create_owned_campaign(session_client)
     c_res = session_client.post(
-        "/api/v1/sessions/create",
-        json={
-            "campaign_id": create_owned_campaign(session_client),
-            "title": "Combat Session",
-            "dm_id": "dm_alice",
-        },
+        f"/api/v1/campaigns/{camp_id}/sessions",
+        json={"title": "Combat Session"},
     )
-    session_id = c_res.json()["session_id"]
+    session_id = c_res.json()["id"]
     char_id = create_character(live_character_sheet, "test-user", "Valeros")
     p_data = {
         "character_id": char_id,
@@ -140,15 +142,12 @@ def test_game_session_turns_frontdoor(session_client, live_character_sheet, monk
 
 def test_game_session_presence_frontdoor(session_client):
     """Verify player join and leave presence frontdoors."""
+    camp_id = create_owned_campaign(session_client)
     c_res = session_client.post(
-        "/api/v1/sessions/create",
-        json={
-            "campaign_id": create_owned_campaign(session_client),
-            "title": "Presence Session",
-            "dm_id": "dm_bob",
-        },
+        f"/api/v1/campaigns/{camp_id}/sessions",
+        json={"title": "Presence Session"},
     )
-    session_id = c_res.json()["session_id"]
+    session_id = c_res.json()["id"]
     cid = str(uuid4())
     p = {"character_id": cid, "character_name": "S", "character_class": "M"}
     assert session_client.post(f"/api/v1/sessions/{session_id}/join", json=p).status_code == 200
@@ -162,15 +161,12 @@ def test_game_session_presence_frontdoor(session_client):
 
 def test_game_session_dice_frontdoor(session_client):
     """Verify session dice rolling frontdoor."""
+    camp_id = create_owned_campaign(session_client)
     c_res = session_client.post(
-        "/api/v1/sessions/create",
-        json={
-            "campaign_id": create_owned_campaign(session_client),
-            "title": "Dice Session",
-            "dm_id": "dm_carol",
-        },
+        f"/api/v1/campaigns/{camp_id}/sessions",
+        json={"title": "Dice Session"},
     )
-    session_id = c_res.json()["session_id"]
+    session_id = c_res.json()["id"]
     session_client.post(f"/api/v1/sessions/{session_id}/start")
 
     roll_res = session_client.post(
@@ -182,15 +178,12 @@ def test_game_session_dice_frontdoor(session_client):
 
 def test_game_session_dice_rejects_bad_notation(session_client):
     """A roll with bad notation is a validation error (422). It records no roll."""
+    camp_id = create_owned_campaign(session_client)
     c_res = session_client.post(
-        "/api/v1/sessions/create",
-        json={
-            "campaign_id": create_owned_campaign(session_client),
-            "title": "Bad Dice Session",
-            "dm_id": "dm_carol",
-        },
+        f"/api/v1/campaigns/{camp_id}/sessions",
+        json={"title": "Bad Dice Session"},
     )
-    session_id = c_res.json()["session_id"]
+    session_id = c_res.json()["id"]
     session_client.post(f"/api/v1/sessions/{session_id}/start")
 
     roll_res = session_client.post(

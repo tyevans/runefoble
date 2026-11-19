@@ -24,15 +24,11 @@ def test_session_lobby_readiness_and_ai_stand_in(client_sess: TestClient) -> Non
     _seat_players(client_sess, campaign_id, ["player_marcus", "player_sarah"])
 
     sess_res = client_sess.post(
-        "/api/v1/sessions/create",
-        json={
-            "campaign_id": campaign_id,
-            "title": "Session 15",
-            "dm_id": "dm_evelyn",
-        },
+        f"/api/v1/campaigns/{campaign_id}/sessions",
+        json={"title": "Session 15"},
     )
-    assert sess_res.status_code == 200
-    session_id = sess_res.json()["session_id"]
+    assert sess_res.status_code == 201
+    session_id = sess_res.json()["id"]
     assert sess_res.json()["status"] == "lobby"
 
     p_m = {
@@ -86,12 +82,12 @@ def test_session_lobby_launch_transition_and_events(
     camp_id = camp_res.json()["id"]
 
     create_res = client_sess.post(
-        "/api/v1/sessions/create",
-        json={"campaign_id": camp_id, "title": "Launch Session", "dm_id": "dm_evelyn"},
+        f"/api/v1/campaigns/{camp_id}/sessions",
+        json={"title": "Launch Session"},
         headers=headers_dm,
     )
-    assert create_res.status_code == 200, create_res.text
-    session_id = create_res.json()["session_id"]
+    assert create_res.status_code == 201, create_res.text
+    session_id = create_res.json()["id"]
     _seat_players(client_sess, camp_id, ["player_marcus"], owner=headers_dm)
 
     unauth = client_gw.post(f"/api/v1/sessions/{session_id}/start", headers=headers_stranger)

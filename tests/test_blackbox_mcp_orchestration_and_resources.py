@@ -99,16 +99,13 @@ def services(upstreams: dict[str, str], monkeypatch: pytest.MonkeyPatch) -> dict
 def _create_session(session_url: str, title: str) -> str:
     """Create a game session through the game_session public route and return its id."""
     with httpx.Client(base_url=session_url, headers=bearer("user-test")) as http:
+        owned_campaign_id = create_owned_campaign(http)
         created = http.post(
-            "/api/v1/sessions/create",
-            json={
-                "campaign_id": create_owned_campaign(http),
-                "title": title,
-                "dm_id": "the_watcher",
-            },
+            f"/api/v1/campaigns/{owned_campaign_id}/sessions",
+            json={"title": title},
         )
-        assert created.status_code == 200, created.text
-        return str(created.json()["session_id"])
+        assert created.status_code == 201, created.text
+        return str(created.json()["id"])
 
 
 _MCP: dict[str, str] = {}

@@ -49,9 +49,9 @@ async def session_id(client: AsyncClient) -> str:
         )
         assert joined.status_code == 200, joined.text
     created = await client.post(
-        "/api/v1/sessions/create", json={"campaign_id": campaign_id}, headers=bearer(DM)
+        f"/api/v1/campaigns/{campaign_id}/sessions", json={"title": "Combat"}, headers=bearer(DM)
     )
-    sid = created.json()["session_id"]
+    sid = created.json()["id"]
     started = await client.post(f"/api/v1/sessions/{sid}/start", headers=bearer(DM))
     assert started.status_code == 200, started.text
     return sid

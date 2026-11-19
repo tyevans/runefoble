@@ -12,7 +12,6 @@ from uuid import UUID
 
 from fastapi import APIRouter, Header, HTTPException
 from game_session.aggregate import GameSessionAggregate, GameSessionState
-from game_session.campaign.session_bootstrap import open_game_session
 from game_session.character_client import (
     CharacterSheetUnavailableError,
     activate_stand_in,
@@ -20,7 +19,6 @@ from game_session.character_client import (
 )
 from game_session.dependencies import repo
 from game_session.models import (
-    CreateSessionRequest,
     HotSwapRequest,
     HotSwapResponse,
     JoinSessionRequest,
@@ -36,9 +34,6 @@ from game_session.routers.session_auth import (
     SessionParticipant,
     SessionReader,
 )
-from game_session.settlement.auth.tokens import (
-    CallerId,
-)
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.permissions import require_subject
 from runefoble_platform.aggregate_loading import load_or_404
@@ -50,31 +45,6 @@ router = APIRouter(tags=["session"])
 async def _load_session(session_id: UUID) -> GameSessionAggregate:
     """Load a session by id. Raise 404 when no session has that id."""
     return await load_or_404(repo, session_id, f"Session not found: {session_id}")
-
-
-@router.post(
-    "/api/v1/sessions/create",
-    response_model=GameSessionState,
-)
-async def create_session(req: CreateSessionRequest, caller_id: CallerId) -> GameSessionState:
-    """Create a new event-sourced game session in a campaign the caller can run.
-
-    The caller needs `run_session` on the campaign. The check runs before the session is saved
-    and before the campaign link is written, so a refused caller leaves no state behind.
-    """
-    spicedb = get_spicedb_client()
-    await require_subject(
-        spicedb,
-        "campaign",
-        str(req.campaign_id),
-        "run_session",
-        caller_id,
-        detail=f"User '{caller_id}' lacks 'run_session' on campaign '{req.campaign_id}'",
-    )
-    session = await open_game_session(
-        repo, spicedb, req.campaign_id, title=req.title, dm_id=req.dm_id
-    )
-    return session.state
 
 
 @router.get(

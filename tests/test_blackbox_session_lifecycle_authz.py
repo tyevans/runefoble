@@ -56,10 +56,10 @@ async def session_id(client: AsyncClient) -> str:
         )
         assert joined.status_code == 200, joined.text
     created = await client.post(
-        "/api/v1/sessions/create", json={"campaign_id": campaign_id}, headers=bearer(DM)
+        f"/api/v1/campaigns/{campaign_id}/sessions", json={"title": "Lifecycle"}, headers=bearer(DM)
     )
-    assert created.status_code == 200, created.text
-    return created.json()["session_id"]
+    assert created.status_code == 201, created.text
+    return created.json()["id"]
 
 
 async def _state(client: AsyncClient, session_id: str) -> dict:

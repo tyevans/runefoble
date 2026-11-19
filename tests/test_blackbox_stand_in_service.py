@@ -119,15 +119,11 @@ async def test_game_session_auto_pilot_turn(
 
         # 1. Create session
         create_res = await client.post(
-            "/api/v1/sessions/create",
-            json={
-                "campaign_id": campaign_id,
-                "title": "Tomb of Horror - Session 4",
-                "dm_id": "the_watcher",
-            },
+            f"/api/v1/campaigns/{campaign_id}/sessions",
+            json={"title": "Tomb of Horror - Session 4"},
         )
-        assert create_res.status_code == 200
-        session_id = create_res.json()["session_id"]
+        assert create_res.status_code == 201
+        session_id = create_res.json()["id"]
 
         # 2. Join player
         join_res = await client.post(

@@ -50,16 +50,12 @@ def _create_session(client: TestClient) -> str:
     )
     assert campaign.status_code == 201, campaign.text
     created = client.post(
-        "/api/v1/sessions/create",
-        json={
-            "campaign_id": campaign.json()["id"],
-            "title": "Credential Test",
-            "dm_id": "the_watcher",
-        },
+        f"/api/v1/campaigns/{campaign.json()['id']}/sessions",
+        json={"title": "Credential Test"},
         headers=_owner_headers(),
     )
-    assert created.status_code == 200, created.text
-    return str(created.json()["session_id"])
+    assert created.status_code == 201, created.text
+    return str(created.json()["id"])
 
 
 def test_character_read_refuses_the_service_credential_without_a_user():
