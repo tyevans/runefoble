@@ -120,7 +120,7 @@ curl -X POST http://localhost:8009/api/v1/soundscape/duck \
 
 To end a duck before its duration, call the same route with `is_ducked: false`. The aggregate records `DuckingReleased` and the duck ends at once.
 
-The browser component `<runefoble-soundscape-controls>` sends each duck and release to the gateway route `POST /api/v1/soundscape/duck` (TASK-0589). It sets the `apiBase` and `authorization` properties for this call. If the owner rejects the duck or cannot be reached, the panel shows the reason in an alert. The local badge and timer still change, so the alert is the only signal of the failure.
+The browser component `<runefoble-soundscape-controls>` sends each duck and release to the gateway route `POST /api/v1/soundscape/duck` (TASK-0589). It reads the caller's bearer from the shell auth context through `AuthConsumerController` (the same helper the other service microfrontends use). It sets no `authorization` property. Set `apiBase` only when the gateway is on another origin. If the owner rejects the duck or cannot be reached, the panel shows the reason in an alert. The local badge and timer still change, so the alert is the only signal of the failure.
 
 ---
 
@@ -185,7 +185,7 @@ Available instrument timbre presets:
 
 The soundscape microfrontends are vendored inside `services/soundscape/ui/` and advertised via `GET /ui/manifest`:
 - `<runefoble-soundscape-controls>`: Real-time tension bar, mood override buttons, stem sliders, and tactical foley trigger grid.
-  Set `apiBase` to the gateway origin (empty for the same origin) and `authorization` to `Bearer <token>`. Ducks post to `/api/v1/soundscape/duck` through the gateway.
+  Set `apiBase` to the gateway origin (empty for the same origin). The component reads the bearer from the shell auth context, so no token property is needed. Ducks post to `/api/v1/soundscape/duck` through the gateway with `Authorization: Bearer <token>`.
 - `<runefoble-leitmotif-config>`: Character instrument signature selector, tempo/volume sliders, and triumphant/somber auditioning buttons with immediate WebAudio earcon feedback.
 
 ```html

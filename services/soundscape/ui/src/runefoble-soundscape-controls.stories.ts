@@ -1,3 +1,4 @@
+import '@runefoble/ui-core/story-auth-provider';
 import type { Meta, StoryObj } from '@storybook/web-components';
 import { html } from 'lit';
 import './runefoble-soundscape-controls.ts';
@@ -96,14 +97,15 @@ export const ManualMoodOverride: Story = {
 
 export const DuckThroughGateway: Story = {
   render: () => html`
-    <runefoble-soundscape-controls
-      sessionId="session-tomb-14"
-      tensionScore="50"
-      stemProfile="tension"
-      masterVolume="85"
-      apiBase=""
-      authorization="Bearer storybook-token"
-    ></runefoble-soundscape-controls>
+    <runefoble-story-auth-provider token="storybook-token">
+      <runefoble-soundscape-controls
+        sessionId="session-tomb-14"
+        tensionScore="50"
+        stemProfile="tension"
+        masterVolume="85"
+        apiBase=""
+      ></runefoble-soundscape-controls>
+    </runefoble-story-auth-provider>
   `,
 };
 

@@ -1,5 +1,6 @@
 import { LitElement, html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
+import { AuthConsumerController } from '@runefoble/ui-core';
 import { soundscapeControlsStyles } from './runefoble-soundscape-controls.styles.ts';
 import { postDuck } from './soundscape-duck-api.ts';
 
@@ -7,10 +8,10 @@ import { postDuck } from './soundscape-duck-api.ts';
 export class RunefobleSoundscapeControls extends LitElement {
   static styles = [soundscapeControlsStyles];
 
+  private readonly auth = new AuthConsumerController(this);
+
   /** Gateway base URL for the ducking proxy. An empty string targets the same origin. */
   @property({ type: String }) apiBase = '';
-  /** Full Authorization header value for gateway calls, such as `Bearer <token>`. */
-  @property({ type: String }) authorization = '';
   @property({ type: String }) sessionId = 'default';
   @property({ type: Number }) tensionScore = 15;
   @property({ type: String }) stemProfile = 'exploration';
@@ -93,7 +94,7 @@ export class RunefobleSoundscapeControls extends LitElement {
   /** Sends the duck to the gateway. A failure shows in the panel and never reports success. */
   private async sendDuck(request: { isDucked: boolean; reason: string; durationMs: number }) {
     const result = await postDuck(
-      { apiBase: this.apiBase, authorization: this.authorization },
+      { apiBase: this.apiBase, authHeaders: () => this.auth.authHeaders() },
       { sessionId: this.sessionId, ...request },
     );
     this.duckError = result.ok ? '' : `Ducking was not applied: ${result.message}`;
