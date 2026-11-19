@@ -47,6 +47,8 @@ The worker never returns substitute text for a failed backend. A failure returns
 
 The `backend` value is the name of the selected backend, `openai_compatible` or `ollama`. The selected server failed or returned no usable output.
 
+For `openai_compatible`, only the client library's transport and API errors (`openai.APIError` and `httpx.HTTPError`) become 503. A model server that answers a 4xx or 5xx status, or that cannot be reached, gives 503. A reply body that the client library cannot decode (not JSON, or no `choices`) is a defect, not an outage. The worker then answers HTTP 500, and The Watcher maps that status to 502 `inference_worker_error`.
+
 A route also returns 503 when the model output has no usable JSON, or when the output lacks a required field. The required fields are:
 
 | Route | Required field |

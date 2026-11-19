@@ -47,6 +47,8 @@ When The Watcher proposes an AI game action (e.g., monster movement, offensive s
 
 Pending actions, whispers, and open disambiguations are event-sourced aggregates (`WatcherPendingActions`, `WatcherWhispers`, `WatcherDisambiguations`). A service restart keeps them. At start-up, the service re-arms the expiry timer of every open action from its stored deadline, so an action whose window elapsed during the outage expires at start-up.
 
+The expiry timer retries only an outage. An event store error (`SQLAlchemyError` or `OSError`) or a SpiceDB outage (`AuthzUnavailableError`) is retried after 1 second, up to 5 times. After the fifth retry, the timer logs at error level, adds one to the OTel counter `runefoble.watcher.pending_action.expiry_failures`, and stops. The action then stays `pending` in the store until the DM decides or the service restarts and re-arms it. Any other error is a defect. It is not retried.
+
 Decision errors:
 - An action id that the session does not hold returns `404`. No placeholder action is created.
 - A veto, approve, or modify on an action that is already vetoed, approved, or executed returns `409`.
