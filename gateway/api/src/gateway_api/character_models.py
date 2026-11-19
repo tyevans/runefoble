@@ -157,8 +157,27 @@ class PrepareSpellRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
 
+class AddWardrobeVariantRequest(BaseModel):
+    """Body of `POST /api/v1/characters/{id}/wardrobe`. Mirrors character_sheet's request."""
+
+    variant_id: str | None = None
+    variant_name: str
+    attire_type: str = "base"
+    image_url: str
+    prompt: str = ""
+    set_active: bool = False
+
+
+class UpdatePortraitRequest(BaseModel):
+    """Body of `POST /api/v1/characters/{id}/portrait/active`. Mirrors character_sheet's request."""
+
+    variant_id: str | None = None
+    image_url: str | None = None
+
+
 __all__ = [
     "AddInventoryItemRequest",
+    "AddWardrobeVariantRequest",
     "ApplyConditionRequest",
     "AssignCampaignRequest",
     "CastSpellRequest",
@@ -167,4 +186,5 @@ __all__ = [
     "EquipItemRequest",
     "HealthChangeRequest",
     "PrepareSpellRequest",
+    "UpdatePortraitRequest",
 ]
