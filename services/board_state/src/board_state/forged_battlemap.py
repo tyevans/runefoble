@@ -1,0 +1,77 @@
+"""Redis Streams consumer that applies forged battlemaps to the board of their session (TASK-0704).
+
+Governed by ADR-0006 (Redis Streams event bus) and ADR-0015 (fail-fast start-up, no fallbacks).
+A handler that raises routes the message to the dead-letter stream. Nothing is applied then.
+"""
+
+from __future__ import annotations
+
+from typing import Any
+
+from board_state.authz import board_campaign_id
+from board_state.dependencies import get_board, repo
+from board_state.events import save_and_publish
+from runefoble_events.asset import BattlemapForged
+from runefoble_platform.consumer_group import RedisConsumerGroup
+from runefoble_platform.redis_bus import RedisStreamsEventBus
+from runefoble_platform.stream_consumer import StreamConsumer, SupervisedStreamConsumers
+
+CONSUMER_NAME = "board_state"
+GROUP_NAME = "board_state_workers"
+WORKER_NAME = "board_state_consumer_1"
+FORGE_STREAM = "runefoble.events.asset"
+
+
+class ForgedBattlemapCampaignError(RuntimeError):
+    """Raised when a forged map names a campaign that does not own the target board."""
+
+
+async def apply_forged_battlemap_event(event: Any, bus: RedisStreamsEventBus | None) -> None:
+    """Apply one forged battlemap to the board of its session.
+
+    A map forged without a session has no board, so there is nothing to apply. The asset
+    stream also carries other forge events. Those are not this consumer's concern.
+    """
+    if not isinstance(event, BattlemapForged) or event.session_id is None:
+        return
+    board = await get_board(event.session_id)
+    owner = await board_campaign_id(event.session_id)
+    if owner != str(event.campaign_id):
+        raise ForgedBattlemapCampaignError(
+            f"Forged map {event.asset_id} belongs to campaign {event.campaign_id}, "
+            f"not to the campaign of board {event.session_id}."
+        )
+    board.apply_forged_battlemap(
+        asset_id=event.asset_id,
+        cols=event.width_cells,
+        rows=event.height_cells,
+        wall_segments=event.wall_segments,
+        hazard_cells=event.hazard_cells,
+    )
+    await save_and_publish(repo, board, bus)
+
+
+async def start_board_consumers(bus: RedisStreamsEventBus) -> SupervisedStreamConsumers:
+    """Create the consumer group and start the read loop on the forge asset stream.
+
+    Raises when the consumer group cannot be created, so the service does not start.
+    """
+    consumer_group = RedisConsumerGroup(client=await bus.get_client())
+
+    async def _handle(_message_id: str, event: Any) -> None:
+        await apply_forged_battlemap_event(event, bus)
+
+    consumers = SupervisedStreamConsumers(
+        CONSUMER_NAME,
+        [
+            StreamConsumer(
+                consumer_group=consumer_group,
+                stream=FORGE_STREAM,
+                group_name=GROUP_NAME,
+                consumer_name=WORKER_NAME,
+                handler=_handle,
+            )
+        ],
+    )
+    await consumers.start()
+    return consumers

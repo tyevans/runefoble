@@ -51,6 +51,7 @@ from runefoble_events.board_events.templates import (
 )
 from runefoble_events.board_events.terrain import (
     BoardGridInitialized,
+    ForgedBattlemapApplied,
     TerrainCellModified,
     TokenHazardTriggered,
     UniversalVTTImported,

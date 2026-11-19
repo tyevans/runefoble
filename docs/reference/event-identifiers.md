@@ -48,6 +48,7 @@ CloudEvents exports (`to_cloudevent_dict()`) lower-case the identifier.
 | `runefoble.events.board.door_toggled` | `BoardDoorToggledEvent` | `runefoble_events.board_events.lighting` |
 | `runefoble.events.board.fog_of_war_revealed` | `FogOfWarRevealed` | `runefoble_events.board_events.fog` |
 | `runefoble.events.board.fog_of_war_shrouded` | `FogOfWarShrouded` | `runefoble_events.board_events.fog` |
+| `runefoble.events.board.forged_battlemap_applied` | `ForgedBattlemapApplied` | `runefoble_events.board_events.terrain` |
 | `runefoble.events.board.grid_initialized` | `BoardGridInitialized` | `runefoble_events.board_events.terrain` |
 | `runefoble.events.board.hazard_triggered` | `TokenHazardTriggered` | `runefoble_events.board_events.terrain` |
 | `runefoble.events.board.light_source_placed` | `BoardLightSourcePlacedEvent` | `runefoble_events.board_events.lighting` |
