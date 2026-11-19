@@ -17,11 +17,7 @@ from character_sheet.main import app as character_app
 from game_session.character_client import CHARACTER_SHEET_URL_ENV
 
 from tests.helpers.live_services import serve
-from tests.helpers.ws_identity import SIGNING_ISSUER
-
-
-def _bearer(sub: str) -> dict[str, str]:
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
+from tests.helpers.ws_identity import bearer
 
 
 @pytest.fixture
@@ -34,7 +30,7 @@ def live_character_sheet(monkeypatch: pytest.MonkeyPatch) -> Iterator[str]:
 
 def create_character(character_url: str, owner: str, name: str = "Kyra") -> str:
     """Create a character as its owner. Return the new character id."""
-    with httpx.Client(base_url=character_url, headers=_bearer(owner)) as http:
+    with httpx.Client(base_url=character_url, headers=bearer(owner)) as http:
         created = http.post(
             "/api/v1/characters",
             json={"name": name, "character_class": "Cleric", "max_hp": 20},
@@ -45,6 +41,6 @@ def create_character(character_url: str, owner: str, name: str = "Kyra") -> str:
 
 def store_policy(character_url: str, owner: str, character_id: str, policy: dict[str, Any]) -> None:
     """Store a stand-in policy on the character through the public PUT route."""
-    with httpx.Client(base_url=character_url, headers=_bearer(owner)) as http:
+    with httpx.Client(base_url=character_url, headers=bearer(owner)) as http:
         put = http.put(f"/api/v1/characters/{character_id}/guardrails", json=policy)
         assert put.status_code == 200, put.text

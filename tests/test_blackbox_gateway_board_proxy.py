@@ -20,15 +20,11 @@ from fastapi.testclient import TestClient
 from gateway_api.main import app as gateway_app
 
 from tests.helpers.live_services import closed_port_url, serve, unavailable_app
-from tests.helpers.ws_identity import SIGNING_ISSUER
+from tests.helpers.ws_identity import bearer
 
 DM = "dm-evelyn"
 OWNER = "player-marcus"
 STRANGER = "stranger-mallory"
-
-
-def bearer(sub: str) -> dict[str, str]:
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
 
 
 @pytest.fixture

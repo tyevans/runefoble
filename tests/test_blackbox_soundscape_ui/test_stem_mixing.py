@@ -14,12 +14,7 @@ from typing import Any
 
 from fastapi.testclient import TestClient
 
-from tests.helpers.ws_identity import SIGNING_ISSUER
-
-
-def auth_headers(sub: str) -> dict[str, str]:
-    """Return Bearer headers for a token that the service verifier accepts."""
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
+from tests.helpers.ws_identity import bearer
 
 
 def test_rest_data_binding_catalog_and_foley_presets(client: TestClient) -> None:
@@ -80,7 +75,7 @@ def test_spicedb_zanzibar_authorization_on_soundscape_controls(
     # 1. A player without DM authority attempts a mood override -> 403 Forbidden
     resp_unauth = client.post(
         "/api/v1/soundscape/stems/override",
-        headers=auth_headers("player-marcus"),
+        headers=bearer("player-marcus"),
         json=payload,
     )
     assert resp_unauth.status_code == 403

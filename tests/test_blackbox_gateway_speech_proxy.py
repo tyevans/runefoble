@@ -19,7 +19,8 @@ from the_watcher.main import app as watcher_app
 from tests.helpers.live_services import closed_port_url, serve
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.stream_events import assert_stream_events
-from tests.realtime_session import bearer, open_table
+from tests.helpers.ws_identity import bearer
+from tests.realtime_session import open_table
 
 SPEAK_PATH = "/api/v1/watcher/speak-and-act"
 BOARD_STREAM = "runefoble.events.board"

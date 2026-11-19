@@ -13,12 +13,7 @@ import pytest
 from fastapi.testclient import TestClient
 from gateway_api.main import app as gateway_app
 
-from tests.helpers.ws_identity import SIGNING_ISSUER
-
-
-def bearer(sub: str) -> dict[str, str]:
-    """Return Bearer headers for a signed token of `sub`."""
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
+from tests.helpers.ws_identity import bearer
 
 
 def open_table(

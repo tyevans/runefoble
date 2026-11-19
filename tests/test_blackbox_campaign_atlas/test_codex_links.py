@@ -10,14 +10,9 @@ from campaign_lore.dependencies import get_codex_repo
 from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import SpiceDBClient
 
-from tests.helpers.ws_identity import SIGNING_ISSUER
+from tests.helpers.ws_identity import bearer
 
 VISITOR_SUBJECT = "lore-test-visitor"
-
-
-def _bearer(user_id: str) -> dict[str, str]:
-    """Return headers carrying a signed bearer token for `user_id`."""
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(user_id)}"}
 
 
 @pytest.mark.asyncio
@@ -27,7 +22,7 @@ async def test_codex_entity_cross_linking_and_privacy(
     """Test codex entity linking against redstring graph and Zanzibar access control."""
     rowan, bob = "rowan_chronicler", "bob_player"
     base = f"/api/v1/campaigns/{campaign_id}/codex/entries"
-    r_h, b_h = _bearer(rowan), _bearer(bob)
+    r_h, b_h = bearer(rowan), bearer(bob)
 
     await spicedb.write_relationship(
         "campaign", campaign_id, "dungeon_master", "user", VISITOR_SUBJECT

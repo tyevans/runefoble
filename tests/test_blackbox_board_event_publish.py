@@ -23,14 +23,8 @@ from runefoble_auth.factory import get_spicedb_client
 from the_watcher.main import app as watcher_app
 
 from tests.helpers.mock_redis import MockAsyncRedis
-from tests.helpers.ws_identity import SIGNING_ISSUER
+from tests.helpers.ws_identity import SIGNING_ISSUER, bearer
 from tests.test_blackbox_uvtt_import.conftest import build_sample_dd2vtt_dict
-
-
-def bearer(sub: str) -> dict[str, str]:
-    """Return the Authorization header for a token that the shared test issuer signs for `sub`."""
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
-
 
 BOARD_STREAM = "runefoble.events.board"
 WATCHER_STREAM = "runefoble.events.watcher"

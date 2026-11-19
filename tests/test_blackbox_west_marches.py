@@ -31,14 +31,9 @@ from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_platform.event_sourcing import create_aggregate_repository
 
 from tests.helpers.spicedb_factory import shared_spicedb_client
-from tests.helpers.ws_identity import SIGNING_ISSUER
+from tests.helpers.ws_identity import bearer
 
 VISITOR_SUBJECT = "lore-test-visitor"
-
-
-def _bearer(user_id: str) -> dict[str, str]:
-    """Return headers carrying a signed bearer token for `user_id`."""
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(user_id)}"}
 
 
 @pytest.fixture
@@ -52,7 +47,7 @@ def spicedb_client() -> Iterator[MockSpiceDBClient]:
 def client(spicedb_client: MockSpiceDBClient, lore_backends) -> Iterator[TestClient]:
     fresh_repo = create_aggregate_repository(WestMarchesAtlasAggregate)
     set_west_marches_repo(fresh_repo)
-    with TestClient(lore_app, headers=_bearer(VISITOR_SUBJECT)) as lore_client:
+    with TestClient(lore_app, headers=bearer(VISITOR_SUBJECT)) as lore_client:
         yield lore_client
 
 
@@ -130,7 +125,7 @@ async def test_frontdoor_record_discovery_pin(
     resp = client.post(
         f"/api/v1/campaigns/{cid}/west-marches/discoveries",
         json=payload,
-        headers=_bearer(uid),
+        headers=bearer(uid),
     )
     assert resp.status_code == 201, resp.text
     data = resp.json()
@@ -142,7 +137,7 @@ async def test_frontdoor_record_discovery_pin(
     # Query atlas to ensure discovery appears in aggregate projection
     atlas_resp = client.get(
         f"/api/v1/campaigns/{cid}/west-marches",
-        headers=_bearer(uid),
+        headers=bearer(uid),
     )
     assert atlas_resp.status_code == 200
     atlas_data = atlas_resp.json()
@@ -172,7 +167,7 @@ async def test_frontdoor_upgrade_outpost_facility(
     resp = client.post(
         f"/api/v1/campaigns/{cid}/west-marches/stronghold/upgrade",
         json=upgrade_payload,
-        headers=_bearer(uid),
+        headers=bearer(uid),
     )
     assert resp.status_code == 200, resp.text
     data = resp.json()
@@ -195,11 +190,11 @@ async def test_frontdoor_outpost_upgrade_refuses_a_client_set_cost(
     resp = client.post(
         f"/api/v1/campaigns/{cid}/west-marches/stronghold/upgrade",
         json={"facility_id": "watchtower", "gold_spent": 1},
-        headers=_bearer(uid),
+        headers=bearer(uid),
     )
     assert resp.status_code == 422, resp.text
 
-    overview = client.get(f"/api/v1/campaigns/{cid}/west-marches", headers=_bearer(uid))
+    overview = client.get(f"/api/v1/campaigns/{cid}/west-marches", headers=bearer(uid))
     assert overview.status_code == 200, overview.text
     outposts = overview.json()["outposts"]
     assert all(out["facilities"].get("watchtower", 0) <= 1 for out in outposts.values())
@@ -225,7 +220,7 @@ async def test_frontdoor_post_tavern_notice(
     resp = client.post(
         f"/api/v1/campaigns/{cid}/west-marches/tavern-board/notices",
         json=notice_payload,
-        headers=_bearer(uid),
+        headers=bearer(uid),
     )
     assert resp.status_code == 201, resp.text
     data = resp.json()
@@ -236,7 +231,7 @@ async def test_frontdoor_post_tavern_notice(
     # Verify board state
     atlas_resp = client.get(
         f"/api/v1/campaigns/{cid}/west-marches",
-        headers=_bearer(uid),
+        headers=bearer(uid),
     )
     assert atlas_resp.status_code == 200
     board = atlas_resp.json()["tavern_board"]

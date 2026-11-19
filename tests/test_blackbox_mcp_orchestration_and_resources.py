@@ -28,7 +28,7 @@ from the_watcher.main import app as watcher_app
 from tests.helpers.live_services import closed_port_url, serve, unavailable_app
 from tests.helpers.mcp_http import call_tool_over_http, read_resource_over_http, serve_mcp
 from tests.helpers.watcher_engine import select_worker_engine
-from tests.helpers.ws_identity import SIGNING_ISSUER
+from tests.helpers.ws_identity import SIGNING_ISSUER, bearer
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
@@ -108,11 +108,6 @@ def _create_session(session_url: str, title: str) -> str:
 
 
 _MCP: dict[str, str] = {}
-
-
-def bearer(sub: str) -> dict[str, str]:
-    """Return the Authorization header for a token that the shared test issuer signs for `sub`."""
-    return {"Authorization": f"Bearer {caller_token(sub)}"}
 
 
 def caller_token(sub: str = "user-test") -> str:

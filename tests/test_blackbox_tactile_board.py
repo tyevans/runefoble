@@ -14,13 +14,7 @@ from board_state.main import app
 from fastapi.testclient import TestClient
 from runefoble_platform.event_sourcing import AggregateRepository, InMemoryEventStore
 
-from tests.helpers.ws_identity import SIGNING_ISSUER
-
-
-def bearer(sub: str) -> dict[str, str]:
-    """Return the Authorization header for a token that the shared test issuer signs for `sub`."""
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
-
+from tests.helpers.ws_identity import bearer
 
 client = TestClient(app, headers=bearer("user-test"))
 

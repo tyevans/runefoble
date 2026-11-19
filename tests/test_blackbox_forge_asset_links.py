@@ -18,7 +18,7 @@ from asset_forge.main import app
 from fastapi.testclient import TestClient
 
 from tests.helpers.silo_fixtures import PNG_SAMPLE_BYTES, SILO_TEST_ENDPOINT
-from tests.helpers.ws_identity import SIGNING_ISSUER
+from tests.helpers.ws_identity import bearer
 
 DM = "dm-evelyn"
 PLAYER = "player-marcus"
@@ -52,11 +52,6 @@ FORGE_BODIES = {
     },
     "token": {"token_name": "Ghoul", "prompt": "Gaunt ghoul with rusted claws"},
 }
-
-
-def bearer(sub: str) -> dict[str, str]:
-    """Return Bearer headers for a token that the service verifier accepts."""
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
 
 
 @pytest.fixture

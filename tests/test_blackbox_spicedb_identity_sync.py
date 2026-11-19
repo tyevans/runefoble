@@ -23,6 +23,7 @@ from runefoble_events.events import SessionCreated
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.ws_identity import bearer
 
 
 @pytest.fixture
@@ -59,16 +60,12 @@ def test_sync_user_route_is_removed(trusted_ws_issuer, client) -> None:
     )
 
 
-def _bearer(issuer, sub: str) -> dict[str, str]:
-    return {"Authorization": f"Bearer {issuer.mint(sub)}"}
-
-
 def _create_campaign_as_owner(client: TestClient, issuer, owner_sub: str) -> str:
     """Create a campaign through the public route. The creator becomes its owner."""
     res = client.post(
         "/api/v1/campaigns",
         json={"title": "Sync Campaign"},
-        headers=_bearer(issuer, owner_sub),
+        headers=bearer(owner_sub, issuer=issuer),
     )
     assert res.status_code == 201, res.text
     return res.json()["id"]
@@ -82,12 +79,12 @@ async def test_gm_synchronization_dm_override_and_atmosphere(trusted_ws_issuer, 
     gm_id = "gm_elena"
     stranger_id = "stranger_pete"
     campaign_id = _create_campaign_as_owner(client, trusted_ws_issuer, owner_id)
-    session_id = _owner_session(campaign_id, _bearer(trusted_ws_issuer, owner_id))
+    session_id = _owner_session(campaign_id, bearer(owner_id, issuer=trusted_ws_issuer))
 
     # 1. Before sync: GM and stranger are rejected with 403
     res_before = client.post(
         f"/api/v1/sessions/{session_id}/dm-override",
-        headers=_bearer(trusted_ws_issuer, gm_id),
+        headers=bearer(gm_id, issuer=trusted_ws_issuer),
         json={"action": "pause_encounter", "reason": "DM bathroom break"},
     )
     assert res_before.status_code == 403
@@ -96,7 +93,7 @@ async def test_gm_synchronization_dm_override_and_atmosphere(trusted_ws_issuer, 
     res_sync = client.post(
         f"/api/v1/campaigns/{campaign_id}/roles",
         json={"user_id": gm_id, "role": "dungeon_master"},
-        headers=_bearer(trusted_ws_issuer, owner_id),
+        headers=bearer(owner_id, issuer=trusted_ws_issuer),
     )
     assert res_sync.status_code == 200
     assert res_sync.json()["status"] == "role_assigned"
@@ -107,7 +104,7 @@ async def test_gm_synchronization_dm_override_and_atmosphere(trusted_ws_issuer, 
     # 4. Synchronized GM can execute DM override
     res_override = client.post(
         f"/api/v1/sessions/{session_id}/dm-override",
-        headers=_bearer(trusted_ws_issuer, gm_id),
+        headers=bearer(gm_id, issuer=trusted_ws_issuer),
         json={"action": "pause_encounter", "reason": "DM narrative pause"},
     )
     assert res_override.status_code == 200
@@ -122,7 +119,7 @@ async def test_gm_synchronization_dm_override_and_atmosphere(trusted_ws_issuer, 
     }
     res_atmo = client.post(
         f"/api/v1/sessions/{session_id}/atmosphere",
-        headers=_bearer(trusted_ws_issuer, gm_id),
+        headers=bearer(gm_id, issuer=trusted_ws_issuer),
         json=atmo_payload,
     )
     assert res_atmo.status_code == 200
@@ -131,14 +128,14 @@ async def test_gm_synchronization_dm_override_and_atmosphere(trusted_ws_issuer, 
     # 6. Unassigned stranger is denied on both endpoints
     res_stranger_override = client.post(
         f"/api/v1/sessions/{session_id}/dm-override",
-        headers=_bearer(trusted_ws_issuer, stranger_id),
+        headers=bearer(stranger_id, issuer=trusted_ws_issuer),
         json={"action": "end_session"},
     )
     assert res_stranger_override.status_code == 403
 
     res_stranger_atmo = client.post(
         f"/api/v1/sessions/{session_id}/atmosphere",
-        headers=_bearer(trusted_ws_issuer, stranger_id),
+        headers=bearer(stranger_id, issuer=trusted_ws_issuer),
         json={"location_name": "Sunny Meadow"},
     )
     assert res_stranger_atmo.status_code == 403
@@ -149,9 +146,9 @@ async def test_idempotence_and_instant_revocation(trusted_ws_issuer, client) -> 
     """Re-granting produces no duplicates; removal immediately revokes permissions."""
     owner_id = "owner_idem"
     campaign_id = _create_campaign_as_owner(client, trusted_ws_issuer, owner_id)
-    session_id = _owner_session(campaign_id, _bearer(trusted_ws_issuer, owner_id))
+    session_id = _owner_session(campaign_id, bearer(owner_id, issuer=trusted_ws_issuer))
     user_id = "test_player_grant"
-    owner_headers = _bearer(trusted_ws_issuer, owner_id)
+    owner_headers = bearer(owner_id, issuer=trusted_ws_issuer)
     grant_payload = {"user_id": user_id, "role": "player"}
 
     assert (
@@ -170,7 +167,7 @@ async def test_idempotence_and_instant_revocation(trusted_ws_issuer, client) -> 
     # User can view session
     assert (
         client.get(
-            f"/api/v1/sessions/{session_id}", headers=_bearer(trusted_ws_issuer, user_id)
+            f"/api/v1/sessions/{session_id}", headers=bearer(user_id, issuer=trusted_ws_issuer)
         ).status_code
         == 200
     )
@@ -184,7 +181,7 @@ async def test_idempotence_and_instant_revocation(trusted_ws_issuer, client) -> 
     # Immediately after revocation: view attempt must fail with 403 Forbidden
     assert (
         client.get(
-            f"/api/v1/sessions/{session_id}", headers=_bearer(trusted_ws_issuer, user_id)
+            f"/api/v1/sessions/{session_id}", headers=bearer(user_id, issuer=trusted_ws_issuer)
         ).status_code
         == 403
     )

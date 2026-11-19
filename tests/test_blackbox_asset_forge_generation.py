@@ -18,13 +18,7 @@ from asset_forge.dependencies import get_storage
 from asset_forge.main import app
 from fastapi.testclient import TestClient
 
-from tests.helpers.ws_identity import SIGNING_ISSUER
-
-
-def auth_headers(sub: str) -> dict[str, str]:
-    """Return Bearer headers for a token that the service verifier accepts."""
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
-
+from tests.helpers.ws_identity import bearer
 
 PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 
@@ -64,7 +58,7 @@ def test_blackbox_forge_battlemap_generation_and_storage(client: TestClient, cam
             "wall_density": 0.25,
             "hazard_density": 0.15,
         },
-        headers=auth_headers("dm-evelyn"),
+        headers=bearer("dm-evelyn"),
     )
     assert response.status_code == 200, response.text
     data = response.json()
@@ -127,7 +121,7 @@ def test_blackbox_forge_token_portrait_and_transparency(client: TestClient, camp
             "border_width": 6,
             "transparent_background": True,
         },
-        headers=auth_headers("player-marcus"),
+        headers=bearer("player-marcus"),
     )
     assert response.status_code == 200, response.text
     data = response.json()

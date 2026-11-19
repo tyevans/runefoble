@@ -20,17 +20,13 @@ from fastapi.testclient import TestClient
 from runefoble_auth.factory import get_spicedb_client
 
 from tests.helpers.mock_redis import MockAsyncRedis
-from tests.helpers.ws_identity import SIGNING_ISSUER
+from tests.helpers.ws_identity import bearer
 
 DOCUMENT_INGESTED_STREAM = "runefoble.events.lore.document_ingested"
 CODEX_ENTRY_PUBLISHED_STREAM = "runefoble.events.lore.codex_entry_published"
 VISITOR_SUBJECT = "lore-test-visitor"
 
 pytestmark = pytest.mark.usefixtures("lore_backends")
-
-
-def _bearer(user_id: str) -> dict[str, str]:
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(user_id)}"}
 
 
 def _payloads(mock_redis: MockAsyncRedis, stream: str) -> list[dict]:
@@ -48,7 +44,7 @@ async def test_ingested_document_is_published_once_to_lore_stream(mock_bus: Mock
     await get_spicedb_client().write_relationship(
         "campaign", campaign_id, "dungeon_master", "user", dm
     )
-    with TestClient(app, headers=_bearer(VISITOR_SUBJECT)) as client:
+    with TestClient(app, headers=bearer(VISITOR_SUBJECT)) as client:
         ingested = client.post(
             "/api/v1/lore/documents",
             json={
@@ -56,7 +52,7 @@ async def test_ingested_document_is_published_once_to_lore_stream(mock_bus: Mock
                 "title": "The Knights of the Silver Dawn",
                 "content": "Sir Gareth guards the Citadel of Light in Neverwinter.",
             },
-            headers=_bearer(dm),
+            headers=bearer(dm),
         )
     assert ingested.status_code == 200, ingested.text
     document_id = ingested.json()["document_id"]
@@ -73,7 +69,7 @@ async def test_published_codex_entry_is_published_once_to_lore_stream(
     campaign_id = str(uuid4())
     author = f"author-{uuid4().hex[:8]}"
     await get_spicedb_client().write_relationship("campaign", campaign_id, "player", "user", author)
-    with TestClient(app, headers=_bearer(VISITOR_SUBJECT)) as client:
+    with TestClient(app, headers=bearer(VISITOR_SUBJECT)) as client:
         published = client.post(
             f"/api/v1/campaigns/{campaign_id}/codex/entries",
             json={
@@ -81,7 +77,7 @@ async def test_published_codex_entry_is_published_once_to_lore_stream(
                 "content": "The fen smells of iron.",
                 "privacy": "private",
             },
-            headers=_bearer(author),
+            headers=bearer(author),
         )
     assert published.status_code == 201, published.text
     entry_id = published.json()["entry_id"]

@@ -15,7 +15,8 @@ from fastapi.testclient import TestClient
 from runefoble_platform.storage import get_storage_service
 
 from tests.helpers.silo_fixtures import PNG_SAMPLE_BYTES
-from tests.test_blackbox_uvtt_import.conftest import bearer, build_sample_dd2vtt_dict
+from tests.helpers.ws_identity import bearer
+from tests.test_blackbox_uvtt_import.conftest import build_sample_dd2vtt_dict
 
 
 def _create_board(client: TestClient, board_id: str) -> None:

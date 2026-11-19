@@ -19,12 +19,7 @@ from fastapi.testclient import TestClient
 from runefoble_events.events import SpellUnprepared, StandInActivated, StandInReleased
 from runefoble_platform.event_sourcing import InMemoryEventStore, create_aggregate_repository
 
-from tests.helpers.ws_identity import SIGNING_ISSUER
-
-
-def auth_headers(sub: str) -> dict[str, str]:
-    """Return Bearer headers for a token that the service verifier accepts."""
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
+from tests.helpers.ws_identity import bearer
 
 
 @pytest.fixture
@@ -40,7 +35,7 @@ def restart(durable_store: InMemoryEventStore) -> Iterator[object]:
     def _start() -> TestClient:
         instance_repo = create_aggregate_repository(CharacterAggregate, event_store=durable_store)
         app.dependency_overrides[deps.get_repository] = lambda: instance_repo
-        return TestClient(app, headers=auth_headers("character-owner"))
+        return TestClient(app, headers=bearer("character-owner"))
 
     yield _start
     app.dependency_overrides.pop(deps.get_repository, None)

@@ -18,7 +18,7 @@ from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
 
-from tests.helpers.ws_identity import SIGNING_ISSUER
+from tests.helpers.ws_identity import bearer
 
 PUBLIC_PATHS = {
     "/health",
@@ -30,11 +30,6 @@ PUBLIC_PATHS = {
     "/redoc",
 }
 SECRET_TITLE = "Vault of the Dragon Eye"
-
-
-def _bearer(user_id: str, issuer: SigningTestIssuer = SIGNING_ISSUER) -> dict[str, str]:
-    """Return headers carrying a signed bearer token for `user_id`."""
-    return {"Authorization": f"Bearer {issuer.mint(user_id)}"}
 
 
 @pytest.fixture
@@ -68,7 +63,7 @@ def _ingest_secret(client: TestClient, campaign: dict[str, str]) -> None:
             "content": "The Dragon Eye gem rests in a secret vault beneath the Citadel.",
             "is_secret": True,
         },
-        headers=_bearer(campaign["dm"]),
+        headers=bearer(campaign["dm"]),
     )
     assert res.status_code == 200, res.text
 
@@ -91,7 +86,7 @@ async def test_player_body_caller_id_naming_dm_reads_no_secret(
         "limit": 10,
     }
 
-    res = _search(client, body, _bearer(seeded_campaign["player"]))
+    res = _search(client, body, bearer(seeded_campaign["player"]))
 
     assert res.status_code == 422, res.text
     assert "caller_id" in res.text
@@ -105,7 +100,7 @@ async def test_player_spoofed_user_header_reads_no_secret(
     await _seed_members(get_spicedb_client(), seeded_campaign)
     _ingest_secret(client, seeded_campaign)
     body = {"campaign_id": seeded_campaign["id"], "query": "Dragon Eye gem secret vault"}
-    headers = {**_bearer(seeded_campaign["player"]), "x-user-id": seeded_campaign["dm"]}
+    headers = {**bearer(seeded_campaign["player"]), "x-user-id": seeded_campaign["dm"]}
 
     res = _search(client, body, headers)
 
@@ -123,7 +118,7 @@ async def test_dm_token_reads_secret_chunk(
     _ingest_secret(client, seeded_campaign)
     body = {"campaign_id": seeded_campaign["id"], "query": "Dragon Eye gem secret vault"}
 
-    res = _search(client, body, _bearer(seeded_campaign["dm"]))
+    res = _search(client, body, bearer(seeded_campaign["dm"]))
 
     assert res.status_code == 200, res.text
     assert res.json()["can_read_secrets"] is True
@@ -155,7 +150,7 @@ async def test_token_from_untrusted_issuer_is_refused(
     res = _search(
         client,
         {"campaign_id": seeded_campaign["id"], "query": "Dragon Eye"},
-        _bearer(seeded_campaign["dm"], rogue),
+        bearer(seeded_campaign["dm"], issuer=rogue),
     )
 
     assert res.status_code == 401
@@ -215,7 +210,7 @@ def test_body_actor_field_is_refused_and_actor_is_the_verified_subject(
     """A body naming another actor fails validation. The actor is never read from the body."""
     path = route.replace("{id}", str(uuid4()))
 
-    res = client.post(path, json=body, headers=_bearer("verified-player"))
+    res = client.post(path, json=body, headers=bearer("verified-player"))
 
     assert res.status_code == 422, res.text
     assert actor_field in res.text

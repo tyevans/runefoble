@@ -9,15 +9,9 @@ GET /api/v1/characters/{id}) with ZERO backdoor internal state tampering.
 from character_sheet.main import app
 from fastapi.testclient import TestClient
 
-from tests.helpers.ws_identity import SIGNING_ISSUER
+from tests.helpers.ws_identity import bearer
 
-
-def auth_headers(sub: str) -> dict[str, str]:
-    """Return Bearer headers for a token that the service verifier accepts."""
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
-
-
-client = TestClient(app, headers=auth_headers("character-owner"))
+client = TestClient(app, headers=bearer("character-owner"))
 
 
 def test_blackbox_character_level_progression_and_spell_casting():

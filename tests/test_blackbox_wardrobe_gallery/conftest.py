@@ -17,13 +17,7 @@ from asset_forge.main import app as asset_forge_app
 from character_sheet.main import app as character_app
 from fastapi.testclient import TestClient
 
-from tests.helpers.ws_identity import SIGNING_ISSUER
-
-
-def auth_headers(sub: str) -> dict[str, str]:
-    """Return Bearer headers for a token that the service verifier accepts."""
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
-
+from tests.helpers.ws_identity import bearer
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
@@ -31,9 +25,9 @@ PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 
 @pytest.fixture
 def char_client() -> TestClient:
-    return TestClient(character_app, headers=auth_headers("character-owner"))
+    return TestClient(character_app, headers=bearer("character-owner"))
 
 
 @pytest.fixture
 def forge_client() -> TestClient:
-    return TestClient(asset_forge_app, headers=auth_headers("character-owner"))
+    return TestClient(asset_forge_app, headers=bearer("character-owner"))

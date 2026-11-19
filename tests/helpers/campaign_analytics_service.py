@@ -26,7 +26,7 @@ from runefoble_platform.redis_bus import RedisStreamsEventBus
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.module_state import restored_seam
 from tests.helpers.spicedb_factory import shared_spicedb_client
-from tests.helpers.ws_identity import SIGNING_ISSUER
+from tests.helpers.ws_identity import bearer
 
 SESSION_STREAM = "runefoble.events.session"
 BOARD_STREAM = "runefoble.events.board"
@@ -34,11 +34,6 @@ CHARACTER_STREAM = "runefoble.events.character"
 WATCHER_STREAM = "runefoble.events.watcher"
 
 SERVICE_SUBJECT = "user-test"
-
-
-def bearer(sub: str) -> dict[str, str]:
-    """Return the Authorization header for a token that the shared test issuer signs for `sub`."""
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
 
 
 @dataclass

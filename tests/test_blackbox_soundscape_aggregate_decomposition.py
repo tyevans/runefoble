@@ -23,7 +23,7 @@ from soundscape.aggregate import (
 )
 from soundscape.main import app
 
-from tests.helpers.ws_identity import SIGNING_ISSUER
+from tests.helpers.ws_identity import bearer
 
 
 @pytest.fixture
@@ -33,26 +33,21 @@ def tomb_session_id(trusted_ws_issuer, game_session_upstream) -> str:
         campaign = gateway.post(
             "/api/v1/campaigns",
             json={"title": "Tomb of Echoes", "setting": "Underdark"},
-            headers=auth_headers("soundscape-tester"),
+            headers=bearer("soundscape-tester"),
         )
         assert campaign.status_code == 201, campaign.text
         session = gateway.post(
             f"/api/v1/campaigns/{campaign.json()['id']}/sessions",
             json={"title": "Echoing Depths"},
-            headers=auth_headers("soundscape-tester"),
+            headers=bearer("soundscape-tester"),
         )
         assert session.status_code == 201, session.text
         return session.json()["id"]
 
 
-def auth_headers(sub: str) -> dict[str, str]:
-    """Return Bearer headers for a token that the service verifier accepts."""
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
-
-
 @pytest.fixture
 def client() -> TestClient:
-    return TestClient(app, headers=auth_headers("soundscape-tester"))
+    return TestClient(app, headers=bearer("soundscape-tester"))
 
 
 @pytest.mark.asyncio

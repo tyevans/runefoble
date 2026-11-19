@@ -11,7 +11,7 @@ import pytest
 from fastapi.testclient import TestClient
 from game_session.events import STREAM_SESSION
 
-from tests.helpers.ws_identity import SIGNING_ISSUER, ws_subprotocols
+from tests.helpers.ws_identity import bearer, ws_subprotocols
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
@@ -40,7 +40,7 @@ def test_session_lobby_readiness_and_ai_stand_in(client_sess: TestClient) -> Non
         "character_class": "Fighter",
     }
     join_m = client_sess.post(
-        f"/api/v1/sessions/{session_id}/join", json=p_m, headers=_bearer("player_marcus")
+        f"/api/v1/sessions/{session_id}/join", json=p_m, headers=bearer("player_marcus")
     )
     assert join_m.status_code == 200
     m_part = join_m.json()["participants"]["player_marcus"]
@@ -52,14 +52,14 @@ def test_session_lobby_readiness_and_ai_stand_in(client_sess: TestClient) -> Non
         "character_class": "Cleric",
     }
     joined_s = client_sess.post(
-        f"/api/v1/sessions/{session_id}/join", json=p_s, headers=_bearer("player_sarah")
+        f"/api/v1/sessions/{session_id}/join", json=p_s, headers=bearer("player_sarah")
     )
     assert joined_s.status_code == 200
 
     leave_s = client_sess.post(
         f"/api/v1/sessions/{session_id}/leave",
         json={"reason": "absent"},
-        headers=_bearer("player_sarah"),
+        headers=bearer("player_sarah"),
     )
     assert leave_s.status_code == 200
     s_part = leave_s.json()["participants"]["player_sarah"]
@@ -102,7 +102,7 @@ def test_session_lobby_launch_transition_and_events(
             "character_name": "Valeros",
             "character_class": "Fighter",
         },
-        headers=_bearer("player_marcus"),
+        headers=bearer("player_marcus"),
     )
     assert joined.status_code == 200, joined.text
 
@@ -130,10 +130,6 @@ def _owned_campaign(client) -> str:
     return res.json()["id"]
 
 
-def _bearer(sub: str) -> dict[str, str]:
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
-
-
 def _seat_players(
     client, campaign_id: str, players: list[str], owner: dict[str, str] | None = None
 ) -> None:
@@ -146,6 +142,6 @@ def _seat_players(
         redeemed = client.post(
             "/api/v1/campaigns/join",
             json={"invite_token": invite.json()["token"]},
-            headers=_bearer(player),
+            headers=bearer(player),
         )
         assert redeemed.status_code == 200, redeemed.text

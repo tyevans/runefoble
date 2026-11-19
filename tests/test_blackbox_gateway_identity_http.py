@@ -14,6 +14,7 @@ from gateway_api.main import app as gateway_app
 from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
 
 from tests.helpers.silo_fixtures import PNG_SAMPLE_BYTES
+from tests.helpers.ws_identity import bearer
 
 ALLOWED_ORIGIN = "http://localhost:5173"
 FOREIGN_ORIGIN = "https://attacker.example"
@@ -25,10 +26,6 @@ def client(
 ) -> Iterator[TestClient]:
     with TestClient(gateway_app) as gateway_client:
         yield gateway_client
-
-
-def _bearer(issuer, sub: str) -> dict[str, str]:
-    return {"Authorization": f"Bearer {issuer.mint(sub)}"}
 
 
 # --- 1. Unauthenticated and forged requests are refused ---
@@ -91,14 +88,14 @@ def test_asset_upload_refuses_x_user_id_without_bearer(client):
 def test_profile_subject_comes_from_token_not_header(client, trusted_ws_issuer):
     response = client.get(
         "/api/v1/profile",
-        headers=_bearer(trusted_ws_issuer, "user-alice") | {"X-User-Id": "someone-else"},
+        headers=bearer("user-alice", issuer=trusted_ws_issuer) | {"X-User-Id": "someone-else"},
     )
     assert response.status_code == 200, response.text
     assert response.json()["user_id"] == "user-alice"
 
 
 def test_profile_has_no_admin_or_role_claims(client, trusted_ws_issuer):
-    response = client.get("/api/v1/profile", headers=_bearer(trusted_ws_issuer, "user-alice"))
+    response = client.get("/api/v1/profile", headers=bearer("user-alice", issuer=trusted_ws_issuer))
     assert response.status_code == 200, response.text
     assert "is_admin" not in response.json()
     assert "roles" not in response.json()
@@ -109,7 +106,7 @@ def test_asset_upload_owner_is_token_subject(client, trusted_ws_issuer):
         "/api/v1/assets/upload",
         files={"file": ("alice.png", PNG_SAMPLE_BYTES, "image/png")},
         data={"owner_id": "user-bob", "asset_type": "avatar"},
-        headers=_bearer(trusted_ws_issuer, "user-alice") | {"X-User-Id": "user-bob"},
+        headers=bearer("user-alice", issuer=trusted_ws_issuer) | {"X-User-Id": "user-bob"},
     )
     assert response.status_code == 200, response.text
     assert response.json()["owner_id"] == "user-alice"

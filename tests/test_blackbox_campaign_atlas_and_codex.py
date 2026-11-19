@@ -19,14 +19,9 @@ from campaign_lore.main import app
 from fastapi.testclient import TestClient
 from runefoble_auth.factory import get_spicedb_client
 
-from tests.helpers.ws_identity import SIGNING_ISSUER
+from tests.helpers.ws_identity import bearer
 
 VISITOR_SUBJECT = "lore-test-visitor"
-
-
-def _bearer(user_id: str) -> dict[str, str]:
-    """Return headers carrying a signed bearer token for `user_id`."""
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(user_id)}"}
 
 
 def test_dependencies_expose_core_getters() -> None:
@@ -51,7 +46,7 @@ def test_dependencies_expose_core_getters() -> None:
 @pytest.mark.usefixtures("lore_backends")
 async def test_frontdoor_codex_crud_and_permissions() -> None:
     """Verify codex endpoints enforce SpiceDB Zanzibar authorization through public frontdoors."""
-    with TestClient(app, headers=_bearer(VISITOR_SUBJECT)) as client:
+    with TestClient(app, headers=bearer(VISITOR_SUBJECT)) as client:
         spicedb = get_spicedb_client()
 
         campaign_id = str(uuid4())
@@ -74,7 +69,7 @@ async def test_frontdoor_codex_crud_and_permissions() -> None:
         pub_res = client.post(
             f"/api/v1/campaigns/{campaign_id}/codex/entries",
             json=publish_payload,
-            headers=_bearer(author_id),
+            headers=bearer(author_id),
         )
         assert pub_res.status_code == 201, pub_res.text
         entry_data = pub_res.json()
@@ -85,7 +80,7 @@ async def test_frontdoor_codex_crud_and_permissions() -> None:
         # 2. Author can read and update the private entry
         get_res = client.get(
             f"/api/v1/campaigns/{campaign_id}/codex/entries/{entry_id}",
-            headers=_bearer(author_id),
+            headers=bearer(author_id),
         )
         assert get_res.status_code == 200
         assert get_res.json()["title"] == "Secret Journal of the Void"
@@ -93,7 +88,7 @@ async def test_frontdoor_codex_crud_and_permissions() -> None:
         # 3. Non-author viewer cannot read private entry
         viewer_get = client.get(
             f"/api/v1/campaigns/{campaign_id}/codex/entries/{entry_id}",
-            headers=_bearer(viewer_id),
+            headers=bearer(viewer_id),
         )
         assert viewer_get.status_code == 403
 
@@ -101,21 +96,21 @@ async def test_frontdoor_codex_crud_and_permissions() -> None:
         viewer_patch = client.patch(
             f"/api/v1/campaigns/{campaign_id}/codex/entries/{entry_id}",
             json={"title": "Hacked Title"},
-            headers=_bearer(viewer_id),
+            headers=bearer(viewer_id),
         )
         assert viewer_patch.status_code == 403
 
         # 5. Stranger (no campaign permissions) is forbidden from listing or editing
         stranger_list = client.get(
             f"/api/v1/campaigns/{campaign_id}/codex/entries",
-            headers=_bearer(stranger_id),
+            headers=bearer(stranger_id),
         )
         assert stranger_list.status_code == 403
 
         stranger_patch = client.patch(
             f"/api/v1/campaigns/{campaign_id}/codex/entries/{entry_id}",
             json={"title": "Stranger Hacked"},
-            headers=_bearer(stranger_id),
+            headers=bearer(stranger_id),
         )
         assert stranger_patch.status_code == 403
 
@@ -123,7 +118,7 @@ async def test_frontdoor_codex_crud_and_permissions() -> None:
         author_patch = client.patch(
             f"/api/v1/campaigns/{campaign_id}/codex/entries/{entry_id}",
             json={"privacy": "party_shared", "title": "Revealed Sunken Tower"},
-            headers=_bearer(author_id),
+            headers=bearer(author_id),
         )
         assert author_patch.status_code == 200
         assert author_patch.json()["privacy"] == "party_shared"
@@ -131,7 +126,7 @@ async def test_frontdoor_codex_crud_and_permissions() -> None:
         # 7. Now viewer (who has campaign play permission) can read the entry
         viewer_shared_get = client.get(
             f"/api/v1/campaigns/{campaign_id}/codex/entries/{entry_id}",
-            headers=_bearer(viewer_id),
+            headers=bearer(viewer_id),
         )
         assert viewer_shared_get.status_code == 200
         assert viewer_shared_get.json()["title"] == "Revealed Sunken Tower"

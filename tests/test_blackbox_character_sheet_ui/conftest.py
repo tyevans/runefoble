@@ -13,13 +13,7 @@ import pytest
 from character_sheet.main import app as character_app
 from fastapi.testclient import TestClient
 
-from tests.helpers.ws_identity import SIGNING_ISSUER
-
-
-def auth_headers(sub: str) -> dict[str, str]:
-    """Return Bearer headers for a token that the service verifier accepts."""
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
-
+from tests.helpers.ws_identity import bearer
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
@@ -27,7 +21,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 @pytest.fixture
 def client() -> Generator[TestClient]:
     """TestClient fixture for character_sheet FastAPI app."""
-    with TestClient(character_app, headers=auth_headers("character-owner")) as test_client:
+    with TestClient(character_app, headers=bearer("character-owner")) as test_client:
         yield test_client
 
 

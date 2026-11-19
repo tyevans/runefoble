@@ -19,12 +19,7 @@ from rules_compendium.main import app
 
 from tests.helpers.live_services import serve
 from tests.helpers.mcp_http import call_tool_over_http, serve_mcp
-from tests.helpers.ws_identity import SIGNING_ISSUER
-
-
-def bearer(sub: str) -> dict[str, str]:
-    """Return the Authorization header for a token that the shared test issuer signs for `sub`."""
-    return {"Authorization": f"Bearer {bearer_token(sub)}"}
+from tests.helpers.ws_identity import SIGNING_ISSUER, bearer
 
 
 def bearer_token(sub: str) -> str:

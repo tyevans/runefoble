@@ -19,17 +19,12 @@ from fastapi.testclient import TestClient
 from runefoble_events.events import CharacterAssignedToCampaign
 from runefoble_platform.event_sourcing import AggregateRepository, InMemoryEventStore
 
-from tests.helpers.ws_identity import SIGNING_ISSUER
-
-
-def auth_headers(sub: str) -> dict[str, str]:
-    """Return Bearer headers for a token that the service verifier accepts."""
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
+from tests.helpers.ws_identity import bearer
 
 
 @pytest.fixture
 def client(spicedb):
-    return TestClient(app, headers=auth_headers("character-owner"))
+    return TestClient(app, headers=bearer("character-owner"))
 
 
 def test_character_assigned_to_campaign_event_registry_and_schema():
@@ -244,7 +239,7 @@ async def test_blackbox_campaign_assignment_spicedb_authorization(client, spiced
             "max_hp": 28,
             "player_id": owner_user,
         },
-        headers=auth_headers(owner_user),
+        headers=bearer(owner_user),
     )
     assert create_res.status_code == 200
     char_id = create_res.json()["character_id"]
@@ -256,7 +251,7 @@ async def test_blackbox_campaign_assignment_spicedb_authorization(client, spiced
     unauth_patch = client.patch(
         f"/api/v1/characters/{char_id}/campaign",
         json={"campaign_id": "camp-cazador"},
-        headers=auth_headers(unauthorized_user),
+        headers=bearer(unauthorized_user),
     )
     assert unauth_patch.status_code == 403
     assert unauth_patch.json()["detail"]["error"] == "permission_denied"
@@ -265,7 +260,7 @@ async def test_blackbox_campaign_assignment_spicedb_authorization(client, spiced
     auth_patch = client.patch(
         f"/api/v1/characters/{char_id}/campaign",
         json={"campaign_id": "camp-cazador"},
-        headers=auth_headers(owner_user),
+        headers=bearer(owner_user),
     )
     assert auth_patch.status_code == 200
     assert auth_patch.json()["campaign_id"] == "camp-cazador"
@@ -280,7 +275,7 @@ async def test_blackbox_campaign_assignment_spicedb_authorization(client, spiced
     unassign_patch = client.patch(
         f"/api/v1/characters/{char_id}/campaign",
         json={"campaign_id": None},
-        headers=auth_headers(owner_user),
+        headers=bearer(owner_user),
     )
     assert unassign_patch.status_code == 200
     assert unassign_patch.json()["campaign_id"] is None

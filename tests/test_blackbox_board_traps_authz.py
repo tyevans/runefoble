@@ -20,7 +20,7 @@ from board_state.main import app
 from fastapi.testclient import TestClient
 from runefoble_auth.errors import AuthzSchemaError, AuthzUnavailableError, AuthzWriteError
 
-from tests.helpers.ws_identity import SIGNING_ISSUER, ws_subprotocols
+from tests.helpers.ws_identity import bearer, ws_subprotocols
 
 DM = "dm-evelyn"
 PLAYER = "player-marcus"
@@ -29,11 +29,6 @@ STRANGER = "stranger-mallory"
 SECRET_NAME = "Obsidian Fang Pit"
 SECRET_TEXT = "Poisoned spikes under the rug in the throne room"
 SECRET_PAYLOAD_KEY = "venom_grade_omega"
-
-
-def bearer(sub: str) -> dict[str, str]:
-    """Return Bearer headers for a token that the board service verifier accepts."""
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
 
 
 @pytest.fixture

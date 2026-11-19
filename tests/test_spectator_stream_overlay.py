@@ -16,8 +16,8 @@ from fastapi.testclient import TestClient
 from gateway_api.cinematic_director import clear_cinematic_directors
 from starlette.websockets import WebSocketDisconnect
 
-from tests.helpers.ws_identity import ws_subprotocols
-from tests.realtime_session import bearer, open_table
+from tests.helpers.ws_identity import bearer, ws_subprotocols
+from tests.realtime_session import open_table
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 

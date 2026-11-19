@@ -15,20 +15,14 @@ from game_session.main import app as session_app
 from gateway_api.main import app as gateway_app
 from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
 
-from tests.helpers.ws_identity import SIGNING_ISSUER
-
-
-def auth_headers(sub: str) -> dict[str, str]:
-    """Return Bearer headers for a token that the service verifier accepts."""
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
-
+from tests.helpers.ws_identity import SIGNING_ISSUER, bearer
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
 
 @pytest.fixture
 def char_client() -> TestClient:
-    return TestClient(character_app, headers=auth_headers("character-owner"))
+    return TestClient(character_app, headers=bearer("character-owner"))
 
 
 @pytest.fixture

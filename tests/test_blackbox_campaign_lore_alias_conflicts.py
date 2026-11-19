@@ -15,7 +15,7 @@ from campaign_lore.main import app, create_app
 from fastapi.testclient import TestClient
 from runefoble_auth.factory import get_spicedb_client
 
-from tests.helpers.ws_identity import SIGNING_ISSUER
+from tests.helpers.ws_identity import bearer
 
 VISITOR_SUBJECT = "lore-test-visitor"
 
@@ -27,14 +27,9 @@ async def _seed_dm(campaign_id: str, user_id: str = VISITOR_SUBJECT) -> None:
     )
 
 
-def _bearer(user_id: str) -> dict[str, str]:
-    """Return headers carrying a signed bearer token for `user_id`."""
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(user_id)}"}
-
-
 @pytest.fixture
 def client(lore_backends) -> Iterator[TestClient]:
-    with TestClient(app, headers=_bearer(VISITOR_SUBJECT)) as client:
+    with TestClient(app, headers=bearer(VISITOR_SUBJECT)) as client:
         yield client
 
 
@@ -114,7 +109,7 @@ async def test_alias_that_is_already_a_canonical_target_conflicts_with_409(clien
 
 def test_consolidate_without_started_service_returns_503_with_message():
     """An application that never ran its lifespan reports a missing backend as 503."""
-    client = TestClient(create_app(), headers=_bearer(VISITOR_SUBJECT))
+    client = TestClient(create_app(), headers=bearer(VISITOR_SUBJECT))
     resp = client.post(
         "/api/v1/lore/aliases/consolidate",
         json={
@@ -130,7 +125,7 @@ def test_consolidate_without_started_service_returns_503_with_message():
 
 def test_openapi_documents_409_and_503_for_consolidate_route():
     """OpenAPI lists the conflict and unavailable responses for the consolidate route."""
-    spec = TestClient(create_app(), headers=_bearer(VISITOR_SUBJECT)).get("/openapi.json").json()
+    spec = TestClient(create_app(), headers=bearer(VISITOR_SUBJECT)).get("/openapi.json").json()
     responses = spec["paths"]["/api/v1/lore/aliases/consolidate"]["post"]["responses"]
     assert "409" in responses
     assert "503" in responses

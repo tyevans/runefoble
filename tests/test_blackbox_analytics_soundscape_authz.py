@@ -24,17 +24,13 @@ from runefoble_auth.errors import AuthzUnavailableError
 from runefoble_auth.spicedb import MockSpiceDBClient
 from soundscape.main import app as soundscape_app
 
-from tests.helpers.ws_identity import SIGNING_ISSUER
+from tests.helpers.ws_identity import bearer
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 DM = "dm_evelyn"
 PLAYER = "player_valeros"
 STRANGER = "stranger_bob"
-
-
-def _bearer(sub: str) -> dict[str, str]:
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
 
 
 @pytest.fixture
@@ -56,23 +52,23 @@ def campaign(gateway: TestClient) -> dict[str, str]:
     created = gateway.post(
         "/api/v1/campaigns",
         json={"title": "Authz Vault", "setting": "Underdark"},
-        headers=_bearer(DM),
+        headers=bearer(DM),
     )
     assert created.status_code == 201, created.text
     cid = created.json()["id"]
 
-    sessions = gateway.get(f"/api/v1/campaigns/{cid}/sessions", headers=_bearer(DM))
+    sessions = gateway.get(f"/api/v1/campaigns/{cid}/sessions", headers=bearer(DM))
     assert sessions.status_code == 200, sessions.text
     sid = sessions.json()[0]["id"]
 
     invite = gateway.post(
-        f"/api/v1/campaigns/{cid}/invites", json={"role": "player"}, headers=_bearer(DM)
+        f"/api/v1/campaigns/{cid}/invites", json={"role": "player"}, headers=bearer(DM)
     )
     assert invite.status_code == 201, invite.text
     joined = gateway.post(
         "/api/v1/campaigns/join",
         json={"invite_token": invite.json()["token"]},
-        headers=_bearer(PLAYER),
+        headers=bearer(PLAYER),
     )
     assert joined.status_code == 200, joined.text
     return {"cid": cid, "sid": sid}
@@ -119,7 +115,7 @@ def test_analytics_gateway_call_by_stranger_is_forbidden(
 ) -> None:
     """A verified caller with no campaign relation gets 403 on an analytics read."""
     cid = campaign["cid"]
-    res = gateway.get(f"/api/v1/analytics/campaigns/{cid}/heatmap", headers=_bearer(STRANGER))
+    res = gateway.get(f"/api/v1/analytics/campaigns/{cid}/heatmap", headers=bearer(STRANGER))
     assert res.status_code == 403
 
 
@@ -139,11 +135,11 @@ def test_soundscape_duck_allows_dm_and_denies_player(
     soundscape: TestClient, campaign: dict[str, str]
 ) -> None:
     body = _duck_body(campaign["sid"])
-    player = soundscape.post("/api/v1/soundscape/duck", headers=_bearer(PLAYER), json=body)
+    player = soundscape.post("/api/v1/soundscape/duck", headers=bearer(PLAYER), json=body)
     assert player.status_code == 403
     assert "Forbidden" in player.json()["detail"]
 
-    dm = soundscape.post("/api/v1/soundscape/duck", headers=_bearer(DM), json=body)
+    dm = soundscape.post("/api/v1/soundscape/duck", headers=bearer(DM), json=body)
     assert dm.status_code == 200
     assert dm.json()["is_ducked"] is True
 
@@ -152,10 +148,10 @@ def test_soundscape_stem_volume_denies_player_and_allows_dm(
     soundscape: TestClient, campaign: dict[str, str]
 ) -> None:
     body = _stems_body(campaign["sid"])
-    player = soundscape.post("/api/v1/soundscape/stems/volume", headers=_bearer(PLAYER), json=body)
+    player = soundscape.post("/api/v1/soundscape/stems/volume", headers=bearer(PLAYER), json=body)
     assert player.status_code == 403
 
-    dm = soundscape.post("/api/v1/soundscape/stems/volume", headers=_bearer(DM), json=body)
+    dm = soundscape.post("/api/v1/soundscape/stems/volume", headers=bearer(DM), json=body)
     assert dm.status_code == 200
     assert dm.json()["stem_channels"]["melody"] == 0.5
 
@@ -174,11 +170,11 @@ def test_soundscape_tension_calculate_denies_player_and_allows_dm(
 ) -> None:
     body = _tension_body(campaign["sid"])
     player = soundscape.post(
-        "/api/v1/soundscape/tension/calculate", headers=_bearer(PLAYER), json=body
+        "/api/v1/soundscape/tension/calculate", headers=bearer(PLAYER), json=body
     )
     assert player.status_code == 403
 
-    dm = soundscape.post("/api/v1/soundscape/tension/calculate", headers=_bearer(DM), json=body)
+    dm = soundscape.post("/api/v1/soundscape/tension/calculate", headers=bearer(DM), json=body)
     assert dm.status_code == 200
     assert dm.json()["tension_score"] > 50
 
@@ -187,12 +183,10 @@ def test_soundscape_mood_override_denies_player_and_allows_dm(
     soundscape: TestClient, campaign: dict[str, str]
 ) -> None:
     body = _mood_body(campaign["sid"])
-    player = soundscape.post(
-        "/api/v1/soundscape/stems/override", headers=_bearer(PLAYER), json=body
-    )
+    player = soundscape.post("/api/v1/soundscape/stems/override", headers=bearer(PLAYER), json=body)
     assert player.status_code == 403
 
-    dm = soundscape.post("/api/v1/soundscape/stems/override", headers=_bearer(DM), json=body)
+    dm = soundscape.post("/api/v1/soundscape/stems/override", headers=bearer(DM), json=body)
     assert dm.status_code == 200
     assert dm.json()["manual_override"] is True
 
@@ -223,7 +217,7 @@ def test_soundscape_spicedb_outage_returns_503(
     monkeypatch.setattr(default_spicedb_client, "check_permission", unreachable)
 
     res = soundscape.post(
-        "/api/v1/soundscape/duck", headers=_bearer(DM), json=_duck_body(campaign["sid"])
+        "/api/v1/soundscape/duck", headers=bearer(DM), json=_duck_body(campaign["sid"])
     )
     assert res.status_code == 503
     assert res.json() == {"error": "authorization_unavailable"}

@@ -37,14 +37,10 @@ from tests.helpers.leitmotif_fixtures import (  # noqa: F401 (registers the fixt
     leitmotif_session_id_fixture,
 )
 from tests.helpers.spicedb_factory import shared_spicedb_client
-from tests.helpers.ws_identity import SIGNING_ISSUER
+from tests.helpers.ws_identity import bearer
 
 VISITOR_SUBJECT = "lore-test-visitor"
 OUTAGE_DETAIL = "Event store is unavailable"
-
-
-def _bearer(user_id: str) -> dict[str, str]:
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(user_id)}"}
 
 
 def _connection_refused(*_args: object, **_kwargs: object) -> None:
@@ -77,7 +73,7 @@ def spicedb_client() -> Iterator[MockSpiceDBClient]:
 @pytest.fixture
 def lore_client(spicedb_client: MockSpiceDBClient, lore_backends) -> Iterator[TestClient]:
     set_west_marches_repo(create_aggregate_repository(WestMarchesAtlasAggregate))
-    with TestClient(lore_app, headers=_bearer(VISITOR_SUBJECT)) as client:
+    with TestClient(lore_app, headers=bearer(VISITOR_SUBJECT)) as client:
         yield client
 
 
@@ -187,7 +183,7 @@ def test_relic_absent_stream_still_answers_404(lore_client: TestClient) -> None:
 
 @pytest.fixture
 def soundscape_client() -> TestClient:
-    return TestClient(soundscape_app, headers=_bearer("soundscape-tester"))
+    return TestClient(soundscape_app, headers=bearer("soundscape-tester"))
 
 
 def test_leitmotif_profile_answers_503_when_spicedb_is_unreachable(

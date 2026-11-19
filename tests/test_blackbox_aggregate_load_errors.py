@@ -24,14 +24,10 @@ from soundscape.aggregate import SoundscapeAggregate
 from soundscape.main import app
 
 from tests.helpers.event_store_seam import store_outage
-from tests.helpers.ws_identity import SIGNING_ISSUER
+from tests.helpers.ws_identity import bearer
 
 TENSION_URL = "/api/v1/soundscape/tension"
 CALCULATE_URL = "/api/v1/soundscape/tension/calculate"
-
-
-def _auth_headers(sub: str) -> dict[str, str]:
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
 
 
 def _connection_refused(*_args: object, **_kwargs: object) -> None:
@@ -40,13 +36,13 @@ def _connection_refused(*_args: object, **_kwargs: object) -> None:
 
 @pytest.fixture
 def client() -> TestClient:
-    return TestClient(app, headers=_auth_headers("soundscape-tester"))
+    return TestClient(app, headers=bearer("soundscape-tester"))
 
 
 @pytest.fixture
 def owned_session_id(trusted_ws_issuer, game_session_upstream) -> str:
     """Create a campaign and a session through the gateway frontdoor. The test subject owns both."""
-    headers = _auth_headers("soundscape-tester")
+    headers = bearer("soundscape-tester")
     with TestClient(gateway_app) as gateway:
         campaign = gateway.post(
             "/api/v1/campaigns",

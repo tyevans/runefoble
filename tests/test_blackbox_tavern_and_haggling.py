@@ -15,7 +15,7 @@ from voice_agent.main import app as voice_app
 
 from tests.helpers.live_services import serve
 from tests.helpers.voice_identity import voice_auth_headers
-from tests.helpers.ws_identity import SIGNING_ISSUER
+from tests.helpers.ws_identity import SIGNING_ISSUER, bearer
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -258,19 +258,14 @@ def test_blackbox_merchant_insult_lowball(session_client):
     assert res["mood_score"] < 0
 
 
-def _bearer(issuer, sub: str) -> dict[str, str]:
-    """Return Bearer headers carrying a token that the gateway verifies for `sub`."""
-    return {"Authorization": f"Bearer {issuer.mint(sub)}"}
-
-
 def test_blackbox_gateway_zanzibar_authorization(gateway_client, trusted_ws_issuer):
     """Verify Gateway Zanzibar authorization enforcement for tavern minigames and merchant haggling.
 
     Membership is created through frontdoors only: the owner creates the campaign,
     issues a player invite, and the player redeems it.
     """
-    owner_headers = _bearer(trusted_ws_issuer, "user_dm")
-    user_headers = _bearer(trusted_ws_issuer, "user_bram")
+    owner_headers = bearer("user_dm", issuer=trusted_ws_issuer)
+    user_headers = bearer("user_bram", issuer=trusted_ws_issuer)
 
     create_res = gateway_client.post(
         "/api/v1/campaigns",
@@ -313,7 +308,7 @@ def test_blackbox_gateway_zanzibar_authorization(gateway_client, trusted_ws_issu
     denied_res = gateway_client.post(
         f"/api/v1/sessions/{session_id}/tavern/games",
         json={"game_type": "liars_dice", "wager_gold": 10, "initiator_id": "bram"},
-        headers=_bearer(trusted_ws_issuer, "unauthorized_stranger"),
+        headers=bearer("unauthorized_stranger", issuer=trusted_ws_issuer),
     )
     assert denied_res.status_code == 403
 

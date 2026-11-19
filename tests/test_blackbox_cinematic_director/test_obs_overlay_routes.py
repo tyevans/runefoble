@@ -6,7 +6,7 @@ from the board owner. Monsters and the owner-side DM data must not reach the ove
 
 from fastapi.testclient import TestClient
 
-from tests.realtime_session import bearer
+from tests.helpers.ws_identity import bearer
 
 OBSERVER = "spectator_sol"
 

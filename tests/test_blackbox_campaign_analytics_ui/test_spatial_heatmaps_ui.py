@@ -27,7 +27,7 @@ from runefoble_events.events import (
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 
 from tests.helpers.polling import wait_until
-from tests.helpers.ws_identity import SIGNING_ISSUER
+from tests.helpers.ws_identity import bearer
 
 
 async def grant_view(spicedb_client: MockSpiceDBClient, campaign_id: str) -> None:
@@ -43,11 +43,6 @@ async def grant_view(spicedb_client: MockSpiceDBClient, campaign_id: str) -> Non
         subject_type="user",
         subject_id="user-test",
     )
-
-
-def bearer(sub: str) -> dict[str, str]:
-    """Return the Authorization header for a token that the shared test issuer signs for `sub`."""
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
 
 
 @pytest.mark.asyncio
