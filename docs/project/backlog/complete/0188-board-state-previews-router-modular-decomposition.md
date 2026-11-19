@@ -23,10 +23,10 @@ pr_url: https://github.com/tyevans/runefoble/pull/248
 Complete
 
 ## Summary
-Decompose `services/board_state/src/board_state/routers/previews.py` (345 lines, 69.0% of limit) by separating REST route preview calculations from the live WebSocket ghost preview connection hub into `previews_http.py` and `previews_ws.py`, keeping each module strictly < 150 lines per Hard Invariant 6 and ADR-0010.
+Decompose `services/board_state/src/board_state/routers/previews.py` (removed) (345 lines, 69.0% of limit) by separating REST route preview calculations from the live WebSocket ghost preview connection hub into `previews_http.py` and `previews_ws.py`, keeping each module strictly < 150 lines per Hard Invariant 6 and ADR-0010.
 
 ## Problem Statement
-`services/board_state/src/board_state/routers/previews.py` has grown to 345 lines because it combines HTTP POST endpoints for kinematic route previews and the interactive WebSocket route (`/ws/boards/{session_id}`) handling ghost preview proposals, movement confirmations, and cancellation events. Combining HTTP route handlers and real-time WebSocket connection state in one file makes maintenance harder and risks breaching file length limits as Milestone 9 physics and AoE snapping features evolve.
+`services/board_state/src/board_state/routers/previews.py` (removed) has grown to 345 lines because it combines HTTP POST endpoints for kinematic route previews and the interactive WebSocket route (`/ws/boards/{session_id}`) handling ghost preview proposals, movement confirmations, and cancellation events. Combining HTTP route handlers and real-time WebSocket connection state in one file makes maintenance harder and risks breaching file length limits as Milestone 9 physics and AoE snapping features evolve.
 
 ## Governing Architecture & ADRs
 - **ADR-0003: UV Monorepo Workspace for Python BCs**: Clean modular router structure for `services/board_state/`.
@@ -38,7 +38,7 @@ Decompose `services/board_state/src/board_state/routers/previews.py` (345 lines,
    - Isolate `preview_token_move` and coordinate calculation endpoints (< 100 lines).
 2. **WebSocket Hub Router (`services/board_state/src/board_state/routers/previews_ws.py`)**:
    - Isolate `/ws/boards/{session_id}` handler, message parsing, ghost proposals, and confirmation events (< 140 lines).
-3. **Router Aggregator Facade (`services/board_state/src/board_state/routers/previews.py`)**:
+3. **Router Aggregator Facade (`services/board_state/src/board_state/routers/previews.py` (removed))**:
    - Maintain backward compatibility by re-exporting the combined APIRouter (< 50 lines).
 4. **Verification**:
    - Run `uv run pytest services/board_state/ tests/test_blackbox_board*.py` and verify all tests pass without regression.
@@ -53,7 +53,7 @@ Decompose `services/board_state/src/board_state/routers/previews.py` (345 lines,
 
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
 1. **Module Architecture**:
-   - `services/board_state/src/board_state/routers/previews.py` reduced to strictly < 60 lines.
+   - `services/board_state/src/board_state/routers/previews.py` (removed) reduced to strictly < 60 lines.
    - Extracted submodules strictly < 150 lines each.
 2. **Frontdoor Test Verification**:
    - `uv run pytest services/board_state/ tests/test_blackbox_board*.py` passes cleanly.

@@ -26,7 +26,7 @@ governing_stories:
 Complete
 
 ## Summary
-Decompose `services/board_state/src/board_state/main.py` (426 lines, 85.2% of limit) into modular FastAPI routers (`routers/boards.py`, `routers/tokens.py`, `routers/terrain.py`, `routers/previews.py`) to prevent breaching Hard Invariant 6 (File length limit < 500 lines) and align with the modular router architecture established in ADR-0003 and TASK-0040.
+Decompose `services/board_state/src/board_state/main.py` (426 lines, 85.2% of limit) into modular FastAPI routers (`routers/boards.py`, `routers/tokens.py`, `routers/terrain.py`, `routers/previews.py` (removed)) to prevent breaching Hard Invariant 6 (File length limit < 500 lines) and align with the modular router architecture established in ADR-0003 and TASK-0040.
 
 ## Problem Statement
 Health scans identify `services/board_state/src/board_state/main.py` at 426 lines. The file currently bundles:
@@ -51,7 +51,7 @@ As tactical board kinematics and multi-level combat terrain rules expand, this f
    - Token placement, coordinate relocation, and token removal endpoints (~100 lines).
 3. **Terrain & Visibility Router (`services/board_state/src/board_state/routers/terrain.py`)**:
    - Hazard grid definitions, elevation levels, and fog-of-war shroud/reveal endpoints (~110 lines).
-4. **Kinematics & Preview Router (`services/board_state/src/board_state/routers/previews.py`)**:
+4. **Kinematics & Preview Router (`services/board_state/src/board_state/routers/previews.py` (removed))**:
    - Kinematic route calculation (`/preview-move`) and WebSocket streaming connection (`/ws/boards/{board_id}`) (~110 lines).
 5. **Main Service Orchestration Shell (`services/board_state/src/board_state/main.py`)**:
    - Lightweight FastAPI initialization mounting sub-routers (< 90 lines).
@@ -66,7 +66,7 @@ As tactical board kinematics and multi-level combat terrain rules expand, this f
 
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
 1. **Modular Router Extraction**:
-   - `services/board_state/src/board_state/main.py` decomposed into `routers/boards.py`, `routers/tokens.py`, `routers/terrain.py`, and `routers/previews.py`.
+   - `services/board_state/src/board_state/main.py` decomposed into `routers/boards.py`, `routers/tokens.py`, `routers/terrain.py`, and `routers/previews.py` (removed).
 2. **File Length Compliance (Hard Invariant 6)**:
    - All modified and newly created source files strictly under 200 lines.
 3. **Frontdoor Blackbox Verification**:
