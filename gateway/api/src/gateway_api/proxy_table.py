@@ -49,6 +49,7 @@ class ProxyRoute:
     - `returns`: the return annotation the route declares. Binary routes use "response".
     - `body`: "none" sends no body. "raw" relays the request body as sent (`forward_bytes` only).
       "json" declares a JSON body to FastAPI: `body_model` when set, else any JSON value.
+    - `body_optional`: a "json" body may be absent. The owner then gets no body.
     - `query_all`: pass every query parameter of the request to the owner.
     - `query_defaults`: query parameters the route declares, as (name, default) pairs.
     - `principal`: require a verified caller (ADR-0015 c). The gateway checks the token only.
@@ -66,6 +67,7 @@ class ProxyRoute:
     returns: Literal["any", "response"] = "any"
     body: Literal["none", "raw", "json"] = "none"
     body_model: type[BaseModel] | None = None
+    body_optional: bool = False
     query_all: bool = False
     query_defaults: tuple[tuple[str, str], ...] = ()
     principal: bool = False
@@ -79,6 +81,8 @@ class ProxyRoute:
             raise ValueError(f"{self.name}: a raw body is forwarded with a bytes reply")
         if self.body_model is not None and self.body != "json":
             raise ValueError(f"{self.name}: body_model needs a json body")
+        if self.body_optional and self.body != "json":
+            raise ValueError(f"{self.name}: body_optional needs a json body")
         if self.query_all and self.query_defaults:
             raise ValueError(f"{self.name}: pick query_all or query_defaults, not both")
         template_params = set(_PATH_PARAM.findall(self.public_path))
@@ -131,8 +135,11 @@ def _build_endpoint(route: ProxyRoute) -> Callable[..., Awaitable[Any]]:
     ]
     if route.body == "json":
         annotation: Any = route.body_model or Annotated[Any, Body()]
+        default = None if route.body_optional else inspect.Parameter.empty
         parameters.append(
-            inspect.Parameter("body", inspect.Parameter.KEYWORD_ONLY, annotation=annotation)
+            inspect.Parameter(
+                "body", inspect.Parameter.KEYWORD_ONLY, annotation=annotation, default=default
+            )
         )
 
     async def endpoint(**kwargs: Any) -> Any:

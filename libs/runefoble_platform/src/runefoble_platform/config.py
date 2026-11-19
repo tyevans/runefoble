@@ -235,6 +235,13 @@ class PlatformSettings(BaseSettings):
         gt=0,
         description="Timeout in seconds for one downstream health probe on the gateway",
     )
+    # Gateway wait for The Watcher LLM routes (narrate, scenes, whispers generate, stand-in act).
+    # The owner's inference worker call waits up to 10 s, so the gateway waits longer.
+    watcher_llm_proxy_timeout_s: float = Field(
+        default=15.0,
+        gt=0,
+        description="Gateway timeout in seconds for The Watcher LLM proxy routes",
+    )
 
 
 class EmbeddingEndpointSettings(BaseSettings):
