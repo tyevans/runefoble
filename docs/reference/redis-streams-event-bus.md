@@ -33,6 +33,7 @@ Runefoble uses Redis Streams as a high-throughput, distributed event bus for cro
    - Publishes domain events, Pydantic models, or structured dictionaries to Redis Streams using `XADD`.
    - Serializes events into `event_type`, `event_id`, and JSON payload fields.
    - `publish_event(stream, event)` is the only publish method. No `publish` method exists.
+   - The bus has no consumer-group methods. Consumers read through `RedisConsumerGroup`. A bus call to `read_group`, `create_consumer_group`, or `acknowledge` raises `AttributeError`.
 
 2. **`RedisConsumerGroup` & `deserialize_event` (`libs/runefoble_platform/src/runefoble_platform/consumer_group.py`, `event_deserializer.py`)**:
    - `RedisConsumerGroup` manages consumer group lifecycles (`create_group`, `read_group`, `ack`, `auto_claim_pending`, `route_to_dead_letter`).
@@ -271,7 +272,6 @@ dlq_id = await consumer_group.route_to_dead_letter(
 | Anything else (not JSON, payload not a JSON object, no event type, registered type fails validation) | Raises `EventDecodeError`. |
 
 - `read_group` and `auto_claim_pending` catch `EventDecodeError`. They route the message to `{stream}.dlq` with `error_reason` starting `EventDecodeError:`, acknowledge it, and omit it from the result. No handler runs for it.
-- `RedisStreamsEventBus.read_group(auto_deserialize=True)` does not catch `EventDecodeError`. The caller receives the exception.
 
 ---
 
