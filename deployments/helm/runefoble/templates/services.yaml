@@ -46,8 +46,7 @@ spec:
                 name: {{ $name }}-config
           {{- end }}
           env:
-            {{- include "runefoble.secretEnv" (dict "root" $ "name" "POSTGRES_PASSWORD" "key" "postgres-password") | nindent 12 }}
-            {{- include "runefoble.secretEnv" (dict "root" $ "name" "RUNEFOBLE_SPICEDB_PRESHARED_KEY" "key" "spicedb-preshared-key") | nindent 12 }}
+            {{- include "runefoble.platformEnv" (dict "root" $ "svc" $svc) | trim | nindent 12 }}
             {{- if $svc.siloCredentials }}
             {{- include "runefoble.secretEnv" (dict "root" $ "name" "RUNEFOBLE_SILO_ACCESS_KEY" "key" "silo-access-key") | nindent 12 }}
             {{- include "runefoble.secretEnv" (dict "root" $ "name" "RUNEFOBLE_SILO_SECRET_KEY" "key" "silo-secret-key") | nindent 12 }}
@@ -55,8 +54,6 @@ spec:
             {{- if $svc.serviceCredential }}
             {{- include "runefoble.serviceCredentialEnv" $ | nindent 12 }}
             {{- end }}
-            - name: RUNEFOBLE_DATABASE_URL
-              value: "{{ $svc.databaseDriver | default "postgresql+asyncpg" }}://{{ $.Values.postgres.username }}:$(POSTGRES_PASSWORD)@postgres:5432/{{ $.Values.postgres.database }}"
             {{- if or (not (hasKey $svc "eventStore")) $svc.eventStore }}
             - name: RUNEFOBLE_EVENT_STORE_BACKEND
               value: "postgresql"
@@ -69,15 +66,6 @@ spec:
             - name: RUNEFOBLE_SILO_ENDPOINT
               value: "silo:{{ $.Values.silo.port }}"
             {{- end }}
-            {{- include "runefoble.zitadelServiceEnv" $ | nindent 12 }}
-            - name: RUNEFOBLE_SPICEDB_ENDPOINT
-              value: "spicedb:{{ $.Values.spicedb.grpcPort }}"
-            - name: RUNEFOBLE_REDIS_URL
-              value: "redis://runefoble-redis:{{ $.Values.redis.port }}/0"
-            - name: RUNEFOBLE_OTEL_ENABLED
-              value: "{{ $.Values.observability.enabled }}"
-            - name: RUNEFOBLE_OTEL_EXPORTER_OTLP_ENDPOINT
-              value: "http://otel-collector:{{ $.Values.observability.otelCollector.grpcPort }}"
             {{- include "runefoble.serviceUrlEnv" (dict "root" $ "consumer" $name) | trim | nindent 12 }}
             {{- range $envName, $value := $svc.env }}
             {{- if $value }}

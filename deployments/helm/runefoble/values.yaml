@@ -397,7 +397,6 @@ services:
     port: 8010
     urlEnv: RUNEFOBLE_AUDIENCE_STUDIO_URL
     consumers: [gateway-api]
-    # Expected token `aud` claim. The service refuses to start without it.
     databaseDriver: postgresql
     eventStore: true
     siloEndpoint: false

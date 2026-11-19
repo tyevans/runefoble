@@ -51,7 +51,7 @@ Runefoble is designed around a Kubernetes-first microservices topology deployed 
 ### 2. Redis Streams (Event Streaming & Consumer Groups)
 - **Role**: High-throughput distributed event bus powering pub/sub across bounded contexts.
 - **Topics**: `runefoble.events.session`, `runefoble.events.board`, `runefoble.events.character`, `runefoble.events.voice`.
-- **Environment Variables**: `RUNEFOBLE_REDIS_URL`.
+- **Environment Variables**: `RUNEFOBLE_REDIS_URL`. The chart renders it on every service only when `redis.enabled` is `true`. The value is `redis://runefoble-redis:<redis.port>/0`.
 - **Storage**: The chart runs Redis as a StatefulSet named `runefoble-redis`. The append-only file is on the data claim `data` at `/data` (`--appendonly yes`). Stream entries and consumer group positions survive a pod restart. Size comes from `redis.persistence.size` (default `1Gi`). Decision: persist. Without the file, a restart drops every stream entry and every pending message that a consumer read but did not acknowledge. The domain record stays in PostgreSQL, but the stream projections (for example Campaign Analytics) would lose those messages.
 - **Reference Guide**: [Redis Streams Event Bus](redis-streams-event-bus.md).
 
@@ -134,6 +134,25 @@ The chart stores every credential in one Kubernetes Secret and reads it with `se
 - **Local (`global.environment: local`)**: The chart renders the Secret from the `credentials` values. Those values are dev-only defaults. They are public in the repository.
 - **Other environments**: Set `credentials.existingSecret` to the name of a Secret that you manage. The chart renders no Secret. It fails `helm template` when `global.environment` is not `local` and `credentials.existingSecret` is empty.
 - **Database URLs**: The URLs use the Kubernetes `$(POSTGRES_PASSWORD)` expansion. The password does not appear in the URL value.
+
+## Shared Platform Environment (TASK-0725)
+
+The chart renders one platform environment for every service in the `services` map. The helper `runefoble.platformEnv` in `templates/_helpers.tpl` renders it. The helper uses the named templates `runefoble.databaseUrl`, `runefoble.redisUrl`, and `runefoble.plainEnv`. Each variable comes from `values.yaml`, not from a name in a template.
+
+| Environment variable | Source | Rendered when |
+|---|---|---|
+| `POSTGRES_PASSWORD` | Secret `runefoble-credentials`, key `postgres-password` | Always |
+| `RUNEFOBLE_SPICEDB_PRESHARED_KEY` | Secret, key `spicedb-preshared-key` | Always |
+| `RUNEFOBLE_DATABASE_URL` | `postgres.username`, `postgres.port`, `postgres.database`, and the service `databaseDriver` (default `postgresql+asyncpg`) | Always |
+| `RUNEFOBLE_SPICEDB_ENDPOINT` | `spicedb.grpcPort` | Always |
+| `RUNEFOBLE_REDIS_URL` | `redis.port` | Only when `redis.enabled` is `true` |
+| `RUNEFOBLE_OTEL_ENABLED` | `observability.enabled` | Always |
+| `RUNEFOBLE_OTEL_EXPORTER_OTLP_ENDPOINT` | `observability.otelCollector.grpcPort` | Always |
+| `RUNEFOBLE_ZITADEL_ISSUER`, `RUNEFOBLE_ZITADEL_INTERNAL_URL`, `RUNEFOBLE_ZITADEL_AUDIENCE` | Zitadel values and the bootstrap Secret | Always |
+
+The helper sets these names for each container. The per-service keys in `services` set the other variables, for example `RUNEFOBLE_ENVIRONMENT`, `RUNEFOBLE_SILO_ENDPOINT`, `RUNEFOBLE_EVENT_STORE_BACKEND`, and the credentials. With `redis.enabled: false`, the chart sets no Redis URL. `PlatformSettings.redis_url` then uses its code default `redis://localhost:6379/0`, which does not reach a Redis in the cluster.
+
+The database host is the Service `postgres`. The OTel host is the Service `otel-collector`. Both names are fixed in the helper. Change `postgres.port` or `observability.otelCollector.grpcPort` in `values.yaml`, and every URL follows it.
 
 ## Cross-Service URLs (TASK-0624)
 

@@ -91,3 +91,52 @@ Service-to-service credential (ADR-0015 e), read from the credentials Secret, ke
 {{- define "runefoble.serviceCredentialEnv" -}}
 {{- include "runefoble.secretEnv" (dict "root" . "name" "RUNEFOBLE_SERVICE_CREDENTIAL" "key" "service-credential") -}}
 {{- end -}}
+
+{{/*
+One container env entry with a plain value. Call with (dict "name" "ENV_NAME" "value" <any>) and
+pipe to nindent. The value is quoted, so a boolean or a number renders as a string.
+*/}}
+{{- define "runefoble.plainEnv" -}}
+- name: {{ .name }}
+  value: {{ .value | quote }}
+{{- end -}}
+
+{{/*
+PostgreSQL URL for a service container. The password is not in the URL. The container reads
+POSTGRES_PASSWORD from its env, so Kubernetes expands $(POSTGRES_PASSWORD) at start. POSTGRES_PASSWORD
+must come before this variable in the env list. Call with (dict "root" $ "driver" "postgresql+asyncpg")
+and pipe to quote. The scheme is the driver: each service sets the scheme its driver reads.
+*/}}
+{{- define "runefoble.databaseUrl" -}}
+{{- $pg := .root.Values.postgres -}}
+{{- printf "%s://%s:$(POSTGRES_PASSWORD)@postgres:%d/%s" .driver $pg.username (int $pg.port) $pg.database -}}
+{{- end -}}
+
+{{/*
+Redis URL for the event bus. Call with $ and pipe to quote. The chart renders the Redis
+StatefulSet only when redis.enabled is true, and the URL points at that Service.
+*/}}
+{{- define "runefoble.redisUrl" -}}
+{{- printf "redis://runefoble-redis:%d/0" (int .Values.redis.port) -}}
+{{- end -}}
+
+{{/*
+Platform env for one service container: PostgreSQL, SpiceDB, Redis, OpenTelemetry, and the
+Zitadel verification settings. The Redis URL is rendered only when redis.enabled is true.
+Call with (dict "root" $ "svc" <services entry>) and pipe to trim, then nindent.
+The values that differ per service come from the services entry: databaseDriver.
+*/}}
+{{- define "runefoble.platformEnv" -}}
+{{- $root := .root -}}
+{{- $svc := .svc -}}
+{{- include "runefoble.secretEnv" (dict "root" $root "name" "POSTGRES_PASSWORD" "key" "postgres-password") | nindent 0 }}
+{{- include "runefoble.secretEnv" (dict "root" $root "name" "RUNEFOBLE_SPICEDB_PRESHARED_KEY" "key" "spicedb-preshared-key") | nindent 0 }}
+{{- include "runefoble.plainEnv" (dict "name" "RUNEFOBLE_DATABASE_URL" "value" (include "runefoble.databaseUrl" (dict "root" $root "driver" ($svc.databaseDriver | default "postgresql+asyncpg")))) | nindent 0 }}
+{{- include "runefoble.plainEnv" (dict "name" "RUNEFOBLE_SPICEDB_ENDPOINT" "value" (printf "spicedb:%v" $root.Values.spicedb.grpcPort)) | nindent 0 }}
+{{- if $root.Values.redis.enabled }}
+{{- include "runefoble.plainEnv" (dict "name" "RUNEFOBLE_REDIS_URL" "value" (include "runefoble.redisUrl" $root)) | nindent 0 }}
+{{- end }}
+{{- include "runefoble.plainEnv" (dict "name" "RUNEFOBLE_OTEL_ENABLED" "value" $root.Values.observability.enabled) | nindent 0 }}
+{{- include "runefoble.plainEnv" (dict "name" "RUNEFOBLE_OTEL_EXPORTER_OTLP_ENDPOINT" "value" (printf "http://otel-collector:%v" $root.Values.observability.otelCollector.grpcPort)) | nindent 0 }}
+{{- include "runefoble.zitadelServiceEnv" $root | nindent 0 }}
+{{- end -}}
