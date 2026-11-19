@@ -22,11 +22,15 @@ from inference_worker.config import WorkerSettings
 
 @dataclass
 class FakeOpenAI:
-    """The state of one fake server. Set `status` and `content` before a request."""
+    """The state of one fake server. Set `status` and `content` before a request.
+
+    Set `raw_body` to send those exact bytes with status 200 instead of a chat completion.
+    """
 
     base_url: str = ""
     status: int = 200
     content: str = "{}"
+    raw_body: bytes | None = None
     requests: list[dict[str, Any]] = field(default_factory=list)
 
     def settings(self, **overrides: Any) -> WorkerSettings:
@@ -64,10 +68,15 @@ class _Handler(BaseHTTPRequestHandler):
         if state.status != 200:
             self._send(state.status, {"error": {"message": "fake failure", "type": "invalid"}})
             return
+        if state.raw_body is not None:
+            self._send_bytes(200, state.raw_body)
+            return
         self._send(200, _chat_completion(state.content, body.get("model", "")))
 
     def _send(self, status: int, document: dict[str, Any]) -> None:
-        payload = json.dumps(document).encode()
+        self._send_bytes(status, json.dumps(document).encode())
+
+    def _send_bytes(self, status: int, payload: bytes) -> None:
         self.send_response(status)
         self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(payload)))

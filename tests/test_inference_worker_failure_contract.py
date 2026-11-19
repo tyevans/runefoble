@@ -146,6 +146,38 @@ async def test_failing_model_server_returns_503(use_worker_backend, fake_llm):
 
 
 @pytest.mark.asyncio
+async def test_model_server_500_returns_503(use_worker_backend, fake_llm):
+    """A model server that answers 500 is an unavailable backend: the worker answers 503."""
+    fake_llm.status = 500
+    use_worker_backend(fake_llm.settings())
+
+    async with AsyncClient(
+        transport=ASGITransport(app=api.app), base_url="http://test", headers=WORKER_AUTH
+    ) as ac:
+        resp = await ac.post("/inference/v1/intent", json=INTENT_PAYLOAD)
+
+    assert resp.status_code == 503
+    assert resp.json() == {"error": "backend_unavailable", "backend": "openai_compatible"}
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("raw_body", [b"not json{", b'{"id": "no-choices"}'])
+async def test_undecodable_model_server_body_is_500_not_503(use_worker_backend, fake_llm, raw_body):
+    """A body the client library cannot decode is a defect, not an outage. It is never a 503."""
+    fake_llm.raw_body = raw_body
+    use_worker_backend(fake_llm.settings())
+
+    async with AsyncClient(
+        transport=ASGITransport(app=api.app, raise_app_exceptions=False),
+        base_url="http://test",
+        headers=WORKER_AUTH,
+    ) as ac:
+        resp = await ac.post("/inference/v1/intent", json=INTENT_PAYLOAD)
+
+    assert resp.status_code == 500
+
+
+@pytest.mark.asyncio
 async def test_watcher_speech_surfaces_worker_503(use_worker_backend, monkeypatch, fake_llm):
     """The Watcher returns its own 503 when the worker reports backend_unavailable."""
     await make_table_runner("user-1", "sess-1", "camp-1")

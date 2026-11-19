@@ -3,6 +3,7 @@
 from typing import ClassVar
 
 import httpx
+import openai
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_openai import ChatOpenAI
 from pydantic import SecretStr
@@ -10,6 +11,10 @@ from pydantic import SecretStr
 from inference_worker.ports import Completion, LLMPort, backend_unavailable
 
 PROBE_TIMEOUT_SECONDS = 2.0
+
+# Transport and API errors of the client library mean the backend is unavailable (503).
+# Any other error is a defect. It propagates, and the app answers 500.
+BACKEND_ERRORS: tuple[type[Exception], ...] = (openai.APIError, httpx.HTTPError)
 
 
 async def probe_endpoint(engine: str, url: str) -> None:
@@ -56,7 +61,7 @@ class OpenAICompatibleLLM(LLMPort):
             response = await self._chat.ainvoke(
                 [SystemMessage(content=system_prompt), HumanMessage(content=user_prompt)]
             )
-        except Exception as e:
+        except BACKEND_ERRORS as e:
             raise backend_unavailable(self.engine_name, str(e)) from e
         if not isinstance(response.content, str):
             raise backend_unavailable(self.engine_name, "model returned non-text content")
