@@ -51,6 +51,9 @@ jobs:
       - name: Run Hex Colour Literal Gate
         run: uv run python scripts/check_hex_literals.py
 
+      - name: Run Lit Template Gate
+        run: uv run python scripts/check_lit_templates.py
+
       - name: Install spec-ops
         run: |
           make install-spec-ops
