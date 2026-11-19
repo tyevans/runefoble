@@ -1,7 +1,7 @@
 ---
 id: '0721'
 title: Auth Lib Holds Only Identity Code
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0486
@@ -16,14 +16,14 @@ target_release: 0.9.0
 # TASK-0721: Auth Lib Holds Only Identity Code
 
 ## Status
-Refined. Found by the refactor audit round r1 and checked against the code by the orchestrator.
+Complete
 
 ## Summary
 The auth lib ships Zitadel bootstrap tooling and a test double. It also builds concrete adapters when none is injected.
 
 ## Problem Statement
-- `libs/runefoble_auth/src/runefoble_auth/zitadel_bootstrap.py` (181 lines) and `zitadel_bootstrap_job.py` (163 lines) are deployment tooling. `deployments/helm/runefoble/templates/zitadel-bootstrap.yaml:82` runs `python -m runefoble_auth.zitadel_bootstrap_job`.
-- `libs/runefoble_auth/src/runefoble_auth/testing/signing_test_issuer.py` (112 lines) is a test double in the production package. About eight test modules import it.
+- `libs/runefoble_auth/src/runefoble_auth/zitadel_bootstrap.py` (removed), moved to `deployments/zitadel_bootstrap/src/zitadel_bootstrap/`, (181 lines) and `zitadel_bootstrap_job.py` (163 lines) are deployment tooling. `deployments/helm/runefoble/templates/zitadel-bootstrap.yaml:82` runs `python -m runefoble_auth.zitadel_bootstrap_job`.
+- `libs/runefoble_auth/src/runefoble_auth/testing/signing_test_issuer.py` (removed), moved to `tests/helpers/signing_test_issuer.py`, (112 lines) is a test double in the production package. About eight test modules import it.
 - `libs/runefoble_auth/src/runefoble_auth/sync.py:41-42`: `spicedb_client or SpiceDBClient()` and `zitadel_auth or ZitadelAuthService()`. The `or` tests truthiness, not `None`.
 
 ## Documentation & Architecture Review

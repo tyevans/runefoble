@@ -40,6 +40,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Gateway WebSocket routes admit a connection only with a verified `runefoble.bearer.<jwt>` subprotocol, checked before accept. Refused handshakes close with 1008. Removed the `?user_id=`, `?token=`, `x-user-id`, and `guest_user` identity paths on WebSocket and voice/companion signaling routes. (TASK-0522)
 
 ### Removed
+- The inference worker has no mock backend: `RUNEFOBLE_WORKER_BACKEND=mock` is refused at start-up, and a model reply that lacks a required field answers 503 instead of a heuristic result. The Helm default backend is `openai_compatible`. (TASK-0740)
 - Each HTTP route serves one path. The bare duplicates of `/api/v1` routes and other alias paths are removed, and a route inventory test keeps it so. (TASK-0857)
 - The Redis bus drops its unused consumer-group methods and the raw-field fallback. `deserialize_event` lives in `runefoble_platform.event_deserializer`. (TASK-0852)
 - `POST /api/v1/sessions/create` is removed. A game session is created only through the campaign session create, so every session is in its campaign list. (TASK-0844)
@@ -175,6 +176,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
 
 ### Changed
+- Playwright BDD journeys sign in through the real Zitadel OIDC flow. The global setup creates persona users through the Zitadel management API; forged tokens and the dev auth mode are removed from the e2e harness. (TASK-0525)
+- The auth library (`runefoble_auth`) holds only identity and authorization code; other modules moved to their owners. (TASK-0721)
 - The store-outage test helper records appends (`record_appends`); six test modules drop their copied outage stubs. (TASK-0877)
 - The six gateway WebSocket handlers live in one router, `gateway_api/routers/realtime.py`. (TASK-0743)
 - The MCP gateway's tool registry, permission checks and service client pool live in one `GatewayMcpContainer` per app, not in module globals. (TASK-0746)

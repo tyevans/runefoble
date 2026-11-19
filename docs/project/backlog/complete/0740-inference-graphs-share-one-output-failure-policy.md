@@ -1,7 +1,7 @@
 ---
 id: '0740'
 title: Inference Graphs Share One Failure Policy for Unusable Model Output
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0739
@@ -17,7 +17,7 @@ target_release: 0.9.0
 # TASK-0740: Inference Graphs Share One Failure Policy for Unusable Model Output
 
 ## Status
-Refined. Found by the refactor audit round refactor-r1 and checked against the code on 2026-11-17.
+Complete
 
 ## Summary
 For the same bad model output, the intent graph returns a regex heuristic marked `degraded`, and the other two graphs raise an error. ADR-0015 decision 4 says no substitute output.

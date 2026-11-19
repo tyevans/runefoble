@@ -1,7 +1,7 @@
 ---
 id: '0525'
 title: Playwright BDD Journeys Authenticate Through Real Zitadel
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0524
@@ -21,7 +21,7 @@ target_release: 0.9.0
 # TASK-0525: Playwright BDD Journeys Authenticate Through Real Zitadel
 
 ## Status
-Refined
+Complete
 
 ## Summary
 The end-to-end suite signs users in with tokens that the test code forges. The Playwright web server runs with dev mode on. Replace this with real sign-in through the Zitadel OIDC flow. Test users are created through the Zitadel management API, which is a public frontdoor.
@@ -35,7 +35,7 @@ The end-to-end suite signs users in with tokens that the test code forges. The P
 Refactor round 2 addendum (2026-11-18): `e2e/support/auth_fixtures.ts:12` duplicates the `UserClaims` type from `frontend/src/auth/auth-service.ts:13`. `e2e/support/auth_fixtures.ts:190-191` and `:204-205` write the private storage keys `rf_auth_session` and `runefoble-user`. Export one test-only shape and one constant for the keys.
 
 ## Documentation & Architecture Review
-- ADR-0014 (BDD and Playwright) and `docs/how-to/validate-e2e-journeys-with-playwright-bdd.md` and `docs/how-to/test-user-flows-with-playwright-bdd.md`. Update both where they describe token fixtures.
+- ADR-0014 (BDD and Playwright) and `docs/how-to/validate-e2e-journeys-with-playwright-bdd.md` (removed) and `docs/how-to/test-user-flows-with-playwright-bdd.md`. Update both where they describe token fixtures.
 - Test users are provisioned through the Zitadel management API, not the database (invariant 7).
 - The Zitadel application and bootstrap service account come from TASK-0526.
 
@@ -45,7 +45,7 @@ Refactor round 2 addendum (2026-11-18): `e2e/support/auth_fixtures.ts:12` duplic
 
 ## Detailed Specification & Implementation Plan
 1. **Global setup**: create the test personas (`dm`, `player`) through the Zitadel management API, using the bootstrap service account from TASK-0526. Do not write to any database.
-2. **Sign-in fixture**: `signInAs(persona)` runs the real OIDC flow in the browser against Zitadel. Save the storage state per persona under `e2e/.auth/` (git-ignored).
+2. **Sign-in fixture**: `signInAs(persona)` runs the real OIDC flow in the browser against Zitadel. Save the storage state per persona under `e2e/.auth/` (removed) (git-ignored).
 3. **Delete** the mock JWT builders and the `injectUserIntoPage` forging path. A helper may inject a token only if that token came from Zitadel in the same run.
 4. **Web server**: remove `AUTH_DEV_MODE` from `playwright.config.ts`. Run the stack with the Helm or Kind values from TASK-0526.
 5. **Feature files**: add real sign-in and sign-out scenarios to `smoke.feature`. Implement US-0062 scenarios 1 and 2 with real steps.
@@ -76,3 +76,6 @@ Browser journeys through the App Shell only.
 
 - Severity: high
 - Source audits: `w2-e2e-bdd.md`, `w2-app-shell.md`
+
+## Completion Note
+Deviations accepted: no storage state on disk (tokens stay in memory); no App Shell forged-token scenario (ADR-0014); token expiry not tested. Test user cleanup moved to TASK-0842. The admin token was checked absent from commits, files and logs.
