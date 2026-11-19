@@ -34,12 +34,13 @@ When('I click the {string} button', async ({ page }, buttonName: string) => {
 
 When('I switch theme to {string}', async ({ page, world }, themeId: string) => {
   world.activeTheme = themeId;
+  const label = new RegExp(themeId.replace('-', ' '), 'i');
 
-  // 1. Try theme buttons directly inside runefoble-theme-switcher (e.g. on profile page)
+  // 1. Theme buttons inside runefoble-theme-switcher (e.g. on the profile page)
   const switcherBtn = page
     .locator('runefoble-theme-switcher')
     .locator('button.theme-button')
-    .filter({ hasText: new RegExp(themeId.replace('-', ' '), 'i') })
+    .filter({ hasText: label })
     .first();
 
   if (await switcherBtn.isVisible()) {
@@ -47,32 +48,20 @@ When('I switch theme to {string}', async ({ page, world }, themeId: string) => {
     return;
   }
 
-  // 2. Try settings modal trigger
+  // 2. Settings modal: open it, then pick the theme card
   const settingsBtn = page.locator('#settings-trigger-btn').first();
-  if (await settingsBtn.isVisible()) {
-    await settingsBtn.click();
-    const modalThemeCard = page
-      .locator('runefoble-settings-appearance button.theme-card')
-      .filter({ hasText: new RegExp(themeId.replace('-', ' '), 'i') })
-      .first();
-    if (await modalThemeCard.isVisible()) {
-      await modalThemeCard.click();
-      return;
-    }
-  }
-
-  // 3. Frontdoor fallback via DOM standard events
-  await page.evaluate((theme) => {
-    document.documentElement.setAttribute('data-theme', theme);
-    window.localStorage.setItem('runefoble-theme', theme);
-    window.dispatchEvent(
-      new CustomEvent('theme-changed', {
-        detail: { theme },
-        bubbles: true,
-        composed: true,
-      })
-    );
-  }, themeId);
+  await expect(settingsBtn, `No theme control visible for "${themeId}"`).toBeVisible({
+    timeout: 10_000,
+  });
+  await settingsBtn.click();
+  const modalThemeCard = page
+    .locator('runefoble-settings-appearance button.theme-card')
+    .filter({ hasText: label })
+    .first();
+  await expect(modalThemeCard, `No theme card visible for "${themeId}"`).toBeVisible({
+    timeout: 10_000,
+  });
+  await modalThemeCard.click();
 });
 
 Then('I should see the heading {string}', async ({ page }, headingText: string) => {
@@ -93,10 +82,17 @@ Then('the URL hash should be {string}', async ({ page }, expectedHash: string) =
 });
 
 Then('the active theme should be {string}', async ({ page }, expectedTheme: string) => {
-  await expect
-    .poll(
-      async () => page.evaluate(() => document.documentElement.getAttribute('data-theme')),
-      { timeout: 10_000 }
-    )
-    .toBe(expectedTheme);
+  // Read the user-visible control state: the pressed switcher button, or the
+  // active settings theme card. Setup never writes the theme attribute.
+  const label = new RegExp(expectedTheme.replace('-', ' '), 'i');
+  const switcherActive = page
+    .locator('runefoble-theme-switcher button.theme-button[aria-pressed="true"]')
+    .first();
+  const modalActive = page
+    .locator('runefoble-settings-appearance button.theme-card.active')
+    .first();
+  const active = (await switcherActive.isVisible()) ? switcherActive : modalActive;
+
+  await expect(active, `No active theme control visible`).toBeVisible({ timeout: 10_000 });
+  await expect(active).toContainText(label);
 });

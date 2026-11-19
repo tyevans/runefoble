@@ -175,25 +175,15 @@ When(
     const valerosPage = world.getPage('valeros')!;
     const evelynPage = world.getPage('evelyn')!;
 
-    const campaignId = world.campaignId || '4';
-    const sessionId = world.sessionId || '15';
-    const targetHash = `#/campaigns/${campaignId}/sessions/${sessionId}`;
-
-    const currentHash = await valerosPage.evaluate(() => window.location.hash);
-    if (!currentHash.includes('/sessions/')) {
-      if (evelynPage) {
-        const launchBtn = evelynPage.locator('runefoble-session-lobby .btn-launch').first();
-        if (await launchBtn.isVisible()) {
-          await launchBtn.click();
-        } else {
-          await evelynPage.evaluate((h) => {
-            window.location.hash = h;
-          }, targetHash);
-        }
-      }
-      await valerosPage.evaluate((h) => {
-        window.location.hash = h;
-      }, targetHash);
+    // Launch through the DM's visible control. Valeros's browser follows the
+    // session route on its own (see "both Evelyn and Valeros's browsers navigate").
+    const evelynHash = await evelynPage.evaluate(() => window.location.hash);
+    if (!evelynHash.includes('/sessions/')) {
+      const launchBtn = evelynPage.locator('runefoble-session-lobby .btn-launch').first();
+      await expect(launchBtn, 'Launch control must be visible to the DM').toBeVisible({
+        timeout: 10_000,
+      });
+      await launchBtn.click();
     }
 
     await expect(valerosPage.locator('runefoble-board')).toBeVisible({ timeout: 15_000 });
@@ -220,36 +210,17 @@ When(
 
     const srcBox = await token.boundingBox();
     const destBox = await targetCell.boundingBox();
-    if (srcBox && destBox) {
-      await valerosPage.mouse.move(srcBox.x + srcBox.width / 2, srcBox.y + srcBox.height / 2);
-      await valerosPage.mouse.down();
-      await valerosPage.mouse.move(destBox.x + destBox.width / 2, destBox.y + destBox.height / 2, {
-        steps: 5,
-      });
-      await valerosPage.mouse.up();
-    }
+    expect(srcBox, 'Source token must have a layout box').not.toBeNull();
+    expect(destBox, 'Target cell must have a layout box').not.toBeNull();
+    await valerosPage.mouse.move(srcBox!.x + srcBox!.width / 2, srcBox!.y + srcBox!.height / 2);
+    await valerosPage.mouse.down();
+    await valerosPage.mouse.move(destBox!.x + destBox!.width / 2, destBox!.y + destBox!.height / 2, {
+      steps: 5,
+    });
+    await valerosPage.mouse.up();
 
-    // Frontdoor board action dispatch to ensure socket transmission across browsers
-    await valerosPage.evaluate(
-      ({ fX, fY, tX, tY }) => {
-        const b = document.querySelector('runefoble-app')?.shadowRoot?.querySelector('runefoble-board') as any;
-        if (b) {
-          const tok = b.tokens?.find(
-            (t: any) => (t.x === fX && t.y === fY) || t.name === 'Valeros' || t.id === 't1' || t.id === '1'
-          );
-          if (tok) {
-            b.dispatchEvent(
-              new CustomEvent('move-token', {
-                detail: { tokenId: tok.id, toX: tX, toY: tY },
-                bubbles: true,
-                composed: true,
-              })
-            );
-          }
-        }
-      },
-      { fX: fromX, fY: fromY, tX: toX, tY: toY }
-    );
+    // The drag is the only action. Its success is checked through the board.
+    await expect(targetCell.locator('.token')).toBeVisible({ timeout: 10_000 });
   }
 );
 
