@@ -140,14 +140,29 @@ from runefoble_platform.aggregate_loading import register_store_unavailable_hand
 from runefoble_platform.domain_errors_http import install_domain_error_handlers
 
 register_store_unavailable_handlers(app)
-install_domain_error_handlers(app, not_found=(BoardNotFoundError, BoardElementNotFoundError))
+install_domain_error_handlers(app)
 ```
 
-- `ValueError` answers `400` with the error text.
-- `AggregateNotFoundError` and each type in `not_found` answer `404`.
+- `DomainRefusedError` answers `400` with the error text.
+- `DomainNotFoundError` and `AggregateNotFoundError` answer `404` with the error text.
 - A store outage answers `503` through `register_store_unavailable_handlers`.
+- Any other error answers `500` with the fixed text `Internal Server Error`. The client does not get the exception text.
 
-Raise a typed not-found error when a command names an element that does not exist. Do not match the text of the message. Starlette picks the most specific registered class, so a not-found type that subclasses `ValueError` answers `404`.
+When an aggregate refuses a command, raise `DomainRefusedError` from `runefoble_platform.domain_errors`, or a subclass of it. When a command names an element that does not exist, raise a subclass of `DomainNotFoundError`. Do not match the text of the message.
+
+Do not raise `ValueError` to refuse a command. The handlers do not map `ValueError`, because a programming error or a `pydantic.ValidationError` in service code also raises it. Such an error is a defect, so it answers `500` (TASK-0914).
+
+```python
+from runefoble_platform.domain_errors import DomainNotFoundError, DomainRefusedError
+
+
+class BoardElementNotFoundError(DomainNotFoundError):
+    """A command names a token that is not on the board."""
+
+
+if not is_within_bounds(to_x, to_y, cols, rows):
+    raise DomainRefusedError(f"Target coordinates ({to_x}, {to_y}) out of bounds")
+```
 
 ### Hold a repository at module level
 

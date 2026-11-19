@@ -5,6 +5,8 @@ from __future__ import annotations
 from collections.abc import Iterable
 from typing import Any
 
+from runefoble_platform.domain_errors import DomainRefusedError
+
 
 def is_within_bounds(x: int, y: int, cols: int, rows: int) -> bool:
     """Return True if coordinates (x, y) fall within grid boundaries."""
@@ -14,18 +16,18 @@ def is_within_bounds(x: int, y: int, cols: int, rows: int) -> bool:
 def validate_point_within_bounds(
     x: int, y: int, cols: int, rows: int, label: str = "Coordinates"
 ) -> None:
-    """Raise ValueError if coordinates (x, y) are out of bounds."""
+    """Raise DomainRefusedError if coordinates (x, y) are out of bounds."""
     if not is_within_bounds(x, y, cols, rows):
-        raise ValueError(f"{label} ({x}, {y}) out of grid bounds")
+        raise DomainRefusedError(f"{label} ({x}, {y}) out of grid bounds")
 
 
 def validate_cells_within_bounds(
     cells: list[list[int]], cols: int, rows: int, label: str = "Cell"
 ) -> None:
-    """Raise ValueError if any coordinate in cells is out of bounds."""
+    """Raise DomainRefusedError if any coordinate in cells is out of bounds."""
     for c in cells:
         if len(c) < 2 or not is_within_bounds(c[0], c[1], cols, rows):
-            raise ValueError(f"{label} coordinates {c} out of grid bounds")
+            raise DomainRefusedError(f"{label} coordinates {c} out of grid bounds")
 
 
 def find_uncharted_cells(

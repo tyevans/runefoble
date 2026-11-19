@@ -5,6 +5,7 @@ from typing import Any, Literal
 from character_sheet.models import CharacterState
 from eventsource.domain.decorators import handles
 from runefoble_events import events as ev
+from runefoble_platform.domain_errors import DomainRefusedError
 from runefoble_platform.stand_in_guardrails import StandInGuardrailPolicy
 
 PenaltyType = Literal["drunk", "foolishness", "cowardice", "greed", "curse"]
@@ -99,7 +100,7 @@ class VitalsHandlerMixin:
     def clear_penalty(self, penalty_type: str) -> None:
         """Clear an active penalty once the player returns or redeems themselves."""
         if penalty_type.lower() not in self.state.penalties:
-            raise ValueError(f"Penalty '{penalty_type}' is not active on this character")
+            raise DomainRefusedError(f"Penalty '{penalty_type}' is not active on this character")
         self.create_event(ev.AbsencePenaltyCleared, penalty_type=penalty_type.lower())
 
     def apply_condition(
@@ -117,7 +118,7 @@ class VitalsHandlerMixin:
         """Remove a status condition from the character."""
         cond = condition.lower()
         if cond not in self.state.conditions:
-            raise ValueError(f"Condition '{condition}' is not active on this character")
+            raise DomainRefusedError(f"Condition '{condition}' is not active on this character")
         self.create_event(ev.ConditionRemoved, condition=cond)
 
     @handles(ev.CharacterHealthChanged)

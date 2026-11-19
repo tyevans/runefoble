@@ -8,6 +8,7 @@ from uuid import uuid4
 from character_sheet.models import CharacterState, WardrobeVariant
 from eventsource.domain.decorators import handles
 from runefoble_events import events as ev
+from runefoble_platform.domain_errors import DomainRefusedError
 
 
 class PortraitHandlerMixin:
@@ -57,7 +58,7 @@ class PortraitHandlerMixin:
         target_url: str | None = custom_url or None
         if variant_id:
             if variant_id not in self.state.wardrobe_variants:
-                raise ValueError(
+                raise DomainRefusedError(
                     f"Wardrobe variant '{variant_id}' does not exist on this character"
                 )
             target_url = self.state.wardrobe_variants[variant_id].image_url

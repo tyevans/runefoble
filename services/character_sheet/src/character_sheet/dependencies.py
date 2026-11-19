@@ -173,7 +173,7 @@ async def execute_condition_mutation(
     """Apply one condition change, save it, then publish the events it committed.
 
     The events are read before the save, because a save clears them. A refused change raises
-    ValueError (HTTP 400 through the service handler) and publishes nothing.
+    DomainRefusedError (HTTP 400 through the service handler) and publishes nothing.
     """
     char = await load_character(repo, character_id)
     mutation_fn(char)

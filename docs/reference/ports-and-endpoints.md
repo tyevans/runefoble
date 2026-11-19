@@ -607,18 +607,19 @@ The response describes the audio it carries. Filters run on the synthesised clip
 
 Engine failure returns `503` with `{"detail": {"error": "speech_synthesis_unavailable", "engine": "espeak-ng", "message": "..."}}`. No audio field is present.
 
-## Board and Character Mutation Errors (TASK-0752)
+## Board and Character Mutation Errors (TASK-0752, TASK-0914)
 
 The `board-state` and `character-sheet` services map errors in one place, at application start-up. Their routes do not catch errors.
 
 | Error | Status | Body |
 |---|---|---|
-| `ValueError` (a refused command or bad input, for example a move out of bounds) | `400` | `{"detail": "<domain message>"}` |
-| A missing board, a token, trap or AoE template that is not on the board, or no matching ghost token | `404` | `{"detail": "<domain message>"}` |
+| `DomainRefusedError` (a refused command, for example a move out of bounds) | `400` | `{"detail": "<domain message>"}` |
+| `DomainNotFoundError` or `AggregateNotFoundError` (a missing board, a token, trap or AoE template that is not on the board, or no matching ghost token) | `404` | `{"detail": "<domain message>"}` |
 | Event store outage (`SQLAlchemyError`, `OSError`) | `503` | `{"detail": "Event store is unavailable"}` |
 | SpiceDB outage (`AuthzError`) | `503` | `{"error": "authorization_unavailable"}` |
+| Any other error, for example a `ValueError` or a `pydantic.ValidationError` in service code | `500` | `Internal Server Error` (plain text, no exception text) |
 
-A storage outage never answers `400` or `500`. The handlers come from `runefoble_platform.domain_errors_http.install_domain_error_handlers` and `runefoble_platform.aggregate_loading.register_store_unavailable_handlers`.
+A storage outage never answers `400` or `500`. A `ValueError` is not a refused command, so it never answers `400`. The error types come from `runefoble_platform.domain_errors`. The handlers come from `runefoble_platform.domain_errors_http.install_domain_error_handlers` and `runefoble_platform.aggregate_loading.register_store_unavailable_handlers`.
 
 ## Service Bearer Token Verification
 

@@ -9,6 +9,7 @@ from runefoble_events.events import (
     ItemAddedToInventory,
     ItemRemovedFromInventory,
 )
+from runefoble_platform.domain_errors import DomainRefusedError
 
 
 class InventoryHandlerMixin:
@@ -35,7 +36,7 @@ class InventoryHandlerMixin:
         """Remove or consume an item from inventory."""
         iid = str(item_id)
         if iid not in self.state.inventory:
-            raise ValueError(f"Item '{item_id}' not found in inventory")
+            raise DomainRefusedError(f"Item '{item_id}' not found in inventory")
         self.create_event(ItemRemovedFromInventory, item_id=iid, quantity=quantity)
 
     def equip_item(self, slot: str, item_name: str | None = None) -> None:
