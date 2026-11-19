@@ -36,6 +36,13 @@ SKIPPED_PARTS = frozenset({"tests", "node_modules", ".venv", "__pycache__", ".wo
 
 # Call name -> positional index of (resource type, permission or relation name).
 CHECK_CALLS = {"check_permission": (0, 2)}
+# Shared checks in runefoble_auth.permissions (TASK-0817). The subject is always a user.
+# Call name -> (resource type, permission) as (position, keyword) pairs.
+SUBJECT_CHECK_CALLS = {
+    "check_subject": ((1, "resource_type"), (3, "permission")),
+    "require_subject": ((1, "resource_type"), (3, "permission")),
+    "require_permission": ((0, "resource_type"), (1, "permission")),
+}
 WRITE_CALLS = {
     "write_relationship": (0, 2),
     "touch_relationship": (0, 2),
@@ -103,6 +110,13 @@ def _uses_in_call(path: str, call: ast.Call) -> Iterator[NameUse]:
         subject_type = _literal(_argument(call, SUBJECT_TYPE_INDEX))
         kind = "permission" if name in CHECK_CALLS else "relation"
         yield NameUse(path, line, f"{name}:{kind}", resource_type, member, subject_type)
+    elif name in SUBJECT_CHECK_CALLS:
+        (type_pos, type_kw), (perm_pos, perm_kw) = SUBJECT_CHECK_CALLS[name]
+        resource_type = _literal(_argument(call, type_pos) or _argument(call, type_kw))
+        permission = _literal(_argument(call, perm_pos) or _argument(call, perm_kw))
+        if resource_type is None or permission is None:
+            return
+        yield NameUse(path, line, f"{name}:permission", resource_type, permission, "user")
     elif name == "require_zanzibar_permission":
         permission = _literal(_argument(call, 0))
         if permission is None:
@@ -172,7 +186,9 @@ def test_gate_finds_real_call_sites() -> None:
     """Guards against a vacuous pass: the scan must see the known SpiceDB call sites."""
     uses = collect_name_uses()
     kinds = {use.kind for use in uses}
-    assert any(use.kind.startswith("check_permission") for use in uses)
+    checks = ("check_permission", *SUBJECT_CHECK_CALLS)
+    assert any(use.kind.split(":")[0] in checks for use in uses)
+    assert any(use.kind.split(":")[0] in SUBJECT_CHECK_CALLS for use in uses)
     assert any(use.kind.startswith("write_relationship") for use in uses)
     assert "ACTION_PERMISSIONS" in kinds
     assert len(uses) >= 50
