@@ -117,6 +117,9 @@ curl -X POST http://localhost:8004/api/v1/sessions/session-101/rest/campfire \
 ```
 
 ### Response
+
+In this example, three characters are seated in `session-101`. The body sends no ids, so the route heals the seated characters.
+
 ```json
 {
   "session_id": "session-101",
@@ -133,6 +136,16 @@ curl -X POST http://localhost:8004/api/v1/sessions/session-101/rest/campfire \
   "status": "completed"
 }
 ```
+
+### Who Is Healed
+
+The route builds `participants_healed` in this order:
+
+1. If the body has `participating_character_ids`, the list holds those ids, in request order.
+2. If not, the list holds the characters that are seated in the session. Each entry is the character name, or the character id when the seat has no name.
+3. If the session has no seated characters, the list is empty (`[]`). The route still answers `200` and applies the boons.
+
+An empty rest is valid. The route never puts names that it did not read from the request or the session into the list (ADR-0015). A DM can run a rest before players seat their characters. To heal specific characters, send their ids.
 
 ---
 

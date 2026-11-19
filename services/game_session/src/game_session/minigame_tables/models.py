@@ -22,7 +22,7 @@ class MinigameTableState(BaseModel):
     """Synchronized multiplayer game state for an establishment or casino table."""
 
     table_id: str
-    establishment_id: str = "est-default"
+    establishment_id: str
     game_type: str = "darts"  # darts, liars_dice, roulette, craps
     status: str = "active"
     pot: int = 0

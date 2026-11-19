@@ -83,7 +83,8 @@ async def campfire_rest(
     prompt = req.storytelling_prompt or random.choice(COLLABORATIVE_PROMPTS)
 
     session = await load_if_exists(sessions, opaque_aggregate_id(session_id, field="session_id"))
-    participants_healed = []
+    # An empty rest is valid: with no ids and no seated characters, nobody is healed (ADR-0015).
+    participants_healed: list[str] = []
     if req.participating_character_ids:
         participants_healed = [str(cid) for cid in req.participating_character_ids]
     elif session is not None:
@@ -92,8 +93,6 @@ async def campfire_rest(
             for p in session.state.participants.values()
             if p.character_id
         ]
-    if not participants_healed:
-        participants_healed = ["Bram the Tinkerer", "Valeros", "Kyra"]
 
     # Calculate baseline resting boons
     boons: list[str] = ["Campfire Camaraderie (+1 Morale to Initiative)"]

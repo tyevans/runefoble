@@ -115,3 +115,18 @@ def test_opening_the_same_table_twice_is_a_conflict(session_client: TestClient) 
         headers=_auth(),
     )
     assert res.status_code == 409
+
+
+def test_opening_a_table_without_an_establishment_is_rejected(session_client: TestClient) -> None:
+    """The open request names its establishment. No substitute id fills a missing value."""
+    table_id = f"table-no-est-{uuid4().hex[:6]}"
+    res = session_client.post(
+        "/api/v1/tavern/tables",
+        json={"table_id": table_id, "game_type": "darts"},
+        headers=_auth(),
+    )
+    assert res.status_code == 422
+    assert any(err["loc"][-1] == "establishment_id" for err in res.json()["detail"])
+    assert (
+        session_client.get(f"/api/v1/tavern/tables/{table_id}", headers=_auth()).status_code == 404
+    )
