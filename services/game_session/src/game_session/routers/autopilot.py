@@ -13,6 +13,7 @@ from game_session.events import STREAM_WATCHER
 from game_session.models import AutoPilotRequest, AutoPilotResponse
 from game_session.routers.session_auth import session_permission
 from runefoble_events.events import AbsencePenaltyApplied
+from runefoble_platform.event_publish import publish_aggregate_events
 from runefoble_platform.stand_in_action import StandInAction
 
 router = APIRouter(dependencies=[Depends(session_permission("control"))], tags=["autopilot"])
@@ -144,27 +145,19 @@ async def auto_pilot_turn(
     # by the session repository when it commits the aggregate above.
     bus = get_event_bus()
     if bus:
-        try:
-            for p in request_data.penalties:
-                p_clean = p.lower()
-                if p_clean in ("drunk", "foolishness", "cowardice", "greed", "curse"):
-                    pen_event = AbsencePenaltyApplied(
-                        aggregate_id=session_id,
-                        session_id=session_id,
-                        campaign_id=session.state.campaign_id,
-                        penalty_type=p_clean,
-                        description=(
-                            stand_in_action.penalty_influence or f"Absence penalty {p} active"
-                        ),
-                        imposed_by="the_watcher",
-                    )
-                    await bus.publish_event(STREAM_WATCHER, pen_event)
-        except Exception as e:
-            logger.warning(
-                "Failed to publish auto-pilot event to Redis stream '%s': %s",
-                STREAM_WATCHER,
-                e,
+        penalty_events = [
+            AbsencePenaltyApplied(
+                aggregate_id=session_id,
+                session_id=session_id,
+                campaign_id=session.state.campaign_id,
+                penalty_type=p.lower(),
+                description=(stand_in_action.penalty_influence or f"Absence penalty {p} active"),
+                imposed_by="the_watcher",
             )
+            for p in request_data.penalties
+            if p.lower() in ("drunk", "foolishness", "cowardice", "greed", "curse")
+        ]
+        await publish_aggregate_events(bus, STREAM_WATCHER, penalty_events)
 
     return AutoPilotResponse(
         session_id=session_id,

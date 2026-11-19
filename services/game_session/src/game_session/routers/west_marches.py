@@ -23,7 +23,7 @@ from game_session.west_marches_models import (
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.permissions import require_subject
 from runefoble_platform.aggregate_loading import load_or_404
-from runefoble_platform.event_publish import publish_or_fail
+from runefoble_platform.event_publish import publish_aggregate_events
 from runefoble_platform.identifiers import parse_uuid
 
 router = APIRouter(
@@ -145,8 +145,7 @@ async def record_discovery(
 
     bus = get_event_bus()
     if bus:
-        for ev in events_to_emit:
-            await publish_or_fail(bus, STREAM_WEST_MARCHES, ev)
+        await publish_aggregate_events(bus, STREAM_WEST_MARCHES, events_to_emit)
 
     found = next((d for d in world.state.discoveries if d["discovery_id"] == did), None)
     return {"shared_world_id": str(wid), "discovery": found}

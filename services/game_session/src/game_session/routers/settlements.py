@@ -27,20 +27,12 @@ from game_session.settlement.models import (
 )
 from game_session.settlement.settlement_aggregate import SettlementAggregate
 from runefoble_auth.factory import get_spicedb_client
-from runefoble_platform.event_publish import publish_or_fail
+from runefoble_platform.event_publish import publish_aggregate_events
 from runefoble_platform.identifiers import parse_uuid
 
 router = APIRouter(
     dependencies=[Depends(get_principal)], prefix="/settlements", tags=["settlements"]
 )
-
-
-async def _save_and_publish(repo: Any, bus: Any, agg: Any) -> None:
-    events = list(agg.uncommitted_events)
-    await repo.save(agg)
-    if bus:
-        for ev in events:
-            await publish_or_fail(bus, STREAM_WEST_MARCHES, ev)
 
 
 async def _load_haven(sid: str, perm: str, uid: str | None) -> SettlementAggregate:
@@ -75,7 +67,10 @@ async def charter_settlement(
         defense_rating=req.defense_rating,
         metadata=req.metadata,
     )
-    await _save_and_publish(repo, bus, agg)
+    events = list(agg.uncommitted_events)
+    await repo.save(agg)
+    if bus:
+        await publish_aggregate_events(bus, STREAM_WEST_MARCHES, events)
     await write_settlement_relationships(
         spicedb,
         str(sid),
@@ -110,7 +105,11 @@ async def upgrade_settlement(
         raise HTTPException(status_code=409, detail=str(e)) from e
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
-    await _save_and_publish(get_settlement_repository(), get_event_bus(), agg)
+    events = list(agg.uncommitted_events)
+    await get_settlement_repository().save(agg)
+    bus = get_event_bus()
+    if bus:
+        await publish_aggregate_events(bus, STREAM_WEST_MARCHES, events)
     if req.contributing_campaign_id:
         await register_campaign_haven_discovery(
             get_spicedb_client(), settlement_id, req.contributing_campaign_id
@@ -135,7 +134,11 @@ async def deposit_haven_resources(
         agg.deposit_resources(gold=req.gold, materials=req.materials, deposited_by=caller_id)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
-    await _save_and_publish(get_settlement_repository(), get_event_bus(), agg)
+    events = list(agg.uncommitted_events)
+    await get_settlement_repository().save(agg)
+    bus = get_event_bus()
+    if bus:
+        await publish_aggregate_events(bus, STREAM_WEST_MARCHES, events)
     return {"settlement_id": str(settlement_id), **agg.state.model_dump()}
 
 
@@ -148,7 +151,11 @@ async def claim_haven_rest_boon(
     """Claim sanctum resting boons or workshop buffs for an adventuring party."""
     agg = await _load_haven(settlement_id, "use", caller_id)
     boon = agg.claim_rest_boon(req.campaign_id, req.character_id, caller_id, req.facility_id)
-    await _save_and_publish(get_settlement_repository(), get_event_bus(), agg)
+    events = list(agg.uncommitted_events)
+    await get_settlement_repository().save(agg)
+    bus = get_event_bus()
+    if bus:
+        await publish_aggregate_events(bus, STREAM_WEST_MARCHES, events)
     return {"settlement_id": str(settlement_id), "boon": boon, **agg.state.model_dump()}
 
 

@@ -31,7 +31,7 @@ from game_session.voice_client import VoiceAgentUnavailableError
 from pydantic import BaseModel
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_platform.aggregate_loading import load_if_exists
-from runefoble_platform.event_publish import publish_or_fail
+from runefoble_platform.event_publish import publish_aggregate_events
 from runefoble_platform.identifiers import opaque_aggregate_id
 
 router = APIRouter(dependencies=[Depends(get_principal)], tags=["tavern"])
@@ -139,8 +139,7 @@ async def start_minigame(
 
     bus = get_event_bus()
     if bus:
-        for ev in events_to_publish:
-            await publish_or_fail(bus, STREAM_TAVERN, ev)
+        await publish_aggregate_events(bus, STREAM_TAVERN, events_to_publish)
 
     return aggregate.state
 
@@ -190,8 +189,7 @@ async def take_minigame_turn(
 
     bus = get_event_bus()
     if bus:
-        for ev in events_to_publish:
-            await publish_or_fail(bus, STREAM_TAVERN, ev)
+        await publish_aggregate_events(bus, STREAM_TAVERN, events_to_publish)
 
     return {
         "game_id": game_id,
