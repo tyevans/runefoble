@@ -6,6 +6,11 @@ the modifier. It asks the inference worker for narration and records the result 
 the DM. The DM decides whether the table sees it. When the worker cannot narrate, the DM gets a
 notice instead. No canned text is ever recorded.
 
+After the save, the consumer publishes the `WhisperRecorded` event on `runefoble.events.watcher`,
+so the gateway sends it to the DM session sockets (TASK-0927). A failed publish raises. The
+whisper stays recorded, and a redelivery records and publishes nothing, so the DM reads that
+whisper through the whisper list.
+
 A modifier that the DM rejected, a modifier of another campaign, and a redelivered modifier
 record nothing. A modifier that names no known session is refused and dead-lettered.
 """
@@ -29,10 +34,11 @@ from runefoble_platform.audience_modifiers import (
 )
 from runefoble_platform.consumer_group import RedisConsumerGroup
 from runefoble_platform.engine_ports import EngineUnavailableError
+from runefoble_platform.event_publish import publish_aggregate_events
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 from runefoble_platform.stream_consumer import StreamConsumer, SupervisedStreamConsumers
 from the_watcher.copilot_state.whispers import WhisperAggregate, whisper_log_id
-from the_watcher.dependencies import logger
+from the_watcher.dependencies import STREAM_WATCHER, logger
 from the_watcher.engine_selection import WatcherEngineSettings
 from the_watcher.models import WhisperSuggestion
 from the_watcher.worker_client import call_worker
@@ -113,7 +119,7 @@ async def _narrate(modifier: AudienceModifierApproved) -> tuple[str, str, dict[s
 
 
 async def record_audience_narration(
-    event: Any, repo: AggregateRepository[WhisperAggregate]
+    event: Any, repo: AggregateRepository[WhisperAggregate], bus: RedisStreamsEventBus
 ) -> None:
     """Record one whisper for the DM about an approved modifier.
 
@@ -156,6 +162,7 @@ async def record_audience_narration(
                 metadata=metadata,
             )
         )
+        events = list(log.uncommitted_events)
         try:
             await repo.save(log)
         except OptimisticLockError:
@@ -165,6 +172,7 @@ async def record_audience_narration(
                 "Whisper log for session %s changed during a write. Retrying.", session_id
             )
             continue
+        await publish_aggregate_events(bus, STREAM_WATCHER, events)
         return
     raise refusal(modifier, f"could not be recorded after {RECORD_ATTEMPTS} attempts.")
 
@@ -181,7 +189,7 @@ async def start_audience_narration_consumers(
     consumer_group = RedisConsumerGroup(client=await bus.get_client())
 
     async def _handle(_message_id: str, event: Any) -> None:
-        await record_audience_narration(event, whisper_repo)
+        await record_audience_narration(event, whisper_repo, bus)
 
     consumers = SupervisedStreamConsumers(
         CONSUMER_NAME,

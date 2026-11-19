@@ -1,5 +1,9 @@
 """Supervised consumer that sends server session frames from domain events (TASK-0923).
 
+It reads `runefoble.events.session` (dice and turns) and `runefoble.events.watcher` (whispers,
+TASK-0927). A DM-only frame goes to the DM socket group only, never to player or spectator
+sockets.
+
 Governed by ADR-0006 (Redis Streams), ADR-0011 (domain events) and ADR-0015 (fail loud).
 
 Each gateway replica holds its own session sockets, so each replica must read every event. The
@@ -19,7 +23,7 @@ import socket
 from collections import OrderedDict
 from typing import Any
 
-from gateway_api.dependencies import ws_manager
+from gateway_api.dependencies import ws_dm_manager, ws_manager
 from gateway_api.live_session_frames import live_frame_for
 from runefoble_platform.consumer_group import RedisConsumerGroup
 from runefoble_platform.redis_bus import RedisStreamsEventBus
@@ -29,6 +33,7 @@ logger = logging.getLogger("runefoble.gateway.session_frame_consumer")
 
 SESSION_FRAMES = "session_frames"
 SESSION_STREAM = "runefoble.events.session"
+WATCHER_STREAM = "runefoble.events.watcher"
 SEEN_EVENT_LIMIT = 1000
 
 
@@ -63,8 +68,8 @@ class SessionFrameRelay:
         if not self._seen.first_time(event_id):
             logger.info("Skipped redelivered event %s; its frame was sent", event_id)
             return
-        session_id, frame = mapped
-        await ws_manager.broadcast(session_id, frame)
+        groups = ws_dm_manager if mapped.dm_only else ws_manager
+        await groups.broadcast(mapped.session_id, mapped.frame)
 
 
 async def _stream_end() -> str:
@@ -78,17 +83,19 @@ async def start_session_frame_consumers(bus: RedisStreamsEventBus) -> Supervised
     """
     replica = socket.gethostname()
     relay = SessionFrameRelay()
+    client = await bus.get_client()
     consumers = SupervisedStreamConsumers(
         SESSION_FRAMES,
         [
             StreamConsumer(
-                consumer_group=RedisConsumerGroup(client=await bus.get_client()),
-                stream=SESSION_STREAM,
+                consumer_group=RedisConsumerGroup(client=client),
+                stream=stream,
                 group_name=f"gateway_session_frames_{replica}",
                 consumer_name=f"gateway_{replica}",
                 handler=relay.handle,
                 resume_position=_stream_end,
             )
+            for stream in (SESSION_STREAM, WATCHER_STREAM)
         ],
     )
     await consumers.start()
@@ -99,6 +106,7 @@ __all__ = [
     "SEEN_EVENT_LIMIT",
     "SESSION_FRAMES",
     "SESSION_STREAM",
+    "WATCHER_STREAM",
     "SeenEvents",
     "SessionFrameRelay",
     "start_session_frame_consumers",

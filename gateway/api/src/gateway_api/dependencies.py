@@ -25,6 +25,9 @@ set_event_bus = event_bus_provider.set
 
 # Live session sockets, one group per session. A broadcast reaches only that session's sockets.
 ws_manager = WebSocketGroups[str]()
+# The session sockets whose caller held `session.control` at admit time (TASK-0927). Only these
+# sockets get DM-only frames such as `dm_whisper`. Each one is in `ws_manager` too.
+ws_dm_manager = WebSocketGroups[str]()
 
 
 def get_upstreams(connection: HTTPConnection) -> UpstreamRegistry:

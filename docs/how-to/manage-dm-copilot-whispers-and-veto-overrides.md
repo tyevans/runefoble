@@ -125,6 +125,20 @@ GET /api/v1/watcher/whispers?session_id=sess-101&campaign_id=camp-202&page=1&lim
 Authorization: Bearer <dm_evelyn access token>
 ```
 
+### Receive Whispers Live on the Session Socket
+
+The Watcher publishes `runefoble.events.watcher.whisper_recorded` on `runefoble.events.watcher` after it saves each whisper (TASK-0927). The gateway sends the whisper to the DM on the session socket (`/ws/session/{session_id}`):
+
+```json
+{"type": "dm_whisper", "sessionId": "<session_id>", "whisper": {"whisper_id": "whisp-1a2b3c4d", "whisper_type": "monster_tactics", "content": "...", "timestamp": "..."}}
+```
+
+- The gateway checks `session.control` once, when the socket opens. Only a socket of a DM, GM, or campaign owner gets `dm_whisper`. Player and spectator sockets never get it.
+- When SpiceDB cannot answer at open, the socket gets an `AUTHZ_UNAVAILABLE` error frame with `action: "dm_whisper"`. That socket gets no whispers. Open the socket again to retry.
+- A redelivered event gives no second frame.
+- The whisper routes publish with `publish_or_fail`. When the stream is unreachable, the route answers `503`. The whisper is saved, but no live frame is sent. Read it with the list route.
+- Clients cannot send `dm_whisper`. The gateway answers `UNKNOWN_FRAME` (TASK-0910).
+
 ### Send an Audience Narration to the Table
 An approved audience modifier leads The Watcher to record one whisper of type `audience_narration` for the DM. The whisper stays pending until the DM acts. The DM sends it to the table with:
 ```http

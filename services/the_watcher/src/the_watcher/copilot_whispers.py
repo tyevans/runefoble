@@ -2,6 +2,11 @@
 
 Whispers live in the ``WhisperAggregate`` for each session and recipient. The service runs
 the commands over that aggregate. Clients read whispers through the whisper routes.
+
+After each save the service publishes the new ``WhisperRecorded`` events on
+``runefoble.events.watcher`` with ``publish_or_fail`` (TASK-0927). The gateway sends each one
+as a ``dm_whisper`` frame to the DM session sockets only. A failed publish raises
+``DomainEventPublishError``, which the app maps to 503.
 """
 
 from __future__ import annotations
@@ -13,7 +18,10 @@ from uuid import uuid4
 
 from eventsource.application.aggregates.repository import AggregateRepository
 from runefoble_platform.aggregate_loading import load_or_create
+from runefoble_platform.event_bus import EventBusProvider
+from runefoble_platform.event_publish import publish_aggregate_events
 from the_watcher.copilot_state.whispers import WhisperAggregate, whisper_log_id
+from the_watcher.dependencies import STREAM_WATCHER
 from the_watcher.models import WhisperSuggestion
 
 logger = logging.getLogger("runefoble.the_watcher.whispers")
@@ -82,8 +90,16 @@ class WhisperService:
         self,
         *,
         whisper_repo: AggregateRepository[WhisperAggregate],
+        event_bus: EventBusProvider,
     ) -> None:
         self._whisper_repo = whisper_repo
+        self._event_bus = event_bus
+
+    async def _save_and_publish(self, log: WhisperAggregate) -> None:
+        """Save the log, then publish the events of this save. Raise when a publish fails."""
+        events = list(log.uncommitted_events)
+        await self._whisper_repo.save(log)
+        await publish_aggregate_events(self._event_bus.get(), STREAM_WATCHER, events)
 
     async def list_whispers(
         self,
@@ -99,7 +115,7 @@ class WhisperService:
         if not log.state.whispers:
             for whisper in build_default_whispers(session_id, campaign_id or ""):
                 log.record(whisper)
-            await repo.save(log)
+            await self._save_and_publish(log)
 
         matches = list(log.state.whispers)
         if campaign_id:
@@ -120,7 +136,7 @@ class WhisperService:
         repo = self._whisper_repo
         log = await load_or_create(repo, whisper_log_id(whisper.session_id), _new_whisper_log)
         log.record(whisper)
-        await repo.save(log)
+        await self._save_and_publish(log)
         return whisper
 
     async def generate_whispers(
@@ -139,5 +155,5 @@ class WhisperService:
         log = await load_or_create(repo, whisper_log_id(session_id), _new_whisper_log)
         for whisper in whispers:
             log.record(whisper)
-        await repo.save(log)
+        await self._save_and_publish(log)
         return whispers
