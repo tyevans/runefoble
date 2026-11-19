@@ -6,7 +6,7 @@ from uuid import UUID, uuid4
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, ConfigDict, Field
 from runefoble_auth.factory import get_spicedb_client
-from runefoble_auth.spicedb import SpiceDBClient
+from runefoble_auth.port import SpiceDBPort
 from runefoble_platform.aggregate_loading import load_if_exists
 from runefoble_platform.event_sourcing import AggregateRepository
 
@@ -65,7 +65,7 @@ class RevealInvisibleInkRequest(BaseModel):
 async def generate_handout(
     payload: GenerateHandoutRequest,
     user_id: CallerId,
-    spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)] = None,
+    spicedb: Annotated[SpiceDBPort, Depends(get_spicedb_client)] = None,
     repo: Annotated[
         AggregateRepository[DiegeticHandoutAggregate], Depends(get_handout_repo)
     ] = None,
@@ -127,7 +127,7 @@ async def generate_handout(
 async def get_handout(
     handout_id: UUID,
     user_id: CallerId,
-    spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)] = None,
+    spicedb: Annotated[SpiceDBPort, Depends(get_spicedb_client)] = None,
     repo: Annotated[
         AggregateRepository[DiegeticHandoutAggregate], Depends(get_handout_repo)
     ] = None,
@@ -169,7 +169,7 @@ async def break_seal(
     handout_id: UUID,
     payload: BreakSealRequest,
     user_id: CallerId,
-    spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)] = None,
+    spicedb: Annotated[SpiceDBPort, Depends(get_spicedb_client)] = None,
     repo: Annotated[
         AggregateRepository[DiegeticHandoutAggregate], Depends(get_handout_repo)
     ] = None,
@@ -221,7 +221,7 @@ async def reveal_invisible_ink(
     handout_id: UUID,
     payload: RevealInvisibleInkRequest,
     user_id: CallerId,
-    spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)] = None,
+    spicedb: Annotated[SpiceDBPort, Depends(get_spicedb_client)] = None,
     repo: Annotated[
         AggregateRepository[DiegeticHandoutAggregate], Depends(get_handout_repo)
     ] = None,

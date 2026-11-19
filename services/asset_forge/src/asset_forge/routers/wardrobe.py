@@ -7,7 +7,7 @@ from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException
 from runefoble_auth.factory import get_spicedb_client
-from runefoble_auth.spicedb import SpiceDBClient
+from runefoble_auth.port import SpiceDBPort
 from runefoble_events.events import PortraitVariantGenerated
 from runefoble_platform.asset_index import get_stored_asset
 from runefoble_platform.storage import AssetNotFoundError, SiloStorageService
@@ -38,7 +38,7 @@ async def forge_wardrobe_variant(
     request: WardrobeForgeRequest,
     user_id: CallerId,
     storage: Annotated[SiloStorageService, Depends(get_storage)],
-    spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
+    spicedb: Annotated[SpiceDBPort, Depends(get_spicedb_client)],
     generator: Annotated[WardrobeGenerator, Depends(get_wardrobe_generator)],
 ) -> WardrobeForgeResponse:
     """Synthesize a wardrobe attire variant with the configured generator.
@@ -106,7 +106,7 @@ async def forge_wardrobe_variant(
 async def get_forged_wardrobe_variant(
     variant_id: str,
     user_id: CallerId,
-    spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
+    spicedb: Annotated[SpiceDBPort, Depends(get_spicedb_client)],
 ) -> dict:
     """Retrieve metadata for a forged wardrobe attire variant. Requires `forged_asset.view`."""
     try:

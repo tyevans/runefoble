@@ -11,7 +11,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends
 from runefoble_auth.factory import get_spicedb_client
-from runefoble_auth.spicedb import SpiceDBClient
+from runefoble_auth.port import SpiceDBPort
 from runefoble_platform.aggregate_loading import load_if_exists
 from runefoble_platform.event_sourcing import AggregateRepository
 
@@ -60,7 +60,7 @@ def _records(state: AssetForgeState) -> list[CampaignForgeRecord]:
 async def list_campaign_forge_records(
     campaign_id: UUID,
     user_id: CallerId,
-    spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
+    spicedb: Annotated[SpiceDBPort, Depends(get_spicedb_client)],
     repo: Annotated[AggregateRepository[AssetForgeAggregate], Depends(get_forge_repo)],
 ) -> CampaignForgeRecordsResponse:
     """List the forge records of a campaign. Requires `campaign.view`.

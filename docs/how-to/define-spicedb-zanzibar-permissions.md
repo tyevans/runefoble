@@ -127,6 +127,24 @@ The preshared key is an operator secret. The library has no literal default. `Sp
 
 `SpiceDBClient` communicates strictly over gRPC. If the SpiceDB server is unreachable or fails, operations fail fast and raise exceptions rather than silently degrading to an in-memory mock, preventing permission desynchronization and data loss. For isolated unit tests, instantiate `MockSpiceDBClient` directly.
 
+### Typing the Client in Service Code
+Service code types the client against `SpiceDBPort`. It never names `SpiceDBClient` or `MockSpiceDBClient`. Do not import `runefoble_auth.mock` in service source. Only tests import it.
+
+```python
+from typing import Annotated
+
+from fastapi import Depends
+from runefoble_auth.factory import get_spicedb_client
+from runefoble_auth.port import SpiceDBPort
+
+SpiceDep = Annotated[SpiceDBPort, Depends(get_spicedb_client)]
+
+
+async def require_view(spicedb: SpiceDBPort, campaign_id: str, user_id: str) -> None: ...
+```
+
+Define one dependency alias per service and reuse it in each route. A fresh interpreter that imports a service `main` module must not load `runefoble_auth.mock` (`tests/test_blackbox_auth_production_imports.py`).
+
 ---
 
 ## 4. Writing and Deleting Relationships

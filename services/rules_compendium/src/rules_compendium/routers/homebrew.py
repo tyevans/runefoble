@@ -5,7 +5,7 @@ from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException
 from runefoble_auth.errors import AuthzWriteError
-from runefoble_auth.spicedb import SpiceDBClient
+from runefoble_auth.port import SpiceDBPort
 from runefoble_platform.aggregate_loading import load_or_create
 from runefoble_platform.event_sourcing import AggregateRepository
 
@@ -33,7 +33,7 @@ router = APIRouter(
 async def register_homebrew_rule(
     request: HomebrewCreateRequest,
     user_id: CallerId,
-    spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
+    spicedb: Annotated[SpiceDBPort, Depends(get_spicedb_client)],
     compendium_repo: Annotated[
         AggregateRepository[CompendiumAggregate], Depends(get_compendium_repo)
     ],
@@ -106,7 +106,7 @@ async def register_homebrew_rule(
 async def list_campaign_homebrew(
     campaign_id: UUID,
     user_id: CallerId,
-    spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
+    spicedb: Annotated[SpiceDBPort, Depends(get_spicedb_client)],
     engine: Annotated[CompendiumRetrievalEngine, Depends(get_retrieval_engine)],
     compendium_repo: Annotated[
         AggregateRepository[CompendiumAggregate], Depends(get_compendium_repo)

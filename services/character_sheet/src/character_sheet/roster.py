@@ -12,14 +12,11 @@ from uuid import UUID
 from character_sheet.aggregate import CharacterAggregate
 from character_sheet.models import CharacterState
 from fastapi import HTTPException
-from runefoble_auth.mock import MockSpiceDBClient
-from runefoble_auth.spicedb import SpiceDBClient
+from runefoble_auth.port import SpiceDBPort
 from runefoble_platform.aggregate_loading import load_if_exists
 from runefoble_platform.event_sourcing import AggregateRepository
 
 logger = logging.getLogger("runefoble.character_sheet.roster")
-
-SpiceDB = SpiceDBClient | MockSpiceDBClient
 
 
 class CharacterRosterView(CharacterState):
@@ -28,7 +25,7 @@ class CharacterRosterView(CharacterState):
     owner_id: str | None = None
 
 
-async def owner_of(spicedb: SpiceDB, character_id: str) -> str | None:
+async def owner_of(spicedb: SpiceDBPort, character_id: str) -> str | None:
     """Return the subject id of the character's `owner` relation, or None when unset."""
     rels = await spicedb.read_relationships(
         resource_type="character", resource_id=character_id, relation="owner"
@@ -37,7 +34,7 @@ async def owner_of(spicedb: SpiceDB, character_id: str) -> str | None:
 
 
 async def roster_view(
-    spicedb: SpiceDB, state: CharacterState, owner_id: str | None = None
+    spicedb: SpiceDBPort, state: CharacterState, owner_id: str | None = None
 ) -> CharacterRosterView:
     """Attach the owner to the state. Read the owner from SpiceDB unless the caller knows it."""
     owner = owner_id if owner_id is not None else await owner_of(spicedb, str(state.character_id))
@@ -46,7 +43,7 @@ async def roster_view(
 
 async def visible_characters(
     repo: AggregateRepository[CharacterAggregate],
-    spicedb: SpiceDB,
+    spicedb: SpiceDBPort,
     user_id: str,
     campaign_id: str | None,
 ) -> list[CharacterRosterView]:

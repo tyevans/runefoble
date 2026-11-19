@@ -17,10 +17,9 @@ from character_sheet.models import CharacterState
 from character_sheet.schemas import CreateCharacterRequest
 from fastapi import Depends
 from runefoble_auth.factory import get_spicedb_client
-from runefoble_auth.mock import MockSpiceDBClient
 from runefoble_auth.permissions import require_permission
+from runefoble_auth.port import SpiceDBPort
 from runefoble_auth.settings import load_spicedb_settings
-from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_auth.wiring import (
     build_identity_dependencies,
     make_verifier_holder,
@@ -71,7 +70,7 @@ RepoDep = Annotated[AggregateRepository[CharacterAggregate], Depends(get_reposit
 CraftingRepoDep = Annotated[
     AggregateRepository[CraftingAggregate], Depends(get_crafting_repository)
 ]
-SpiceDep = Annotated[SpiceDBClient | MockSpiceDBClient, Depends(get_spicedb_client)]
+SpiceDep = Annotated[SpiceDBPort, Depends(get_spicedb_client)]
 
 
 get_zitadel_auth_service, set_zitadel_auth_service = make_verifier_holder(
@@ -230,7 +229,7 @@ async def update_character_guardrails(
 
 async def assign_character_campaign(
     repo: AggregateRepository[CharacterAggregate],
-    spicedb: SpiceDBClient | MockSpiceDBClient,
+    spicedb: SpiceDBPort,
     character_id: UUID,
     campaign_id: str | None,
     assigned_by: str,

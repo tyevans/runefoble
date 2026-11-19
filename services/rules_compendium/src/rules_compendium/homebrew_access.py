@@ -5,8 +5,7 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID
 
-from runefoble_auth.mock import MockSpiceDBClient
-from runefoble_auth.spicedb import SpiceDBClient
+from runefoble_auth.port import SpiceDBPort
 from runefoble_platform.aggregate_loading import load_if_exists
 from runefoble_platform.event_sourcing import AggregateRepository
 
@@ -29,7 +28,7 @@ async def campaign_homebrew_rules(
 async def visible_homebrew_rule_ids(
     user_id: str,
     rules: list[dict[str, Any]],
-    spicedb: SpiceDBClient | MockSpiceDBClient,
+    spicedb: SpiceDBPort,
 ) -> frozenset[str]:
     """Return the ids of the given homebrew rules whose `homebrew_rule.view` check passes for the user.
 
@@ -48,7 +47,7 @@ async def visible_homebrew_monster(
     campaign_id: UUID,
     name: str,
     engine: CompendiumRetrievalEngine,
-    spicedb: SpiceDBClient | MockSpiceDBClient,
+    spicedb: SpiceDBPort,
 ) -> dict[str, Any] | None:
     """Return a campaign homebrew monster by name when `homebrew_rule.view` passes. Else None.
 

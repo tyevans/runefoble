@@ -12,12 +12,10 @@ from collections.abc import Awaitable, Callable
 from typing import Any
 
 from game_session.campaign.errors import AuthorizationStoreError
-from runefoble_auth.mock import MockSpiceDBClient
-from runefoble_auth.spicedb import SpiceDBClient
+from runefoble_auth.port import SpiceDBPort
 
 logger = logging.getLogger("runefoble.game_session.campaign")
 
-SpiceDB = SpiceDBClient | MockSpiceDBClient
 MEMBER_RELATIONS = ("player", "spectator", "dungeon_master", "game_master")
 
 
@@ -31,7 +29,7 @@ async def _guarded(action: str, call: Callable[[], Awaitable[Any]]) -> None:
         ) from exc
 
 
-async def grant_owner(spicedb: SpiceDB, campaign_id: str, owner_id: str) -> None:
+async def grant_owner(spicedb: SpiceDBPort, campaign_id: str, owner_id: str) -> None:
     await _guarded(
         "owner write",
         lambda: spicedb.write_relationship("campaign", campaign_id, "owner", "user", owner_id),
@@ -45,7 +43,7 @@ def relation_for_role(role: str) -> str:
     return "player"
 
 
-async def grant_member(spicedb: SpiceDB, campaign_id: str, role: str, user_id: str) -> None:
+async def grant_member(spicedb: SpiceDBPort, campaign_id: str, role: str, user_id: str) -> None:
     relation = relation_for_role(role)
     await _guarded(
         "member write",
@@ -53,7 +51,7 @@ async def grant_member(spicedb: SpiceDB, campaign_id: str, role: str, user_id: s
     )
 
 
-async def revoke_member(spicedb: SpiceDB, campaign_id: str, user_id: str) -> None:
+async def revoke_member(spicedb: SpiceDBPort, campaign_id: str, user_id: str) -> None:
     for relation in MEMBER_RELATIONS:
         await _guarded(
             "member delete",
@@ -63,7 +61,7 @@ async def revoke_member(spicedb: SpiceDB, campaign_id: str, user_id: str) -> Non
         )
 
 
-async def link_session(spicedb: SpiceDB, session_id: str, campaign_id: str) -> None:
+async def link_session(spicedb: SpiceDBPort, session_id: str, campaign_id: str) -> None:
     """Write the one campaign link of a session, `game_session#campaign` (ADR-0015 (a))."""
     await _guarded(
         "session link write",

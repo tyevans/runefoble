@@ -4,7 +4,7 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from runefoble_auth.spicedb import SpiceDBClient
+from runefoble_auth.port import SpiceDBPort
 from runefoble_platform.event_sourcing import AggregateRepository
 
 from rules_compendium.aggregate import CompendiumAggregate
@@ -44,7 +44,7 @@ async def search_rules(
     campaign_id: Annotated[UUID | None, Query(description="Campaign context for homebrew")] = None,
     limit: Annotated[int, Query(ge=1, le=50)] = 10,
     engine: Annotated[CompendiumRetrievalEngine, Depends(get_retrieval_engine)] = None,
-    spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)] = None,
+    spicedb: Annotated[SpiceDBPort, Depends(get_spicedb_client)] = None,
     compendium_repo: Annotated[
         AggregateRepository[CompendiumAggregate], Depends(get_compendium_repo)
     ] = None,
@@ -77,7 +77,7 @@ async def get_monster_by_name(
     name: str,
     caller: CallerOrService,
     engine: Annotated[CompendiumRetrievalEngine, Depends(get_retrieval_engine)],
-    spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
+    spicedb: Annotated[SpiceDBPort, Depends(get_spicedb_client)],
     campaign_id: Annotated[
         UUID | None, Query(description="Campaign whose homebrew monsters may be read")
     ] = None,

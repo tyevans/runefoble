@@ -10,8 +10,8 @@ import logging
 from uuid import UUID
 
 from runefoble_auth.permissions import check_subject
+from runefoble_auth.port import SpiceDBPort
 from runefoble_auth.settings import load_spicedb_settings
-from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_auth.wiring import (
     build_identity_dependencies,
     make_verifier_holder,
@@ -53,7 +53,7 @@ async def check_user_can_control_soundscape(
     user_id: str,
     session_id: str,
     campaign_id: UUID | None,
-    spicedb: SpiceDBClient,
+    spicedb: SpiceDBPort,
 ) -> bool:
     """Check the schema permissions that govern soundscape controls (ADR-0001).
 
@@ -71,7 +71,7 @@ async def check_user_can_trigger_cue(
     user_id: str,
     session_id: str,
     campaign_id: UUID | None,
-    spicedb: SpiceDBClient,
+    spicedb: SpiceDBPort,
 ) -> bool:
     """Check whether the subject may trigger a foley cue.
 

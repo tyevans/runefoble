@@ -6,8 +6,8 @@ import logging
 from uuid import UUID
 
 from runefoble_auth.permissions import require_subject
+from runefoble_auth.port import SpiceDBPort
 from runefoble_auth.settings import load_spicedb_settings
-from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_auth.wiring import (
     build_identity_dependencies,
     make_verifier_holder,
@@ -72,7 +72,7 @@ get_principal, CallerPrincipal, CallerId, get_caller_or_service, CallerOrService
 async def require_forge_permission(
     user_id: str,
     campaign_id: UUID,
-    spicedb: SpiceDBClient,
+    spicedb: SpiceDBPort,
 ) -> UUID:
     """Allow a forge action only for a campaign player (`campaign.play`).
 
@@ -94,7 +94,7 @@ async def require_forge_permission(
 
 
 async def record_asset_relations(
-    spicedb: SpiceDBClient,
+    spicedb: SpiceDBPort,
     asset_id: str,
     creator_id: str,
     campaign_id: UUID,
@@ -119,7 +119,7 @@ async def record_asset_relations(
     )
 
 
-async def require_campaign_view(spicedb: SpiceDBClient, campaign_id: UUID, user_id: str) -> None:
+async def require_campaign_view(spicedb: SpiceDBPort, campaign_id: UUID, user_id: str) -> None:
     """Allow a campaign read only when the caller holds `campaign.view`.
 
     Raises:
@@ -135,7 +135,7 @@ async def require_campaign_view(spicedb: SpiceDBClient, campaign_id: UUID, user_
     )
 
 
-async def require_asset_view(spicedb: SpiceDBClient, asset_id: str, user_id: str) -> None:
+async def require_asset_view(spicedb: SpiceDBPort, asset_id: str, user_id: str) -> None:
     """Allow a read only when the caller holds `forged_asset.view` on the asset.
 
     Raises:

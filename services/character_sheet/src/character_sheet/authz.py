@@ -10,10 +10,7 @@ from uuid import UUID
 
 from character_sheet.roster import permission_denied
 from fastapi import HTTPException
-from runefoble_auth.mock import MockSpiceDBClient
-from runefoble_auth.spicedb import SpiceDBClient
-
-AuthzClient = SpiceDBClient | MockSpiceDBClient
+from runefoble_auth.port import SpiceDBPort
 
 
 def character_denial(
@@ -24,7 +21,7 @@ def character_denial(
 
 
 async def write_character_ownership(
-    spicedb: AuthzClient, character_id: UUID, owner_id: str, campaign_id: str | None
+    spicedb: SpiceDBPort, character_id: UUID, owner_id: str, campaign_id: str | None
 ) -> None:
     """Write the owner tuple and, when given, the campaign tuple for a new character."""
     cid = str(character_id)
@@ -34,7 +31,7 @@ async def write_character_ownership(
 
 
 async def replace_character_campaign(
-    spicedb: AuthzClient, character_id: UUID, campaign_id: str | None
+    spicedb: SpiceDBPort, character_id: UUID, campaign_id: str | None
 ) -> None:
     """Replace every campaign tuple of the character with the given campaign, or none."""
     cid = str(character_id)

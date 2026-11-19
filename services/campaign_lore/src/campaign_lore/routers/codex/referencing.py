@@ -7,7 +7,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends
 from runefoble_auth.factory import get_spicedb_client
-from runefoble_auth.spicedb import SpiceDBClient
+from runefoble_auth.port import SpiceDBPort
 
 from campaign_lore.codex import CodexCrossReferencer
 from campaign_lore.codex_deps import (
@@ -60,7 +60,7 @@ async def extract_references(
     payload: CrossReferenceContentRequest,
     user_id: CallerId,
     referencer: Annotated[CodexCrossReferencer, Depends(get_codex_referencer)],
-    spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
+    spicedb: Annotated[SpiceDBPort, Depends(get_spicedb_client)],
 ) -> dict[str, Any]:
     """Scan text and extract redstring entity mentions and hyperlinked content."""
     await require_campaign_view(user_id, campaign_id, spicedb)

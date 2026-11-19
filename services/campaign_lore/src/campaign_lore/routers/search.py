@@ -7,7 +7,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, ConfigDict, Field
 from runefoble_auth.factory import get_spicedb_client
-from runefoble_auth.spicedb import SpiceDBClient
+from runefoble_auth.port import SpiceDBPort
 
 from campaign_lore.dependencies import (
     get_retrieval_engine,
@@ -62,7 +62,7 @@ async def search_lore(
     req: LoreSearchRequest,
     user_id: CallerId,
     retrieval_engine: Annotated[LoreRetrievalEngine, Depends(get_retrieval_engine)],
-    spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
+    spicedb: Annotated[SpiceDBPort, Depends(get_spicedb_client)],
 ) -> LoreSearchResponse:
     """Execute hybrid search combining BM25, dense embeddings, and graph neighbor walks.
 

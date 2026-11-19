@@ -6,7 +6,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from runefoble_auth.factory import get_spicedb_client
-from runefoble_auth.spicedb import SpiceDBClient
+from runefoble_auth.port import SpiceDBPort
 
 from soundscape.dependencies import (
     CallerId,
@@ -50,7 +50,7 @@ async def get_tension_status(
 async def calculate_tension(
     request: TensionCalculationRequest,
     user_id: CallerId,
-    spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
+    spicedb: Annotated[SpiceDBPort, Depends(get_spicedb_client)],
 ) -> TensionStatusResponse:
     """Compute tension index (0-100) and adaptively update musical stems (session control)."""
     allowed = await check_user_can_control_soundscape(

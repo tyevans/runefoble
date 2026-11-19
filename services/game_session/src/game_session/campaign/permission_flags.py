@@ -15,8 +15,8 @@ from __future__ import annotations
 import asyncio
 
 from game_session.campaign.schemas import CampaignPermissionsResponse
-from game_session.campaign.tuples import SpiceDB
 from runefoble_auth.permissions import check_subject
+from runefoble_auth.port import SpiceDBPort
 
 # API flag -> schema permission on `campaign` that the matching route guard checks.
 PERMISSION_FLAGS: dict[str, str] = {
@@ -53,7 +53,9 @@ def flags_from(granted: frozenset[str]) -> CampaignPermissionsResponse:
     )
 
 
-async def granted_permissions(spicedb: SpiceDB, campaign_id: str, user_id: str) -> frozenset[str]:
+async def granted_permissions(
+    spicedb: SpiceDBPort, campaign_id: str, user_id: str
+) -> frozenset[str]:
     """Check each distinct permission on one campaign concurrently. A failure raises."""
     results = await asyncio.gather(
         *(
@@ -64,7 +66,7 @@ async def granted_permissions(spicedb: SpiceDB, campaign_id: str, user_id: str) 
     return frozenset(p for p, ok in zip(CAMPAIGN_PERMISSIONS, results, strict=True) if ok)
 
 
-async def granted_by_campaign(spicedb: SpiceDB, user_id: str) -> dict[str, frozenset[str]]:
+async def granted_by_campaign(spicedb: SpiceDBPort, user_id: str) -> dict[str, frozenset[str]]:
     """Return the granted permissions per campaign id, from one lookup per permission.
 
     A campaign without `view` is absent. A SpiceDB failure raises.

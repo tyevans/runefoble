@@ -12,7 +12,7 @@ from fastapi import Depends, HTTPException, status
 from runefoble_auth.errors import AuthzError
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.permissions import check_subject
-from runefoble_auth.spicedb import SpiceDBClient
+from runefoble_auth.port import SpiceDBPort
 from runefoble_platform.aggregate_loading import load_or_404
 from runefoble_platform.errors import ServiceUnavailableError
 from runefoble_platform.event_sourcing import AggregateRepository
@@ -25,20 +25,20 @@ SHARED_PRIVACY = ("party_shared", "public")
 
 
 async def check_user_can_view_codex_entry(
-    user_id: str, entry: CodexEntryState, spicedb: SpiceDBClient
+    user_id: str, entry: CodexEntryState, spicedb: SpiceDBPort
 ) -> bool:
     """Check the schema permission `codex_entry.view` for the caller."""
     return await check_subject(spicedb, "codex_entry", str(entry.entry_id), "view", user_id)
 
 
 async def check_user_can_edit_codex_entry(
-    user_id: str, entry: CodexEntryState, spicedb: SpiceDBClient
+    user_id: str, entry: CodexEntryState, spicedb: SpiceDBPort
 ) -> bool:
     """Check the schema permission `codex_entry.edit` for the caller."""
     return await check_subject(spicedb, "codex_entry", str(entry.entry_id), "edit", user_id)
 
 
-async def require_campaign_view(user_id: str, campaign_id: UUID, spicedb: SpiceDBClient) -> None:
+async def require_campaign_view(user_id: str, campaign_id: UUID, spicedb: SpiceDBPort) -> None:
     """Raise HTTP 403 if user cannot view the campaign."""
     if not await check_user_can_view_campaign(user_id, campaign_id, spicedb):
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Forbidden: Cannot access campaign codex.")
@@ -49,7 +49,7 @@ async def load_codex_entry(
     entry_id: UUID,
     user_id: str,
     repo: AggregateRepository[CodexAggregate],
-    spicedb: SpiceDBClient,
+    spicedb: SpiceDBPort,
     *,
     for_edit: bool = False,
 ) -> CodexAggregate:
@@ -75,7 +75,7 @@ async def load_codex_entry(
 
 
 async def write_codex_permissions(
-    spicedb: SpiceDBClient, eid: str, author: str, cid: str, privacy: str
+    spicedb: SpiceDBPort, eid: str, author: str, cid: str, privacy: str
 ) -> None:
     """Write the author, editor, campaign, and privacy relations of a new entry."""
     for rel in ("author", "editor"):
@@ -86,7 +86,7 @@ async def write_codex_permissions(
 
 
 async def update_codex_permissions(
-    spicedb: SpiceDBClient, eid: str, cid: str, old_p: str, new_p: str
+    spicedb: SpiceDBPort, eid: str, cid: str, old_p: str, new_p: str
 ) -> None:
     """Replace the privacy relation of an entry when its privacy changes."""
     if old_p in SHARED_PRIVACY:
@@ -108,7 +108,7 @@ class CodexSessionDeps:
         self,
         user_id: CallerId,
         repo: Annotated[AggregateRepository[CodexAggregate], Depends(_repo_dep)],
-        spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
+        spicedb: Annotated[SpiceDBPort, Depends(get_spicedb_client)],
     ) -> None:
         self.user_id, self.repo, self.spicedb = user_id, repo, spicedb
 
