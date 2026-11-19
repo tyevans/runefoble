@@ -1,7 +1,7 @@
 ---
 id: '0498'
 title: Remove Backward Compatibility Shims & Re-exports in soundscape
-status: Refined
+status: Complete
 created: 2026-09-29
 dependencies:
 - TASK-0230
@@ -22,7 +22,7 @@ target_release: 0.9.0
 # TASK-0498: Remove Backward Compatibility Shims & Re-exports in soundscape
 
 ## Status
-Refined
+Complete
 
 Audit 2026-11-17: soundscape port corrected from 8010 to 8009.
 
@@ -51,7 +51,7 @@ During the extraction of soundscape aggregate handlers (`TASK-0230`) and Gateway
    - In `services/soundscape/src/soundscape/dependencies.py` and `soundscape/mixer.py`, remove legacy cue trigger functions that wrap the underlying aggregate or event bus.
    - Ensure all callers invoke canonical `SoundscapeAggregate` methods or publish domain events directly.
 2. **Remove Deprecated Tension Calculation Aliases**:
-   - In `services/soundscape/src/soundscape/tension.py`, remove legacy tension formula shims, standardizing on the unified combat CR/round tension calculation engine.
+   - In `services/soundscape/src/soundscape/tension.py` (removed), remove legacy tension formula shims, standardizing on the unified combat CR/round tension calculation engine.
 3. **Clean Up `soundscape/__init__.py`**:
    - Prune package root re-exports to expose only authoritative service classes.
 4. **Update Blackbox Test Suites**:

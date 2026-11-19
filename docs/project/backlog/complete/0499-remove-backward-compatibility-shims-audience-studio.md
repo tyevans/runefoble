@@ -1,7 +1,7 @@
 ---
 id: '0499'
 title: Remove Backward Compatibility Shims & Re-exports in audience_studio
-status: Refined
+status: Complete
 created: 2026-09-29
 dependencies:
 - TASK-0014
@@ -21,7 +21,7 @@ target_release: 0.9.0
 # TASK-0499: Remove Backward Compatibility Shims & Re-exports in audience_studio
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Excise legacy poll option wrappers, deprecated voting payload shims, and transitional re-export facades from `services/audience_studio`, standardizing on canonical TypeScript event schemas and microfrontend contracts.
@@ -44,7 +44,7 @@ Excise legacy poll option wrappers, deprecated voting payload shims, and transit
 
 ## Detailed Specification & Implementation Plan
 1. **Remove Legacy Voting Payload Shims**:
-   - In `services/audience_studio/src/types/`, remove deprecated voting payload interfaces and legacy option converters.
+   - In `services/audience_studio/src/types/` (removed), remove deprecated voting payload interfaces and legacy option converters.
    - Standardize all poll creation, voting, and DM approval handlers on canonical schemas.
 2. **Prune Re-export Facades**:
    - In `services/audience_studio/src/index.ts`, ensure only authoritative classes and types are exported without legacy aliases.
@@ -70,3 +70,6 @@ Excise legacy poll option wrappers, deprecated voting payload shims, and transit
 ## Orchestrator Addenda (2026-11-17, refactor-r1)
 
 - TASK-0499 (audience shim excision): note that 0708, 0713, 0723 and 0724 edit the same files and run after it.
+
+## Completion Note
+Already satisfied on main (evidence: `.audit/work/0499.md`). The dual Redis variable name and the PostgreSQL URL rewrite moved to TASK-0839.

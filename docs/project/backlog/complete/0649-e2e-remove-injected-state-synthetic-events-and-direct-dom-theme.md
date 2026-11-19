@@ -1,7 +1,7 @@
 ---
 id: '0649'
 title: E2E Steps Remove Injected Component State, Synthetic Events, and Direct DOM Theme Writes
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies: []
 governing_adrs:
@@ -18,7 +18,7 @@ target_release: 0.9.0
 # TASK-0649: E2E Steps Remove Injected Component State, Synthetic Events, and Direct DOM Theme Writes
 
 ## Status
-Refined
+Complete
 
 Review 2026-11-18: not blocked. Every step file is under 500 lines (largest: `e2e/steps/campaign_hub_steps.ts`, 445). Removing the backdoors makes the files shorter. TASK-0512 and TASK-0447 are optional clean-ups and do not block this task.
 
@@ -48,7 +48,7 @@ Several Playwright BDD steps change the application from the inside: they write 
 3. `common_steps`: delete fallback 3 (lines 64-75). The step clicks the real theme control (settings modal or switcher, decided with TASK-0376 and TASK-0380). If the control is not visible, the step fails. The assertion reads the theme from the user-visible label or the control state.
 4. Search all of `e2e/steps` and `e2e/support` for `app.`, `shadowRoot`, `dispatchEvent`, `localStorage`, `window.location`, and `data-theme` writes. Each hit is removed or justified in a comment that cites ADR-0014. Justified hits must be reads only.
 5. Keep every file under 500 lines.
-6. `docs/how-to/test-user-flows-with-playwright-bdd.md` (w2-e2e-bdd F11): replace the example step files `e2e/steps/auth_steps.ts` and `e2e/steps/campaign_steps.ts` with the real files, replace the unimplemented example steps with steps that exist, and list all personas the code accepts (`evelyn`, `valeros`, `sarah`, and the `gm` alias from `e2e/support/auth_fixtures.ts:138-156`).
+6. `docs/how-to/test-user-flows-with-playwright-bdd.md` (w2-e2e-bdd F11): replace the example step files `e2e/steps/auth_steps.ts` (removed) and `e2e/steps/campaign_steps.ts` (removed) with the real files, replace the unimplemented example steps with steps that exist, and list all personas the code accepts (`evelyn`, `valeros`, `sarah`, and the `gm` alias from `e2e/support/auth_fixtures.ts:138-156`).
 
 ## Frontdoor Blackbox Test Plan
 These scenarios already exist. The change removes their backdoors, so they must still pass through the UI:
@@ -77,3 +77,6 @@ Source: `.audit/synth/discovered-round1.md`.
 
 - Severity: high
 - Source audits: `w2-e2e-bdd.md`
+
+## Completion Note
+The four backdoors are removed. The forge 503 scenario and the lobby negative scenario moved to TASK-0840, which needs a Playwright run.

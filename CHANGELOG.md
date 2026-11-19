@@ -38,6 +38,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Gateway WebSocket routes admit a connection only with a verified `runefoble.bearer.<jwt>` subprotocol, checked before accept. Refused handshakes close with 1008. Removed the `?user_id=`, `?token=`, `x-user-id`, and `guest_user` identity paths on WebSocket and voice/companion signaling routes. (TASK-0522)
 
 ### Removed
+- Audience Studio has no compatibility shims or re-exports left (checked; no code change). (TASK-0499)
+- The soundscape package root exports only its aggregate; the re-exports are removed. (TASK-0498)
 - The gateway OBS overlay HTML, camera math, redaction rules and duplicate spectator and overlay paths. (TASK-0823)
 - 29 event classes that no service read, and their publish calls, including the `WatcherAction*` events and `SpectatorSessionConnected`. (TASK-0703)
 - The Watcher `stand_in_ai.py` and `autonomous_dm.py` facades and parser aliases; import `AutonomousDMEngine` from `the_watcher.autonomous_dm_engine`. (TASK-0490)
@@ -78,6 +80,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Campaign analytics worker `process_event` alias, tracking property wrappers, and package root re-exports. Callers use `handle_event`. (TASK-0500)
 
 ### Added
+- Gateway routes for character wardrobe variants (`GET` and `POST /api/v1/characters/{character_id}/wardrobe`) and the active portrait (`POST /api/v1/characters/{character_id}/portrait/active`) proxy to character_sheet, which checks `view` or `edit`. (TASK-0444)
 - Gateway proxies 30 public Watcher routes to the_watcher through the shared proxy table. (TASK-0596)
 - Gateway proxies `POST /api/v1/soundscape/stems/volume` to the soundscape owner. (TASK-0436)
 - A battlemap forged with a session id becomes that session's board geometry: `BattlemapForged` carries the walls and hazards, and board_state applies them (`ForgedBattlemapApplied`). (TASK-0704)
@@ -159,6 +162,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
 
 ### Changed
+- Playwright BDD steps act only through visible controls and public routes: no injected component state, no synthetic DOM events, no hash jumps, no direct theme writes. (TASK-0649)
+- Audience Studio reads `RUNEFOBLE_EVENT_STORE_BACKEND` and refuses `memory` outside tests. Helm turns its PostgreSQL event store on, and the Helm event-store gate also finds TypeScript owners. (TASK-0709)
 - Gateway API tests live in `gateway/api/tests/` and run with `make test-gateway`. One root `conftest.py` sets the test environment for every test folder. A guard test fails when a gateway data route answers 200 with every owner unreachable. (TASK-0597)
 - `scripts/dev_server.py` delegates to focused modules under `scripts/dev_orchestrator/`. (TASK-0434)
 - Gateway pass-through routes are rows in one proxy table, and owner paths come from one shared owner map; the OpenAPI document is unchanged. A `.` or `..` path value now returns 404. (TASK-0822)

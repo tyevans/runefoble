@@ -1,7 +1,7 @@
 ---
 id: '0444'
 title: Gateway Character Wardrobe and Dynamic Portrait API Routing & Zanzibar Proxy
-status: Refined
+status: Complete
 created: 2026-09-29
 dependencies:
 - TASK-0124
@@ -27,7 +27,7 @@ target_release: 0.9.0
 # TASK-0444: Gateway Character Wardrobe and Dynamic Portrait API Routing & Zanzibar Proxy
 
 ## Status
-Refined
+Complete
 
 Audit 2026-11-17: in-memory and `proxy_or_fallback()` requirements removed. Depends on TASK-0585 and TASK-0586. The owner has `GET` and `POST .../wardrobe` (`wardrobe_router.py:72,78`) and `POST .../portrait/active` (`wardrobe_router.py:48`). No `POST .../portrait` route exists.
 
@@ -78,5 +78,8 @@ While `services/character_sheet/src/character_sheet/wardrobe_router.py` exposes 
 1. All three wardrobe and portrait endpoints exposed under `/api/v1/characters/{character_id}/...`.
 2. SpiceDB Zanzibar permissions strictly enforced (403 Forbidden when caller lacks `view`/`edit`).
 3. Downstream proxying works with the live character_sheet service. No fallback store exists.
-4. Comprehensive frontdoor blackbox test suite `tests/test_blackbox_gateway_wardrobe_proxy.py` passes with 100% assertions.
+4. Comprehensive frontdoor blackbox test suite `gateway/api/tests/test_blackbox_gateway_wardrobe_proxy.py` passes with 100% assertions.
 5. All modified files adhere to Hard Invariant 6 (< 500 lines).
+
+## Completion Note
+Decision: the Zanzibar check stays in character_sheet. The gateway only forwards. The task file paths name `gateway/api/tests/` now.
