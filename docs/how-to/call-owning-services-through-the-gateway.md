@@ -102,7 +102,7 @@ ProxyRoute(
 )
 ```
 
-Then call `register_proxy_routes(router, ROUTES)` once at the end of the module. Use a row for each route that needs no check and no transform. Keep a hand-written handler for a composite route, a body transform, a typed reply, or a second owner call. Add an owner route function to `runefoble_platform.service_client.owner_routes` when another caller also uses the route. A row can name that function in `owner=` instead of repeating the owner path in `owner_segments`:
+Then call `register_proxy_routes(router, ROUTES)` once at the end of the module. Use a row for each route that needs no check and no transform. Keep a hand-written handler for a composite route, a body transform, a typed reply, or a second owner call. Add an owner route function to `runefoble_platform.service_client.owner_routes` for each owner route that the MCP gateway calls, or that a gateway module builds by path. A row names that function in `owner=` and does not repeat the owner path in `owner_segments`. Use `owner_segments` only when no such function exists:
 
 ```python
 ProxyRoute(

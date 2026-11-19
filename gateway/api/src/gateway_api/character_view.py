@@ -17,14 +17,9 @@ from fastapi import HTTPException, Request, status
 from gateway_api.campaign_titles import campaign_titles
 from gateway_api.character_models import CharacterResponse, CreateCharacterRequest
 from gateway_api.proxy import forward_json
+from runefoble_platform.service_client import owner_routes
 
 CHARACTER_SERVICE = "character_sheet"
-CHARACTERS_PATH = "/api/v1/characters"
-
-
-def character_path(character_id: str, suffix: str) -> str:
-    """Return the character_sheet path for one character and a route suffix."""
-    return f"{CHARACTERS_PATH}/{character_id}{suffix}"
 
 
 async def forward_character_state(
@@ -129,11 +124,12 @@ def to_character_response(view: dict[str, Any], campaign_title: str | None) -> C
 
 async def campaign_character_names(request: Request, campaign_id: str) -> dict[str, str]:
     """Return {owner id: character name} for the characters the caller sees in one campaign."""
+    route = owner_routes.list_characters()
     views = await forward_json(
         request,
         service=CHARACTER_SERVICE,
-        method="GET",
-        path=CHARACTERS_PATH,
+        method=route.method,
+        path=route.path,
         params={"campaignId": campaign_id},
     )
     names: dict[str, str] = {}

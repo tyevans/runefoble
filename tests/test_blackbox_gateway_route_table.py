@@ -211,6 +211,7 @@ def test_table_route_maps_an_unreachable_owner_to_503(
         "/api/v1/campaigns/%2E%2E",
         "/api/v1/boards/%2E%2E",
         "/api/v1/shared-worlds/%2E%2E/caravans/contracts",
+        "/api/v1/characters/%2E%2E",
     ],
 )
 def test_a_dot_segment_returns_404_without_an_owner_call(
@@ -221,6 +222,21 @@ def test_a_dot_segment_returns_404_without_an_owner_call(
     OWNER_STATUS["code"] = 200
     with _gateway(monkeypatch, owner_stub_url) as client:
         res = client.get(url, headers=_auth(trusted_ws_issuer, "user_table"))
+
+    assert res.status_code == 404, res.text
+
+
+def test_a_dot_character_id_on_a_subresource_returns_404_without_an_owner_call(
+    owner_stub_url, monkeypatch, trusted_ws_issuer
+):
+    """A character id of `..` on a write route is refused before the owner call (TASK-0861)."""
+    OWNER_STATUS["code"] = 200
+    with _gateway(monkeypatch, owner_stub_url) as client:
+        res = client.post(
+            "/api/v1/characters/%2E%2E/health",
+            json={"delta": -1, "source": "damage"},
+            headers=_auth(trusted_ws_issuer, "user_table"),
+        )
 
     assert res.status_code == 404, res.text
 

@@ -2,10 +2,14 @@
 
 A pass-through route forwards one request to one owner route and returns the reply. Such a route
 needs no code of its own. A `ProxyRoute` row names the public path, the owner route, the body
-mode, and the reply mode. The owner route is either its segments, or a function of
-`runefoble_platform.service_client.owner_routes` (one definition of each owner path).
-`register_proxy_routes` turns each row into a FastAPI route that calls `forward_json` or
-`forward_bytes`.
+mode, and the reply mode. The owner path is either a function of
+`runefoble_platform.service_client.owner_routes` (`owner=`, one definition of the path), or the
+path segments (`owner_segments`). Give exactly one. `register_proxy_routes` turns each row into a
+FastAPI route that calls `forward_json` or `forward_bytes`.
+
+Use `owner=` when a function of `owner_routes` exists for the route. The MCP gateway calls the same
+function, so the path has one definition. A row keeps `owner_segments` only when no function exists.
+A route gets a function when a caller other than its own row needs the path (TASK-0861).
 
 Each generated endpoint carries a real signature: path parameters, query defaults, and the body
 are declared to FastAPI. The OpenAPI document therefore lists them as before. The table does not
@@ -41,9 +45,9 @@ class ProxyRoute:
 
     - `public_path`: the FastAPI path template, with `{name}` path parameters.
     - `owner_segments`: the owner path as segments. A segment `{name}` takes the path parameter.
-      Empty when `owner` is set.
+      Empty when `owner` is set. Used only when no `owner_routes` function covers the route.
     - `owner`: a function of `owner_routes` that returns the owner route. Its parameters are the
-      path parameters of `public_path`, by name.
+      path parameters of `public_path`, by name. Preferred whenever the function exists.
     - `reply`: "json" returns the decoded JSON (`forward_json`); "bytes" relays the payload
       unchanged (`forward_bytes`).
     - `returns`: the return annotation the route declares. Binary routes use "response".

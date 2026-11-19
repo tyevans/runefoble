@@ -21,29 +21,47 @@ The package exports `ServiceClient`, `UpstreamReply`, `UpstreamError`, `Upstream
 
 ## Owner routes
 
-`owner_routes` holds one function for each owner route that more than one caller uses. Each function returns an `OwnerRoute(method, path)`. The caller sends the body. Both gateways use these functions, so a route has one definition.
+`owner_routes` holds one function for each owner route that the MCP gateway calls, and each route that a gateway module builds by path (TASK-0861). Each function returns an `OwnerRoute(method, path)`. The caller sends the body. Both gateways use these functions, so a route has one definition. Each function takes the path values of its route as strings.
 
 | Function | Route |
 |---|---|
 | `get_campaign(campaign_id)` | `GET /api/v1/campaigns/{id}` (game_session) |
+| `get_session(session_id)` | `GET /api/v1/sessions/{id}` (game_session) |
+| `start_combat(session_id)` | `POST /api/v1/sessions/{id}/combat/start` (game_session) |
+| `get_combat_state(session_id)` | `GET /api/v1/sessions/{id}/combat` (game_session) |
+| `list_characters()` | `GET /api/v1/characters` (character_sheet) |
+| `create_character()` | `POST /api/v1/characters` (character_sheet) |
 | `get_character(character_id)` | `GET /api/v1/characters/{id}` (character_sheet) |
+| `assign_campaign(character_id)` | `PATCH /api/v1/characters/{id}/campaign` |
 | `change_health(character_id)` | `POST /api/v1/characters/{id}/health` |
 | `apply_penalty(character_id)` | `POST /api/v1/characters/{id}/penalties` |
 | `apply_condition(character_id)` | `POST /api/v1/characters/{id}/conditions` |
+| `remove_condition(character_id, condition)` | `DELETE /api/v1/characters/{id}/conditions/{condition}` |
 | `cast_spell(character_id)` | `POST /api/v1/characters/{id}/spells/cast` |
+| `prepare_spell(character_id)` | `POST /api/v1/characters/{id}/spells/prepare` |
+| `equip_item(character_id)` | `POST /api/v1/characters/{id}/equipment` |
+| `unequip_item(character_id, slot)` | `DELETE /api/v1/characters/{id}/equipment/{slot}` |
+| `add_inventory_item(character_id)` | `POST /api/v1/characters/{id}/inventory` |
+| `remove_inventory_item(character_id, item_id)` | `DELETE /api/v1/characters/{id}/inventory/{item_id}` |
+| `get_guardrails(character_id)` | `GET /api/v1/characters/{id}/guardrails` |
+| `update_guardrails(character_id)` | `PUT /api/v1/characters/{id}/guardrails` |
+| `create_board()` | `POST /api/v1/boards` (board_state) |
+| `get_board(session_id)` | `GET /api/v1/boards/{session_id}` (board_state) |
 | `get_token(session_id, token_id)` | `GET /api/v1/boards/{session_id}/tokens/{token_id}` (board_state) |
 | `place_token(session_id)` | `POST /api/v1/boards/{session_id}/tokens` (board_state) |
 | `move_token(session_id, token_id)` | `POST /api/v1/boards/{session_id}/tokens/{token_id}/move` (board_state) |
+| `narrate()` | `POST /api/v1/watcher/narrate` (the_watcher) |
+| `propose_action()` | `POST /api/v1/watcher/actions/propose` (the_watcher) |
 | `get_monster(name)` | `GET /api/v1/compendium/monsters/{name}` (rules_compendium) |
 | `balance_encounter()` | `POST /api/v1/compendium/encounters/balance` (rules_compendium) |
 
-Path segments are encoded with `path()`. A value cannot change the route.
+Path segments are encoded with `path()`. A value cannot change the route. A value that `path()` refuses (`.`, `..`, or empty) raises `ValueError`. The gateway maps that to `404` before it calls the owner (`owner_route` in `gateway_api.proxy`, and the `owner` option of `ProxyRoute`).
 
 ## Gateway proxy table
 
 A pure pass-through route is a row of `ProxyRoute` in `gateway_api/proxy_table.py`. Each module in `gateway_api/routers/` that holds only pass-through routes lists its rows in `ROUTES` and calls `register_proxy_routes(router, ROUTES)`. A row names the method, the public path, the owner path, the service, the reply mode (`json` or `bytes`), the body mode (`none`, `raw`, or `json`), the query mode, the caller check, and the timeout. The generated endpoint declares its path parameters, query defaults, and body to FastAPI, so the OpenAPI document keeps the same parameters and schemas.
 
-The owner path is either `owner_segments` (a tuple, where `{name}` takes a path parameter) or `owner` (a function of `owner_routes`, so the path has one definition). Give exactly one. A function takes the path parameters of the public path, by name.
+The owner path is either `owner` (a function of `owner_routes`, so the path has one definition) or `owner_segments` (a tuple, where `{name}` takes a path parameter). Give exactly one. Use `owner` whenever `owner_routes` has a function for the route. A function takes the path parameters of the public path, by name.
 
 The caller check of a row (`principal=True`) verifies the bearer token only. A route with a Zanzibar permission check, a transform, a typed reply, or a second owner call stays hand-written. Examples: the haggling route in `downtime_proxy.py`, and the session routes in `sessions_proxy.py`, which check a permission on each route.
 

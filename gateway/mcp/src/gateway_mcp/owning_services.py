@@ -20,7 +20,6 @@ from runefoble_platform.service_client import (
     decode_json_body,
     error_detail,
     owner_routes,
-    path,
 )
 
 from gateway_mcp.settings import GatewayMcpSettings, load_settings
@@ -149,37 +148,37 @@ class OwningServices:
 
         board_state refuses a request with no campaign and a caller who cannot run the campaign.
         """
+        route = owner_routes.create_board()
         return await self._json(
             "board_state",
-            "POST",
-            path("api", "v1", "boards"),
+            route.method,
+            route.path,
             {"session_id": session_id, "campaign_id": campaign_id, "cols": cols, "rows": rows},
         )
 
     async def get_board(self, session_id: str) -> dict[str, Any]:
         """Read the board state for a session."""
-        return await self._json("board_state", "GET", path("api", "v1", "boards", session_id))
+        route = owner_routes.get_board(session_id)
+        return await self._json("board_state", route.method, route.path)
 
     async def get_session(self, session_id: str) -> dict[str, Any]:
         """Read the stored game session state from game_session."""
-        return await self._json("game_session", "GET", path("api", "v1", "sessions", session_id))
+        route = owner_routes.get_session(session_id)
+        return await self._json("game_session", route.method, route.path)
 
     async def start_combat(
         self, session_id: str, *, combatants: list[dict[str, Any]]
     ) -> dict[str, Any]:
         """Start a combat encounter in a game session and return its combat state."""
+        route = owner_routes.start_combat(session_id)
         return await self._json(
-            "game_session",
-            "POST",
-            path("api", "v1", "sessions", session_id, "combat", "start"),
-            {"combatants": combatants},
+            "game_session", route.method, route.path, {"combatants": combatants}
         )
 
     async def get_combat_state(self, session_id: str) -> dict[str, Any]:
         """Read the combat round, active combatant, and initiative order from game_session."""
-        return await self._json(
-            "game_session", "GET", path("api", "v1", "sessions", session_id, "combat")
-        )
+        route = owner_routes.get_combat_state(session_id)
+        return await self._json("game_session", route.method, route.path)
 
     async def get_character(self, character_id: str) -> dict[str, Any]:
         """Read the stored character sheet from character_sheet."""
@@ -291,15 +290,13 @@ class OwningServices:
 
     async def narrate(self, request: dict[str, Any]) -> dict[str, Any]:
         """Ask The Watcher for DM narration. The response is returned as The Watcher sent it."""
-        return await self._json(
-            "the_watcher", "POST", path("api", "v1", "watcher", "narrate"), request
-        )
+        route = owner_routes.narrate()
+        return await self._json("the_watcher", route.method, route.path, request)
 
     async def propose_action(self, request: dict[str, Any]) -> dict[str, Any]:
         """Propose an agent action to The Watcher. The DM can veto it before it takes effect."""
-        return await self._json(
-            "the_watcher", "POST", path("api", "v1", "watcher", "actions", "propose"), request
-        )
+        route = owner_routes.propose_action()
+        return await self._json("the_watcher", route.method, route.path, request)
 
     async def balance_encounter(
         self, party_levels: list[int], target_difficulty: str
