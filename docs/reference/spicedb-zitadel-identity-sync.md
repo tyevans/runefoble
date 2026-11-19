@@ -142,7 +142,7 @@ Only SpiceDB failures (`AuthzError`) produce `unhealthy`. Any other exception is
 | Event type | Handler | Tuples |
 |---|---|---|
 | `runefoble.events.session.created` | `handle_session_created` | Game master and session campaign tuples |
-| `runefoble.events.session.participant_joined`, `runefoble.events.session.player_joined_session` | `handle_participant_joined` | Campaign role tuple. Character ownership when a `character_id` is present. |
+| `runefoble.events.session.player_joined_session` | `handle_participant_joined` | Campaign role tuple. Character ownership when a `character_id` is present. |
 | `runefoble.events.character.created` | `handle_character_created` | Character owner and campaign tuples |
 | `runefoble.events.board.token_placed` | `handle_token_placed` | Board token character and campaign tuples |
 

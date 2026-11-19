@@ -23,7 +23,7 @@ sequenceDiagram
     VoiceAgent->>Redis: Publish PlayerSpokeEvent (runefoble.events.session)
     VoiceAgent->>Watcher: Forward Transcript ("I step 15 feet south")
     Watcher->>Watcher: Parse Intent (Action: move, dx: 0, dy: +3)
-    Watcher->>Redis: Publish SpeechIntentParsed & WatcherNarrationGenerated (runefoble.events.watcher)
+    Watcher->>Redis: Publish SpeechIntentParsed (runefoble.events.watcher)
     Watcher->>Board: Propose move (POST /api/v1/boards/{id}/ghost-previews)
     Board-->>Client: ghost_preview over the board socket (staged)
     Client->>Board: confirm_move (player)
@@ -67,7 +67,7 @@ Each active voice participant maintains an isolated, bounded circular ring buffe
 ### 3. Whisper Acoustic Inference & Event Dispatch
 - **Acoustic Transcription**: The completed audio segment is transcribed via `FasterWhisperTranscriber` (CTranslate2 INT8 tiny.en/base.en model), the production default. The speech engine sits behind the `BaseTranscriber` port. There is no canned transcript in production. When the engine cannot load or infer, the chunk fails with `speech_engine_unavailable` and no `runefoble.events.watcher.player_spoke` is published. Tests inject a deterministic fixture engine at the composition root.
 - **CloudEvent Publication**: An immutable `runefoble.events.watcher.player_spoke` is dispatched onto Redis Streams (`runefoble.events.session`).
-- **Watcher Orchestration**: The transcript is concurrently delivered to `the_watcher` for spatial intent extraction and board action execution (`runefoble.events.watcher.speech_intent_parsed` and `runefoble.events.watcher.narration_generated`). For a move, The Watcher also proposes the move to `board_state` as a ghost preview. The Watcher never publishes `token_moved`. Only the player's `confirm_move` commits the move, and then `board_state` publishes `runefoble.events.board.token_moved`.
+- **Watcher Orchestration**: The transcript is concurrently delivered to `the_watcher` for spatial intent extraction and board action execution (`runefoble.events.watcher.speech_intent_parsed`). For a move, The Watcher also proposes the move to `board_state` as a ghost preview. The Watcher never publishes `token_moved`. Only the player's `confirm_move` commits the move, and then `board_state` publishes `runefoble.events.board.token_moved`.
 
 
 ## WebRTC Voice Room Signaling Gateway Architecture

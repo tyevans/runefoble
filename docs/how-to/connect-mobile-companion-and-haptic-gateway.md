@@ -70,7 +70,7 @@ ws.send(JSON.stringify({
 }));
 ```
 
-The gateway immediately responds with an `audio_profile_adapted` frame and publishes `MobileAudioProfileAdapted` over the Redis event bus.
+The gateway immediately responds with an `audio_profile_adapted` frame.
 
 ---
 
@@ -176,7 +176,7 @@ curl -X POST "http://localhost:8005/api/v1/voice/streams/session-101/report" \
   }'
 ```
 
-- When packet loss > 5% or RTT > 250ms is detected, `VoiceStreamQualityDegradedEvent` is emitted.
+- When packet loss > 5% or RTT > 250ms is detected, the stream report marks the stream as degraded.
 - The `AdaptiveBitrateRegulator` steps transmission down to 12 kbps (`cellular_constrained` mode) or 8 kbps (`ultra_low` mode) within 200ms.
 - A `VoiceStreamCodecAdaptedEvent` is published to Redis Streams.
 

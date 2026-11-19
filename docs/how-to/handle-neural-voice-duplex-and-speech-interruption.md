@@ -119,27 +119,9 @@ The adaptive Normalized LMS echo canceller subtracts the speaker echo from the m
 
 ---
 
-## 5. Subscribing to `voice.speech.interrupted` Domain Events
+## 5. Reacting to a Barge-In
 
-The Watcher and session services subscribe to Redis Streams (`runefoble.events.voice` and `runefoble.events.session`) to save conversational state and listen to the interjecting player:
-
-```python
-from runefoble_events.events import VoiceSpeechInterrupted
-from runefoble_platform.redis_bus import RedisConsumerGroup
-
-
-async def handle_voice_events(consumer: RedisConsumerGroup):
-    messages = await consumer.read_group(
-        stream="runefoble.events.voice",
-        group_name="watcher_speech_duplex",
-        consumer_name="watcher_worker_1",
-    )
-    for msg_id, event in messages:
-        if isinstance(event, VoiceSpeechInterrupted):
-            print(f"Narrative paused at {event.cutoff_position_ms}ms by {event.speaker_name}")
-            print(f"Unspoken remaining text: {event.remaining_narration_text}")
-            await consumer.ack("runefoble.events.voice", "watcher_speech_duplex", msg_id)
-```
+A barge-in reaches the client as frames on the duplex WebSocket. The `barge_in_detected` frame carries `cutoff_ms` and `remaining_text`. The `playback_canceled` frame follows it. No Redis Streams event is published for a barge-in.
 
 ---
 
@@ -186,7 +168,7 @@ To eliminate harsh audio clipping and delayed conversational cutoffs, `voice_age
 ### Architecture Components
 - **`BargeInOnsetFilter` (`voice_agent.dsp.barge_in_filter`)**: Audio ring-buffer evaluator continuously analyzing 10ms PCM frames for energy and zero-crossing rates, triggering barge-in within `< 40ms` of speech onset.
 - **`CosineCrossfadeAttenuator` (`voice_agent.dsp.cosine_crossfade`)**: Smooth raised-cosine attenuation filter ($0.5 \times (1 + \cos(\pi \times (i+1)/N))$) damping outgoing TTS audio samples to zero amplitude across 20ms without pop artifacts.
-- **CloudEvents**: Automatically publishes `runefoble.events.voice.barge_in_detected` and `runefoble.events.voice.tts_stream_attenuated` over Redis Streams.
+- **Client frames**: The duplex socket sends the `barge_in_detected` and `webrtc_stream_mute` frames. No Redis Streams event is published for a barge-in.
 
 ### Diagnostic Evaluation Frontdoor API
 
@@ -235,7 +217,7 @@ To ensure tabletop players can converse through open room speakers without headp
 - **`DoubleTalkDetector` (`voice_agent.aec.double_talk`)**: Finite state machine detecting simultaneous human speech (`DoubleTalkState.DOUBLE_TALK`) via Geigel ratio, freezing filter adaptation to eliminate weight divergence.
 - **`ResidualEchoSuppressor` (`voice_agent.aec.double_talk`)**: Post-filter applying up to 28dB attenuation to residual echo during `FAR_END_ONLY` state while passing near-end speech transparently with 1.0 gain.
 - **`AECPipeline` (`voice_agent.aec.pipeline`)**: High-performance coordinator running frame-by-frame cancellation, metric computation, and ERLE validation.
-- **CloudEvents**: Automatically publishes `runefoble.events.voice.aec_benchmark_completed` and `runefoble.events.voice.echo_suppression_engaged` over Redis Streams.
+- **Response**: The benchmark endpoint returns the ERLE, the pass state, and the echo detection flag. No Redis Streams event is published.
 
 ### Diagnostic Benchmark Frontdoor API
 
@@ -300,7 +282,7 @@ When the engine fails to load a model or to infer text, the utterance is dropped
 
 - `POST /api/v1/voice/stream/chunk` returns `503` with `{"detail": {"error": "speech_engine_unavailable", "engine": "faster-whisper", "message": "..."}}`.
 - `WS /api/v1/voice/stream/ws` sends `{"error": "speech_engine_unavailable", "engine": "...", "message": "..."}` and keeps the socket open.
-- The service publishes `runefoble.events.voice.transcription_failed` (`VoiceTranscriptionFailed`) to `runefoble.events.voice`.
+- The route returns the 503 and records no speech. No Redis Streams event is published for the failure.
 - No `runefoble.events.watcher.player_spoke` is published, and The Watcher receives no transcript.
 
 Check the active engine with `GET /healthz`. The response includes `"stt_engine": "faster-whisper"`.

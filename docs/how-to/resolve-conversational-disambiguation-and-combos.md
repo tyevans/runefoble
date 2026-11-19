@@ -88,8 +88,8 @@ curl -X POST http://localhost:8001/api/v1/watcher/intent/parse \
 ```
 
 During this call:
-1. `IntentDisambiguationRequested` is published to Redis Stream `runefoble.events.watcher`.
-2. Candidate preview locations are emitted as `CandidateGhostPreviewEmitted` to `runefoble.events.board` to render preview highlights on `<runefoble-board>`.
+1. The `POST /api/v1/watcher/intent/parse` response carries `requires_disambiguation`, `clarification_prompt`, and `candidates`. No Redis Streams event is published.
+2. The candidate targets in the response list the choices for the player.
 
 ---
 
@@ -140,7 +140,7 @@ curl -X POST http://localhost:8001/api/v1/watcher/intent/resolve \
 }
 ```
 
-This publishes `CompoundActionResolved` over `runefoble.events.watcher`.
+The response carries the resolved actions. No Redis Streams event is published.
 
 ---
 

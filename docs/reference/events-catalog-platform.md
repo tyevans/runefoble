@@ -13,7 +13,7 @@ Aggregate state: `CampaignChronicleAggregate` (`services/campaign_analytics/src/
 - **`EncounterMvpAwarded`**: Defined, not produced by any service yet (`runefoble.events.analytics.mvp_awarded`). Fields: `campaign_id_str`, `session_id_str`, `encounter_id`, `combatant_id`, `combatant_name`, `award_title`, `metric_name`, `score`. MVP awards are computed at query time from `combat_performance_records`.
 
 ### Downtime, Crafting, Tavern Minigames & Merchant Haggling Events
-For full schemas of `runefoble.events.downtime.crafting_attempted`, `runefoble.events.downtime.crafting_succeeded`, `runefoble.events.downtime.crafting_mishap_occurred`, `runefoble.events.downtime.campfire_rest_completed`, `runefoble.events.downtime.stronghold_created`, and `runefoble.events.downtime.stronghold_upgraded`, see [`downtime-and-crafting-events.md`](downtime-and-crafting-events.md).
+For full schemas of `runefoble.events.downtime.crafting_attempted`, `runefoble.events.downtime.crafting_succeeded`, `runefoble.events.downtime.crafting_mishap_occurred`, `runefoble.events.downtime.stronghold_created`, and `runefoble.events.downtime.stronghold_upgraded`, see [`downtime-and-crafting-events.md`](downtime-and-crafting-events.md).
 For schemas of `runefoble.events.tavern.minigame_started`, `runefoble.events.tavern.minigame_turn_taken`, `runefoble.events.tavern.minigame_ended`, `runefoble.events.tavern.intoxication_level_changed`, and `runefoble.events.tavern.haggling_negotiated`, see [`tavern-and-merchants-events.md`](tavern-and-merchants-events.md).
 
 ### West Marches & Cross-Campaign Trade Events (`aggregate_type: SharedWorld`, `CaravanLedger`)
@@ -85,8 +85,5 @@ Owned by `game_session` (ADR-0015 decision a, TASK-0742). Defined in `libs/runef
 
 ### Dynamic FastMCP Tool Events (`aggregate_type: DynamicTool`)
 
-- **`DynamicToolRegisteredEvent`** (`runefoble.events.mcp_tools.dynamic_tool_registered`): Emitted when a dynamic FastMCP tool is registered or hot-reloaded at runtime. Broadcast on Redis Stream `runefoble.events.system`. Fields: `tool_name`, `description`, `parameters`, `author_id`, `campaign_id`, `metadata`.
-- **`DynamicToolUnregisteredEvent`** (`runefoble.events.mcp_tools.dynamic_tool_unregistered`): Emitted when a dynamic tool is unregistered or retired from discovery. Broadcast on Redis Stream `runefoble.events.system`. Fields: `tool_name`, `unregistered_by`, `campaign_id`.
-- **`DynamicToolInvokedEvent`** (`runefoble.events.mcp_tools.dynamic_tool_invoked`): Emitted when an agent or user invokes a dynamic tool via FastMCP or REST frontdoors. Broadcast on Redis Stream `runefoble.events.system`. Fields: `tool_name`, `user_id`, `session_id`, `campaign_id`, `arguments`, `duration_ms`, `success`, `error`.
 
 

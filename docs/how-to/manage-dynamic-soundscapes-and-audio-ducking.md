@@ -175,8 +175,8 @@ Available instrument timbre presets:
 - `synth`: Arcane Synthesizer & Astral Chime (crystal chords, ethereal synth)
 
 ### Reactive Tabletop Triggering
-- **Clutch Criticals**: When a player rolls a natural 20 (`CriticalHitScored` or `DiceRolled(is_crit=True)`), the audio mixer triggers their triumphant stinger within 250ms, blending seamlessly into active combat stems.
-- **Death Saves**: When a character drops to 0 HP (`DeathSaveStarted`), the audio soundtrack smoothly transitions to introduce their somber theme variant (e.g. solitary cello), amplifying dramatic tension.
+- **Clutch Criticals**: When a player rolls a natural 20 (`DiceRolled` with `is_crit=True`), the audio mixer triggers their triumphant stinger within 250ms, blending seamlessly into active combat stems.
+- **Death Saves**: When a health change leaves a character at 0 HP (`CharacterHealthChanged` with `current_hp` 0), the audio soundtrack smoothly transitions to introduce their somber theme variant (e.g. solitary cello), amplifying dramatic tension.
 - **Voice Sidechain Ducking**: Whenever voice activity is detected (`runefoble.events.watcher.player_spoke`), leitmotif stems are attenuated by -12dB alongside background music.
 
 ---
@@ -234,7 +234,7 @@ Per ADR-0003, ADR-0006, ADR-0007, and Hard Invariant 6, the service keeps no ses
 - `services/soundscape/src/soundscape/dependencies.py`: Holds the event repository factory, the SpiceDB permission guards, the Zitadel verifier seam, and the event bus seam. It holds no mixer, tension, or leitmotif state.
 - `services/soundscape/src/soundscape/session_state.py`: Reads and writes one session's state through the aggregate. It projects the public tension and mixer view from the stored state.
 - `services/soundscape/src/soundscape/ids.py`: Derives the aggregate id from the session id with UUID v5. Every process resolves the same event stream for one session.
-- `services/soundscape/src/soundscape/event_handlers.py`: Contains the domain event handler `handle_incoming_domain_event`. It handles `runefoble.events.session.combat_encounter_started`, `runefoble.events.session.combat_encounter_ended`, `runefoble.events.session.combat_round_advanced`, `runefoble.events.session.initiative_turn_advanced`, `runefoble.events.watcher.player_spoke`, `CriticalHitScored`, `DiceRolled`, and `DeathSaveStarted`.
+- `services/soundscape/src/soundscape/event_handlers.py`: Contains the domain event handler `handle_incoming_domain_event`. It handles `runefoble.events.session.combat_encounter_started`, `runefoble.events.session.combat_encounter_ended`, `runefoble.events.session.combat_round_advanced`, `runefoble.events.session.initiative_turn_advanced`, `runefoble.events.watcher.player_spoke`, `DiceRolled`, and `CharacterHealthChanged`.
 - `services/soundscape/src/soundscape/consumer.py`: Runs the only caller of the handler. One Redis Streams consumer reads the `runefoble.events.session`, `runefoble.events.watcher`, and `runefoble.events.character` streams (TASK-0710). No in-process bus delivers events to the handler.
 - `services/soundscape/src/soundscape/main.py`: Coordinates service startup. The FastAPI lifespan connects the Redis Streams bus and starts the consumer.
 

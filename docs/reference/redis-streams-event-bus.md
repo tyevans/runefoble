@@ -119,7 +119,7 @@ Rules for clients and operators:
 
 Decision routes that return 503 include the Watcher veto, approve, modify, DM whisper, stand-in activation, and autonomous DM routes. Game session routes that return 503 include session start, hot-swap takeover, combat, tavern, bounty, campfire, caravan, stronghold, settlement, and west marches routes. The dice roll route in game session uses `publish_best_effort` until TASK-0565 refactors it.
 
-#### Site Classes in Voice Agent and gateway_mcp
+#### Site Classes in Voice Agent
 
 Each publish site in these services belongs to one class.
 
@@ -127,12 +127,10 @@ Each publish site in these services belongs to one class.
 |---|---|---|---|
 | `POST /api/v1/voice/transcribe` player speech (`runefoble.events.watcher.player_spoke`) | Domain state | `publish_or_fail` | 503. The Watcher is not called. |
 | `POST /api/v1/voice/stream/chunk` and stream WebSocket player speech | Domain state | `publish_or_fail` | HTTP 503. On the WebSocket, a `{"status": "publish_failed"}` frame. The chunk is not kept. |
-| Transcription engine failure (`VoiceTranscriptionFailed`) | Notification | `publish_best_effort` | The route returns the engine 503. A failed publish is counted. |
 | Voice room peer events (`VoicePeerJoined`, `VoicePeerLeft`, mute) | Notification | `publish_best_effort` | Counted. The request succeeds. |
-| Voice audio conditioned, speech interrupted, barge-in CloudEvents, TTS attenuation, AEC and stream diagnostics | Notification | `publish_best_effort` | Counted. The request succeeds. |
-| gateway_mcp dynamic tool events (`runefoble:events:system`) | Notification | `record_publish_failure` | Counted, logged at error level, and marked on the active trace span. The tool call succeeds. |
+| Voice stream diagnostics (codec adaptation) | Notification | `publish_best_effort` | Counted. The request succeeds. |
 
-The `gateway_mcp` `/healthz` route returns `event_publish_failures` with the same count. Standalone `gateway_mcp` injects its Redis Streams bus at start-up. It fails when `RUNEFOBLE_REDIS_URL` is empty.
+The `gateway_mcp` `/healthz` route returns `event_publish_failures`. The gateway_mcp process publishes no domain event.
 
 ---
 
@@ -157,7 +155,7 @@ These consumers had no running process. TASK-0578 removed them or started them. 
 | `RedisInferenceConsumer` (`services/inference_worker`) | Removed. Config keys `RUNEFOBLE_WORKER_REDIS_*` removed. | No producer writes `runefoble.inference.requests`. TASK-0448 may add a producer and a dead-letter path later. |
 | `AnalyticsEventWorker` | Removed. | No service started it. OpenPanel forwarding is not deployed. Domain services call `OpenPanelClient` directly if they need it. |
 | In-process `runefoble_platform.bus` (`EventBus`) | Deleted (TASK-0710). Every publish goes to Redis Streams. Soundscape handlers run only from the Redis consumer. | Forge and soundscape publishes reached no in-process subscriber. The one subscriber also read the same events from Redis. |
-| Gateway MCP dynamic tool bus | Kept. No mock fallback. | `configure_dynamic_event_bus` in `gateway_mcp.server` injects the Redis bus when the MCP process starts. It raises when `REDIS_URL` is empty. Dropped events log at `ERROR`. |
+| Gateway MCP dynamic tool bus | Removed with the dynamic tool events (TASK-0703). | The gateway_mcp process has no Redis Streams bus. Its tool calls publish nothing. |
 
 ---
 
