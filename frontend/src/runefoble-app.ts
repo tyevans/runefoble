@@ -87,7 +87,8 @@ export class RunefobleApp extends LitElement {
   @state() public lobbyAvailableCharacters: LobbyCharacterOption[] = [];
   @state() public activeCharacter: CharacterItem | null = null;
   /** `no_board` while the session has no board yet (TASK-0906). The view then shows an empty state. */
-  @state() public boardKind: SessionBoard['kind'] = 'board';
+  /** `loading` until the first board read of the open session answers (no board element, no board socket). */
+  @state() public boardKind: SessionBoard['kind'] | 'loading' = 'loading';
   /** The seated characters, read for the DM while the session has no board (TASK-0922). */
   @state() public sessionSeats: PartySeat[] = [];
   @state() public boardCols = 10;

@@ -40,10 +40,8 @@ function applyBoard(host: RunefobleApp, board: SessionBoard): void {
     host.tokens = [];
     return;
   }
-  host.tokens = board.tokens.map((bt) => {
-    const existing = host.tokens.find((t) => t.id === bt.id);
-    return existing ? { ...bt, x: existing.x, y: existing.y } : bt;
-  });
+  // The read is the server state. A cell shown before the read can be older than it.
+  host.tokens = board.tokens;
   host.boardCols = board.cols;
   host.boardRows = board.rows;
 }

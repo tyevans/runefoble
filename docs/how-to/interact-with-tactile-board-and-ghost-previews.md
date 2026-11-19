@@ -153,6 +153,7 @@ Token ids are global in SpiceDB. A token id must use only letters, digits, and `
 ### WebSocket `/ws/boards/{session_id}`
 
 - Offer the subprotocols `runefoble.v1` and `runefoble.bearer.<jwt>`. A missing or invalid token closes the handshake with `1008`. A user without `board.view` closes with `4403`, the code of the gateway session sockets. Both closes happen before accept.
+- The first frame is `connected`. It carries `tokens`, a map of token id to PlacedTokenState at subscribe time. `<runefoble-board>` replaces its token list with this snapshot. Thus a screen that read the board before its socket opened still shows a move that another player made in between.
 - `confirm_move`, `token_action`, and `radial_action` need `board_token.move` on `token_id`.
 - A confirmed move broadcasts a `token_moved` frame. The frame has the same move fields as the HTTP move response: `movement_cost`, `hazard_triggered`, `damage_dice`, `trap_triggered`, and `movement_paused`. A move onto a trap stops at the trap cell and sets `movement_paused` to `true`.
 - `aoe_place`, `cast_spell`, `spell_vfx`, `SpellCast`, and spoken spell intents need `campaign.play`.
@@ -167,6 +168,8 @@ Token ids are global in SpiceDB. A token id must use only letters, digits, and `
 `<runefoble-board>` reads the token from the App Shell `runefoble-auth` context (`@runefoble/ui-core`). It opens the socket with `boardSocketProtocols(token)`. `<runefoble-dm-trap-controls>` and `<runefoble-map-switcher>` send `Authorization: Bearer` from the same context. They no longer send a `campaign_id` query.
 
 ### App Shell mount
+
+The App Shell mounts `<runefoble-board>` only after the board read of the open session returns a board. Until the first read answers, the board area shows "Loading the battlemap..." (`boardKind` is `loading`). Thus no board socket opens before the board exists, and each page has one board socket: the one of `<runefoble-board>` (`getWebSocketUrl()` in `runefoble-app.ts` only builds its URL). A `board_ready` frame reads the board again while the shell has no board or the first read is still out. A board read replaces the shown token cells with the server cells.
 
 The App Shell mounts `<runefoble-dm-trap-controls>` and `<runefoble-map-switcher>` in the live tabletop view (`#/campaigns/:campaignId/sessions/:sessionId`). Only a caller with the `run_session` capability (from `GET /api/v1/campaigns/{campaign_id}/capabilities`) sees them. Both take the session id as `boardId`. A `move-token` dispatch from `<runefoble-board>` sets `targetX` and `targetY` on `<runefoble-dm-trap-controls>` to the destination cell. A `map-switched` event reloads the board from the server.
 

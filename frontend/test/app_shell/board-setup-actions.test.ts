@@ -16,7 +16,7 @@ import type { RunefobleApp } from '../../src/runefoble-app.ts';
 const OPEN = 1;
 (globalThis as any).WebSocket ??= { OPEN };
 
-function host(boardKind: 'board' | 'no_board') {
+function host(boardKind: 'board' | 'no_board' | 'loading') {
   const sent: string[] = [];
   const toasts: string[] = [];
   let reloads = 0;
@@ -52,6 +52,12 @@ describe('battlemap set-up in the App Shell', () => {
 
   it('reads the board again on a board_ready frame while the client has no board', () => {
     const h = host('no_board');
+    handleSessionMessage(h.app, { type: 'board_ready', sessionId: 'sess-1' });
+    assert.equal(h.reloads(), 1);
+  });
+
+  it('reads the board again on a board_ready frame while the first board read is out', () => {
+    const h = host('loading');
     handleSessionMessage(h.app, { type: 'board_ready', sessionId: 'sess-1' });
     assert.equal(h.reloads(), 1);
   });

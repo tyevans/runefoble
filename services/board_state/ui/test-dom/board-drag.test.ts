@@ -104,3 +104,23 @@ describe('runefoble-board server error frames', () => {
     expect(cell(el, 0, 0).querySelector('.token[title^="Valeros the Bold"]')).not.toBeNull();
   });
 });
+
+describe('runefoble-board connected snapshot', () => {
+  it('shows the token cells of the connected frame, so a move before the socket opened is shown', async () => {
+    const el = await mount();
+
+    el.handleIncomingSocketMessage({
+      type: 'connected',
+      session_id: 'sess-1',
+      tokens: {
+        'tok-valeros': { token_id: 'tok-valeros', name: 'Valeros the Bold', x: 3, y: 3, vision_radius: 2 },
+        'tok-sarah': { token_id: 'tok-sarah', name: 'Sarah of the Mists', x: 1, y: 0, vision_radius: 2 },
+      },
+    });
+    await el.updateComplete;
+
+    expect(cell(el, 3, 3).querySelector('.token[title^="Valeros the Bold"]')).not.toBeNull();
+    expect(cell(el, 0, 0).querySelector('.token')).toBeNull();
+    expect(cell(el, 1, 0).querySelector('.token[title^="Sarah of the Mists"]')).not.toBeNull();
+  });
+});

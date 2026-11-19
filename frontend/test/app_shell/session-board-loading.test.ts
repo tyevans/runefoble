@@ -78,6 +78,15 @@ describe('Live session load without a board', () => {
     assert.ok(host.tokens.length >= 1);
   });
 
+  it('shows the token cells of the board read, not the cells shown before it', async () => {
+    gateway = installSessionGateway({ body: OWNER_BOARD_STATE });
+    const host = newHost();
+    host.tokens = [{ id: 'tok-valeros', name: 'Valeros', x: 0, y: 0 }];
+    await loadActiveSessionData(host, ROUTE);
+    const valeros = host.tokens.find((t) => t.id === 'tok-valeros');
+    assert.deepEqual([valeros?.x, valeros?.y], [2, 3]);
+  });
+
   it('reads the seated characters for a DM when the board is 404 (TASK-0922)', async () => {
     gateway = installSessionGateway({ status: 404, body: { detail: 'Board not found' } });
     const host = newHost();

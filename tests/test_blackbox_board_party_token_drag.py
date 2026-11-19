@@ -200,3 +200,46 @@ def test_a_move_without_a_target_cell_gets_an_invalid_error_frame(
     assert (frame["code"], frame["action"]) == ("INVALID", "confirm_move")
     assert "to_y" in frame["message"]
     assert _token_cell(gateway, session_id, token_id) == (0, 0)
+
+
+def test_the_move_reaches_the_dm_board_socket_that_is_already_open(
+    gateway: TestClient, board_state_upstream: str
+) -> None:
+    session_id, token_id = _set_up_table(gateway)
+
+    with (
+        _board_socket(board_state_upstream, session_id, DM) as dm,
+        _board_socket(board_state_upstream, session_id, PLAYER) as player,
+    ):
+        assert _next_frame(dm)["type"] == "connected"
+        assert _next_frame(player)["type"] == "connected"
+        player.send(_move(token_id, to_x=3, to_y=3))
+        frame = _next_frame(dm)
+
+    assert (frame["type"], frame["token_id"], frame["x"], frame["y"]) == (
+        "token_moved",
+        token_id,
+        3,
+        3,
+    )
+
+
+def test_a_board_socket_opened_after_a_move_gets_the_moved_token_on_connect(
+    gateway: TestClient, board_state_upstream: str
+) -> None:
+    """The DM screen can read the board and open its socket after the player moves (Kind run 6).
+
+    The `connected` frame carries the board tokens, so the late socket misses no move.
+    """
+    session_id, token_id = _set_up_table(gateway)
+    with _board_socket(board_state_upstream, session_id, PLAYER) as player:
+        assert _next_frame(player)["type"] == "connected"
+        player.send(_move(token_id, to_x=3, to_y=3))
+        assert _next_frame(player)["type"] == "token_moved"
+
+    with _board_socket(board_state_upstream, session_id, DM) as dm:
+        connected = _next_frame(dm)
+
+    assert connected["type"] == "connected", connected
+    token = connected["tokens"][token_id]
+    assert (token["name"], token["x"], token["y"]) == ("Valeros the Bold", 3, 3)
