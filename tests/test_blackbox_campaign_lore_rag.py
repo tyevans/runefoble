@@ -2,7 +2,7 @@
 
 Governed by Hard Invariant 7 (Blackbox TDD with Frontdoor Setup).
 All assertions and setup operate strictly through public HTTP endpoints
-using TestClient(app, headers=_bearer(VISITOR_SUBJECT)) from campaign_lore.main.
+using TestClient(app, headers=bearer(VISITOR_SUBJECT)) from campaign_lore.main.
 """
 
 import statistics
@@ -15,7 +15,7 @@ from campaign_lore.main import app
 from fastapi.testclient import TestClient
 from runefoble_auth.factory import get_spicedb_client
 
-from tests.helpers.ws_identity import SIGNING_ISSUER
+from tests.helpers.ws_identity import bearer
 
 VISITOR_SUBJECT = "lore-test-visitor"
 
@@ -27,14 +27,9 @@ async def _seed_dm(campaign_id: str, user_id: str = VISITOR_SUBJECT) -> None:
     )
 
 
-def _bearer(user_id: str) -> dict[str, str]:
-    """Return headers carrying a signed bearer token for `user_id`."""
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(user_id)}"}
-
-
 @pytest.fixture
 def client(lore_backends) -> Iterator[TestClient]:
-    with TestClient(app, headers=_bearer(VISITOR_SUBJECT)) as client:
+    with TestClient(app, headers=bearer(VISITOR_SUBJECT)) as client:
         yield client
 
 
@@ -242,7 +237,7 @@ async def test_blackbox_spicedb_authorization_secret_filtering(client: TestClien
     # DM can view secret document
     dm_doc_resp = client.get(
         f"/api/v1/lore/documents/{secret_doc_id}",
-        headers=_bearer(dm_user),
+        headers=bearer(dm_user),
     )
     assert dm_doc_resp.status_code == 200
     assert dm_doc_resp.json()["is_secret"] is True
@@ -250,7 +245,7 @@ async def test_blackbox_spicedb_authorization_secret_filtering(client: TestClien
     # Player CANNOT view secret document directly (403 Forbidden)
     player_doc_resp = client.get(
         f"/api/v1/lore/documents/{secret_doc_id}",
-        headers=_bearer(player_user),
+        headers=bearer(player_user),
     )
     assert player_doc_resp.status_code == 403
     assert "Forbidden" in player_doc_resp.json()["detail"]
@@ -266,7 +261,7 @@ async def test_blackbox_spicedb_authorization_secret_filtering(client: TestClien
     dm_search = client.post(
         "/api/v1/lore/search",
         json=search_query,
-        headers=_bearer(dm_user),
+        headers=bearer(dm_user),
     )
     assert dm_search.status_code == 200
     dm_results = dm_search.json()
@@ -279,7 +274,7 @@ async def test_blackbox_spicedb_authorization_secret_filtering(client: TestClien
     player_search = client.post(
         "/api/v1/lore/search",
         json=search_query,
-        headers=_bearer(player_user),
+        headers=bearer(player_user),
     )
     assert player_search.status_code == 200
     player_results = player_search.json()

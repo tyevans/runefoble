@@ -12,7 +12,7 @@ from fastapi.testclient import TestClient
 from game_session.main import app as session_app
 from runefoble_auth.spicedb import MockSpiceDBClient
 
-from tests.helpers.ws_identity import SIGNING_ISSUER
+from tests.helpers.ws_identity import SIGNING_ISSUER, bearer
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
@@ -24,23 +24,16 @@ def client(spicedb: MockSpiceDBClient) -> TestClient:
     )
 
 
-def auth_headers(sub: str) -> dict[str, str]:
-    """Return Bearer headers for a token that the game_session verifier accepts."""
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
-
-
 def create_campaign_session(client: TestClient, owner_id: str) -> tuple[str, str]:
     """Create a campaign as its owner and return (campaign_id, first_session_id)."""
     res = client.post(
         "/api/v1/campaigns",
         json={"title": f"Bounty Campaign {uuid4().hex[:8]}"},
-        headers=auth_headers(owner_id),
+        headers=bearer(owner_id),
     )
     assert res.status_code == 201, res.text
     campaign_id = res.json()["id"]
-    sessions = client.get(
-        f"/api/v1/campaigns/{campaign_id}/sessions", headers=auth_headers(owner_id)
-    )
+    sessions = client.get(f"/api/v1/campaigns/{campaign_id}/sessions", headers=bearer(owner_id))
     assert sessions.status_code == 200, sessions.text
     return campaign_id, sessions.json()[0]["id"]
 
@@ -50,12 +43,12 @@ def join_campaign(client: TestClient, campaign_id: str, owner_id: str, member_id
     invite = client.post(
         f"/api/v1/campaigns/{campaign_id}/invites",
         json={"role": "player"},
-        headers=auth_headers(owner_id),
+        headers=bearer(owner_id),
     )
     assert invite.status_code == 201, invite.text
     joined = client.post(
         "/api/v1/campaigns/join",
         json={"invite_token": invite.json()["token"]},
-        headers=auth_headers(member_id),
+        headers=bearer(member_id),
     )
     assert joined.status_code == 200, joined.text

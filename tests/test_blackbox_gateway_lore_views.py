@@ -20,6 +20,7 @@ from fastapi.testclient import TestClient
 from gateway_api.main import app as gateway_app
 
 from tests.helpers.live_services import closed_port_url, serve, unavailable_app
+from tests.helpers.ws_identity import bearer
 
 PIN_TITLE = "Gate of Ashes"
 PIN_BODY = {
@@ -37,10 +38,6 @@ OTHER_ENTRY = {
     "content": "Dockhands mutter about lanterns on the water.",
     "privacy": "party_shared",
 }
-
-
-def _bearer(issuer: Any, user_id: str) -> dict[str, str]:
-    return {"Authorization": f"Bearer {issuer.mint(user_id)}"}
 
 
 @pytest.fixture
@@ -61,7 +58,7 @@ def client(live_lore) -> Iterator[TestClient]:
 @pytest.fixture
 def campaign(client: TestClient, trusted_ws_issuer) -> dict[str, Any]:
     """Create a campaign as its owner, invite a player, and join the player to it."""
-    owner = _bearer(trusted_ws_issuer, "dm_lore_owner")
+    owner = bearer("dm_lore_owner", issuer=trusted_ws_issuer)
     created = client.post(
         "/api/v1/campaigns",
         json={"title": "Ashes Campaign", "setting": "Ember Coast", "system": "5e"},
@@ -77,7 +74,7 @@ def campaign(client: TestClient, trusted_ws_issuer) -> dict[str, Any]:
     )
     assert invite.status_code == 201, invite.text
 
-    member = _bearer(trusted_ws_issuer, "player_lore_member")
+    member = bearer("player_lore_member", issuer=trusted_ws_issuer)
     joined = client.post(
         "/api/v1/campaigns/join",
         json={"invite_token": invite.json()["token"]},
@@ -88,7 +85,7 @@ def campaign(client: TestClient, trusted_ws_issuer) -> dict[str, Any]:
         "id": campaign_id,
         "owner": owner,
         "member": member,
-        "outsider": _bearer(trusted_ws_issuer, "stranger_lore"),
+        "outsider": bearer("stranger_lore", issuer=trusted_ws_issuer),
     }
 
 
@@ -149,7 +146,7 @@ def test_owner_down_returns_503_for_atlas_and_codex(
     monkeypatch, trusted_ws_issuer, game_session_upstream
 ) -> None:
     monkeypatch.setenv("RUNEFOBLE_CAMPAIGN_LORE_URL", closed_port_url())
-    owner = _bearer(trusted_ws_issuer, "dm_lore_down")
+    owner = bearer("dm_lore_down", issuer=trusted_ws_issuer)
     with TestClient(gateway_app) as gateway_client:
         created = gateway_client.post(
             "/api/v1/campaigns",
@@ -171,7 +168,7 @@ def test_owner_down_returns_503_for_atlas_and_codex(
 def test_owner_403_passes_through_on_atlas_and_codex(
     monkeypatch, trusted_ws_issuer, game_session_upstream
 ) -> None:
-    owner = _bearer(trusted_ws_issuer, "dm_lore_refused")
+    owner = bearer("dm_lore_refused", issuer=trusted_ws_issuer)
     with TestClient(gateway_app) as gateway_client:
         created = gateway_client.post(
             "/api/v1/campaigns",

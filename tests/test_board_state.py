@@ -8,7 +8,7 @@ from board_state.aggregate import BoardAggregate
 from board_state.main import app as board_app
 from httpx import ASGITransport, AsyncClient
 
-from tests.helpers.ws_identity import SIGNING_ISSUER
+from tests.helpers.ws_identity import bearer
 
 
 async def _create_seeded_party_board(client: AsyncClient, session_id: str) -> None:
@@ -33,11 +33,6 @@ async def _create_seeded_party_board(client: AsyncClient, session_id: str) -> No
     for token in tokens:
         placed = await client.post(f"/api/v1/boards/{session_id}/tokens", json=token)
         assert placed.status_code == 200, placed.text
-
-
-def bearer(sub: str) -> dict[str, str]:
-    """Return the Authorization header for a token that the shared test issuer signs for `sub`."""
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
 
 
 @pytest.mark.asyncio

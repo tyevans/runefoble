@@ -10,14 +10,9 @@ from campaign_lore.dependencies import get_atlas_repo
 from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import SpiceDBClient
 
-from tests.helpers.ws_identity import SIGNING_ISSUER
+from tests.helpers.ws_identity import bearer
 
 VISITOR_SUBJECT = "lore-test-visitor"
-
-
-def _bearer(user_id: str) -> dict[str, str]:
-    """Return headers carrying a signed bearer token for `user_id`."""
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(user_id)}"}
 
 
 @pytest.mark.asyncio
@@ -38,7 +33,7 @@ async def test_milestone_pin_placement_and_retrieval(
         "linked_entity_ids": ["entity-silverguard"],
         "metadata": {"icon": "castle_flag"},
     }
-    resp = client.post(url, json=payload, headers=_bearer(user_id))
+    resp = client.post(url, json=payload, headers=bearer(user_id))
     assert resp.status_code == 201
     pin_id = resp.json()["pin_id"]
     assert resp.json()["title"] == "Silverkeep Garrison Liberation"
@@ -47,7 +42,7 @@ async def test_milestone_pin_placement_and_retrieval(
     assert len(aggregate.state.pins) == 1
     assert aggregate.state.pins[0]["pin_id"] == pin_id
 
-    get_resp = client.get(f"{url}/{pin_id}", headers=_bearer(user_id))
+    get_resp = client.get(f"{url}/{pin_id}", headers=bearer(user_id))
     assert get_resp.status_code == 200
     assert get_resp.json()["title"] == "Silverkeep Garrison Liberation"
 
@@ -59,7 +54,7 @@ async def test_milestone_pin_era_and_session_filtering(
     """Test chronological era and session filtering for atlas milestone pins."""
     user_id = "rowan_chronicler"
     await spicedb.write_relationship("campaign", campaign_id, "player", "user", user_id)
-    base, headers = f"/api/v1/campaigns/{campaign_id}/atlas", _bearer(user_id)
+    base, headers = f"/api/v1/campaigns/{campaign_id}/atlas", bearer(user_id)
 
     client.post(
         f"{base}/pins",
@@ -103,12 +98,12 @@ async def test_milestone_pin_zanzibar_permission_checks(
     resp = client.post(
         f"/api/v1/campaigns/{campaign_id}/atlas/pins",
         json={"title": "Intrusion Pin", "coordinates": {"x": 10.0, "y": 10.0}},
-        headers=_bearer(intruder),
+        headers=bearer(intruder),
     )
     assert resp.status_code == 403
 
     view_resp = client.get(
         f"/api/v1/campaigns/{campaign_id}/atlas",
-        headers=_bearer(intruder),
+        headers=bearer(intruder),
     )
     assert view_resp.status_code == 403

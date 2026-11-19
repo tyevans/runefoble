@@ -15,7 +15,8 @@ import pytest
 from fastapi.testclient import TestClient
 from gateway_api.main import app as gateway_app
 
-from tests.realtime_session import bearer, open_table
+from tests.helpers.ws_identity import bearer
+from tests.realtime_session import open_table
 
 PARTY_TOKEN = {
     "token_id": "t1",

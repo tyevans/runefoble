@@ -18,14 +18,9 @@ from mcp.types import CallToolResult
 
 from tests.helpers.live_services import serve, unavailable_app
 from tests.helpers.mcp_http import call_tool_over_http, serve_mcp
-from tests.helpers.ws_identity import SIGNING_ISSUER
+from tests.helpers.ws_identity import SIGNING_ISSUER, bearer
 
 _MCP: dict[str, str] = {}
-
-
-def bearer(sub: str) -> dict[str, str]:
-    """Return the Authorization header for a token that the shared test issuer signs for `sub`."""
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
 
 
 @pytest.fixture(scope="module", autouse=True)

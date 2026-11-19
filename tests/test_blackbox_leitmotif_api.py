@@ -15,13 +15,7 @@ from tests.helpers.leitmotif_fixtures import (
     leitmotif_session_id_fixture,  # noqa: F401 (registers the leitmotif_session_id fixture)
     setup_leitmotif_profile,
 )
-from tests.helpers.ws_identity import SIGNING_ISSUER
-
-
-def auth_headers(sub: str) -> dict[str, str]:
-    """Return Bearer headers for a token that the service verifier accepts."""
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
-
+from tests.helpers.ws_identity import bearer
 
 __all__ = ["client"]
 
@@ -119,7 +113,7 @@ def test_zanzibar_authorization_enforced_on_leitmotif_profile(
     resp_forbidden = client.post(
         "/api/v1/soundscape/leitmotif/profile",
         json=payload,
-        headers=auth_headers("user-unauthorized"),
+        headers=bearer("user-unauthorized"),
     )
     assert resp_forbidden.status_code == 403 and "Forbidden" in resp_forbidden.json()["detail"]
 

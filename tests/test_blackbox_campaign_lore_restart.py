@@ -31,7 +31,7 @@ from tests.helpers.lore_backends import (
 from tests.helpers.module_state import SeamRestorer
 from tests.helpers.ports import free_port
 from tests.helpers.process import run_command
-from tests.helpers.ws_identity import SIGNING_ISSUER
+from tests.helpers.ws_identity import bearer
 
 VISITOR_SUBJECT = "lore-test-visitor"
 
@@ -41,11 +41,6 @@ async def _seed_dm(campaign_id: str, user_id: str = VISITOR_SUBJECT) -> None:
     await get_spicedb_client().write_relationship(
         "campaign", campaign_id, "dungeon_master", "user", user_id
     )
-
-
-def _bearer(user_id: str) -> dict[str, str]:
-    """Return headers carrying a signed bearer token for `user_id`."""
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(user_id)}"}
 
 
 def _use_postgres_event_store(dsn: str):
@@ -94,7 +89,7 @@ async def test_pgvector_ranking_survives_restart_without_reingest(postgres_servi
     await _seed_dm(campaign_id)
 
     store_before = _use_postgres_event_store(dsn)
-    with TestClient(create_app(), headers=_bearer(VISITOR_SUBJECT)) as first:
+    with TestClient(create_app(), headers=bearer(VISITOR_SUBJECT)) as first:
         for title, content in LORE_DOCUMENTS:
             resp = first.post(
                 "/api/v1/lore/documents",
@@ -107,7 +102,7 @@ async def test_pgvector_ranking_survives_restart_without_reingest(postgres_servi
     rows_before = await _vector_rows(dsn, campaign_id)
 
     store_after = _use_postgres_event_store(dsn)
-    with TestClient(create_app(), headers=_bearer(VISITOR_SUBJECT)) as second:
+    with TestClient(create_app(), headers=bearer(VISITOR_SUBJECT)) as second:
         undead_after = _ranked_titles(second, campaign_id, UNDEAD_QUERY)
         treasure_after = _ranked_titles(second, campaign_id, TREASURE_QUERY)
     await store_after.close()
@@ -135,7 +130,7 @@ async def test_lore_projection_survives_restart(postgres_service):
     await spicedb.write_relationship("campaign", campaign_id, "player", "user", player_user)
 
     store_before = _use_postgres_event_store(dsn)
-    with TestClient(create_app(), headers=_bearer(VISITOR_SUBJECT)) as first:
+    with TestClient(create_app(), headers=bearer(VISITOR_SUBJECT)) as first:
         public_resp = first.post(
             "/api/v1/lore/documents",
             json={
@@ -174,7 +169,7 @@ async def test_lore_projection_survives_restart(postgres_service):
     await store_before.close()
 
     store_after = _use_postgres_event_store(dsn)
-    with TestClient(create_app(), headers=_bearer(VISITOR_SUBJECT)) as second:
+    with TestClient(create_app(), headers=bearer(VISITOR_SUBJECT)) as second:
         player_search = second.post(
             "/api/v1/lore/search",
             json={
@@ -182,7 +177,7 @@ async def test_lore_projection_survives_restart(postgres_service):
                 "query": "Sunblade undead",
                 "limit": 5,
             },
-            headers=_bearer(player_user),
+            headers=bearer(player_user),
         )
         assert player_search.status_code == 200, player_search.text
         titles = [r["document_title"] for r in player_search.json()["results"]]
@@ -195,7 +190,7 @@ async def test_lore_projection_survives_restart(postgres_service):
                 "query": "Dragon Eye gem secret vault",
                 "limit": 5,
             },
-            headers=_bearer(player_user),
+            headers=bearer(player_user),
         )
         assert "Vault of the Dragon Eye" not in [
             r["document_title"] for r in secret_for_player.json()["results"]
@@ -208,7 +203,7 @@ async def test_lore_projection_survives_restart(postgres_service):
                 "query": "Dragon Eye gem secret vault",
                 "limit": 5,
             },
-            headers=_bearer(dm_user),
+            headers=bearer(dm_user),
         )
         assert "Vault of the Dragon Eye" in [
             r["document_title"] for r in secret_for_dm.json()["results"]
@@ -220,7 +215,7 @@ async def test_lore_projection_survives_restart(postgres_service):
         )
         assert resolve.json()["canonical_name"] == "Sir Gareth"
 
-        doc = second.get(f"/api/v1/lore/documents/{public_id}", headers=_bearer(player_user))
+        doc = second.get(f"/api/v1/lore/documents/{public_id}", headers=bearer(player_user))
         assert doc.status_code == 200, doc.text
         assert doc.json()["title"] == "Knights of the Sunblade"
     await store_after.close()
@@ -233,7 +228,7 @@ async def test_extracted_entities_record_pattern_provenance():
     set_event_store(None)
     campaign_id = str(uuid4())
     await _seed_dm(campaign_id)
-    with TestClient(create_app(), headers=_bearer(VISITOR_SUBJECT)) as client:
+    with TestClient(create_app(), headers=bearer(VISITOR_SUBJECT)) as client:
         resp = client.post(
             "/api/v1/lore/documents",
             json={
@@ -259,7 +254,7 @@ async def test_alias_consolidation_requires_an_existing_document():
     set_event_store(None)
     campaign_id = str(uuid4())
     await _seed_dm(campaign_id)
-    with TestClient(create_app(), headers=_bearer(VISITOR_SUBJECT)) as client:
+    with TestClient(create_app(), headers=bearer(VISITOR_SUBJECT)) as client:
         resp = client.post(
             "/api/v1/lore/aliases/consolidate",
             json={

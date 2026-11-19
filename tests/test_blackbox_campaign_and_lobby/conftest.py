@@ -13,12 +13,7 @@ from fastapi.testclient import TestClient
 from game_session.main import app as session_app
 from gateway_api.main import app as gateway_app
 
-from tests.helpers.ws_identity import SIGNING_ISSUER
-
-
-def auth_headers(sub: str) -> dict[str, str]:
-    """Return Bearer headers for a token that the service verifier accepts."""
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
+from tests.helpers.ws_identity import SIGNING_ISSUER, bearer
 
 
 @pytest.fixture
@@ -37,7 +32,7 @@ def client_sess(game_session_upstream) -> Iterator[TestClient]:
 
 @pytest.fixture
 def client_char(game_session_upstream) -> Iterator[TestClient]:
-    with TestClient(character_app, headers=auth_headers("character-owner")) as character_client:
+    with TestClient(character_app, headers=bearer("character-owner")) as character_client:
         yield character_client
 
 
@@ -47,13 +42,13 @@ def open_session(client_gw: TestClient, client_sess: TestClient):
 
     def _open(owner: str) -> str:
         campaign = client_gw.post(
-            "/api/v1/campaigns", json={"title": f"{owner} table"}, headers=auth_headers(owner)
+            "/api/v1/campaigns", json={"title": f"{owner} table"}, headers=bearer(owner)
         )
         assert campaign.status_code == 201, campaign.text
         session = client_sess.post(
             "/api/v1/sessions/create",
             json={"campaign_id": campaign.json()["id"], "title": "Night", "dm_id": owner},
-            headers=auth_headers(owner),
+            headers=bearer(owner),
         )
         assert session.status_code == 200, session.text
         return session.json()["session_id"]

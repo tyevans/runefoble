@@ -10,14 +10,9 @@ from campaign_lore.dependencies import get_atlas_repo
 from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import SpiceDBClient
 
-from tests.helpers.ws_identity import SIGNING_ISSUER
+from tests.helpers.ws_identity import bearer
 
 VISITOR_SUBJECT = "lore-test-visitor"
-
-
-def _bearer(user_id: str) -> dict[str, str]:
-    """Return headers carrying a signed bearer token for `user_id`."""
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(user_id)}"}
 
 
 @pytest.mark.asyncio
@@ -43,7 +38,7 @@ async def test_territory_definition_and_polygon_containment(
     terr_resp = client.post(
         f"/api/v1/campaigns/{campaign_id}/atlas/territories",
         json=terr_payload,
-        headers=_bearer(user_id),
+        headers=bearer(user_id),
     )
     assert terr_resp.status_code == 201, terr_resp.text
     terr_data = terr_resp.json()
@@ -64,7 +59,7 @@ async def test_territory_definition_and_polygon_containment(
     pin_resp = client.post(
         f"/api/v1/campaigns/{campaign_id}/atlas/pins",
         json=pin_payload,
-        headers=_bearer(user_id),
+        headers=bearer(user_id),
     )
     assert pin_resp.status_code == 201, pin_resp.text
     pin_data = pin_resp.json()
@@ -95,13 +90,13 @@ async def test_contested_territory_updates_and_layer_toggle(
             "is_contested": True,
             "era": "Age of Rebirth",
         },
-        headers=_bearer(user_id),
+        headers=bearer(user_id),
     )
     assert terr_resp.status_code == 201
 
     full_resp = client.get(
         f"/api/v1/campaigns/{campaign_id}/atlas?layer=continental",
-        headers=_bearer(user_id),
+        headers=bearer(user_id),
     )
     assert full_resp.status_code == 200
     full_data = full_resp.json()
@@ -112,7 +107,7 @@ async def test_contested_territory_updates_and_layer_toggle(
     toggle_resp = client.post(
         f"/api/v1/campaigns/{campaign_id}/atlas/layers/toggle",
         json={"layer": "municipal", "is_visible": False},
-        headers=_bearer(user_id),
+        headers=bearer(user_id),
     )
     assert toggle_resp.status_code == 200
     assert toggle_resp.json()["is_visible"] is False

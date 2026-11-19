@@ -31,7 +31,7 @@ from tests.helpers.lore_backends import (
     lore_embedding_app,
 )
 from tests.helpers.ports import free_port
-from tests.helpers.ws_identity import SIGNING_ISSUER
+from tests.helpers.ws_identity import bearer
 
 VISITOR_SUBJECT = "lore-test-visitor"
 
@@ -43,14 +43,9 @@ async def _seed_dm(campaign_id: str, user_id: str = VISITOR_SUBJECT) -> None:
     )
 
 
-def _bearer(user_id: str) -> dict[str, str]:
-    """Return headers carrying a signed bearer token for `user_id`."""
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(user_id)}"}
-
-
 @pytest.fixture
 def client(lore_backends: dict[str, str | int]) -> Iterator[TestClient]:
-    with TestClient(create_app(), headers=_bearer(VISITOR_SUBJECT)) as client:
+    with TestClient(create_app(), headers=bearer(VISITOR_SUBJECT)) as client:
         yield client
 
 
@@ -109,7 +104,7 @@ def test_start_up_fails_when_embedding_endpoint_is_unreachable(
 
     with (
         pytest.raises(RuntimeError, match="embedding endpoint is unreachable"),
-        TestClient(create_app(), headers=_bearer(VISITOR_SUBJECT)),
+        TestClient(create_app(), headers=bearer(VISITOR_SUBJECT)),
     ):
         pass
 
@@ -130,7 +125,7 @@ def test_start_up_fails_when_pgvector_store_is_unreachable(
 
         with (
             pytest.raises(RuntimeError, match="vector store .* is unreachable"),
-            TestClient(create_app(), headers=_bearer(VISITOR_SUBJECT)),
+            TestClient(create_app(), headers=bearer(VISITOR_SUBJECT)),
         ):
             pass
 
@@ -148,6 +143,6 @@ def test_embedding_endpoint_settings_are_required_by_the_default_backend(
 
     with (
         pytest.raises(ValueError, match="RUNEFOBLE_EMBEDDING_BASE_URL"),
-        TestClient(create_app(), headers=_bearer(VISITOR_SUBJECT)),
+        TestClient(create_app(), headers=bearer(VISITOR_SUBJECT)),
     ):
         pass

@@ -14,12 +14,7 @@ from gateway_mcp.server import mcp
 
 from tests.helpers.mcp_http import serve_mcp
 from tests.helpers.silo_fixtures import PNG_SAMPLE_BYTES
-from tests.helpers.ws_identity import SIGNING_ISSUER
-
-
-def bearer(sub: str) -> dict[str, str]:
-    """Return the Authorization header for a token that the shared test issuer signs for `sub`."""
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
+from tests.helpers.ws_identity import bearer
 
 
 @pytest.fixture

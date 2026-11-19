@@ -14,13 +14,7 @@ from fastapi.testclient import TestClient
 from gateway_api.main import app as gateway_app
 from runefoble_auth.factory import get_spicedb_client
 
-from tests.helpers.ws_identity import SIGNING_ISSUER, ws_subprotocols
-
-
-def bearer(sub: str) -> dict[str, str]:
-    """Return the Authorization header for a token that the shared test issuer signs for `sub`."""
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
-
+from tests.helpers.ws_identity import bearer, ws_subprotocols
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 

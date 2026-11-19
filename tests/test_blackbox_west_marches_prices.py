@@ -21,13 +21,9 @@ from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_platform.event_sourcing import create_aggregate_repository
 
 from tests.helpers.spicedb_factory import shared_spicedb_client
-from tests.helpers.ws_identity import SIGNING_ISSUER
+from tests.helpers.ws_identity import bearer
 
 PLAYER = "smith_mira"
-
-
-def _bearer(user_id: str) -> dict[str, str]:
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(user_id)}"}
 
 
 @pytest.fixture
@@ -40,12 +36,12 @@ def spicedb_client() -> Iterator[MockSpiceDBClient]:
 @pytest.fixture
 def client(spicedb_client: MockSpiceDBClient, lore_backends) -> Iterator[TestClient]:
     set_west_marches_repo(create_aggregate_repository(WestMarchesAtlasAggregate))
-    with TestClient(lore_app, headers=_bearer(PLAYER)) as lore_client:
+    with TestClient(lore_app, headers=bearer(PLAYER)) as lore_client:
         yield lore_client
 
 
 def _outpost(client: TestClient, cid: str) -> dict:
-    overview = client.get(f"/api/v1/campaigns/{cid}/west-marches", headers=_bearer(PLAYER))
+    overview = client.get(f"/api/v1/campaigns/{cid}/west-marches", headers=bearer(PLAYER))
     assert overview.status_code == 200, overview.text
     return next(iter(overview.json()["outposts"].values()))
 
@@ -61,7 +57,7 @@ async def test_outpost_upgrade_spends_the_table_cost(
     resp = client.post(
         f"/api/v1/campaigns/{cid}/west-marches/stronghold/upgrade",
         json={"facility_id": "watchtower"},
-        headers=_bearer(PLAYER),
+        headers=bearer(PLAYER),
     )
     assert resp.status_code == 200, resp.text
     assert resp.json()["new_tier"] == 2
@@ -83,7 +79,7 @@ async def test_outpost_upgrade_shortfall_answers_409_and_changes_nothing(
     first = client.post(
         f"/api/v1/campaigns/{cid}/west-marches/stronghold/upgrade",
         json={"facility_id": "watchtower"},
-        headers=_bearer(PLAYER),
+        headers=bearer(PLAYER),
     )
     assert first.status_code == 200, first.text
     before = _outpost(client, str(cid))
@@ -91,7 +87,7 @@ async def test_outpost_upgrade_shortfall_answers_409_and_changes_nothing(
     refused = client.post(
         f"/api/v1/campaigns/{cid}/west-marches/stronghold/upgrade",
         json={"facility_id": "watchtower"},
-        headers=_bearer(PLAYER),
+        headers=bearer(PLAYER),
     )
     assert refused.status_code == 409, refused.text
 

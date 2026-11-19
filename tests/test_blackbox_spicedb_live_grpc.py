@@ -25,9 +25,9 @@ from game_session.dependencies import set_spicedb_client as set_session_spicedb
 from gateway_api.main import app
 from runefoble_auth.bootstrap_schema import bootstrap_schema
 from runefoble_auth.spicedb import SpiceDBClient
-from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
 
 from tests.helpers.spicedb_factory import shared_spicedb_client
+from tests.helpers.ws_identity import bearer
 
 
 @contextmanager
@@ -46,11 +46,6 @@ def gateway_tc(game_session_upstream) -> Iterator[TestClient]:
     """Gateway client with the lifespan entered after game_session is served."""
     with TestClient(app) as gateway_client:
         yield gateway_client
-
-
-def _bearer(issuer: SigningTestIssuer, sub: str) -> dict[str, str]:
-    """Return Bearer headers carrying a token that the gateway verifies for `sub`."""
-    return {"Authorization": f"Bearer {issuer.mint(sub)}"}
 
 
 def _create_campaign_with_session(tc: TestClient, owner_headers: dict[str, str]) -> tuple[str, str]:
@@ -93,8 +88,8 @@ async def test_mock_spicedb_frontdoor_role_assignment(trusted_ws_issuer, gateway
     """Verify invite-based membership and enforcement using the strict mock SpiceDB client."""
     tc = gateway_tc
 
-    owner = _bearer(trusted_ws_issuer, f"owner-{uuid4().hex[:6]}")
-    user_alice = _bearer(trusted_ws_issuer, f"user-{uuid4().hex[:6]}")
+    owner = bearer(f"owner-{uuid4().hex[:6]}", issuer=trusted_ws_issuer)
+    user_alice = bearer(f"user-{uuid4().hex[:6]}", issuer=trusted_ws_issuer)
     camp_id, session_id = _create_campaign_with_session(tc, owner)
 
     # Not a member -> 403 Forbidden
@@ -146,8 +141,8 @@ async def test_live_spicedb_frontdoor_role_assignment_and_checks(
 
     with shared_spicedb_client(live_client), _game_session_spicedb(live_client):
         tc = gateway_tc
-        dm = _bearer(trusted_ws_issuer, "dm_garrick")
-        player = _bearer(trusted_ws_issuer, "player_talia")
+        dm = bearer("dm_garrick", issuer=trusted_ws_issuer)
+        player = bearer("player_talia", issuer=trusted_ws_issuer)
         camp_id, session_id = _create_campaign_with_session(tc, dm)
 
         # Before membership -> 403 Forbidden
@@ -203,8 +198,8 @@ async def test_live_spicedb_relationship_deletion_and_revocation(
     with shared_spicedb_client(live_client), _game_session_spicedb(live_client):
         tc = gateway_tc
 
-        owner = _bearer(trusted_ws_issuer, "owner_revocation")
-        member = _bearer(trusted_ws_issuer, "user_revoked")
+        owner = bearer("owner_revocation", issuer=trusted_ws_issuer)
+        member = bearer("user_revoked", issuer=trusted_ws_issuer)
         camp_id, session_id = _create_campaign_with_session(tc, owner)
 
         # Membership through the invite frontdoor -> 200

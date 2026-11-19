@@ -19,7 +19,7 @@ from fastapi.testclient import TestClient
 from the_watcher.main import app
 
 from tests.helpers.spicedb_factory import make_table_runner, shared_spicedb_client
-from tests.helpers.ws_identity import SIGNING_ISSUER
+from tests.helpers.ws_identity import bearer
 
 pytestmark = [pytest.mark.authz_live, pytest.mark.usefixtures("trusted_ws_issuer")]
 
@@ -29,10 +29,6 @@ def live_client(live_spicedb_with_schema):
     """The Watcher shares the live SpiceDB client for the duration of one test."""
     with shared_spicedb_client(live_spicedb_with_schema.client):
         yield TestClient(app)
-
-
-def _bearer(sub: str) -> dict[str, str]:
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
 
 
 def test_live_dm_and_player_roles_gate_encounter_spawn(live_client: TestClient):
@@ -55,12 +51,10 @@ def test_live_dm_and_player_roles_gate_encounter_spawn(live_client: TestClient):
     asyncio.run(_seed())
     body = {"session_id": session_id, "party_level": 2, "party_size": 3}
 
-    denied = live_client.post(
-        "/api/v1/watcher/encounters/spawn", json=body, headers=_bearer(player)
-    )
+    denied = live_client.post("/api/v1/watcher/encounters/spawn", json=body, headers=bearer(player))
     assert denied.status_code == 403
 
-    allowed = live_client.post("/api/v1/watcher/encounters/spawn", json=body, headers=_bearer(dm))
+    allowed = live_client.post("/api/v1/watcher/encounters/spawn", json=body, headers=bearer(dm))
     assert allowed.status_code == 200
 
 
@@ -92,7 +86,7 @@ def test_live_player_cannot_veto_and_dm_can(live_client: TestClient):
             "description": "Attacks target",
             "pause_window_ms": 60000,
         },
-        headers=_bearer(dm),
+        headers=bearer(dm),
     )
     assert proposed.status_code == 200, proposed.text
     veto_body = {
@@ -102,8 +96,8 @@ def test_live_player_cannot_veto_and_dm_can(live_client: TestClient):
         "reason": "Not this turn",
     }
 
-    denied = live_client.post("/api/v1/watcher/veto", json=veto_body, headers=_bearer(player))
+    denied = live_client.post("/api/v1/watcher/veto", json=veto_body, headers=bearer(player))
     assert denied.status_code == 403
 
-    allowed = live_client.post("/api/v1/watcher/veto", json=veto_body, headers=_bearer(dm))
+    allowed = live_client.post("/api/v1/watcher/veto", json=veto_body, headers=bearer(dm))
     assert allowed.status_code == 200

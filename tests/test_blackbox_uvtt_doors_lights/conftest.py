@@ -10,14 +10,9 @@ from fastapi.testclient import TestClient
 from gateway_api.main import app as gateway_app
 from runefoble_auth.factory import get_spicedb_client
 
-from tests.helpers.ws_identity import SIGNING_ISSUER
+from tests.helpers.ws_identity import bearer
 
 BOARD_CAMPAIGN = "camp-board-fixture"
-
-
-def bearer(sub: str) -> dict[str, str]:
-    """Return the Authorization header for a token that the shared test issuer signs for `sub`."""
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
 
 
 @pytest.fixture

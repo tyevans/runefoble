@@ -31,16 +31,12 @@ from runefoble_auth.errors import AuthzSchemaError, AuthzUnavailableError
 from runefoble_auth.spicedb import MockSpiceDBClient
 from the_watcher.main import app as the_watcher_app
 
-from tests.helpers.ws_identity import SIGNING_ISSUER
+from tests.helpers.ws_identity import bearer
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 USER = "outage-user"
 OUTAGE_BODY = {"error": "authorization_unavailable"}
-
-
-def _bearer(sub: str = USER) -> dict[str, str]:
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
 
 
 @dataclass(frozen=True)
@@ -57,7 +53,7 @@ class Probe:
     app: FastAPI | None = None
     under_test: str | None = None
     json: dict[str, Any] | None = None
-    headers: dict[str, str] = field(default_factory=_bearer)
+    headers: dict[str, str] = field(default_factory=lambda: bearer(USER))
 
 
 PROBES = [

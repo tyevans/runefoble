@@ -18,14 +18,9 @@ from campaign_lore.main import app as lore_app
 from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import SpiceDBClient
 
-from tests.helpers.ws_identity import SIGNING_ISSUER
+from tests.helpers.ws_identity import bearer
 
 VISITOR_SUBJECT = "lore-test-visitor"
-
-
-def _bearer(user_id: str) -> dict[str, str]:
-    """Return headers carrying a signed bearer token for `user_id`."""
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(user_id)}"}
 
 
 def test_codex_openapi_routes_completeness() -> None:
@@ -47,7 +42,7 @@ async def test_codex_frontdoor_referencing_and_crud(
 ) -> None:
     """Verify frontdoor publishing, referencing extraction, filtering, and Zanzibar privacy."""
     dm_user, player_user = f"dm_{uuid4().hex[:6]}", f"player_{uuid4().hex[:6]}"
-    dm_h, player_h = _bearer(dm_user), _bearer(player_user)
+    dm_h, player_h = bearer(dm_user), bearer(player_user)
     base = f"/api/v1/campaigns/{campaign_id}/codex"
 
     # Set up Zanzibar permissions for campaign

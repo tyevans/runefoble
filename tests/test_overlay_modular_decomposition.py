@@ -11,8 +11,7 @@ import pytest
 from fastapi.testclient import TestClient
 from gateway_api.cinematic_director import clear_cinematic_directors
 
-from tests.helpers.ws_identity import ws_subprotocols
-from tests.realtime_session import bearer
+from tests.helpers.ws_identity import bearer, ws_subprotocols
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 

@@ -18,16 +18,12 @@ from runefoble_auth.spicedb import MockSpiceDBClient
 
 from tests.helpers.live_services import serve
 from tests.helpers.mock_redis import MockAsyncRedis
-from tests.helpers.ws_identity import SIGNING_ISSUER
+from tests.helpers.ws_identity import bearer
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 PLAYER_ID = "sarah-user"
 UNREACHABLE_CHARACTER_SHEET_URL = "http://127.0.0.1:9"
-
-
-def _bearer(sub: str) -> dict[str, str]:
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
 
 
 @pytest.fixture
@@ -52,7 +48,7 @@ def session_client(mock_redis: MockAsyncRedis, use_redis_client) -> Iterator[Non
 
 def _create_character(character_url: str) -> str:
     """Create an active character through the character_sheet frontdoor. Stand-in stays off."""
-    with httpx.Client(base_url=character_url, headers=_bearer(PLAYER_ID)) as http:
+    with httpx.Client(base_url=character_url, headers=bearer(PLAYER_ID)) as http:
         created = http.post(
             "/api/v1/characters",
             json={"name": "Kyra", "character_class": "Cleric", "max_hp": 20},
@@ -64,7 +60,7 @@ def _create_character(character_url: str) -> str:
 def _read_stand_in_flag(character_url: str, char_id: str) -> bool:
     """Read the character sheet flag as its owner, the player who created the character."""
     with httpx.Client(base_url=character_url) as http:
-        sheet = http.get(f"/api/v1/characters/{char_id}", headers=_bearer(PLAYER_ID))
+        sheet = http.get(f"/api/v1/characters/{char_id}", headers=bearer(PLAYER_ID))
         assert sheet.status_code == 200, sheet.text
         return sheet.json()["is_stand_in_active"]
 
@@ -79,7 +75,7 @@ async def _lobby_session(client, char_id: str, *, select_character: bool = True)
     redeemed = await client.post(
         "/api/v1/campaigns/join",
         json={"invite_token": invite.json()["token"]},
-        headers=_bearer(PLAYER_ID),
+        headers=bearer(PLAYER_ID),
     )
     assert redeemed.status_code == 200, redeemed.text
     create_res = await client.post(
@@ -91,14 +87,14 @@ async def _lobby_session(client, char_id: str, *, select_character: bool = True)
     join = await client.post(
         f"/api/v1/sessions/{session_id}/join",
         json={"character_id": char_id, "character_name": "Kyra", "character_class": "Cleric"},
-        headers=_bearer(PLAYER_ID),
+        headers=bearer(PLAYER_ID),
     )
     assert join.status_code == 200, join.text
     if select_character:
         pick = await client.post(
             f"/api/v1/sessions/{session_id}/lobby/character",
             json={"character_id": char_id},
-            headers=_bearer(PLAYER_ID),
+            headers=bearer(PLAYER_ID),
         )
         assert pick.status_code == 200, pick.text
     started = await client.post(f"/api/v1/sessions/{session_id}/start")
@@ -110,7 +106,7 @@ def _client() -> AsyncClient:
     return AsyncClient(
         transport=ASGITransport(app=session_app),
         base_url="http://test",
-        headers=_bearer("test-user"),
+        headers=bearer("test-user"),
     )
 
 
@@ -125,7 +121,7 @@ async def test_leave_activates_stand_in_on_character_sheet(session_client, chara
         leave = await client.post(
             f"/api/v1/sessions/{session_id}/leave",
             json={"reason": "Late arrival"},
-            headers=_bearer(PLAYER_ID),
+            headers=bearer(PLAYER_ID),
         )
         assert leave.status_code == 200, leave.text
         body = leave.json()
@@ -148,7 +144,7 @@ async def test_leave_without_lobby_character_records_absence_only(
         leave = await client.post(
             f"/api/v1/sessions/{session_id}/leave",
             json={"reason": "Late arrival"},
-            headers=_bearer(PLAYER_ID),
+            headers=bearer(PLAYER_ID),
         )
         assert leave.status_code == 200, leave.text
         body = leave.json()
@@ -170,7 +166,7 @@ async def test_leave_returns_503_and_keeps_presence_when_character_sheet_unreach
         leave = await client.post(
             f"/api/v1/sessions/{session_id}/leave",
             json={"reason": "Late arrival"},
-            headers=_bearer(PLAYER_ID),
+            headers=bearer(PLAYER_ID),
         )
         assert leave.status_code == 503, leave.text
 
@@ -192,7 +188,7 @@ async def test_rejoin_releases_stand_in_on_character_sheet(session_client, chara
         leave = await client.post(
             f"/api/v1/sessions/{session_id}/leave",
             json={"reason": "Late arrival"},
-            headers=_bearer(PLAYER_ID),
+            headers=bearer(PLAYER_ID),
         )
         assert leave.status_code == 200, leave.text
         assert _read_stand_in_flag(character_service, char_id) is True
@@ -200,7 +196,7 @@ async def test_rejoin_releases_stand_in_on_character_sheet(session_client, chara
         rejoin = await client.post(
             f"/api/v1/sessions/{session_id}/join",
             json={"character_id": char_id, "character_name": "Kyra", "character_class": "Cleric"},
-            headers=_bearer(PLAYER_ID),
+            headers=bearer(PLAYER_ID),
         )
         assert rejoin.status_code == 200, rejoin.text
         assert rejoin.json()["participants"][PLAYER_ID]["is_stand_in_active"] is False

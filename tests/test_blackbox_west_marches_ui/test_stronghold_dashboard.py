@@ -16,14 +16,9 @@ import pytest
 from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import MockSpiceDBClient
 
-from tests.helpers.ws_identity import SIGNING_ISSUER
+from tests.helpers.ws_identity import bearer
 
 VISITOR_SUBJECT = "lore-test-visitor"
-
-
-def _bearer(user_id: str) -> dict[str, str]:
-    """Return headers carrying a signed bearer token for `user_id`."""
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(user_id)}"}
 
 
 @pytest.mark.asyncio
@@ -50,7 +45,7 @@ async def test_blackbox_communal_stronghold_upgrade_and_boons(
     upgrade_resp = client.post(
         f"/api/v1/campaigns/{campaign_id}/west-marches/stronghold/upgrade",
         json=upgrade_payload,
-        headers=_bearer(player_id),
+        headers=bearer(player_id),
     )
     assert upgrade_resp.status_code == 200
     res = upgrade_resp.json()
@@ -63,7 +58,7 @@ async def test_blackbox_communal_stronghold_upgrade_and_boons(
     watch_resp = client.post(
         f"/api/v1/campaigns/{campaign_id}/west-marches/stronghold/upgrade",
         json={"facility_id": "watchtower"},
-        headers=_bearer(player_id),
+        headers=bearer(player_id),
     )
     assert watch_resp.status_code == 200
     assert watch_resp.json()["new_tier"] == 2
@@ -98,7 +93,7 @@ async def test_blackbox_tavern_notice_board(
     post_resp = client.post(
         f"/api/v1/campaigns/{campaign_id}/west-marches/tavern-board/notices",
         json=notice_payload,
-        headers=_bearer(player_id),
+        headers=bearer(player_id),
     )
     assert post_resp.status_code == 201
     notice = post_resp.json()["notice"]
@@ -108,7 +103,7 @@ async def test_blackbox_tavern_notice_board(
     # 2. Retrieve overview and verify notice is listed
     overview = client.get(
         f"/api/v1/campaigns/{campaign_id}/west-marches",
-        headers=_bearer(player_id),
+        headers=bearer(player_id),
     ).json()
     assert len(overview["tavern_board"]) == 1
     assert overview["tavern_board"][0]["author_name"] == "Ranger Laura"

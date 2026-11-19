@@ -20,8 +20,7 @@ from the_watcher.main import app as watcher_app
 
 from tests.helpers.live_services import serve
 from tests.helpers.spectator_table import open_board_table
-from tests.helpers.ws_identity import ws_subprotocols
-from tests.realtime_session import bearer
+from tests.helpers.ws_identity import bearer, ws_subprotocols
 
 FORBIDDEN = 4403
 SILENCE_SECONDS = 1.0

@@ -17,15 +17,11 @@ from runefoble_auth.spicedb import MockSpiceDBClient
 
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.stream_events import assert_stream_events
-from tests.helpers.ws_identity import SIGNING_ISSUER
+from tests.helpers.ws_identity import bearer
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 FOUNDER = "builder_orla"
-
-
-def _bearer(user_id: str) -> dict[str, str]:
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(user_id)}"}
 
 
 async def _charter_haven(client: TestClient, spicedb: MockSpiceDBClient) -> tuple[str, str]:
@@ -34,7 +30,7 @@ async def _charter_haven(client: TestClient, spicedb: MockSpiceDBClient) -> tupl
     world = client.post(
         "/api/v1/shared-worlds",
         json={"name": "Ashen Vale", "frontier_region": "Cinder Hills"},
-        headers=_bearer(FOUNDER),
+        headers=bearer(FOUNDER),
     )
     world_id = world.json()["shared_world_id"]
     await spicedb.write_relationship("shared_world", world_id, "participant", "user", FOUNDER)
@@ -46,7 +42,7 @@ async def _charter_haven(client: TestClient, spicedb: MockSpiceDBClient) -> tupl
             "shared_world_id": world_id,
             "founded_by_campaign_id": camp,
         },
-        headers=_bearer(FOUNDER),
+        headers=bearer(FOUNDER),
     )
     assert charter.status_code == 201, charter.text
     return charter.json()["settlement_id"], camp
@@ -62,13 +58,13 @@ async def test_deposit_funds_the_haven_treasury(
     deposit = client.post(
         f"/settlements/{sid}/deposit",
         json={"gold": 500, "materials": {"timber": 100, "stone": 100}},
-        headers=_bearer(FOUNDER),
+        headers=bearer(FOUNDER),
     )
     assert deposit.status_code == 200, deposit.text
     assert deposit.json()["gold_treasury"] == 500
     assert deposit.json()["materials_treasury"] == {"timber": 100, "stone": 100}
 
-    view = client.get(f"/settlements/{sid}", headers=_bearer(FOUNDER))
+    view = client.get(f"/settlements/{sid}", headers=bearer(FOUNDER))
     assert view.json()["gold_treasury"] == 500
     assert_stream_events(mock_bus, "SettlementResourcesDeposited")
 
@@ -82,13 +78,13 @@ async def test_upgrade_spends_the_table_cost_from_the_treasury(
     client.post(
         f"/settlements/{sid}/deposit",
         json={"gold": 500, "materials": {"timber": 100}},
-        headers=_bearer(FOUNDER),
+        headers=bearer(FOUNDER),
     )
 
     upgrade = client.post(
         f"/settlements/{sid}/upgrade",
         json={"facility_id": "workshop", "contributing_campaign_id": camp},
-        headers=_bearer(FOUNDER),
+        headers=bearer(FOUNDER),
     )
     assert upgrade.status_code == 200, upgrade.text
     data = upgrade.json()
@@ -108,20 +104,20 @@ async def test_upgrade_shortfall_answers_409_and_records_no_event(
     client.post(
         f"/settlements/{sid}/deposit",
         json={"gold": 50, "materials": {"timber": 100}},
-        headers=_bearer(FOUNDER),
+        headers=bearer(FOUNDER),
     )
     events_before = len(mock_bus.streams.get(STREAM_WEST_MARCHES, []))
 
     refused = client.post(
         f"/settlements/{sid}/upgrade",
         json={"facility_id": "workshop", "contributing_campaign_id": camp},
-        headers=_bearer(FOUNDER),
+        headers=bearer(FOUNDER),
     )
     assert refused.status_code == 409, refused.text
     assert "gold" in refused.json()["detail"]
 
     assert len(mock_bus.streams.get(STREAM_WEST_MARCHES, [])) == events_before
-    view = client.get(f"/settlements/{sid}", headers=_bearer(FOUNDER)).json()
+    view = client.get(f"/settlements/{sid}", headers=bearer(FOUNDER)).json()
     assert view["facilities"]["workshop"] == 1
     assert view["gold_treasury"] == 50
     assert view["materials_treasury"] == {"timber": 100}

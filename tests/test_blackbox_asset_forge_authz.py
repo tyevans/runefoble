@@ -23,7 +23,7 @@ from runefoble_platform.redis_bus import RedisStreamsEventBus
 
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.module_state import SeamRestorer
-from tests.helpers.ws_identity import SIGNING_ISSUER
+from tests.helpers.ws_identity import bearer
 
 DM = "dm-evelyn"
 PLAYER = "player-marcus"
@@ -37,11 +37,6 @@ ROUTES = {
     "standees": "/api/v1/forge/standees",
     "stl-token": "/api/v1/forge/stl-token",
 }
-
-
-def bearer(sub: str) -> dict[str, str]:
-    """Return Bearer headers for a token that the service verifier accepts."""
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
 
 
 def _body(kind: str, campaign_id: str | None) -> dict:

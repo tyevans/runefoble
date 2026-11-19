@@ -22,14 +22,9 @@ from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_platform.event_sourcing import create_aggregate_repository
 
-from tests.helpers.ws_identity import SIGNING_ISSUER
+from tests.helpers.ws_identity import bearer
 
 VISITOR_SUBJECT = "lore-test-visitor"
-
-
-def _bearer(user_id: str) -> dict[str, str]:
-    """Return headers carrying a signed bearer token for `user_id`."""
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(user_id)}"}
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -39,7 +34,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 def client(spicedb: MockSpiceDBClient, lore_backends) -> Iterator[TestClient]:
     fresh_repo = create_aggregate_repository(WestMarchesAtlasAggregate)
     set_west_marches_repo(fresh_repo)
-    with TestClient(lore_app, headers=_bearer(VISITOR_SUBJECT)) as lore_client:
+    with TestClient(lore_app, headers=bearer(VISITOR_SUBJECT)) as lore_client:
         yield lore_client
 
 

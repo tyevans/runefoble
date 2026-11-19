@@ -8,15 +8,9 @@ from character_sheet.main import app
 from fastapi.testclient import TestClient
 from runefoble_platform.event_sourcing import AggregateRepository, InMemoryEventStore
 
-from tests.helpers.ws_identity import SIGNING_ISSUER
+from tests.helpers.ws_identity import bearer
 
-
-def auth_headers(sub: str) -> dict[str, str]:
-    """Return Bearer headers for a token that the service verifier accepts."""
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
-
-
-client = TestClient(app, headers=auth_headers("character-owner"))
+client = TestClient(app, headers=bearer("character-owner"))
 
 
 @pytest.mark.asyncio

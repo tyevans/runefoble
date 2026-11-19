@@ -24,7 +24,7 @@ from runefoble_platform.event_sourcing import set_event_store
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 
 from tests.helpers.mock_redis import MockAsyncRedis
-from tests.helpers.ws_identity import SIGNING_ISSUER
+from tests.helpers.ws_identity import SIGNING_ISSUER, bearer
 
 pytestmark = pytest.mark.usefixtures("lore_backends")
 
@@ -34,10 +34,6 @@ PLAYER_SUBJECT = f"player-{uuid4().hex[:8]}"
 
 def _is_campaign_lore(name: str) -> bool:
     return name == "campaign_lore" or name.startswith("campaign_lore.")
-
-
-def _bearer(user_id: str) -> dict[str, str]:
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(user_id)}"}
 
 
 @pytest.fixture(autouse=True)
@@ -100,7 +96,7 @@ async def test_codex_entry_is_listed_after_process_restart(
                 "content": "The tower lies beneath the Whispering Fen.",
                 "privacy": "party_shared",
             },
-            headers=_bearer(PLAYER_SUBJECT),
+            headers=bearer(PLAYER_SUBJECT),
         )
         assert published.status_code == 201, published.text
         entry_id = published.json()["entry_id"]
@@ -109,7 +105,7 @@ async def test_codex_entry_is_listed_after_process_restart(
     with TestClient(app) as second:
         listed = second.get(
             f"/api/v1/campaigns/{campaign_id}/codex/entries",
-            headers=_bearer(PLAYER_SUBJECT),
+            headers=bearer(PLAYER_SUBJECT),
         )
 
     assert listed.status_code == 200, listed.text
@@ -135,7 +131,7 @@ async def test_lore_document_is_searchable_after_process_restart(
                 "title": "Knights of the Sunblade",
                 "content": "Sir Gareth wields the Sunblade against the undead.",
             },
-            headers=_bearer(DM_SUBJECT),
+            headers=bearer(DM_SUBJECT),
         )
         assert ingested.status_code == 200, ingested.text
 
@@ -144,7 +140,7 @@ async def test_lore_document_is_searchable_after_process_restart(
         searched = second.post(
             "/api/v1/lore/search",
             json={"campaign_id": campaign_id, "query": "Sunblade undead", "limit": 5},
-            headers=_bearer(PLAYER_SUBJECT),
+            headers=bearer(PLAYER_SUBJECT),
         )
 
     assert searched.status_code == 200, searched.text

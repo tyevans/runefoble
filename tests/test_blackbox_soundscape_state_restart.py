@@ -29,15 +29,11 @@ from runefoble_platform.redis_bus import deserialize_event
 from soundscape.main import app
 
 from tests.helpers.process import run_command
-from tests.helpers.ws_identity import SIGNING_ISSUER as ISSUER
+from tests.helpers.ws_identity import bearer
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 CHILD_SCRIPT = REPO_ROOT / "tests" / "helpers" / "soundscape_restart_child.py"
 DM = "soundscape-restart-dm"
-
-
-def _bearer(sub: str) -> dict[str, str]:
-    return {"Authorization": f"Bearer {ISSUER.mint(sub)}"}
 
 
 def _use_postgres_event_store(dsn: str):
@@ -80,7 +76,7 @@ async def test_master_volume_survives_process_restart(postgres_service):
     await _seed_dm(session_id, campaign_id)
 
     store = _use_postgres_event_store(dsn)
-    with TestClient(app, headers=_bearer(DM)) as client:
+    with TestClient(app, headers=bearer(DM)) as client:
         response = client.post(
             "/api/v1/soundscape/stems/override",
             json={
@@ -108,7 +104,7 @@ async def test_speech_ducking_releases_after_its_stored_duration(postgres_servic
     await _seed_dm(session_id, campaign_id)
 
     store = _use_postgres_event_store(dsn)
-    with TestClient(app, headers=_bearer(DM)) as client:
+    with TestClient(app, headers=bearer(DM)) as client:
         engaged = client.post(
             "/api/v1/soundscape/duck",
             json={
@@ -139,7 +135,7 @@ async def test_explicit_duck_release_clears_ducking_before_its_duration(postgres
     await _seed_dm(session_id, campaign_id)
 
     store = _use_postgres_event_store(dsn)
-    with TestClient(app, headers=_bearer(DM)) as client:
+    with TestClient(app, headers=bearer(DM)) as client:
         client.post(
             "/api/v1/soundscape/duck",
             json={"session_id": session_id, "is_ducked": True, "reason": "cue"},
@@ -163,7 +159,7 @@ async def test_aggregate_id_is_stable_across_process_starts(postgres_service, mo
     await _seed_dm(session_id, campaign_id)
 
     store = _use_postgres_event_store(dsn)
-    with TestClient(app, headers=_bearer(DM)) as client:
+    with TestClient(app, headers=bearer(DM)) as client:
         cue = client.post(
             "/api/v1/soundscape/cue",
             json={

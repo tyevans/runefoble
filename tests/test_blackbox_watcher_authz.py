@@ -28,7 +28,7 @@ from tests.helpers.spicedb_factory import (
     make_table_runner,
     shared_spicedb_client,
 )
-from tests.helpers.ws_identity import SIGNING_ISSUER
+from tests.helpers.ws_identity import bearer
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
@@ -55,10 +55,6 @@ def watcher_bus():
 @pytest.fixture
 def client() -> TestClient:
     return TestClient(app)
-
-
-def _bearer(sub: str) -> dict[str, str]:
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
 
 
 async def _seed_table(dm: str, player: str) -> tuple[str, str]:
@@ -103,13 +99,13 @@ def test_only_the_dm_adjusts_faction_resources(client: TestClient):
     body = {"treasury_delta": 100, "campaign_id": campaign_id}
 
     denied = client.post(
-        f"/api/v1/factions/{faction_id}/resources/adjust", json=body, headers=_bearer(player)
+        f"/api/v1/factions/{faction_id}/resources/adjust", json=body, headers=bearer(player)
     )
     assert denied.status_code == 403
     assert "Forbidden" in denied.json()["detail"]
 
     allowed = client.post(
-        f"/api/v1/factions/{faction_id}/resources/adjust", json=body, headers=_bearer(dm)
+        f"/api/v1/factions/{faction_id}/resources/adjust", json=body, headers=bearer(dm)
     )
     assert allowed.status_code == 200
     assert allowed.json()["treasury"] == 200  # a new faction starts with 100 treasury
@@ -121,10 +117,10 @@ def test_only_the_dm_spawns_encounters(client: TestClient):
     _, session_id = asyncio.run(_seed_table(dm, player))
     body = {"session_id": session_id, "party_level": 2, "party_size": 3}
 
-    denied = client.post("/api/v1/watcher/encounters/spawn", json=body, headers=_bearer(player))
+    denied = client.post("/api/v1/watcher/encounters/spawn", json=body, headers=bearer(player))
     assert denied.status_code == 403
 
-    allowed = client.post("/api/v1/watcher/encounters/spawn", json=body, headers=_bearer(dm))
+    allowed = client.post("/api/v1/watcher/encounters/spawn", json=body, headers=bearer(dm))
     assert allowed.status_code == 200
 
 
@@ -136,7 +132,7 @@ def test_player_speech_intent_is_allowed_for_a_participant(client: TestClient):
     res = client.post(
         "/api/v1/watcher/intent",
         json=_speech_body(session_id, campaign_id, speaker=player),
-        headers=_bearer(player),
+        headers=bearer(player),
     )
     assert res.status_code == 200, res.text
 
@@ -150,7 +146,7 @@ def test_intent_from_a_non_participant_is_forbidden(client: TestClient):
     res = client.post(
         "/api/v1/watcher/intent",
         json=_speech_body(session_id, campaign_id, speaker=stranger),
-        headers=_bearer(stranger),
+        headers=bearer(stranger),
     )
     assert res.status_code == 403
 
@@ -169,7 +165,7 @@ def test_player_cannot_veto_and_dm_can(client: TestClient):
             "description": "Attacks target",
             "pause_window_ms": 60000,
         },
-        headers=_bearer(dm),
+        headers=bearer(dm),
     )
     assert proposed.status_code == 200, proposed.text
     action_id = proposed.json()["action_id"]
@@ -180,11 +176,11 @@ def test_player_cannot_veto_and_dm_can(client: TestClient):
         "reason": "Not this turn",
     }
 
-    denied = client.post("/api/v1/watcher/veto", json=veto_body, headers=_bearer(player))
+    denied = client.post("/api/v1/watcher/veto", json=veto_body, headers=bearer(player))
     assert denied.status_code == 403
     assert denied.json()["detail"].startswith("Forbidden")
 
-    allowed = client.post("/api/v1/watcher/veto", json=veto_body, headers=_bearer(dm))
+    allowed = client.post("/api/v1/watcher/veto", json=veto_body, headers=bearer(dm))
     assert allowed.status_code == 200
     assert allowed.json()["status"] == "vetoed"
 
@@ -203,7 +199,7 @@ def test_veto_returns_503_when_spicedb_is_unavailable(client: TestClient):
                 "campaign_id": campaign_id,
                 "reason": "outage",
             },
-            headers=_bearer(dm),
+            headers=bearer(dm),
         )
     assert res.status_code == 503
     assert res.json()["error"] == "authorization_unavailable"
@@ -223,7 +219,7 @@ def test_schema_defect_returns_500_with_error_id(client: TestClient):
                 "campaign_id": campaign_id,
                 "reason": "defect",
             },
-            headers=_bearer(dm),
+            headers=bearer(dm),
         )
     assert res.status_code == 500
     body = res.json()
@@ -245,14 +241,14 @@ def test_player_may_speak_for_own_character_only(client: TestClient):
     allowed = client.post(
         "/api/v1/watcher/intent",
         json=_speech_body(session_id, campaign_id, speaker=own_character),
-        headers=_bearer(player),
+        headers=bearer(player),
     )
     assert allowed.status_code == 200, allowed.text
 
     denied = client.post(
         "/api/v1/watcher/intent",
         json=_speech_body(session_id, campaign_id, speaker=foreign_character),
-        headers=_bearer(player),
+        headers=bearer(player),
     )
     assert denied.status_code == 403
 
@@ -283,7 +279,7 @@ def test_compound_action_on_another_players_character_is_forbidden(client: TestC
                     }
                 ],
             },
-            headers=_bearer(player),
+            headers=bearer(player),
         )
 
     assert _execute(own_character).status_code == 200
@@ -301,10 +297,10 @@ def test_stand_in_recap_requires_session_observe(client: TestClient):
     stranger = f"stranger-{uuid4().hex[:6]}"
     assert (
         client.post(
-            "/api/v1/watcher/stand-in/recap", json=body, headers=_bearer(stranger)
+            "/api/v1/watcher/stand-in/recap", json=body, headers=bearer(stranger)
         ).status_code
         == 403
     )
 
-    allowed = client.post("/api/v1/watcher/stand-in/recap", json=body, headers=_bearer(player))
+    allowed = client.post("/api/v1/watcher/stand-in/recap", json=body, headers=bearer(player))
     assert allowed.status_code == 200, allowed.text

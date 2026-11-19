@@ -25,17 +25,13 @@ from runefoble_auth.spicedb import MockSpiceDBClient
 
 from tests.helpers.live_services import closed_port_url
 from tests.helpers.module_state import SeamRestorer
-from tests.helpers.ws_identity import SIGNING_ISSUER
+from tests.helpers.ws_identity import bearer
 
 DM = "dm_evelyn"
 PLAYER = "smith_mira"
 LORE_OUTPOST_STREAM = "runefoble.events.lore.outpost_resources_contributed"
 TREASURY_EVENT = "runefoble.events.downtime.stronghold_treasury_contributed"
 OUTPOST_EVENT = "runefoble.events.west_marches.outpost_resources_contributed"
-
-
-def _bearer(user_id: str) -> dict[str, str]:
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(user_id)}"}
 
 
 @pytest.fixture
@@ -67,14 +63,14 @@ async def _funded_campaign(
 ) -> str:
     """A DM owns a campaign and deposits gold. A player can play there but cannot manage it."""
     created = session_client.post(
-        "/api/v1/campaigns", json={"title": "Frontier Funders"}, headers=_bearer(DM)
+        "/api/v1/campaigns", json={"title": "Frontier Funders"}, headers=bearer(DM)
     )
     assert created.status_code == 201, created.text
     campaign_id = created.json()["id"]
     deposit = session_client.post(
         f"/api/v1/campaigns/{campaign_id}/stronghold/deposit",
         json={"gold": gold},
-        headers=_bearer(DM),
+        headers=bearer(DM),
     )
     assert deposit.status_code == 200, deposit.text
     await spicedb.write_relationship("campaign", campaign_id, "player", "user", PLAYER)
@@ -82,13 +78,13 @@ async def _funded_campaign(
 
 
 def _treasury(session_client: TestClient, campaign_id: str) -> int:
-    res = session_client.get(f"/api/v1/campaigns/{campaign_id}/stronghold", headers=_bearer(DM))
+    res = session_client.get(f"/api/v1/campaigns/{campaign_id}/stronghold", headers=bearer(DM))
     assert res.status_code == 200, res.text
     return res.json()["treasury_gold"]
 
 
 def _outpost(lore_client: TestClient, campaign_id: str) -> dict:
-    res = lore_client.get(f"/api/v1/campaigns/{campaign_id}/west-marches", headers=_bearer(PLAYER))
+    res = lore_client.get(f"/api/v1/campaigns/{campaign_id}/west-marches", headers=bearer(PLAYER))
     assert res.status_code == 200, res.text
     return next(iter(res.json()["outposts"].values()))
 
@@ -101,7 +97,7 @@ def _contribute(lore_client: TestClient, campaign_id: str, body: dict, user: str
     return lore_client.post(
         f"/api/v1/campaigns/{campaign_id}/west-marches/stronghold/contribute",
         json=body,
-        headers=_bearer(user),
+        headers=bearer(user),
     )
 
 
@@ -116,7 +112,7 @@ async def test_first_upgrade_in_a_fresh_frontier_answers_200(
     res = lore_client.post(
         f"/api/v1/campaigns/{campaign_id}/west-marches/stronghold/upgrade",
         json={"facility_id": "watchtower"},
-        headers=_bearer(PLAYER),
+        headers=bearer(PLAYER),
     )
 
     assert res.status_code == 200, res.text
@@ -135,7 +131,7 @@ async def test_upgrade_naming_an_unknown_outpost_answers_404_and_changes_nothing
     res = lore_client.post(
         f"/api/v1/campaigns/{campaign_id}/west-marches/stronghold/upgrade",
         json={"facility_id": "watchtower", "outpost_id": "outpost_missing"},
-        headers=_bearer(PLAYER),
+        headers=bearer(PLAYER),
     )
 
     assert res.status_code == 404, res.text

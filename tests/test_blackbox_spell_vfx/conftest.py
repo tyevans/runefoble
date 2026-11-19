@@ -7,13 +7,7 @@ import pytest
 from board_state.main import app as board_app
 from fastapi.testclient import TestClient
 
-from tests.helpers.ws_identity import SIGNING_ISSUER
-
-
-def bearer(sub: str) -> dict[str, str]:
-    """Return the Authorization header for a token that the shared test issuer signs for `sub`."""
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
-
+from tests.helpers.ws_identity import bearer
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 

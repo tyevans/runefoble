@@ -10,7 +10,8 @@ import httpx
 import pytest
 from fastapi.testclient import TestClient
 from gateway_api.main import app
-from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
+
+from tests.helpers.ws_identity import bearer
 
 
 @pytest.fixture
@@ -18,11 +19,6 @@ def client(game_session_upstream, board_state_upstream):
     """Enter the gateway lifespan after game_session and board_state are served."""
     with TestClient(app) as gateway_client:
         yield gateway_client
-
-
-def _bearer(issuer: SigningTestIssuer, sub: str) -> dict[str, str]:
-    """Return Bearer headers carrying a token that the gateway verifies for `sub`."""
-    return {"Authorization": f"Bearer {issuer.mint(sub)}"}
 
 
 def _create_campaign_with_session(
@@ -65,9 +61,9 @@ def _join_with_invite(
 @pytest.mark.asyncio
 async def test_zanzibar_authorization_enforcement(trusted_ws_issuer, client):
     """Verify that Gateway API enforces SpiceDB Zanzibar permissions without hardcoded role checks."""
-    owner = _bearer(trusted_ws_issuer, "owner_dana")
-    player = _bearer(trusted_ws_issuer, "player_alice")
-    stranger = _bearer(trusted_ws_issuer, "stranger_bob")
+    owner = bearer("owner_dana", issuer=trusted_ws_issuer)
+    player = bearer("player_alice", issuer=trusted_ws_issuer)
+    stranger = bearer("stranger_bob", issuer=trusted_ws_issuer)
     campaign_id, session_id = _create_campaign_with_session(client, owner)
 
     # 1. Unassigned user tries to view session -> 403 Forbidden
@@ -108,9 +104,9 @@ async def test_zanzibar_authorization_enforcement(trusted_ws_issuer, client):
 @pytest.mark.asyncio
 async def test_zanzibar_board_view_permission(trusted_ws_issuer, client):
     """Verify board query endpoint requires Zanzibar view permission."""
-    owner = _bearer(trusted_ws_issuer, "owner_dana")
-    spectator = _bearer(trusted_ws_issuer, "spectator_devon")
-    stranger = _bearer(trusted_ws_issuer, "stranger_mallory")
+    owner = bearer("owner_dana", issuer=trusted_ws_issuer)
+    spectator = bearer("spectator_devon", issuer=trusted_ws_issuer)
+    stranger = bearer("stranger_mallory", issuer=trusted_ws_issuer)
     campaign_id, session_id = _create_campaign_with_session(client, owner)
     _owner_board(campaign_id, session_id, owner)
 

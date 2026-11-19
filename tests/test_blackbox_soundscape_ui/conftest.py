@@ -19,20 +19,14 @@ from fastapi.testclient import TestClient
 from gateway_api.main import app as gateway_app
 from soundscape.main import app as soundscape_app
 
-from tests.helpers.ws_identity import SIGNING_ISSUER
-
-
-def auth_headers(sub: str) -> dict[str, str]:
-    """Return Bearer headers for a token that the service verifier accepts."""
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
-
+from tests.helpers.ws_identity import bearer
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 @pytest.fixture
 def client() -> TestClient:
-    return TestClient(soundscape_app, headers=auth_headers("soundscape-tester"))
+    return TestClient(soundscape_app, headers=bearer("soundscape-tester"))
 
 
 @pytest.fixture
@@ -60,13 +54,13 @@ def soundscape_session_id(trusted_ws_issuer, game_session_upstream) -> Iterator[
         campaign = gateway.post(
             "/api/v1/campaigns",
             json={"title": "Soundscape Vault", "setting": "Underdark"},
-            headers=auth_headers("soundscape-tester"),
+            headers=bearer("soundscape-tester"),
         )
         assert campaign.status_code == 201, campaign.text
         session = gateway.post(
             f"/api/v1/campaigns/{campaign.json()['id']}/sessions",
             json={"title": "Echoing Depths"},
-            headers=auth_headers("soundscape-tester"),
+            headers=bearer("soundscape-tester"),
         )
         assert session.status_code == 201, session.text
         yield session.json()["id"]

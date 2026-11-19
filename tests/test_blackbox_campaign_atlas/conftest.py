@@ -10,19 +10,14 @@ import pytest
 from campaign_lore.main import app
 from fastapi.testclient import TestClient
 
-from tests.helpers.ws_identity import SIGNING_ISSUER
+from tests.helpers.ws_identity import bearer
 
 VISITOR_SUBJECT = "lore-test-visitor"
 
 
-def _bearer(user_id: str) -> dict[str, str]:
-    """Return headers carrying a signed bearer token for `user_id`."""
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(user_id)}"}
-
-
 @pytest.fixture
 def client(lore_backends) -> Iterator[TestClient]:
-    with TestClient(app, headers=_bearer(VISITOR_SUBJECT)) as client:
+    with TestClient(app, headers=bearer(VISITOR_SUBJECT)) as client:
         yield client
 
 

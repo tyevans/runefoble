@@ -21,7 +21,7 @@ from board_state.main import app
 from fastapi.testclient import TestClient
 from starlette.websockets import WebSocketDisconnect
 
-from tests.helpers.ws_identity import SIGNING_ISSUER, ws_subprotocols
+from tests.helpers.ws_identity import bearer, ws_subprotocols
 
 DM = "dm-evelyn"
 OWNER = "player-marcus"
@@ -29,10 +29,6 @@ OTHER = "player-nadia"
 SPECTATOR = "spectator-iris"
 STRANGER = "stranger-mallory"
 MOVE = {"to_x": 3, "to_y": 2}
-
-
-def bearer(sub: str) -> dict[str, str]:
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
 
 
 def _write(spicedb, kind: str, rid: str, relation: str, subject_type: str, subject: str) -> None:

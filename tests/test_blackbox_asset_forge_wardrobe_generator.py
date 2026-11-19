@@ -26,13 +26,7 @@ from fastapi.testclient import TestClient
 from pydantic import ValidationError
 from runefoble_platform.config import WardrobeGeneratorSettings
 
-from tests.helpers.ws_identity import SIGNING_ISSUER
-
-
-def auth_headers(sub: str) -> dict[str, str]:
-    """Return Bearer headers for a token that the service verifier accepts."""
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
-
+from tests.helpers.ws_identity import bearer
 
 PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 
@@ -113,7 +107,7 @@ def _forge(client: TestClient, prompt: str | None, campaign_id: str) -> dict:
             "face_embedding_seed": "nadia_face_v1",
             "size_px": 128,
         },
-        headers=auth_headers("player-nadia"),
+        headers=bearer("player-nadia"),
     )
     assert response.status_code == 200, response.text
     return response.json()

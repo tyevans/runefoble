@@ -23,7 +23,7 @@ from runefoble_events.events import (
 )
 
 from tests.helpers.mock_redis import MockAsyncRedis
-from tests.helpers.ws_identity import SIGNING_ISSUER
+from tests.helpers.ws_identity import bearer
 
 from .conftest import PNG_SIGNATURE
 
@@ -43,11 +43,6 @@ def forge_campaign(spicedb) -> str:
             )
         )
     return campaign_id
-
-
-def auth_headers(sub: str) -> dict[str, str]:
-    """Return Bearer headers for a token that the service verifier accepts."""
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
 
 
 def test_blackbox_generative_wardrobe_synthesis_and_storage(
@@ -73,7 +68,7 @@ def test_blackbox_generative_wardrobe_synthesis_and_storage(
             "face_embedding_seed": "nadia_face_signature_123",
             "size_px": 256,
         },
-        headers=auth_headers("dm-nadia"),
+        headers=bearer("dm-nadia"),
     )
     assert forge_res.status_code == 200, forge_res.text
     forge_data = forge_res.json()

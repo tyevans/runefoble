@@ -20,9 +20,9 @@ from tests.helpers.campaign_analytics_service import (
     CHARACTER_STREAM,
     SESSION_STREAM,
     AnalyticsService,
-    bearer,
 )
 from tests.helpers.polling import wait_until
+from tests.helpers.ws_identity import bearer
 
 
 def _timeline_titles(client: TestClient, cid: str) -> list[str]:

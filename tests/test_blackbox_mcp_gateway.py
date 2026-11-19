@@ -25,14 +25,9 @@ from tests.helpers.game_session_setup import start_session_with_player
 from tests.helpers.live_services import closed_port_url, serve, unavailable_app
 from tests.helpers.mcp_http import call_tool_over_http, serve_mcp
 from tests.helpers.spicedb_factory import shared_spicedb_client
-from tests.helpers.ws_identity import SIGNING_ISSUER
+from tests.helpers.ws_identity import SIGNING_ISSUER, bearer
 
 _MCP: dict[str, str] = {}
-
-
-def bearer(sub: str) -> dict[str, str]:
-    """Return the Authorization header for a token that the shared test issuer signs for `sub`."""
-    return {"Authorization": f"Bearer {bearer_token(sub)}"}
 
 
 def bearer_token(sub: str) -> str:

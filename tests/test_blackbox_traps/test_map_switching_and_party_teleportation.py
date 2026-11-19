@@ -17,12 +17,7 @@ from board_state.main import app as board_app
 from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import MockSpiceDBClient
 
-from tests.helpers.ws_identity import SIGNING_ISSUER
-
-
-def bearer(sub: str) -> dict[str, str]:
-    """Return the Authorization header for a token that the shared test issuer signs for `sub`."""
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
+from tests.helpers.ws_identity import bearer
 
 
 @pytest.mark.asyncio

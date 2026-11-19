@@ -16,14 +16,9 @@ from runefoble_platform.redis_bus import deserialize_event
 
 from tests.helpers.live_services import serve
 from tests.helpers.mock_redis import MockAsyncRedis
-from tests.helpers.ws_identity import SIGNING_ISSUER
+from tests.helpers.ws_identity import SIGNING_ISSUER, bearer
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
-
-
-def auth_headers(sub: str) -> dict[str, str]:
-    """Return Bearer headers for a token that the service verifier accepts."""
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
 
 
 @pytest.fixture
@@ -41,7 +36,7 @@ def character_service(monkeypatch: pytest.MonkeyPatch) -> Iterator[str]:
 
 def _create_stand_in_character(character_url: str, owner: str) -> str:
     """Create the owner's character and activate its AI stand-in through the character_sheet frontdoor."""
-    with httpx.Client(base_url=character_url, headers=auth_headers(owner)) as http:
+    with httpx.Client(base_url=character_url, headers=bearer(owner)) as http:
         created = http.post(
             "/api/v1/characters",
             json={"name": "Kyra", "character_class": "Cleric", "max_hp": 20},
@@ -83,7 +78,7 @@ async def test_mid_session_hot_swap_takeover_and_turn_continuity(
         await client.post(
             f"/api/v1/sessions/{session_id}/join",
             json={"character_id": char_id, "character_name": "Kyra", "character_class": "Cleric"},
-            headers=_bearer(player_id),
+            headers=bearer(player_id),
         )
         await client.post(f"/api/v1/sessions/{session_id}/start")
         await client.post(
@@ -104,7 +99,7 @@ async def test_mid_session_hot_swap_takeover_and_turn_continuity(
         leave_res = await client.post(
             f"/api/v1/sessions/{session_id}/leave",
             json={"reason": "Late arrival"},
-            headers=_bearer(player_id),
+            headers=bearer(player_id),
         )
         assert leave_res.status_code == 200
         assert leave_res.json()["participants"][player_id]["is_stand_in_active"] is True
@@ -137,7 +132,7 @@ async def test_mid_session_hot_swap_takeover_and_turn_continuity(
 
     # 5. The character sheet no longer reports the stand-in as active
     with httpx.Client(base_url=character_service) as http:
-        sheet = http.get(f"/api/v1/characters/{char_id}", headers=auth_headers(player_id))
+        sheet = http.get(f"/api/v1/characters/{char_id}", headers=bearer(player_id))
         assert sheet.status_code == 200, sheet.text
         assert sheet.json()["is_stand_in_active"] is False
 
@@ -177,7 +172,7 @@ async def test_hot_swap_unauthorized_user_rejected_by_spicedb(
         await client.post(
             f"/api/v1/sessions/{session_id}/join",
             json={"character_id": char_id, "character_name": "Kyra", "character_class": "Cleric"},
-            headers=_bearer(player_id),
+            headers=bearer(player_id),
         )
         await client.post(f"/api/v1/sessions/{session_id}/start")
 
@@ -217,13 +212,13 @@ async def test_hot_swap_returns_502_when_character_sheet_is_not_configured(
         await client.post(
             f"/api/v1/sessions/{session_id}/join",
             json={"character_id": char_id, "character_name": "Kyra", "character_class": "Cleric"},
-            headers=_bearer(player_id),
+            headers=bearer(player_id),
         )
         await client.post(f"/api/v1/sessions/{session_id}/start")
         await client.post(
             f"/api/v1/sessions/{session_id}/leave",
             json={"reason": "Late arrival"},
-            headers=_bearer(player_id),
+            headers=bearer(player_id),
         )
         await spicedb.write_relationship(
             resource_type="character",
@@ -262,10 +257,6 @@ async def _add_player(client, campaign_id: str, player_id: str) -> None:
     joined = await client.post(
         "/api/v1/campaigns/join",
         json={"invite_token": invite.json()["token"]},
-        headers=_bearer(player_id),
+        headers=bearer(player_id),
     )
     assert joined.status_code == 200, joined.text
-
-
-def _bearer(sub: str) -> dict[str, str]:
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}

@@ -25,12 +25,7 @@ from runefoble_events.events import (
     TrapSprungEvent,
 )
 
-from tests.helpers.ws_identity import SIGNING_ISSUER
-
-
-def bearer(sub: str) -> dict[str, str]:
-    """Return the Authorization header for a token that the shared test issuer signs for `sub`."""
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
+from tests.helpers.ws_identity import bearer
 
 
 def test_board_traps_cloudevents_registration():

@@ -8,6 +8,8 @@ from __future__ import annotations
 from character_sheet.dependencies import STREAM_CRAFTING
 from fastapi.testclient import TestClient
 
+from tests.helpers.ws_identity import bearer
+
 
 def test_blackbox_reagent_recipes_and_catalogue(char_client: TestClient):
     """Verify public query endpoints for reagents, affinities, and known recipes."""
@@ -82,11 +84,6 @@ def test_blackbox_alchemical_crafting_success_flow(char_client: TestClient, mock
     )
 
 
-def _bearer(issuer, sub: str) -> dict[str, str]:
-    """Return Bearer headers carrying a token that the gateway verifies for `sub`."""
-    return {"Authorization": f"Bearer {issuer.mint(sub)}"}
-
-
 def test_blackbox_gateway_zanzibar_authorization(
     character_sheet_upstream, gateway_client: TestClient, spicedb, trusted_ws_issuer
 ):
@@ -95,8 +92,8 @@ def test_blackbox_gateway_zanzibar_authorization(
     Membership is created through frontdoors only: the owner creates the campaign,
     issues a player invite, and the player redeems it.
     """
-    owner_headers = _bearer(trusted_ws_issuer, "user_dm")
-    user_headers = _bearer(trusted_ws_issuer, "user_bram")
+    owner_headers = bearer("user_dm", issuer=trusted_ws_issuer)
+    user_headers = bearer("user_bram", issuer=trusted_ws_issuer)
 
     create_res = gateway_client.post(
         "/api/v1/campaigns",
@@ -125,7 +122,7 @@ def test_blackbox_gateway_zanzibar_authorization(
 
     denied_res = gateway_client.get(
         f"/api/v1/campaigns/{camp_id}/stronghold",
-        headers=_bearer(trusted_ws_issuer, "unauthorized_stranger"),
+        headers=bearer("unauthorized_stranger", issuer=trusted_ws_issuer),
     )
     assert denied_res.status_code == 403
 

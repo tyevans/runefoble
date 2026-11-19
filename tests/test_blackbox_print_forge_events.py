@@ -13,18 +13,13 @@ import pytest
 from asset_forge.main import app
 from fastapi.testclient import TestClient
 
-from tests.helpers.ws_identity import SIGNING_ISSUER
-
-
-def auth_headers(sub: str) -> dict[str, str]:
-    """Return Bearer headers for a token that the service verifier accepts."""
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
+from tests.helpers.ws_identity import bearer
 
 
 @pytest.mark.asyncio
 async def test_standee_export_publishes_print_pdf_forged(spicedb, mock_bus):
     """Exporting standees through the public route writes one PrintPdfForged entry."""
-    client = TestClient(app, headers=auth_headers("crafter-rowan"))
+    client = TestClient(app, headers=bearer("crafter-rowan"))
     campaign_id = str(uuid4())
     await spicedb.write_relationship(
         resource_type="campaign",

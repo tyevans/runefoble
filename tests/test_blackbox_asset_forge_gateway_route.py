@@ -16,15 +16,11 @@ import pytest
 from fastapi.testclient import TestClient
 from gateway_api.main import app as gateway_app
 
-from tests.helpers.ws_identity import SIGNING_ISSUER
+from tests.helpers.ws_identity import bearer
 
 PLAYER = "player-marcus"
 STRANGER = "stranger-mallory"
 PNG_SIGNATURE = b"\x89PNG"
-
-
-def bearer(sub: str) -> dict[str, str]:
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
 
 
 @pytest.fixture
