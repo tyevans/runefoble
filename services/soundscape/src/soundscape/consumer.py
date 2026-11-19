@@ -20,6 +20,7 @@ SOUNDSCAPE_STREAMS: tuple[str, ...] = (
     "runefoble.events.session",
     "runefoble.events.watcher",
     "runefoble.events.character",
+    "runefoble.events.board",
 )
 
 

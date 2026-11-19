@@ -16,7 +16,9 @@ from runefoble_events.events import (
     CombatRoundAdvanced,
     DiceRolled,
     InitiativeTurnAdvanced,
+    PhysicsCollisionOccurred,
     PlayerSpokeEvent,
+    TokenHazardTriggered,
 )
 
 from soundscape.aggregate import SoundscapeAggregate
@@ -27,6 +29,7 @@ from soundscape.scoring import (
     enemy_cr_balance_from_combatants,
 )
 from soundscape.session_state import load_session_aggregate, save_session_aggregate
+from soundscape.tactical_cues import hazard_cue, impact_cue
 
 logger = logging.getLogger("runefoble.soundscape.events")
 
@@ -162,6 +165,29 @@ async def _handle_leitmotif_trigger(
     await save_session_aggregate(agg)
 
 
+async def _handle_tactical_board_event(
+    event: TokenHazardTriggered | PhysicsCollisionOccurred,
+) -> None:
+    """Record a foley cue for a hazard trip or a physical impact on the board."""
+    if not event.session_id:
+        # A board event with no session in play feeds no cue.
+        return
+    if isinstance(event, TokenHazardTriggered):
+        cue = hazard_cue(event.hazard_type)
+    else:
+        cue = impact_cue(event.collision_type, event.impact_energy)
+    agg = await load_session_aggregate(str(event.session_id))
+    agg.record_cue(
+        session_id=str(event.session_id),
+        cue_id=f"cue-{str(event.event_id)[:8]}",
+        sound_url=cue["sound_url"],
+        cue_type=cue["cue_type"],
+        volume_gain=cue["volume_gain"],
+        duck_music=cue["duck_music"],
+    )
+    await save_session_aggregate(agg)
+
+
 async def handle_incoming_domain_event(event: Any) -> None:
     """Process domain events to dynamically adjust soundscape, tension, and leitmotifs."""
     session_id = str(getattr(event, "session_id", "default") or "default")
@@ -186,6 +212,8 @@ async def handle_incoming_domain_event(event: Any) -> None:
         await _handle_leitmotif_trigger(
             session_id, char_id, char_name, "triumphant", "critical_hit"
         )
+    elif isinstance(event, (TokenHazardTriggered, PhysicsCollisionOccurred)):
+        await _handle_tactical_board_event(event)
     elif isinstance(event, CharacterHealthChanged):
         # A health event has no session when no session is in play. Such an event feeds no tension.
         if event.session_id:
