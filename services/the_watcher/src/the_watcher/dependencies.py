@@ -9,10 +9,8 @@ from runefoble_auth.contract import permission_for_action
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.event_bus import EventBusProvider
-from runefoble_platform.event_sourcing import (
-    AggregateRepository,
-    create_aggregate_repository,
-)
+from runefoble_platform.event_sourcing import create_aggregate_repository
+from runefoble_platform.lazy_repository import LazyRepository
 from the_watcher.autonomous_dm import AutonomousDMEngine
 from the_watcher.chronicle import ChronicleRecapEngine
 from the_watcher.compound_actions import CompoundActionEngine
@@ -43,12 +41,6 @@ compound_action_engine = CompoundActionEngine()
 
 platform_settings = PlatformSettings()
 
-_faction_repo: AggregateRepository[FactionAggregate] | None = None
-_campaign_world_repo: AggregateRepository[CampaignWorldAggregate] | None = None
-_faction_resource_repo: AggregateRepository[FactionResourceAggregate] | None = None
-_regional_unrest_repo: AggregateRepository[RegionalUnrestAggregate] | None = None
-
-
 _faction_simulation_engine = FactionSimulationEngine()
 
 
@@ -61,52 +53,19 @@ def set_faction_simulation_engine(engine: FactionSimulationEngine) -> None:
     _faction_simulation_engine = engine
 
 
-def get_faction_repo() -> AggregateRepository[FactionAggregate]:
-    global _faction_repo
-    if _faction_repo is None:
-        _faction_repo = create_aggregate_repository(FactionAggregate)
-    return _faction_repo
+_faction = LazyRepository(lambda: create_aggregate_repository(FactionAggregate))
+_campaign_world = LazyRepository(lambda: create_aggregate_repository(CampaignWorldAggregate))
+_faction_resource = LazyRepository(lambda: create_aggregate_repository(FactionResourceAggregate))
+_regional_unrest = LazyRepository(lambda: create_aggregate_repository(RegionalUnrestAggregate))
 
-
-def set_faction_repo(repo: AggregateRepository[FactionAggregate] | None) -> None:
-    global _faction_repo
-    _faction_repo = repo
-
-
-def get_campaign_world_repo() -> AggregateRepository[CampaignWorldAggregate]:
-    global _campaign_world_repo
-    if _campaign_world_repo is None:
-        _campaign_world_repo = create_aggregate_repository(CampaignWorldAggregate)
-    return _campaign_world_repo
-
-
-def set_campaign_world_repo(repo: AggregateRepository[CampaignWorldAggregate] | None) -> None:
-    global _campaign_world_repo
-    _campaign_world_repo = repo
-
-
-def get_faction_resource_repo() -> AggregateRepository[FactionResourceAggregate]:
-    global _faction_resource_repo
-    if _faction_resource_repo is None:
-        _faction_resource_repo = create_aggregate_repository(FactionResourceAggregate)
-    return _faction_resource_repo
-
-
-def set_faction_resource_repo(repo: AggregateRepository[FactionResourceAggregate] | None) -> None:
-    global _faction_resource_repo
-    _faction_resource_repo = repo
-
-
-def get_regional_unrest_repo() -> AggregateRepository[RegionalUnrestAggregate]:
-    global _regional_unrest_repo
-    if _regional_unrest_repo is None:
-        _regional_unrest_repo = create_aggregate_repository(RegionalUnrestAggregate)
-    return _regional_unrest_repo
-
-
-def set_regional_unrest_repo(repo: AggregateRepository[RegionalUnrestAggregate] | None) -> None:
-    global _regional_unrest_repo
-    _regional_unrest_repo = repo
+get_faction_repo = _faction.get
+set_faction_repo = _faction.set
+get_campaign_world_repo = _campaign_world.get
+set_campaign_world_repo = _campaign_world.set
+get_faction_resource_repo = _faction_resource.get
+set_faction_resource_repo = _faction_resource.set
+get_regional_unrest_repo = _regional_unrest.get
+set_regional_unrest_repo = _regional_unrest.set
 
 
 async def check_action_permission(
@@ -208,45 +167,16 @@ get_event_bus = event_bus_provider.get
 set_event_bus = event_bus_provider.set
 
 
-_pending_action_repo: AggregateRepository[PendingActionAggregate] | None = None
-_whisper_repo: AggregateRepository[WhisperAggregate] | None = None
-_disambiguation_repo: AggregateRepository[DisambiguationAggregate] | None = None
+_pending_action = LazyRepository(lambda: create_aggregate_repository(PendingActionAggregate))
+_whisper = LazyRepository(lambda: create_aggregate_repository(WhisperAggregate))
+_disambiguation = LazyRepository(lambda: create_aggregate_repository(DisambiguationAggregate))
 
-
-def get_pending_action_repo() -> AggregateRepository[PendingActionAggregate]:
-    global _pending_action_repo
-    if _pending_action_repo is None:
-        _pending_action_repo = create_aggregate_repository(PendingActionAggregate)
-    return _pending_action_repo
-
-
-def set_pending_action_repo(repo: AggregateRepository[PendingActionAggregate] | None) -> None:
-    global _pending_action_repo
-    _pending_action_repo = repo
-
-
-def get_whisper_repo() -> AggregateRepository[WhisperAggregate]:
-    global _whisper_repo
-    if _whisper_repo is None:
-        _whisper_repo = create_aggregate_repository(WhisperAggregate)
-    return _whisper_repo
-
-
-def set_whisper_repo(repo: AggregateRepository[WhisperAggregate] | None) -> None:
-    global _whisper_repo
-    _whisper_repo = repo
-
-
-def get_disambiguation_repo() -> AggregateRepository[DisambiguationAggregate]:
-    global _disambiguation_repo
-    if _disambiguation_repo is None:
-        _disambiguation_repo = create_aggregate_repository(DisambiguationAggregate)
-    return _disambiguation_repo
-
-
-def set_disambiguation_repo(repo: AggregateRepository[DisambiguationAggregate] | None) -> None:
-    global _disambiguation_repo
-    _disambiguation_repo = repo
+get_pending_action_repo = _pending_action.get
+set_pending_action_repo = _pending_action.set
+get_whisper_repo = _whisper.get
+set_whisper_repo = _whisper.set
+get_disambiguation_repo = _disambiguation.get
+set_disambiguation_repo = _disambiguation.set
 
 
 def build_copilot_engine() -> CopilotEngine:

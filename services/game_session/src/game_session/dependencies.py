@@ -25,6 +25,7 @@ from runefoble_platform.event_sourcing import (
     AggregateRepository,
     create_aggregate_repository,
 )
+from runefoble_platform.lazy_repository import LazyRepository
 
 logger = logging.getLogger("runefoble.game_session")
 
@@ -46,91 +47,74 @@ repo: AggregateRepository[GameSessionAggregate] = create_aggregate_repository(
     GameSessionAggregate,
     event_bus=SessionEventPublisher(lambda: get_event_bus()),
 )
-stronghold_repo: AggregateRepository[StrongholdAggregate] = create_aggregate_repository(
-    StrongholdAggregate
+stronghold_repository = LazyRepository(lambda: create_aggregate_repository(StrongholdAggregate))
+tavern_repository = LazyRepository(lambda: create_aggregate_repository(TavernGameAggregate))
+merchant_repository = LazyRepository(lambda: create_aggregate_repository(MerchantAggregate))
+shared_world_repository = LazyRepository(lambda: create_aggregate_repository(SharedWorldAggregate))
+caravan_ledger_repository = LazyRepository(
+    lambda: create_aggregate_repository(CaravanLedgerAggregate)
 )
-tavern_repo: AggregateRepository[TavernGameAggregate] = create_aggregate_repository(
-    TavernGameAggregate
+caravan_contract_repository = LazyRepository(
+    lambda: create_aggregate_repository(CaravanContractAggregate)
 )
-merchant_repo: AggregateRepository[MerchantAggregate] = create_aggregate_repository(
-    MerchantAggregate
+settlement_repository = LazyRepository(lambda: create_aggregate_repository(SettlementAggregate))
+establishment_repository = LazyRepository(
+    lambda: create_aggregate_repository(EstablishmentAggregate)
 )
-
-shared_world_repo: AggregateRepository[SharedWorldAggregate] = create_aggregate_repository(
-    SharedWorldAggregate
+bounty_contract_repository = LazyRepository(
+    lambda: create_aggregate_repository(MercenaryBountyAggregate)
 )
-caravan_ledger_repo: AggregateRepository[CaravanLedgerAggregate] = create_aggregate_repository(
-    CaravanLedgerAggregate
-)
-caravan_contract_repo: AggregateRepository[CaravanContractAggregate] = create_aggregate_repository(
-    CaravanContractAggregate
-)
-settlement_repo: AggregateRepository[SettlementAggregate] = create_aggregate_repository(
-    SettlementAggregate
-)
-establishment_repo: AggregateRepository[EstablishmentAggregate] = create_aggregate_repository(
-    EstablishmentAggregate
-)
-bounty_contract_repo: AggregateRepository[MercenaryBountyAggregate] = create_aggregate_repository(
-    MercenaryBountyAggregate
-)
-worker_repo: AggregateRepository[NPCWorkerAggregate] = create_aggregate_repository(
-    NPCWorkerAggregate
-)
-negotiation_repo: AggregateRepository[NegotiationAggregate] = create_aggregate_repository(
-    NegotiationAggregate
-)
-child_index_repo: AggregateRepository[ChildIndexAggregate] = create_aggregate_repository(
-    ChildIndexAggregate
-)
-
-
-def get_tavern_repository() -> AggregateRepository[TavernGameAggregate]:
-    return tavern_repo
-
-
-def get_merchant_repository() -> AggregateRepository[MerchantAggregate]:
-    return merchant_repo
-
-
-def get_negotiation_repository() -> AggregateRepository[NegotiationAggregate]:
-    return negotiation_repo
+worker_repository = LazyRepository(lambda: create_aggregate_repository(NPCWorkerAggregate))
+negotiation_repository = LazyRepository(lambda: create_aggregate_repository(NegotiationAggregate))
+child_index_repository = LazyRepository(lambda: create_aggregate_repository(ChildIndexAggregate))
 
 
 def get_stronghold_repository() -> AggregateRepository[StrongholdAggregate]:
-    return stronghold_repo
+    return stronghold_repository.get()
+
+
+def get_tavern_repository() -> AggregateRepository[TavernGameAggregate]:
+    return tavern_repository.get()
+
+
+def get_merchant_repository() -> AggregateRepository[MerchantAggregate]:
+    return merchant_repository.get()
 
 
 def get_shared_world_repository() -> AggregateRepository[SharedWorldAggregate]:
-    return shared_world_repo
+    return shared_world_repository.get()
 
 
 def get_caravan_ledger_repository() -> AggregateRepository[CaravanLedgerAggregate]:
-    return caravan_ledger_repo
+    return caravan_ledger_repository.get()
 
 
 def get_caravan_contract_repository() -> AggregateRepository[CaravanContractAggregate]:
-    return caravan_contract_repo
+    return caravan_contract_repository.get()
 
 
 def get_settlement_repository() -> AggregateRepository[SettlementAggregate]:
-    return settlement_repo
+    return settlement_repository.get()
 
 
 def get_establishment_repository() -> AggregateRepository[EstablishmentAggregate]:
-    return establishment_repo
+    return establishment_repository.get()
 
 
 def get_bounty_contract_repository() -> AggregateRepository[MercenaryBountyAggregate]:
-    return bounty_contract_repo
+    return bounty_contract_repository.get()
 
 
 def get_worker_repository() -> AggregateRepository[NPCWorkerAggregate]:
-    return worker_repo
+    return worker_repository.get()
+
+
+def get_negotiation_repository() -> AggregateRepository[NegotiationAggregate]:
+    return negotiation_repository.get()
 
 
 def get_child_index_repository() -> AggregateRepository[ChildIndexAggregate]:
-    return child_index_repo
+    return child_index_repository.get()
 
 
 event_bus_provider = EventBusProvider(platform_settings)
