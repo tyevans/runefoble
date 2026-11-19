@@ -123,7 +123,7 @@ client = SpiceDBClient(
 mock_client = MockSpiceDBClient()
 ```
 
-The preshared key is an operator secret. The library has no literal default. If `RUNEFOBLE_SPICEDB_PRESHARED_KEY` is unset and no `token` is passed, the constructor raises `RuntimeError`. Services read the same setting through `PlatformSettings.spicedb_preshared_key` and fail at startup when it is unset. Tests set a throwaway value in the repository root `conftest.py`.
+The preshared key is an operator secret. The library has no literal default. `SpiceDBClient` requires an explicit `endpoint` and `token`. `runefoble_auth.settings.SpiceDBSettings` holds the endpoint (`RUNEFOBLE_SPICEDB_ENDPOINT` or `SPICEDB_ENDPOINT`, default `localhost:50051`) and the key (`RUNEFOBLE_SPICEDB_PRESHARED_KEY`). `PlatformSettings` does not hold them. `load_spicedb_settings()` raises `ConfigurationError` when the key is unset or empty. A service that checks permissions calls it at startup, so it fails at startup without the key. A service that never checks permissions does not need the key. Tests set a throwaway value in the repository root `conftest.py`.
 
 `SpiceDBClient` communicates strictly over gRPC. If the SpiceDB server is unreachable or fails, operations fail fast and raise exceptions rather than silently degrading to an in-memory mock, preventing permission desynchronization and data loss. For isolated unit tests, instantiate `MockSpiceDBClient` directly.
 

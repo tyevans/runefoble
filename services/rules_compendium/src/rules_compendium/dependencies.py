@@ -6,6 +6,7 @@ from fastapi import Request
 from runefoble_auth.factory import get_spicedb_client as get_spicedb_client
 from runefoble_auth.mock import MockSpiceDBClient
 from runefoble_auth.permissions import check_subject
+from runefoble_auth.settings import load_spicedb_settings
 from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_auth.wiring import (
     build_identity_dependencies,
@@ -23,6 +24,8 @@ from rules_compendium.aggregate import CompendiumAggregate, EncounterAggregate
 from rules_compendium.retrieval import CompendiumRetrievalEngine
 
 settings = PlatformSettings()
+# This service checks SpiceDB permissions. Fail fast at start-up without the key (TASK-0720).
+load_spicedb_settings()
 
 # Global singletons
 

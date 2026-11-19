@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 
 from gateway_api.upstreams import UpstreamRegistry
+from runefoble_auth.settings import load_spicedb_settings
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.event_bus import EventBusProvider
 from runefoble_platform.ws_groups import WebSocketGroups
@@ -13,6 +14,8 @@ from starlette.requests import HTTPConnection
 logger = logging.getLogger("runefoble.gateway.dependencies")
 
 platform_settings = PlatformSettings()
+# This service checks SpiceDB permissions. Fail fast at start-up without the key (TASK-0720).
+load_spicedb_settings()
 
 
 event_bus_provider = EventBusProvider(platform_settings)

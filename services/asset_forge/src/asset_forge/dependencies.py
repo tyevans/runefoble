@@ -7,6 +7,7 @@ from uuid import UUID
 
 from fastapi import HTTPException
 from runefoble_auth.permissions import require_subject
+from runefoble_auth.settings import load_spicedb_settings
 from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_auth.wiring import (
     build_identity_dependencies,
@@ -29,6 +30,8 @@ from asset_forge.wardrobe_generator import WardrobeGenerator, build_wardrobe_gen
 
 logger = logging.getLogger("runefoble.asset_forge")
 settings = PlatformSettings()
+# This service checks SpiceDB permissions. Fail fast at start-up without the key (TASK-0720).
+load_spicedb_settings()
 
 _forge_repo: AggregateRepository[AssetForgeAggregate] = create_aggregate_repository(
     AssetForgeAggregate

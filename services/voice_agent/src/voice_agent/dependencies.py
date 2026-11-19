@@ -6,6 +6,7 @@ import logging
 from typing import Any
 
 import httpx
+from runefoble_auth.settings import load_spicedb_settings
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.event_publish import publish_best_effort
 from runefoble_platform.redis_bus import RedisStreamsEventBus
@@ -18,6 +19,8 @@ STREAM_SESSION = "runefoble.events.session"
 STREAM_VOICE = "runefoble.events.voice"
 
 platform_settings = PlatformSettings()
+# This service checks SpiceDB permissions. Fail fast at start-up without the key (TASK-0720).
+load_spicedb_settings()
 dsp_pipeline = VoiceDSPPipeline()
 
 

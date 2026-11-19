@@ -179,7 +179,7 @@ The paths in this table are absent from `/openapi.json` of `gateway-api`. Use th
 |---|---|---|
 | `RUNEFOBLE_SERVICE_CREDENTIAL` | Shared service credential. No default. A receiver refuses to start without it. | `config.py`, `service_credential.py` (`expected_service_credential`) |
 | `RUNEFOBLE_ZITADEL_CLIENT_ID` | Default audience when `RUNEFOBLE_ZITADEL_AUDIENCE` is empty | `config.py` |
-| `RUNEFOBLE_SPICEDB_PRESHARED_KEY` | Key for SpiceDB. No default. | `config.py`, `libs/runefoble_auth/src/runefoble_auth/factory.py` |
+| `RUNEFOBLE_SPICEDB_PRESHARED_KEY` | Key for SpiceDB. No default. | `libs/runefoble_auth/src/runefoble_auth/settings.py`, `libs/runefoble_auth/src/runefoble_auth/factory.py` |
 
 ---
 

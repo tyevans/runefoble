@@ -3,12 +3,11 @@
 import argparse
 import asyncio
 import logging
-import os
 from pathlib import Path
 
-from runefoble_platform.config import PlatformSettings
 from runefoble_platform.errors import ConfigurationError
 
+from runefoble_auth.settings import load_spicedb_settings
 from runefoble_auth.spicedb import SpiceDBClient
 
 logger = logging.getLogger(__name__)
@@ -57,10 +56,11 @@ async def bootstrap_schema(
 
 def main() -> None:
     """CLI entrypoint for executing schema migrations."""
+    settings = load_spicedb_settings()
     parser = argparse.ArgumentParser(description="Apply Zanzibar schema to SpiceDB")
     parser.add_argument(
         "--endpoint",
-        default=os.getenv("RUNEFOBLE_SPICEDB_ENDPOINT", "localhost:50051"),
+        default=settings.endpoint,
         help="SpiceDB gRPC endpoint (default: localhost:50051 or RUNEFOBLE_SPICEDB_ENDPOINT)",
     )
     parser.add_argument(
@@ -80,7 +80,7 @@ def main() -> None:
     asyncio.run(
         bootstrap_schema(
             endpoint=args.endpoint,
-            token=PlatformSettings().spicedb_preshared_key,
+            token=settings.preshared_key.get_secret_value(),
             schema_path=args.schema,
             insecure=args.insecure,
         )

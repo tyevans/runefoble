@@ -1,7 +1,9 @@
-"""Blackbox checks for the SpiceDB preshared key (TASK-0625).
+"""Blackbox checks for the SpiceDB preshared key (TASK-0625, TASK-0720).
 
 The key has one source: the RUNEFOBLE_SPICEDB_PRESHARED_KEY environment variable.
-It has no literal default. A process without the key must fail at startup.
+It has no literal default. `SpiceDBSettings` holds it, not `PlatformSettings`. A service that
+checks SpiceDB permissions fails at startup without the key. A process that never checks
+permissions and only builds `PlatformSettings` starts without it.
 
 Governed by:
 - ADR-0001: SpiceDB Zanzibar Object Authorization (the key is an operator secret)
@@ -34,6 +36,12 @@ SERVICE_DEPENDENCY_MODULES = [
     "soundscape.dependencies",
     "the_watcher.dependencies",
     "campaign_lore.dependencies",
+    "character_sheet.dependencies",
+    "game_session.dependencies",
+    "campaign_analytics.main",
+    "gateway_api.dependencies",
+    "gateway_mcp.asgi",
+    "voice_agent.main",
 ]
 
 
@@ -49,22 +57,35 @@ def _run_python(code: str, env: dict[str, str], cwd: Path) -> subprocess.Complet
     return run_command([sys.executable, "-c", code], env=env, cwd=cwd, timeout=180, check=False)
 
 
-def test_platform_settings_fail_without_key(tmp_path: Path) -> None:
-    """Constructing PlatformSettings without the key exits non-zero and names the variable."""
+def test_platform_settings_build_without_key(tmp_path: Path) -> None:
+    """PlatformSettings no longer holds the SpiceDB key, so it builds without the key."""
     result = _run_python(
-        "from runefoble_platform.config import PlatformSettings; PlatformSettings()",
+        "from runefoble_platform.config import PlatformSettings; PlatformSettings(); print('ok')",
+        _env(),
+        tmp_path,
+    )
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.strip().splitlines()[-1] == "ok"
+
+
+def test_spicedb_settings_fail_without_key(tmp_path: Path) -> None:
+    """Loading the SpiceDB settings without the key raises ConfigurationError and names it."""
+    result = _run_python(
+        "from runefoble_auth.settings import load_spicedb_settings; load_spicedb_settings()",
         _env(),
         tmp_path,
     )
     assert result.returncode != 0
+    assert "ConfigurationError" in result.stderr
     assert KEY_VAR in result.stderr
 
 
 @pytest.mark.parametrize("module_name", SERVICE_DEPENDENCY_MODULES)
 def test_service_startup_fails_without_key(module_name: str, tmp_path: Path) -> None:
-    """Each service dependency module refuses to load when the key is missing."""
+    """Each service that checks permissions refuses to start when the key is missing."""
     result = _run_python(f"import {module_name}", _env(), tmp_path)
     assert result.returncode != 0
+    assert "ConfigurationError" in result.stderr
     assert KEY_VAR in result.stderr
 
 
@@ -77,16 +98,6 @@ def test_rules_compendium_sends_configured_key(tmp_path: Path) -> None:
     result = _run_python(code, _env(**{KEY_VAR: "key-from-environment"}), tmp_path)
     assert result.returncode == 0, result.stderr
     assert result.stdout.strip().splitlines()[-1] == "key-from-environment"
-
-
-def test_spicedb_client_requires_key_when_none_is_passed(monkeypatch: pytest.MonkeyPatch) -> None:
-    """The auth library refuses to pick a literal key when no token and no environment key exist."""
-    from runefoble_auth.spicedb import SpiceDBClient
-
-    monkeypatch.delenv(KEY_VAR, raising=False)
-    monkeypatch.delenv("SPICEDB_TOKEN", raising=False)
-    with pytest.raises(RuntimeError, match=KEY_VAR):
-        SpiceDBClient(endpoint="localhost:1")
 
 
 def test_audience_studio_config_requires_key(tmp_path: Path) -> None:

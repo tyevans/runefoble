@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 
 from board_state.aggregate import BoardAggregate
+from runefoble_auth.settings import load_spicedb_settings
 from runefoble_auth.wiring import (
     build_identity_dependencies,
     make_verifier_holder,
@@ -22,6 +23,8 @@ from runefoble_platform.service_credential import expected_service_credential
 
 logger = logging.getLogger("runefoble.board_state")
 platform_settings = PlatformSettings()
+# This service checks SpiceDB permissions. Fail fast at start-up without the key (TASK-0720).
+load_spicedb_settings()
 
 repo: AggregateRepository[BoardAggregate] = create_aggregate_repository(BoardAggregate)
 

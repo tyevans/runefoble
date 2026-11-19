@@ -19,6 +19,7 @@ from fastapi import Depends, HTTPException
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.mock import MockSpiceDBClient
 from runefoble_auth.permissions import require_permission
+from runefoble_auth.settings import load_spicedb_settings
 from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_auth.wiring import (
     build_identity_dependencies,
@@ -43,6 +44,8 @@ from runefoble_platform.stand_in_guardrails import StandInGuardrailPolicy
 STREAM_CHARACTER = "runefoble.events.character"
 STREAM_CRAFTING = "runefoble.events.crafting"
 platform_settings = PlatformSettings()
+# This service checks SpiceDB permissions. Fail fast at start-up without the key (TASK-0720).
+load_spicedb_settings()
 
 # Global aggregate repositories
 repo: AggregateRepository[CharacterAggregate] = create_aggregate_repository(CharacterAggregate)

@@ -19,6 +19,7 @@ from game_session.settlement.settlement_aggregate import SettlementAggregate
 from game_session.settlement.workers import NPCWorkerAggregate
 from game_session.stronghold import StrongholdAggregate
 from game_session.west_marches import SharedWorldAggregate
+from runefoble_auth.settings import load_spicedb_settings
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.event_bus import EventBusProvider
 from runefoble_platform.event_sourcing import (
@@ -36,6 +37,8 @@ def watcher_service_url() -> str | None:
 
 
 platform_settings = PlatformSettings()
+# This service checks SpiceDB permissions. Fail fast at start-up without the key (TASK-0720).
+load_spicedb_settings()
 if platform_settings.is_deployed and watcher_service_url() is None:
     # ADR-0015 (4): a deployed session service must not start without its Watcher.
     raise RuntimeError(
