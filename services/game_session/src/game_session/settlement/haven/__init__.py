@@ -9,7 +9,6 @@ from game_session.settlement.haven.loaders import (
     build_settlement_projection,
     load_establishment,
     load_settlement,
-    save_and_publish,
 )
 from game_session.settlement.haven.routes_establishments import (
     construct_establishment,
@@ -45,7 +44,6 @@ __all__ = [
     "list_settlement_establishments",
     "load_establishment",
     "load_settlement",
-    "save_and_publish",
     "upgrade_establishment",
     "upgrade_settlement_tier",
     "upgrades_router",

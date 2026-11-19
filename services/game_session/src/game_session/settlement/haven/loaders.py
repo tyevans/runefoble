@@ -1,15 +1,12 @@
-"""Data loaders, aggregate resolvers, and persistence for settlement havens.
+"""Data loaders and aggregate resolvers for settlement havens.
 
 Governed by ADR-0001, ADR-0003, ADR-0007, ADR-0013, and PRD-0024.
 """
 
 from __future__ import annotations
 
-from typing import Any
-
 from fastapi import HTTPException
 from game_session.dependencies import get_establishment_repository, get_settlement_repository
-from game_session.events import STREAM_WEST_MARCHES
 from game_session.queries import list_establishments_for_settlement
 from game_session.settlement.auth import (
     check_establishment_read_permission,
@@ -25,17 +22,7 @@ from game_session.settlement.models import (
 from game_session.settlement.settlement_aggregate import SettlementAggregate
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_platform.aggregate_loading import load_if_exists
-from runefoble_platform.event_publish import publish_best_effort
 from runefoble_platform.identifiers import parse_uuid
-
-
-async def save_and_publish(repo: Any, bus: Any, agg: Any) -> None:
-    """Save aggregate uncommitted events and publish to West Marches stream."""
-    events = list(agg.uncommitted_events)
-    await repo.save(agg)
-    if bus:
-        for ev in events:
-            await publish_best_effort(bus, STREAM_WEST_MARCHES, ev)
 
 
 async def load_settlement(sid: str, perm: str, uid: str | None) -> SettlementAggregate:
@@ -106,5 +93,4 @@ __all__ = [
     "build_settlement_projection",
     "load_establishment",
     "load_settlement",
-    "save_and_publish",
 ]

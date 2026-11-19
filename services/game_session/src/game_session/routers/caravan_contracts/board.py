@@ -11,17 +11,18 @@ from uuid import UUID, uuid4
 from fastapi import APIRouter, Depends, Query
 from game_session.caravan import CaravanContractAggregate
 from game_session.child_index import ChildIndexKind
-from game_session.dependencies import get_caravan_contract_repository
+from game_session.dependencies import get_caravan_contract_repository, get_event_bus
+from game_session.events import STREAM_WEST_MARCHES
 from game_session.queries import link_child, list_world_contracts_for_world
 from game_session.routers.caravan_contracts.auth import (
     _check_high_tier_auth,
-    _publish,
 )
 from game_session.settlement.auth.tokens import CallerId, get_principal
 from game_session.west_marches_models import PostCaravanContractRequest
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.permissions import require_subject
 from runefoble_platform.aggregate_loading import load_if_exists, load_or_404
+from runefoble_platform.event_publish import publish_aggregate_events
 from runefoble_platform.identifiers import parse_uuid
 
 router = APIRouter(
@@ -74,7 +75,8 @@ async def post_caravan_contract(
     )
     await spicedb.write_relationship("caravan_contract", cid, "poster", "user", caller_id)
 
-    await _publish(events)
+    if bus := get_event_bus():
+        await publish_aggregate_events(bus, STREAM_WEST_MARCHES, events)
     return {"shared_world_id": str(wid), "contract": contract.state.model_dump()}
 
 

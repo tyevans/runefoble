@@ -12,12 +12,10 @@ from uuid import UUID
 
 from fastapi import HTTPException
 from game_session.caravan import CaravanContractAggregate
-from game_session.dependencies import get_caravan_contract_repository, get_event_bus
-from game_session.events import STREAM_WEST_MARCHES
+from game_session.dependencies import get_caravan_contract_repository
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.permissions import check_subject, require_subject
 from runefoble_platform.aggregate_loading import load_or_404
-from runefoble_platform.event_publish import publish_or_fail
 
 
 async def _check_high_tier_auth(
@@ -51,16 +49,9 @@ def _val_err(fn: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
         raise HTTPException(status_code=400, detail=str(e)) from e
 
 
-async def _publish(events: list[Any]) -> None:
-    if bus := get_event_bus():
-        for ev in events:
-            await publish_or_fail(bus, STREAM_WEST_MARCHES, ev)
-
-
 __all__ = [
     "_check_high_tier_auth",
     "_load_contract",
-    "_publish",
     "_set_contractor",
     "_val_err",
 ]

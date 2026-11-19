@@ -9,6 +9,7 @@ from typing import Any
 
 from fastapi import APIRouter, Depends
 from game_session.dependencies import get_event_bus, get_worker_repository
+from game_session.events import STREAM_WEST_MARCHES
 from game_session.settlement.auth.tokens import CallerId, get_principal
 from game_session.settlement.worker_models import (
     FormRelationshipRequest,
@@ -16,8 +17,9 @@ from game_session.settlement.worker_models import (
     UpdateWorkerMoodRequest,
     WorkerRelationship,
 )
-from game_session.settlement.workers.loaders import load_worker, save_and_publish
+from game_session.settlement.workers.loaders import load_worker
 from game_session.settlement.workers.operations import sync_establishment_operations
+from runefoble_platform.event_publish import publish_aggregate_events
 
 router = APIRouter(dependencies=[Depends(get_principal)], tags=["settlement-npc-relationships"])
 
@@ -31,7 +33,10 @@ async def update_worker_mood(
     """Update an NPC worker's temperament, mood, and patience."""
     agg = await load_worker(npc_id, "edit_mood", caller_id)
     agg.update_mood(req.mood, req.temperament, req.patience_delta, req.metadata)
-    await save_and_publish(get_worker_repository(), get_event_bus(), agg)
+    events = list(agg.uncommitted_events)
+    await get_worker_repository().save(agg)
+    if bus := get_event_bus():
+        await publish_aggregate_events(bus, STREAM_WEST_MARCHES, events)
     if agg.state.establishment_id:
         await sync_establishment_operations(agg.state.establishment_id)
     agg.refresh_computed_fields()
@@ -49,7 +54,10 @@ async def form_npc_relationship(
     agg.form_relationship(
         req.target_npc_id, req.relation_type, req.intensity, req.notes, req.metadata
     )
-    await save_and_publish(get_worker_repository(), get_event_bus(), agg)
+    events = list(agg.uncommitted_events)
+    await get_worker_repository().save(agg)
+    if bus := get_event_bus():
+        await publish_aggregate_events(bus, STREAM_WEST_MARCHES, events)
     if agg.state.establishment_id:
         await sync_establishment_operations(agg.state.establishment_id)
     agg.refresh_computed_fields()

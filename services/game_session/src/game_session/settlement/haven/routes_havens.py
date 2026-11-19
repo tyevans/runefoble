@@ -10,6 +10,7 @@ from uuid import uuid4
 from fastapi import APIRouter, Depends, HTTPException
 from game_session.child_index import ChildIndexKind
 from game_session.dependencies import get_event_bus, get_settlement_repository
+from game_session.events import STREAM_WEST_MARCHES
 from game_session.queries import link_child, list_settlements_for_campaign
 from game_session.settlement.auth import (
     check_campaign_write_permission,
@@ -19,7 +20,6 @@ from game_session.settlement.auth.tokens import CallerId, get_principal
 from game_session.settlement.haven.loaders import (
     build_settlement_projection,
     load_settlement,
-    save_and_publish,
 )
 from game_session.settlement.models import (
     FoundSettlementRequest,
@@ -28,6 +28,7 @@ from game_session.settlement.models import (
 from game_session.settlement.settlement_aggregate import SettlementAggregate
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_platform.aggregate_loading import load_if_exists
+from runefoble_platform.event_publish import publish_aggregate_events
 from runefoble_platform.identifiers import parse_uuid
 
 router = APIRouter(dependencies=[Depends(get_principal)])
@@ -60,7 +61,8 @@ async def found_settlement(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
 
-    await save_and_publish(repo, bus, agg)
+    events = list(agg.uncommitted_events)
+    await repo.save(agg)
     await write_settlement_relationships(
         spicedb,
         settlement_id=str(sid),
@@ -69,6 +71,8 @@ async def found_settlement(
     )
 
     await link_child(ChildIndexKind.CAMPAIGN_SETTLEMENTS, campaign_id, str(sid))
+    if bus:
+        await publish_aggregate_events(bus, STREAM_WEST_MARCHES, events)
     return await build_settlement_projection(agg)
 
 

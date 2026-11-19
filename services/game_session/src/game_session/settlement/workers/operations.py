@@ -14,6 +14,7 @@ from game_session.dependencies import (
     get_event_bus,
     get_worker_repository,
 )
+from game_session.events import STREAM_WEST_MARCHES
 from game_session.queries import link_child, list_workers_for_establishment
 from game_session.settlement.auth import write_npc_relationships
 from game_session.settlement.establishment_aggregate import EstablishmentAggregate
@@ -26,9 +27,9 @@ from game_session.settlement.worker_models import (
     WorkerInventoryItem,
     WorkerRelationship,
 )
-from game_session.settlement.workers.loaders import save_and_publish
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_platform.aggregate_loading import load_if_exists
+from runefoble_platform.event_publish import publish_aggregate_events
 from runefoble_platform.identifiers import parse_uuid
 
 
@@ -60,7 +61,10 @@ async def sync_establishment_operations(establishment_id: str) -> EstablishmentO
         service_quality_tier=q_tier,
         interpersonal_tension_index=tension,
     )
-    await save_and_publish(est_repo, get_event_bus(), est)
+    events = list(est.uncommitted_events)
+    await est_repo.save(est)
+    if bus := get_event_bus():
+        await publish_aggregate_events(bus, STREAM_WEST_MARCHES, events)
 
     return EstablishmentOperationsSummary(
         total_staff=len(active_ids),
@@ -77,7 +81,7 @@ async def create_and_assign_worker(
     establishment_id: str, est: EstablishmentAggregate, req: AssignWorkerRequest, uid: str | None
 ) -> NPCWorkerState:
     """Instantiate and configure new worker aggregate for establishment assignment."""
-    spicedb, worker_repo, bus = get_spicedb_client(), get_worker_repository(), get_event_bus()
+    spicedb, worker_repo = get_spicedb_client(), get_worker_repository()
     wage = req.wage_gold if req.wage_gold is not None else req.wage
     nid = req.npc_id or str(uuid4())
     agg = NPCWorkerAggregate(parse_uuid(nid, field="worker_id"))
@@ -108,7 +112,8 @@ async def create_and_assign_worker(
     for rel in req.relationships:
         r = WorkerRelationship.model_validate(rel)
         agg.form_relationship(r.target_npc_id, r.relation_type, r.intensity, r.notes, r.metadata)
-    await save_and_publish(worker_repo, bus, agg)
+    events = list(agg.uncommitted_events)
+    await worker_repo.save(agg)
 
     await link_child(ChildIndexKind.ESTABLISHMENT_WORKERS, establishment_id, str(agg.aggregate_id))
 
@@ -119,6 +124,8 @@ async def create_and_assign_worker(
         campaign_id=est.state.campaign_id,
         manager_id=uid,
     )
+    if bus := get_event_bus():
+        await publish_aggregate_events(bus, STREAM_WEST_MARCHES, events)
     await sync_establishment_operations(establishment_id)
     agg.refresh_computed_fields(establishment_tier=est.state.tier)
     return agg.state

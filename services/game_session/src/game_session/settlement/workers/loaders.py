@@ -1,15 +1,12 @@
-"""Data loaders, UUID converters, and event persistence for worker domain.
+"""Data loaders and permission checks for the worker domain.
 
 Governed by ADR-0003, ADR-0007, ADR-0013, and PRD-0024.
 """
 
 from __future__ import annotations
 
-from typing import Any
-
 from fastapi import HTTPException
 from game_session.dependencies import get_establishment_repository, get_worker_repository
-from game_session.events import STREAM_WEST_MARCHES
 from game_session.settlement.auth import (
     check_establishment_read_permission,
     check_establishment_write_permission,
@@ -19,17 +16,7 @@ from game_session.settlement.auth import (
 from game_session.settlement.establishment_aggregate import EstablishmentAggregate
 from game_session.settlement.worker_aggregate import NPCWorkerAggregate
 from runefoble_auth.factory import get_spicedb_client
-from runefoble_platform.event_publish import publish_best_effort
 from runefoble_platform.identifiers import parse_uuid
-
-
-async def save_and_publish(repo: Any, bus: Any, agg: Any) -> None:
-    """Persist uncommitted aggregate events and publish to West Marches stream."""
-    events = list(agg.uncommitted_events)
-    await repo.save(agg)
-    if bus:
-        for ev in events:
-            await publish_best_effort(bus, STREAM_WEST_MARCHES, ev)
 
 
 async def load_establishment(eid: str, perm: str, uid: str | None) -> EstablishmentAggregate:

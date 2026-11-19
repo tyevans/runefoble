@@ -8,11 +8,15 @@ from uuid import UUID
 from fastapi import APIRouter, Depends
 from game_session.caravan import CaravanContractAggregate
 from game_session.caravan.ledger import CaravanLedgerAggregate
-from game_session.dependencies import get_caravan_contract_repository, get_caravan_ledger_repository
+from game_session.dependencies import (
+    get_caravan_contract_repository,
+    get_caravan_ledger_repository,
+    get_event_bus,
+)
+from game_session.events import STREAM_WEST_MARCHES
 from game_session.routers.caravan_contracts.auth import (
     _check_high_tier_auth,
     _load_contract,
-    _publish,
     _set_contractor,
     _val_err,
 )
@@ -25,6 +29,7 @@ from game_session.west_marches_models import (
 )
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_platform.aggregate_loading import load_or_create
+from runefoble_platform.event_publish import publish_aggregate_events
 from runefoble_platform.identifiers import parse_uuid
 
 router = APIRouter(
@@ -55,7 +60,8 @@ async def _sync(
 ) -> None:
     events = list(contract.uncommitted_events) + list(extra)
     await get_caravan_contract_repository().save(contract)
-    await _publish(events)
+    if bus := get_event_bus():
+        await publish_aggregate_events(bus, STREAM_WEST_MARCHES, events)
     if updates:
         repo, ledger = await _ledger(wid)
         if str(cid) in ledger.state.contracts:
