@@ -150,7 +150,7 @@ To create real session entities prior to assembling in the lobby, the campaign d
        status: 'lobby' | 'upcoming';
      }
      ```
-   - The App Shell delegates to `AppDataService.createCampaignSession()`, calling `POST /api/v1/campaigns/{campaign_id}/sessions` requiring Zanzibar `run_session` permission.
+   - The App Shell delegates to `AppDataService.createCampaignSession()`, calling `POST /api/v1/campaigns/{campaign_id}/sessions` requiring Zanzibar `run_session` permission. The route creates the game session aggregate in the same call. The returned `id` is the only session id the App Shell stores. It is the UUID that `GET /api/v1/sessions/{id}` accepts (TASK-0706).
    - In fallback/offline mode, newly created sessions are persisted into `FALLBACK_CAMPAIGN_SESSIONS_MAP[campaignId]`, guaranteeing that subsequent `fetchCampaignSessions(campaignId)` reloads preserve newly scheduled sessions.
    - On success, the campaign session list refreshes. If `status === 'lobby'`, the router automatically navigates to `#/campaigns/:campaignId/lobby/:sessionId`.
 5. **Initial Staging Lobby Auto-Seeding (TASK-0354)**:

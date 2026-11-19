@@ -251,6 +251,8 @@ curl -X DELETE "http://localhost:8000/api/v1/campaigns/6f1c2b8e-3a4d-4e5f-9a7b-8
 Campaign owners and Dungeon Masters (holding `run_session` permission) can create staging lobbies and scheduled sessions using `POST /api/v1/campaigns/{campaign_id}/sessions`. All members (holding `view` permission) can list active and scheduled sessions via `GET /api/v1/campaigns/{campaign_id}/sessions`:
 
 ### Creating a Session / Staging Lobby
+
+The response `id` is the game session id. The same UUID works in `GET /api/v1/sessions/{id}`, the session start route, the combat routes, and the turn routes. A campaign session and its game session share one id (TASK-0706). The `status` value in the campaign list is descriptive. A new game session starts in `lobby` until the start route moves it to `active`.
 ```bash
 curl -X POST "http://localhost:8000/api/v1/campaigns/6f1c2b8e-3a4d-4e5f-9a7b-8c9d0e1f2a3b/sessions" \
   -H "Authorization: Bearer <DM_JWT>" \
