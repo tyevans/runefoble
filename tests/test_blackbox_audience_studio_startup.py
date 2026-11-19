@@ -1,12 +1,14 @@
-"""Blackbox start-up tests: Audience Studio has no in-memory store and no mock stream bus.
+"""Blackbox start-up tests: Audience Studio has no in-memory store, no mock stream bus and no test-mode key.
 
 Governed by:
 - TASK-0724: production code cannot select in-memory adapters.
+- TASK-0913: the SpiceDB preshared key is required in every NODE_ENV.
 - ADR-0015 decision f: a deployed process never runs on memory.
 - Hard Invariant 7: the built service is started as a process. Only its exit code and
   stderr are read.
 
-The helper sets NODE_ENV=test, so each case also proves that NODE_ENV does not open a memory path.
+The helper sets NODE_ENV=test, so each case also proves that NODE_ENV does not open a memory path
+or skip the key check.
 """
 
 from __future__ import annotations
@@ -53,3 +55,21 @@ def test_the_service_refuses_to_start_without_real_stores(env: dict[str, str], m
         process.stop()
     assert code != 0
     assert message in stderr
+
+
+def test_the_service_refuses_to_start_without_the_spicedb_key():
+    """TASK-0913: NODE_ENV=test does not make the SpiceDB key optional. The process exits non-zero."""
+    process = AudienceStudioProcess(
+        {
+            "RUNEFOBLE_SPICEDB_ENDPOINT": "127.0.0.1:9",
+            "RUNEFOBLE_DATABASE_URL": DATABASE_URL,
+            "RUNEFOBLE_REDIS_URL": REDIS_URL,
+        }
+    )
+    process.start(wait_healthy=False)
+    try:
+        code, stderr = process.wait_for_exit(timeout=60.0)
+    finally:
+        process.stop()
+    assert code != 0
+    assert "RUNEFOBLE_SPICEDB_PRESHARED_KEY is not set" in stderr

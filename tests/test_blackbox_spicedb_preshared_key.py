@@ -109,8 +109,9 @@ def test_rules_compendium_sends_configured_key(tmp_path: Path) -> None:
     assert result.stdout.strip().splitlines()[-1] == "key-from-environment"
 
 
-def test_audience_studio_config_requires_key(tmp_path: Path) -> None:
-    """The audience-studio key reader throws without the key unless NODE_ENV is test."""
+@pytest.mark.parametrize("node_env", [None, "production", "test"])
+def test_audience_studio_config_requires_key(tmp_path: Path, node_env: str | None) -> None:
+    """The audience-studio key reader throws without the key in every NODE_ENV (TASK-0913)."""
     node = shutil.which("node")
     if node is None:
         pytest.skip("node is not installed")
@@ -121,6 +122,8 @@ def test_audience_studio_config_requires_key(tmp_path: Path) -> None:
     )
     env = _env()
     env.pop("NODE_ENV", None)
+    if node_env is not None:
+        env["NODE_ENV"] = node_env
     result = run_command(
         [node, "--experimental-strip-types", "--input-type=module", "-e", script],
         env=env,

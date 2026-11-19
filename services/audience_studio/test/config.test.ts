@@ -1,11 +1,12 @@
 /**
- * Start-up configuration tests. The identity settings have no defaults (ADR-0015 decision c).
+ * Start-up configuration tests. The identity settings and the SpiceDB key have no defaults, and
+ * NODE_ENV changes nothing (ADR-0015 decision c).
  * The event store and the stream bus have no in-memory choice in production code (ADR-0015 decision f).
  */
 
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { readSpicedbEndpoint, readStoreSettings, readZitadelSettings } from '../src/config.js';
+import { readSpicedbEndpoint, readSpicedbPresharedKey, readStoreSettings, readZitadelSettings } from '../src/config.js';
 
 test('the service refuses to start without an issuer or an audience', () => {
   assert.throws(() => readZitadelSettings({ RUNEFOBLE_ZITADEL_AUDIENCE: 'runefoble-api' }), /RUNEFOBLE_ZITADEL_ISSUER/);
@@ -33,6 +34,20 @@ test('the internal URL is read when set', () => {
 test('the SpiceDB endpoint has no default and the service refuses to start without it', () => {
   assert.throws(() => readSpicedbEndpoint({}), /RUNEFOBLE_SPICEDB_ENDPOINT/);
   assert.equal(readSpicedbEndpoint({ RUNEFOBLE_SPICEDB_ENDPOINT: 'spicedb:50051' }), 'spicedb:50051');
+});
+
+for (const nodeEnv of ['test', 'production', undefined]) {
+  test(`a missing SpiceDB key throws when NODE_ENV is ${nodeEnv ?? 'unset'}`, () => {
+    assert.throws(() => readSpicedbPresharedKey({ NODE_ENV: nodeEnv }), /RUNEFOBLE_SPICEDB_PRESHARED_KEY is not set/);
+    assert.throws(
+      () => readSpicedbPresharedKey({ NODE_ENV: nodeEnv, RUNEFOBLE_SPICEDB_PRESHARED_KEY: '' }),
+      /RUNEFOBLE_SPICEDB_PRESHARED_KEY is not set/
+    );
+  });
+}
+
+test('the SpiceDB key is read when set', () => {
+  assert.equal(readSpicedbPresharedKey({ RUNEFOBLE_SPICEDB_PRESHARED_KEY: 'operator-key' }), 'operator-key');
 });
 
 const DATABASE_URL = 'postgresql://runefoble:secret@127.0.0.1:1/runefoble';
