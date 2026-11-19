@@ -6,10 +6,10 @@ import pytest
 from httpx import ASGITransport, AsyncClient
 from runefoble_events.events import SpeechIntentParsed
 from runefoble_platform.event_deserializer import deserialize_event
-from the_watcher.main import app as watcher_app
 
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.spicedb_factory import bind_character_owner, make_table_runner
+from tests.helpers.the_watcher_app import watcher_app
 from tests.helpers.watcher_board import open_board_with_tokens, token_position
 from tests.helpers.ws_identity import SIGNING_ISSUER
 

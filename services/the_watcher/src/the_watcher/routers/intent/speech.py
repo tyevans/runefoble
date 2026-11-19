@@ -9,13 +9,8 @@ from runefoble_events.events import (
 from runefoble_platform.event_publish import publish_best_effort
 from runefoble_platform.identifiers import opaque_aggregate_id
 from the_watcher.board_preview import propose_move_preview
-from the_watcher.dependencies import (
-    STREAM_WATCHER,
-    engine,
-    get_event_bus,
-    require_session_permission,
-    require_speaker,
-)
+from the_watcher.container_access import Engines, EventBus
+from the_watcher.dependencies import STREAM_WATCHER, require_session_permission, require_speaker
 from the_watcher.engine_selection import WatcherEngineSettings, load_watcher_ports
 from the_watcher.identity import CallerId, get_principal
 from the_watcher.models import (
@@ -29,14 +24,18 @@ router = APIRouter(dependencies=[Depends(get_principal)], tags=["intent"])
 
 @router.post("/api/v1/watcher/transcribe-and-act", response_model=IntentResult)
 async def process_speech_action(
-    caller_id: CallerId, req: SpeechInputRequest, request: Request
+    engines: Engines,
+    event_bus: EventBus,
+    caller_id: CallerId,
+    req: SpeechInputRequest,
+    request: Request,
 ) -> IntentResult:
     """Parse player speech and propose a move as a ghost preview. Only player confirm commits it."""
     await require_session_permission(caller_id, req.session_id, "session.participate")
     await require_speaker(caller_id, req.speaker_id)
-    intent = await load_watcher_ports(engine).intent.parse(req)
+    intent = await load_watcher_ports(engines.watcher).intent.parse(req)
 
-    bus = get_event_bus()
+    bus = event_bus.get()
     session_uuid = opaque_aggregate_id(req.session_id, field="session_id")
     campaign_uuid = opaque_aggregate_id(req.campaign_id, field="campaign_id")
 
@@ -59,7 +58,7 @@ async def process_speech_action(
     await publish_best_effort(bus, STREAM_WATCHER, speech_intent_event)
 
     if intent.action_type == "move":
-        await _propose_move(request, req, intent, engine)
+        await _propose_move(request, req, intent, engines.watcher)
 
     return intent
 

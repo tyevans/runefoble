@@ -13,9 +13,9 @@ from eventsource.domain.event_registry import default_registry
 from fastapi.testclient import TestClient
 from runefoble_events.events import AbsenteeRecapGenerated
 from the_watcher.chronicle import ChronicleRecapEngine
-from the_watcher.main import app as watcher_app
 
 from tests.helpers.spicedb_factory import make_table_runner
+from tests.helpers.the_watcher_app import watcher_app
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")

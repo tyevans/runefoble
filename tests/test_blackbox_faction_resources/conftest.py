@@ -8,39 +8,24 @@ from __future__ import annotations
 from uuid import uuid4
 
 import pytest
-from eventsource.adapters.memory.bus import InMemoryEventBus
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from runefoble_auth.factory import get_spicedb_client
-from runefoble_platform.event_sourcing import (
-    AggregateRepository,
-    InMemoryEventStore,
-)
-from the_watcher.dependencies import get_faction_resource_repo, set_faction_resource_repo
-from the_watcher.factions.resources.aggregate import FactionResourceAggregate
-from the_watcher.main import app
 
-from tests.helpers.module_state import SeamRestorer
+from tests.helpers.the_watcher_app import app_with_container, fresh_store_container
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
-@pytest.fixture(autouse=True)
-def clean_resource_environment(seam_restorer: SeamRestorer):
-    """Give each test a fresh faction resource repo. The harness sets the bus and SpiceDB."""
-    test_store = InMemoryEventStore()
-    test_bus = InMemoryEventBus()
-    repo = AggregateRepository(
-        event_store=test_store,
-        aggregate_factory=FactionResourceAggregate,
-        event_publisher=test_bus,
-    )
-    seam_restorer.replace(get_faction_resource_repo, set_faction_resource_repo, repo)
-    yield
+@pytest.fixture
+def app() -> FastAPI:
+    """Give each test an app over a fresh event store. The harness sets the bus and SpiceDB."""
+    return app_with_container(fresh_store_container())
 
 
 @pytest.fixture
-def client() -> TestClient:
+def client(app: FastAPI) -> TestClient:
     return TestClient(app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"})
 
 

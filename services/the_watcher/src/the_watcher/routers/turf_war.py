@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends
-from the_watcher.dependencies import (
-    require_campaign_permission,
-)
+from the_watcher.container_access import EventBus, Repos
+from the_watcher.dependencies import require_campaign_permission
 from the_watcher.identity import CallerId, get_principal
 from the_watcher.turf_war.models import (
     RegionalUnrestResponse,
@@ -25,12 +24,14 @@ router = APIRouter(dependencies=[Depends(get_principal)], tags=["turf_war"])
     response_model=SkirmishSimulateResponse,
 )
 async def simulate_skirmish(
+    repos: Repos,
+    event_bus: EventBus,
     caller_id: CallerId,
     req: SkirmishSimulateRequest,
 ) -> SkirmishSimulateResponse:
     """Simulate an ad-hoc boundary skirmish and escalate regional unrest."""
     await require_campaign_permission(caller_id, req.campaign_id, "campaign.run_session")
-    return await execute_skirmish_simulation(req)
+    return await execute_skirmish_simulation(repos.regional_unrest, event_bus.get(), req)
 
 
 @router.get(
@@ -38,12 +39,13 @@ async def simulate_skirmish(
     response_model=RegionalUnrestResponse,
 )
 async def get_regional_unrest(
+    repos: Repos,
     caller_id: CallerId,
     region_id: str,
     campaign_id: str | None = None,
 ) -> RegionalUnrestResponse:
     """Query regional unrest metrics, security posture, and economic friction."""
-    agg = await load_or_create_unrest(region_id, campaign_id or "")
+    agg = await load_or_create_unrest(repos.regional_unrest, region_id, campaign_id or "")
     camp = campaign_id or agg.state.campaign_id
     await require_campaign_permission(caller_id, camp, "campaign.view")
 

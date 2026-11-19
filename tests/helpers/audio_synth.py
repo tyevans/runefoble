@@ -13,7 +13,6 @@ from httpx import ASGITransport
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 from runefoble_platform.service_credential import expected_service_credential
-from the_watcher.main import app as watcher_app
 from voice_agent.main import app as voice_app
 from voice_agent.speech_settings import VoiceAgentSettings, build_synthesizer, build_transcriber
 from voice_agent.stt import (
@@ -28,6 +27,7 @@ from tests.helpers.fixture_synthesizer import FixtureSynthesizer
 from tests.helpers.fixture_transcriber import FixtureTranscriber
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.module_state import SeamRestorer
+from tests.helpers.the_watcher_app import watcher_app
 from tests.helpers.voice_identity import voice_auth_headers
 
 

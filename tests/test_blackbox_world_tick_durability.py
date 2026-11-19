@@ -14,32 +14,16 @@ and the same Redis double. Tests interact only through public HTTP routes and th
 from __future__ import annotations
 
 import json
-from collections.abc import Iterator
 from uuid import uuid4
 
 import pytest
-from eventsource.adapters.memory.bus import InMemoryEventBus
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from runefoble_auth.factory import get_spicedb_client
-from runefoble_platform.event_sourcing import (
-    AggregateRepository,
-    InMemoryEventStore,
-)
-from the_watcher.dependencies import (
-    get_campaign_world_repo,
-    get_faction_repo,
-    get_faction_simulation_engine,
-    set_campaign_world_repo,
-    set_faction_repo,
-    set_faction_simulation_engine,
-)
-from the_watcher.factions import FactionAggregate
-from the_watcher.factions.campaign_world import CampaignWorldAggregate
-from the_watcher.main import app
-from the_watcher.simulation_engine import FactionSimulationEngine
+from runefoble_platform.event_sourcing import InMemoryEventStore
 
 from tests.helpers.mock_redis import MockAsyncRedis
-from tests.helpers.module_state import SeamRestorer
+from tests.helpers.the_watcher_app import app_with_container, container_over, repositories_over
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 WATCHER_STREAM = "runefoble.events.watcher"
@@ -49,39 +33,16 @@ WORLD_TICK_TYPE = "runefoble.events.watcher.world_tick_executed"
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
-def _boot(store: InMemoryEventStore) -> None:
-    """Start a fresh process: new engine and repositories over the durable store."""
-    set_faction_repo(
-        AggregateRepository(
-            event_store=store,
-            aggregate_factory=FactionAggregate,
-            event_publisher=InMemoryEventBus(),
-        )
-    )
-    set_campaign_world_repo(
-        AggregateRepository(
-            event_store=store,
-            aggregate_factory=CampaignWorldAggregate,
-            event_publisher=InMemoryEventBus(),
-        )
-    )
-    set_faction_simulation_engine(FactionSimulationEngine())
-
-
-@pytest.fixture(autouse=True)
-def durable_environment(seam_restorer: SeamRestorer) -> Iterator[None]:
-    seam_restorer.keep(get_faction_repo, set_faction_repo)
-    seam_restorer.keep(get_campaign_world_repo, set_campaign_world_repo)
-    seam_restorer.keep(get_faction_simulation_engine, set_faction_simulation_engine)
-    yield
+def _boot(store: InMemoryEventStore) -> FastAPI:
+    """Start a fresh process: a new app, engine, and repositories over the durable store."""
+    return app_with_container(container_over(repositories_over(store)))
 
 
 @pytest.mark.asyncio
 async def test_tick_count_registry_and_latest_bulletin_survive_restart(trusted_ws_issuer):
     """After a restart the tick resumes at 3, the registry keeps one faction, and no defaults return."""
     store = InMemoryEventStore()
-    _boot(store)
-    client = TestClient(app)
+    client = TestClient(_boot(store))
 
     camp_id = str(uuid4())
     dm_user = "dm_restart"
@@ -119,8 +80,7 @@ async def test_tick_count_registry_and_latest_bulletin_survive_restart(trusted_w
     assert last_tick.json()["tick_number"] == 2
     bulletin_before_restart = last_tick.json()["intelligence_bulletin"]
 
-    _boot(store)
-    client = TestClient(app)
+    client = TestClient(_boot(store))
 
     resumed = client.post(
         f"/api/v1/campaigns/{camp_id}/world-tick",
@@ -153,8 +113,7 @@ async def test_each_world_tick_writes_one_stream_entry_in_order(
     """Three ticks, spread across a restart, write three world_tick_executed entries in order."""
     store = InMemoryEventStore()
     redis = mock_bus
-    _boot(store)
-    client = TestClient(app)
+    client = TestClient(_boot(store))
 
     camp_id = str(uuid4())
     dm_user = "dm_stream"
@@ -178,8 +137,7 @@ async def test_each_world_tick_writes_one_stream_entry_in_order(
         headers=headers,
     )
 
-    _boot(store)
-    client = TestClient(app)
+    client = TestClient(_boot(store))
     res = client.post(
         f"/api/v1/campaigns/{camp_id}/world-tick",
         json={"regional_stability": 50, "random_seed": 3},

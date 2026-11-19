@@ -16,10 +16,10 @@ from fastapi.testclient import TestClient
 from gateway_api.main import app as gateway_app
 from starlette.testclient import WebSocketTestSession
 from starlette.websockets import WebSocketDisconnect
-from the_watcher.main import app as watcher_app
 
 from tests.helpers.live_services import serve
 from tests.helpers.spectator_table import open_board_table
+from tests.helpers.the_watcher_app import watcher_app
 from tests.helpers.ws_identity import bearer, ws_subprotocols
 
 FORBIDDEN = 4403

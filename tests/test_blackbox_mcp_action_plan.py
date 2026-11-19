@@ -12,11 +12,11 @@ from typing import Any
 import httpx
 import pytest
 from mcp.types import CallToolResult
-from the_watcher.main import app as watcher_app
 
 from tests.helpers.campaign_setup import create_owned_campaign
 from tests.helpers.live_services import serve
 from tests.helpers.mcp_http import call_tool_over_http, serve_mcp
+from tests.helpers.the_watcher_app import watcher_app
 from tests.helpers.ws_identity import SIGNING_ISSUER, bearer
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer", "board_campaign")

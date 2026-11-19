@@ -13,11 +13,11 @@ from inference_worker.graphs import (
 )
 from inference_worker.llm_factory import build_llm_port
 from runefoble_platform.service_credential import SERVICE_CREDENTIAL_HEADER
-from the_watcher.main import app as watcher_app
 
 from tests.helpers.fake_openai_server import FakeOpenAI
 from tests.helpers.inference_worker_port import install_worker_port
 from tests.helpers.spicedb_factory import make_table_runner
+from tests.helpers.the_watcher_app import watcher_app
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 WORKER_AUTH = {SERVICE_CREDENTIAL_HEADER: os.environ["RUNEFOBLE_SERVICE_CREDENTIAL"]}

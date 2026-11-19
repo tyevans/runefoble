@@ -16,9 +16,9 @@ import httpx
 import pytest
 from fastapi.testclient import TestClient
 from gateway_api.main import app as gateway_app
-from the_watcher.main import app as watcher_app
 
 from tests.helpers.live_services import closed_port_url, serve
+from tests.helpers.the_watcher_app import watcher_app
 from tests.helpers.ws_identity import bearer
 from tests.realtime_session import open_table
 

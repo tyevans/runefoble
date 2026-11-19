@@ -14,54 +14,24 @@ from __future__ import annotations
 from uuid import uuid4
 
 import pytest
-from eventsource.adapters.memory.bus import InMemoryEventBus
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from runefoble_auth.factory import get_spicedb_client
-from runefoble_platform.event_sourcing import (
-    AggregateRepository,
-    InMemoryEventStore,
-)
-from the_watcher.dependencies import (
-    get_campaign_world_repo,
-    get_faction_repo,
-    set_campaign_world_repo,
-    set_faction_repo,
-)
-from the_watcher.factions import FactionAggregate
-from the_watcher.factions.campaign_world import CampaignWorldAggregate
-from the_watcher.main import app
 
-from tests.helpers.module_state import SeamRestorer
+from tests.helpers.the_watcher_app import app_with_container, fresh_store_container
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
-@pytest.fixture(autouse=True)
-def clean_simulation_environment(seam_restorer: SeamRestorer):
-    """Give each test fresh faction repositories over an empty store, then restore the previous ones."""
-    test_store = InMemoryEventStore()
-    test_bus = InMemoryEventBus()
-    repo = AggregateRepository(
-        event_store=test_store,
-        aggregate_factory=FactionAggregate,
-        event_publisher=test_bus,
-    )
-    seam_restorer.replace(get_faction_repo, set_faction_repo, repo)
-    seam_restorer.replace(
-        get_campaign_world_repo,
-        set_campaign_world_repo,
-        AggregateRepository(
-            event_store=test_store,
-            aggregate_factory=CampaignWorldAggregate,
-            event_publisher=test_bus,
-        ),
-    )
-    yield
+@pytest.fixture
+def app() -> FastAPI:
+    """Give each test an app with fresh faction repositories over an empty store."""
+    return app_with_container(fresh_store_container())
 
 
 @pytest.fixture
-def client() -> TestClient:
+def client(app: FastAPI) -> TestClient:
     return TestClient(app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"})
 
 

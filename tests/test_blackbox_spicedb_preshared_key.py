@@ -26,6 +26,8 @@ import pytest
 from tests.helpers.game_session_startup import STARTED_MARKER, start_game_session
 from tests.helpers.ports import free_port
 from tests.helpers.process import run_command
+from tests.helpers.watcher_startup import STARTED_MARKER as WATCHER_STARTED
+from tests.helpers.watcher_startup import start_the_watcher
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 KEY_VAR = "RUNEFOBLE_SPICEDB_PRESHARED_KEY"
@@ -35,7 +37,6 @@ SERVICE_DEPENDENCY_MODULES = [
     "asset_forge.dependencies",
     "board_state.dependencies",
     "soundscape.dependencies",
-    "the_watcher.dependencies",
     "campaign_lore.dependencies",
     "character_sheet.dependencies",
     "campaign_analytics.main",
@@ -96,6 +97,15 @@ def test_game_session_startup_fails_without_key(tmp_path: Path) -> None:
     assert "ConfigurationError" in result.stderr
     assert KEY_VAR in result.stderr
     assert STARTED_MARKER not in result.stdout
+
+
+def test_the_watcher_startup_fails_without_key(tmp_path: Path) -> None:
+    """The Watcher builds its container in the lifespan. Its start-up refuses a missing key."""
+    result = start_the_watcher({}, tmp_path, base_env=_env())
+    assert result.returncode != 0
+    assert "ConfigurationError" in result.stderr
+    assert KEY_VAR in result.stderr
+    assert WATCHER_STARTED not in result.stdout
 
 
 def test_rules_compendium_sends_configured_key(tmp_path: Path) -> None:

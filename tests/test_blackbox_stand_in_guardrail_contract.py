@@ -18,12 +18,12 @@ from inference_worker.config import WorkerSettings
 from inference_worker.llm_factory import build_llm_port
 from runefoble_platform.service_credential import SERVICE_CREDENTIAL_HEADER
 from runefoble_platform.stand_in_guardrails import StandInGuardrailPolicy
-from the_watcher.main import app as watcher_app
 
 from tests.helpers.fake_openai_server import FakeOpenAI
 from tests.helpers.inference_worker_port import install_worker_port
 from tests.helpers.live_services import serve
 from tests.helpers.spicedb_factory import make_table_runner
+from tests.helpers.the_watcher_app import watcher_app
 from tests.helpers.watcher_engine import select_worker_engine
 from tests.helpers.ws_identity import SIGNING_ISSUER
 

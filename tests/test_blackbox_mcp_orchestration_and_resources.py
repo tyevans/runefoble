@@ -22,12 +22,12 @@ from mcp.types import CallToolResult
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.sync import ZitadelSpiceDBSyncService
 from runefoble_auth.sync_events import handle_domain_event
-from the_watcher.main import app as watcher_app
 
 from tests.helpers.campaign_setup import create_owned_campaign
 from tests.helpers.live_services import closed_port_url, serve, unavailable_app
 from tests.helpers.mcp_http import call_tool_over_http, read_resource_over_http, serve_mcp
 from tests.helpers.sync_verifier import sync_test_verifier
+from tests.helpers.the_watcher_app import watcher_app
 from tests.helpers.watcher_engine import select_worker_engine
 from tests.helpers.ws_identity import SIGNING_ISSUER, bearer
 

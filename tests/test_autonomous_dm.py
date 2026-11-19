@@ -19,9 +19,9 @@ from runefoble_events.events import (
     SceneAtmosphereSet,
 )
 from the_watcher.autonomous_dm_engine import AutonomousDMEngine
-from the_watcher.main import app as watcher_app
 
 from tests.helpers.spicedb_factory import make_table_runner
+from tests.helpers.the_watcher_app import watcher_app
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")

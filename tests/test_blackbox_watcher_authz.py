@@ -21,13 +21,13 @@ from fastapi.testclient import TestClient
 from runefoble_auth.errors import AuthzSchemaError, AuthzUnavailableError
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.mock import MockSpiceDBClient
-from the_watcher.main import app
 
 from tests.helpers.spicedb_factory import (
     bind_character_owner,
     make_table_runner,
     shared_spicedb_client,
 )
+from tests.helpers.the_watcher_app import watcher_app as app
 from tests.helpers.ws_identity import bearer
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
