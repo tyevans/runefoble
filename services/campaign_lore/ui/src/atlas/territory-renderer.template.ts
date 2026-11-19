@@ -1,4 +1,4 @@
-import { html, svg, type TemplateResult } from 'lit';
+import { svg, type SVGTemplateResult } from 'lit';
 import type { AtlasTerritory } from './types.ts';
 
 export interface TerritoryRendererProps {
@@ -23,7 +23,7 @@ export function filterVisibleTerritories(
   });
 }
 
-export function renderTerritoryDefs(): TemplateResult {
+export function renderTerritoryDefs(): SVGTemplateResult {
   return svg`
     <pattern id="contested-hatch" width="8" height="8" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse">
       <line x1="0" y1="0" x2="0" y2="8" stroke="#e63946" stroke-width="2" />
@@ -31,7 +31,7 @@ export function renderTerritoryDefs(): TemplateResult {
   `;
 }
 
-export function renderTerritories(props: TerritoryRendererProps): TemplateResult {
+export function renderTerritories(props: TerritoryRendererProps): SVGTemplateResult {
   const visibleTerritories = filterVisibleTerritories(
     props.territories,
     props.activeLayer,
@@ -39,12 +39,12 @@ export function renderTerritories(props: TerritoryRendererProps): TemplateResult
     props.showContestedOnly
   );
 
-  return html`
+  return svg`
     <g class="territories-layer">
       ${visibleTerritories.map((t) => {
         const points = t.polygon_coordinates.map((p) => `${p[0]},${p[1]}`).join(' ');
         const fill = t.metadata?.banner_color || '#457b9d';
-        return html`
+        return svg`
           <polygon
             points=${points}
             class="territory-poly ${t.is_contested ? 'contested' : ''}"
