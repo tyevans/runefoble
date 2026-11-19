@@ -13,7 +13,7 @@ import { EventListeners } from './eventListeners.js';
 import { PollAggregate, type PollSnapshot } from './domain/pollAggregate.js';
 import { ProposalAggregate } from './domain/proposalAggregate.js';
 import { pollStreamId } from './domain/events.js';
-import { NotFound } from './errors.js';
+import { DependencyUnavailableError, NotFound } from './errors.js';
 import type { AudienceEventRepository } from './eventSourcing/repository.js';
 import { KeyedMutex } from './eventSourcing/keyedMutex.js';
 import type { EventSourcedAggregate } from './eventSourcing/aggregate.js';
@@ -83,7 +83,11 @@ export class PollEngine {
     this.scheduler.close();
   }
 
-  /** Opens a poll. The actor needs `run_session` on the campaign. The poll is bound to the campaign before it is stored. */
+  /**
+   * Opens a poll. The actor needs `run_session` on the campaign. The poll is stored first, then bound
+   * to the campaign. A failed bind returns 503. The stored poll then stays unbound, and no tuple
+   * exists for a poll that was never stored.
+   */
   async createPoll(actor: VerifiedPrincipal, params: CreatePollParams): Promise<AudiencePoll> {
     await this.access.requireCampaign(actor, params.campaignId, 'run_session');
     const id = uuidv4();
@@ -99,11 +103,12 @@ export class PollEngine {
       quorum: params.quorum ?? 5,
       now: new Date(),
     });
-    await this.access.bindPollToCampaign(id, params.campaignId);
+    // Commit first (ADR-0011). The SpiceDB binding is a side effect of the stored poll.
     await this.mutex.run([pollStreamId(id)], () => this.repo.commit([poll]));
 
     const snap = poll.snapshot();
     this.scheduler.arm(id, Date.parse(snap.expiresAt) - Date.now());
+    await this.bindAfterCommit(id, params.campaignId);
     const view = pollView(snap);
     this.events.emit({ type: 'poll_started', poll: view });
     return this.presenter.presentFor(actor, view);
@@ -201,6 +206,19 @@ export class PollEngine {
       views.push(presentPoll(view, held.has('approve')));
     }
     return views;
+  }
+
+  /**
+   * Binds a committed poll to its campaign. Any failure is reported as a dependency outage (503),
+   * never as success. The poll stays stored. The failure is logged with the poll id.
+   */
+  private async bindAfterCommit(pollId: string, campaignId: string): Promise<void> {
+    try {
+      await this.access.bindPollToCampaign(pollId, campaignId);
+    } catch (err: unknown) {
+      this.log.error({ err, pollId }, 'Audience poll stored but campaign binding failed');
+      throw new DependencyUnavailableError('The campaign binding for the poll could not be written', { cause: err });
+    }
   }
 
   /** Loads the poll (404), then checks the permission (403). */
