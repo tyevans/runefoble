@@ -38,6 +38,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Gateway WebSocket routes admit a connection only with a verified `runefoble.bearer.<jwt>` subprotocol, checked before accept. Refused handshakes close with 1008. Removed the `?user_id=`, `?token=`, `x-user-id`, and `guest_user` identity paths on WebSocket and voice/companion signaling routes. (TASK-0522)
 
 ### Removed
+- The Watcher `stand_in_ai.py` and `autonomous_dm.py` facades and parser aliases; import `AutonomousDMEngine` from `the_watcher.autonomous_dm_engine`. (TASK-0490)
 - The five WebSocket group managers. (TASK-0820)
 - Duplicate voice routes `POST /api/v1/voice/tts` and the unprefixed `/voice/*` paths. (TASK-0494)
 - The board templates facade and forwarding re-exports in board, settings, bulletin and compendium UI modules. (TASK-0502)
@@ -147,6 +148,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
 
 ### Changed
+- Every service checks SpiceDB through `runefoble_auth.permissions` (`check_subject`, `require_subject`, and the `require_permission` route dependency); no service calls `check_permission` directly. (TASK-0817)
+- Aggregate loads and saves use `load_or_404`, `save_or_conflict` and `LazyRepository`; 404 and 409 answers are unchanged. (TASK-0819)
 - Speak-and-act publishes no board event for a proposed move; a confirmed move publishes one `token_moved`. (TASK-0814)
 - WebSocket rooms share one `WebSocketGroups` class and one `serve_authorized_socket` loop. (TASK-0820)
 - Event types are read through `event_type_of`; an event without a type fails with `EventTypeMissingError`. Unavailable errors share the `ServiceUnavailableError` base; `runefoble_platform.dice` is the one dice roller. (TASK-0821)

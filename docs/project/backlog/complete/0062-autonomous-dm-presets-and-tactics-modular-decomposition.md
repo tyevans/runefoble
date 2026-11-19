@@ -20,10 +20,10 @@ governing_stories: []
 Complete
 
 ## Summary
-Decompose `services/the_watcher/src/the_watcher/autonomous_dm.py` (387 lines, 77.4% of limit) into modular, single-responsibility domain submodules (`presets.py`, `encounters.py`, `tactics.py`) to prevent breaching Hard Invariant 6 (File length limit < 500 lines) as narrative scene presets, monster archetypes, and combat heuristics expand.
+Decompose `services/the_watcher/src/the_watcher/autonomous_dm_engine.py` (387 lines, 77.4% of limit) into modular, single-responsibility domain submodules (`presets.py`, `encounters.py`, `tactics.py`) to prevent breaching Hard Invariant 6 (File length limit < 500 lines) as narrative scene presets, monster archetypes, and combat heuristics expand.
 
 ## Problem Statement
-`services/the_watcher/src/the_watcher/autonomous_dm.py` bundles three distinct responsibilities in a single 387-line module:
+`services/the_watcher/src/the_watcher/autonomous_dm_engine.py` bundles three distinct responsibilities in a single 387-line module:
 1. Static narrative scene catalogs and atmosphere descriptions (`SCENE_PRESETS`, dungeon/crypt/tavern/forest/dragon lair lighting, moods, and ambient audio prompts).
 2. Encounter balancing logic, party-level Challenge Rating (CR) scaling, and monster stat block templates across easy/medium/hard/deadly threat levels (`spawn_encounter`).
 3. NPC and monster tactical decision trees, spellcaster prioritization, wounded target finishing heuristics, and combat action resolution (`resolve_npc_turn`).
@@ -42,7 +42,7 @@ As upcoming Milestone 3 features introduce procedural encounter generation, lore
    - Extract monster stat block catalogs, CR calculation, tactical objectives, and `spawn_encounter` implementation (< 140 lines).
 3. **Tactical Action Resolution (`services/the_watcher/src/the_watcher/tactics.py`)**:
    - Extract target selection, spellcaster decision logic, finishing strikes, and `resolve_npc_turn` implementation (< 110 lines).
-4. **Engine Facade (`services/the_watcher/src/the_watcher/autonomous_dm.py`)**:
+4. **Engine Facade (`services/the_watcher/src/the_watcher/autonomous_dm_engine.py`)**:
    - Retain `AutonomousDMEngine` class as an orchestrator delegating to the submodules, maintaining 100% backward-compatible public methods (< 90 lines).
 
 ## INVEST Criteria Evaluation

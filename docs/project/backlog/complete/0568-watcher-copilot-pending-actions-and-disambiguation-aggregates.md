@@ -34,7 +34,7 @@ The Watcher keeps DM approval windows, pending vetoes, private whispers, and ope
 
 ## Documentation & Architecture Review
 - `docs/how-to/manage-dm-copilot-whispers-and-veto-overrides.md` and `docs/how-to/resolve-conversational-disambiguation-and-combos.md` describe these flows. Verify them and correct any statement that conflicts.
-- `refined/0490-remove-backward-compatibility-shims-the-watcher.md` (TASK-0490) removes shims in `the_watcher`. Coordinate: do not change shim files here.
+- `complete/0490-remove-backward-compatibility-shims-the-watcher.md` (TASK-0490) removes shims in `the_watcher`. Coordinate: do not change shim files here.
 
 ## Product & User Story References
 - [`us-0017-human-dm-veto-and-narrative-copilot-whispers.md`](../../user_stories/accepted/us-0017-human-dm-veto-and-narrative-copilot-whispers.md)

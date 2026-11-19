@@ -27,7 +27,7 @@ Implemented the autonomous Game Master orchestration engine within The Watcher (
    - `EncounterSpawned`: `session_id`, `encounter_id`, `encounter_name`, `threat_level`, `monsters`, `tactical_objective` registered with `@register_event("runefoble.events.encounter.spawned")`.
    - `AutonomousActionResolved`: `session_id`, `actor_name`, `action_type`, `target_name`, `narrative`, `hp_impact` registered with `@register_event("runefoble.events.encounter.action_resolved")`.
    - Exported in `__all__` across `events.py` and `__init__.py` with full CloudEvents 1.0 serialization and event registry support.
-2. **Autonomous DM Logic (`services/the_watcher/src/the_watcher/autonomous_dm.py`)**:
+2. **Autonomous DM Logic (`services/the_watcher/src/the_watcher/autonomous_dm_engine.py`)**:
    - `AutonomousDMEngine` class implementing dynamic scene generation across cataloged presets (`dungeon`, `crypt`, `tavern`, `forest`, `dragon_lair`) and procedural fallbacks.
    - Challenge rating (CR) monster generation and encounter balancing across level tiers and threat levels (`easy`, `medium`, `hard`, `deadly`).
    - Tactical NPC decision trees: targeting lowest HP opponents, executing low-HP targets, spellcasting for caster roles, charging in round 1, and standard tactical melee strikes.

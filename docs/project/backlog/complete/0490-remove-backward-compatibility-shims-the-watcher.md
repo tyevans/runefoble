@@ -1,7 +1,7 @@
 ---
 id: '0490'
 title: Remove Backward Compatibility Shims & Re-exports in the_watcher
-status: Refined
+status: Complete
 created: 2026-09-29
 dependencies:
 - TASK-0002
@@ -23,7 +23,7 @@ target_release: 0.9.0
 # TASK-0490: Remove Backward Compatibility Shims & Re-exports in the_watcher
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decommission and remove backward-compatibility facades and legacy method aliases in `services/the_watcher` (`autonomous_dm.py` facade, `stand_in_ai.py` facade, and `SpeechIntentParser` backward-compatible methods), migrating all callers and tests directly to modular domain components.

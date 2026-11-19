@@ -1,7 +1,7 @@
 ---
 id: '0819'
 title: "Aggregate Load and Not-Found Handling Use the Lib Helpers"
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies: []
 governing_adrs:
@@ -15,7 +15,7 @@ target_release: 0.9.0
 # TASK-0819: Aggregate Load and Not-Found Handling Use the Lib Helpers
 
 ## Status
-Refined
+Complete
 
 ## Summary
 22 inline `except AggregateNotFoundError` blocks repeat what lib helpers already do, and repository accessors are hand-written get/set pairs.

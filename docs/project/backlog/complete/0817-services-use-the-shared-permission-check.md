@@ -1,7 +1,7 @@
 ---
 id: '0817'
 title: "Services Use One Shared Permission Check Instead of Local Wrappers"
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies:
 - TASK-0813
@@ -16,7 +16,7 @@ target_release: 0.9.0
 # TASK-0817: Services Use One Shared Permission Check Instead of Local Wrappers
 
 ## Status
-Refined
+Complete
 
 ## Summary
 About 25 local SpiceDB permission wrappers exist (some byte-identical), and game_session builds its identity dependencies three times.
