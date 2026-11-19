@@ -1,40 +1,21 @@
 /**
  * Runefoble Zitadel OIDC Browser Authentication Service
- * ADR-0004, ADR-0005, ADR-0013, ADR-0015 (d), TASK-0207, TASK-0524
+ * ADR-0004, ADR-0005, ADR-0013, ADR-0015 (d), TASK-0207, TASK-0524, TASK-0871
  *
  * The App Shell never handles a password. It sends the user to Zitadel (authorization code + PKCE),
  * receives the code at /auth/callback, and keeps only the tokens Zitadel issues.
+ * Claims live in claims.ts, storage in token-store.ts, and session state and renewal in auth-session.ts.
  */
 
 import { createPkceSession, loadPendingSignIn, clearPendingSignIn, savePendingSignIn, type KeyValueStore, type PendingSignIn } from './pkce.ts';
-import { OidcClient, type OidcTokenResponse } from './oidc-client.ts';
+import { OidcClient } from './oidc-client.ts';
 import { loadRuntimeConfig } from './runtime-config.ts';
+import { extractClaimsFromPayload, parseJwtPayload, type UserClaims } from './claims.ts';
+import { AuthSession, toAuthTokens, type AuthListener, type AuthState } from './auth-session.ts';
 
-export interface UserClaims {
-  user_id: string;
-  username: string;
-  email?: string;
-  roles: string[];
-  display_name?: string;
-  avatar_url?: string;
-  bio?: string;
-}
-
-export interface AuthTokens {
-  accessToken: string;
-  idToken?: string;
-  refreshToken?: string;
-  expiresAt: number;
-}
-
-export interface AuthState {
-  isAuthenticated: boolean;
-  user: UserClaims | null;
-  tokens: AuthTokens | null;
-}
-
-export type AuthListener = (state: AuthState) => void;
-const STORAGE_KEY = 'rf_auth_session';
+export type { UserClaims } from './claims.ts';
+export type { AuthState, AuthListener } from './auth-session.ts';
+export type { AuthTokens } from './token-store.ts';
 
 /** Path that receives the Zitadel redirect. A redirect URI cannot carry a fragment, so this is a real path, not a hash route. */
 export const AUTH_CALLBACK_PATH = '/auth/callback';
@@ -62,63 +43,15 @@ function defaultEnvironment(): AuthEnvironment {
   };
 }
 
-export function parseJwtPayload(token: string): Record<string, unknown> | null {
-  try {
-    const parts = token.split('.');
-    if (parts.length < 2) return null;
-    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
-    const json = decodeURIComponent(
-      atob(base64).split('').map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')
-    );
-    return JSON.parse(json);
-  } catch { return null; }
-}
-
-export function extractClaimsFromPayload(payload: Record<string, unknown>): UserClaims {
-  const rolesRaw = payload['urn:zitadel:iam:org:project:roles'] || payload.roles || [];
-  const roles: string[] = Array.isArray(rolesRaw) ? rolesRaw.map(String) :
-    typeof rolesRaw === 'object' && rolesRaw !== null ? Object.keys(rolesRaw) : [];
-  const sub = String(payload.sub || payload.user_id || 'user-unknown');
-  return {
-    user_id: sub,
-    username: String(payload.preferred_username || payload.username || payload.name || sub),
-    email: payload.email ? String(payload.email) : undefined,
-    roles,
-    display_name: payload.display_name ? String(payload.display_name) : (payload.name ? String(payload.name) : undefined),
-    avatar_url: payload.avatar_url || payload.picture ? String(payload.avatar_url || payload.picture) : undefined,
-    bio: payload.bio ? String(payload.bio) : undefined,
-  };
-}
-
-/** Expiry comes from the access token `exp` claim when it is a JWT, else from `expires_in`. */
-function expiresAtFor(response: OidcTokenResponse): number {
-  const exp = parseJwtPayload(response.access_token)?.exp;
-  if (typeof exp === 'number') return exp * 1000;
-  if (typeof response.expires_in !== 'number' || !Number.isFinite(response.expires_in)) {
-    throw new Error('Token response has no expiry.');
-  }
-  return Date.now() + response.expires_in * 1000;
-}
-
-function toAuthTokens(response: OidcTokenResponse): AuthTokens {
-  return {
-    accessToken: response.access_token,
-    idToken: response.id_token,
-    refreshToken: response.refresh_token,
-    expiresAt: expiresAtFor(response),
-  };
-}
-
 export class AuthService {
   private static instance: AuthService;
-  private state: AuthState = { isAuthenticated: false, user: null, tokens: null };
-  private refreshTimer: ReturnType<typeof setTimeout> | null = null;
-  private listeners: Set<AuthListener> = new Set();
   private readonly env: AuthEnvironment;
+  private readonly session: AuthSession;
 
   constructor(env: Partial<AuthEnvironment> = {}) {
     this.env = { ...defaultEnvironment(), ...env };
-    this.restoreSession();
+    this.session = new AuthSession(() => this.renewInBackground());
+    this.session.restore();
   }
 
   static getInstance(): AuthService {
@@ -126,25 +59,26 @@ export class AuthService {
     return AuthService.instance;
   }
 
-  getState(): AuthState { return { ...this.state }; }
+  getState(): AuthState { return this.session.getState(); }
 
   /** True only while the stored access token is unexpired by its own expiry. The server still verifies every call. */
   isAuthenticated(): boolean {
-    return this.state.isAuthenticated && this.state.tokens !== null && this.state.tokens.expiresAt > Date.now();
+    const { isAuthenticated, tokens } = this.session.getState();
+    return isAuthenticated && tokens !== null && tokens.expiresAt > Date.now();
   }
 
-  getUser(): UserClaims | null { return this.state.user; }
-  getAccessToken(): string | null { return this.isAuthenticated() ? this.state.tokens?.accessToken || null : null; }
+  getUser(): UserClaims | null { return this.session.getState().user; }
+  getAccessToken(): string | null { return this.isAuthenticated() ? this.session.getState().tokens?.accessToken || null : null; }
 
   onAuthChanged(listener: AuthListener): () => void {
-    this.listeners.add(listener);
-    return () => { this.listeners.delete(listener); };
+    return this.session.onChanged(listener);
   }
 
   /** Merges profile changes into the signed-in user. Fails when no user is signed in. */
   updateUser(claims: Partial<UserClaims>): void {
-    if (!this.state.user || !this.state.tokens) throw new Error('Cannot update a user without a sign-in session.');
-    this.persistSession(this.state.tokens, { ...this.state.user, ...claims });
+    const { user, tokens } = this.session.getState();
+    if (!user || !tokens) throw new Error('Cannot update a user without a sign-in session.');
+    this.session.save(tokens, { ...user, ...claims });
   }
 
   /** Redirects the browser to Zitadel. `signUp` opens the hosted registration page. */
@@ -198,18 +132,17 @@ export class AuthService {
       if (!idClaims || idClaims.nonce !== pending.nonce) throw new Error('Sign-in nonce did not match. No session was stored.');
 
       const user = extractClaimsFromPayload(idClaims);
-      this.persistSession(toAuthTokens(response), user);
+      this.session.save(toAuthTokens(response), user);
       return user;
     } catch (err) {
-      this.clearSession();
+      this.session.clear();
       throw err;
     }
   }
 
   /** Renews the access token with the refresh token. On failure the session is cleared and the error is thrown. */
   async refreshToken(): Promise<string> {
-    const current = this.state.tokens;
-    const user = this.state.user;
+    const { tokens: current, user } = this.session.getState();
     try {
       if (!current?.refreshToken || !user) throw new Error('No refresh token available');
       const response = await this.env.oidc.refresh(current.refreshToken);
@@ -221,7 +154,7 @@ export class AuthService {
         if (nextUser.user_id !== user.user_id) throw new Error('Refreshed token belongs to another user.');
       }
       const renewed = toAuthTokens(response);
-      this.persistSession({
+      this.session.save({
         accessToken: renewed.accessToken,
         idToken: renewed.idToken ?? current.idToken,
         refreshToken: renewed.refreshToken ?? current.refreshToken,
@@ -229,79 +162,26 @@ export class AuthService {
       }, nextUser);
       return renewed.accessToken;
     } catch (err) {
-      this.clearSession();
+      this.session.clear();
       throw err;
     }
   }
 
   /** Clears the local session without contacting Zitadel. The auth guard then sends the user to sign-in. */
   discardSession(): void {
-    this.clearSession();
+    this.session.clear();
   }
 
   /** Clears local tokens, then ends the Zitadel session when an ID token is held. */
   async logout(): Promise<void> {
-    const idToken = this.state.tokens?.idToken;
-    this.clearSession();
+    const idToken = this.session.getState().tokens?.idToken;
+    this.session.clear();
     if (!idToken) return;
     this.env.navigate(await this.env.oidc.endSessionUrl(idToken, this.env.postLogoutUri()));
   }
 
-  private notify(): void {
-    const current = this.getState();
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('rf-auth-changed', { detail: current, bubbles: true, composed: true }));
-    }
-    for (const l of this.listeners) l(current);
-  }
-
-  private persistSession(tokens: AuthTokens, user: UserClaims): void {
-    this.state = { isAuthenticated: true, user, tokens };
-    try {
-      if (typeof window !== 'undefined' && window.localStorage) {
-        window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ tokens, user }));
-      }
-    } catch { /* storage disabled */ }
-    this.scheduleRefresh(tokens.expiresAt);
-    this.notify();
-  }
-
-  private clearSession(): void {
-    if (this.refreshTimer) clearTimeout(this.refreshTimer);
-    this.refreshTimer = null;
-    this.state = { isAuthenticated: false, user: null, tokens: null };
-    try {
-      if (typeof window !== 'undefined' && window.localStorage) {
-        window.localStorage.removeItem(STORAGE_KEY);
-      }
-    } catch { /* storage disabled */ }
-    this.notify();
-  }
-
-  private restoreSession(): void {
-    try {
-      if (typeof window === 'undefined' || !window.localStorage) return;
-      const raw = window.localStorage.getItem(STORAGE_KEY);
-      if (!raw) return;
-      const data = JSON.parse(raw);
-      if (!data?.tokens?.accessToken || !data?.user) return;
-      this.state = { isAuthenticated: true, user: data.user, tokens: data.tokens };
-      if (data.tokens.expiresAt <= Date.now()) {
-        // refreshToken() clears the session when renewal fails. The guard then sends the user to login.
-        this.refreshToken().catch((err) => console.error('Session renewal failed', err));
-        return;
-      }
-      this.scheduleRefresh(data.tokens.expiresAt);
-    } catch { this.clearSession(); }
-  }
-
-  private scheduleRefresh(expiresAt: number): void {
-    if (this.refreshTimer) clearTimeout(this.refreshTimer);
-    const delay = Math.max(5000, expiresAt - Date.now() - 60000);
-    this.refreshTimer = setTimeout(() => {
-      this.refreshToken().catch((err) => console.error('Session renewal failed', err));
-    }, delay);
-    (this.refreshTimer as any)?.unref?.();
+  private renewInBackground(): void {
+    this.refreshToken().catch((err) => console.error('Session renewal failed', err));
   }
 }
 

@@ -31,12 +31,8 @@ if (typeof (globalThis as any).window === 'undefined') {
   (globalThis as any).window.localStorage = mockStorage;
 }
 
-import {
-  AuthService,
-  parseJwtPayload,
-  extractClaimsFromPayload,
-  type AuthState,
-} from '../src/auth/auth-service.ts';
+import { AuthService, type AuthState } from '../src/auth/auth-service.ts';
+import { extractClaimsFromPayload, parseJwtPayload } from '../src/auth/claims.ts';
 import { createFakeZitadel, signInWithFake, type FakeZitadel } from './support/fake-zitadel.ts';
 
 describe('Zitadel JWT Claims Extraction & Decoding', () => {

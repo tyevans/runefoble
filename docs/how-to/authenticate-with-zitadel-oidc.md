@@ -124,7 +124,7 @@ On `/ws/campaigns/{id}`, an action name that has no owner route returns an `UNKN
 
 ## Step 4: Frontend Client Authentication
 
-The App Shell uses the OIDC authorization-code flow with PKCE (ADR-0015 d). The App Shell never reads a password. Its code lives in `frontend/src/auth/`.
+The App Shell uses the OIDC authorization-code flow with PKCE (ADR-0015 d). The App Shell never reads a password. Its code lives in `frontend/src/auth/`. `auth-service.ts` holds the public `AuthService` and the sign-in flow. `claims.ts` decodes JWT claims. `token-store.ts` reads and writes the `rf_auth_session` record in `localStorage`. `auth-session.ts` holds the in-memory session and the renewal timer.
 
 1. **Runtime settings.** The App Shell loads `/runtime-config.json`. It holds the issuer, client ID, scopes, and provider name. Helm renders the file. An init container fills in the client ID and the project ID from the Secret `runefoble-zitadel-client` when the pod starts. See [Bootstrap the Zitadel Project and Application](#bootstrap-the-zitadel-project-and-application).
    The scope list includes the project audience scope `urn:zitadel:iam:org:project:id:<projectId>:aud`. Zitadel then puts the project ID in the token `aud` claim.
