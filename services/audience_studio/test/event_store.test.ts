@@ -4,7 +4,7 @@
 
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { MemoryEventStore } from '../src/eventStore/memoryEventStore.js';
+import { MemoryEventStore } from './fakes/memoryEventStore.js';
 import { ConcurrencyConflictError } from '../src/eventStore/types.js';
 import { KeyedMutex } from '../src/eventSourcing/keyedMutex.js';
 

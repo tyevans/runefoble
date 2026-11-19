@@ -87,6 +87,7 @@ def pytest_collection_modifyitems(config, items):
 
 pytest_plugins = [
     "tests.realtime_session",
+    "tests.helpers.audience_server",
     "tests.helpers.audio_synth",
     "tests.helpers.campaign_analytics_service",
     "tests.helpers.campaign_setup",

@@ -217,3 +217,40 @@ describe('an unreachable SpiceDB fails closed with 503', () => {
     assert.equal(recovered.statusCode, 200);
   });
 });
+
+describe('error responses keep their status and body', () => {
+  test('403, 404 and 503 answer with the error message only', async () => {
+    const roles = campaignWithRoles('bodies');
+    const denied = await createPoll('stranger-bodies', roles.campaignId);
+    assert.equal(denied.status, 403);
+    assert.deepEqual(denied.body, { error: "Permission 'run_session' is required on the campaign" });
+
+    const missing = await ctx.server.inject({ method: 'POST', url: `${API}/proposals/no-such/veto`, headers: await token(roles.dm) });
+    assert.equal(missing.statusCode, 404);
+    assert.deepEqual(jsonBody(missing), { error: "Proposal 'no-such' not found" });
+
+    spicedb.setUnavailable(true);
+    try {
+      const outage = await ctx.server.inject({ method: 'GET', url: `${API}/proposals?campaign_id=${roles.campaignId}`, headers: await token(roles.dm) });
+      assert.equal(outage.statusCode, 503);
+      assert.deepEqual(jsonBody(outage), { error: 'SpiceDB is unavailable (fake outage)' });
+    } finally {
+      spicedb.setUnavailable(false);
+    }
+  });
+
+  test('a body that fails the route schema keeps the Fastify 400 body', async () => {
+    const roles = campaignWithRoles('schema');
+    const res = await ctx.server.inject({
+      method: 'POST',
+      url: `${API}/polls`,
+      headers: await token(roles.dm),
+      payload: { campaign_id: roles.campaignId },
+    });
+    assert.equal(res.statusCode, 400);
+    const body = jsonBody(res);
+    assert.equal(body.statusCode, 400);
+    assert.equal(body.code, 'FST_ERR_VALIDATION');
+    assert.equal(body.error, 'Bad Request');
+  });
+});

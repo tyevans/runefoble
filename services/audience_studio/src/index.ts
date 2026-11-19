@@ -3,7 +3,7 @@
  */
 
 import { createAdapters } from './adapters.js';
-import { readSpicedbEndpoint, readSpicedbPresharedKey, readZitadelSettings } from './config.js';
+import { readSpicedbEndpoint, readSpicedbPresharedKey, readStoreSettings, readZitadelSettings } from './config.js';
 import { createSpiceDbClient } from './spicedb/spicedbClient.js';
 import { buildServer } from './server.js';
 
@@ -12,13 +12,14 @@ const HOST = process.env.HOST || '0.0.0.0';
 const SPICEDB_ENDPOINT = readSpicedbEndpoint(process.env);
 const SPICEDB_TOKEN = readSpicedbPresharedKey(process.env);
 const ZITADEL = readZitadelSettings(process.env);
+const STORES = readStoreSettings(process.env);
 
 async function main() {
   const { server } = await buildServer({
     spicedb: createSpiceDbClient({ endpoint: SPICEDB_ENDPOINT, presharedKey: SPICEDB_TOKEN }),
     zitadel: ZITADEL,
     logger: true,
-    createAdapters: (log) => createAdapters(process.env, log),
+    createAdapters: (log) => createAdapters(STORES, log),
   });
 
   const shutdown = async () => {

@@ -5,8 +5,8 @@
 
 import assert from 'node:assert/strict';
 import { after, before, test } from 'node:test';
-import { MemoryEventStore } from '../src/eventStore/memoryEventStore.js';
-import { InMemoryStreamPublisher } from '../src/memoryStreams.js';
+import { MemoryEventStore } from './fakes/memoryEventStore.js';
+import { InMemoryStreamPublisher } from './fakes/memoryStreams.js';
 import { buildServer } from '../src/server.js';
 import { FakeSpiceDb } from './fakeSpiceDb.js';
 import { bearer, jsonBody, TEST_AUDIENCE, TEST_ISSUER, TestIssuer } from './helpers.js';

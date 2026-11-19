@@ -19,7 +19,7 @@ import { AudienceEventRepository } from './eventSourcing/repository.js';
 import { OutboxRelay } from './eventSourcing/outboxRelay.js';
 import type { Logger } from './logger.js';
 import { PollEngine } from './pollEngine.js';
-import { createAudienceRoutes } from './routes.js';
+import { createAudienceRoutes } from './routes/audienceRoutes.js';
 import type { StreamPublisher } from './streamPublisher.js';
 import type { EventStore } from './eventStore/types.js';
 import type { SpiceDbPort } from './spicedb/spicedbPort.js';
