@@ -20,6 +20,7 @@ const MATRIX: Array<[string, string]> = [
   ['#/campaigns/c1/codex', 'campaign-codex'],
   ['#/campaigns/c1/analytics', 'campaign-analytics'],
   ['#/campaigns/c1/forge', 'campaign-forge'],
+  ['#/campaigns/c1/rules', 'campaign-rules'],
   ['#/campaigns/c1/lobby/s1', 'session-lobby'],
   ['#/campaigns/c1/sessions/s1', 'session-active'],
   ['#/characters', 'characters'],

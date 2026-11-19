@@ -75,18 +75,20 @@ export class RunefobleRulesCompendium extends LitElement {
           >
             🛡️ CR Builder (${this.draftMonsters.reduce((acc, m) => acc + m.count, 0)})
           </button>
-          <button
-            class="tab-btn ${this.activeTab === 'homebrew' ? 'active' : ''}"
-            @click=${() => this.handleTabSelect('homebrew')}
-          >
-            ✨ Homebrew Forge
-          </button>
+          ${this.campaignId ? html`
+            <button
+              class="tab-btn ${this.activeTab === 'homebrew' ? 'active' : ''}"
+              @click=${() => this.handleTabSelect('homebrew')}
+            >
+              ✨ Homebrew Forge
+            </button>
+          ` : ''}
         </div>
       </div>
 
       ${this.activeTab === 'search' ? this.renderSearchTab() : ''}
       ${this.activeTab === 'encounter' ? this.renderEncounterTab() : ''}
-      ${this.activeTab === 'homebrew' ? this.renderHomebrewTab() : ''}
+      ${this.activeTab === 'homebrew' && this.campaignId ? this.renderHomebrewTab() : ''}
     `;
   }
 
@@ -113,6 +115,7 @@ export class RunefobleRulesCompendium extends LitElement {
     `;
   }
 
+  /** The homebrew forge registers rules for one campaign. Without a campaign id it is not offered. */
   private renderHomebrewTab() {
     return html`
       <runefoble-homebrew-creator

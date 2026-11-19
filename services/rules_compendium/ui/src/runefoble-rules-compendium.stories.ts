@@ -150,6 +150,23 @@ export const HomebrewCreator: Story = {
   `,
 };
 
+/** The #/rules route. No campaign id, so the compendium offers search and the encounter builder only. */
+export const SrdOnlyWithoutHomebrew: Story = {
+  render: () => html`
+    <runefoble-rules-compendium></runefoble-rules-compendium>
+  `,
+};
+
+/** The campaign rules route. The campaign id is set, so the homebrew forge tab is offered. */
+export const CampaignRulesWithHomebrew: Story = {
+  render: () => html`
+    <runefoble-rules-compendium
+      .campaignId=${'campaign-homebrew-lab'}
+      .isDM=${true}
+    ></runefoble-rules-compendium>
+  `,
+};
+
 export const DedicatedHomebrewCreator: Story = {
   render: () => html`
     <runefoble-homebrew-creator

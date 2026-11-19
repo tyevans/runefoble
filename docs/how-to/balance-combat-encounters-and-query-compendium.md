@@ -256,9 +256,12 @@ The gateway does not proxy `/ui/manifest`. The `rules_compendium` service serves
 
 ### App Shell route
 
-The App Shell mounts the compendium at `#/rules`. The route needs a signed-in player. The view passes the gateway origin as `apiBaseUrl`. The compendium does not search when `apiBaseUrl` is empty.
+The App Shell mounts the compendium in two places. The route needs a signed-in player. Each view passes the gateway origin as `apiBaseUrl`. The compendium does not search when `apiBaseUrl` is empty.
 
-The encounter builder is a tab inside `<runefoble-rules-compendium>`, so the route does not mount it a second time. The route passes no `campaignId`.
+- `#/rules` is the read-only SRD search. It passes no `campaignId`. The compendium hides the homebrew tab, so the route cannot register a rule.
+- `#/campaigns/:campaignId/rules` is the campaign rules tab. It passes the campaign id, so the homebrew forge tab registers rules for that campaign. The campaign navigation links to it.
+
+The encounter builder is a tab inside `<runefoble-rules-compendium>`, so neither route mounts it a second time.
 
 ### Key Features:
 - **Instant Hybrid Search**: Debounced autocomplete with sub-50ms latency badge and category filter pills (`ALL`, `MONSTER`, `SPELL`, `CONDITION`, `HOMEBREW`).

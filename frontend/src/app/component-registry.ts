@@ -43,6 +43,7 @@ export const VIEW_BUNDLES: Record<AppActiveView, BundleName[]> = {
   'campaign-codex': ['gameSession', 'campaignLore'],
   'campaign-analytics': ['gameSession', 'campaignAnalytics'],
   'campaign-forge': ['gameSession', 'assetForge'],
+  'campaign-rules': ['gameSession', 'rulesCompendium'],
   'characters': ['characterSheet'],
   'character-sheet': ['characterSheet'],
   'session-lobby': SESSION_BUNDLES,
