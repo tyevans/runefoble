@@ -11,7 +11,7 @@ from runefoble_platform.config import PlatformSettings
 from runefoble_platform.event_bus import EventBusProvider
 from runefoble_platform.event_sourcing import create_aggregate_repository
 from runefoble_platform.lazy_repository import LazyRepository
-from the_watcher.autonomous_dm import AutonomousDMEngine
+from the_watcher.autonomous_dm_engine import AutonomousDMEngine
 from the_watcher.chronicle import ChronicleRecapEngine
 from the_watcher.compound_actions import CompoundActionEngine
 from the_watcher.copilot import CopilotEngine

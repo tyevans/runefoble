@@ -2,7 +2,7 @@
 
 Empowers The Watcher to autonomously set scene atmospheres, balance and spawn tactical
 encounters with monster tokens, and adjudicate intelligent NPC/monster tactics.
-Callers import presets, encounters, and tactics from their own submodules.
+The engine delegates to the presets, encounters, and tactics modules.
 """
 
 from __future__ import annotations

@@ -25,11 +25,11 @@ When a human player cannot attend, their character remains active on the board:
 - **Absentee Chronicle & Humorous Recap**: When the absent player returns for the next session, `POST /api/v1/watcher/stand-in/recap` compiles all stand-in decisions and active penalties into a comedic narrative recap with memorable quotes and battle highlights.
 
 ### 3. Modular Domain Architecture
-To ensure high maintainability, enforce file size limits (< 500 lines), and enable independent expansion of narrative assets and combat heuristics, the autonomous DM engine (`services/the_watcher/src/the_watcher/`) is decomposed into focused domain submodules coordinated by a lightweight facade:
+To ensure high maintainability, enforce file size limits (< 500 lines), and enable independent expansion of narrative assets and combat heuristics, the autonomous DM engine (`services/the_watcher/src/the_watcher/`) is decomposed into focused domain submodules coordinated by an engine module:
 - **Scene Presets (`presets.py`)**: Catalogs narrative atmosphere presets (`dungeon`, `crypt`, `tavern`, `forest`, `dragon_lair`) including mood-specific environmental descriptions, dynamic lighting, and ambient soundscape audio prompts (`build_scene_atmosphere`).
 - **Encounter Generation (`encounters.py`)**: Balances Challenge Ratings (CR), party level and size scaling, monster stat blocks, and tactical objectives across easy, medium, hard, and deadly threat tiers (`build_encounter`).
 - **Tactical Action Resolution (`tactics.py`)**: Adjudicates NPC decision trees, spellcaster prioritization, wounded-target finishing strikes, and aggressive round-one opening charges (`adjudicate_npc_turn`).
-- **Engine Facade (`autonomous_dm.py`)**: Exposes the `AutonomousDMEngine` class and top-level helpers, orchestrating the underlying domain submodules without leaking implementation details.
+- **Engine (`autonomous_dm_engine.py`)**: Exposes the `AutonomousDMEngine` class, which orchestrates the underlying domain submodules without leaking implementation details.
 
 ### 4. Modular Speech-to-Intent Parsing Architecture
 To maintain file size invariants (< 500 lines) and support streaming transcription and compound intent processing, speech parsing in `services/the_watcher/src/the_watcher/` is structured into:
