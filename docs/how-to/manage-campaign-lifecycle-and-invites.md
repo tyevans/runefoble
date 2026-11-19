@@ -175,7 +175,7 @@ A user who is already a member gets `200` again. The join does not use up anothe
 
 ## 5. Querying Campaign Members and Active Roles
 
-Inspect the owner and every member via `GET /api/v1/campaigns/{id}/members`. The roster comes from the membership record that `game_session` owns. `username` is derived from the user ID. The gateway adds `character_name` from the characters assigned to the campaign, and it is `null` when none is assigned:
+Inspect the owner and every member via `GET /api/v1/campaigns/{id}/members`. The roster comes from the membership record that `game_session` owns. `username` is the edited profile `display_name` of the member. If the member did not edit it, `username` is the username that the member's verified token carried when the member created or joined the campaign. If no token carried a username, `username` is `null`, and the UI shows the user ID. The service never makes a name from the user ID (TASK-0887). The gateway adds `character_name` from the characters assigned to the campaign, and it is `null` when none is assigned:
 
 ```bash
 curl -X GET "http://localhost:8000/api/v1/campaigns/6f1c2b8e-3a4d-4e5f-9a7b-8c9d0e1f2a3b/members" \

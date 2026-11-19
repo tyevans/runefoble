@@ -115,14 +115,17 @@ async def create_campaign(
     repos: CampaignRepositories,
     spicedb: SpiceDB,
     owner_id: str,
+    owner_username: str | None,
     req: CreateCampaignRequest,
     game_sessions: AggregateRepository[GameSessionAggregate],
 ) -> CampaignSummaryResponse:
+    """Create a campaign. `owner_username` comes from the creator's verified token."""
     campaign_id = uuid4()
     campaign = repos.campaigns.create_new(campaign_id)
     campaign.create(
         title=req.title,
         owner_id=owner_id,
+        owner_username=owner_username,
         description=req.description,
         setting=req.setting,
         system=req.system,

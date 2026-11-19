@@ -12,7 +12,7 @@ The full identity contract for every surface is in [Identity and Token Contract]
 ## Architecture & Verification Flows
 
 1. **User Login**: The frontend signs the user in with Zitadel (PKCE flow).
-2. **Token Issuance**: Zitadel issues an RS256 access token with `sub`, `iss`, `aud`, `exp`, and optional `email` and `preferred_username`.
+2. **Token Issuance**: Zitadel issues an RS256 access token with `sub`, `iss`, `aud`, `exp`, and optional `email` and `preferred_username`. Zitadel JWT access tokens do not include `preferred_username` or `email` by default. When the claim is absent, `VerifiedPrincipal.username` is `None`.
 3. **Verification**: `ZitadelAuthService.verify_token` checks the RS256 signature against the issuer's JWKS. It checks `exp`, `sub`, `iss` (exact match), and `aud` (exact match). Any failure raises `TokenVerificationError`.
 4. **Principal**: A passing token yields a `VerifiedPrincipal` (`user_id`, `username`, `email`).
 5. **Zanzibar Check**: The `user_id` is the SpiceDB subject for permission checks.

@@ -83,7 +83,8 @@ The following services verify only user tokens. They pass `None` for the service
 ## 3. Subject
 
 - The token `sub` claim is the user id. The verifier returns it as `VerifiedPrincipal.user_id` (`zitadel.py`, `_principal_from_claims`).
-- `username` comes from `preferred_username`. When that claim is absent, `username` is the `sub` value.
+- `username` comes from `preferred_username`. When that claim is absent or empty, `username` is `None`. The verifier does not make a name from `sub` (ADR-0015, TASK-0887).
+- Zitadel JWT access tokens do not carry `preferred_username` or `email`. Zitadel puts these claims only in the ID token, the userinfo response, and the introspection response (Zitadel claims reference). The App Shell sends the access token, so a real Zitadel sign-in gives `username = None` until an action adds the claim to the access token.
 - `email` comes from the `email` claim. It is `None` when the claim is absent.
 - `VerifiedPrincipal` has three fields: `user_id`, `username`, and `email` (`principal.py`). It has no roles and no admin flag.
 - Roles and admin flags in a token grant nothing. No code reads them for authorization. Authorization uses only SpiceDB relations in `libs/runefoble_auth/schema/runefoble.zed` (ADR-0015 d, Hard Invariant 1).

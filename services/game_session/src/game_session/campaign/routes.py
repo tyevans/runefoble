@@ -39,6 +39,8 @@ from game_session.campaign.schemas import (
 )
 from game_session.campaign.tuples import SpiceDB
 from game_session.dependencies import get_game_session_repository
+from game_session.profile.aggregate import UserProfileAggregate
+from game_session.profile.repository import get_profile_repository
 from game_session.settlement.auth.tokens import CallerPrincipal, get_principal
 from runefoble_auth.factory import get_spicedb_client
 
@@ -53,6 +55,7 @@ Spicedb = Annotated[SpiceDB, Depends(get_spicedb_client)]
 GameSessions = Annotated[
     AggregateRepository[GameSessionAggregate], Depends(get_game_session_repository)
 ]
+ProfileRepo = Annotated[AggregateRepository[UserProfileAggregate], Depends(get_profile_repository)]
 
 
 @router.get("", response_model=list[CampaignSummaryResponse])
@@ -72,7 +75,9 @@ async def create_campaign(
     game_sessions: GameSessions,
 ) -> CampaignSummaryResponse:
     """Create a campaign. The caller becomes its owner."""
-    return await campaigns.create_campaign(repos, spicedb, principal.user_id, req, game_sessions)
+    return await campaigns.create_campaign(
+        repos, spicedb, principal.user_id, principal.username, req, game_sessions
+    )
 
 
 @router.get("/{campaign_id}", response_model=CampaignSummaryResponse)
@@ -121,7 +126,9 @@ async def join_campaign(
     spicedb: Spicedb,
 ) -> JoinCampaignResponse:
     """Redeem an invite and join the campaign with the invite's role."""
-    return await membership.join_campaign(repos, spicedb, req.invite_token, principal.user_id)
+    return await membership.join_campaign(
+        repos, spicedb, req.invite_token, principal.user_id, principal.username
+    )
 
 
 @router.get("/{campaign_id}/members", response_model=list[CampaignMemberResponse])
@@ -129,9 +136,10 @@ async def list_members(
     campaign_id: str,
     principal: ViewCampaign,
     repos: Repos,
+    profiles: ProfileRepo,
 ) -> list[CampaignMemberResponse]:
-    """List the owner and every member. Requires `view`."""
-    return await membership.list_members(repos, campaign_id)
+    """List the owner and every member with their names. Requires `view`."""
+    return await membership.list_members(repos, profiles, campaign_id)
 
 
 @router.delete("/{campaign_id}/members/{user_id}", response_model=MemberRemovedResponse)
