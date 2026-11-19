@@ -146,10 +146,10 @@ def _principal_from_claims(payload: dict[str, Any]) -> VerifiedPrincipal:
     subject = payload.get("sub")
     if not isinstance(subject, str) or not subject:
         raise TokenVerificationError("Token 'sub' claim is empty or not a string")
-    username = payload.get("preferred_username") or subject
+    username = payload.get("preferred_username") or None
     email = payload.get("email") or None
     return VerifiedPrincipal(
         user_id=subject,
-        username=str(username),
+        username=str(username) if username else None,
         email=str(email) if email else None,
     )

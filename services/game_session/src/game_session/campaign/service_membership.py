@@ -31,18 +31,11 @@ from game_session.campaign.service_campaigns import (
     parse_campaign_id,
 )
 from game_session.campaign.tuples import SpiceDB, grant_member, relation_for_role, revoke_member
+from game_session.profile.aggregate import UserProfileAggregate
+from game_session.profile.repository import load_profile
 from runefoble_platform.aggregate_loading import load_if_exists, save_or_conflict
+from runefoble_platform.event_sourcing import AggregateRepository
 from runefoble_platform.models import utc_now
-
-
-def display_name(user_id: str) -> str:
-    """Derive a readable name from a user ID. Profile data is owned elsewhere."""
-    cleaned = user_id
-    for prefix in ("user-", "user_", "player-", "player_", "dm-", "dm_"):
-        if cleaned.startswith(prefix):
-            cleaned = cleaned[len(prefix) :]
-            break
-    return cleaned.replace("-", " ").replace("_", " ").title() or user_id
 
 
 def _relation_key(campaign_id: str, relation: str, user_id: str) -> str:
@@ -79,8 +72,13 @@ async def create_invite(
 
 
 async def join_campaign(
-    repos: CampaignRepositories, spicedb: SpiceDB, token: str, user_id: str
+    repos: CampaignRepositories,
+    spicedb: SpiceDB,
+    token: str,
+    user_id: str,
+    username: str | None,
 ) -> JoinCampaignResponse:
+    """Redeem an invite. `username` comes from the joiner's verified token."""
     invite = await load_if_exists(repos.invites, invite_stream_id(token))
     if invite is None:
         raise InvalidInviteError("Invalid invite token")
@@ -99,7 +97,7 @@ async def join_campaign(
 
     invite.redeem(user_id, utc_now())
     await save_or_conflict(repos.invites, invite, concurrent_update)
-    memberships.add_member(user_id, invite.state.role)
+    memberships.add_member(user_id, invite.state.role, username)
     await save_or_conflict(repos.memberships, memberships, concurrent_update)
     await grant_member(spicedb, campaign_key, invite.state.role, user_id)
     return _joined(campaign_key, user_id, invite.state.role, relation_for_role(invite.state.role))
@@ -116,26 +114,42 @@ def _joined(campaign_id: str, user_id: str, role: str, relation: str) -> JoinCam
 
 
 async def list_members(
-    repos: CampaignRepositories, campaign_id: str
+    repos: CampaignRepositories,
+    profiles: AggregateRepository[UserProfileAggregate],
+    campaign_id: str,
 ) -> list[CampaignMemberResponse]:
+    """List the owner first, then every member, each with a name (see `_member_name`)."""
     cid = parse_campaign_id(campaign_id)
     campaign = await load_campaign(repos, cid)
     memberships = await load_memberships(repos, cid)
     key = str(cid)
-    owner = campaign.state.owner_id
-    members = [_member(key, owner, "owner")]
-    members.extend(_member(key, uid, role) for uid, role in memberships.state.members.items())
-    return members
+    entries = [(campaign.state.owner_id, "owner", campaign.state.owner_username)]
+    entries.extend(
+        (uid, role, memberships.username_of(uid)) for uid, role in memberships.state.members.items()
+    )
+    return [
+        _member(key, uid, role, await _member_name(profiles, uid, recorded))
+        for uid, role, recorded in entries
+    ]
 
 
-def _member(campaign_id: str, user_id: str, role: str) -> CampaignMemberResponse:
+async def _member_name(
+    profiles: AggregateRepository[UserProfileAggregate], user_id: str, recorded: str | None
+) -> str | None:
+    """The edited profile display name, else the recorded username, else None (ADR-0015)."""
+    profile = await load_profile(profiles, user_id)
+    edited = profile.state.display_name
+    return edited if edited is not None else recorded
+
+
+def _member(campaign_id: str, user_id: str, role: str, name: str | None) -> CampaignMemberResponse:
     relation = "owner" if role == "owner" else relation_for_role(role)
     return CampaignMemberResponse(
         user_id=user_id,
         role=role,
         subject_type="user",
         zanzibar_relation=_relation_key(campaign_id, relation, user_id),
-        username=display_name(user_id),
+        username=name,
         character_name=None,
     )
 

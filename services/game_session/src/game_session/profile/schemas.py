@@ -20,11 +20,15 @@ class UpdateProfileRequest(BaseModel):
 
 
 class ProfileResponse(BaseModel):
-    """The profile a user sees. Username and email default to the verified token."""
+    """The profile a user sees. Username and email default to the verified token.
+
+    `username` is None when the token has no username claim. `display_name` is then None
+    until the user edits it.
+    """
 
     user_id: str
-    username: str
+    username: str | None
     email: str | None
-    display_name: str
+    display_name: str | None
     avatar_url: str | None
     bio: str

@@ -20,7 +20,7 @@ class SpectatorViewerInfo(BaseModel):
     """Connected spectator viewer identity."""
 
     viewer_id: str
-    viewer_name: str
+    viewer_name: str | None
 
 
 class SpectatorStateResponse(BaseModel):

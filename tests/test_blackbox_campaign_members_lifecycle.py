@@ -107,9 +107,13 @@ async def test_campaign_member_removal_endpoint_requires_manage_permission(
 async def test_campaign_member_enrichment_with_character_and_username(
     client_gw: TestClient, trusted_ws_issuer
 ):
-    """Verify get_campaign_members populates username and character_name from characters."""
-    headers_dm = _auth(trusted_ws_issuer, "dm_evelyn")
-    headers_marcus = _auth(trusted_ws_issuer, "player_marcus")
+    """Verify get_campaign_members shows token usernames and character names (TASK-0887)."""
+    headers_dm = {
+        "Authorization": f"Bearer {trusted_ws_issuer.mint('dm_evelyn', username='Evelyn')}"
+    }
+    headers_marcus = {
+        "Authorization": f"Bearer {trusted_ws_issuer.mint('player_marcus', username='Marcus')}"
+    }
 
     # 1. DM creates campaign
     res = client_gw.post(

@@ -27,6 +27,7 @@ class CampaignState(BaseModel):
     system: str = "5e"
     status: str = "active"
     owner_id: str = ""
+    owner_username: str | None = None
     cover_image_url: str | None = None
     settings: dict[str, Any] = Field(default_factory=dict)
     created_at: str = ""
@@ -44,6 +45,7 @@ class CampaignAggregate(DeclarativeAggregate[CampaignState]):
         *,
         title: str,
         owner_id: str,
+        owner_username: str | None = None,
         description: str = "",
         setting: str = "",
         system: str = "5e",
@@ -56,6 +58,7 @@ class CampaignAggregate(DeclarativeAggregate[CampaignState]):
             CampaignCreated,
             campaign_id=self.aggregate_id,
             owner_id=owner_id,
+            owner_username=owner_username,
             title=title,
             description=description,
             setting=setting,
@@ -83,6 +86,7 @@ class CampaignAggregate(DeclarativeAggregate[CampaignState]):
             setting=event.setting,
             system=event.system,
             owner_id=event.owner_id,
+            owner_username=event.owner_username,
             cover_image_url=event.cover_image_url,
             settings=dict(event.settings),
             created_at=stamp,

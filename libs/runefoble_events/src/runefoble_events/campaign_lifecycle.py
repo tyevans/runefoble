@@ -15,12 +15,16 @@ from runefoble_events.base import BaseRunefobleEvent, register_event
 
 @register_event("runefoble.events.game_session.campaign_created")
 class CampaignCreated(BaseRunefobleEvent):
-    """Fired when a campaign is created. The creator becomes its owner."""
+    """Fired when a campaign is created. The creator becomes its owner.
+
+    `owner_username` is the username from the creator's verified token, or None.
+    """
 
     event_type: str = "runefoble.events.game_session.campaign_created"
 
     aggregate_type: str = "Campaign"
     owner_id: str
+    owner_username: str | None = None
     title: str
     description: str = ""
     setting: str = ""
@@ -41,13 +45,17 @@ class CampaignUpdated(BaseRunefobleEvent):
 
 @register_event("runefoble.events.game_session.campaign_member_added")
 class CampaignMemberAdded(BaseRunefobleEvent):
-    """Fired when a user joins a campaign with a player or spectator role."""
+    """Fired when a user joins a campaign or the owner grants a role.
+
+    `username` is the username from the member's own verified token, or None.
+    """
 
     event_type: str = "runefoble.events.game_session.campaign_member_added"
 
     aggregate_type: str = "CampaignMembership"
     user_id: str
     role: str
+    username: str | None = None
 
 
 @register_event("runefoble.events.game_session.campaign_member_removed")
