@@ -4,9 +4,9 @@ Governed by ADR-0001 (fail closed), ADR-0011 (eventsource-py), ADR-0015 and Hard
 A store outage must not answer "not found", must not answer with an empty aggregate, and must
 not write over stored history. A SpiceDB outage must answer 503, never a denial or an allow.
 
-The store double patches `read_stream` on the process event store (the store boundary). The
-SpiceDB double patches `check_permission` on the shared test client (the SpiceDB boundary).
-No application code is mocked.
+`store_outage` routes the process event store reads to an unreachable store (the store
+boundary). The SpiceDB double patches `check_permission` on the shared test client (the
+SpiceDB boundary). No application code is mocked.
 """
 
 from __future__ import annotations
@@ -33,6 +33,7 @@ from runefoble_platform.ws_groups import WebSocketGroups
 from soundscape.main import app as soundscape_app
 from starlette.websockets import WebSocketDisconnect
 
+from tests.helpers.event_store_seam import store_outage
 from tests.helpers.leitmotif_fixtures import (  # noqa: F401 (registers the fixtures)
     leitmotif_session_id_fixture,
 )
@@ -42,10 +43,6 @@ from tests.helpers.ws_identity import bearer
 
 VISITOR_SUBJECT = "lore-test-visitor"
 OUTAGE_DETAIL = "Event store is unavailable"
-
-
-def _connection_refused(*_args: object, **_kwargs: object) -> None:
-    raise ConnectionError("event store unreachable")
 
 
 async def _spicedb_unreachable(*_args: object, **_kwargs: object) -> bool:
@@ -98,9 +95,7 @@ def _grant_player(campaign_id: str) -> None:
     )
 
 
-def test_west_marches_overview_answers_503_and_keeps_stored_atlas(
-    lore_client: TestClient, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_west_marches_overview_answers_503_and_keeps_stored_atlas(lore_client: TestClient) -> None:
     """A failed atlas load answers 503. It does not answer 200 with an empty atlas."""
     campaign_id = str(uuid4())
     _grant_player(campaign_id)
@@ -110,8 +105,7 @@ def test_west_marches_overview_answers_503_and_keeps_stored_atlas(
     )
     assert seeded.status_code == 201, seeded.text
 
-    with monkeypatch.context() as m:
-        m.setattr(get_event_store(), "read_stream", _connection_refused)
+    with store_outage():
         resp = lore_client.get(f"/api/v1/campaigns/{campaign_id}/west-marches")
     assert resp.status_code == 503, resp.text
     assert resp.json()["detail"] == OUTAGE_DETAIL
@@ -122,14 +116,13 @@ def test_west_marches_overview_answers_503_and_keeps_stored_atlas(
 
 
 def test_west_marches_discovery_write_answers_503_and_saves_nothing(
-    lore_client: TestClient, monkeypatch: pytest.MonkeyPatch
+    lore_client: TestClient,
 ) -> None:
     """A failed atlas load on POST discoveries writes no discovery and answers 503."""
     campaign_id = str(uuid4())
     _grant_player(campaign_id)
 
-    with monkeypatch.context() as m:
-        m.setattr(get_event_store(), "read_stream", _connection_refused)
+    with store_outage():
         resp = lore_client.post(
             f"/api/v1/campaigns/{campaign_id}/west-marches/discoveries",
             json={"name": "Lost Cave", "coordinates": {"x": 3.0, "y": 4.0}},
@@ -144,23 +137,17 @@ def test_west_marches_discovery_write_answers_503_and_saves_nothing(
 # Diegetic handouts and 3D relics: a load error is not a missing handout or relic
 
 
-def test_handout_read_answers_503_on_store_outage(
-    lore_client: TestClient, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_handout_read_answers_503_on_store_outage(lore_client: TestClient) -> None:
     """GET handout answers 404 only when the stream is absent. A store outage answers 503."""
     handout_id = uuid4()
-    with monkeypatch.context() as m:
-        m.setattr(get_event_store(), "read_stream", _connection_refused)
+    with store_outage():
         resp = lore_client.get(f"/api/v1/lore/handouts/{handout_id}")
     assert resp.status_code == 503, resp.text
 
 
-def test_handout_seal_break_answers_503_on_store_outage(
-    lore_client: TestClient, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_handout_seal_break_answers_503_on_store_outage(lore_client: TestClient) -> None:
     """POST break-seal answers 503 on a store outage, not 404."""
-    with monkeypatch.context() as m:
-        m.setattr(get_event_store(), "read_stream", _connection_refused)
+    with store_outage():
         resp = lore_client.post(
             f"/api/v1/lore/handouts/{uuid4()}/break-seal",
             json={},
@@ -168,12 +155,9 @@ def test_handout_seal_break_answers_503_on_store_outage(
     assert resp.status_code == 503, resp.text
 
 
-def test_relic_read_answers_503_on_store_outage(
-    lore_client: TestClient, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_relic_read_answers_503_on_store_outage(lore_client: TestClient) -> None:
     """GET relic answers 404 only when the stream is absent. A store outage answers 503."""
-    with monkeypatch.context() as m:
-        m.setattr(get_event_store(), "read_stream", _connection_refused)
+    with store_outage():
         resp = lore_client.get(f"/api/v1/lore/relics/{uuid4()}")
     assert resp.status_code == 503, resp.text
 

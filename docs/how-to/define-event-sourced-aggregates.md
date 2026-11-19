@@ -171,6 +171,8 @@ with store_outage():  # every read fails with a connection error
 assert res.status_code == 503
 ```
 
+To check that a failed write saves nothing, pass `record_appends=True`. The block then yields a list with one entry for each `append` made inside it. To spy on appends without an outage, use `record_appends()` from the same module.
+
 ## 6. Persistent Event Store (PostgreSQL)
 
 The event store backend defaults to `postgresql`. In staging and production deployments, Helm sets `RUNEFOBLE_EVENT_STORE_BACKEND=postgresql` for every service that owns aggregate state. The setting maps to `PlatformSettings.event_store_backend`. Durable persistence uses `PostgreSQLEventStore`:
