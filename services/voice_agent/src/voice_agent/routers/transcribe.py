@@ -11,18 +11,13 @@ import binascii
 import logging
 from typing import Annotated, Literal
 
-import httpx
 from fastapi import APIRouter, Depends, Header, HTTPException
 from runefoble_events.events import PlayerSpokeEvent
 from runefoble_platform.event_publish import publish_or_fail
 from runefoble_platform.identifiers import opaque_aggregate_id
-from voice_agent.auth import CallerPrincipal, caller_headers, get_principal
+from voice_agent.auth import CallerPrincipal, get_principal
 from voice_agent.authz import require_speaker
-from voice_agent.dependencies import (
-    STREAM_SESSION,
-    get_event_bus,
-    platform_settings,
-)
+from voice_agent.dependencies import STREAM_SESSION, get_event_bus
 from voice_agent.models import TranscribeRequest, TranscribeResponse
 from voice_agent.stt import get_streaming_pipeline, parse_audio_data
 
@@ -96,44 +91,20 @@ async def transcribe_speech(
     # The spoken words are player state. A failed publish returns 503 and forwards nothing.
     event_entry_id = await publish_or_fail(get_event_bus(), STREAM_SESSION, spoke_event)
 
-    # 2. Forward to The Watcher
-    watcher_intent = None
-    try:
-        watcher_client = get_streaming_pipeline()._watcher_client
-        if watcher_client:
-            resp = await watcher_client.post(
-                "/api/v1/watcher/transcribe-and-act",
-                headers=caller_headers(authorization),
-                json={
-                    "speaker_id": req.speaker_id,
-                    "speaker_name": req.speaker_name,
-                    "transcript": transcript,
-                    "session_id": req.session_id,
-                    "campaign_id": req.campaign_id,
-                },
-            )
-            if resp.status_code == 200:
-                watcher_intent = resp.json()
-        else:
-            watcher_url = platform_settings.the_watcher_url
-            if not watcher_url:
-                raise RuntimeError("RUNEFOBLE_WATCHER_URL is not set")
-            async with httpx.AsyncClient(timeout=5.0) as client:
-                resp = await client.post(
-                    f"{watcher_url}/api/v1/watcher/transcribe-and-act",
-                    headers=caller_headers(authorization),
-                    json={
-                        "speaker_id": req.speaker_id,
-                        "speaker_name": req.speaker_name,
-                        "transcript": transcript,
-                        "session_id": req.session_id,
-                        "campaign_id": req.campaign_id,
-                    },
-                )
-                if resp.status_code == 200:
-                    watcher_intent = resp.json()
-    except Exception as e:
-        logger.warning("Failed to forward transcript to The Watcher: %s", e)
+    # 2. Forward to The Watcher with the speaker's own bearer (ADR-0015 c). A failed forward
+    # keeps the transcript and reports the reason in `watcher_error` (TASK-0732).
+    forwarded = await get_streaming_pipeline().watcher.forward(
+        {
+            "speaker_id": req.speaker_id,
+            "speaker_name": req.speaker_name,
+            "transcript": transcript,
+            "session_id": req.session_id,
+            "campaign_id": req.campaign_id,
+        },
+        authorization,
+    )
+    if forwarded.error is not None:
+        logger.warning("The Watcher did not take the transcript: %s", forwarded.error)
 
     return TranscribeResponse(
         transcript=transcript,
@@ -141,5 +112,6 @@ async def transcribe_speech(
         speaker_id=req.speaker_id,
         speaker_name=req.speaker_name,
         event_id=event_entry_id,
-        watcher_intent=watcher_intent,
+        watcher_intent=forwarded.intent,
+        watcher_error=forwarded.error,
     )

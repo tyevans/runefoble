@@ -319,6 +319,8 @@ services:
     port: 8005
     urlEnv: RUNEFOBLE_VOICE_AGENT_URL
     consumers: [game-session, gateway-api]
+    # The Watcher port sends the service credential on each transcript forward (TASK-0732).
+    serviceCredential: true
     readinessPath: /healthz
     # Speech-to-text engine. faster-whisper runs in-process and needs the model cache below.
     # whisper-cpp calls a whisper.cpp HTTP server at sttBaseUrl (for example http://<host>:8080)

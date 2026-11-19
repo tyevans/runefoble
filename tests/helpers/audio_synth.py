@@ -9,15 +9,12 @@ from collections.abc import Generator
 
 import pytest
 from fastapi.testclient import TestClient
-from httpx import ASGITransport, AsyncClient
+from httpx import ASGITransport
+from runefoble_platform.config import PlatformSettings
 from runefoble_platform.redis_bus import RedisStreamsEventBus
+from runefoble_platform.service_credential import expected_service_credential
 from the_watcher.main import app as watcher_app
-from voice_agent.main import (
-    app as voice_app,
-)
-from voice_agent.main import (
-    set_watcher_client,
-)
+from voice_agent.main import app as voice_app
 from voice_agent.speech_settings import VoiceAgentSettings, build_synthesizer, build_transcriber
 from voice_agent.stt import (
     StreamingAudioPipeline,
@@ -25,6 +22,7 @@ from voice_agent.stt import (
     set_streaming_pipeline,
 )
 from voice_agent.synthesis_engine import get_speech_synthesizer, set_speech_synthesizer
+from voice_agent.watcher_intent import ServiceClientWatcherIntent, build_watcher_intent_port
 
 from tests.helpers.fixture_synthesizer import FixtureSynthesizer
 from tests.helpers.fixture_transcriber import FixtureTranscriber
@@ -142,7 +140,10 @@ def build_speech_seams_from_env() -> None:
     Call this after the test sets its environment. `keep_speech_seams` restores the values at teardown.
     """
     set_streaming_pipeline(
-        StreamingAudioPipeline(transcriber=build_transcriber(VoiceAgentSettings()))
+        StreamingAudioPipeline(
+            transcriber=build_transcriber(VoiceAgentSettings()),
+            watcher=build_watcher_intent_port(PlatformSettings()),
+        )
     )
     set_speech_synthesizer(build_synthesizer(VoiceAgentSettings()))
 
@@ -158,7 +159,9 @@ def shared_event_bus(
     seam_restorer.replace(
         get_streaming_pipeline,
         set_streaming_pipeline,
-        StreamingAudioPipeline(transcriber=speech_engine),
+        StreamingAudioPipeline(
+            transcriber=speech_engine, watcher=build_watcher_intent_port(PlatformSettings())
+        ),
     )
     return use_redis_client(mock_redis)
 
@@ -166,7 +169,10 @@ def shared_event_bus(
 @pytest.fixture
 def client(shared_event_bus: RedisStreamsEventBus, trusted_voice_issuer) -> TestClient:
     get_streaming_pipeline().reset_all()
-    # Wire the watcher ASGI transport directly for inter-service communication
-    watcher_client = AsyncClient(transport=ASGITransport(app=watcher_app), base_url="http://test")
-    set_watcher_client(watcher_client)
+    # Route the Watcher port to the in-process Watcher app through the shared service client.
+    get_streaming_pipeline().watcher = ServiceClientWatcherIntent(
+        "http://test",
+        expected_service_credential(),
+        transport=ASGITransport(app=watcher_app),
+    )
     return TestClient(voice_app, headers=voice_auth_headers())
