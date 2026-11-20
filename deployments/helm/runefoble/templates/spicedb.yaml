@@ -16,9 +16,17 @@ spec:
         app: spicedb
     spec:
       {{- include "runefoble.imagePullSecrets" $ }}
+      {{- if include "runefoble.hosted.profile" $ }}
+      securityContext:
+        {{- include "runefoble.hosted.podSecurity" (dict "extra" nil) | nindent 8 }}
+      {{- end }}
       initContainers:
         - name: spicedb-migrate
           image: {{ .Values.spicedb.image }}
+          {{- if include "runefoble.hosted.profile" $ }}
+          securityContext:
+            {{- include "runefoble.hosted.thirdPartyContainerSecurity" $ | nindent 12 }}
+          {{- end }}
           {{- with .Values.spicedb.migrateResources }}
           resources:
             {{- toYaml . | nindent 12 }}
@@ -31,6 +39,10 @@ spec:
       containers:
         - name: spicedb
           image: {{ .Values.spicedb.image }}
+          {{- if include "runefoble.hosted.profile" $ }}
+          securityContext:
+            {{- include "runefoble.hosted.thirdPartyContainerSecurity" $ | nindent 12 }}
+          {{- end }}
           {{- with .Values.spicedb.resources }}
           resources:
             {{- toYaml . | nindent 12 }}

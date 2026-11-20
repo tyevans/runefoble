@@ -47,9 +47,17 @@ spec:
         app: postgres
     spec:
       {{- include "runefoble.imagePullSecrets" $ }}
+      {{- if include "runefoble.hosted.profile" $ }}
+      securityContext:
+        {{- include "runefoble.hosted.podSecurity" (dict "extra" nil) | nindent 8 }}
+      {{- end }}
       containers:
         - name: postgres
           image: {{ .Values.postgres.image }}
+          {{- if include "runefoble.hosted.profile" $ }}
+          securityContext:
+            {{- include "runefoble.hosted.thirdPartyContainerSecurity" $ | nindent 12 }}
+          {{- end }}
           {{- with .Values.postgres.resources }}
           resources:
             {{- toYaml . | nindent 12 }}

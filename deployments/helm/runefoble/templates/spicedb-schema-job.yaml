@@ -29,6 +29,10 @@ spec:
         app: spicedb-schema-migration
     spec:
       {{- include "runefoble.imagePullSecrets" $ }}
+      {{- if include "runefoble.hosted.profile" $ }}
+      securityContext:
+        {{- include "runefoble.hosted.podSecurity" (dict "extra" nil) | nindent 8 }}
+      {{- end }}
       restartPolicy: OnFailure
       # No migration here. The spicedb Deployment migrates the datastore in its init container.
       # A second migration at install time deadlocks on CREATE INDEX CONCURRENTLY. This Job
@@ -36,6 +40,10 @@ spec:
       containers:
         - name: schema-writer
           image: {{ .Values.spicedb.schemaJob.image | quote }}
+          {{- if include "runefoble.hosted.profile" $ }}
+          securityContext:
+            {{- include "runefoble.hosted.thirdPartyContainerSecurity" $ | nindent 12 }}
+          {{- end }}
           {{- with .Values.spicedb.schemaJob.resources }}
           resources:
             {{- toYaml . | nindent 12 }}

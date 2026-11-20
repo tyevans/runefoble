@@ -207,6 +207,48 @@ plugin that it uses.
   in both directions, each platform path, the ingress controller paths, and the single-address
   external entries.
 
+## Pod security
+
+A hosted render sets these rules. The local render does not change.
+
+- Every pod runs with the `RuntimeDefault` seccomp profile.
+- Every container blocks privilege escalation (`allowPrivilegeEscalation: false`).
+- Every application container (the Python services, `gateway-mcp`, `inference-worker`, the
+  `pat-publisher` sidecar, and the Zitadel bootstrap Job) drops all capabilities, runs as a
+  numeric non-root UID, and mounts a read-only root filesystem with an `emptyDir` at `/tmp`.
+  The UID is the one in the image Dockerfile: `10001` for the Python images (see
+  `deployments/docker/python-service.Dockerfile`), and `1000` for `audience-studio` (its image
+  runs as `node`). The numeric value is required. A user name in the image cannot prove non-root.
+- The `HOME` variable of each application container is `/tmp` in a hosted render.
+- A service that writes to disk outside `/tmp` needs a volume for that path before its
+  `readOnlyRootFilesystem` can stay true. The audit of the Python sources found no such write.
+  The voice agent writes its model files to its model cache volume.
+
+## Security exceptions
+
+Third-party images choose their own users. Some start as root and switch users at run time. This
+list names each container that the hosted render does not restrict further. Each container keeps
+`allowPrivilegeEscalation: false` and the `RuntimeDefault` seccomp profile. For each container,
+the table names the reason. Enable the stricter settings only after you test the image.
+
+| Container | Workload | Reason |
+|---|---|---|
+| `postgres` | StatefulSet `postgres` | The image entrypoint runs as root, sets data ownership, and switches to the `postgres` user. |
+| `redis` | StatefulSet `runefoble-redis` | The image entrypoint runs as root and switches to the `redis` user. |
+| `silo` | StatefulSet `silo` | Third-party object store. Its UID and write paths are not verified in this chart. |
+| `zitadel` | Deployment `zitadel` | Third-party identity server. Its UID and write paths are not verified in this chart. |
+| `spicedb-migrate` | Deployment `spicedb` (init container) | Third-party authorization server image. Its UID is not verified in this chart. |
+| `spicedb` | Deployment `spicedb` | Third-party authorization server image. Its UID is not verified in this chart. |
+| `otel-collector` | Deployment `otel-collector` | Third-party collector image. Its UID is not verified in this chart. |
+| `loki` | Deployment `loki` | Third-party log store. Its UID and write paths are not verified in this chart. |
+| `grafana` | Deployment `grafana` | Third-party dashboard image. Its UID and write paths are not verified in this chart. |
+| `openpanel` | Deployment `openpanel` | Third-party analytics image. Its UID and write paths are not verified in this chart. |
+| `swagger-ui` | Deployment `swagger-ui` | Third-party static server. It listens on a port that needs a check before a UID change. |
+| `frontend` | Deployment `frontend` | The `nginx:alpine` image runs as root and listens on port 80. A non-root image on port 8080 is a follow-up. |
+| `render-runtime-config` | Deployment `frontend` (init container) | Same image as `frontend`. |
+| `create-buckets` | Job `silo-buckets` | Third-party MinIO client image. It writes its client configuration under `/tmp/mc`. |
+| `schema-writer` | Job `spicedb-schema-migration` | Third-party `zed` image. Its UID is not verified in this chart. |
+
 ## Placeholder marker
 
 `REPLACE-ME` marks every value that an operator must set. The guard fails on it in every

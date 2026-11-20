@@ -183,6 +183,8 @@ services:
     resources: *small
   audienceStudio:
     resources: *medium
+    # The Node image runs as the node user (UID 1000). Its Dockerfile sets USER node.
+    runAsUser: 1000
   campaignAnalytics:
     resources: *small
   inferenceWorker:

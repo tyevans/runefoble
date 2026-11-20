@@ -17,9 +17,17 @@ spec:
         app: silo
     spec:
       {{- include "runefoble.imagePullSecrets" $ }}
+      {{- if include "runefoble.hosted.profile" $ }}
+      securityContext:
+        {{- include "runefoble.hosted.podSecurity" (dict "extra" nil) | nindent 8 }}
+      {{- end }}
       containers:
         - name: silo
           image: {{ .Values.silo.image }}
+          {{- if include "runefoble.hosted.profile" $ }}
+          securityContext:
+            {{- include "runefoble.hosted.thirdPartyContainerSecurity" $ | nindent 12 }}
+          {{- end }}
           {{- with .Values.silo.resources }}
           resources:
             {{- toYaml . | nindent 12 }}

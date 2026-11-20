@@ -17,11 +17,19 @@ spec:
         checksum/runtime-config: {{ include (print $.Template.BasePath "/frontend-runtime-config.yaml") . | sha256sum }}
     spec:
       {{- include "runefoble.imagePullSecrets" $ }}
+      {{- if include "runefoble.hosted.profile" $ }}
+      securityContext:
+        {{- include "runefoble.hosted.podSecurity" (dict "extra" nil) | nindent 8 }}
+      {{- end }}
       # The init container fills in the client ID and project ID from the Secret that the bootstrap
       # Job writes. The pod waits until that Secret exists.
       initContainers:
         - name: render-runtime-config
           image: {{ .Values.frontend.image }}
+          {{- if include "runefoble.hosted.profile" $ }}
+          securityContext:
+            {{- include "runefoble.hosted.thirdPartyContainerSecurity" $ | nindent 12 }}
+          {{- end }}
           {{- with .Values.frontend.initResources }}
           resources:
             {{- toYaml . | nindent 12 }}
@@ -53,6 +61,10 @@ spec:
       containers:
         - name: frontend
           image: {{ .Values.frontend.image }}
+          {{- if include "runefoble.hosted.profile" $ }}
+          securityContext:
+            {{- include "runefoble.hosted.thirdPartyContainerSecurity" $ | nindent 12 }}
+          {{- end }}
           {{- with .Values.frontend.resources }}
           resources:
             {{- toYaml . | nindent 12 }}

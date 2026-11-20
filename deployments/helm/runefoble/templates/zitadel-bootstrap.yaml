@@ -74,6 +74,10 @@ spec:
         app: zitadel-bootstrap
     spec:
       {{- include "runefoble.imagePullSecrets" $ }}
+      {{- if include "runefoble.hosted.profile" $ }}
+      securityContext:
+        {{- include "runefoble.hosted.podSecurity" (dict "extra" nil) | nindent 8 }}
+      {{- end }}
       serviceAccountName: zitadel-bootstrap
       automountServiceAccountToken: true
       restartPolicy: OnFailure
@@ -116,4 +120,16 @@ spec:
               value: {{ join "," .Values.zitadel.bootstrap.postLogoutRedirectUris | quote }}
             - name: RUNEFOBLE_ZITADEL_DEV_MODE
               value: {{ .Values.zitadel.bootstrap.devMode | quote }}
+          {{- if include "runefoble.hosted.profile" $ }}
+          securityContext:
+            {{- include "runefoble.hosted.appContainerSecurity" (dict "uid" 10001 "readOnly" true) | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+          {{- end }}
+      {{- if include "runefoble.hosted.profile" $ }}
+      volumes:
+        - name: tmp
+          emptyDir: {}
+      {{- end }}
 {{- end }}
