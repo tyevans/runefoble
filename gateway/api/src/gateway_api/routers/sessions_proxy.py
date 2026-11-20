@@ -25,7 +25,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from gateway_api.auth import get_principal, require_zanzibar_permission
 from gateway_api.dependencies import ws_manager
 from gateway_api.models import AtmosphereUpdateRequest, DMOverrideRequest, JoinSessionRequest
-from gateway_api.proxy import UPSTREAM_INVALID_DETAIL, forward_json, owner_route
+from gateway_api.proxy import UPSTREAM_INVALID_DETAIL, forward_bytes, forward_json, owner_route
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from runefoble_platform.service_client import owner_routes
 
@@ -71,6 +71,17 @@ async def join_session_proxy(session_id: str, req: JoinSessionRequest, request: 
         path=route.path,
         json_body=req.model_dump(mode="json"),
     )
+
+
+@router.post("/api/v1/sessions/{session_id}/roll", dependencies=_VERIFIED)
+async def roll_dice_proxy(session_id: str, request: Request) -> Any:
+    """Evaluate a dice roll for the verified caller (game_session checks 'participate').
+
+    The body goes to the owner unchanged. The owner's reply is the stored roll. The gateway
+    keeps no state. The live `dice_rolled` frame comes from the owner's `DiceRolled` event.
+    """
+    route = owner_route(owner_routes.roll_session, session_id)
+    return await forward_bytes(request, service=SERVICE, method=route.method, path=route.path)
 
 
 @router.post("/api/v1/sessions/{session_id}/start", dependencies=_VERIFIED)
