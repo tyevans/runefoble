@@ -57,4 +57,7 @@ USER runefoble
 EXPOSE ${PORT}
 
 # `sh -c` expands the APP and PORT variables. `exec` keeps uvicorn as PID 1.
-CMD ["sh", "-c", "exec uvicorn \"$SERVICE_APP\" --host 0.0.0.0 --port \"$SERVICE_PORT\""]
+# `--timeout-keep-alive 15` keeps an idle connection open longer than the service client keeps
+# it in its pool (`KEEPALIVE_EXPIRY_S`, 4 s), so a caller never reuses a connection that the
+# service has just closed (TASK-0936).
+CMD ["sh", "-c", "exec uvicorn \"$SERVICE_APP\" --host 0.0.0.0 --port \"$SERVICE_PORT\" --timeout-keep-alive 15"]
