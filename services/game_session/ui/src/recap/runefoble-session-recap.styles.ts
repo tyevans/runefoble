@@ -39,7 +39,7 @@ export const sessionRecapStyles = css`
     display: flex;
     gap: 0.75rem;
     padding: 0.5rem 0.75rem;
-    border-left: 4px solid var(--rf-color-blue, #2563eb);
+    border-left: 4px solid var(--rf-color-blue);
   }
 
   .speaker-name {
