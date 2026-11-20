@@ -15,10 +15,12 @@ Hard rules that these tests hold:
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Iterator
 from dataclasses import dataclass
 from datetime import timedelta
 from typing import Any
+from uuid import uuid4
 
 import pytest
 from eventsource.adapters.memory.store import InMemoryEventStore
@@ -37,6 +39,11 @@ from tests.helpers.service_harness import live_upstream
 pytestmark = pytest.mark.asyncio
 
 SERVICE_TOKEN = "test-zitadel-service-token"
+TRUSTED_PROXY_CIDR = "10.244.0.0/16"
+ACCOUNT_PATH = "/api/v1/campaigns/invites/accounts"
+TRUSTED_PEER = "10.244.0.9"
+UNTRUSTED_PEER = "198.51.100.1"
+DIRECT_PEER = "198.51.100.250"
 OWNER = "dm-owner"
 PLAYER_EMAIL = "new.player@example.com"
 REPLY_KEYS = {"status", "message"}
@@ -58,12 +65,13 @@ def account_stack(monkeypatch, trusted_ws_issuer) -> Iterator[AccountStack]:
     with fake_zitadel_server(SERVICE_TOKEN) as zitadel:
         monkeypatch.setenv("RUNEFOBLE_ZITADEL_API_URL", zitadel.base_url)
         monkeypatch.setenv("RUNEFOBLE_ZITADEL_SERVICE_TOKEN", SERVICE_TOKEN)
+        monkeypatch.setenv("RUNEFOBLE_TRUSTED_PROXY_CIDRS", TRUSTED_PROXY_CIDR)
         store = InMemoryEventStore()
         with restored_seam(get_event_store, set_event_store, store, replace=True):
             session = app_with_container(build_container(event_bus=session_event_bus))
             with (
                 live_upstream(session, "RUNEFOBLE_GAME_SESSION_URL"),
-                TestClient(gateway_app) as gateway,
+                TestClient(_PeerAddress(gateway_app)) as gateway,
             ):
                 yield AccountStack(gateway, zitadel, store, trusted_ws_issuer)
 
@@ -93,11 +101,46 @@ def _campaign_with_invite(
 def _request_account(
     stack: AccountStack, token: str, email: str, display_name: str = "Ada Lovelace"
 ) -> Any:
-    """The account route. It takes no bearer token."""
+    """The account route. It takes no bearer token. The invite token travels in the body."""
     return stack.gateway.post(
-        f"/api/v1/campaigns/invites/{token}/accounts",
-        json={"email": email, "display_name": display_name},
+        ACCOUNT_PATH,
+        json={"invite_token": token, "email": email, "display_name": display_name},
     )
+
+
+class _PeerAddress:
+    """Stands in for the TCP peer that the ASGI server reports for each request.
+
+    The test sets the `x-test-peer` header. The wrapper removes it and sets the scope client to
+    that address, as uvicorn does for a real connection. Every other request passes unchanged.
+    """
+
+    def __init__(self, app: Any) -> None:
+        self.app = app
+
+    async def __call__(self, scope: dict[str, Any], receive: Any, send: Any) -> None:
+        if scope["type"] == "http":
+            incoming = dict(scope["headers"])
+            peer = incoming.get(b"x-test-peer", DIRECT_PEER.encode()).decode()
+            headers = [(k, v) for k, v in scope["headers"] if k != b"x-test-peer"]
+            scope = {**scope, "headers": headers, "client": (peer, 50000)}
+        await self.app(scope, receive, send)
+
+
+def _account_from(stack: AccountStack, token: str, peer: str, forwarded_for: str | None) -> int:
+    headers = {"x-test-peer": peer}
+    if forwarded_for is not None:
+        headers["X-Forwarded-For"] = forwarded_for
+    res = stack.gateway.post(
+        ACCOUNT_PATH,
+        json={
+            "invite_token": token,
+            "email": f"{uuid4().hex[:10]}@example.com",
+            "display_name": "Peer Player",
+        },
+        headers=headers,
+    )
+    return res.status_code
 
 
 async def _account_events(store: InMemoryEventStore) -> list[str]:
@@ -283,3 +326,50 @@ async def test_pending_join_completes_at_sign_in_without_a_second_use(account_st
     )
     assert stranger.status_code == 410
     assert not await spicedb.check_permission("campaign", campaign_id, "play", "user", "stranger")
+
+
+async def test_invite_token_never_reaches_a_log_line(account_stack, caplog):
+    """The token is a bearer credential. No log record of a request may carry it."""
+    stack = account_stack
+    _, token = _campaign_with_invite(stack, max_uses=1)
+    caplog.set_level(logging.DEBUG)
+
+    assert _request_account(stack, token, PLAYER_EMAIL).status_code == 202
+    assert _request_account(stack, token, "second.player@example.com").status_code == 410
+    assert _request_account(stack, "no-such-token", PLAYER_EMAIL).status_code == 404
+
+    for record in caplog.records:
+        rendered = f"{record.getMessage()} {record.args!r} {record.exc_info!r}"
+        assert token not in rendered, record.name
+
+
+async def test_trusted_peer_limits_each_forwarded_client_separately(account_stack):
+    """Traefik (a trusted peer) appends the real client. The limit follows that address."""
+    stack = account_stack
+    _, token = _campaign_with_invite(stack)
+    for _ in range(20):
+        assert _account_from(stack, token, TRUSTED_PEER, "203.0.113.7") == 202
+
+    assert _account_from(stack, token, TRUSTED_PEER, "203.0.113.7") == 429
+    assert _account_from(stack, token, TRUSTED_PEER, "203.0.113.8") == 202
+
+
+async def test_untrusted_peer_ignores_the_forwarded_header(account_stack):
+    """A client that reaches the gateway directly cannot choose its own bucket."""
+    stack = account_stack
+    _, token = _campaign_with_invite(stack)
+    for index in range(20):
+        assert _account_from(stack, token, UNTRUSTED_PEER, f"192.0.2.{index + 1}") == 202
+
+    assert _account_from(stack, token, UNTRUSTED_PEER, "192.0.2.250") == 429
+
+
+async def test_trusted_peer_uses_the_rightmost_untrusted_address(account_stack):
+    """A client can prepend anything. The address that the proxy appended is the one that counts."""
+    stack = account_stack
+    _, token = _campaign_with_invite(stack)
+    for index in range(20):
+        forged = f"198.51.100.{index + 1}, 203.0.113.7"
+        assert _account_from(stack, token, TRUSTED_PEER, forged) == 202
+
+    assert _account_from(stack, token, TRUSTED_PEER, "198.51.100.99, 203.0.113.7") == 429

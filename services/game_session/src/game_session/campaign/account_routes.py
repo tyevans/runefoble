@@ -30,15 +30,16 @@ Provisioner = Annotated[AccountProvisioner, Depends(account_provisioner)]
 
 
 @router.post(
-    "/{token}/accounts",
+    "/accounts",
     response_model=AccountRequestedResponse,
     status_code=status.HTTP_202_ACCEPTED,
 )
 async def request_account_from_invite(
-    token: str,
     req: CreateAccountRequest,
     repos: Repos,
     provisioner: Provisioner,
 ) -> AccountRequestedResponse:
-    """Create a Zitadel account through a valid invite. Zitadel emails the person to finish it."""
-    return await accounts.request_account(repos, provisioner, token, req.email, req.display_name)
+    """Create a Zitadel account through a valid invite. The token is in the body (no path)."""
+    return await accounts.request_account(
+        repos, provisioner, req.invite_token, req.email, req.display_name
+    )

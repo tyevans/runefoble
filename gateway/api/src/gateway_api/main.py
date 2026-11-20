@@ -49,6 +49,7 @@ from gateway_api.session_frame_consumer import SESSION_FRAMES, start_session_fra
 from gateway_api.upstream_errors import register_upstream_error_handlers
 from gateway_api.upstreams import UpstreamRegistry
 from runefoble_auth.authz_http import install_authz_error_handlers
+from runefoble_platform.client_address import parse_trusted_proxies
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.readiness import set_readiness_gate
 from runefoble_platform.telemetry import init_telemetry
@@ -58,7 +59,9 @@ from runefoble_platform.telemetry import init_telemetry
 async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Build the upstream clients and start the session frame consumer. Stop both at shutdown."""
     app.state.upstreams = UpstreamRegistry.from_settings(PlatformSettings())
-    app.state.account_invite_limits = build_account_invite_limits()
+    app.state.account_invite_limits = build_account_invite_limits(
+        parse_trusted_proxies(PlatformSettings().trusted_proxy_cidrs)
+    )
     set_readiness_gate(app, readiness_gate())
     try:
         async with event_bus_provider.lifespan(app):

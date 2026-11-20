@@ -177,9 +177,10 @@ A person whose account came from an invite link (section 4a) completes the join 
 ADR-0023 lets a person with no account join through an invite link. The person gives a display name and an email. Runefoble asks Zitadel to create the user with no password. Zitadel sends its own email. The person sets the password and verifies the address on the Zitadel page. Runefoble never receives the password.
 
 ```bash
-curl -X POST "http://localhost:8000/api/v1/campaigns/invites/dGVzdF9pbnZpdGVfdG9rZW4/accounts" \
+curl -X POST "http://localhost:8000/api/v1/campaigns/invites/accounts" \
   -H "Content-Type: application/json" \
   -d '{
+    "invite_token": "dGVzdF9pbnZpdGVfdG9rZW4",
     "email": "friend@example.com",
     "display_name": "Ada Lovelace"
   }'
@@ -208,7 +209,7 @@ Each refused case makes no call to Zitadel. A `503` records no invite use and cr
 
 After the person sets the password and signs in, the App Shell returns to the join link. The join route (section 4) completes the pending join. Until then the person has no campaign relation.
 
-The limits are 20 requests for each client address and 30 requests for each invite, in one hour. A refused request waits for the `Retry-After` time. The full rules are in [Identity and Token Contract](../reference/identity-and-token-contract.md#invite-account-route-adr-0023).
+The token travels in the body, so access logs never record it. The limits are 20 requests for each client address and 30 requests for each invite, in one hour. Behind the ingress, the client address comes from `X-Forwarded-For` when the proxy is trusted (`ingress.trustedProxyCidrs`). A refused request waits for the `Retry-After` time. The full rules are in [Identity and Token Contract](../reference/identity-and-token-contract.md#invite-account-route-adr-0023).
 
 ---
 

@@ -143,6 +143,14 @@ class PlatformSettings(BaseSettings):
         validation_alias=AliasChoices("RUNEFOBLE_ZITADEL_SERVICE_TOKEN"),
         description="Zitadel service user token that creates accounts (Kubernetes Secret)",
     )
+    trusted_proxy_cidrs: str = Field(
+        default="",
+        validation_alias=AliasChoices("RUNEFOBLE_TRUSTED_PROXY_CIDRS"),
+        description=(
+            "Comma-separated CIDR networks of the proxies (for example Traefik) whose "
+            "X-Forwarded-For header the gateway trusts. Empty trusts no proxy."
+        ),
+    )
     zitadel_org_id: str | None = Field(
         default=None,
         validation_alias=AliasChoices("RUNEFOBLE_ZITADEL_ORG_ID"),

@@ -21,10 +21,12 @@ from gateway_api.dependencies import get_upstreams
 from gateway_api.models import CreateAccountRequest
 from gateway_api.proxy import decode_upstream_json
 from gateway_api.upstream_errors import UpstreamRejectedError
+from runefoble_platform.client_address import client_address
 from runefoble_platform.rate_limit import RateDecision
-from runefoble_platform.service_client import UpstreamFailureError, path
+from runefoble_platform.service_client import UpstreamFailureError
 
 SERVICE = "game_session"
+OWNER_PATH = "/api/v1/campaigns/invites/accounts"
 UPSTREAM_TIMEOUT_S = 5.0
 ACCOUNT_UNAVAILABLE_DETAIL = "Account creation is unavailable"
 
@@ -32,36 +34,31 @@ router = APIRouter(tags=["Campaigns & Sessions"])
 
 
 @router.post(
-    "/api/v1/campaigns/invites/{token}/accounts",
+    "/api/v1/campaigns/invites/accounts",
     status_code=status.HTTP_202_ACCEPTED,
 )
-async def create_account_from_invite(
-    token: str, req: CreateAccountRequest, request: Request
-) -> Any:
+async def create_account_from_invite(req: CreateAccountRequest, request: Request) -> Any:
     """Create a player account through a campaign invite. Zitadel emails the person.
 
+    The invite token travels in the body, never in the path, so access logs do not record it.
     Returns 202 with the same body for a new and an existing email. Requires no bearer token.
     """
     limits: AccountInviteLimits = request.app.state.account_invite_limits
-    address = request.client.host if request.client else "unknown"
+    peer = request.client.host if request.client else None
+    address = client_address(peer, request.headers.get("x-forwarded-for"), limits.trusted_proxies)
     decisions = (
         limits.client.hit(client_limit_key(address)),
-        limits.invite.hit(invite_limit_key(token)),
+        limits.invite.hit(invite_limit_key(req.invite_token)),
     )
     refused = [decision for decision in decisions if not decision.allowed]
     if refused:
         return _too_many_requests(refused)
 
-    try:
-        owner_path = path("api", "v1", "campaigns", "invites", token, "accounts")
-    except ValueError:
-        return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content={"detail": "Not Found"})
-
     client = get_upstreams(request).client(SERVICE)
     try:
         reply = await client.send(
             "POST",
-            owner_path,
+            OWNER_PATH,
             authorization=None,
             json=req.model_dump(),
             timeout_s=UPSTREAM_TIMEOUT_S,
@@ -75,7 +72,7 @@ async def create_account_from_invite(
         raise
     if reply.status_code >= status.HTTP_400_BAD_REQUEST:
         raise UpstreamRejectedError(SERVICE, reply)
-    return decode_upstream_json(SERVICE, "POST", owner_path, reply.body)
+    return decode_upstream_json(SERVICE, "POST", OWNER_PATH, reply.body)
 
 
 def _too_many_requests(refused: list[RateDecision]) -> JSONResponse:

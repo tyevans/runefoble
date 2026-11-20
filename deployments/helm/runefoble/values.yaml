@@ -32,6 +32,11 @@ credentials:
 ingress:
   enabled: true
   className: traefik
+  # CIDR networks of the ingress proxies. The gateway reads X-Forwarded-For only from a peer in
+  # these networks, and it then counts the rightmost address that is not a proxy (ADR-0023 d).
+  # The default is the Kind pod network (kindnet), where Traefik runs. A hosted profile sets the
+  # pod CIDR of its ingress controller. An empty value trusts no proxy.
+  trustedProxyCidrs: "10.244.0.0/16"
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web
   hosts:
@@ -311,6 +316,8 @@ services:
     replicas: 1
     port: 8000
     serviceCredential: true
+    # Reads ingress.trustedProxyCidrs for the client address of the rate limits (ADR-0023 d).
+    trustedProxy: true
     # /readyz (the default) waits for SpiceDB and Redis (TASK-0930).
   theWatcher:
     swaggerName: "The Watcher AI Engine"
