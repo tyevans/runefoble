@@ -143,14 +143,14 @@ if (v === 'characters') {
 
 During session staging and active virtual tabletop play, the App Shell dynamically resolves and binds the player's active character:
 
-1. **Lobby Roster Population**: `appDataService.fetchLobbyState(campaignId, sessionId)` queries the user's real character roster and prioritizes characters assigned to the active campaign.
-2. **Lobby Selection Sync**: When a player selects a character in `<runefoble-session-lobby>`, the component emits `@select-character` (and `@character-selected`), storing the selection in App Shell `activeCharacter` state and updating participant cards.
-3. **Session Transition & Character Resolution**: When launching or entering `session-active` (`#/campaigns/:id/sessions/:sessionId`), `resolveActiveCharacter(campaignId)` preserves any character chosen during lobby staging. If no selection was made, it selects:
-   - The first character assigned to the specified `campaignId`.
-   - The user's first available character in their roster.
-   - When the roster is empty, `resolveActiveCharacter` returns `null`. The session view shows an empty state that asks the user to choose a character in the lobby. No placeholder character is created (TASK-0642).
+1. **Lobby Roster Population**: `appDataService.fetchLobbyState(campaignId, sessionId)` queries the user's real character roster and prioritizes characters assigned to the active campaign. Each character carries its owner (`ownerId`, mapped from `owner_id`). A character without an owner fails the read.
+2. **Lobby Selection Sync**: When a player selects a character in `<runefoble-session-lobby>`, the component emits `@select-character` (and `@character-selected`). The App Shell stores the selection in `activeCharacter` only when the caller owns the character. A pick of another player's character updates the lobby seat only (TASK-0972).
+3. **Session Transition & Character Resolution**: When launching or entering `session-active` (`#/campaigns/:id/sessions/:sessionId`), `resolveActiveCharacter(campaignId)` binds the caller own character in the campaign (`pickActiveCharacter`, `frontend/src/app/active-character.ts`). The rules are:
+   - The caller seat wins when the caller owns the seated character in the campaign.
+   - Otherwise the caller first owned character in the campaign is bound.
+   - The App Shell never binds another player's character. With no owned character in the campaign, the binding is `null`. The session view shows an empty state that asks the user to choose a character in the lobby. No placeholder character is created (TASK-0642, TASK-0972).
 4. **VTT Character Card Binding**: The `<runefoble-character-card>` dynamically receives `.characterName`, `.characterClass`, `.level`, `.currentHp`, `.maxHp`, `.armorClass`, and `.portraitUrl`.
-5. **DM Party Inspector & Switcher**: When the campaign capabilities report `run_session`, a high-contrast inspection banner and `<select class="dm-character-switcher">` allow the Dungeon Master to inspect and switch active character cards across the entire party.
+5. **DM Party Inspector & Switcher**: When the campaign capabilities report `run_session`, a high-contrast inspection banner and `<select class="dm-character-switcher">` allow the Dungeon Master to inspect and switch active character cards across the entire party. `switchDmCharacter` checks the same `run_session` capability. Without it, the switch does nothing.
 
 ## 7. Auditing View Wiring and Regression Verification
 

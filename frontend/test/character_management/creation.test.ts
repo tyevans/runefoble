@@ -25,7 +25,7 @@ describe('Character Creation & Data Mutations (TASK-0288, PRD-0006)', () => {
     gateway = installFakeGateway({
       'POST /api/v1/characters': (req) => {
         const body = req.body as any;
-        const created = { id: 'char-seoni', name: body.name, characterClass: body.characterClass, level: body.level, currentHp: body.maxHp, maxHp: body.maxHp, armorClass: body.armorClass, campaignId: null };
+        const created = { id: 'char-seoni', name: body.name, characterClass: body.characterClass, level: body.level, currentHp: body.maxHp, maxHp: body.maxHp, armorClass: body.armorClass, campaignId: null, owner_id: 'user-signed-in' };
         roster.push(created as CharacterItem);
         return { status: 201, body: created };
       },

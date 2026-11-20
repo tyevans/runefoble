@@ -38,7 +38,7 @@ describe('opening the stance drawer reads the real stand-in state', () => {
 
   it('takes the stand-in flag from the character and the stance from the stored policy', async () => {
     gateway = installFakeGateway({
-      'GET /api/v1/characters/char-7': { body: { id: 'char-7', name: 'Seoni', isAiStandIn: true } },
+      'GET /api/v1/characters/char-7': { body: { id: 'char-7', name: 'Seoni', isAiStandIn: true, owner_id: 'user-seoni' } },
       'GET /api/v1/characters/char-7/guardrails': { body: { stance: 'cautious' } },
     });
     const host = makeHost();
@@ -53,7 +53,7 @@ describe('opening the stance drawer reads the real stand-in state', () => {
 
   it('shows no stance when the player has not chosen one', async () => {
     gateway = installFakeGateway({
-      'GET /api/v1/characters/char-7': { body: { id: 'char-7', isAiStandIn: true } },
+      'GET /api/v1/characters/char-7': { body: { id: 'char-7', isAiStandIn: true, owner_id: 'user-seoni' } },
       'GET /api/v1/characters/char-7/guardrails': { body: { stance: null } },
     });
     const host = makeHost();

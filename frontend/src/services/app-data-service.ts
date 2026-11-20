@@ -7,6 +7,7 @@ import type { CampaignSessionItem } from '../components/runefoble-session-list.t
 import { authService, type UserClaims } from '../auth/auth-service.ts';
 import { toWatcherFeedEvent, type SessionChronicleEntry } from './session-chronicle.ts';
 import { resolveLobbyAvailableCharacters } from './lobby-character-options.ts';
+import { characterFromWire, charactersFromWire } from './character-wire-mapper.ts';
 import type { CampaignCapabilities } from './campaign-capabilities.ts';
 import { dataFailure, dataOk, isNotFound, type DataResult } from './data-result.ts';
 import type { SessionBoard } from './session-board.ts';
@@ -141,9 +142,15 @@ export class AppDataService {
     }, SESSION_REQUIRED_FIELDS);
   }
 
-  async fetchCharacters(): Promise<DataResult<CharacterItem[]>> { return this.request<CharacterItem[]>(`${this.apiBase}/characters`); }
+  async fetchCharacters(): Promise<DataResult<CharacterItem[]>> {
+    const res = await this.request<unknown>(`${this.apiBase}/characters`);
+    return res.ok ? charactersFromWire(res.data) : res;
+  }
 
-  async fetchCharacter(characterId: string): Promise<DataResult<any>> { return this.request<any>(`${this.apiBase}/characters/${characterId}`); }
+  async fetchCharacter(characterId: string): Promise<DataResult<any>> {
+    const res = await this.request<any>(`${this.apiBase}/characters/${characterId}`);
+    return res.ok ? characterFromWire(res.data) : res;
+  }
 
   async modifyCharacterHealth(characterId: string, delta: number, source = 'damage'): Promise<DataResult<any>> {
     return mutateCharacterHealth(this, characterId, delta, source);
@@ -167,7 +174,8 @@ export class AppDataService {
   }
 
   async createCharacter(payload: CreateCharacterPayload): Promise<DataResult<CharacterItem>> {
-    return this.request<CharacterItem>(`${this.apiBase}/characters`, { method: 'POST', body: JSON.stringify(payload) });
+    const res = await this.request<unknown>(`${this.apiBase}/characters`, { method: 'POST', body: JSON.stringify(payload) });
+    return res.ok ? characterFromWire(res.data) : res;
   }
 
   async assignCharacterCampaign(characterId: string, campaignId: string | null): Promise<DataResult<void>> {

@@ -81,7 +81,7 @@ export function renderSessionActive(app: RunefobleApp) {
       ${char ? html`<runefoble-character-card .characterName=${char.name} .characterClass=${`${char.characterClass}${char.level ? ` Lvl ${char.level}` : ''}`} .level=${char.level} .currentHp=${char.currentHp} .maxHp=${char.maxHp} .armorClass=${char.armorClass} .portraitUrl=${char.portraitUrl || ''} .isAiStandIn=${Boolean(char.isAiStandIn)}></runefoble-character-card>
       ${char.isAiStandIn ? html`<button class="btn-toggle-directive" @click=${() => openAbsenteeDrawer(app)}>📋 Stance Directives</button>` : ''}` : html`<div class="empty-state" data-testid="active-character-empty"><p>No character is bound to this session. Choose a character in the session lobby.</p></div>`}
       <runefoble-plugin-slot slot-id="sidebar-tool" .showFallback=${false}></runefoble-plugin-slot>
-      <runefoble-plugin-slot slot-id="dice-panel" .showFallback=${false} .pluginProps=${{ 'default-dice-roller': { sessionId: app.sessionId, rollerName: char?.name ?? '' } }}></runefoble-plugin-slot>
+      <runefoble-plugin-slot slot-id="dice-panel" .showFallback=${false} .pluginProps=${guard([app.sessionId, char?.name ?? ''], () => ({ 'default-dice-roller': { sessionId: app.sessionId, rollerName: char?.name ?? '' } }))}></runefoble-plugin-slot>
     </div>
     <runefoble-watcher-feed .events=${app.events}></runefoble-watcher-feed>
   </div>

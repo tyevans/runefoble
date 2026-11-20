@@ -111,7 +111,7 @@ describe('AppDataService success path through the gateway', () => {
 
   it('creates, assigns, and deletes a character against the gateway', async () => {
     const roster = [...FALLBACK_CHARACTERS];
-    const created = { id: 'char-new', name: 'Harsk the Ranger', characterClass: 'Ranger', level: 3, maxHp: 28, currentHp: 28, armorClass: 15, speed: 30, campaignId: null, campaignTitle: null };
+    const created = { id: 'char-new', name: 'Harsk the Ranger', characterClass: 'Ranger', level: 3, maxHp: 28, currentHp: 28, armorClass: 15, speed: 30, campaignId: null, campaignTitle: null, ownerId: 'user-fixture' };
     gateway = installFakeGateway({
       'POST /api/v1/characters': { status: 201, body: created },
       'GET /api/v1/characters': () => ({ body: roster }),
