@@ -9,6 +9,7 @@ import type { RunefobleApp } from '../runefoble-app.ts';
 import { toWatcherFeedEvent, type SessionChronicleEntry } from '../services/session-chronicle.ts';
 import { dispatchSessionMessage } from '../vtt-mesh-handlers.ts';
 import { handleBoardReady } from './board-setup-actions.ts';
+import { isLobbyRoute, reloadLobbyRoster } from './lobby-roster.ts';
 
 function clockTime(): string {
   return new Date().toLocaleTimeString();
@@ -77,6 +78,14 @@ function appendDiceRoll(host: RunefobleApp, msg: { rollerName?: unknown; formula
   });
 }
 
+/**
+ * A seat frame on the lobby route reads the roster again. The frame patch shows the change at
+ * once. The read adds a seat that the page did not have yet when the frame came.
+ */
+function rereadLobbyRoster(host: RunefobleApp): void {
+  if (isLobbyRoute(host.currentRoute?.pattern) && host.sessionId) void reloadLobbyRoster(host, host.sessionId);
+}
+
 /** Routes one parsed session message to the matching state update or VTT handler. */
 export function handleSessionMessage(host: RunefobleApp, msg: any): void {
   if (msg.type === 'speech_action') {
@@ -91,9 +100,11 @@ export function handleSessionMessage(host: RunefobleApp, msg: any): void {
     dispatchSessionMessage(msg);
   } else if (msg.type === 'player_readiness') {
     host.lobbyParticipants = host.lobbyParticipants.map((p) => (p.userId === msg.userId ? { ...p, isReady: msg.isReady } : p));
+    rereadLobbyRoster(host);
   } else if (msg.type === 'player_stand_in') {
     host.lobbyParticipants = host.lobbyParticipants.map((p) => (p.userId === msg.userId ? { ...p, isAbsent: msg.isAbsent } : p));
     host.sessionParticipants = host.sessionParticipants.map((p) => (p.userId === msg.userId ? { ...p, isStandInActive: msg.isAbsent === true } : p));
+    rereadLobbyRoster(host);
   } else if (msg.type === 'board_ready') {
     handleBoardReady(host, msg);
   } else {

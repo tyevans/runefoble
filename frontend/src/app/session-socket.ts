@@ -14,6 +14,7 @@ import { wsProtocols } from '../auth/transport.ts';
 import { router, type MatchedRoute } from '../router/index.ts';
 import type { RunefobleApp } from '../runefoble-app.ts';
 import { applySessionEndedFrame, handleSessionMessage, sessionStartedRoute } from './session-messages.ts';
+import { isLobbyRoute, reloadLobbyRoster } from './lobby-roster.ts';
 
 const RECONNECT_DELAY_MS = 4000;
 /** Close code the gateway sends when it refuses the WebSocket handshake (ADR-0015 c). */
@@ -63,6 +64,8 @@ export class SessionSocket {
       this.socket = new WebSocket(sessionSocketUrl(sessionId), protocols);
       this.socket.onopen = () => {
         this.host.socketConnected = true;
+        // A seat change between the first roster read and the subscription sent no frame here.
+        if (isLobbyRoute(router.getCurrentRoute()?.pattern)) void reloadLobbyRoster(this.host, sessionId);
       };
       this.socket.onmessage = (e) => this.handleMessage(e.data);
       this.socket.onclose = (event) => {

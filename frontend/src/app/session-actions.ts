@@ -11,6 +11,7 @@ import { router } from '../router/index.ts';
 import type { RunefobleApp } from '../runefoble-app.ts';
 import { markSessionEnded } from './session-messages.ts';
 import { openAbsenteeDrawer } from './absentee-actions.ts';
+import { reloadLobbyRoster } from './lobby-roster.ts';
 
 /**
  * Starts the session through the gateway start route, then opens the live tabletop (TASK-0910).
@@ -61,17 +62,6 @@ function rerenderRoster(host: RunefobleApp): void {
   host.lobbyParticipants = [...host.lobbyParticipants];
 }
 
-/** Reads the roster again from the owner. The stored readiness and presence replace the page state. */
-async function reloadRoster(host: RunefobleApp, sId: string): Promise<void> {
-  const lobby = await appDataService.fetchLobbyState(host.campaignId, sId);
-  if (!lobby.ok) {
-    host.showToast(`The roster did not load: ${lobby.message}`);
-    return;
-  }
-  host.lobbyParticipants = lobby.data.participants;
-  host.lobbyAvailableCharacters = lobby.data.availableCharacters;
-}
-
 /**
  * Saves the caller's readiness through the gateway route (TASK-0952). The owner stores it, and
  * the roster is read again. A refusal shows the owner's message and restores the checkbox.
@@ -89,7 +79,7 @@ export async function toggleReadiness(host: RunefobleApp, e: CustomEvent<ToggleR
     rerenderRoster(host);
     return;
   }
-  await reloadRoster(host, sId);
+  await reloadLobbyRoster(host, sId);
 }
 
 /**
@@ -113,7 +103,7 @@ export async function toggleStandIn(host: RunefobleApp, e: CustomEvent<ToggleSta
     rerenderRoster(host);
     return;
   }
-  await reloadRoster(host, sId);
+  await reloadLobbyRoster(host, sId);
   // A player who left the lobby during the save does not get the drawer in the next view.
   if (isAbsent && userId === host.currentUserId && host.currentRoute === startRoute) {
     await openAbsenteeDrawer(host);
