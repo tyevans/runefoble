@@ -20,10 +20,32 @@ from typing import Any
 from runefoble_auth.zitadel import issuer_host_headers
 
 MANAGEMENT_PREFIX = "/management/v1"
+ADMIN_PREFIX = "/admin/v1"
 REQUEST_TIMEOUT_SECONDS = 10
 READY_PATH = "/debug/healthz"
 READY_POLL_SECONDS = 5
 EQUALS = "TEXT_QUERY_METHOD_EQUALS"
+# Every field of the default login policy. The update replaces all of them, so the Job sends each
+# one back with the value that it read. A field that Zitadel omits is false or unset.
+LOGIN_POLICY_FIELDS = (
+    "allowUsernamePassword",
+    "allowRegister",
+    "allowExternalIdp",
+    "forceMfa",
+    "passwordlessType",
+    "hidePasswordReset",
+    "ignoreUnknownUsernames",
+    "defaultRedirectUri",
+    "passwordCheckLifetime",
+    "externalLoginCheckLifetime",
+    "mfaInitSkipLifetime",
+    "secondFactorCheckLifetime",
+    "multiFactorCheckLifetime",
+    "allowDomainDiscovery",
+    "disableLoginWithEmail",
+    "disableLoginWithPhone",
+    "forceMfaLocalOnly",
+)
 
 
 class ZitadelBootstrapError(RuntimeError):
@@ -78,6 +100,12 @@ class ZitadelManagement:
         raw = self._send(method, f"{MANAGEMENT_PREFIX}{path}", body, self._headers)
         return json.loads(raw) if raw.strip() else {}
 
+    def _admin_request(
+        self, method: str, path: str, body: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
+        raw = self._send(method, f"{ADMIN_PREFIX}{path}", body, self._headers)
+        return json.loads(raw) if raw.strip() else {}
+
     def _send(
         self,
         method: str,
@@ -125,6 +153,14 @@ class ZitadelManagement:
     def update_oidc_config(self, project_id: str, app_id: str, spec: ApplicationSpec) -> None:
         self._request("PUT", f"/projects/{project_id}/apps/{app_id}/oidc_config", _oidc_body(spec))
 
+    def get_default_login_policy(self) -> dict[str, Any]:
+        """The instance default login policy. It applies to every organization without its own."""
+        policy = self._admin_request("GET", "/policies/login").get("policy") or {}
+        return dict(policy)
+
+    def update_default_login_policy(self, policy: dict[str, Any]) -> None:
+        self._admin_request("PUT", "/policies/login", policy)
+
     def find_action(self, name: str) -> dict[str, Any] | None:
         query = {"queries": [{"actionNameQuery": {"name": name, "method": EQUALS}}]}
         matches = self._request("POST", "/actions/_search", query).get("result") or []
@@ -164,6 +200,22 @@ def provision(client: ZitadelManagement, spec: ApplicationSpec) -> Provisioned:
     if _drifted(config, spec):
         client.update_oidc_config(project_id, app_id, spec)
     return Provisioned(project_id=project_id, app_id=app_id, client_id=str(config["clientId"]))
+
+
+def close_self_registration(client: ZitadelManagement) -> bool:
+    """Turn off local self-registration in the default login policy (ADR-0023 (a)).
+
+    Returns True when the policy changed. Zitadel omits a false boolean, so an omitted
+    `allowRegister` counts as off. Federated sign-in and the other login settings keep their
+    values. A refused read or write raises, so the Job fails.
+    """
+    policy = client.get_default_login_policy()
+    if not policy.get("allowRegister", False):
+        return False
+    body = {field: policy[field] for field in LOGIN_POLICY_FIELDS if field in policy}
+    body["allowRegister"] = False
+    client.update_default_login_policy(body)
+    return True
 
 
 def _drifted(config: dict[str, Any], spec: ApplicationSpec) -> bool:
