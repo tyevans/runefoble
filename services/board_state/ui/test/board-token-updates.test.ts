@@ -101,6 +101,17 @@ describe('board token updates', () => {
     assert.deepEqual(host.tokens[2], { id: 'sarah', name: 'Sarah', x: 0, y: 1, hp: 12, visionRadius: 3, activeAction: null });
   });
 
+  it('token_placed keeps the character of a character token (TASK-0945)', () => {
+    const host = makeHost();
+
+    handleBoardSocketMessage(host, {
+      type: 'token_placed',
+      token: { token_id: 'sarah', name: 'Sarah', x: 0, y: 1, character_id: 'char-sarah' },
+    });
+
+    assert.equal(host.tokens[2].characterId, 'char-sarah');
+  });
+
   it('token_placed for a token the host shows replaces that token', () => {
     const host = makeHost();
 

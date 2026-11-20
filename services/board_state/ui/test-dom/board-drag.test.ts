@@ -124,3 +124,17 @@ describe('runefoble-board connected snapshot', () => {
     expect(cell(el, 1, 0).querySelector('.token[title^="Sarah of the Mists"]')).not.toBeNull();
   });
 });
+
+describe('runefoble-board tokens-changed (TASK-0945)', () => {
+  it('tells the host the shown tokens after a server move', async () => {
+    const el = await mount();
+    const shown: Array<Array<{ id: string; x: number; y: number }>> = [];
+    el.addEventListener('tokens-changed', (e) => shown.push((e as CustomEvent<{ tokens: Array<{ id: string; x: number; y: number }> }>).detail.tokens));
+
+    el.handleIncomingSocketMessage({ action: 'token_moved', token_id: 'tok-valeros', x: 3, y: 3 });
+    await el.updateComplete;
+
+    expect(shown).toHaveLength(1);
+    expect(shown[0].find((t) => t.id === 'tok-valeros')).toMatchObject({ x: 3, y: 3 });
+  });
+});

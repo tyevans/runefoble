@@ -1,6 +1,8 @@
 export interface BoardToken {
   id: string;
   name: string;
+  /** The character of a character token, from the board owner. Absent for a token without a character (TASK-0945). */
+  characterId?: string;
   x: number;
   y: number;
   avatarUrl?: string;

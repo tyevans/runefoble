@@ -49,6 +49,7 @@ export function boardTokenFromPlaced(token: any): BoardToken | null {
   const mapped: BoardToken = { id: token.token_id, name: token.name, x: token.x, y: token.y };
   if (typeof token.hp === 'number') mapped.hp = token.hp;
   if (typeof token.vision_radius === 'number') mapped.visionRadius = token.vision_radius;
+  if (typeof token.character_id === 'string' && token.character_id) mapped.characterId = token.character_id;
   if ('active_action' in token) mapped.activeAction = token.active_action ?? null;
   return mapped;
 }

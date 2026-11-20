@@ -127,7 +127,11 @@ export class RunefobleBoard extends LitElement {
     if (changedProperties.has('cols') || changedProperties.has('rows')) {
       this.resizeParticleCanvas(); this.resize3DCanvas();
     }
-    if (changedProperties.has('tokens') && this.visualizer3D) this.visualizer3D.updateTokens(this.tokens as any);
+    if (changedProperties.has('tokens')) {
+      this.visualizer3D?.updateTokens(this.tokens as any);
+      // The host reads the shown cells, for example the cell of the speaker's token (TASK-0945).
+      this.dispatchEvent(new CustomEvent('tokens-changed', { detail: { tokens: this.tokens }, bubbles: true, composed: true }));
+    }
     if (changedProperties.has('terrainCells') && this.visualizer3D) this.visualizer3D.updateTerrain(this.terrainCells as any);
   }
 
