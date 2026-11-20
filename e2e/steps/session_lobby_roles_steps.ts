@@ -11,6 +11,7 @@ import { expect, type Page } from '@playwright/test';
 import { Given, When, Then } from '../support/fixtures';
 import { openAndRecordCapabilities, recordedCapabilities } from '../support/campaign_capabilities';
 import { requireValue } from '../support/guards';
+import { joinCampaignThroughInviteLink } from '../support/invite_join';
 
 const LOBBY = 'runefoble-session-lobby';
 const LAUNCH_CONTROL = `${LOBBY} button.btn-launch`;
@@ -73,11 +74,9 @@ Given('the DM issues a player invite to the campaign', async ({ frontdoorApi, wo
   world.set(INVITE_KEY, requireValue(invite.token, 'The invite reply has no token.'));
 });
 
-Given('I redeem the campaign invite', async ({ frontdoorApi, world }) => {
+Given('I redeem the campaign invite', async ({ page, world }) => {
   const invite = requireValue(world.get<string>(INVITE_KEY), 'No invite. Run "the DM issues a player invite" first.');
-  const token = requireValue(world.currentUser?.token, 'No bearer token. Log in with a setup step first.');
-  const joined = await frontdoorApi.joinCampaign(invite, token);
-  expect(joined.role).toBe('player');
+  await joinCampaignThroughInviteLink(page, invite);
 });
 
 Given('I have a character named {string}', async ({ frontdoorApi, world }, name: string) => {

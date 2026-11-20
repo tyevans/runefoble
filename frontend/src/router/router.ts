@@ -25,8 +25,11 @@ interface RouteDefinition {
   regex: RegExp;
 }
 
+/** The invite link route (ADR-0023). The token is a route parameter, and the route never shows it in a label. */
+export const JOIN_ROUTE_PATTERN = '#/join/:token' as const;
+
 export const STANDARD_ROUTES = [
-  '#/login', '#/register', '#/campaigns', '#/campaigns/:campaignId',
+  '#/login', '#/register', JOIN_ROUTE_PATTERN, '#/campaigns', '#/campaigns/:campaignId',
   '#/campaigns/:campaignId/characters', '#/campaigns/:campaignId/codex',
   '#/campaigns/:campaignId/analytics', '#/campaigns/:campaignId/forge', '#/campaigns/:campaignId/rules',
   '#/campaigns/:campaignId/lobby/:sessionId',
@@ -174,6 +177,7 @@ export class Router {
     }
     if (pattern === '#/login') return [{ label: 'Login', path: '#/login', active: true }];
     if (pattern === '#/register') return [{ label: 'Register', path: '#/register', active: true }];
+    if (pattern === JOIN_ROUTE_PATTERN) return [{ label: 'Join Campaign', active: true }];
     const segments = path.replace(/^#?\/?/, '').split('/');
     return segments.map((seg, idx) => ({ label: seg.charAt(0).toUpperCase() + seg.slice(1), path: `#/${segments.slice(0, idx + 1).join('/')}`, active: idx === segments.length - 1 }));
   }

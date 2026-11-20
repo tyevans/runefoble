@@ -179,19 +179,6 @@ export class FrontdoorApi {
     return res.json();
   }
 
-  /** Redeems a campaign invite token for the caller through `POST /api/v1/campaigns/join`. */
-  async joinCampaign(inviteToken: string, token?: string): Promise<any> {
-    const res = await this.request.post(`${this.baseUrl}/api/v1/campaigns/join`, {
-      headers: { 'Content-Type': 'application/json', ...this.authHeaders(token) },
-      data: { invite_token: inviteToken },
-    });
-    if (!res.ok()) {
-      const errText = await res.text();
-      throw new Error(`Failed to redeem campaign invite: ${res.status()} ${res.statusText()} - ${errText}`);
-    }
-    return res.json();
-  }
-
   async listCampaignMembers(campaignId: string, token?: string): Promise<any[]> {
     const res = await this.request.get(`${this.baseUrl}/api/v1/campaigns/${campaignId}/members`, {
       headers: this.authHeaders(token),

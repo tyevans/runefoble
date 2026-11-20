@@ -97,3 +97,27 @@ export interface CreateInviteEventDetail {
   expiresInHours?: number;
   maxUses?: number;
 }
+
+/**
+ * The phases of the join view (ADR-0023, TASK-0950). The App Shell chooses the phase.
+ * A signed-out visitor sees the account phases. A signed-in person sees the join phases.
+ */
+export type CampaignJoinPhase =
+  | 'account-form'
+  | 'account-sending'
+  | 'account-accepted'
+  | 'account-refused'
+  | 'join-ready'
+  | 'joining'
+  | 'joined'
+  | 'join-refused';
+
+export interface CreateInviteAccountEventDetail {
+  inviteToken: string;
+  email: string;
+  displayName: string;
+}
+
+export interface JoinCampaignEventDetail {
+  inviteToken: string;
+}

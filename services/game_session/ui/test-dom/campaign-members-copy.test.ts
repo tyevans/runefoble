@@ -43,6 +43,19 @@ afterEach(() => {
 });
 
 describe('runefoble-campaign-members invite copy', () => {
+  it('shows no link field before the DM generates a link (no placeholder token)', async () => {
+    const el = document.createElement('runefoble-campaign-members') as Members;
+    el.setAttribute('campaign-id', 'camp-1');
+    el.toggleAttribute('can-manage', true);
+    document.body.append(el);
+    await el.updateComplete;
+    el.openInviteModal();
+    await el.updateComplete;
+
+    expect(el.shadowRoot?.querySelector('.invite-link-input')).toBeNull();
+    expect(text(el)).not.toContain('sample_token');
+  });
+
   it('shows "Copied" only after the clipboard accepts the link', async () => {
     const written: string[] = [];
     useClipboard(async (t) => { written.push(t); });

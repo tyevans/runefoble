@@ -38,6 +38,7 @@ import { installTitleResolvers } from './app/title-resolver.ts';
 import { pickActiveCharacter } from './app/active-character.ts';
 import type { BoardTarget } from './app/board-dm-controls.ts';
 import type { RunefobleHeader } from './components/runefoble-header.ts';
+import { IDLE_JOIN_STATE, type JoinViewState } from './app/campaign-join-actions.ts';
 
 @customElement('runefoble-app')
 export class RunefobleApp extends LitElement {
@@ -96,7 +97,8 @@ export class RunefobleApp extends LitElement {
   @state() public atmosphere: { location_name: string } = { location_name: '' };
   @state() public toastMessage: string | null = null;
   @state() public inviteUrl = '';
-  @state() public inviteToken = '';
+  /** The state of the join view for the open invite token (TASK-0950). */
+  @state() public joinState: JoinViewState = IDLE_JOIN_STATE;
   @state() public isAbsenteeDirectiveOpen = false;
   @state() public boardTarget: BoardTarget | null = null;
   @state() public isMapSwitcherOpen = false;

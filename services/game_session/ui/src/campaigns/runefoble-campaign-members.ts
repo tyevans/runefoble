@@ -39,23 +39,14 @@ export class RunefobleCampaignMembers extends LitElement {
   /** Server permission flag (`manage` on the campaign). Set by the App Shell from the capabilities route. */
   @property({ type: Boolean, attribute: 'can-manage' }) canManage = false;
   @property({ type: String, attribute: 'current-user-id' }) currentUserId = '';
+  /** The full invite URL from the App Shell, or an empty string before the DM generates a link (ADR-0015). */
   @property({ type: String, attribute: 'invite-url' }) inviteUrl = '';
-  @property({ type: String, attribute: 'invite-token' }) inviteToken = '';
 
   @state() private isInviteOpen = false;
   @state() private selectedInviteRole: 'player' | 'spectator' = 'player';
   @state() private memberToRemove: CampaignMember | null = null;
   /** The result of the last copy. It is `copied` only after the clipboard accepts the link. */
   @state() private copyState: 'idle' | 'copied' | 'failed' = 'idle';
-
-  get effectiveInviteUrl(): string {
-    if (this.inviteUrl) return this.inviteUrl;
-    const token = this.inviteToken || 'sample_token';
-    const origin = typeof window !== 'undefined' && window.location?.origin
-      ? window.location.origin
-      : 'https://runefoble.local';
-    return `${origin}/#/join/${token}`;
-  }
 
   private formatRole(role: string): string {
     const known = normalizeRole(role);
@@ -90,7 +81,7 @@ export class RunefobleCampaignMembers extends LitElement {
   }
 
   private async copyInviteLink(): Promise<void> {
-    const link = this.effectiveInviteUrl;
+    const link = this.inviteUrl;
     try {
       if (typeof navigator === 'undefined' || !navigator.clipboard?.writeText) throw new Error('Clipboard unavailable');
       await navigator.clipboard.writeText(link);
@@ -181,17 +172,19 @@ export class RunefobleCampaignMembers extends LitElement {
               <button class="btn-generate-link" @click=${this.handleGenerateInvite} type="button">Generate Link</button>
             </div>
           </div>
-          <div class="form-group">
-            <label class="form-label">Shareable Link</label>
-            <div class="invite-link-row">
-              <input type="text" class="form-input invite-link-input" readonly .value=${this.effectiveInviteUrl} />
-              <button class="btn-copy" @click=${this.copyInviteLink} type="button">
-                ${this.copyState === 'copied' ? 'Copied!' : 'Copy Link'}
-              </button>
+          ${this.inviteUrl ? html`
+            <div class="form-group">
+              <label class="form-label">Shareable Link</label>
+              <div class="invite-link-row">
+                <input type="text" class="form-input invite-link-input" readonly .value=${this.inviteUrl} />
+                <button class="btn-copy" @click=${this.copyInviteLink} type="button">
+                  ${this.copyState === 'copied' ? 'Copied!' : 'Copy Link'}
+                </button>
+              </div>
+              ${this.copyState === 'copied' ? html`<span class="copied-badge">✓ Copied to clipboard!</span>` : ''}
+              ${this.copyState === 'failed' ? html`<span class="copy-failed-badge" role="alert">Copy failed. Select the link and copy it.</span>` : ''}
             </div>
-            ${this.copyState === 'copied' ? html`<span class="copied-badge">✓ Copied to clipboard!</span>` : ''}
-            ${this.copyState === 'failed' ? html`<span class="copy-failed-badge" role="alert">Copy failed. Select the link and copy it.</span>` : ''}
-          </div>
+          ` : ''}
         </div>
       </div>
     `;
