@@ -20,6 +20,8 @@ class PlacedTokenState(BaseModel):
     active_hazard: str | None = None
     hazard_status: str | None = None
     active_action: str | None = None
+    # The character of a character token, so a client finds its own token (TASK-0945).
+    character_id: str | None = None
 
     @classmethod
     def from_placed_event(cls, event: Any, hazard: str | None = None) -> PlacedTokenState:
@@ -31,6 +33,7 @@ class PlacedTokenState(BaseModel):
             y=event.y,
             hp=event.hp,
             is_friendly=event.is_friendly,
+            character_id=event.character_id,
             active_hazard=hazard,
             hazard_status="active" if hazard else None,
         )
