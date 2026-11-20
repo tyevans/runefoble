@@ -1,4 +1,13 @@
 {{- if .Values.ingress.enabled -}}
+{{- include "runefoble.ingress.validateTls" . -}}
+{{- $mode := include "runefoble.ingress.tlsMode" . -}}
+{{- $annotations := deepCopy (.Values.ingress.annotations | default dict) -}}
+{{- if ne $mode "none" -}}
+{{- $_ := set $annotations "traefik.ingress.kubernetes.io/router.entrypoints" "websecure" -}}
+{{- end -}}
+{{- if eq $mode "certManager" -}}
+{{- $_ := set $annotations "cert-manager.io/cluster-issuer" (include "runefoble.ingress.clusterIssuer" .) -}}
+{{- end -}}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -7,11 +16,19 @@ metadata:
     app.kubernetes.io/name: {{ .Chart.Name }}
     app.kubernetes.io/instance: {{ .Release.Name }}
   annotations:
-    {{- range $key, $value := .Values.ingress.annotations }}
+    {{- range $key, $value := $annotations }}
     {{ $key }}: {{ $value | quote }}
     {{- end }}
 spec:
   ingressClassName: {{ .Values.ingress.className | default "traefik" }}
+  {{- if ne $mode "none" }}
+  tls:
+    - hosts:
+      {{- range .Values.ingress.hosts }}
+        - {{ .host | quote }}
+      {{- end }}
+      secretName: {{ include "runefoble.ingress.tlsSecretName" . }}
+  {{- end }}
   rules:
   {{- range .Values.ingress.hosts }}
     - host: {{ .host }}

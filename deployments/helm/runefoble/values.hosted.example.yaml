@@ -13,6 +13,14 @@ credentials:
   existingSecret: runefoble-hosted-credentials
 
 ingress:
+  # Serve HTTPS only. Plain HTTP answers 301 to HTTPS. The guard rejects false.
+  httpsRedirect: true
+  tls:
+    # certManager: name of a ClusterIssuer that you install (ACME or a private CA).
+    # existingSecret: name of a kubernetes.io/tls Secret that you create. Set one source only.
+    mode: certManager
+    clusterIssuer: REPLACE-ME
+    secretName: ""
   hosts:
     - host: REPLACE-ME
       paths:
