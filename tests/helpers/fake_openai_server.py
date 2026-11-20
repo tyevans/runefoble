@@ -27,6 +27,7 @@ class FakeOpenAI:
 
     Set `raw_body` to send those exact bytes with status 200 instead of a chat completion.
     Set `delay_s` to hold each reply for that many seconds, so a test can model a slow model.
+    Set `finish_reason` to "length" to model a reply that the token limit cut off.
     """
 
     base_url: str = ""
@@ -34,6 +35,7 @@ class FakeOpenAI:
     content: str = "{}"
     raw_body: bytes | None = None
     delay_s: float = 0.0
+    finish_reason: str = "stop"
     requests: list[dict[str, Any]] = field(default_factory=list)
 
     def settings(self, **overrides: Any) -> WorkerSettings:
@@ -76,7 +78,7 @@ class _Handler(BaseHTTPRequestHandler):
         if state.raw_body is not None:
             self._send_bytes(200, state.raw_body)
             return
-        self._send(200, _chat_completion(state.content, body.get("model", "")))
+        self._send(200, _chat_completion(state.content, body.get("model", ""), state.finish_reason))
 
     def _send(self, status: int, document: dict[str, Any]) -> None:
         self._send_bytes(status, json.dumps(document).encode())
@@ -92,7 +94,7 @@ class _Handler(BaseHTTPRequestHandler):
         return
 
 
-def _chat_completion(content: str, model: str) -> dict[str, Any]:
+def _chat_completion(content: str, model: str, finish_reason: str) -> dict[str, Any]:
     return {
         "id": "fake-1",
         "object": "chat.completion",
@@ -102,7 +104,7 @@ def _chat_completion(content: str, model: str) -> dict[str, Any]:
             {
                 "index": 0,
                 "message": {"role": "assistant", "content": content},
-                "finish_reason": "stop",
+                "finish_reason": finish_reason,
             }
         ],
         "usage": {"prompt_tokens": 1, "completion_tokens": 1, "total_tokens": 2},

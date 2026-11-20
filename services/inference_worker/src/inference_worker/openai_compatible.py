@@ -65,6 +65,10 @@ class OpenAICompatibleLLM(LLMPort):
             )
         except BACKEND_ERRORS as e:
             raise backend_unavailable(self.engine_name, str(e)) from e
+        if response.response_metadata.get("finish_reason") == "length":
+            raise backend_unavailable(
+                self.engine_name, "model output stopped at the token limit (max_tokens)"
+            )
         if not isinstance(response.content, str):
             raise backend_unavailable(self.engine_name, "model returned non-text content")
         return Completion(content=response.content, backend=self.engine_name)

@@ -59,6 +59,13 @@ A route also returns 503 when the model output has no usable JSON, or when the o
 
 The worker checks each field with `require_field` (`inference_worker/model_output.py`). It never fills a missing field with a default or a keyword rule.
 
+Two more model output failures return 503:
+
+- The model server reports `finish_reason: "length"`. The token limit (`RUNEFOBLE_WORKER_MAX_TOKENS`) cut off the answer, so the worker does not use it, even when its text parses. The narration prompt asks for at most 60 words, so that a full answer fits the default limit of 512 tokens.
+- An intent field has the wrong type, for example `"dice_check_required": false` where the contract has a string or `null`. `validate_fields` checks the types. It never converts a wrong value.
+
+The worker logs each 503 at level `WARNING` with the reason (logger `inference_worker.api`), because the body has no reason.
+
 ## Backend Selection
 
 Set the backend with `RUNEFOBLE_WORKER_BACKEND`. The worker reads the value once, in the app lifespan, and builds one engine port from it (`docs/how-to/add-an-engine-port-adapter.md`):

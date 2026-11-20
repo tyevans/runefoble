@@ -5,10 +5,21 @@ import re
 from typing import Any, TypedDict
 
 from langgraph.graph import END, START, StateGraph
+from pydantic import BaseModel
 
-from inference_worker.model_output import parse_json_object, require_field
+from inference_worker.model_output import parse_json_object, require_field, validate_fields
 from inference_worker.models import ParsedAction, ResponseSource
 from inference_worker.ports import LLMPort
+
+
+class ModelIntentFields(BaseModel):
+    """The fields that the model writes. Their types must match before the graph uses them."""
+
+    action_type: str
+    target_name: str | None = None
+    spell_or_ability: str | None = None
+    dice_check_required: str | None = None
+    narrative_flavor: str = ""
 
 
 class IntentGraphState(TypedDict, total=False):
@@ -47,8 +58,9 @@ async def extract_candidate_action_node(
 
     system_prompt = (
         "You are Runefoble's The Watcher Speech Parser. Convert player tabletop RPG declarations "
-        "into structured JSON actions with fields: action_type, target_name, spell_or_ability, "
-        "dice_check_required, narrative_flavor.\n"
+        "into one JSON object with these fields: action_type (string), target_name (string or "
+        "null), spell_or_ability (string or null), dice_check_required (a dice expression such as "
+        "'1d20+5' or 'DC 14 Dexterity save' as a string, or null), narrative_flavor (string).\n"
         "action_type must be one of: attack, cast_spell, move, dash, dodge, help, skill_check, dialogue, unknown."
     )
     user_prompt = (
@@ -62,6 +74,7 @@ async def extract_candidate_action_node(
     completion = await llm_port.complete(system_prompt, user_prompt)
     extracted = parse_json_object(completion.content)
     require_field(extracted, "action_type", completion.backend)
+    validate_fields(extracted, ModelIntentFields, completion.backend)
     return {"raw_intent": extracted, "source": "llm"}
 
 

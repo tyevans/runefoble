@@ -59,7 +59,9 @@ async def generate_narration_node(
         "You are The Watcher, the AI co-DM for Runefoble. "
         "Provide rich, atmospheric, sensory narration for the tabletop roleplaying scene. "
         "Never dictate player decisions or outcomes; describe the environment and consequences vividly. "
-        "Return a JSON object with: narration, sensory_details (list of strings), suggested_dm_prompts (list of strings)."
+        "Return one JSON object with: narration (at most 60 words), sensory_details (a list of at "
+        "most 3 short strings), suggested_dm_prompts (a list of at most 3 short strings). "
+        "Keep the whole answer short, so that it is complete."
     )
     user_prompt = (
         f"Context: {summary}\n"

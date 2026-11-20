@@ -1,5 +1,6 @@
 """FastAPI application for Runefoble AI Inference Worker."""
 
+import logging
 import time
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
@@ -24,6 +25,8 @@ from inference_worker.models import (
     StandInActionResponse,
 )
 from inference_worker.ports import LLMPort
+
+logger = logging.getLogger(__name__)
 
 # Global runtime state. The lifespan selects the LLM port once and builds the graphs for it.
 settings = WorkerSettings.from_environment()
@@ -80,8 +83,10 @@ async def backend_unavailable_handler(
 ) -> JSONResponse:
     """Report a failed model engine as an explicit 503. Never return substitute output.
 
-    The worker keeps its published flat body. See the response contract reference.
+    The worker keeps its published flat body. See the response contract reference. The log
+    line has the reason, because the body does not.
     """
+    logger.warning("Engine %s unavailable: %s", exc.engine, exc)
     return JSONResponse(
         status_code=503,
         content={"error": exc.error_code, "backend": exc.engine},
