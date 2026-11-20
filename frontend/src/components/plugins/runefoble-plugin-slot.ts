@@ -10,6 +10,12 @@ import { customElement, property, state } from 'lit/decorators.js';
 import { pluginRegistry, type PluginDefinition, type PluginRegistryEvent, type SlotIdentifier } from './plugin_registry.ts';
 import { sandboxStyles, instantiatePluginElement } from './plugin_sandbox.ts';
 
+/** Sets each value of one plugin's props on its mounted element. */
+function applyPluginProps(el: Element, props: Record<string, unknown> | undefined): void {
+  if (!props) return;
+  for (const [key, val] of Object.entries(props)) (el as unknown as Record<string, unknown>)[key] = val;
+}
+
 @customElement('runefoble-plugin-slot')
 export class RunefoblePluginSlot extends LitElement {
   // Target slots: 'hud-widget', 'dice-panel', 'sidebar-tool'
@@ -22,6 +28,11 @@ export class RunefoblePluginSlot extends LitElement {
   @property({ type: String }) orientation: 'vertical' | 'horizontal' = 'vertical';
   @property({ type: Boolean, attribute: 'show-fallback' }) showFallback = true;
   @property({ type: String, attribute: 'fallback-text' }) fallbackText = '';
+  /**
+   * Properties for each mounted plugin, keyed by plugin id. The slot sets them on the plugin
+   * element when it mounts and on every later render, so a new value reaches a mounted plugin.
+   */
+  @property({ attribute: false }) pluginProps: Record<string, Record<string, unknown>> = {};
 
   @state() private activePlugins: PluginDefinition[] = [];
   private unsubscribe: (() => void) | null = null;
@@ -80,7 +91,8 @@ export class RunefoblePluginSlot extends LitElement {
   private mountPlugins() {
     for (const p of this.activePlugins) {
       const container = this.shadowRoot?.querySelector<HTMLElement>(`#plugin-host-${p.id}`);
-      if (container && container.children.length === 0) {
+      if (!container) continue;
+      if (container.children.length === 0) {
         const el = instantiatePluginElement(p, (err) => {
           this.dispatchEvent(new CustomEvent('plugin-error', { detail: { pluginId: p.id, error: err.message }, bubbles: true }));
         });
@@ -89,6 +101,8 @@ export class RunefoblePluginSlot extends LitElement {
           this.dispatchEvent(new CustomEvent('plugin-mounted', { detail: { pluginId: p.id, slot: this.slotName }, bubbles: true }));
         }
       }
+      const mounted = container.firstElementChild;
+      if (mounted) applyPluginProps(mounted, this.pluginProps[p.id]);
     }
   }
 

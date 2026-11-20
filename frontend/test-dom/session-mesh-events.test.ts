@@ -12,13 +12,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import '@runefoble/board-state-ui/runefoble-board';
 import '@runefoble/board-state-ui/runefoble-dice-tray-3d';
-import '@runefoble/game-session-ui/runefoble-dice-roller';
 import '@runefoble/game-session-ui/runefoble-initiative-tracker';
 import '@runefoble/the-watcher-ui/runefoble-dm-whisper-bar';
 import { handleSessionMessage } from '../src/app/session-messages.ts';
 import type { RunefobleApp } from '../src/runefoble-app.ts';
 
-const HOST = {} as RunefobleApp;
+const HOST = { events: [] } as unknown as RunefobleApp;
 
 async function mount<T extends HTMLElement>(tag: string, props: Record<string, unknown> = {}): Promise<T> {
   const el = document.createElement(tag) as T & { updateComplete?: Promise<boolean> };
@@ -34,22 +33,17 @@ afterEach(() => {
 });
 
 describe('dice_rolled session message', () => {
-  it('sets the forced result on a mounted dice roller', async () => {
-    const roller = await mount<HTMLElement & { forcedResult: unknown }>('runefoble-dice-roller');
-    const result = { formula: '1d20', count: 1, sides: 20, modifier: 0, rolls: [17], keptRolls: [17], total: 17 };
+  it('adds one chronicle row for each roll, with the roller and the server total', () => {
+    const host = { events: [] } as unknown as RunefobleApp;
 
-    handleSessionMessage(HOST, { type: 'dice_rolled', result });
+    handleSessionMessage(host, { type: 'dice_rolled', rollerName: 'Sarah of the Mists', formula: '1d20', total: 14, rolls: [14] });
+    handleSessionMessage(host, { type: 'dice_rolled', rollerName: 'Sarah of the Mists', formula: '1d20', total: 3, rolls: [3] });
 
-    expect(roller.forcedResult).toEqual(result);
-  });
-
-  it('stops reacting after the roller leaves the page', async () => {
-    const roller = await mount<HTMLElement & { forcedResult: unknown }>('runefoble-dice-roller');
-    roller.remove();
-
-    handleSessionMessage(HOST, { type: 'dice_rolled', result: { formula: '1d20', count: 1, sides: 20, modifier: 0, rolls: [3], keptRolls: [3], total: 3 } });
-
-    expect(roller.forcedResult).toBeNull();
+    const rows = (host as unknown as { events: Array<{ speaker: string; text: string; actionType: string }> }).events;
+    expect(rows.map((row) => [row.speaker, row.text, row.actionType])).toEqual([
+      ['Sarah of the Mists', '1d20 = 14', 'dice_roll'],
+      ['Sarah of the Mists', '1d20 = 3', 'dice_roll'],
+    ]);
   });
 
   it('rolls a mounted 3D dice tray', async () => {

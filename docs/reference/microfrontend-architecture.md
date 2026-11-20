@@ -115,7 +115,7 @@ The gateway refuses `dice_rolled`, `turn_advanced` and `dm_whisper` from clients
 
 | Session message `type` | Window event | Detail | Subscribers |
 |---|---|---|---|
-| `dice_rolled` | `runefoble:dice-rolled` | the session message | `<runefoble-dice-tray-3d>` (rolls the tray), `<runefoble-dice-roller>` (sets `forcedResult` from `result`), `<runefoble-board>` (`roll3DDice`) |
+| `dice_rolled` | `runefoble:dice-rolled` | the session message | `<runefoble-dice-tray-3d>` (rolls the tray), `<runefoble-board>` (`roll3DDice`). The shell also adds one chronicle row (speaker `rollerName`, text `formula = total`, kind `dice_roll`) to `<runefoble-watcher-feed>`. `<runefoble-dice-roller>` does not subscribe: it sends each roll to `POST /api/v1/sessions/{session_id}/roll` and shows the reply (TASK-0951) |
 | `turn_advanced` | `runefoble:turn-advanced` | the session message | `<runefoble-initiative-tracker>` (sets `activeCombatantId` and `roundNumber`, or advances the turn), `<runefoble-board>` (sets `activeTurnTokenId`) |
 | `aoe_placed` | `runefoble:aoe-placed` | the session message | `<runefoble-board>` (sets `activeAoE`) |
 | `spell_vfx` | `runefoble:spell-vfx` | the session message | `<runefoble-board>` (`triggerSpellVFX`) |

@@ -90,6 +90,15 @@ Place `<runefoble-plugin-slot>` at the desired extension point in the markup:
 
 When no plugins are registered, the slot displays an accessible fallback placeholder unless `.showFallback=${false}` is set.
 
+To give a mounted plugin values that change at run time, set `.pluginProps` on the slot. It maps a plugin id to the properties that the slot sets on that plugin's element. The slot sets them when it mounts the plugin and on every later render. The App Shell uses this for the dice roller:
+
+```html
+<runefoble-plugin-slot slot-id="dice-panel" .showFallback=${false}
+  .pluginProps=${{ 'default-dice-roller': { sessionId, rollerName } }}></runefoble-plugin-slot>
+```
+
+The roller rolls only when both values are set. An empty `rollerName` means no character is bound.
+
 ## Step 4: Dispatch Sandboxed Events
 
 When emitting custom events from your plugin, use `createSandboxedEvent` to retain plugin origin metadata and maintain Shadow DOM encapsulation:

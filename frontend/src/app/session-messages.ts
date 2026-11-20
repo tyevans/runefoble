@@ -37,6 +37,22 @@ function appendChronicleEntry(host: RunefobleApp, entry: SessionChronicleEntry):
   host.events = [...host.events, toWatcherFeedEvent(entry)];
 }
 
+/** Each live roll gets a local row key. The `dice_rolled` frame has no event id. */
+let diceRowSeq = 0;
+
+/** Adds the live line of one `dice_rolled` frame: the roller's name, the formula and the total. */
+function appendDiceRoll(host: RunefobleApp, msg: { rollerName?: unknown; formula?: unknown; total?: unknown }): void {
+  diceRowSeq += 1;
+  appendChronicleEntry(host, {
+    event_id: `dice-roll-${diceRowSeq}`,
+    kind: 'dice_roll',
+    occurred_at: new Date().toISOString(),
+    speaker: String(msg.rollerName ?? ''),
+    text: `${String(msg.formula ?? '')} = ${String(msg.total ?? '')}`,
+    penalties: [],
+  });
+}
+
 /** Routes one parsed session message to the matching state update or VTT handler. */
 export function handleSessionMessage(host: RunefobleApp, msg: any): void {
   if (msg.type === 'speech_action') {
@@ -46,6 +62,9 @@ export function handleSessionMessage(host: RunefobleApp, msg: any): void {
     ];
   } else if (msg.type === 'chronicle_entry') {
     appendChronicleEntry(host, msg.entry);
+  } else if (msg.type === 'dice_rolled') {
+    appendDiceRoll(host, msg);
+    dispatchSessionMessage(msg);
   } else if (msg.type === 'player_readiness') {
     host.lobbyParticipants = host.lobbyParticipants.map((p) => (p.userId === msg.userId ? { ...p, isReady: msg.isReady } : p));
   } else if (msg.type === 'player_stand_in') {
