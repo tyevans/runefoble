@@ -70,7 +70,7 @@ A row whose owner path has a segment that the owner cannot encode (`.`, `..`, or
 ## `ServiceClient`
 
 ```python
-ServiceClient(service: str, base_url: str, service_credential: str, transport: httpx.AsyncBaseTransport | None = None)
+ServiceClient(service: str, base_url: str, service_credential: str)
 ```
 
 | Argument | Meaning |
@@ -78,9 +78,8 @@ ServiceClient(service: str, base_url: str, service_credential: str, transport: h
 | `service` | Service name. It appears in errors and in the gateway error body (`upstream`). |
 | `base_url` | Base URL of the owning service. A trailing `/` is removed. |
 | `service_credential` | Service credential (ADR-0015 e). It is sent on every call in the `X-Runefoble-Service-Credential` header. The constructor raises `ValueError` when it is blank. |
-| `transport` | Optional HTTP transport. Tests pass a transport here. Production code omits it. |
 
-Each instance owns one `httpx.AsyncClient`. Call `await aclose()` when the instance is no longer needed.
+Each instance owns one pooled `httpx.AsyncClient`, and one `httpx.AsyncClient` that keeps no idle connection, for retries. Call `await aclose()` when the instance is no longer needed. It closes both.
 
 ### `send`
 
@@ -109,9 +108,36 @@ await client.send(
 | `content` | Optional raw body, forwarded unchanged. The owner parses it. Pass `json` or `content`, not both. |
 | `content_type` | Media type of `content`. The client sends it only with `content`. |
 
-The caller sets `timeout_s` for each call. The client sets no default timeout. The client does not retry. The client does not cache.
+The caller sets `timeout_s` for each call. The client sets no default timeout. The client does not cache. The client retries in one case only. Section "Stale pooled connections" gives the rule.
 
 The TCP connect has its own limit, `CONNECT_TIMEOUT_S = 2.0` in `service_client/client.py`. An in-cluster connect takes milliseconds, and 2 s allows one lost SYN. When a pod stops, the Service can route to the deleted pod IP for some seconds, and the SYN gets no answer. The client then raises `UpstreamUnavailableError` with the reason `ConnectTimeout` after 2 s, and the gateway answers `503`. Without this limit, the caller waits the full `timeout_s` (5 s on most proxy routes, 15 s on The Watcher LLM routes).
+
+### Stale pooled connections
+
+After an owner restart (rollout, crash, or scale), the pool can hold keep-alive connections to the old process. A request on such a connection fails before any answer arrives. The owner can be healthy, so this failure is not an outage (ADR-0015). TASK-0936 sets these rules:
+
+| Rule | Value |
+|---|---|
+| Errors that mean a dropped connection | `httpx.RemoteProtocolError`, `httpx.ReadError`, `httpx.WriteError` (`STALE_CONNECTION_ERRORS`) |
+| Methods that the client sends again | `GET`, `HEAD`, `PUT`, `DELETE`, `OPTIONS` (`IDEMPOTENT_METHODS`) |
+| Number of retries | One. The retry uses a fresh connection, never a pooled one. |
+| `POST` and `PATCH` | Never sent again. The owner may have applied the request. The client raises `UpstreamUnavailableError`, and the gateway answers `503`. |
+| Idempotency keys | No owner route honours an idempotency key. So no `POST` or `PATCH` route is retried. |
+| Log | One warning for each retried call, on the logger `runefoble.service_client`. It names the method, the path, the owner, and the error. |
+| Connect failure or timeout | Not retried. A connect failure is an outage. It still fails within `CONNECT_TIMEOUT_S`. |
+
+A retry that fails again raises `UpstreamUnavailableError` with the reason of the second error.
+
+The keep-alive settings remove the usual cause:
+
+| Side | Setting | Value |
+|---|---|---|
+| Client pool | `KEEPALIVE_EXPIRY_S` in `service_client/client.py` | 4 s. The client drops an idle connection after 4 s. |
+| Python service images | `uvicorn --timeout-keep-alive` in `deployments/docker/python-service.Dockerfile` | 15 s |
+| Local uvicorn without the option | uvicorn default | 5 s |
+| Audience Studio (Fastify) | Fastify default `keepAliveTimeout` | 72 s |
+
+The client expiry must stay shorter than every owner keep-alive timeout. Then the owner never closes an idle connection that the client is about to reuse. If you change one value, check the others.
 
 ### `websocket_target`
 
