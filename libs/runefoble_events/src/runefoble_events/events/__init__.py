@@ -77,6 +77,8 @@ from runefoble_events.campaign_lifecycle import (
     CampaignMemberRemoved,
     CampaignSessionCreated,
     CampaignUpdated,
+    PendingJoinCompleted,
+    PendingJoinRecorded,
 )
 from runefoble_events.character import (
     AbsencePenaltyApplied,

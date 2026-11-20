@@ -91,6 +91,33 @@ class CampaignInviteRedeemed(BaseRunefobleEvent):
     user_id: str
 
 
+@register_event("runefoble.events.game_session.pending_join_recorded")
+class PendingJoinRecorded(BaseRunefobleEvent):
+    """Fired when an invite creates an account for a person (ADR-0023 d).
+
+    The person holds no campaign relation until that person signs in and calls the join route.
+    `user_id` is the identity provider user id. The event stores no email and no password.
+    """
+
+    event_type: str = "runefoble.events.game_session.pending_join_recorded"
+
+    aggregate_type: str = "CampaignInvite"
+    campaign_id: str
+    user_id: str
+    role: str
+
+
+@register_event("runefoble.events.game_session.pending_join_completed")
+class PendingJoinCompleted(BaseRunefobleEvent):
+    """Fired when the user of a pending join signs in and completes the join (ADR-0023 e)."""
+
+    event_type: str = "runefoble.events.game_session.pending_join_completed"
+
+    aggregate_type: str = "CampaignInvite"
+    campaign_id: str
+    user_id: str
+
+
 @register_event("runefoble.events.game_session.campaign_session_created")
 class CampaignSessionCreated(BaseRunefobleEvent):
     """Fired when a session or staging lobby is added to a campaign."""
@@ -113,4 +140,6 @@ __all__ = [
     "CampaignMemberRemoved",
     "CampaignSessionCreated",
     "CampaignUpdated",
+    "PendingJoinCompleted",
+    "PendingJoinRecorded",
 ]
