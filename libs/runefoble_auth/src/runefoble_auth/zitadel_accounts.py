@@ -90,7 +90,9 @@ class ZitadelAccountProvisioner:
             "queries": [{"emailQuery": {"emailAddress": email, "method": EMAIL_EQUALS_IGNORE_CASE}}]
         }
         document = await self._expect_json("search", f"{USER_API}/users", body, status_ok={200})
-        results = document.get("result")
+        # Zitadel leaves `result` out of the reply when no user matches (protobuf JSON omits an
+        # empty list), so a missing key means no match. Any other shape is an error.
+        results = document.get("result", [])
         if not isinstance(results, list):
             raise _unavailable("search", "the reply has no result list")
         if not results:

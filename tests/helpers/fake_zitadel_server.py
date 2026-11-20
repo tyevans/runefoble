@@ -86,7 +86,10 @@ class FakeZitadel:
 
     def _route(self, method: str, path: str, body: dict[str, Any]) -> tuple[int, Any]:
         if method == "POST" and path == SEARCH_PATH:
-            return 200, {"result": self._search(body), "details": {}}
+            # Like Zitadel, the reply has no `result` key when no user matches (protobuf JSON
+            # omits an empty list).
+            found = self._search(body)
+            return 200, ({"result": found, "details": {}} if found else {"details": {}})
         if method == "POST" and path == HUMAN_USER_PATH:
             return self._create(body)
         if method == "POST" and path.endswith(RESET_SUFFIX):
