@@ -19,6 +19,7 @@ function sessionApp(boardKind: 'loading' | 'no_board' | 'board'): RunefobleApp {
     campaignCapabilities: { run_session: false },
     characters: [],
     sessionSeats: [],
+    sessionParticipants: [],
     tokens: [],
     events: [],
     boardCols: 10,

@@ -246,3 +246,31 @@ describe('AppDataService caravan board reads the owner contract list', () => {
     assert.equal((contracts as any).status, 502);
   });
 });
+
+describe('AppDataService session state reads every participant seat (TASK-0974)', () => {
+  let gateway: FakeGateway;
+  let service: AppDataService;
+
+  beforeEach(() => { service = new AppDataService(); });
+  afterEach(() => gateway?.restore());
+
+  it('maps the status and each seat with its stand-in state', async () => {
+    gateway = installFakeGateway({ [SESSION_URL]: { body: OWNER_SESSION_STATE } });
+    const state = await service.fetchSessionState('session-tomb-14');
+    assert.ok(state.ok);
+    assert.equal(state.data.status, 'active');
+    assert.deepEqual(state.data.participants[1], {
+      userId: 'user-kyra', characterId: 'char-kyra', characterName: 'Kyra the Sun Maiden', isStandInActive: false,
+    });
+  });
+
+  it('fails when a participant has no is_stand_in_active', async () => {
+    gateway = installFakeGateway({ [SESSION_URL]: { body: withParticipant('user-kyra', { is_stand_in_active: undefined }) } });
+    assertFailure(await service.fetchSessionState('session-tomb-14'), /is_stand_in_active/);
+  });
+
+  it('fails when the owner sends participants as a list', async () => {
+    gateway = installFakeGateway({ [SESSION_URL]: { body: { ...OWNER_SESSION_STATE, participants: [] } } });
+    assertFailure(await service.fetchSessionState('session-tomb-14'), /participants/);
+  });
+});

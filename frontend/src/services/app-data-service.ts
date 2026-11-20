@@ -1,6 +1,5 @@
 import type { CampaignItem, CampaignMember, CreateCampaignPayload, UpdateCampaignPayload, LobbyCharacterOption, LobbyParticipant } from '@runefoble/game-session-ui';
 import type { CharacterItem, RosterCampaignOption, CreateCharacterPayload } from '@runefoble/character-sheet-ui';
-import type { PartySeat } from '@runefoble/board-state-ui';
 import type { CaravanContractItem } from '@runefoble/game-session-ui';
 import type { WatcherFeedEvent } from '@runefoble/the-watcher-ui';
 import type { CampaignSessionItem } from '../components/runefoble-session-list.ts';
@@ -14,7 +13,7 @@ import type { SessionBoard } from './session-board.ts';
 import { requestData } from './shell-request.ts';
 import { isArray, isString, malformedResponse, requireFields } from './required-fields.ts';
 import {
-  SESSION_REQUIRED_FIELDS, sessionFromOwner, lobbyParticipantsFromOwner, boardFromOwner, sessionSeatsFromOwner,
+  SESSION_REQUIRED_FIELDS, sessionFromOwner, lobbyParticipantsFromOwner, boardFromOwner, sessionStateFromOwner, type SessionState,
 } from './owner-wire-mappers.ts';
 import type { RequestSpec } from '@runefoble/ui-core';
 import {
@@ -240,12 +239,13 @@ export class AppDataService {
     return res.ok ? requireFields(res.data, { status: isString }) : res;
   }
 
-  /** Reads the status of a session (`lobby`, `active` or `ended`) from the owner state (TASK-0953). */
-  async fetchSessionStatus(sessionId: string): Promise<DataResult<string>> {
-    const res = await this.request<{ status: string }>(`${this.apiBase}/sessions/${sessionId}`);
-    if (!res.ok) return res;
-    const checked = requireFields(res.data, { status: isString });
-    return checked.ok ? dataOk(checked.data.status) : checked;
+  /**
+   * Reads the session state: its status (`lobby`, `active` or `ended`, TASK-0953) and every seated
+   * participant with its stand-in state (TASK-0974). The session route reads it on every load.
+   */
+  async fetchSessionState(sessionId: string): Promise<DataResult<SessionState>> {
+    const res = await this.request<any>(`${this.apiBase}/sessions/${sessionId}`);
+    return res.ok ? sessionStateFromOwner(res.data) : res;
   }
 
   /**
@@ -258,12 +258,6 @@ export class AppDataService {
     if (!res.ok) return res;
     const board = boardFromOwner(res.data);
     return board.ok ? dataOk({ kind: 'board', ...board.data }) : board;
-  }
-
-  /** Reads the seated characters of a session, for the battlemap set-up (TASK-0922). */
-  async fetchSessionSeats(sessionId: string): Promise<DataResult<PartySeat[]>> {
-    const res = await this.request<any>(`${this.apiBase}/sessions/${sessionId}`);
-    return res.ok ? sessionSeatsFromOwner(res.data) : res;
   }
 
   /** Reads the session chronicle feed from the gateway (TASK-0641). An empty session yields []. */

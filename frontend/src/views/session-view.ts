@@ -11,6 +11,7 @@ import { recordBoardMoveTarget, resolveBoardDmAccess } from '../app/board-dm-con
 import { handleBoardSetUp } from '../app/board-setup-actions.ts';
 import { endSession } from '../app/session-actions.ts';
 import { openAbsenteeDrawer } from '../app/absentee-actions.ts';
+import { findCallerSeat } from '../app/active-character.ts';
 
 /**
  * The DM ends an active session (TASK-0953). Only a caller with the `run_session` capability sees
@@ -52,7 +53,7 @@ function renderBoardDmControls(app: RunefobleApp) {
  */
 function renderBoardArea(app: RunefobleApp, canRunSession: boolean) {
   if (app.boardKind === 'loading') return html`<div class="board-loading" role="status" aria-live="polite">Loading the battlemap...</div>`;
-  if (app.boardKind === 'no_board') return html`<runefoble-board-empty ?can-set-up-map=${canRunSession} .campaignId=${app.campaignId} .sessionId=${app.sessionId} .seats=${app.sessionSeats} @board-set-up=${(e: CustomEvent) => handleBoardSetUp(app, e)}></runefoble-board-empty>`;
+  if (app.boardKind === 'no_board') return html`<runefoble-board-empty ?can-set-up-map=${canRunSession} .campaignId=${app.campaignId} .sessionId=${app.sessionId} .seats=${guard([app.sessionSeats], () => app.sessionSeats)} @board-set-up=${(e: CustomEvent) => handleBoardSetUp(app, e)}></runefoble-board-empty>`;
   return html`<runefoble-board .cols=${app.boardCols} .rows=${app.boardRows} .tokens=${guard([app.tokens], () => app.tokens)} .fogOfWar=${true} .websocketUrl=${app.getWebSocketUrl()} @token-action=${(e: CustomEvent) => handleBoardTokenAction(e, app.sessionSocket.current)} @aoe-place=${(e: CustomEvent) => handleBoardAoEPlace(e, app.sessionSocket.current)} @spell-vfx-triggered=${(e: CustomEvent) => handleBoardSpellVFX(e, app.sessionSocket.current)} @confirm-ghost=${(e: CustomEvent) => handleBoardConfirmGhost(e, app.sessionSocket.current)} @move-token=${(e: CustomEvent) => recordBoardMoveTarget(app, e)}></runefoble-board>
       ${renderBoardDmControls(app)}`;
 }
@@ -64,6 +65,8 @@ function renderBoardArea(app: RunefobleApp, canRunSession: boolean) {
 export function renderSessionActive(app: RunefobleApp) {
   const char = app.activeCharacter ?? app.resolveActiveCharacter(app.campaignId);
   const canRunSession = Boolean(app.campaignCapabilities?.run_session);
+  // The stand-in state is the caller seat's, read from game_session (TASK-0974).
+  const isStandIn = findCallerSeat(app.sessionParticipants, app.currentUserId)?.isStandInActive === true;
   if (app.sessionStatus === 'ended') {
     return html`<runefoble-session-recap .sessionTitle=${app.sessionTitle} .entries=${app.events}></runefoble-session-recap>`;
   }
@@ -78,8 +81,8 @@ export function renderSessionActive(app: RunefobleApp) {
     <div class="character-column">
       ${renderEndSessionControl(app, canRunSession)}
       ${canRunSession ? html`<div class="dm-party-inspector" role="region" aria-label="DM Party Inspector"><span class="dm-badge">DM Party Inspector</span><select class="dm-character-switcher" aria-label="Switch inspected character" @change=${(e: Event) => switchDmCharacter(app, (e.target as HTMLSelectElement).value)}>${app.characters.map((c) => html`<option value="${c.id}" ?selected=${c.id === char?.id}>${c.name} (${c.characterClass} Lv ${c.level})</option>`)}</select></div>` : ''}
-      ${char ? html`<runefoble-character-card .characterName=${char.name} .characterClass=${`${char.characterClass}${char.level ? ` Lvl ${char.level}` : ''}`} .level=${char.level} .currentHp=${char.currentHp} .maxHp=${char.maxHp} .armorClass=${char.armorClass} .portraitUrl=${char.portraitUrl || ''} .isAiStandIn=${Boolean(char.isAiStandIn)}></runefoble-character-card>
-      ${char.isAiStandIn ? html`<button class="btn-toggle-directive" @click=${() => openAbsenteeDrawer(app)}>📋 Stance Directives</button>` : ''}` : html`<div class="empty-state" data-testid="active-character-empty"><p>No character is bound to this session. Choose a character in the session lobby.</p></div>`}
+      ${char ? html`<runefoble-character-card .characterName=${char.name} .characterClass=${`${char.characterClass}${char.level ? ` Lvl ${char.level}` : ''}`} .level=${char.level} .currentHp=${char.currentHp} .maxHp=${char.maxHp} .armorClass=${char.armorClass} .portraitUrl=${char.portraitUrl || ''} .isAiStandIn=${isStandIn}></runefoble-character-card>
+      ${isStandIn ? html`<button class="btn-toggle-directive" @click=${() => openAbsenteeDrawer(app)}>📋 Stance Directives</button>` : ''}` : html`<div class="empty-state" data-testid="active-character-empty"><p>No character is bound to this session. Choose a character in the session lobby.</p></div>`}
       <runefoble-plugin-slot slot-id="sidebar-tool" .showFallback=${false}></runefoble-plugin-slot>
       <runefoble-plugin-slot slot-id="dice-panel" .showFallback=${false} .pluginProps=${guard([app.sessionId, char?.name ?? ''], () => ({ 'default-dice-roller': { sessionId: app.sessionId, rollerName: char?.name ?? '' } }))}></runefoble-plugin-slot>
     </div>

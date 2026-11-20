@@ -8,6 +8,13 @@
  */
 
 import type { CharacterItem } from '@runefoble/character-sheet-ui';
+import type { SessionParticipant } from '../services/owner-wire-mappers.ts';
+
+/** The seat that the caller holds in the live session, or null. Another player's seat is never returned (TASK-0974). */
+export function findCallerSeat(participants: SessionParticipant[], currentUserId: string): SessionParticipant | null {
+  if (currentUserId === '') return null;
+  return participants.find((p) => p.userId === currentUserId) ?? null;
+}
 
 /**
  * Returns the caller's character in the campaign, or null. `seatCharacterId` is the character the

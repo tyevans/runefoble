@@ -59,7 +59,7 @@ const SEATED_STATE = {
   participants: {
     [PLAYER]: {
       player_id: PLAYER, character_id: CHARACTER.id, character_name: CHARACTER.name,
-      character_class: CHARACTER.characterClass, is_present: true,
+      character_class: CHARACTER.characterClass, is_present: true, is_stand_in_active: false,
     },
   },
   lobby_readiness: {},

@@ -28,6 +28,7 @@ function sessionApp(currentUserId: string): RunefobleApp {
     campaignCapabilities: { run_session: false, play: true },
     characters,
     sessionSeats: [],
+    sessionParticipants: [],
     tokens: [],
     events: [],
     atmosphere: {},

@@ -35,7 +35,8 @@ import { renderAppShell } from './app/shell-template.ts';
 import { initTheme, syncAuthState } from './app/shell-state.ts';
 import { SessionSocket } from './app/session-socket.ts';
 import { installTitleResolvers } from './app/title-resolver.ts';
-import { pickActiveCharacter } from './app/active-character.ts';
+import { findCallerSeat, pickActiveCharacter } from './app/active-character.ts';
+import type { SessionParticipant } from './services/owner-wire-mappers.ts';
 import type { BoardTarget } from './app/board-dm-controls.ts';
 import type { RunefobleHeader } from './components/runefoble-header.ts';
 import { IDLE_JOIN_STATE, type JoinViewState } from './app/campaign-join-actions.ts';
@@ -92,6 +93,8 @@ export class RunefobleApp extends LitElement {
   @state() public boardKind: SessionBoard['kind'] | 'loading' = 'loading';
   /** The seated characters, read for the DM while the session has no board (TASK-0922). */
   @state() public sessionSeats: PartySeat[] = [];
+  /** Every seated participant of the open session, with its stand-in state (TASK-0974). */
+  @state() public sessionParticipants: SessionParticipant[] = [];
   @state() public boardCols = 10;
   @state() public boardRows = 10;
   @state() public atmosphere: { location_name: string } = { location_name: '' };
@@ -191,7 +194,7 @@ export class RunefobleApp extends LitElement {
    * owns none. Never another player's character (TASK-0972).
    */
   public resolveActiveCharacter(campaignId: string): CharacterItem | null {
-    const seat = this.lobbyParticipants.find((p) => p.userId === this.currentUserId)?.characterId ?? null;
+    const seat = findCallerSeat(this.sessionParticipants, this.currentUserId)?.characterId ?? null;
     this.activeCharacter = pickActiveCharacter(this.characters, campaignId, this.currentUserId, seat);
     return this.activeCharacter;
   }

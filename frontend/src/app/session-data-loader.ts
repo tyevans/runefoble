@@ -7,7 +7,6 @@
 import type { MatchedRoute } from '../router/index.ts';
 import type { RunefobleApp } from '../runefoble-app.ts';
 import { appDataService } from '../services/app-data-service.ts';
-import { dataOk } from '../services/data-result.ts';
 import type { SessionBoard } from '../services/session-board.ts';
 import { failLoad } from './load-error.ts';
 import { setCampaignCapabilities, setCurrentCampaign } from './shell-state.ts';
@@ -76,27 +75,27 @@ export async function loadActiveSessionData(host: RunefobleApp, route: MatchedRo
   const cId = route.params.campaignId ?? '';
   const sId = route.params.sessionId ?? '';
   const readNo = startBoardRead(host);
-  const [boardData, events, chars, camp, caps, status] = await Promise.all([
+  const [boardData, events, session, chars, camp, caps] = await Promise.all([
     appDataService.fetchBoardState(sId),
     appDataService.fetchSessionEvents(sId),
+    appDataService.fetchSessionState(sId),
     // Read the roster on every load. A cached list misses a character made since the last read (TASK-0972).
     appDataService.fetchCharacters(),
     appDataService.fetchCampaign(cId),
     appDataService.fetchCampaignCapabilities(cId),
-    appDataService.fetchSessionStatus(sId),
   ]);
-  if (!boardData.ok || !events.ok || !chars.ok || !camp.ok || !caps.ok || !status.ok) {
-    return failLoad(host, boardData, events, chars, camp, caps, status);
+  if (!boardData.ok || !events.ok || !session.ok || !chars.ok || !camp.ok || !caps.ok) {
+    return failLoad(host, boardData, events, session, chars, camp, caps);
   }
   // The DM sets up a missing board with one token for each seat, so the DM view needs the seats (TASK-0922).
   const needsSeats = boardData.data.kind === 'no_board' && caps.data.run_session === true;
-  const seats = needsSeats ? await appDataService.fetchSessionSeats(sId) : dataOk([]);
-  if (!seats.ok) return failLoad(host, seats);
   setCurrentCampaign(host, camp.data);
   setCampaignCapabilities(host, caps.data);
   applyBoard(host, boardData.data, readNo);
-  applySessionStatus(host, status.data);
-  host.sessionSeats = seats.data;
+  applySessionStatus(host, session.data.status);
+  host.sessionSeats = needsSeats ? session.data.participants.map((p) => ({ characterId: p.characterId, characterName: p.characterName })) : [];
+  // The caller seat holds the stand-in state. Every load replaces it (TASK-0974).
+  host.sessionParticipants = session.data.participants;
   host.atmosphere = { location_name: host.sessionTitle };
   const liveEvents = host.events.filter((e) => !events.data.some((ev) => ev.id === e.id));
   host.events = [...events.data, ...liveEvents];

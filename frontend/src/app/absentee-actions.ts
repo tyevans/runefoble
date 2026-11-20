@@ -2,8 +2,9 @@
  * App Shell Absentee Drawer Actions (TASK-0954).
  *
  * The stance drawer shows the real stand-in state and the stored stance. Opening it reads both from
- * the gateway. Saving a stance writes it through the guardrail route. The drawer never shows a
- * stand-in status or a stance that the server did not return.
+ * the gateway: the session state for the caller seat, and the stored policy (TASK-0974). Saving a
+ * stance writes it through the guardrail route. The drawer never shows a stand-in status or a stance
+ * that the server did not return.
  */
 
 import type { RunefobleApp } from '../runefoble-app.ts';
@@ -17,22 +18,19 @@ export async function openAbsenteeDrawer(host: RunefobleApp): Promise<void> {
     host.showToast('Stance drawer not opened. No character is bound to this session.');
     return;
   }
-  const [character, policy] = await Promise.all([
-    appDataService.fetchCharacter(charId),
+  const [session, policy] = await Promise.all([
+    appDataService.fetchSessionState(host.sessionId),
     appDataService.fetchCharacterGuardrails(charId),
   ]);
-  if (!character.ok) {
-    host.showToast(`Stance drawer not opened. ${character.message}`);
+  if (!session.ok) {
+    host.showToast(`Stance drawer not opened. ${session.message}`);
     return;
   }
   if (!policy.ok) {
     host.showToast(`Stance drawer not opened. ${policy.message}`);
     return;
   }
-  const isAiStandIn = Boolean(character.data.isAiStandIn ?? character.data.is_stand_in_active);
-  const bound = host.activeCharacter;
-  if (bound) host.activeCharacter = { ...bound, isAiStandIn };
-  host.characters = host.characters.map((c) => (c.id === charId ? { ...c, isAiStandIn } : c));
+  host.sessionParticipants = session.data.participants;
   host.absenteeStance = typeof policy.data.stance === 'string' ? policy.data.stance : '';
   host.isAbsenteeDirectiveOpen = true;
 }

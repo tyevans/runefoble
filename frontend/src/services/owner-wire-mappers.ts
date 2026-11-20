@@ -8,7 +8,7 @@
  */
 
 import type { LobbyParticipant } from '@runefoble/game-session-ui';
-import type { BoardToken, PartySeat } from '@runefoble/board-state-ui';
+import type { BoardToken } from '@runefoble/board-state-ui';
 import type { CampaignSessionItem } from '../components/runefoble-session-list.ts';
 import { dataOk, type DataResult } from './data-result.ts';
 import {
@@ -54,7 +54,53 @@ const PARTICIPANT_FIELDS: RequiredFields = {
   character_name: isString,
   character_class: isString,
   is_present: isBoolean,
+  is_stand_in_active: isBoolean,
 };
+
+/** One seated participant of a session, as the App Shell reads it (TASK-0974). */
+export interface SessionParticipant {
+  userId: string;
+  characterId: string;
+  characterName: string;
+  isStandInActive: boolean;
+}
+
+/** The session state the session route reads: its status and every seated participant (TASK-0974). */
+export interface SessionState {
+  status: string;
+  participants: SessionParticipant[];
+}
+
+/** Reads the participant map of a GameSessionState. Each entry has every PARTICIPANT_FIELDS field. */
+function ownerParticipantEntries(state: any): DataResult<Array<Record<string, any>>> {
+  const participants = state?.participants;
+  if (!isPlainObject(participants)) return malformedResponse('the session participants are not a map');
+  const entries: Array<Record<string, any>> = [];
+  for (const entry of Object.values(participants)) {
+    const missing = missingRequiredFields(entry, PARTICIPANT_FIELDS);
+    if (missing.length > 0) return malformedResponse(`a participant is missing or invalid ${missing.join(', ')}`);
+    entries.push(entry as Record<string, any>);
+  }
+  return dataOk(entries);
+}
+
+/**
+ * Maps the session state that the session route reads (GameSessionState). Every seat keeps its
+ * character and its stand-in state. A participant with a missing field fails the read.
+ */
+export function sessionStateFromOwner(state: any): DataResult<SessionState> {
+  const status = requireFields({ status: state?.status }, { status: isString });
+  if (!status.ok) return status;
+  const entries = ownerParticipantEntries(state);
+  if (!entries.ok) return entries;
+  const participants = entries.data.map((player) => ({
+    userId: player.player_id as string,
+    characterId: player.character_id as string,
+    characterName: player.character_name as string,
+    isStandInActive: player.is_stand_in_active as boolean,
+  }));
+  return dataOk({ status: status.data.status, participants });
+}
 
 interface MemberLike { user_id: string; username?: string | null; role?: string | null }
 
@@ -67,15 +113,12 @@ interface MemberLike { user_id: string; username?: string | null; role?: string 
  * (lobby_transitions.with_readiness). A missing key means not ready.
  */
 export function lobbyParticipantsFromOwner(state: any, members: MemberLike[]): DataResult<LobbyParticipant[]> {
-  const participants = state?.participants;
-  if (!isPlainObject(participants)) return malformedResponse('the session participants are not a map');
+  const entries = ownerParticipantEntries(state);
+  if (!entries.ok) return entries;
   const readiness = state?.lobby_readiness;
   if (!isPlainObject(readiness)) return malformedResponse('the session lobby_readiness is not a map');
   const out: LobbyParticipant[] = [];
-  for (const entry of Object.values(participants)) {
-    const missing = missingRequiredFields(entry, PARTICIPANT_FIELDS);
-    if (missing.length > 0) return malformedResponse(`a participant is missing or invalid ${missing.join(', ')}`);
-    const player = entry as Record<string, any>;
+  for (const player of entries.data) {
     const member = members.find((m) => m.user_id === player.player_id);
     if (!member) return malformedResponse(`no campaign member for participant ${player.player_id}`);
     const memberMissing = missingRequiredFields(member, MEMBER_FIELDS);
@@ -92,23 +135,6 @@ export function lobbyParticipantsFromOwner(state: any, members: MemberLike[]): D
     });
   }
   return dataOk(out);
-}
-
-/**
- * The seated characters of a GameSessionState, in seat order (TASK-0922). The battlemap set-up
- * places one token for each. A participant with a missing field fails the read.
- */
-export function sessionSeatsFromOwner(state: any): DataResult<PartySeat[]> {
-  const participants = state?.participants;
-  if (!isPlainObject(participants)) return malformedResponse('the session participants are not a map');
-  const seats: PartySeat[] = [];
-  for (const entry of Object.values(participants)) {
-    const missing = missingRequiredFields(entry, PARTICIPANT_FIELDS);
-    if (missing.length > 0) return malformedResponse(`a participant is missing or invalid ${missing.join(', ')}`);
-    const player = entry as Record<string, any>;
-    seats.push({ characterId: player.character_id, characterName: player.character_name });
-  }
-  return dataOk(seats);
 }
 
 /** Required fields of a board (BoardState, services/board_state/src/board_state/models/board.py:18). */
