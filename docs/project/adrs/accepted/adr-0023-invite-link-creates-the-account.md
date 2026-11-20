@@ -21,7 +21,7 @@ Use **Option C**. This decision replaces the second rule of ADR-0015 (d) for rel
 The hosted profile turns off self-registration in Zitadel. The only ways to get an account are a campaign invite and the Zitadel admin console.
 
 ### (b) Runefoble never handles a password
-The account route takes a display name and an email only. Zitadel creates the user with no password and sends its initialization email. The person sets the password on the Zitadel hosted page and verifies the email there. Runefoble never sees, stores, or sends a password or a Zitadel init code.
+The account route takes a display name and an email only. Zitadel creates the user with no password, and Runefoble asks Zitadel to send one Set Password link to the address. The person sets the password on the Zitadel hosted page. Only the owner of the mailbox can use that link, so the address is created as verified, and no second verification mail is sent (decided 2026-11-20, after the Kind check showed that Zitadel v2.54 `email.sendCode` sends a verify-only mail that never sets a password). Runefoble never sees, stores, or sends a password or a Zitadel init code.
 
 ### (c) game_session owns redemption, and a port owns the Zitadel call
 `game_session` owns invites and membership (ADR-0015 (a)). It validates the invite and records a pending join for the new user. An `AccountProvisioner` port in `libs/runefoble_auth` creates the Zitadel user. Its adapter calls the Zitadel Management API with a service account credential from a Kubernetes Secret (ADR-0015 (e)). The gateway only forwards the route (ADR-0015 (b)). When Zitadel is unavailable, the route returns 503 and creates nothing (ADR-0015, no hidden fallbacks).

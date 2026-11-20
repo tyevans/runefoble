@@ -156,8 +156,8 @@ When('Sarah reads the Zitadel e-mail and sets a password', async ({ request, wor
   await page.goto(link);
   // The hosted Zitadel page sets the password. Runefoble never sees it (ADR-0023 b).
   await page.locator('#password').fill(password);
-  await page.locator('#confirmPassword').fill(password);
-  await page.locator('#submit-button').click();
+  await page.locator('#passwordconfirm').fill(password);
+  await page.locator('#init-button').click();
 });
 
 When('Sarah completes the Zitadel sign-in', async ({ world }) => {

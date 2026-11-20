@@ -1,12 +1,12 @@
 """Zitadel adapter of the `AccountProvisioner` port (ADR-0023 b, c).
 
-The adapter calls the Zitadel v2 user API, the version that the chart runs (v2.54). Each call
-sends the service token as a bearer token.
+The adapter calls the Zitadel user API of the chart image (v2.54, served under `/v2beta`). Each
+call sends the service token as a bearer token.
 
 - `POST /v2beta/users` (ListUsers) with an email query finds a user that already has the email.
-- `POST /v2beta/users/human` (AddHumanUser) creates a user with no password. `email.sendCode` makes
-  Zitadel send its own verification email. The person sets the password on the hosted page.
-- `POST /v2beta/users/{id}/password_reset` sends a reset email to a user that already exists.
+- `POST /v2beta/users/human` (AddHumanUser) creates a user with no password and a verified address.
+- `POST /v2beta/users/{id}/password_reset` (`sendLink`) sends the one mail: the Set Password link.
+  A new user and an existing user both get it, so the reply is the same for both.
 
 Runefoble never sends or stores a password or an init code. A failed call raises
 `AccountProvisionerUnavailableError`. The adapter logs the operation and the HTTP status only.
@@ -83,6 +83,7 @@ class ZitadelAccountProvisioner:
                 ) from None
             await self._send_reset_link(existing)
             return ProvisionedAccount(user_id=existing, created=False)
+        await self._send_reset_link(user_id)
         return ProvisionedAccount(user_id=user_id, created=True)
 
     async def _find_user_id(self, email: str) -> str | None:
@@ -104,7 +105,10 @@ class ZitadelAccountProvisioner:
         body = {
             "username": email,
             "profile": {"givenName": given, "familyName": family, "displayName": display_name},
-            "email": {"email": email, "sendCode": {}},
+            # No verify-code mail. The one mail is the Set Password link sent after the create.
+            # Only the owner of the mailbox can use it, so the address is marked verified here
+            # (ADR-0023 b). A person who cannot read the mailbox can never sign in.
+            "email": {"email": email, "isVerified": True},
         }
         response = await self._send("create", f"{USER_API}/users/human", body)
         if response.status_code == STATUS_USER_EXISTS:

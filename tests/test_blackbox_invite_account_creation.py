@@ -174,7 +174,12 @@ async def test_new_email_creates_account_without_password_and_answers_202(accoun
     sent = creates[0].body
     assert creates[0].authorized
     assert not _mentions(sent, "password")
-    assert sent["email"] == {"email": PLAYER_EMAIL, "sendCode": {}}
+    assert sent["email"] == {"email": PLAYER_EMAIL, "isVerified": True}
+    # The only mail is the Set Password link (ADR-0023 b).
+    new_id = stack.zitadel.reset_calls()[0].path.split("/")[3]
+    assert [call.path for call in stack.zitadel.reset_calls()] == [
+        f"/v2beta/users/{new_id}/password_reset"
+    ]
     assert sent["profile"]["displayName"] == "Ada Lovelace"
     names = await _account_events(stack.store)
     assert names == [
@@ -195,9 +200,14 @@ async def test_existing_email_gets_the_same_reply_and_no_create_call(account_sta
     assert existing.json() == fresh.json()
     assert stack.zitadel.create_calls()[0].body["email"]["email"] == PLAYER_EMAIL
     assert len(stack.zitadel.create_calls()) == 1
+    # Both people get exactly one mail, the Set Password link (ADR-0023 b, d).
     resets = stack.zitadel.reset_calls()
-    assert [call.path for call in resets] == [f"/v2beta/users/{known_id}/password_reset"]
-    assert resets[0].body == {"sendLink": {"notificationType": "NOTIFICATION_TYPE_EMAIL"}}
+    assert len(resets) == 2
+    assert resets[0].path == f"/v2beta/users/{known_id}/password_reset"
+    assert all(
+        call.body == {"sendLink": {"notificationType": "NOTIFICATION_TYPE_EMAIL"}}
+        for call in resets
+    )
     assert not _mentions(existing.json(), known_id)
 
 
