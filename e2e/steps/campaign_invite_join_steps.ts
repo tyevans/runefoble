@@ -179,7 +179,8 @@ When('Sarah joins the campaign from the invite page', async ({ world }) => {
 Then('Sarah sees the campaign {string} with the role {string}', async ({ world }, title: string, role: string) => {
   const page = world.getPage('sarah');
   await expect(page.locator('runefoble-campaign-header')).toContainText(title, { timeout: 15_000 });
-  await expect(page.locator('runefoble-header')).toContainText(role, { timeout: 15_000 });
+  // The header shows the stored role value (for example `player`), so the check ignores case.
+  await expect(page.locator('runefoble-header')).toContainText(new RegExp(`\\b${role}\\b`, 'i'), { timeout: 15_000 });
 });
 
 Then('the campaign list of Sarah shows {string}', async ({ world }, title: string) => {
