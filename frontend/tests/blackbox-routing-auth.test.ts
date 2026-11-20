@@ -60,6 +60,7 @@ import { Router } from '../src/router/router.ts';
 import { AuthService } from '../src/auth/auth-service.ts';
 import { createFakeZitadel, signInWithFake, type FakeZitadel } from '../test/support/fake-zitadel.ts';
 import { registerAuthGuard } from '../src/router/auth-guard.ts';
+import { takePostSignInPath } from '../src/app/post-sign-in-path.ts';
 
 describe('Router & Deep-Link Blackbox Tests (US-0066)', () => {
   let router: Router;
@@ -176,6 +177,25 @@ describe('Auth Guard & Session Persistence Tests (US-0062)', () => {
     assert.equal(navigated, true);
     assert.equal(router.getCurrentRoute()?.path, '#/login');
     assert.equal((globalThis as any).window.location.hash, '#/login');
+  });
+
+  it('keeps the join path for a signed-out visitor through sign-in and returns it once (ADR-0023 e)', async () => {
+    const kept = new Map<string, string>();
+    const pathStore = {
+      getItem: (key: string) => kept.get(key) ?? null,
+      setItem: (key: string, value: string) => { kept.set(key, value); },
+      removeItem: (key: string) => { kept.delete(key); },
+    };
+    unlistenGuard?.();
+    unlistenGuard = registerAuthGuard(router, auth, undefined, () => pathStore);
+
+    assert.equal(await router.navigate('#/join/tok-9'), true);
+    assert.equal(router.getCurrentRoute()?.pattern, '#/join/:token');
+    assert.equal(router.getCurrentRoute()?.params.token, 'tok-9');
+
+    await signInWithFake(auth, fake);
+    assert.equal(takePostSignInPath(pathStore), '#/join/tok-9');
+    assert.equal(takePostSignInPath(pathStore), null);
   });
 
   it('permits direct access to protected routes when valid session exists in localStorage', async () => {

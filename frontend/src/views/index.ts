@@ -15,6 +15,7 @@ import { loadCampaignHubData, renderCampaignHub } from './campaign-hub-view.ts';
 import { loadCharacterSheet, loadRoster, renderCharacterSheet, renderRoster } from './character-view.ts';
 import { loadCaravanBoard, renderCaravanBoard } from './caravan-board-view.ts';
 import { renderLobby } from './lobby-view.ts';
+import { renderCampaignJoin } from './campaign-join-view.ts';
 import { renderProfile } from './profile-view.ts';
 import { renderSessionActive } from './session-view.ts';
 import { renderPartyVitalsOverlay } from './party-vitals-overlay-view.ts';
@@ -32,6 +33,7 @@ const hub: ViewController = { render: renderCampaignHub, load: loadCampaignHubDa
 
 export const VIEW_CONTROLLERS: Record<AppActiveView, ViewController> = {
   'login': { render: renderAuthFallback, switcher: false },
+  'campaign-join': { render: renderCampaignJoin, switcher: false },
   'campaigns': { render: renderDashboard, load: loadDashboardData, switcher: false },
   'campaign-detail': hub,
   'campaign-characters': hub,

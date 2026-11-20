@@ -30,7 +30,6 @@ const FORGE_API_BASE_URL = '';
 export async function loadCampaignHubData(host: RunefobleApp, route: MatchedRoute): Promise<void> {
   const c = route.params.campaignId ?? '';
   host.inviteUrl = '';
-  host.inviteToken = '';
   const [camp, caps, members, sessions, chars, rosterCamps] = await Promise.all([
     appDataService.fetchCampaign(c),
     appDataService.fetchCampaignCapabilities(c),
@@ -71,7 +70,7 @@ function renderCampaignTabContent(app: RunefobleApp, activeTab: CampaignTab, can
   const canRunSession = Boolean(app.campaignCapabilities?.run_session);
   if (activeTab === 'overview') {
     return html`<div class="campaign-detail-layout">
-      <runefoble-campaign-members campaign-id=${app.campaignId} campaign-title=${app.campaignTitle} .members=${app.campaignMembers} .canManage=${canManage} current-user-id=${app.currentUserId} .inviteUrl=${app.inviteUrl} .inviteToken=${app.inviteToken} @assign-role=${(e: CustomEvent) => assignRoleFromEvent(app, e)} @create-invite=${(e: CustomEvent) => createInviteFromEvent(app, e)} @remove-member=${(e: CustomEvent) => removeMemberFromEvent(app, e)}></runefoble-campaign-members>
+      <runefoble-campaign-members campaign-id=${app.campaignId} campaign-title=${app.campaignTitle} .members=${app.campaignMembers} .canManage=${canManage} current-user-id=${app.currentUserId} .inviteUrl=${app.inviteUrl} @assign-role=${(e: CustomEvent) => assignRoleFromEvent(app, e)} @create-invite=${(e: CustomEvent) => createInviteFromEvent(app, e)} @remove-member=${(e: CustomEvent) => removeMemberFromEvent(app, e)}></runefoble-campaign-members>
       <runefoble-session-list campaign-id=${app.campaignId} .sessions=${app.campaignSessions} .isDm=${canRunSession} @enter-lobby=${(e: CustomEvent) => router.navigate('#/campaigns/' + app.campaignId + '/lobby/' + e.detail.sessionId)} @join-session=${(e: CustomEvent) => router.navigate('#/campaigns/' + app.campaignId + '/sessions/' + e.detail.sessionId)} @create-session=${(e: CustomEvent) => createSessionFromEvent(app, e)}></runefoble-session-list>
     </div>`;
   }

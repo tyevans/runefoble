@@ -80,8 +80,8 @@ export async function createInviteFromEvent(host: RunefobleApp, e: CustomEvent):
     host.showToast(`Invite not created. ${inv.message}`);
     return;
   }
-  host.inviteToken = inv.data.token;
-  host.inviteUrl = inv.data.invite_url;
+  // The server returns a path such as `/#/join/<token>`. The field shows the absolute link (ADR-0015).
+  host.inviteUrl = new URL(inv.data.invite_url, window.location.origin).href;
   host.showToast(`Invite created for ${role}`);
 }
 

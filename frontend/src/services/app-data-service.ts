@@ -28,6 +28,14 @@ export interface InviteResponse {
   token: string; campaign_id: string; role: string; invite_url: string; expires_at?: string | null; created_at: string; max_uses?: number | null; uses?: number;
 }
 
+/** The reply of `POST /api/v1/campaigns/join` (game_session JoinCampaignResponse). */
+export interface JoinCampaignResult {
+  status: string; campaign_id: string; user_id: string; role: string; zanzibar_relation: string;
+}
+
+/** The reply of `POST /api/v1/campaigns/invites/accounts`. It is the same for a new and an existing email. */
+export interface InviteAccountReply { status: string; message: string; }
+
 export class AppDataService {
   private static instance: AppDataService;
   public apiBase = '/api/v1';
@@ -79,6 +87,19 @@ export class AppDataService {
 
   async createCampaignInvite(campaignId: string, role: string, expiresInHours?: number, maxUses?: number): Promise<DataResult<InviteResponse>> {
     return this.request<InviteResponse>(`${this.apiBase}/campaigns/${campaignId}/invites`, { method: 'POST', body: JSON.stringify({ role, expires_in_hours: expiresInHours, max_uses: maxUses }) });
+  }
+
+  /** Completes a join for the signed-in caller with the invite token (ADR-0023 e). A pending join clears here. */
+  async joinCampaign(inviteToken: string): Promise<DataResult<JoinCampaignResult>> {
+    return this.request<JoinCampaignResult>(`${this.apiBase}/campaigns/join`, { method: 'POST', body: JSON.stringify({ invite_token: inviteToken }) });
+  }
+
+  /** Asks for an account for an invite holder. Needs no bearer. Zitadel sends the mail (ADR-0023 b, d). */
+  async createInviteAccount(payload: { inviteToken: string; email: string; displayName: string }): Promise<DataResult<InviteAccountReply>> {
+    return this.request<InviteAccountReply>(`${this.apiBase}/campaigns/invites/accounts`, {
+      method: 'POST',
+      body: JSON.stringify({ invite_token: payload.inviteToken, email: payload.email, display_name: payload.displayName }),
+    });
   }
 
   async removeCampaignMember(campaignId: string, userId: string): Promise<DataResult<void>> {

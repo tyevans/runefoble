@@ -37,6 +37,7 @@ const SESSION_BUNDLES: BundleName[] = ['gameSession', 'characterSheet', 'boardSt
 /** The microfrontend bundles that each view mounts. */
 export const VIEW_BUNDLES: Record<AppActiveView, BundleName[]> = {
   'login': [],
+  'campaign-join': ['gameSession'],
   'campaigns': ['gameSession'],
   'campaign-detail': ['gameSession'],
   'campaign-characters': ['gameSession', 'characterSheet'],

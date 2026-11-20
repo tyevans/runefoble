@@ -5,10 +5,11 @@
  * It has no DOM access. The App Shell and the view wiring tests import this one mapping.
  */
 
-import type { MatchedRoute } from './router.ts';
+import { JOIN_ROUTE_PATTERN, type MatchedRoute } from './router.ts';
 
 export type AppActiveView =
   | 'login'
+  | 'campaign-join'
   | 'campaigns'
   | 'campaign-detail'
   | 'campaign-characters'
@@ -31,6 +32,7 @@ const CAMPAIGN = '#/campaigns/:campaignId';
 export function resolveActiveView(route: Pick<MatchedRoute, 'pattern'> | null): AppActiveView {
   const pat = route?.pattern || '';
   if (pat === '#/login' || pat === '#/register') return 'login';
+  if (pat === JOIN_ROUTE_PATTERN) return 'campaign-join';
   if (pat.startsWith(`${CAMPAIGN}/lobby/`)) return 'session-lobby';
   if (pat.startsWith(`${CAMPAIGN}/sessions/`)) return 'session-active';
   if (pat === `${CAMPAIGN}/characters`) return 'campaign-characters';
