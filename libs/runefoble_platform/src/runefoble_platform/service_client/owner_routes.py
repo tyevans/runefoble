@@ -198,6 +198,11 @@ def move_token(session_id: str, token_id: str) -> OwnerRoute:
     return OwnerRoute("POST", path("api", "v1", "boards", session_id, "tokens", token_id, "move"))
 
 
+def create_trap(session_id: str) -> OwnerRoute:
+    """POST: lay a secret DM trap on the board of a session. The owner checks `board.manage_traps`."""
+    return OwnerRoute("POST", path("api", "v1", "boards", session_id, "traps"))
+
+
 # the_watcher
 
 

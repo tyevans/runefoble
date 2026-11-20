@@ -12,7 +12,6 @@
     "./runefoble-board-empty": "./src/runefoble-board-empty.ts",
     "./runefoble-dm-trap-controls": "./src/runefoble-dm-trap-controls.ts",
     "./runefoble-dm-trap-controls.styles": "./src/runefoble-dm-trap-controls.styles.ts",
-    "./runefoble-map-switcher": "./src/runefoble-map-switcher.ts",
     "./runefoble-dice-tray-3d": "./src/runefoble-dice-tray-3d.ts",
     "./runefoble-dice-tray-3d.styles": "./src/runefoble-dice-tray-3d.styles.ts"
   },

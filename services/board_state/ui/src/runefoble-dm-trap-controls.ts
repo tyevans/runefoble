@@ -26,7 +26,6 @@ export class RunefobleDmTrapControls extends LitElement {
 
   static styles = dmTrapControlsStyles;
 
-  @property({ type: Boolean }) layerVisible = true;
   @property({ type: String }) selectedTrapType = 'pit_trap';
   @property({ type: String }) triggerType: 'step' | 'touch' | 'proximity' = 'step';
   @property({ type: Number }) proximityRadius = 1;
@@ -47,12 +46,6 @@ export class RunefobleDmTrapControls extends LitElement {
     this.proximityRadius = preset.proximityRadius;
     this.damageDice = preset.damageDice;
     this.dcDetection = preset.dcDetection;
-    this.dispatchEvent(new CustomEvent('trap-selected', { bubbles: true, composed: true, detail: preset }));
-  }
-
-  toggleLayer() {
-    this.layerVisible = !this.layerVisible;
-    this.dispatchEvent(new CustomEvent('layer-toggled', { bubbles: true, composed: true, detail: { layerVisible: this.layerVisible } }));
   }
 
   /**
@@ -91,17 +84,10 @@ export class RunefobleDmTrapControls extends LitElement {
     }
   }
 
-  openMapSwitcher() {
-    this.dispatchEvent(new CustomEvent('open-map-switcher', { bubbles: true, composed: true }));
-  }
-
   render() {
     return html`
       <div class="hud-header">
-        <div class="title"><span>🛡️ Hidden Layer</span><span class="dm-badge">DM Only</span></div>
-        <button class="btn-hud" @click="${this.toggleLayer}">
-          ${this.layerVisible ? '👁️ Visible' : '🙈 Hidden'}
-        </button>
+        <div class="title"><span>🛡️ Secret Traps</span><span class="dm-badge">DM Only</span></div>
       </div>
 
       <div class="trap-palette">
@@ -136,7 +122,6 @@ export class RunefobleDmTrapControls extends LitElement {
 
       <div class="action-footer">
         <button class="btn-hud primary" ?disabled="${this.busy}" @click="${this.armTrap}">⚔️ Arm Cell</button>
-        <button class="btn-hud accent" @click="${this.openMapSwitcher}">🗺️ Switch Map</button>
       </div>
     `;
   }

@@ -67,8 +67,4 @@ export const absenteeDirectiveStyles = css`
   }
   .vitals-hp { color: var(--rf-status-success); font-weight: 700; }
   .vitals-stance { color: var(--rf-accent-secondary); font-weight: 600; text-transform: uppercase; }
-  .haptic-alert {
-    font-family: var(--rf-font-mono, monospace); font-size: 0.7rem;
-    color: var(--rf-accent-secondary); text-align: center; margin-top: 8px;
-  }
 `;

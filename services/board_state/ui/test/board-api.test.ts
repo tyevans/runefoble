@@ -11,7 +11,6 @@ import {
   boardSocketUrl,
   buildAoEEvaluateMessage,
   buildConfirmMoveMessage,
-  postSwitchMap,
   postTrap,
 } from '../src/board-api.ts';
 
@@ -53,38 +52,6 @@ describe('postTrap', () => {
         proximityRadius: 1, dcDetection: 15, damageDice: '2d10', isSecret: true,
       }, { fetchImpl }),
       (err: unknown) => err instanceof HttpError && err.status === 403 && err.detail.includes('DM permissions'),
-    );
-  });
-});
-
-describe('postSwitchMap', () => {
-  it('posts the map draft to the public switch-map route', async () => {
-    const { fetchImpl, calls } = stubFetch(200, {
-      board_id: 'board-42', new_map_id: 'dungeon_lvl2', cols: 20, rows: 20,
-      teleported_tokens: { valeros: [10, 15] }, status: 'switched',
-    });
-    const resp = await postSwitchMap('board-42', {
-      newMapId: 'dungeon_lvl2', cols: 20, rows: 20, backgroundImageUrl: '',
-      tokenTeleports: { valeros: [10, 15] },
-    }, { headers: { Authorization: 'Bearer tok' }, fetchImpl });
-
-    assert.equal(calls[0].url, '/api/v1/boards/board-42/switch-map');
-    assert.equal(calls[0].init?.method, 'POST');
-    assert.deepEqual(JSON.parse(String(calls[0].init?.body)), {
-      new_map_id: 'dungeon_lvl2', cols: 20, rows: 20, background_image_url: null,
-      token_teleports: { valeros: [10, 15] },
-    });
-    assert.equal(resp.new_map_id, 'dungeon_lvl2');
-    assert.deepEqual(resp.teleported_tokens, { valeros: [10, 15] });
-  });
-
-  it('throws HttpError when the server refuses the switch', async () => {
-    const { fetchImpl } = stubFetch(403, { detail: 'Forbidden' });
-    await assert.rejects(
-      postSwitchMap('board-42', {
-        newMapId: 'x', cols: 8, rows: 8, backgroundImageUrl: '', tokenTeleports: {},
-      }, { fetchImpl }),
-      (err: unknown) => err instanceof HttpError && err.status === 403,
     );
   });
 });

@@ -26,25 +26,6 @@ export interface SecretTrapResponse {
   [key: string]: unknown;
 }
 
-export interface SwitchMapDraft {
-  newMapId: string;
-  cols: number;
-  rows: number;
-  backgroundImageUrl: string;
-  tokenTeleports: Record<string, [number, number]>;
-}
-
-export interface SwitchMapResponse {
-  board_id: string;
-  previous_map_id?: string | null;
-  new_map_id: string;
-  cols: number;
-  rows: number;
-  background_image_url?: string | null;
-  teleported_tokens: Record<string, [number, number]>;
-  status: string;
-}
-
 export function buildCreateTrapBody(draft: TrapDraft): Record<string, unknown> {
   return {
     name: draft.name,
@@ -63,18 +44,6 @@ export function buildCreateTrapBody(draft: TrapDraft): Record<string, unknown> {
 export function postTrap(boardId: string, draft: TrapDraft, opts: RequestOptions = {}): Promise<SecretTrapResponse> {
   const url = `/api/v1/boards/${encodeURIComponent(boardId)}/traps`;
   return postJson<SecretTrapResponse>(url, buildCreateTrapBody(draft), opts);
-}
-
-/** POST /api/v1/boards/{boardId}/switch-map (DM only). */
-export function postSwitchMap(boardId: string, draft: SwitchMapDraft, opts: RequestOptions = {}): Promise<SwitchMapResponse> {
-  const url = `/api/v1/boards/${encodeURIComponent(boardId)}/switch-map`;
-  return postJson<SwitchMapResponse>(url, {
-    new_map_id: draft.newMapId,
-    cols: draft.cols,
-    rows: draft.rows,
-    background_image_url: draft.backgroundImageUrl || null,
-    token_teleports: draft.tokenTeleports,
-  }, opts);
 }
 
 /** WebSocket URL of the board service stream, /ws/boards/{boardId}. */

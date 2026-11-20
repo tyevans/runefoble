@@ -92,7 +92,10 @@ describe('guardrail and hot-swap handlers never show success after an error', ()
   afterEach(() => { gateway?.restore(); gateway = undefined; });
 
   it('a refused guardrail save shows the error and keeps the old guardrails', async () => {
-    gateway = installFakeGateway({ 'PUT /api/v1/characters/char-1/guardrails': { status: 503, body: { detail: 'Character service is unavailable.' } } });
+    gateway = installFakeGateway({
+      'GET /api/v1/characters/char-1/guardrails': { body: { stance: 'cautious' } },
+      'PUT /api/v1/characters/char-1/guardrails': { status: 503, body: { detail: 'Character service is unavailable.' } },
+    });
     const host = makeHost();
     const before = host.selectedCharacter;
 
@@ -104,25 +107,32 @@ describe('guardrail and hot-swap handlers never show success after an error', ()
   });
 
   it('a confirmed guardrail save shows success and puts new guardrails on the host', async () => {
-    gateway = installFakeGateway({ 'PUT /api/v1/characters/char-1/guardrails': { body: {} } });
+    gateway = installFakeGateway({
+      'GET /api/v1/characters/char-1/guardrails': { body: { stance: 'cautious', avoid_melee: false } },
+      'PUT /api/v1/characters/char-1/guardrails': { body: {} },
+    });
     const host = makeHost();
     const before = host.selectedCharacter;
 
     await handleGuardrailsSaved(host, 'char-1', event({ riskThreshold: 'reckless' }));
 
     assert.notEqual(host.selectedCharacter, before);
-    assert.deepEqual(host.selectedCharacter.stand_in_guardrails, { riskThreshold: 'reckless' });
+    assert.deepEqual(host.selectedCharacter.stand_in_guardrails, { stance: 'cautious', avoid_melee: false, riskThreshold: 'reckless' });
     assert.deepEqual(host.toasts, ['Tactical Guardrails Saved!']);
   });
 
-  it('a guardrail save sends only the policy fields, without the character id', async () => {
-    gateway = installFakeGateway({ 'PUT /api/v1/characters/char-1/guardrails': { body: {} } });
+  it('a guardrail save sends the full stored policy, keeps the stance, and omits the character id', async () => {
+    gateway = installFakeGateway({
+      'GET /api/v1/characters/char-1/guardrails': { body: { stance: 'heroic' } },
+      'PUT /api/v1/characters/char-1/guardrails': { body: {} },
+    });
     const host = makeHost();
 
     await handleGuardrailsSaved(host, 'char-1', event({ characterId: 'char-1', avoid_melee: true }));
 
-    assert.deepEqual(gateway.calls.map((c) => c.body), [{ avoid_melee: true }]);
-    assert.deepEqual(host.selectedCharacter.stand_in_guardrails, { avoid_melee: true });
+    assert.deepEqual(gateway.calls.map((c) => c.method), ['GET', 'PUT']);
+    assert.deepEqual(gateway.calls[1].body, { stance: 'heroic', avoid_melee: true });
+    assert.deepEqual(host.selectedCharacter.stand_in_guardrails, { stance: 'heroic', avoid_melee: true });
   });
 
   it('a refused hot-swap shows the error and no success text', async () => {

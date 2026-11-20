@@ -121,11 +121,11 @@ Each board UI event maps to one public route or socket action. The owning compon
 | UI event | Owning component | Backend call | Success signal |
 |---|---|---|---|
 | `move-token` (drag release, cell click, ghost confirm) | `<runefoble-board>` | WebSocket `/ws/boards/{session_id}`, action `confirm_move` with `{ token_id, to_x, to_y, initiated_by: "player" }` | Server broadcasts `token_moved`. The board updates the token position. |
-| `trap-placed` (emitted by Arm Cell) | `<runefoble-dm-trap-controls>` | `POST /api/v1/boards/{board_id}/traps?campaign_id=...` | HTTP 201. Event detail is the server trap state. |
-| `map-switched` (emitted by Teleport Here) | `<runefoble-map-switcher>` | `POST /api/v1/boards/{board_id}/switch-map?campaign_id=...` | HTTP 2xx. Event detail is the server switch response. |
-| `open-map-switcher` (Switch Map button) | `<runefoble-dm-trap-controls>` | None. UI only. | Host opens `<runefoble-map-switcher>`. |
+| `trap-placed` (emitted by Arm Cell) | `<runefoble-dm-trap-controls>` | `POST /api/v1/boards/{session_id}/traps` through the gateway | HTTP 201. Event detail is the server trap state. |
 
-On a non-2xx response, Arm Cell and Teleport Here show the server `detail` text. They do not emit a success event.
+The trap controls have no other event. The hidden-layer toggle, the trap preset event and the map switch control were removed (TASK-0954). Each one had no route or no listener.
+
+On a non-2xx response, Arm Cell shows the server `detail` text. It does not emit a success event.
 
 Set `boardId` and `campaignId` on both DM components. Set `targetX` and `targetY` on the trap controls before Arm Cell. Without a target cell, Arm Cell does not send a request.
 
@@ -178,12 +178,12 @@ Token ids are global in SpiceDB. A token id must use only letters, digits, and `
 
 ### Client side
 
-`<runefoble-board>` reads the token from the App Shell `runefoble-auth` context (`@runefoble/ui-core`). It opens the socket with `boardSocketProtocols(token)`. `<runefoble-dm-trap-controls>` and `<runefoble-map-switcher>` send `Authorization: Bearer` from the same context. They no longer send a `campaign_id` query.
+`<runefoble-board>` reads the token from the App Shell `runefoble-auth` context (`@runefoble/ui-core`). It opens the socket with `boardSocketProtocols(token)`. `<runefoble-dm-trap-controls>` sends `Authorization: Bearer` from the same context. It no longer sends a `campaign_id` query.
 
 ### App Shell mount
 
 The App Shell mounts `<runefoble-board>` only after the board read of the open session returns a board. Until the first read answers, the board area shows "Loading the battlemap..." (`boardKind` is `loading`). Thus no board socket opens before the board exists, and each page has one board socket: the one of `<runefoble-board>` (`getWebSocketUrl()` in `runefoble-app.ts` only builds its URL). A `board_ready` frame reads the board again while the shell has no board or the first read is still out. A board read replaces the shown token cells with the server cells.
 
-The App Shell mounts `<runefoble-dm-trap-controls>` and `<runefoble-map-switcher>` in the live tabletop view (`#/campaigns/:campaignId/sessions/:sessionId`). Only a caller with the `run_session` capability (from `GET /api/v1/campaigns/{campaign_id}/capabilities`) sees them. Both take the session id as `boardId`. A `move-token` dispatch from `<runefoble-board>` sets `targetX` and `targetY` on `<runefoble-dm-trap-controls>` to the destination cell. A `map-switched` event reloads the board from the server.
+The App Shell mounts `<runefoble-dm-trap-controls>` in the live tabletop view (`#/campaigns/:campaignId/sessions/:sessionId`). Only a caller with the `run_session` capability (from `GET /api/v1/campaigns/{campaign_id}/capabilities`) sees it. It takes the session id as `boardId`. A `move-token` dispatch from `<runefoble-board>` sets `targetX` and `targetY` on `<runefoble-dm-trap-controls>` to the destination cell.
 
-The App Shell does not load the battlemap list yet. `<runefoble-map-switcher>` therefore shows an empty grid. Loading battlemaps for the switcher is a follow-up.
+The App Shell has no map switch. `<runefoble-map-switcher>` was removed (TASK-0954): no public route lists the campaign battlemaps, so the switcher could only show an empty grid.

@@ -1,35 +1,25 @@
 import { LitElement, html } from 'lit';
-import { customElement, property, state } from 'lit/decorators.js';
+import { customElement, property } from 'lit/decorators.js';
 import { absenteeDirectiveStyles } from './runefoble-absentee-directive.styles.ts';
 import './runefoble-absentee-vote-card.ts';
 import type { DecisionPoll } from './runefoble-absentee-vote-card.ts';
-
-export interface TacticalStance {
-  id: string;
-  name: string;
-  icon: string;
-  description: string;
-}
-
-export const DEFAULT_STANCES: TacticalStance[] = [
-  { id: 'defensive', name: 'Defensive', icon: '🛡️', description: 'Protect allies & avoid melee' },
-  { id: 'cautious', name: 'Cautious', icon: '⚖️', description: 'Conserve slots & ranged support' },
-  { id: 'heroic', name: 'Heroic', icon: '⚔️', description: 'Bold smites & frontline focus' },
-];
+import { TACTICAL_STANCES, type TacticalStance } from './absentee-stances.ts';
 
 @customElement('runefoble-absentee-directive')
 export class RunefobleAbsenteeDirective extends LitElement {
-  @property({ type: String }) characterName = 'Sarah';
-  @property({ type: String }) characterClass = 'Cleric';
-  @property({ type: Boolean }) standInActive = true;
-  @property({ type: String }) currentStance = 'defensive';
+  /** The bound character's name. The App Shell passes it. The component has no default name. */
+  @property({ type: String }) characterName = '';
+  @property({ type: String }) characterClass = '';
+  /** True only while the character is an active stand-in. The App Shell passes the real flag. */
+  @property({ type: Boolean }) standInActive = false;
+  /** The saved stance id, or '' when the player has not chosen one. The App Shell owns the value. */
+  @property({ type: String }) currentStance = '';
   @property({ type: Array }) penalties: string[] = [];
   @property({ type: Number }) currentHp = 0;
   @property({ type: Number }) maxHp = 0;
   @property({ type: Object }) activePoll: DecisionPoll | null = null;
   @property({ type: Boolean }) hapticFeedbackEnabled = true;
-  @property({ type: Array }) stances: TacticalStance[] = DEFAULT_STANCES;
-  @state() private lastHapticNotice = '';
+  @property({ type: Array }) stances: TacticalStance[] = TACTICAL_STANCES;
 
   static styles = absenteeDirectiveStyles;
 
@@ -43,12 +33,13 @@ export class RunefobleAbsenteeDirective extends LitElement {
     }));
   }
 
+  /**
+   * Asks the host to save a stance. The component does not change `currentStance`. The host saves
+   * the stance on the server and sets the new value only after the server confirms it.
+   */
   public selectStance(stanceId: string): void {
-    this.currentStance = stanceId;
     this.triggerHaptic([60]);
-    this.lastHapticNotice = `Tactical stance shifted to ${stanceId.toUpperCase()}`;
     const detail = { characterName: this.characterName, stance: stanceId };
-    this.dispatchEvent(new CustomEvent('directive-changed', { detail, bubbles: true, composed: true }));
     this.dispatchEvent(new CustomEvent('stance-selected', { detail, bubbles: true, composed: true }));
   }
 
@@ -74,7 +65,7 @@ export class RunefobleAbsenteeDirective extends LitElement {
         ${this.maxHp > 0 ? html`
           <div class="vitals-bar">
             <span>HP: <span class="vitals-hp">${this.currentHp} / ${this.maxHp}</span></span>
-            <span>Directive: <span class="vitals-stance">${this.currentStance}</span></span>
+            <span>Directive: <span class="vitals-stance">${this.currentStance || 'No stance set'}</span></span>
           </div>
         ` : ''}
 
@@ -112,9 +103,6 @@ export class RunefobleAbsenteeDirective extends LitElement {
           </div>
         ` : ''}
 
-        ${this.lastHapticNotice ? html`
-          <div class="haptic-alert">⚡ ${this.lastHapticNotice}</div>
-        ` : ''}
       </div>
     `;
   }

@@ -10,6 +10,7 @@ import { appDataService } from '../services/app-data-service.ts';
 import { router } from '../router/index.ts';
 import type { RunefobleApp } from '../runefoble-app.ts';
 import { markSessionEnded } from './session-messages.ts';
+import { openAbsenteeDrawer } from './absentee-actions.ts';
 
 /**
  * Starts the session through the gateway start route, then opens the live tabletop (TASK-0910).
@@ -113,7 +114,7 @@ export async function toggleStandIn(host: RunefobleApp, e: CustomEvent<ToggleSta
   }
   await reloadRoster(host, sId);
   if (isAbsent && userId === host.currentUserId) {
-    host.isAbsenteeDirectiveOpen = true;
+    await openAbsenteeDrawer(host);
     host.showToast('Stand-In Activated: Directives drawer opened');
   }
 }

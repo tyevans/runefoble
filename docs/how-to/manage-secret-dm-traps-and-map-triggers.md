@@ -109,7 +109,7 @@ If a step trap is armed at `(4, 4)`:
 
 ## 5. Mid-Session Map Switching & Party Teleportation
 
-To transition the stage to a new battlemap and teleport the party:
+The board service exposes this route. The gateway does not proxy it, and the App Shell does not offer a map switch. No public route lists the campaign battlemaps for the App Shell, so the UI has no map to choose (TASK-0954). Map switching is not available from the UI. A client that calls the board service directly can use the route:
 
 ```http
 POST /api/v1/boards/{board_id}/switch-map
@@ -132,16 +132,16 @@ All tokens are relocated atomically, and `BattlemapSwitchedEvent` is emitted.
 
 ---
 
-## 6. UI Microfrontends: DM Hidden Layers & Map Switcher
+## 6. UI Microfrontends: DM Trap Controls
 
 Vendored in `@runefoble/board-state-ui` per **ADR-0004** and **ADR-0013**:
 
-The App Shell mounts both elements in the live tabletop view for callers with the `run_session` capability. See the App Shell mount section in [`interact-with-tactile-board-and-ghost-previews.md`](interact-with-tactile-board-and-ghost-previews.md).
+The App Shell mounts the element in the live tabletop view for callers with the `run_session` capability. See the App Shell mount section in [`interact-with-tactile-board-and-ghost-previews.md`](interact-with-tactile-board-and-ghost-previews.md).
 
 ### `<runefoble-dm-trap-controls>`
-Provides DM-exclusive HUD controls to toggle the hidden grid layer, select trap presets (Spike Pit, Glyph of Warding, Tripwire), adjust trigger radiuses, and arm cells:
+Provides DM-exclusive HUD controls to select a trap preset (Spike Pit, Glyph of Warding, Tripwire), adjust the trigger, radius and detection class, and arm the selected cell:
+- **Controls**: The preset palette, the trigger, radius and DC inputs, and the `Arm Cell` button. The board keeps no hidden-layer state, so the element has no layer toggle (TASK-0954).
 - **Properties**:
-  - `layerVisible: boolean` (default: `true`)
   - `selectedTrapType: string` (`"pit_trap"`, `"glyph"`, `"tripwire"`)
   - `triggerType: "step" | "touch" | "proximity"`
   - `proximityRadius: number`
@@ -152,22 +152,6 @@ Provides DM-exclusive HUD controls to toggle the hidden grid layer, select trap 
   - `boardId: string`: Board that receives the trap. Required to arm.
   - `campaignId: string`: Not used by the server. board_state takes the campaign from the board tuple.
   - `targetX: number | null`, `targetY: number | null`: Target grid cell. Required to arm.
+- **Route**: `Arm Cell` sends `POST /api/v1/boards/{boardId}/traps` through the gateway. The gateway forwards the bearer token. board_state checks `board.manage_traps`. A player receives `403`, and the element shows the server message.
 - **Events**:
-  - `trap-selected`: Emitted on palette preset selection.
   - `trap-placed`: Emitted after `POST /api/v1/boards/{boardId}/traps` returns 2xx. Detail is the server trap state.
-  - `layer-toggled`: Emitted when toggling DM layer visibility.
-  - `open-map-switcher`: Emitted to request opening the map switcher modal.
-
-### `<runefoble-map-switcher>`
-Quick-switcher modal providing a thumbnail grid of active campaign battlemaps with one-click teleport execution:
-- **Properties**:
-  - `open: boolean`
-  - `currentMapId: string`
-  - `maps: BattlemapItem[]`
-  - `tokenTeleports: Record<string, [number, number]>`
-- **Additional Properties**:
-  - `boardId: string`: Board to switch. Required to teleport.
-  - `campaignId: string`: Not used by the server. board_state takes the campaign from the board tuple.
-- **Events**:
-  - `map-switched`: Emitted after `POST /api/v1/boards/{boardId}/switch-map` returns 2xx, with `{ newMapId, cols, rows, backgroundImageUrl, tokenTeleports }` from the server response.
-  - `switcher-closed`: Emitted when the modal closes.

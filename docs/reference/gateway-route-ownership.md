@@ -48,6 +48,7 @@ each route, and the mode in which the gateway serves it.
 | POST | `/api/v1/boards/{session_id}/tokens` | board_state | proxy | `gateway_api.routers.boards_proxy` |
 | GET | `/api/v1/boards/{session_id}/tokens/{token_id}` | board_state | proxy | `gateway_api.routers.boards_proxy` |
 | POST | `/api/v1/boards/{session_id}/tokens/{token_id}/move` | board_state | proxy | `gateway_api.routers.boards_proxy` |
+| POST | `/api/v1/boards/{session_id}/traps` | board_state | proxy | `gateway_api.routers.boards_proxy` |
 | GET | `/api/v1/campaigns` | game_session | proxy | `gateway_api.routers.campaigns_proxy` |
 | POST | `/api/v1/campaigns` | game_session | proxy | `gateway_api.routers.campaigns_proxy` |
 | POST | `/api/v1/campaigns/invites/accounts` | game_session | proxy | `gateway_api.routers.account_invites_proxy` |

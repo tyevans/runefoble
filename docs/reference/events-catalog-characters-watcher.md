@@ -72,13 +72,8 @@ Part of the [Events Schema](events-schema.md). Each event identifier in this pag
   - `session_id`: String
   - `character_id`: UUID | str
 - **`StandInPolicyUpdated`**: Emitted when tactical guardrail constraints and preferences are configured for a character's AI stand-in (`runefoble.events.character.stand_in_policy_updated`).
-  - `session_id`: Optional[UUID | str]
   - `character_id`: UUID | str
-  - `spell_slot_reserve_level`: Optional[Integer]
-  - `ally_protection_target`: Optional[String]
-  - `avoid_melee`: Boolean
-  - `risk_threshold`: String
-  - `custom_priorities`: List[String]
+  - `guardrails`: Dict. The full `StandInGuardrailPolicy` as stored: `preserve_spell_slots`, `protect_allies`, `protect_ally_hp_threshold`, `risk_threshold`, `avoid_melee`, `permadeath_safeguard`, `custom_priorities`, and `stance` (`defensive`, `cautious`, `heroic`, or `null`; TASK-0954).
 - **`StandInStabilized`**: Emitted when zero-HP permadeath safeguard stabilizes a stand-in character at 0 HP without death save failures (`runefoble.events.character.stand_in_stabilized`).
   - `session_id`: Optional[UUID | str]
   - `character_id`: UUID | str

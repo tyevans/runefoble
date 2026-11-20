@@ -73,7 +73,7 @@ Some packages have their own status-specific text:
 | Package | Module | Calls |
 |---|---|---|
 | `@runefoble/asset-forge-ui` | `forge-api.ts` | Every forge route, and `POST /api/v1/boards/{session_id}/tokens`. Each function takes `(input, opts)`. The elements pass `{ apiBase: this.apiBaseUrl, auth: this.auth }`. |
-| `@runefoble/board-state-ui` | `board-api.ts` | `POST /api/v1/boards/{id}/traps` and `/switch-map`. |
+| `@runefoble/board-state-ui` | `board-api.ts` | `POST /api/v1/boards/{id}/traps`. |
 | `@runefoble/board-state-ui` | `physics_3d/physics_bridge.ts` | `POST /api/v1/boards/{id}/physics/simulate-throw` and `/knockback`. The API base is the `apiBaseUrl` of the host element (`<runefoble-board>`, `<runefoble-tabletop-3d>`). |
 | `@runefoble/board-state-ui` | `runefoble-map-dropzone.ts` | `POST /api/v1/assets/upload` with `postForm`. The API base is its `apiBaseUrl` property. `<runefoble-map-uploader>` passes its own `apiBaseUrl` down. |
 | `@runefoble/game-session-ui` | `caravan/caravan_api.ts` | `POST /shared-worlds/{id}/caravans/contracts/{contract_id}/accept`, `/dispatch` and `/fulfill` under the board `api-base` (default `/api/v1`). One POST function serves the three routes. The board passes its `AuthConsumerController` as `auth`. No call sends `x-user-id`. |
