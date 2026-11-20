@@ -1,7 +1,7 @@
 ---
 id: '0959'
 title: Every Operator Credential Comes From a Named Secret in the Hosted Profile
-status: Refined
+status: Complete
 created: 2026-11-19
 dependencies:
 - '0955'
@@ -19,7 +19,7 @@ target_release: 1.0.0
 
 ## Status
 
-Refined. Release One hosting slice 5 (PRD-0025, outcome 8: private credentials). Other hosting records use this contract for their keys.
+Complete
 
 ## Summary
 

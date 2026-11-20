@@ -565,7 +565,7 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 558. **TASK-0655 (Refined)**: [`0655-e2e-core-journeys-lobby-launch-vtt-and-character-sheet.md`](refined/0655-e2e-core-journeys-lobby-launch-vtt-and-character-sheet.md) — Gherkin and Playwright Coverage for Lobby, Launch, Text and Voice Token Moves, and Character Sheet
 559. **TASK-0956 (Complete)**: [`0956-public-tls-ingress.md`](complete/0956-public-tls-ingress.md) — Public TLS Ingress with an HTTP-to-HTTPS Redirect
 560. **TASK-0957 (Refined)**: [`0957-dev-only-routes-are-off-in-the-hosted-profile.md`](refined/0957-dev-only-routes-are-off-in-the-hosted-profile.md) — Development-Only Public Routes Are Off in the Hosted Profile
-561. **TASK-0959 (Refined)**: [`0959-hosted-secret-contract.md`](refined/0959-hosted-secret-contract.md) — Every Operator Credential Comes From a Named Secret in the Hosted Profile
+561. **TASK-0959 (Complete)**: [`0959-hosted-secret-contract.md`](complete/0959-hosted-secret-contract.md) — Every Operator Credential Comes From a Named Secret in the Hosted Profile
 562. **TASK-0958 (Refined)**: [`0958-zitadel-real-smtp-invite-only-sign-up-and-first-admin.md`](refined/0958-zitadel-real-smtp-invite-only-sign-up-and-first-admin.md) — Zitadel Uses Real SMTP, Closed Registration, and a First Admin on the Public Domain
 563. **TASK-0960 (Refined)**: [`0960-image-registry-and-digest-pins.md`](refined/0960-image-registry-and-digest-pins.md) — Image Registry Value and Digest Pins for Every Hosted Image
 564. **TASK-0961 (Refined)**: [`0961-database-backups-and-restore-test.md`](refined/0961-database-backups-and-restore-test.md) — Daily PostgreSQL Backup to Storage Outside the Cluster, and a Tested Restore

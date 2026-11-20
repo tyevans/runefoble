@@ -93,6 +93,7 @@ The MCP gateway subpackages re-export no names, and the gateway has one entrypoi
 - Campaign analytics worker `process_event` alias, tracking property wrappers, and package root re-exports. Callers use `handle_event`. (TASK-0500)
 
 ### Added
+Hosted Secret contract in `docs/reference/hosted-secrets.md`: every operator and generated Secret key that a hosted release reads, pinned to the render by a test. A staging or production render fails when the campaign-lore Secret name is empty. The local credential Secret holds an empty `smtp-password` key for TASK-0958.
 Public TLS ingress for hosted releases: `ingress.tls.mode` is `certManager` (with `ingress.tls.clusterIssuer`) or `existingSecret` (with `ingress.tls.secretName`), and plain HTTP answers 301 to HTTPS through a Traefik Middleware (`ingress.httpsRedirect`). The local render is unchanged.
 Hosted values profile (`deployments/helm/runefoble/values.hosted.example.yaml`) and a render guard. A staging or production render fails on any `REPLACE-ME` placeholder or development default, and names the key path. The local render is unchanged.
 The session chronicle records board token moves ("Valeros the Bold moved to (3, 3)") from the board `TokenMoved` event, once per event, and the gateway sends the line live to the feed.
