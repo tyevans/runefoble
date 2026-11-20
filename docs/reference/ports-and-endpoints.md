@@ -9,10 +9,10 @@
 | `/ws/boards` | `board-state:8002` | Board socket `/ws/boards/{session_id}`. board_state owns it and checks the bearer and `board.view`. gateway-api has no `/ws/boards` route. Traefik gives the longer prefix the higher priority, so this rule wins over `/ws` (TASK-0928) |
 | `/ws` | `gateway-api:8000` | WebSocket gateway (`/ws/session/{id}`, `/ws/voice/{id}`, `/ws/campaigns/{id}`, `/ws/minigames/{id}`, and other `/ws/...` routes). Traefik forwards the HTTP upgrade without extra annotations. `/ws/session/{id}` needs `session.observe` (close code 4403 otherwise), relays only inside its own session, and relays inbound frames only from callers with `session.participate` (see [Session WebSocket inbound frames](#session-websocket-inbound-frames)). The minigame table sockets (`/ws/minigames/{id}` and `/ws/establishments/{id}/tables/{table_id}`) are relayed to `game_session`, which verifies the bearer subprotocol and owns the table (TASK-0592). Clients authenticate as described in [Authenticate with Zitadel OIDC](../how-to/authenticate-with-zitadel-oidc.md) |
 | `/healthz` | `gateway-api:8000` | Gateway health report. It probes each downstream service and reports its status. |
-| `/docs`, `/swagger-ui` | `swagger-ui:8080` | Unified Swagger UI aggregating all OpenAPI specs |
+| `/docs`, `/swagger-ui` | `swagger-ui:8080` | Unified Swagger UI aggregating all OpenAPI specs. Local only: no route in a hosted render |
 | Host `auth.localhost`, path `/` | `zitadel:8080` | Self-hosted Zitadel identity provider. Zitadel has its own host because it serves only its root path |
-| `/analytics` | `openpanel:3000` | Self-hosted OpenPanel privacy-preserving analytics |
-| `/mail`, `/mailpit` | `mailpit:8025` | Self-hosted Mailpit email testing & mock SMTP Web UI and API |
+| `/analytics` | `openpanel:3000` | Self-hosted OpenPanel privacy-preserving analytics. Local only: no route in a hosted render |
+| `/mail`, `/mailpit` | `mailpit:8025` | Self-hosted Mailpit email testing & mock SMTP Web UI and API. Local only: no route in a hosted render |
 | `/` | `frontend:80` | Lit + Vite web application (catch-all, lowest precedence) |
 
 ## TLS and HTTP Redirect Rules (hosted)
