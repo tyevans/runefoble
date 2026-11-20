@@ -1,7 +1,7 @@
 ---
 id: '0931'
 title: The Remaining Services Gate Readiness on Their Dependencies
-status: Refined
+status: Complete
 created: 2026-11-19
 dependencies:
 - '0930'
@@ -18,7 +18,7 @@ target_release: 0.9.0
 
 ## Status
 
-Refined. Follow-up of TASK-0930 (`.audit/work/0930.md`).
+Complete
 
 ## Summary
 

@@ -1,7 +1,7 @@
 ---
 id: '0922'
 title: The DM Sets Up the Session Battlemap and Places the Party Tokens
-status: Refined
+status: Complete
 created: 2026-11-19
 dependencies:
 - '0906'
@@ -19,7 +19,7 @@ target_release: 0.9.0
 
 ## Status
 
-Refined. Found by TASK-0652 (`.audit/work/0652.md`).
+Complete
 
 ## Summary
 

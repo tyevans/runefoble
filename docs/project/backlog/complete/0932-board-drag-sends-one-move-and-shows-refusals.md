@@ -1,7 +1,7 @@
 ---
 id: '0932'
 title: The Board Drag Sends One Move and Shows Refusals
-status: Refined
+status: Complete
 created: 2026-11-19
 dependencies:
 - '0928'
@@ -19,7 +19,7 @@ target_release: 0.9.0
 
 ## Status
 
-Refined. Found by the fifth full e2e run on Kind (`.audit/work/vtt-drag.md`).
+Complete
 
 ## Summary
 

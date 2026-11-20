@@ -1,7 +1,7 @@
 ---
 id: '0928'
 title: "The Board Socket Reaches board_state, and Placed Tokens Arrive Live"
-status: Refined
+status: Complete
 created: 2026-11-19
 dependencies:
 - '0922'
@@ -19,7 +19,7 @@ target_release: 0.9.0
 
 ## Status
 
-Refined.
+Complete
 
 ## Summary
 
