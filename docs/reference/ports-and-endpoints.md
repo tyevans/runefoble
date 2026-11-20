@@ -91,9 +91,9 @@ Campaign Lore routes require a verified bearer token, except `/healthz`, `/ready
 | `the-watcher` | POST | `/api/v1/watcher/approve` | Commits pending AI action immediately without waiting for pause timeout (Zanzibar enforced) |
 | `the-watcher` | POST | `/api/v1/watcher/modify` | Modifies parameters or target of an intercepted AI action before commit (Zanzibar enforced) |
 | `the-watcher` | GET | `/api/v1/watcher/actions/pending` | Lists every action a session holds with its status. Needs `session_id` and a DM (Zanzibar enforced). Proxied by `gateway-api` (TASK-0596) |
-| `the-watcher` | GET | `/api/v1/watcher/whispers` | Retrieves paginated DM private narrative suggestions, tactics, and perception alerts (Zanzibar enforced) |
+| `the-watcher` | GET | `/api/v1/watcher/whispers` | Retrieves paginated DM whispers and `narration_engine`. An empty log returns an empty list (Zanzibar enforced, TASK-0949) |
 | `the-watcher` | POST | `/api/v1/watcher/whispers` | Creates a new private narrative suggestion for the DM (Zanzibar enforced) |
-| `the-watcher` | POST | `/api/v1/watcher/whispers/generate` | Generates dynamic atmospheric hints, monster tactics, and perception checks (Zanzibar enforced) |
+| `the-watcher` | POST | `/api/v1/watcher/whispers/generate` | Asks the narration port for one DM whisper of type `narration` and records it. `503` when the port is `none` or the engine fails (Zanzibar enforced, TASK-0949) |
 | `the-watcher` | POST | `/api/v1/watcher/whispers/{whisper_id}/dispatch` | Sends an `audience_narration` whisper to the table as `runefoble.events.watcher.narrative_dispatched`. Optional `text` replaces the narration. `403` for a non-DM. `404` for an unknown whisper. `409` for a whisper that is not a narration or was already sent (TASK-0838) |
 | `the-watcher` | POST | `/api/v1/campaigns/{campaign_id}/world-tick` | Advances background NPC faction agendas, simulates rival clashes, and generates DM intelligence bulletin |
 | `the-watcher` | POST | `/api/v1/campaigns/{campaign_id}/factions` | Registers and persists an autonomous NPC faction with influence, resources, and agendas (Zanzibar enforced) |

@@ -282,4 +282,25 @@ export const dmWhisperBarStyles = css`
     padding: 12px 0;
     text-align: center;
   }
+
+  .bar-status {
+    margin-top: 6px;
+    padding: 6px 8px;
+    border: 1px dashed var(--rf-border-color);
+    font-size: 0.8rem;
+    color: var(--rf-text-muted);
+  }
+
+  .bar-error {
+    margin-top: 6px;
+    padding: 6px 8px;
+    border: 1px solid var(--rf-status-danger);
+    font-size: 0.8rem;
+    color: var(--rf-status-danger);
+  }
+
+  .action-outcome {
+    font-weight: 700;
+    color: var(--rf-status-danger);
+  }
 `;

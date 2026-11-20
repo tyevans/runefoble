@@ -12,6 +12,8 @@
     "./runefoble-autonomous-dm": "./src/runefoble-autonomous-dm.ts",
     "./runefoble-dm-whisper-bar": "./src/runefoble-dm-whisper-bar.ts",
     "./whisper-actions": "./src/whisper-actions.ts",
+    "./whisper-bar-api": "./src/whisper-bar-api.ts",
+    "./whisper-bar-types": "./src/whisper-bar-types.ts",
     "./runefoble-faction-radar": "./src/runefoble-faction-radar.ts",
     "./faction_radar": "./src/faction_radar/index.ts",
     "./faction_radar/radar-svg.template": "./src/faction_radar/radar-svg.template.ts",
@@ -30,6 +32,7 @@
     "build": "tsc --noEmit"
   },
   "dependencies": {
+    "@runefoble/ui-core": "workspace:*",
     "lit": "^3.3.3"
   },
   "devDependencies": {

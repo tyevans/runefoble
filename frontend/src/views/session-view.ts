@@ -13,6 +13,7 @@ import { endSession } from '../app/session-actions.ts';
 import { openAbsenteeDrawer } from '../app/absentee-actions.ts';
 import { findCallerSeat } from '../app/active-character.ts';
 import { speakerTokenCell } from '../app/command-bar-context.ts';
+import { handleActionVetoed, whisperBarProps } from '../app/whisper-bar-actions.ts';
 
 /**
  * The DM ends an active session (TASK-0953). Only a caller with the `run_session` capability sees
@@ -84,7 +85,7 @@ export function renderSessionActive(app: RunefobleApp) {
       ${canRunSession ? html`<div class="dm-party-inspector" role="region" aria-label="DM Party Inspector"><span class="dm-badge">DM Party Inspector</span><select class="dm-character-switcher" aria-label="Switch inspected character" @change=${(e: Event) => switchDmCharacter(app, (e.target as HTMLSelectElement).value)}>${app.characters.map((c) => html`<option value="${c.id}" ?selected=${c.id === char?.id}>${c.name} (${c.characterClass} Lv ${c.level})</option>`)}</select></div>` : ''}
       ${char ? html`<runefoble-character-card .characterName=${char.name} .characterClass=${`${char.characterClass}${char.level ? ` Lvl ${char.level}` : ''}`} .level=${char.level} .currentHp=${char.currentHp} .maxHp=${char.maxHp} .armorClass=${char.armorClass} .portraitUrl=${char.portraitUrl || ''} .isAiStandIn=${isStandIn}></runefoble-character-card>
       ${isStandIn ? html`<button class="btn-toggle-directive" @click=${() => openAbsenteeDrawer(app)}>📋 Stance Directives</button>` : ''}` : html`<div class="empty-state" data-testid="active-character-empty"><p>No character is bound to this session. Choose a character in the session lobby.</p></div>`}
-      <runefoble-plugin-slot slot-id="sidebar-tool" .showFallback=${false}></runefoble-plugin-slot>
+      <runefoble-plugin-slot slot-id="sidebar-tool" .showFallback=${false} .pluginProps=${guard([app.sessionId, app.campaignId], () => whisperBarProps(app.sessionId, app.campaignId))} @action-vetoed=${handleActionVetoed}></runefoble-plugin-slot>
       <runefoble-plugin-slot slot-id="dice-panel" .showFallback=${false} .pluginProps=${guard([app.sessionId, char?.name ?? ''], () => ({ 'default-dice-roller': { sessionId: app.sessionId, rollerName: char?.name ?? '' } }))}></runefoble-plugin-slot>
     </div>
     <runefoble-watcher-feed .events=${app.events}></runefoble-watcher-feed>

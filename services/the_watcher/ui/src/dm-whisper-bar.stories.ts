@@ -11,82 +11,61 @@ const meta: Meta = {
 export default meta;
 type Story = StoryObj;
 
-export const Default: Story = {
+const GOBLIN_ACTION = {
+  action_id: 'act-goblin-flank',
+  actor_name: 'Goblin Skulker',
+  action_type: 'move_and_strike',
+  description: 'Disengages from Valeros and dashes behind Merisiel with jagged dagger drawn.',
+  target: 'Merisiel',
+  parameters: { damage: 5, advantage: true },
+  status: 'pending',
+  pause_window_ms: 4000,
+};
+
+const MODEL_WHISPERS = [
+  {
+    whisper_id: 'whisp-n1',
+    whisper_type: 'narration',
+    content: 'The torches gutter. Something breathes behind the sealed door.',
+    metadata: { source: 'llm', suggested_dm_prompts: ['Ask who opens the door.'] },
+  },
+];
+
+/** A new session: the bar has no whisper and no action. No story here calls a route. */
+export const Empty: Story = {
+  render: () => html`<runefoble-dm-whisper-bar></runefoble-dm-whisper-bar>`,
+};
+
+/** The narration port has no engine. The bar says so and shows no invented text. */
+export const NoModel: Story = {
+  render: () => html`<runefoble-dm-whisper-bar narrationEngine="none"></runefoble-dm-whisper-bar>`,
+};
+
+/** Whispers that the language model wrote. */
+export const Whispers: Story = {
   render: () => html`
-    <runefoble-dm-whisper-bar
-      sessionId="sess-101"
-      campaignId="camp-202"
-    ></runefoble-dm-whisper-bar>
+    <runefoble-dm-whisper-bar narrationEngine="inference_worker" .whispers=${MODEL_WHISPERS}></runefoble-dm-whisper-bar>
   `,
 };
 
-export const WithPendingAction: Story = {
+/** An AI action waits in its pause window. The DM can approve, veto or edit it. */
+export const PendingAction: Story = {
   render: () => html`
     <runefoble-dm-whisper-bar
-      sessionId="sess-101"
-      campaignId="camp-202"
+      narrationEngine="inference_worker"
       pauseWindowMs="4000"
-      .pendingAction=${{
-        action_id: 'act-goblin-flank',
-        actor_name: 'Goblin Skulker',
-        action_type: 'move_and_strike',
-        description: 'Disengages from Valeros and dashes behind Merisiel with jagged dagger drawn.',
-        target: 'Merisiel',
-        parameters: { damage: 5, advantage: true },
-        pause_window_ms: 4000,
-      }}
-      .whispers=${[
-        {
-          whisper_id: 'whisp-1',
-          whisper_type: 'monster_tactics',
-          content: 'Goblin Skulkers gain sneak attack if allies are within 5 feet of target.',
-        },
-        {
-          whisper_id: 'whisp-2',
-          whisper_type: 'passive_perception',
-          content: 'Ezren passive perception 15 notices the scent of goblin oil poison.',
-        },
-        {
-          whisper_id: 'whisp-3',
-          whisper_type: 'atmospheric_hint',
-          content: 'The torch flickering reveals long spiderwebs hanging above.',
-        },
-      ]}
+      .pendingAction=${GOBLIN_ACTION}
+      .whispers=${MODEL_WHISPERS}
     ></runefoble-dm-whisper-bar>
   `,
 };
 
-export const BossEncounterSecrets: Story = {
+/** The veto route answered 200. The action shows as vetoed and has no control. */
+export const Vetoed: Story = {
   render: () => html`
     <runefoble-dm-whisper-bar
-      sessionId="sess-boss"
-      campaignId="camp-202"
-      .pendingAction=${{
-        action_id: 'act-dragon-breath',
-        actor_name: 'Young Red Dragon',
-        action_type: 'breath_weapon',
-        description: 'Inhales deeply, preparing to unleash a 30ft cone of searing flame across the bridge.',
-        target: 'Party Frontline',
-        parameters: { damage_dice: '16d6', dc: 17 },
-        pause_window_ms: 6000,
-      }}
-      .whispers=${[
-        {
-          whisper_id: 'whisp-b1',
-          whisper_type: 'monster_tactics',
-          content: 'The dragon aims breath weapon at bridge choke point to maximize party casualties.',
-        },
-        {
-          whisper_id: 'whisp-b2',
-          whisper_type: 'narrative_secret',
-          content: 'The dragon carries an old scar on its underbelly that Evelyn can use for a critical vulnerability hint.',
-        },
-        {
-          whisper_id: 'whisp-b3',
-          whisper_type: 'passive_perception',
-          content: 'Passive Perception 16 hears the collapsing support beams under the bridge.',
-        },
-      ]}
+      narrationEngine="inference_worker"
+      .pendingAction=${{ ...GOBLIN_ACTION, status: 'vetoed' }}
     ></runefoble-dm-whisper-bar>
   `,
 };
@@ -94,8 +73,6 @@ export const BossEncounterSecrets: Story = {
 export const AudienceNarrationToSend: Story = {
   render: () => html`
     <runefoble-dm-whisper-bar
-      sessionId="sess-101"
-      campaignId="camp-202"
       .whispers=${[
         {
           whisper_id: 'whisp-aud-1',
@@ -111,8 +88,6 @@ export const AudienceNarrationToSend: Story = {
 export const AudienceNarrationSent: Story = {
   render: () => html`
     <runefoble-dm-whisper-bar
-      sessionId="sess-101"
-      campaignId="camp-202"
       .whispers=${[
         {
           whisper_id: 'whisp-aud-2',
@@ -128,8 +103,6 @@ export const AudienceNarrationSent: Story = {
 export const NarrationUnavailable: Story = {
   render: () => html`
     <runefoble-dm-whisper-bar
-      sessionId="sess-101"
-      campaignId="camp-202"
       .whispers=${[
         {
           whisper_id: 'whisp-unavail-1',

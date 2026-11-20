@@ -120,7 +120,7 @@ ROUTES = (
         ("api", "v1", "watcher", "whispers", "generate"),
         SERVICE,
         name="watcher_generate_whispers",
-        doc="Generate DM whispers: hints, monster tactics, and perception checks (The Watcher).",
+        doc="Ask the language model for one DM whisper (The Watcher; DM only).",
         body="json",
         principal=True,
         timeout=LLM_TIMEOUT_S,

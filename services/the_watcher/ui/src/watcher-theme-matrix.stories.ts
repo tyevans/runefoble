@@ -59,7 +59,7 @@ export const AbsenteeDirective: Story = {
 };
 
 export const DmWhisperBar: Story = {
-  render: ({ theme }) => matrix(theme, renderStory(WhisperStories.BossEncounterSecrets)),
+  render: ({ theme }) => matrix(theme, renderStory(WhisperStories.PendingAction)),
 };
 
 export const AutonomousDm: Story = {

@@ -98,7 +98,7 @@ The speech targets are not measured. The 500 millisecond target has no latency t
 
 ### 2. The Watcher: DM Co-Pilot and Stand-Ins
 
-- **Live**: DM co-pilot whispers and veto override. A human DM can reject any AI action. Test: `tests/test_blackbox_dm_copilot_whispers.py` (TASK-0053).
+- **Live**: DM co-pilot whispers and veto override. The whispers come only from the language model, and the bar says when no model is configured. A human DM vetoes an AI action from the whisper bar, and the action does not run. Tests: `tests/test_blackbox_dm_whispers_model.py`, `tests/test_blackbox_dm_copilot_whispers.py`, `e2e/features/dm_whispers_and_veto.feature` (TASK-0053, TASK-0949).
 - **Live**: Disambiguation and compound actions through the API. Tests: `tests/test_blackbox_intent_disambiguation_flow.py`, `tests/test_blackbox_intent_compound_combos.py` (TASK-0054).
 - **Live**: LLM narration and stand-ins. The Watcher calls the inference worker for DM narration, audience narration and stand-in decisions when each port is set to `inference_worker` (TASK-0943, TASK-0948). Each call has its own budget, and a failed or slow call returns `503`.
 - **Live**: The grammar parses every spoken transcript first. The worker parses only the speech that the grammar returns as narrative (ADR-0022, TASK-0943).
