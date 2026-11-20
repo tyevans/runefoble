@@ -8,7 +8,7 @@ and `deployments/helm/runefoble/templates/hosted-guard.yaml`.
 
 1. Copy `deployments/helm/runefoble/values.hosted.example.yaml` to a file outside the repository.
 2. Replace every `REPLACE-ME` with your value.
-3. Create the Secret named in `credentials.existingSecret`. It holds the keys in `templates/secret.yaml`.
+3. Create the Secret named in `credentials.existingSecret`. It holds every key in [`hosted-secrets.md`](hosted-secrets.md).
 4. Render the chart. Deploy only when the render succeeds:
 
 ```sh
@@ -32,7 +32,8 @@ An unset key that the guard reads also fails the render. The guard never takes a
 |---|---|---|
 | `global.environment` | `production` | Selects the guard. Use `staging` or `production`. |
 | `global.domain` | `REPLACE-ME` | Fails on `REPLACE-ME`, `localhost`, or a `.local` suffix. |
-| `credentials.existingSecret` | `runefoble-hosted-credentials` | `templates/secret.yaml` fails when it is empty. The chart then renders no credential Secret, so no `DEV-ONLY` value reaches the output. |
+| `credentials.existingSecret` | `runefoble-hosted-credentials` | `templates/secret.yaml` fails when it is empty. The chart then renders no credential Secret, so no `DEV-ONLY` value reaches the output. The Secret keys are in [`hosted-secrets.md`](hosted-secrets.md). |
+| `services.campaignLore.embeddingApiKeySecret` | `campaign-lore-embedding` | Fails when it is empty or holds `REPLACE-ME`. The chart renders no Secret with this name in a hosted render. The operator creates it with the key `api-key`. |
 | `ingress.hosts[].host` | `REPLACE-ME` and `auth.REPLACE-ME` | Fails on `REPLACE-ME`, `localhost`, or a `.local` suffix. |
 | `zitadel.externalDomain` | `auth.REPLACE-ME` | Fails on `REPLACE-ME`, `localhost`, or a `.local` suffix. |
 | `zitadel.externalPort` | `443` | No guard. Must match the public port. |
@@ -58,3 +59,11 @@ hosted key that the table lists. Do not keep the marker in a rendered file.
 `deployments/helm/runefoble/values.yaml` marks the credential defaults as `DEV-ONLY`. Do not
 use these values in a hosted render. In a hosted render, the chart does not render them, because
 `credentials.existingSecret` names a Secret that you manage.
+
+## Secret decisions
+
+- D5 (Secret source): the operator chooses. A hand-applied Secret or an external-secret operator
+  both work. The chart reads only the names. The choice is not a chart decision.
+- D5b (narrow the `create` grant): Option A. The chart keeps the namespace-wide `create` grant on
+  Secrets, because RBAC cannot limit `create` by name. The residual risk is in
+  [`hosted-secrets.md`](hosted-secrets.md), section 5.

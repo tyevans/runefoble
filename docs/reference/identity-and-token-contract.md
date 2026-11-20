@@ -206,3 +206,4 @@ The paths in this table are absent from `/openapi.json` of `gateway-api`. Use th
 - [Ports and Endpoints](ports-and-endpoints.md)
 - [Platform Services](platform-services.md)
 - [SpiceDB and Zitadel Identity Sync](spicedb-zitadel-identity-sync.md)
+- [Hosted Secrets](hosted-secrets.md): the Secret keys that hold the service credential and the other operator credentials
