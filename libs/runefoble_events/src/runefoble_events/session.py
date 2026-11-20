@@ -200,3 +200,26 @@ class WeatherChanged(BaseRunefobleEvent):
     event_type: str = "runefoble.events.session.weather_changed"
     weather: str
     source_proposal_id: UUID | str | None = None
+
+
+@register_event("runefoble.events.session.token_move_chronicled")
+class TokenMoveChronicled(BaseRunefobleEvent):
+    """The session chronicle recorded a board token move.
+
+    game_session records it from the board `TokenMoved` event. `source_event_id` is the id of
+    that event, so a redelivery of the same move records nothing.
+    """
+
+    aggregate_type: str = "GameSession"
+    event_type: str = "runefoble.events.session.token_move_chronicled"
+    source_event_id: str
+    token_id: str
+    token_name: str
+    to_x: int
+    to_y: int
+    initiated_by: str = "player"
+
+    @property
+    def line(self) -> str:
+        """The feed line, for example "Valeros the Bold moved to (3, 3)"."""
+        return f"{self.token_name} moved to ({self.to_x}, {self.to_y})"

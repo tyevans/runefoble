@@ -33,6 +33,7 @@ from runefoble_events.events import (
     SessionEnded,
     SessionStarted,
     StandInActionDecided,
+    TokenMoveChronicled,
     TurnAdvanced,
     TurnStarted,
     WeatherChanged,
@@ -63,6 +64,7 @@ SESSION_EVENT_STREAMS: dict[type[DomainEvent], str] = {
     DMOverrideApplied: STREAM_SESSION,
     AtmosphereUpdated: STREAM_SESSION,
     WeatherChanged: STREAM_SESSION,
+    TokenMoveChronicled: STREAM_SESSION,
     StandInActionDecided: STREAM_WATCHER,
 }
 

@@ -1,4 +1,4 @@
-"""DM override and atmosphere domain handler mixin for the GameSession aggregate."""
+"""DM override, atmosphere and chronicle domain handler mixin for the GameSession aggregate."""
 
 from __future__ import annotations
 
@@ -6,7 +6,12 @@ from typing import Any
 
 from eventsource.domain.decorators import handles
 from game_session.models import GameSessionState
-from runefoble_events.events import AtmosphereUpdated, DMOverrideApplied, WeatherChanged
+from runefoble_events.events import (
+    AtmosphereUpdated,
+    DMOverrideApplied,
+    TokenMoveChronicled,
+    WeatherChanged,
+)
 
 
 class DirectorHandlersMixin:
@@ -57,6 +62,31 @@ class DirectorHandlersMixin:
             weather=weather,
             source_proposal_id=source_proposal_id,
         )
+
+    def chronicle_token_move(
+        self,
+        source_event_id: str,
+        token_id: str,
+        token_name: str,
+        to: tuple[int, int],
+        initiated_by: str,
+    ) -> None:
+        """Record a board token move in the session chronicle."""
+        self.create_event(
+            TokenMoveChronicled,
+            campaign_id=self.state.campaign_id,
+            session_id=self.aggregate_id,
+            source_event_id=source_event_id,
+            token_id=token_id,
+            token_name=token_name,
+            to_x=to[0],
+            to_y=to[1],
+            initiated_by=initiated_by,
+        )
+
+    @handles(TokenMoveChronicled)
+    def _on_token_move_chronicled(self, event: TokenMoveChronicled) -> None:
+        self._state = self.state.with_chronicled_move(event.source_event_id)
 
     @handles(WeatherChanged)
     def _on_weather_changed(self, event: WeatherChanged) -> None:

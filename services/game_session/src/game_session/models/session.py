@@ -43,6 +43,9 @@ class GameSessionState(BaseModel, GameSessionTransitionsMixin):
     weather: str | None = None
     # The approved audience proposal that set the weather. A redelivery of it changes nothing.
     weather_source_proposal_id: str | None = None
+    # The board `TokenMoved` ids that the chronicle recorded, newest last. A redelivery of one
+    # records nothing. Only the last CHRONICLED_MOVE_LIMIT ids are kept.
+    chronicled_move_ids: list[str] = Field(default_factory=list)
     dm_overrides: list[dict[str, Any]] = Field(default_factory=list)
 
 

@@ -7,6 +7,9 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from game_session.models.session import GameSessionState
 
+# The number of recorded board move ids that a session keeps for its redelivery guard.
+CHRONICLED_MOVE_LIMIT = 1000
+
 
 class DirectorTransitionsMixin:
     """Pure state transitions for DM overrides and the session atmosphere."""
@@ -26,3 +29,7 @@ class DirectorTransitionsMixin:
         return self.model_copy(
             update={"weather": weather, "weather_source_proposal_id": source_proposal_id}
         )
+
+    def with_chronicled_move(self: GameSessionState, source_event_id: str) -> GameSessionState:
+        ids = [*self.chronicled_move_ids, source_event_id][-CHRONICLED_MOVE_LIMIT:]
+        return self.model_copy(update={"chronicled_move_ids": ids})

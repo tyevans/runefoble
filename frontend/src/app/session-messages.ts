@@ -6,6 +6,7 @@
  */
 
 import type { RunefobleApp } from '../runefoble-app.ts';
+import { toWatcherFeedEvent, type SessionChronicleEntry } from '../services/session-chronicle.ts';
 import { dispatchSessionMessage } from '../vtt-mesh-handlers.ts';
 import { handleBoardReady } from './board-setup-actions.ts';
 
@@ -30,6 +31,12 @@ export function sessionStartedRoute(shell: ShellSessionIds, msg: { sessionId?: u
   return `#/campaigns/${shell.campaignId}/sessions/${shell.sessionId}`;
 }
 
+/** Adds a live chronicle line to the feed. A line that the feed already holds is not added again. */
+function appendChronicleEntry(host: RunefobleApp, entry: SessionChronicleEntry): void {
+  if (host.events.some((e) => e.id === entry.event_id)) return;
+  host.events = [...host.events, toWatcherFeedEvent(entry)];
+}
+
 /** Routes one parsed session message to the matching state update or VTT handler. */
 export function handleSessionMessage(host: RunefobleApp, msg: any): void {
   if (msg.type === 'speech_action') {
@@ -37,6 +44,8 @@ export function handleSessionMessage(host: RunefobleApp, msg: any): void {
       ...host.events,
       { id: String(Date.now()), timestamp: clockTime(), source: 'player', speaker: msg.speaker || 'Party Member', text: msg.transcript || '', actionType: 'speech' },
     ];
+  } else if (msg.type === 'chronicle_entry') {
+    appendChronicleEntry(host, msg.entry);
   } else if (msg.type === 'player_readiness') {
     host.lobbyParticipants = host.lobbyParticipants.map((p) => (p.userId === msg.userId ? { ...p, isReady: msg.isReady } : p));
   } else if (msg.type === 'player_stand_in') {
