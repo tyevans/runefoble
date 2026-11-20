@@ -37,6 +37,7 @@ spec:
           env:
             {{- include "runefoble.serviceCredentialEnv" $ | nindent 12 }}
             {{- include "runefoble.secretEnv" (dict "root" $ "name" "RUNEFOBLE_SPICEDB_PRESHARED_KEY" "key" "spicedb-preshared-key") | nindent 12 }}
+            {{- include "runefoble.plainEnv" (dict "name" "RUNEFOBLE_SPICEDB_ENDPOINT" "value" (printf "spicedb:%v" $.Values.spicedb.grpcPort)) | nindent 12 }}
             {{- include "runefoble.zitadelServiceEnv" $ | nindent 12 }}
             {{- include "runefoble.serviceUrlEnv" (dict "root" $ "consumer" "gateway-mcp") | trim | nindent 12 }}
           {{- include "runefoble.probes" $mcp | nindent 10 }}

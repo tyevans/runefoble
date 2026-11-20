@@ -130,3 +130,18 @@ def test_database_url_follows_the_postgres_port_value():
     for service in PLATFORM_SERVICES:
         url = _value(env[service], "RUNEFOBLE_DATABASE_URL")
         assert url is not None and url.endswith("@postgres:5433/runefoble"), service
+
+
+def test_every_spicedb_client_container_gets_the_spicedb_endpoint(default_env):
+    """A container with the SpiceDB key also gets the SpiceDB address.
+
+    Without the address the client dials the library default, 127.0.0.1, and every permission
+    check and readiness probe fails. gateway-mcp had the key but not the address.
+    """
+    missing = [
+        name
+        for name, env in default_env.items()
+        if "RUNEFOBLE_SPICEDB_PRESHARED_KEY" in env
+        and _value(env, "RUNEFOBLE_SPICEDB_ENDPOINT") != SHARED_VALUES["RUNEFOBLE_SPICEDB_ENDPOINT"]
+    ]
+    assert missing == []
