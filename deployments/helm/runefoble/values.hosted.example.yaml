@@ -1,0 +1,76 @@
+# Hosted values profile (TASK-0955). Copy this file to a file that you keep outside the repository.
+# Replace every REPLACE-ME with your own value. Then render and deploy with:
+#   helm template runefoble deployments/helm/runefoble -f <your-hosted-values.yaml>
+# The chart fails the render until every REPLACE-ME is gone and no development default remains.
+# Do not put a credential value in this file. Create the Secret named in credentials.existingSecret.
+# See docs/reference/hosted-profile.md for every key and the check that guards it.
+global:
+  environment: production
+  domain: REPLACE-ME
+
+# Name of a Secret that you create. It holds the keys listed in templates/secret.yaml.
+credentials:
+  existingSecret: runefoble-hosted-credentials
+
+ingress:
+  hosts:
+    - host: REPLACE-ME
+      paths:
+        - path: /api
+          pathType: Prefix
+          service: gateway-api
+          port: 8000
+        - path: /docs
+          pathType: Prefix
+          service: swagger-ui
+          port: 8080
+        - path: /swagger-ui
+          pathType: Prefix
+          service: swagger-ui
+          port: 8080
+        - path: /analytics
+          pathType: Prefix
+          service: openpanel
+          port: 3000
+        - path: /ws/boards
+          pathType: Prefix
+          service: board-state
+          port: 8002
+        - path: /ws
+          pathType: Prefix
+          service: gateway-api
+          port: 8000
+        - path: /healthz
+          pathType: Prefix
+          service: gateway-api
+          port: 8000
+        - path: /
+          pathType: Prefix
+          service: frontend
+          port: 80
+    # Browser-facing Zitadel host. It must equal zitadel.externalDomain.
+    - host: auth.REPLACE-ME
+      paths:
+        - path: /
+          pathType: Prefix
+          service: zitadel
+          port: 8080
+
+zitadel:
+  externalDomain: auth.REPLACE-ME
+  externalPort: 443
+  externalSecure: true
+  # Operator mail address for the first admin account.
+  adminEmail: admin@REPLACE-ME
+  bootstrap:
+    # Short expiry for the bootstrap token. Set a date that suits your rotation policy.
+    patExpirationDate: "2027-01-01T00:00:00Z"
+    redirectUris:
+      - https://REPLACE-ME/auth/callback
+    postLogoutRedirectUris:
+      - https://REPLACE-ME/
+    devMode: false
+
+# Mailpit captures mail for development only. A hosted render runs without it.
+mailpit:
+  enabled: false

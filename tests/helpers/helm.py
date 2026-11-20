@@ -45,3 +45,27 @@ def render_chart(*extra_args: str) -> list[dict]:
     result = helm_template_result(*extra_args)
     assert result.returncode == 0, f"helm template failed:\n{result.stderr}"
     return [doc for doc in yaml.safe_load_all(result.stdout) if doc]
+
+
+HOSTED_EXAMPLE = CHART_DIR / "values.hosted.example.yaml"
+HOSTED_PLACEHOLDER = "REPLACE-ME"
+HOSTED_FILL = "hosted-test"
+
+
+def hosted_values_file(directory: Path, **overrides: object) -> Path:
+    """Write a hosted values file with every REPLACE-ME filled in, then apply the overrides.
+
+    Each override is a dotted key path and a value, for example
+    `zitadel.externalSecure=False`. The file goes in `directory`, which the caller owns.
+    """
+    text = HOSTED_EXAMPLE.read_text(encoding="utf-8").replace(HOSTED_PLACEHOLDER, HOSTED_FILL)
+    values = yaml.safe_load(text)
+    for dotted, value in overrides.items():
+        node = values
+        *parents, leaf = dotted.split(".")
+        for key in parents:
+            node = node[key]
+        node[leaf] = value
+    path = directory / "hosted-values.yaml"
+    path.write_text(yaml.safe_dump(values, sort_keys=False), encoding="utf-8")
+    return path

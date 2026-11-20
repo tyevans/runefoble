@@ -9,7 +9,7 @@ value, that each credential env var reads a Secret key, and that a non-local ren
 
 import re
 
-from tests.helpers.helm import helm_template_result, render_chart
+from tests.helpers.helm import helm_template_result, hosted_values_file, render_chart
 
 SECRET_NAME = "runefoble-credentials"
 
@@ -130,11 +130,11 @@ def test_non_local_render_without_existing_secret_fails():
     assert "credentials.existingSecret must name a Secret" in proc.stderr
 
 
-def test_existing_secret_replaces_the_rendered_secret():
+def test_existing_secret_replaces_the_rendered_secret(tmp_path):
     """With credentials.existingSecret, the chart renders no Secret and references that name."""
     docs = _rendered_docs(
-        "--set",
-        "global.environment=production",
+        "-f",
+        str(hosted_values_file(tmp_path)),
         "--set",
         "credentials.existingSecret=team-credentials",
     )
