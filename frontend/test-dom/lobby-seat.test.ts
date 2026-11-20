@@ -16,7 +16,7 @@ import type { RunefobleApp } from '../src/runefoble-app.ts';
 const SESSION = 'sess-1';
 const CAMPAIGN = 'camp-1';
 const PLAYER = 'player-mira';
-const CHARACTER = { id: 'char-mira', name: 'Mira Thornwake', characterClass: 'Ranger', level: 3 };
+const CHARACTER = { id: 'char-mira', name: 'Mira Thornwake', characterClass: 'Ranger', level: 3, ownerId: PLAYER };
 
 type Caps = { play: boolean; run_session: boolean };
 
