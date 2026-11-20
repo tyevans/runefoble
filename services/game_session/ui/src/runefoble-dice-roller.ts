@@ -1,6 +1,7 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { parseAndRoll, type DiceRollResult } from './utils/dice.ts';
+import { actionFailureMessage, AuthConsumerController } from '@runefoble/ui-core';
+import { postDiceRoll, type DiceRollReply } from './dice-roll-api.ts';
 
 export type RollMode = 'normal' | 'advantage' | 'disadvantage';
 
@@ -14,19 +15,25 @@ const DICE_OPTIONS = [
   { sides: 100, label: 'D100', symbol: '⬤%' },
 ];
 
+/**
+ * Rolls dice through the owner. The App Shell sets `sessionId` and `rollerName` (the bound
+ * character's name). An empty `rollerName` means no character is bound, so no roll is offered.
+ * The element has no default session or roller: a substitute id would record a roll for nobody.
+ */
 @customElement('runefoble-dice-roller')
 export class RunefobleDiceRoller extends LitElement {
-  @property({ type: String }) sessionId = 'session-1';
-  @property({ type: String }) rollerId = 'player-1';
-  @property({ type: String }) rollerName = 'Hero';
+  @property({ type: String }) sessionId = '';
+  @property({ type: String }) rollerName = '';
+  @property({ type: String }) apiBaseUrl = '';
   @property({ type: String }) formula = '1d20';
-  @property({ type: Object }) forcedResult: DiceRollResult | null = null;
+
+  private readonly auth = new AuthConsumerController(this);
 
   @state() private selectedSides: number = 20;
   @state() private mode: RollMode = 'normal';
   @state() private formulaInput: string = '1d20';
   @state() private isRolling: boolean = false;
-  @state() private lastResult: DiceRollResult | null = null;
+  @state() private lastResult: DiceRollReply | null = null;
   @state() private errorMessage: string = '';
 
   static styles = css`
@@ -69,32 +76,13 @@ export class RunefobleDiceRoller extends LitElement {
     .score-label { font-size: 0.9rem; font-weight: 800; text-transform: uppercase; color: var(--rf-text-muted); }
     .result-breakdown { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; font-size: 0.82rem; font-weight: 700; padding-top: 8px; border-top: 1px solid var(--rf-border-subtle); }
     .roll-item { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 22px; padding: 0 3px; border: 1px solid var(--rf-border-color); background: var(--rf-bg-surface); color: var(--rf-text-primary); font-weight: 800; }
-    .roll-item.dropped { opacity: 0.4; text-decoration: line-through; background: var(--rf-bg-inset); }
     .roll-item.crit { background: var(--rf-accent-tertiary); color: var(--rf-color-dark); }
     .roll-item.fumble { background: var(--rf-accent-primary); color: var(--rf-text-inverse); }
+    .empty-text { color: var(--rf-text-muted); font-size: 0.9rem; font-weight: 700; padding: 12px 4px; }
     .error-text { color: var(--rf-accent-primary); font-size: 0.8rem; font-weight: 700; }
   `;
 
-  connectedCallback() {
-    super.connectedCallback();
-    if (this.formula) this.formulaInput = this.formula;
-    if (this.forcedResult) this.lastResult = this.forcedResult;
-    globalThis.addEventListener('runefoble:dice-rolled', this.onSessionDiceRolled);
-  }
-
-  disconnectedCallback() {
-    super.disconnectedCallback();
-    globalThis.removeEventListener('runefoble:dice-rolled', this.onSessionDiceRolled);
-  }
-
-  /** Session `dice_rolled` message (window event `runefoble:dice-rolled`): show the forced result. */
-  private readonly onSessionDiceRolled = (e: Event): void => {
-    const result = (e as CustomEvent<{ result?: DiceRollResult }>).detail.result;
-    if (result) this.forcedResult = result;
-  };
-
   willUpdate(changedProps: Map<string, unknown>) {
-    if (changedProps.has('forcedResult') && this.forcedResult) this.lastResult = this.forcedResult;
     if (changedProps.has('formula') && this.formula) this.formulaInput = this.formula;
   }
 
@@ -120,51 +108,30 @@ export class RunefobleDiceRoller extends LitElement {
     }
   }
 
-  public roll(): DiceRollResult | null {
+  /** Sends the formula to the owner. The owner evaluates it and stores the roll. */
+  public async roll(): Promise<DiceRollReply | null> {
+    if (this.isRolling || !this.sessionId || !this.rollerName) return null;
     this.errorMessage = '';
+    this.isRolling = true;
     try {
-      this.isRolling = true;
-      const result = parseAndRoll(this.formulaInput);
-      setTimeout(() => {
-        this.isRolling = false;
-        this.lastResult = result;
-        this.dispatchEvent(
-          new CustomEvent('dice-rolled', {
-            detail: {
-              sessionId: this.sessionId,
-              rollerId: this.rollerId,
-              rollerName: this.rollerName,
-              formula: result.formula,
-              total: result.total,
-              rolls: result.rolls,
-              keptRolls: result.keptRolls,
-              isCrit: result.isCrit,
-              isFumble: result.isFumble,
-              is_crit: result.isCrit,
-              is_fumble: result.isFumble,
-            },
-            bubbles: true,
-            composed: true,
-          })
-        );
-      }, 300);
-      return result;
+      const reply = await postDiceRoll(
+        { apiBase: this.apiBaseUrl, auth: this.auth },
+        this.sessionId,
+        { formula: this.formulaInput, rollerName: this.rollerName },
+      );
+      this.lastResult = reply;
+      return reply;
     } catch (err: unknown) {
-      this.isRolling = false;
-      this.errorMessage = err instanceof Error ? err.message : String(err);
+      this.errorMessage = actionFailureMessage(err, 'dice roll');
       return null;
+    } finally {
+      this.isRolling = false;
     }
   }
 
-  render() {
+  private renderBound() {
     const res = this.lastResult;
     return html`
-      <div class="roller-card">
-        <div class="card-header">
-          <h2><span class="badge-icon">🎲</span> Bauhaus Geometric Dice Roller</h2>
-          <span class="section-label">${this.rollerName}</span>
-        </div>
-
         <div class="section-label">Polyhedral Geometry</div>
         <div class="dice-chips-grid">
           ${DICE_OPTIONS.map(
@@ -229,14 +196,12 @@ export class RunefobleDiceRoller extends LitElement {
           </button>
         </div>
 
-        ${this.errorMessage ? html`<div class="error-text">${this.errorMessage}</div>` : ''}
+        ${this.errorMessage ? html`<div class="error-text" role="alert">${this.errorMessage}</div>` : ''}
 
         ${res
           ? html`
-              <div
-                class="result-container ${res.isCrit ? 'crit' : ''} ${res.isFumble ? 'fumble' : ''}"
-              >
-                ${res.isCrit
+              <div class="result-container ${res.is_crit ? 'crit' : ''} ${res.is_fumble ? 'fumble' : ''}">
+                ${res.is_crit
                   ? html`
                       <div class="banner-crit">★ CRITICAL HIT! NATURAL 20 ★</div>
                       <div class="confetti-particles">
@@ -248,7 +213,7 @@ export class RunefobleDiceRoller extends LitElement {
                       </div>
                     `
                   : ''}
-                ${res.isFumble
+                ${res.is_fumble
                   ? html`<div class="banner-fumble">⚠ CRITICAL FUMBLE! NATURAL 1 ⚠</div>`
                   : ''}
 
@@ -258,36 +223,36 @@ export class RunefobleDiceRoller extends LitElement {
                 </div>
 
                 <div class="result-breakdown">
-                  <span><strong>Formula:</strong> ${res.formula || this.formulaInput}</span>
+                  <span><strong>Formula:</strong> ${res.formula}</span>
                   <span>
                     <strong>Rolls:</strong>
-                    ${(() => {
-                      const remainingKept = [...res.keptRolls];
-                      return res.rolls.map((r) => {
-                        const keptIdx = remainingKept.indexOf(r);
-                        const isKept = keptIdx !== -1;
-                        if (isKept) remainingKept.splice(keptIdx, 1);
-                        const isCritDie = res.sides === 20 && r === 20 && isKept;
-                        const isFumbleDie = res.sides === 20 && r === 1 && isKept;
-                        return html`
-                          <span
-                            class="roll-item ${!isKept ? 'dropped' : ''} ${isCritDie
-                              ? 'crit'
-                              : ''} ${isFumbleDie ? 'fumble' : ''}"
-                          >
-                            ${r}
-                          </span>
-                        `;
-                      });
-                    })()}
+                    ${res.rolls.map(
+                      (r) => html`
+                        <span
+                          class="roll-item ${res.is_crit && r === 20 ? 'crit' : ''} ${res.is_fumble && r === 1 ? 'fumble' : ''}"
+                        >
+                          ${r}
+                        </span>
+                      `
+                    )}
                   </span>
-                  ${res.modifier !== 0
-                    ? html`<span><strong>Mod:</strong> ${res.modifier > 0 ? `+${res.modifier}` : res.modifier}</span>`
-                    : ''}
                 </div>
               </div>
             `
           : ''}
+    `;
+  }
+
+  render() {
+    return html`
+      <div class="roller-card">
+        <div class="card-header">
+          <h2><span class="badge-icon">🎲</span> Bauhaus Geometric Dice Roller</h2>
+          <span class="section-label">${this.rollerName || 'No character bound'}</span>
+        </div>
+        ${this.rollerName
+          ? this.renderBound()
+          : html`<div class="empty-text" role="status">A character must be bound to this session before you can roll.</div>`}
       </div>
     `;
   }
