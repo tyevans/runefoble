@@ -143,6 +143,37 @@ def test_skill_check_intent_parsing(watcher_engine: TheWatcherEngine):
     assert res2.parameters["skill"] == "athletics"
 
 
+def test_possessive_and_named_mover_parsing(watcher_engine: TheWatcherEngine):
+    """The grammar records the target name only. It never reads the board (TASK-0944)."""
+    for phrase, subject in (
+        ("move my warrior to the chest", "warrior"),
+        ("move the warrior to the chest", "warrior"),
+        ("move Valeros to the chest", "Valeros"),
+    ):
+        res = watcher_engine.parse_speech_intent(phrase, "Valeros")
+        assert res.action_type == "move", phrase
+        assert res.parameters["action"] == "move_to_token", phrase
+        assert res.parameters["target_token"] == "chest", phrase
+        assert res.parameters["target"] == "chest", phrase
+        assert res.parameters["subject"] == subject, phrase
+
+
+def test_possessive_shape_does_not_take_other_moves(watcher_engine: TheWatcherEngine):
+    """Phrases without a subject and a target keep their old meaning or stay narrative."""
+    res_go = watcher_engine.parse_speech_intent("go to the tavern", "Valeros")
+    assert res_go.parameters.get("action") == "move_to_target"
+    assert res_go.parameters["target_token"] == "tavern"
+
+    res_bare = watcher_engine.parse_speech_intent("move my warrior", "Valeros")
+    assert res_bare.action_type == "narrative"
+
+
+def test_dice_phrase_still_parses_as_a_roll(watcher_engine: TheWatcherEngine):
+    res = watcher_engine.parse_speech_intent("roll a d20", "Valeros")
+    assert res.action_type == "roll_dice"
+    assert res.parameters["notation"] == "1d20"
+
+
 def test_sub_200ms_latency_budget(watcher_engine: TheWatcherEngine):
     """Verify that heuristic parsing latency budget is strictly under 200ms."""
     phrases = [

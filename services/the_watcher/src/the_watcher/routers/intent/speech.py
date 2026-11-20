@@ -83,6 +83,12 @@ async def _propose_move(
     if not authorization:
         raise HTTPException(status_code=401, detail="A bearer token is required to propose a move")
     origin = check_origin(req.from_x, req.from_y)
+    if intent.parameters.get("action") == "move_to_token" and req.token_id is None:
+        raise HTTPException(
+            status_code=422,
+            detail="A spoken move to a named token needs token_id, the speaker's token. "
+            "The Watcher stages nothing.",
+        )
     to_x, to_y = await _destination(req, intent, origin, authorization, engine_)
     await propose_move_preview(
         WatcherEngineSettings().board_state_url,
