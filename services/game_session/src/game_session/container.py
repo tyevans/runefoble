@@ -10,6 +10,7 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass
 
+from game_session.campaign.account_provisioning import build_account_provisioner
 from game_session.campaign.repositories import CampaignRepositories, build_campaign_repositories
 from game_session.downtime.repositories import DowntimeRepositories, build_downtime_repositories
 from game_session.play.repositories import PlayRepositories, build_play_repositories
@@ -20,6 +21,7 @@ from game_session.settlement.repositories import (
 from game_session.shared.child_index import ChildIndexAggregate
 from game_session.shared.child_index_queries import build_child_index_repository
 from game_session.world.repositories import WorldRepositories, build_world_repositories
+from runefoble_auth.account_provisioner import AccountProvisioner
 from runefoble_auth.settings import load_spicedb_settings
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.event_bus import EventBusProvider
@@ -38,6 +40,7 @@ class GameSessionContainer:
     event_bus: EventBusProvider
     child_indexes: AggregateRepository[ChildIndexAggregate]
     campaign: CampaignRepositories
+    accounts: AccountProvisioner
     play: PlayRepositories
     downtime: DowntimeRepositories
     settlement: SettlementRepositories
@@ -51,6 +54,8 @@ def build_container(
 
     - SpiceDB: this service checks permissions, so the preshared key is required (TASK-0720).
     - The Watcher: a deployed service must know its Watcher URL (ADR-0015 (4)).
+    - Zitadel: a deployed service needs the service token that creates invite accounts
+      (ADR-0023 c). Without it the account route answers 503 in every other environment.
     - The event store: build it now. A deployed service without a reachable PostgreSQL
       store, or with the memory store, refuses to start (ADR-0015 (f), TASK-0707).
 
@@ -58,6 +63,12 @@ def build_container(
     """
     settings = settings if settings is not None else PlatformSettings()
     load_spicedb_settings()
+    token = settings.zitadel_service_token
+    if settings.is_deployed and (token is None or not token.get_secret_value().strip()):
+        raise RuntimeError(
+            "RUNEFOBLE_ZITADEL_SERVICE_TOKEN must be set when RUNEFOBLE_ENVIRONMENT is "
+            f"'{settings.environment}'"
+        )
     if settings.is_deployed and watcher_service_url() is None:
         raise RuntimeError(
             "RUNEFOBLE_WATCHER_URL must be set when RUNEFOBLE_ENVIRONMENT is "
@@ -69,6 +80,7 @@ def build_container(
         event_bus=bus,
         child_indexes=build_child_index_repository(),
         campaign=build_campaign_repositories(),
+        accounts=build_account_provisioner(settings),
         play=build_play_repositories(bus),
         downtime=build_downtime_repositories(),
         settlement=build_settlement_repositories(),

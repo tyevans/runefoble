@@ -167,7 +167,7 @@ def test_invite_with_max_uses_one_accepts_one_join_and_rejects_the_second(
     )
 
     second = join(client, issuer, token, "player-kyra")
-    assert second.status_code == 409
+    assert second.status_code == 410
     assert second.json()["detail"]["error"] == "invite_exhausted"
 
 

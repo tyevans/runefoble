@@ -11,6 +11,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, Request
 from game_session.campaign import campaign_router, register_campaign_error_handlers
+from game_session.campaign.account_routes import router as campaign_account_router
 from game_session.container import GameSessionContainer, build_container
 from game_session.profile import profile_router
 from game_session.routers import (
@@ -86,6 +87,7 @@ def _include_routers(app: FastAPI) -> None:
     register_store_unavailable_handlers(app)
     app.include_router(session_router)
     app.include_router(campaign_router)
+    app.include_router(campaign_account_router)
     register_campaign_error_handlers(app)
     app.include_router(combat_router)
     app.include_router(encounters_router)

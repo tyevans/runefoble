@@ -148,7 +148,7 @@ def test_patch_requires_manage_and_applies_for_the_owner(client, trusted_ws_issu
     assert updated.json()["title"] == "Refined"
 
 
-def test_single_use_invite_rejects_the_second_join_with_409(client, trusted_ws_issuer) -> None:
+def test_single_use_invite_rejects_the_second_join_with_410(client, trusted_ws_issuer) -> None:
     owner = _auth(trusted_ws_issuer, "dm-evelyn")
     campaign = _create(client, owner)
     token = _invite(client, owner, campaign["id"], max_uses=1)
@@ -163,7 +163,7 @@ def test_single_use_invite_rejects_the_second_join_with_409(client, trusted_ws_i
         headers=_auth(trusted_ws_issuer, "player-b"),
     )
     assert first.status_code == 200
-    assert second.status_code == 409
+    assert second.status_code == 410
     assert second.json()["detail"]["error"] == "invite_exhausted"
 
 

@@ -164,7 +164,8 @@ Campaign Lore routes require a verified bearer token, except `/healthz`, `/ready
 | `game-session` | GET | `/api/v1/campaigns/{campaign_id}` | Reads one campaign (Zanzibar `view`). Includes the same `permissions` object as the list (TASK-0644) |
 | `game-session` | PATCH | `/api/v1/campaigns/{campaign_id}` | Updates campaign fields (Zanzibar `manage`) |
 | `game-session` | POST | `/api/v1/campaigns/{campaign_id}/invites` | Issues an invite with role, expiry, and use limit (Zanzibar `run_session`) |
-| `game-session` | POST | `/api/v1/campaigns/join` | Redeems an invite and records membership (any verified caller; `400`, `410`, or `409` on a bad invite) |
+| `game-session` | POST | `/api/v1/campaigns/join` | Redeems an invite and records membership, or completes the pending join of an account that the invite created (any verified caller; `400` or `410` on a bad invite) |
+| `game-session` | POST | `/api/v1/campaigns/invites/accounts` | Creates a Zitadel account through a valid invite, with no bearer token. Answers `202` for a new or an existing email. `404` unknown invite, `410` expired or used up, `503` Zitadel unavailable (ADR-0023) |
 | `game-session` | GET | `/api/v1/campaigns/{campaign_id}/members` | Lists the owner and members (Zanzibar `view`) |
 | `game-session` | DELETE | `/api/v1/campaigns/{campaign_id}/members/{user_id}` | Removes a member and revokes campaign tuples. The owner cannot be removed (Zanzibar `manage`) |
 | `game-session` | GET | `/api/v1/campaigns/{campaign_id}/sessions` | Lists sessions and lobbies of a campaign (Zanzibar `view`) |
@@ -332,7 +333,8 @@ Campaign Lore routes require a verified bearer token, except `/healthz`, `/ready
 | `gateway-api` | GET | `/api/v1/campaigns/{campaign_id}` | Proxies to `game_session`: campaign overview (requires `view`) with the `permissions` object (TASK-0644). Unknown ID returns `404` |
 | `gateway-api` | PATCH | `/api/v1/campaigns/{campaign_id}` | Proxies to `game_session`: updates campaign fields (requires `manage`) |
 | `gateway-api` | POST | `/api/v1/campaigns/{campaign_id}/invites` | Proxies to `game_session`: issues an invite for `player` or `spectator` (requires `run_session`). Returns `201` |
-| `gateway-api` | POST | `/api/v1/campaigns/join` | Proxies to `game_session`: redeems an invite and records membership. A used-up invite returns `409` |
+| `gateway-api` | POST | `/api/v1/campaigns/join` | Proxies to `game_session`: redeems an invite and records membership. A used-up invite returns `410` |
+| `gateway-api` | POST | `/api/v1/campaigns/invites/accounts` | Unauthenticated. Body `{invite_token, email, display_name}`. Rate limits the client address (20 per hour; `X-Forwarded-For` only from trusted proxies) and the invite (30 per hour), then proxies to `game_session`. Returns `202`, or `429` with `Retry-After` (ADR-0023 d) |
 | `gateway-api` | GET | `/api/v1/campaigns/{campaign_id}/members` | Proxies to `game_session`: owner and members (requires `view`). The gateway adds `character_name` from its character store |
 | `gateway-api` | DELETE | `/api/v1/campaigns/{campaign_id}/members/{user_id}` | Proxies to `game_session`: removes a member and revokes campaign relations (requires `manage`). The owner cannot be removed |
 | `gateway-api` | GET | `/api/v1/profile` | Proxies to `game_session`: reads the caller's profile. The gateway holds no profile data (TASK-0742) |

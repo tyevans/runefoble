@@ -127,6 +127,36 @@ class PlatformSettings(BaseSettings):
         ),
     )
 
+    # Zitadel Management API for account provisioning (ADR-0023 c). The service token is a
+    # personal access token of a Zitadel service user. It has no default: a deployed service
+    # refuses to start without it (game_session), and the chart fills it from a Secret.
+    zitadel_api_url: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("RUNEFOBLE_ZITADEL_API_URL"),
+        description=(
+            "Origin of the Zitadel API used to create accounts. Empty means the internal URL, "
+            "or else the issuer."
+        ),
+    )
+    zitadel_service_token: SecretStr | None = Field(
+        default=None,
+        validation_alias=AliasChoices("RUNEFOBLE_ZITADEL_SERVICE_TOKEN"),
+        description="Zitadel service user token that creates accounts (Kubernetes Secret)",
+    )
+    trusted_proxy_cidrs: str = Field(
+        default="",
+        validation_alias=AliasChoices("RUNEFOBLE_TRUSTED_PROXY_CIDRS"),
+        description=(
+            "Comma-separated CIDR networks of the proxies (for example Traefik) whose "
+            "X-Forwarded-For header the gateway trusts. Empty trusts no proxy."
+        ),
+    )
+    zitadel_org_id: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("RUNEFOBLE_ZITADEL_ORG_ID"),
+        description="Zitadel organization that owns the accounts. Empty means the token's org.",
+    )
+
     # Service-to-service credential (ADR-0015 e). No default value. The caller presents it in
     # the X-Runefoble-Service-Credential header. The receiver refuses to start without it.
     service_credential: SecretStr | None = Field(

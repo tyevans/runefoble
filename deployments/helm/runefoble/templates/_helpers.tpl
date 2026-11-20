@@ -47,6 +47,27 @@ the project audience scope.
 {{- end -}}
 
 {{/*
+Zitadel service token and organization for account provisioning (ADR-0023 c). Call with the
+root context. An empty zitadel.provisioner.secretName renders the token only in the local
+environment, where it reads the bootstrap admin token (DEV-ONLY, Kind only). Hosted
+environments must name their own Secret, or the service refuses to start.
+*/}}
+{{- define "runefoble.zitadelProvisionerEnv" -}}
+{{- $secret := .Values.zitadel.provisioner.secretName | default (ternary "zitadel-admin" "" (eq .Values.global.environment "local")) -}}
+{{- if $secret }}
+- name: RUNEFOBLE_ZITADEL_SERVICE_TOKEN
+  valueFrom:
+    secretKeyRef:
+      name: {{ $secret }}
+      key: {{ .Values.zitadel.provisioner.secretKey | quote }}
+{{- end }}
+{{- with .Values.zitadel.provisioner.orgId }}
+- name: RUNEFOBLE_ZITADEL_ORG_ID
+  value: {{ . | quote }}
+{{- end }}
+{{- end -}}
+
+{{/*
 Name of the Secret that holds chart credentials. credentials.existingSecret replaces the
 Secret that this chart renders.
 */}}

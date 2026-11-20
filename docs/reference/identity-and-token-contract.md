@@ -2,7 +2,7 @@
 
 This page states the identity contract for every surface of the platform. It describes the code as it is now. Each claim names the code that enforces it.
 
-Governing records: ADR-0015 (decisions c, d, e), PRD-0023, US-0062.
+Governing records: ADR-0015 (decisions c, d, e), ADR-0023 (invite creates the account), PRD-0023, US-0062.
 
 ---
 
@@ -106,6 +106,7 @@ Only the routes in this section take no identity check. Every other route verifi
 | `GET /healthz`, `GET /readyz` | None | `gateway/api/src/gateway_api/routers/health.py` |
 | `GET /openapi.json`, `GET /docs`, `GET /redoc` | None | `gateway/api/src/gateway_api/main.py` |
 | `GET /api/v1/auth/sync/health` | None | `gateway/api/src/gateway_api/auth_sync.py` |
+| `POST /api/v1/campaigns/invites/accounts` | None. The invite token in the body is the credential. Rate limited (see below). | `gateway/api/src/gateway_api/routers/account_invites_proxy.py`, `services/game_session/src/game_session/campaign/account_routes.py` |
 The spectator and overlay reads are not public. `GET /api/v1/spectate/{session_id}` and `GET /overlay/party-vitals/{session_id}` need a verified `Authorization: Bearer` token and `session.observe` on the session (`gateway/api/src/gateway_api/routers/spectator.py`, `gateway/api/src/gateway_api/routers/overlay.py`). A missing or failed token returns `401`. A viewer without the permission gets `403`. The state comes from `game_session` and `board_state`, and each owner removes the private fields before the gateway reads them. An owner `404` passes on unchanged. The `token` query parameter is not read.
 
 Proxy routes:
@@ -113,6 +114,24 @@ Proxy routes:
 - A proxy route forwards the caller's `Authorization` header to the owning service. It sends no other client header (`gateway/api/src/gateway_api/proxy.py`).
 - The owning service verifies the token again (ADR-0015 c).
 - Some proxy routes have no gateway identity dependency. Examples are `/api/v1/assets/*`, `/api/v1/forge/*`, `/api/v1/voice/*`, and `/api/v1/mobile/companion/*` (`gateway/api/src/gateway_api/routers/voice_proxy.py`, `assets_proxy.py`, `forge_proxy.py`). For these routes the owning service is the only identity check.
+
+### Invite account route (ADR-0023)
+
+`POST /api/v1/campaigns/invites/accounts` takes the body `{invite_token, email, display_name}`. The token is in the body, never in the path, so access logs do not record it. The route creates a Zitadel user for a person who holds a valid campaign invite. It answers `202` with `{"status": "accepted", "message": "..."}`. No log line of either service carries the token (a blackbox test captures the log records of each request).
+
+- **No password.** Runefoble never receives, stores, logs, or returns a password or a Zitadel init code. The adapter creates the user with `email.sendCode` and no password. Zitadel sends the verification email. The person sets the password on the Zitadel hosted page (`libs/runefoble_auth/src/runefoble_auth/zitadel_accounts.py`).
+- **Same answer for any email.** A new email and an existing email get the same status and body. For an existing email the adapter sends a password-reset link through Zitadel and creates nothing (`zitadel_accounts.py`, `ZitadelAccountProvisioner.provision`).
+- **Refused invites make no provider call.** An unknown token returns `404`. An expired invite, or one with no uses left, returns `410` (`invite_expired` or `invite_exhausted`). A malformed body returns `422`. All of these return before Zitadel is called (`game_session/campaign/service_accounts.py`, `request_account`).
+- **Zitadel unavailable.** The route returns `503` with `{"detail", "upstream": "game_session"}`. It records no use and no event, and it creates no local user. There is no fallback (`service_accounts.py`, `_provision`).
+- **One use per new account.** A new account records one invite use and one `PendingJoinRecorded` event in one save (`campaign/invite_aggregate.py`, `record_pending`). An existing email records nothing.
+- **No relation before sign-in.** The new account holds no campaign relation. When it signs in and calls `POST /api/v1/campaigns/join`, the join clears the pending record and writes the SpiceDB `player` (or `spectator`) relation. The join does not use another invite slot (`campaign/service_membership.py`, `_complete_pending_join`). Hard Invariant 1 holds: no token claim writes a relation.
+- **Rate limits.** Two fixed windows of one hour, counted in the gateway (`gateway_api/account_invite_limits.py`):
+  - 20 requests for each client address. The client address comes from the TCP peer. The gateway reads `X-Forwarded-For` only when the peer is in `RUNEFOBLE_TRUSTED_PROXY_CIDRS`. Then it counts the rightmost address that is not a trusted proxy. A client cannot choose its key: an untrusted peer's header is ignored, and a client's prepended values are never used (`libs/runefoble_platform/src/runefoble_platform/client_address.py`). The chart sets the trusted networks from `ingress.trustedProxyCidrs`, which defaults to the Kind pod network `10.244.0.0/16`. Hosted profiles set the pod CIDR of their ingress controller. An empty value trusts no proxy.
+  - 30 requests for each invite. The gateway keys the count by SHA-256 of the token, so it holds no raw token.
+  - A refused request returns `429` with `Retry-After` in seconds. The counts live in one process. A shared limiter can replace them through the `RateLimiter` port (`libs/runefoble_platform/src/runefoble_platform/rate_limit.py`).
+- **Configuration.** The adapter reads `RUNEFOBLE_ZITADEL_SERVICE_TOKEN`, `RUNEFOBLE_ZITADEL_ORG_ID`, and `RUNEFOBLE_ZITADEL_API_URL` (see Section 7). A deployed `game_session` refuses to start without the token (`services/game_session/src/game_session/container.py`).
+
+Zitadel API used: the v2 user API of the chart's Zitadel image (`v2.54.0`). The calls are `POST /v2/users` (email search), `POST /v2/users/human` (create with `email.sendCode`), and `POST /v2/users/{id}/password_reset` (`sendLink`).
 
 ### Owning services
 
@@ -182,6 +201,10 @@ The paths in this table are absent from `/openapi.json` of `gateway-api`. Use th
 | `RUNEFOBLE_SERVICE_CREDENTIAL` | Shared service credential. No default. A receiver refuses to start without it. | `config.py`, `service_credential.py` (`expected_service_credential`) |
 | `RUNEFOBLE_ZITADEL_CLIENT_ID` | Default audience when `RUNEFOBLE_ZITADEL_AUDIENCE` is empty | `config.py` |
 | `RUNEFOBLE_SPICEDB_PRESHARED_KEY` | Key for SpiceDB. No default. | `libs/runefoble_auth/src/runefoble_auth/settings.py`, `libs/runefoble_auth/src/runefoble_auth/factory.py` |
+| `RUNEFOBLE_ZITADEL_SERVICE_TOKEN` | Zitadel service user token that creates invite accounts (ADR-0023 c). No default. Read only by `game_session`. The chart fills it from a Secret (`zitadel.provisioner`). Without it the account route answers `503`. A deployed `game_session` refuses to start. | `config.py`, `game_session/campaign/account_provisioning.py` |
+| `RUNEFOBLE_ZITADEL_API_URL` | Origin of the Zitadel API that creates accounts. Empty means `RUNEFOBLE_ZITADEL_INTERNAL_URL`, and then `RUNEFOBLE_ZITADEL_ISSUER`. | `config.py`, `account_provisioning.py` |
+| `RUNEFOBLE_TRUSTED_PROXY_CIDRS` | Comma-separated CIDR networks of the ingress proxies. The gateway trusts `X-Forwarded-For` only from these peers (ADR-0023 d). Empty trusts none. The chart sets it on `gateway-api` from `ingress.trustedProxyCidrs`. | `config.py`, `client_address.py`, `gateway_api/main.py` |
+| `RUNEFOBLE_ZITADEL_ORG_ID` | Zitadel organization that owns the accounts (sent as `x-zitadel-orgid`). Empty means the organization of the token. | `config.py`, `zitadel_accounts.py` |
 
 ---
 
@@ -196,6 +219,7 @@ The paths in this table are absent from `/openapi.json` of `gateway-api`. Use th
 | Negative matrix for every surface | `tests/test_blackbox_identity_negative.py` (Gherkin mirror: `e2e/features/identity-negative.feature`) |
 | Retired routes are absent | `tests/test_blackbox_auth_routes_retired.py` |
 | Signed test tokens | `libs/runefoble_auth/src/tests.helpers.signing_test_issuer.py` |
+| Invite account route, pending join, rate limits, trusted proxy, log hygiene | `tests/test_blackbox_invite_account_creation.py` (loopback Zitadel fake: `tests/helpers/fake_zitadel_server.py`) |
 
 ---
 

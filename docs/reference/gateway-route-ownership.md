@@ -51,6 +51,7 @@ each route, and the mode in which the gateway serves it.
 | GET | `/api/v1/campaigns` | game_session | proxy | `gateway_api.routers.campaigns_proxy` |
 | POST | `/api/v1/campaigns` | game_session | proxy | `gateway_api.routers.campaigns_proxy` |
 | POST | `/api/v1/campaigns/join` | game_session | proxy | `gateway_api.routers.campaigns_proxy` |
+| POST | `/api/v1/campaigns/invites/accounts` | game_session | rate-limited proxy, no bearer token (ADR-0023) | `gateway_api.routers.account_invites_proxy` |
 | GET | `/api/v1/campaigns/{campaign_id}` | game_session | proxy | `gateway_api.routers.campaigns_proxy` |
 | PATCH | `/api/v1/campaigns/{campaign_id}` | game_session | proxy | `gateway_api.routers.campaigns_proxy` |
 | GET | `/api/v1/campaigns/{campaign_id}/atlas` | campaign_lore | proxy | `gateway_api.routers.lore_views` |
