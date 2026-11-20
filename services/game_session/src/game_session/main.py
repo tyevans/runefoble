@@ -10,7 +10,6 @@ from collections.abc import AsyncIterator, Callable
 from pathlib import Path
 
 from fastapi import FastAPI, Request
-from game_session.audience_weather import start_audience_consumers
 from game_session.campaign import campaign_router, register_campaign_error_handlers
 from game_session.container import GameSessionContainer, build_container
 from game_session.profile import profile_router
@@ -35,6 +34,7 @@ from game_session.routers import (
 from game_session.settlement.haggling_router import router as settlement_haggling_router
 from game_session.settlement.router import router as settlement_haven_router
 from game_session.settlement.workers_router import router as settlement_workers_router
+from game_session.stream_consumers import start_stream_consumers
 from runefoble_auth.authz_http import install_authz_error_handlers
 from runefoble_auth.readiness import spicedb_probe
 from runefoble_platform.aggregate_loading import register_store_unavailable_handlers
@@ -59,7 +59,7 @@ ContainerBuilder = Callable[[], GameSessionContainer]
 def _lifespan_for(build: ContainerBuilder):
     @contextlib.asynccontextmanager
     async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
-        """Build the container, open the Redis Streams bus, and start the weather consumer."""
+        """Build the container, open the Redis Streams bus, and start the stream consumers."""
         container = build()
         app.state.container = container
         # A write route needs the event store, SpiceDB and Redis (TASK-0929).
@@ -70,7 +70,7 @@ def _lifespan_for(build: ContainerBuilder):
         }
         set_readiness_gate(app, ReadinessGate(readiness))
         bus = await container.event_bus.connect()
-        consumers = await start_audience_consumers(bus, container.play)
+        consumers = await start_stream_consumers(bus, container.play)
         app.state.consumers = {"game_session": consumers}
         try:
             yield

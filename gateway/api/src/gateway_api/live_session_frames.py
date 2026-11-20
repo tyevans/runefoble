@@ -5,18 +5,20 @@ events that the owner publishes:
 
 - `turn_advanced` from `TurnAdvanced` (game_session, `runefoble.events.session`).
 - `dice_rolled` from `DiceRolled` (game_session, `runefoble.events.session`).
+- `chronicle_entry` from `TokenMoveChronicled` (game_session, `runefoble.events.session`). The
+  `entry` is the line that `GET /api/v1/sessions/{id}/events` returns for the event.
 - `dm_whisper` from `WhisperRecorded` (the_watcher, `runefoble.events.watcher`). This frame is
   for the DM only: it goes to the sockets whose caller holds `session.control`.
 
 Other events on the streams give no frame. `token_moved` is not built here: board_state sends
-it on its own board socket.
+it on its own board socket. The chronicle line of that move comes as `chronicle_entry`.
 """
 
 from __future__ import annotations
 
 from typing import Any, NamedTuple
 
-from runefoble_events.events import DiceRolled, TurnAdvanced, WhisperRecorded
+from runefoble_events.events import DiceRolled, TokenMoveChronicled, TurnAdvanced, WhisperRecorded
 
 
 class LiveFrame(NamedTuple):
@@ -47,6 +49,22 @@ def _whisper_frame(event: WhisperRecorded) -> LiveFrame:
         session_id,
         {"type": "dm_whisper", "sessionId": session_id, "whisper": whisper},
         dm_only=True,
+    )
+
+
+def _move_entry_frame(event: TokenMoveChronicled) -> LiveFrame:
+    session_id = _session_key(event)
+    entry = {
+        "event_id": str(event.event_id),
+        "kind": "token_moved",
+        "occurred_at": event.model_dump(mode="json")["occurred_at"],
+        "speaker": event.token_name,
+        "text": event.line,
+        "action_type": "board_move",
+        "penalties": [],
+    }
+    return LiveFrame(
+        session_id, {"type": "chronicle_entry", "sessionId": session_id, "entry": entry}
     )
 
 
@@ -85,6 +103,8 @@ def live_frame_for(event: Any) -> LiveFrame | None:
                 "isFumble": event.is_fumble,
             },
         )
+    if isinstance(event, TokenMoveChronicled):
+        return _move_entry_frame(event)
     if isinstance(event, WhisperRecorded):
         return _whisper_frame(event)
     return None

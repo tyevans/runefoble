@@ -92,7 +92,7 @@ Pass `reclaim=ReclaimPolicy(min_idle_ms=..., every_polls=...)` to `StreamConsume
 
 A handler can receive the same message twice. Use one of these guards before it writes:
 
-1. **State guard.** Read the aggregate state. Skip the write when the state already holds the result. Store the source id in the state when the result alone does not identify the source. Examples: the session stores `weather_source_proposal_id`, and the board stores `forged_asset_id`.
+1. **State guard.** Read the aggregate state. Skip the write when the state already holds the result. Store the source id in the state when the result alone does not identify the source. Examples: the session stores `weather_source_proposal_id`, the board stores `forged_asset_id`, and the session keeps the last 1,000 board `TokenMoved` ids that its chronicle recorded (`chronicled_move_ids`).
 2. **Source ledger.** When no state guard fits, record the source event id in the aggregate in the same save as the effect. Skip an event whose id is already recorded. The soundscape aggregate does this. It keeps the last 1,000 source event ids per session, so a redelivery older than that window applies again.
 
 Save the effect and its guard in one write. A crash between two writes can apply one and lose the other.

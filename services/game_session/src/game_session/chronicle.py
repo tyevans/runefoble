@@ -1,7 +1,8 @@
 """Read projections over a game session: the chronicle feed and the absentee recap (TASK-0641).
 
 The feed reads the session's own event stream from the event store (ADR-0011). It keeps only
-the event kinds that the App Shell shows. The absentee recap derives from the stand-in actions
+the event kinds that the App Shell shows. Board token moves are in that stream as
+`TokenMoveChronicled`, which the board stream consumer records (`board_moves.py`). The absentee recap derives from the stand-in actions
 that the session aggregate recorded from `StandInActionDecided`. Neither projection writes state
 and neither holds fixed sample content.
 """
@@ -17,10 +18,18 @@ from eventsource.domain.stream_id import StreamId
 from game_session.aggregate import GameSessionAggregate
 from game_session.models import GameSessionState
 from pydantic import BaseModel, Field
-from runefoble_events.events import DiceRolled, SessionEnded, SessionStarted, StandInActionDecided
+from runefoble_events.events import (
+    DiceRolled,
+    SessionEnded,
+    SessionStarted,
+    StandInActionDecided,
+    TokenMoveChronicled,
+)
 from runefoble_platform.event_sourcing import AggregateRepository
 
-ChronicleKind = Literal["stand_in_action", "dice_roll", "session_started", "session_ended"]
+ChronicleKind = Literal[
+    "stand_in_action", "dice_roll", "token_moved", "session_started", "session_ended"
+]
 
 
 class ChronicleEntry(BaseModel):
@@ -76,6 +85,15 @@ def _chronicle_entry(event_id: str, event: DomainEvent) -> ChronicleEntry | None
             speaker=event.roller_name,
             text=f"{event.formula} = {event.total}",
             action_type="dice_roll",
+        )
+    if isinstance(event, TokenMoveChronicled):
+        return ChronicleEntry(
+            event_id=event_id,
+            kind="token_moved",
+            occurred_at=occurred_at,
+            speaker=event.token_name,
+            text=event.line,
+            action_type="board_move",
         )
     if isinstance(event, SessionStarted):
         return ChronicleEntry(

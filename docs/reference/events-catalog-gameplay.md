@@ -111,6 +111,12 @@ Part of the [Events Schema](events-schema.md). Each event identifier in this pag
   - `round_number`: Optional[Integer]
 - **`SessionEnded`** (`runefoble.events.session.ended`): Emitted when the session concludes.
   - `summary`: String
+- **`TokenMoveChronicled`** (`runefoble.events.session.token_move_chronicled`): Recorded by game_session when its `runefoble.events.board` consumer reads a `TokenMoved`. Published on `runefoble.events.session`. The session chronicle feed shows it as `<token_name> moved to (<to_x>, <to_y>)`, and the gateway sends it to the session sockets as a `chronicle_entry` frame.
+  - `source_event_id`: String. The id of the board `TokenMoved` event. A redelivery of that event records nothing.
+  - `token_id`: String
+  - `token_name`: String
+  - `to_x`: Integer, `to_y`: Integer
+  - `initiated_by`: String (`player`, `the_watcher` or `stand_in`)
 
 ### BoardState Events (`aggregate_type: BoardState`)
 
@@ -128,7 +134,7 @@ Part of the [Events Schema](events-schema.md). Each event identifier in this pag
   - `hp`: Optional[Integer]
   - `is_friendly`: Boolean
 - **`CameraFocused`** (`runefoble.events.board.camera_focused`): Emitted when the board owner records a new spectator camera target (`turn_started` or `token_moved`). Fields: `target_x`, `target_y`, `zoom`, `duration_ms`, `easing`, `reason`, `active_token_id`, `active_character_id`, `focused_at`. The board aggregate replays it to restore the camera.
-- **`TokenMoved`** (`runefoble.events.board.token_moved`): Emitted when a token traverses grid coordinates.
+- **`TokenMoved`** (`runefoble.events.board.token_moved`): Emitted when a token traverses grid coordinates. game_session reads it to record `TokenMoveChronicled` in the session chronicle.
   - `token_id`: String
   - `name`: String
   - `from_x`: Integer, `from_y`: Integer

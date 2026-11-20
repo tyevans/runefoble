@@ -174,6 +174,7 @@ from runefoble_events.session import (
     SessionCreated,
     SessionEnded,
     SessionStarted,
+    TokenMoveChronicled,
     TurnAdvanced,
     TurnStarted,
     WeatherChanged,
