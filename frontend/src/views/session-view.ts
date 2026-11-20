@@ -3,6 +3,7 @@
  */
 
 import { html } from 'lit';
+import { guard } from 'lit/directives/guard.js';
 import type { RunefobleApp } from '../runefoble-app.ts';
 import { handleBoardAoEPlace, handleBoardConfirmGhost, handleBoardSpellVFX, handleBoardTokenAction } from '../vtt-mesh-handlers.ts';
 import { switchDmCharacter } from '../app/character-actions.ts';
@@ -27,11 +28,14 @@ function renderBoardDmControls(app: RunefobleApp) {
  * The DM board controls act on a board, so they show only when the board exists.
  * Until the first board read answers, no `<runefoble-board>` mounts, so no board socket opens
  * before the board exists.
+ * The board applies socket frames to its own `tokens`. Lit commits an array binding on every
+ * render, so `guard` passes `app.tokens` only when a new board read replaces it. Without it, any
+ * shell render (a chronicle frame, for example) puts the read tokens back over a move (TASK-0938).
  */
 function renderBoardArea(app: RunefobleApp, canRunSession: boolean) {
   if (app.boardKind === 'loading') return html`<div class="board-loading" role="status" aria-live="polite">Loading the battlemap...</div>`;
   if (app.boardKind === 'no_board') return html`<runefoble-board-empty ?can-set-up-map=${canRunSession} .campaignId=${app.campaignId} .sessionId=${app.sessionId} .seats=${app.sessionSeats} @board-set-up=${(e: CustomEvent) => handleBoardSetUp(app, e)}></runefoble-board-empty>`;
-  return html`<runefoble-board .cols=${app.boardCols} .rows=${app.boardRows} .tokens=${app.tokens} .fogOfWar=${true} .websocketUrl=${app.getWebSocketUrl()} @token-action=${(e: CustomEvent) => handleBoardTokenAction(e, app.sessionSocket.current)} @aoe-place=${(e: CustomEvent) => handleBoardAoEPlace(e, app.sessionSocket.current)} @spell-vfx-triggered=${(e: CustomEvent) => handleBoardSpellVFX(e, app.sessionSocket.current)} @confirm-ghost=${(e: CustomEvent) => handleBoardConfirmGhost(e, app.sessionSocket.current)} @move-token=${(e: CustomEvent) => recordBoardMoveTarget(app, e)}></runefoble-board>
+  return html`<runefoble-board .cols=${app.boardCols} .rows=${app.boardRows} .tokens=${guard([app.tokens], () => app.tokens)} .fogOfWar=${true} .websocketUrl=${app.getWebSocketUrl()} @token-action=${(e: CustomEvent) => handleBoardTokenAction(e, app.sessionSocket.current)} @aoe-place=${(e: CustomEvent) => handleBoardAoEPlace(e, app.sessionSocket.current)} @spell-vfx-triggered=${(e: CustomEvent) => handleBoardSpellVFX(e, app.sessionSocket.current)} @confirm-ghost=${(e: CustomEvent) => handleBoardConfirmGhost(e, app.sessionSocket.current)} @move-token=${(e: CustomEvent) => recordBoardMoveTarget(app, e)}></runefoble-board>
       ${renderBoardDmControls(app)}`;
 }
 
