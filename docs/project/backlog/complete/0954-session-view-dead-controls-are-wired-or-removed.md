@@ -1,7 +1,7 @@
 ---
 id: '0954'
 title: Session View Controls Work or Are Removed
-status: Refined
+status: Complete
 created: 2026-11-19
 dependencies:
 - '0952'
@@ -21,7 +21,7 @@ target_release: 1.0.0
 
 ## Status
 
-Refined. Release One (PRD-0025). Items 8 and 10 of section 4 in `.audit/research/r1-core-journeys.md`.
+Complete
 
 This record depends on TASK-0952. The stance drawer needs the real stand-in state, and that state comes from the lobby stand-in routes. The research report does not list this dependency.
 

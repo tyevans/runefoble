@@ -1351,6 +1351,8 @@ The App Shell auth service keeps JWT claim handling, session storage and session
 - **Documentation & Build Navigation**: Featured the Platform Showcase and Changelog in `zensical.toml` and root documentation landing page (`docs/index.md`), and enhanced `scripts/build_docs.py` to synchronize `CHANGELOG.md` to `docs/changelog.md` during documentation compilation.
 
 ### Fixed
+Session view controls work or are removed: the stance drawer shows the real stand-in state and keeps the chosen stance, and the DM board has no hidden-layer toggle.
+The session view reads the caller's own seat and its stand-in state. A route change closes the stance drawer, and the lobby reads the roster again when the live connection opens and after each seat change.
 - Every app service gates `/readyz`, every app pod has a 180 s startup probe, and the Silo bucket and SpiceDB schema Jobs no longer deadlock `helm --wait`. (TASK-0933)
 Every app service gates `/readyz`, every app pod has a 180 s startup probe, and the Silo bucket and SpiceDB schema Jobs no longer deadlock `helm --wait`.
 The invite link field and Copy Link clear while a new link is generated, so a DM never copies a stale link.

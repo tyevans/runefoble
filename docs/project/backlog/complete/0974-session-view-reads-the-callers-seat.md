@@ -1,7 +1,7 @@
 ---
 id: '0974'
 title: The Session View Reads the Caller's Seat, Including the Stand-In State
-status: Refined
+status: Complete
 created: 2026-11-20
 dependencies:
 - '0952'
@@ -24,7 +24,7 @@ target_release: 1.0.0
 
 ## Status
 
-Refined
+Complete
 
 ## Summary
 
