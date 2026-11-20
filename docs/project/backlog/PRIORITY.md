@@ -921,3 +921,5 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 915. **TASK-0935 (Complete)**: [`0935-chronicle-records-board-token-moves.md`](complete/0935-chronicle-records-board-token-moves.md) — The Session Chronicle Records Board Token Moves
 916. **TASK-0936 (Complete)**: [`0936-service-client-recovers-from-stale-pooled-connections.md`](complete/0936-service-client-recovers-from-stale-pooled-connections.md) — The Service Client Recovers From Stale Pooled Connections After an Owner Restart
 917. **TASK-0937 (Proposed)**: [`0937-first-forge-after-a-restart-is-measured.md`](proposed/0937-first-forge-after-a-restart-is-measured.md) — The First Forge After an asset_forge Restart Is Measured
+918. **TASK-0938 (Refined)**: [`0938-mover-board-shows-its-own-accepted-token-move.md`](refined/0938-mover-board-shows-its-own-accepted-token-move.md) — The Mover's Board Shows Its Own Accepted Token Move
+919. **TASK-0939 (Refined)**: [`0939-reaction-prompt-opens-only-for-a-real-reaction.md`](refined/0939-reaction-prompt-opens-only-for-a-real-reaction.md) — The Reaction Prompt Opens Only for a Real Reaction
