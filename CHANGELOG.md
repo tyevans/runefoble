@@ -1337,6 +1337,8 @@ The App Shell auth service keeps JWT claim handling, session storage and session
 - **Documentation & Build Navigation**: Featured the Platform Showcase and Changelog in `zensical.toml` and root documentation landing page (`docs/index.md`), and enhanced `scripts/build_docs.py` to synchronize `CHANGELOG.md` to `docs/changelog.md` during documentation compilation.
 
 ### Fixed
+The combat reaction prompt stays closed and idle until it receives a real reaction, and the App Shell no longer mounts it as a default sidebar plugin.
+A token moved by drag no longer jumps back to its old cell. Each App Shell render put the last board read back into the board; the session view now passes tokens only when a new board read replaces them. Board socket frames carry a board version, and an older board read no longer replaces a newer one.
 - A token moved by drag no longer jumps back to its old cell. Each App Shell render put the last board read back into the board, over the move from the board socket. The session view now passes the tokens only when a new board read replaces them. (TASK-0938)
 - The combat reaction prompt stays closed and idle until it receives a real reaction. Live sessions no longer show a fake "Turn Paused: Reaction" dialog with a running timer, because the App Shell no longer seeds the prompt as a default sidebar plugin. (TASK-0939)
 The gateway service client sends an idempotent call once more on a fresh connection when a pooled connection closes before the answer; POST and PATCH still answer 503. Idle pooled connections expire after 4 s, and the service images start uvicorn with a 15 s keep-alive.

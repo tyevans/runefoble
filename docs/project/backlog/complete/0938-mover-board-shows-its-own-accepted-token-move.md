@@ -1,7 +1,7 @@
 ---
 id: '0938'
 title: The Mover's Board Shows Its Own Accepted Token Move
-status: Refined
+status: Complete
 created: 2026-11-19
 dependencies:
 - '0932'
@@ -21,7 +21,7 @@ target_release: 0.9.0
 
 ## Status
 
-Refined
+Complete
 
 ## Summary
 

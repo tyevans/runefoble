@@ -544,8 +544,8 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 538. **TASK-0599 (Complete)**: [`0599-gateway-spectator-and-overlay-state-moves-to-owning-contexts.md`](complete/0599-gateway-spectator-and-overlay-state-moves-to-owning-contexts.md) — Gateway Spectator and Overlay State Moves to Owning Contexts
 539. **TASK-0596 (Complete)**: [`0596-gateway-the-watcher-public-routes-proxy-to-the-watcher.md`](complete/0596-gateway-the-watcher-public-routes-proxy-to-the-watcher.md) — Gateway The Watcher Public Routes Proxy to The Watcher Service
 <!-- Release One (PRD-0025, ADR-0022), 2026-11-19 -->
-540. **TASK-0938 (Refined)**: [`0938-mover-board-shows-its-own-accepted-token-move.md`](refined/0938-mover-board-shows-its-own-accepted-token-move.md) — The Mover's Board Shows Its Own Accepted Token Move
-541. **TASK-0939 (Refined)**: [`0939-reaction-prompt-opens-only-for-a-real-reaction.md`](refined/0939-reaction-prompt-opens-only-for-a-real-reaction.md) — The Reaction Prompt Opens Only for a Real Reaction
+540. **TASK-0938 (Complete)**: [`0938-mover-board-shows-its-own-accepted-token-move.md`](complete/0938-mover-board-shows-its-own-accepted-token-move.md) — The Mover's Board Shows Its Own Accepted Token Move
+541. **TASK-0939 (Complete)**: [`0939-reaction-prompt-opens-only-for-a-real-reaction.md`](complete/0939-reaction-prompt-opens-only-for-a-real-reaction.md) — The Reaction Prompt Opens Only for a Real Reaction
 542. **TASK-0942 (Refined)**: [`0942-the-watcher-spoken-move-resolves-its-destination.md`](refined/0942-the-watcher-spoken-move-resolves-its-destination.md) — The Watcher's Spoken Move Resolves Its Destination
 543. **TASK-0967 (Refined)**: [`0967-invite-link-creates-the-player-account.md`](refined/0967-invite-link-creates-the-player-account.md) — A Campaign Invite Link Creates the Player Account Through Zitadel
 544. **TASK-0950 (Refined)**: [`0950-invite-link-opens-a-join-view-in-the-app-shell.md`](refined/0950-invite-link-opens-a-join-view-in-the-app-shell.md) — An Invite Link Opens a Join View in the App Shell

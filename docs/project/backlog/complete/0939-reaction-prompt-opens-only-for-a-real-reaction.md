@@ -1,7 +1,7 @@
 ---
 id: '0939'
 title: The Reaction Prompt Opens Only for a Real Reaction
-status: Refined
+status: Complete
 created: 2026-11-19
 dependencies: []
 governing_adrs:
@@ -18,7 +18,7 @@ target_release: 0.9.0
 
 ## Status
 
-Refined
+Complete
 
 ## Summary
 
