@@ -85,7 +85,7 @@ Tests use the public gateway route `POST /api/v1/watcher/speak-and-act` and the 
 ## Definition of Done
 
 - Every test in the plan passes, with `uv run pytest` on the named files.
-- `grep -rn RUNEFOBLE_WATCHER_ENGINE` in `services deployments docs tests gateway libs e2e` returns no match, except in `docs/changelog.md` and completed backlog records.
+- `grep -rn RUNEFOBLE_WATCHER_ENGINE` in `services deployments docs tests gateway libs e2e` returns no match, except in `CHANGELOG.md` and completed backlog records.
 - `heuristic_engines.py` is deleted. No file imports it.
 - `values.yaml` sets the three new settings.
 - Every doc named in "Problem Statement" is updated.
