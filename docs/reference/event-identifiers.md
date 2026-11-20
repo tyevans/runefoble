@@ -167,6 +167,7 @@ CloudEvents exports (`to_cloudevent_dict()`) lower-case the identifier.
 | `runefoble.events.session.player_left_session` | `PlayerLeftSession` | `runefoble_events.session` |
 | `runefoble.events.session.readiness_toggled` | `ReadinessToggled` | `runefoble_events.session` |
 | `runefoble.events.session.started` | `SessionStarted` | `runefoble_events.session` |
+| `runefoble.events.session.token_move_chronicled` | `TokenMoveChronicled` | `runefoble_events.session` |
 | `runefoble.events.session.turn_advanced` | `TurnAdvanced` | `runefoble_events.session` |
 | `runefoble.events.session.turn_started` | `TurnStarted` | `runefoble_events.session` |
 | `runefoble.events.session.weather_changed` | `WeatherChanged` | `runefoble_events.session` |

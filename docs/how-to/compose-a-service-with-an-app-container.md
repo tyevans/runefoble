@@ -71,7 +71,7 @@ The repositories do not hold the store. They resolve the process store on each o
 app = create_app()  # uvicorn serves game_session.main:app
 ```
 
-A stream consumer gets the container part that it needs when the lifespan starts it, for example `start_audience_consumers(bus, container.play)`.
+A stream consumer gets the container part that it needs when the lifespan starts it, for example `start_stream_consumers(bus, container.play)`.
 
 ## Step 4: Use the Providers in Routes
 

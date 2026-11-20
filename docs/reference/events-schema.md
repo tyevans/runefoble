@@ -90,7 +90,8 @@ Each catalogue section lists the fields of its events. Field names come from the
 
 Two read routes project the session event stream. Neither writes state.
 
-- `GET /api/v1/sessions/{session_id}/events` reads the session stream and returns the chronicle feed lines for `runefoble.events.watcher.stand_in_action_decided`, `DiceRolled`, `runefoble.events.session.started`, and `runefoble.events.session.ended`. Other event kinds are skipped.
+- `GET /api/v1/sessions/{session_id}/events` reads the session stream and returns the chronicle feed lines for `runefoble.events.watcher.stand_in_action_decided`, `DiceRolled`, `runefoble.events.session.token_move_chronicled`, `runefoble.events.session.started`, and `runefoble.events.session.ended`. Other event kinds are skipped.
+- A board token move gets into the session stream through the published event. board_state publishes `TokenMoved` on `runefoble.events.board`. The game_session consumer records `TokenMoveChronicled` on the session. The feed line has `kind: "token_moved"`, `action_type: "board_move"`, the token name as `speaker`, and the text `<token name> moved to (<x>, <y>)`. The feed does not call board_state.
 - `GET /api/v1/sessions/{session_id}/absentee-recap` summarises the stand-in actions that the session aggregate recorded from `runefoble.events.watcher.stand_in_action_decided`. Each penalty comes from that event's `penalties_applied` list.
 
 Both routes are proxied by the gateway. The gateway checks the `observe` permission on the session first, so a stranger gets the same `403` for a session that exists and for one that does not. Both return an empty result when the session has no matching events. See [Ports and Endpoints](ports-and-endpoints.md).

@@ -111,7 +111,7 @@ runefoble/
 
 The App Shell forwards incoming session WebSocket messages to microfrontends as window events. The shell does not query service element tags or call their methods (TASK-0826, audit F-07). Each owner subscribes to the events it needs.
 
-The gateway refuses `dice_rolled`, `turn_advanced` and `dm_whisper` from clients (TASK-0910). The gateway sends `dice_rolled` and `turn_advanced` from the game_session domain events (TASK-0923). The gateway sends `dm_whisper` from the Watcher `whisper_recorded` event, to DM sockets only (TASK-0927). `aoe_placed` and `spell_vfx` are client kinds that need `session.participate`. See "Session WebSocket inbound frames" in [`ports-and-endpoints.md`](ports-and-endpoints.md).
+The gateway refuses `dice_rolled`, `turn_advanced` and `dm_whisper` from clients (TASK-0910). The gateway sends `dice_rolled` and `turn_advanced` from the game_session domain events (TASK-0923). The gateway sends `dm_whisper` from the Watcher `whisper_recorded` event, to DM sockets only (TASK-0927). `aoe_placed` and `spell_vfx` are client kinds that need `session.participate`. The gateway sends `chronicle_entry` from the game_session `token_move_chronicled` event. The shell does not forward `chronicle_entry` as a window event. It adds `entry` to the `events` property of `<runefoble-watcher-feed>`, once by `event_id`. See "Session WebSocket inbound frames" in [`ports-and-endpoints.md`](ports-and-endpoints.md).
 
 | Session message `type` | Window event | Detail | Subscribers |
 |---|---|---|---|
