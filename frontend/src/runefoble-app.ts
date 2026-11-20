@@ -186,10 +186,13 @@ export class RunefobleApp extends LitElement {
     this.header.value?.restoreFocus();
   }
 
-  /** The bound character, or null when the roster is empty. Never a placeholder. */
+  /**
+   * Binds the caller own character in the campaign, preferring the caller seat. Null when the caller
+   * owns none. Never another player's character (TASK-0972).
+   */
   public resolveActiveCharacter(campaignId: string): CharacterItem | null {
-    if (this.activeCharacter) return this.activeCharacter;
-    this.activeCharacter = pickActiveCharacter(this.characters, campaignId);
+    const seat = this.lobbyParticipants.find((p) => p.userId === this.currentUserId)?.characterId ?? null;
+    this.activeCharacter = pickActiveCharacter(this.characters, campaignId, this.currentUserId, seat);
     return this.activeCharacter;
   }
 

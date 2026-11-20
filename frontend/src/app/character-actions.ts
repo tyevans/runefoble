@@ -58,15 +58,20 @@ export async function selectCharacterFromEvent(host: RunefobleApp, e: CustomEven
     if (!res.ok) return failLoad(host, res);
     full = res.data;
   }
-  host.activeCharacter = full;
-  const s = host.activeCharacter;
+  // The caller binds only the caller own character. Another player's pick updates the lobby seat only.
+  if (full?.ownerId === host.currentUserId) host.activeCharacter = full;
+  const s = full;
   host.lobbyParticipants = host.lobbyParticipants.map((p) => (p.userId === (d.userId || host.currentUserId)
     ? { ...p, characterId: cId, characterName: s?.name || p.characterName, characterClass: s?.characterClass || p.characterClass, characterLevel: s?.level || p.characterLevel, portraitUrl: s?.portraitUrl || p.portraitUrl }
     : p));
 }
 
-/** Switches the DM inspector to another roster character. */
+/**
+ * Switches the DM inspector to another roster character. Only a caller with the run-session
+ * capability (read from the campaign capabilities) may inspect another character.
+ */
 export function switchDmCharacter(host: RunefobleApp, cId: string): void {
+  if (host.campaignCapabilities?.run_session !== true) return;
   const f = host.characters.find((c) => c.id === cId);
   if (f) host.activeCharacter = f;
 }

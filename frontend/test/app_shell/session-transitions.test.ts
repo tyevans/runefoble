@@ -36,7 +36,7 @@ function installRosterGateway(): { gateway: FakeGateway; roster: any[] } {
     'GET /api/v1/characters': () => ({ body: roster }),
     'POST /api/v1/characters': (req) => {
       const body = req.body as any;
-      const created = { id: `char-${roster.length + 1}`, campaignId: null, campaignTitle: null, currentHp: body.maxHp, armorClass: 10, speed: 30, ...body };
+      const created = { id: `char-${roster.length + 1}`, campaignId: null, campaignTitle: null, ownerId: 'user-fixture', currentHp: body.maxHp, armorClass: 10, speed: 30, ...body };
       roster.push(created);
       return { status: 201, body: created };
     },

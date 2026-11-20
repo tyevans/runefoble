@@ -56,7 +56,7 @@ function fakeHost(view: string, overrides: Record<string, unknown> = {}) {
     showToast(message: string) { this.toasts.push(message); },
     resolveActiveCharacter(campaignId: string) {
       if (this.activeCharacter) return this.activeCharacter;
-      this.activeCharacter = pickActiveCharacter(this.characters, campaignId);
+      this.activeCharacter = pickActiveCharacter(this.characters, campaignId, this.currentUserId, null);
       return this.activeCharacter;
     },
     ...overrides,
@@ -118,20 +118,20 @@ describe('App Shell Route State (TASK-0642)', () => {
   });
 
   it('returns no active character when the roster is empty, not a placeholder', () => {
-    assert.equal(pickActiveCharacter([], 'glass-crypt'), null);
+    assert.equal(pickActiveCharacter([], 'glass-crypt', 'user-signed-in', null), null);
   });
 
-  it('prefers the roster character assigned to the route campaign', () => {
+  it('prefers the caller own character in the route campaign', () => {
     const roster = [
-      { id: 'char-harbour', name: 'Mira', campaignId: 'harbour-watch' },
-      { id: 'char-glass', name: 'Oren', campaignId: 'glass-crypt' },
+      { id: 'char-harbour', name: 'Mira', campaignId: 'glass-crypt', ownerId: 'user-other' },
+      { id: 'char-glass', name: 'Oren', campaignId: 'glass-crypt', ownerId: 'user-signed-in' },
     ] as any[];
-    assert.equal(pickActiveCharacter(roster, 'glass-crypt')?.id, 'char-glass');
+    assert.equal(pickActiveCharacter(roster, 'glass-crypt', 'user-signed-in', null)?.id, 'char-glass');
   });
 
   it('loads a selected character record and invents no stats', async () => {
     gateway = installFakeGateway({
-      'GET /api/v1/characters/char-new': { body: { id: 'char-new', name: 'Harsk the Ranger', characterClass: 'Ranger', level: 1 } },
+      'GET /api/v1/characters/char-new': { body: { id: 'char-new', name: 'Harsk the Ranger', characterClass: 'Ranger', level: 1, owner_id: 'user-signed-in' } },
     });
     const host = fakeHost('session-lobby');
     const event = new Event('select-character') as CustomEvent;
