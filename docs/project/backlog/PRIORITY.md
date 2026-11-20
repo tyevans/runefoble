@@ -960,3 +960,4 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 952. **TASK-0969 (Proposed)**: [`0969-stand-in-guardrails-are-enforced-on-model-output.md`](proposed/0969-stand-in-guardrails-are-enforced-on-model-output.md) — Stand-In Guardrails Are Enforced on the Model Decision, Not Only Written in the Prompt
 953. **TASK-0970 (Proposed)**: [`0970-helm-values-file-under-500-lines.md`](proposed/0970-helm-values-file-under-500-lines.md) — The Helm Values File Is Split Below 500 Lines
 954. **TASK-0971 (Proposed)**: [`0971-named-token-move-reads-the-board-once.md`](proposed/0971-named-token-move-reads-the-board-once.md) — A Spoken Move to a Named Token Reads the Board Once and Fits the Gateway Budget
+955. **TASK-0975 (Proposed)**: [`0975-game-session-latency-under-e2e-load.md`](proposed/0975-game-session-latency-under-e2e-load.md) — game_session Reads Stay Under the Gateway Budget When the Kind Host Is Loaded
