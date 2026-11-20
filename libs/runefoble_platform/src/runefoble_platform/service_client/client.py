@@ -1,7 +1,8 @@
 """Typed HTTP client for calls from a gateway to one owning bounded context.
 
 One `ServiceClient` wraps one `httpx.AsyncClient` for one service base URL. The
-caller sets the timeout for each call. The client adds no retries and no cache.
+caller sets the timeout for each call. The TCP connect has a shorter limit,
+`CONNECT_TIMEOUT_S`. The client adds no retries and no cache.
 """
 
 from __future__ import annotations
@@ -18,6 +19,12 @@ from runefoble_platform.service_client.errors import (
 from runefoble_platform.service_client.headers import build_upstream_headers
 
 DEFAULT_CONTENT_TYPE = "application/json"
+
+# Longest wait for the TCP connect to an owning service. An in-cluster connect takes
+# milliseconds. 2 s allows one lost SYN (the kernel sends it again after 1 s). A Service that
+# still routes to a deleted pod drops every SYN, so without this limit the caller waits the
+# full call timeout before it gets 503.
+CONNECT_TIMEOUT_S = 2.0
 
 # Response headers that describe the upstream transport, not the payload. The gateway drops
 # them, because httpx has already decoded the body and the gateway sets its own framing.
@@ -82,6 +89,9 @@ class ServiceClient:
         `content` forwards a raw body unchanged (the owner parses it). Pass `json` or `content`,
         not both. `content_type` is the body's media type and is sent only with `content`.
 
+        `timeout_s` limits each phase of the call. The connect phase waits at most
+        `CONNECT_TIMEOUT_S`.
+
         Raises UpstreamUnavailableError on connect failure or timeout.
         Raises UpstreamFailureError on an upstream 5xx status.
         """
@@ -96,7 +106,7 @@ class ServiceClient:
                 content=content,
                 params=params,
                 headers=headers,
-                timeout=timeout_s,
+                timeout=httpx.Timeout(timeout_s, connect=min(CONNECT_TIMEOUT_S, timeout_s)),
             )
         except httpx.TransportError as exc:
             raise UpstreamUnavailableError(self.service, type(exc).__name__) from exc

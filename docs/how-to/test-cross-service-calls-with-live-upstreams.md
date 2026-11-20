@@ -18,6 +18,7 @@ Do not use this pattern for a call to an external network service, such as an LL
 | `serve(app, lifespan="off")` | Run an ASGI app on a free loopback port. It yields the base URL. Pass `lifespan="on"` for a service that builds state at start-up. |
 | `unavailable_app(status_code=503)` | Build a stand-in upstream that answers every route with the given status. |
 | `closed_port_url()` | Return a base URL where nothing listens. Connections are refused. |
+| `unanswered_port_url()` | Context manager. Yield a base URL where a TCP connect never completes, as for a Service that still routes to a deleted pod. Use it to test that the gateway answers `503` before the call timeout. |
 | `serve_subprocess(app_path, env)` | Run an import path such as `game_session.main:app` in a child uvicorn process. The child reads its settings from `env`. It yields the base URL and stops when the block exits, also when the block raises. |
 | `serve_subprocesses(apps, env)` | Run several import paths, such as `{"game_session": "game_session.main:app", "soundscape": "soundscape.main:app"}`, as child processes that share `env`. Each child gets its own free port. It yields a dict of base URLs. Every child stops when the block exits, also when a later child fails to start. |
 
