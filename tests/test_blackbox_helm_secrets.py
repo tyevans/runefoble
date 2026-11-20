@@ -55,6 +55,7 @@ def test_rendered_secret_holds_every_chart_credential():
         "postgres-password",
         "grafana-admin-password",
         "service-credential",
+        "smtp-password",
     }
 
 

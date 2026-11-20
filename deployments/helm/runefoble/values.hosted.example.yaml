@@ -74,3 +74,8 @@ zitadel:
 # Mailpit captures mail for development only. A hosted render runs without it.
 mailpit:
   enabled: false
+
+services:
+  campaignLore:
+    # Secret that you create. It holds the embedding endpoint key under the key api-key.
+    embeddingApiKeySecret: campaign-lore-embedding

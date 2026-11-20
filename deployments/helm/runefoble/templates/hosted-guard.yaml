@@ -76,4 +76,10 @@ Docs: docs/reference/hosted-profile.md.
 {{- include "runefoble.hosted.fail" (dict "key" "zitadel.adminEmail" "value" $adminEmail "env" $env) -}}
 {{- end -}}
 
+{{- /* The campaign-lore key comes from a Secret that the operator creates (TASK-0959). */ -}}
+{{- $embeddingSecret := required "services.campaignLore.embeddingApiKeySecret must name a Secret for a hosted render" .Values.services.campaignLore.embeddingApiKeySecret -}}
+{{- if contains "REPLACE-ME" $embeddingSecret -}}
+{{- include "runefoble.hosted.fail" (dict "key" "services.campaignLore.embeddingApiKeySecret" "value" $embeddingSecret "env" $env) -}}
+{{- end -}}
+
 {{- end -}}

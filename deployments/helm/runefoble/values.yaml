@@ -9,7 +9,7 @@ global:
 # Kind cluster. They are public in this repository. Never deploy them to a shared cluster.
 # For any environment other than `local`, set `credentials.existingSecret` to the name of a
 # Secret you manage. The chart then renders no Secret, and it fails if that name is empty.
-# The existing Secret must hold the keys listed in templates/secret.yaml.
+# The existing Secret must hold the keys listed in docs/reference/hosted-secrets.md.
 credentials:
   existingSecret: ""
   silo:
