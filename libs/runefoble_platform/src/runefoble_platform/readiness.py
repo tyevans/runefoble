@@ -22,6 +22,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, FastAPI, Request
 from fastapi.responses import JSONResponse
+from starlette.applications import Starlette
 
 from runefoble_platform.event_sourcing import get_event_store
 from runefoble_platform.redis_bus import RedisStreamsEventBus
@@ -103,7 +104,7 @@ class ReadinessGate:
         return None
 
 
-def set_readiness_gate(app: FastAPI, gate: ReadinessGate) -> None:
+def set_readiness_gate(app: Starlette, gate: ReadinessGate) -> None:
     """Make `gate` the gate that `/readyz` of `app` uses. Call it at the start of the lifespan.
 
     A new lifespan gets a new gate, so no dependency counts as answered before the app starts.
