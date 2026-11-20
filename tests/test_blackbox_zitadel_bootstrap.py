@@ -14,6 +14,7 @@ import pytest
 from helpers.local_http_server import LocalHttpServer, RecordedRequest
 from zitadel_bootstrap import provisioning
 from zitadel_bootstrap.job import BootstrapConfigError, main
+from zitadel_bootstrap.provisioning import ZitadelBootstrapError
 
 ISSUER = "http://auth.localhost"
 ADMIN_PAT = "pat-bootstrap-admin"
@@ -32,6 +33,14 @@ class FakeZitadel:
         self.starting_checks = starting_checks
         self.health_checks = 0
         self._next = 0
+        self.login_policy: dict[str, Any] = {
+            "allowUsernamePassword": True,
+            "allowRegister": True,
+            "allowExternalIdp": True,
+            "passwordCheckLifetime": "864000s",
+        }
+        self.policy_writes: list[dict[str, Any]] = []
+        self.policy_refusal: tuple[int, Any] | None = None
 
     def _id(self, prefix: str) -> str:
         self._next += 1
@@ -49,7 +58,9 @@ class FakeZitadel:
             )
         if request.headers.get("Authorization") != f"Bearer {ADMIN_PAT}":
             return 401, {"message": "unauthenticated"}
-        parts = request.path.split("/")  # ["", "management", "v1", ...]
+        parts = request.path.split("/")  # ["", "management", "v1", ...] or ["", "admin", "v1", ...]
+        if parts[1] == "admin":
+            return self._login_policy_route(request, parts[2:])
         if request.method == "POST" and parts[3:] == ["projects", "_search"]:
             return 200, {"result": self._search_projects(request)}
         if request.method == "POST" and parts[3:] == ["projects"]:
@@ -134,6 +145,19 @@ class FakeZitadel:
             return 200, {}
         return 404, {"message": f"no flow route for {request.method} {request.path}"}
 
+    def _login_policy_route(self, request: RecordedRequest, rest: list[str]) -> tuple[int, Any]:
+        if rest != ["v1", "policies", "login"]:
+            return 404, {"message": f"no admin route for {request.method} {request.path}"}
+        if self.policy_refusal is not None:
+            return self.policy_refusal
+        if request.method == "GET":
+            return 200, {"policy": dict(self.login_policy)}
+        if request.method == "PUT":
+            self.login_policy = request.json()
+            self.policy_writes.append(request.json())
+            return 200, {}
+        return 404, {"message": f"no admin route for {request.method} {request.path}"}
+
     def _app_by_id(self, project_id: str, app_id: str) -> dict[str, Any] | None:
         return next(
             (
@@ -194,6 +218,7 @@ def job_env(zitadel_url: str, kube_url: str, **overrides: str) -> dict[str, str]
         "RUNEFOBLE_ZITADEL_REDIRECT_URIS": REDIRECT,
         "RUNEFOBLE_ZITADEL_POST_LOGOUT_URIS": POST_LOGOUT,
         "RUNEFOBLE_ZITADEL_DEV_MODE": "true",
+        "RUNEFOBLE_ZITADEL_CLOSED_REGISTRATION": "false",
         "KUBERNETES_API_URL": kube_url,
     }
     env.update(overrides)
@@ -346,3 +371,65 @@ def test_a_changed_action_script_is_updated_in_place(
     assert list(fake_zitadel.actions) == [action_id]
     assert fake_zitadel.actions[action_id]["script"] == expected_script
     assert fake_zitadel.triggers[(COMPLEMENT_TOKEN_FLOW, PRE_ACCESS_TOKEN_TRIGGER)] == [action_id]
+
+
+def test_closed_registration_turns_off_local_sign_up_and_keeps_other_login_settings(
+    zitadel, kubernetes, service_account: Path
+) -> None:
+    fake_zitadel, zitadel_server = zitadel
+    _, kube_server = kubernetes
+
+    exit_code = main(
+        job_env(zitadel_server.url, kube_server.url, RUNEFOBLE_ZITADEL_CLOSED_REGISTRATION="true"),
+        service_account,
+    )
+
+    assert exit_code == 0
+    policy = fake_zitadel.login_policy
+    assert policy["allowRegister"] is False
+    assert policy["allowUsernamePassword"] is True
+    assert policy["allowExternalIdp"] is True
+    assert policy["passwordCheckLifetime"] == "864000s"
+
+
+def test_closed_registration_on_a_second_run_writes_the_policy_once(
+    zitadel, kubernetes, service_account: Path
+) -> None:
+    fake_zitadel, zitadel_server = zitadel
+    _, kube_server = kubernetes
+    env = job_env(zitadel_server.url, kube_server.url, RUNEFOBLE_ZITADEL_CLOSED_REGISTRATION="true")
+
+    main(env, service_account)
+    main(env, service_account)
+
+    assert len(fake_zitadel.policy_writes) == 1
+
+
+def test_open_registration_leaves_the_login_policy_untouched(
+    zitadel, kubernetes, service_account: Path
+) -> None:
+    fake_zitadel, zitadel_server = zitadel
+    _, kube_server = kubernetes
+
+    main(job_env(zitadel_server.url, kube_server.url), service_account)
+
+    assert fake_zitadel.policy_writes == []
+    assert fake_zitadel.login_policy["allowRegister"] is True
+
+
+def test_refused_login_policy_read_fails_the_job(
+    zitadel, kubernetes, service_account: Path
+) -> None:
+    fake_zitadel, zitadel_server = zitadel
+    _, kube_server = kubernetes
+    fake_zitadel.policy_refusal = (403, {"message": "permission denied"})
+
+    with pytest.raises(ZitadelBootstrapError, match="policies/login returned HTTP 403"):
+        main(
+            job_env(
+                zitadel_server.url, kube_server.url, RUNEFOBLE_ZITADEL_CLOSED_REGISTRATION="true"
+            ),
+            service_account,
+        )
+
+    assert fake_zitadel.policy_writes == []

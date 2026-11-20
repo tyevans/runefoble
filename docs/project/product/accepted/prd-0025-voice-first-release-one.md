@@ -56,7 +56,7 @@ The research for this release is in `.audit/research/r1-voice-path.md`, `r1-watc
 
 ## Checkable Outcomes
 
-1. A Playwright scenario covers sign-up through Mailpit (development) or real SMTP (hosted), campaign creation, invite, join through the invite link, character creation, lobby, ready, launch, battlemap set-up, a drag move, a typed move, a spoken move (fake microphone, real speech-to-text engine), a dice roll, a whisper and veto, and session end with recap. Setup uses only the UI (Hard Invariant 7).
+1. A Playwright scenario covers account setup through Mailpit (development) or real SMTP (hosted), campaign creation, invite, join through the invite link, character creation, lobby, ready, launch, battlemap set-up, a drag move, a typed move, a spoken move (fake microphone, real speech-to-text engine), a dice roll, a whisper and veto, and session end with recap. Setup uses only the UI (Hard Invariant 7).
 2. The spoken move scenario prints the time from Push to Talk release to the ghost banner.
 3. The full e2e suite passes twice in a row on Kind.
 4. The hosted profile renders with no development default (a render guard fails on any `DEV-ONLY` value), serves HTTPS only, and turns off Mailpit, `/mail`, `/docs` and `/analytics`.

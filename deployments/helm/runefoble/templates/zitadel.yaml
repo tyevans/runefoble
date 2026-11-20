@@ -6,6 +6,18 @@ by zitadel.bootstrap.adminSecret. The Role below may touch only that Secret by n
 */ -}}
 {{- $patDir := "/zitadel/bootstrap" -}}
 {{- $patPath := printf "%s/admin.pat" $patDir -}}
+{{- /* The hosted SMTP provider. Read with defaults. Mailpit (local) takes the branch before it. */ -}}
+{{- $smtpIn := dig "smtp" (dict) .Values.zitadel -}}
+{{- $smtp := dict
+      "host" (dig "host" "" $smtpIn)
+      "port" (dig "port" 587 $smtpIn)
+      "user" (dig "user" "" $smtpIn)
+      "tls" (dig "tls" true $smtpIn)
+      "passwordSecretKey" (dig "passwordSecretKey" "smtp-password" $smtpIn)
+      "fromAddress" (dig "fromAddress" "" $smtpIn)
+      "fromName" (dig "fromName" "Runefoble" $smtpIn)
+      "senderAddressMatchesInstanceDomain" (dig "senderAddressMatchesInstanceDomain" false $smtpIn)
+-}}
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -148,6 +160,26 @@ spec:
             # The sender is not in the instance domain (auth.localhost). Turn off the check.
             - name: ZITADEL_DEFAULTINSTANCE_DOMAINPOLICY_SMTPSENDERADDRESSMATCHESINSTANCEDOMAIN
               value: "false"
+            {{- else if $smtp.host }}
+            # Operator SMTP provider (zitadel.smtp in values, TASK-0958). The password is a key of the
+            # credentials Secret. The check below is off unless the operator turns it on.
+            - name: ZITADEL_DEFAULTINSTANCE_SMTPCONFIGURATION_SMTP_HOST
+              value: {{ printf "%s:%v" $smtp.host $smtp.port | quote }}
+            - name: ZITADEL_DEFAULTINSTANCE_SMTPCONFIGURATION_SMTP_USER
+              value: {{ $smtp.user | quote }}
+            - name: ZITADEL_DEFAULTINSTANCE_SMTPCONFIGURATION_SMTP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "runefoble.credentialsSecret" $ }}
+                  key: {{ $smtp.passwordSecretKey }}
+            - name: ZITADEL_DEFAULTINSTANCE_SMTPCONFIGURATION_TLS
+              value: {{ $smtp.tls | quote }}
+            - name: ZITADEL_DEFAULTINSTANCE_SMTPCONFIGURATION_FROM
+              value: {{ $smtp.fromAddress | quote }}
+            - name: ZITADEL_DEFAULTINSTANCE_SMTPCONFIGURATION_FROMNAME
+              value: {{ $smtp.fromName | quote }}
+            - name: ZITADEL_DEFAULTINSTANCE_DOMAINPOLICY_SMTPSENDERADDRESSMATCHESINSTANCEDOMAIN
+              value: {{ $smtp.senderAddressMatchesInstanceDomain | quote }}
             {{- end }}
         - name: pat-publisher
           image: {{ .Values.services.gatewayApi.image }}

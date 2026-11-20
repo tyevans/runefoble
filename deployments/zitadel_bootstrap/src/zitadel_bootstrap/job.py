@@ -29,6 +29,7 @@ from zitadel_bootstrap.provisioning import (
     ApplicationSpec,
     Provisioned,
     ZitadelManagement,
+    close_self_registration,
     provision,
 )
 from zitadel_bootstrap.token_claims import ensure_username_claim_action
@@ -49,6 +50,7 @@ class BootstrapConfig:
     namespace: str
     secret_name: str
     spec: ApplicationSpec
+    closed_registration: bool
     kubernetes_api: str
     kubernetes_token: str
     kubernetes_ca_file: str | None
@@ -70,6 +72,8 @@ class BootstrapConfig:
                 post_logout_redirect_uris=_csv(env, "RUNEFOBLE_ZITADEL_POST_LOGOUT_URIS"),
                 dev_mode=_required(env, "RUNEFOBLE_ZITADEL_DEV_MODE").lower() == "true",
             ),
+            closed_registration=_required(env, "RUNEFOBLE_ZITADEL_CLOSED_REGISTRATION").lower()
+            == "true",
             kubernetes_api=_required(env, "KUBERNETES_API_URL"),
             kubernetes_token=read_service_account_token(service_account_dir),
             kubernetes_ca_file=service_account_ca_file(service_account_dir),
@@ -107,6 +111,8 @@ def run(config: BootstrapConfig) -> Provisioned:
     client = ZitadelManagement(config.issuer, config.internal_url, config.admin_token)
     client.wait_until_ready(READY_TIMEOUT_SECONDS)
     provisioned = provision(client, config.spec)
+    if config.closed_registration:
+        close_self_registration(client)
     ensure_username_claim_action(client)
     apply_client_secret(config, provisioned)
     return provisioned

@@ -112,4 +112,7 @@ spec:
               value: {{ join "," .Values.zitadel.bootstrap.postLogoutRedirectUris | quote }}
             - name: RUNEFOBLE_ZITADEL_DEV_MODE
               value: {{ .Values.zitadel.bootstrap.devMode | quote }}
+            # true turns off local self-registration in the Zitadel default login policy (ADR-0023 a).
+            - name: RUNEFOBLE_ZITADEL_CLOSED_REGISTRATION
+              value: {{ dig "closedRegistration" false .Values.zitadel.bootstrap | quote }}
 {{- end }}

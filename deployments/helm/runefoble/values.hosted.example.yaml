@@ -61,6 +61,17 @@ zitadel:
   externalSecure: true
   # Operator mail address for the first admin account.
   adminEmail: admin@REPLACE-ME
+  # SMTP provider for account e-mail (TASK-0958). Set every value for your provider. The password
+  # is not a value: it is the key smtp-password in the Secret named in credentials.existingSecret.
+  smtp:
+    host: REPLACE-ME
+    port: 587
+    # true: STARTTLS or implicit TLS, as the provider requires. The guard rejects false.
+    tls: true
+    user: REPLACE-ME
+    passwordSecretKey: smtp-password
+    fromAddress: noreply@REPLACE-ME
+    fromName: Runefoble
   bootstrap:
     # Short expiry for the bootstrap token. Set a date that suits your rotation policy.
     patExpirationDate: "2027-01-01T00:00:00Z"
@@ -69,6 +80,9 @@ zitadel:
     postLogoutRedirectUris:
       - https://REPLACE-ME/
     devMode: false
+    # true: the bootstrap Job turns off local self-registration. Only a campaign invite (TASK-0967)
+    # and the Zitadel admin console create accounts (ADR-0023 a). The guard rejects false.
+    closedRegistration: true
 
 # Development-only workloads. A hosted render runs without them (PRD-0025 outcome 4).
 # Mailpit captures mail. Swagger UI lists the OpenAPI specs. OpenPanel is analytics (D6: off).
