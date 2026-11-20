@@ -93,6 +93,7 @@ The MCP gateway subpackages re-export no names, and the gateway has one entrypoi
 - Campaign analytics worker `process_event` alias, tracking property wrappers, and package root re-exports. Callers use `handle_event`. (TASK-0500)
 
 ### Added
+- The grammar parses "move my warrior to the chest", "move the warrior to the chest" and "move Valeros to the chest"; the mover is always the speaker's token. (TASK-0944)
 The grammar parses "move my warrior to the chest", "move the warrior to the chest" and "move Valeros to the chest"; the mover is always the speaker's token.
 The DM ends an active session (`POST /api/v1/sessions/{id}/end`, SpiceDB control) and every player sees the session recap.
 The invite link opens a join page in the App Shell (`#/join/<token>`): a signed-out friend creates an account from the link and joins after sign-in; the sample invite token placeholder is gone.
@@ -203,6 +204,8 @@ The campaign rules tab at `#/campaigns/:campaignId/rules`. The homebrew forge re
   - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
 
 ### Changed
+- The Watcher routes spoken commands grammar first (ADR-0022): one setting per engine port (intent, stand-in, narration), only unparsed speech goes to the model, and a model failure returns 503 with no retry on another engine. (TASK-0943)
+- The inference worker reads its API key from a Secret and its generation settings and timeouts from Helm, and The Watcher's engine budgets come from settings. (TASK-0948)
 The inference worker reads its API key from a Secret and its generation settings and timeouts from Helm, and The Watcher's engine budgets come from settings.
 The Watcher routes spoken commands grammar first (ADR-0022): one setting per engine port (intent, stand-in, narration), only unparsed speech goes to the model, and a model failure returns 503 with no retry on another engine.
 The hosted profile turns off Mailpit, Swagger UI and OpenPanel and serves no `/mail`, `/docs`, `/swagger-ui` or `/analytics` route. A hosted render fails when an Ingress path reaches a development prefix or a disabled development workload.
@@ -1348,6 +1351,7 @@ The App Shell auth service keeps JWT claim handling, session storage and session
 - **Documentation & Build Navigation**: Featured the Platform Showcase and Changelog in `zensical.toml` and root documentation landing page (`docs/index.md`), and enhanced `scripts/build_docs.py` to synchronize `CHANGELOG.md` to `docs/changelog.md` during documentation compilation.
 
 ### Fixed
+- Every app service gates `/readyz`, every app pod has a 180 s startup probe, and the Silo bucket and SpiceDB schema Jobs no longer deadlock `helm --wait`. (TASK-0933)
 Every app service gates `/readyz`, every app pod has a 180 s startup probe, and the Silo bucket and SpiceDB schema Jobs no longer deadlock `helm --wait`.
 The invite link field and Copy Link clear while a new link is generated, so a DM never copies a stale link.
 The session binds only the caller's own character: the frontend reads `owner_id`, prefers the caller's seat, and shows the empty state when the caller has none. Lobby and session loads read the roster every time.
