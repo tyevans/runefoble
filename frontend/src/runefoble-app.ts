@@ -100,8 +100,9 @@ export class RunefobleApp extends LitElement {
   /** The state of the join view for the open invite token (TASK-0950). */
   @state() public joinState: JoinViewState = IDLE_JOIN_STATE;
   @state() public isAbsenteeDirectiveOpen = false;
+  /** The stance the player saved, read from the stand-in policy. '' until one is chosen (TASK-0954). */
+  @state() public absenteeStance = '';
   @state() public boardTarget: BoardTarget | null = null;
-  @state() public isMapSwitcherOpen = false;
   /** The session status from the owner: `active` while live, `ended` after the DM ends it (TASK-0953). */
   @state() public sessionStatus = '';
   @state() public isEndSessionConfirmOpen = false;

@@ -10,6 +10,7 @@ import { switchDmCharacter } from '../app/character-actions.ts';
 import { recordBoardMoveTarget, resolveBoardDmAccess } from '../app/board-dm-controls.ts';
 import { handleBoardSetUp } from '../app/board-setup-actions.ts';
 import { endSession } from '../app/session-actions.ts';
+import { openAbsenteeDrawer } from '../app/absentee-actions.ts';
 
 /**
  * The DM ends an active session (TASK-0953). Only a caller with the `run_session` capability sees
@@ -28,14 +29,14 @@ function renderEndSessionControl(app: RunefobleApp, canRunSession: boolean) {
 }
 
 /**
- * The DM trap controls and the map switcher for the board. The session id is the board id.
- * Only a caller with the `run_session` capability sees them. A map switch reloads the board from the server.
+ * The DM trap controls for the board. The session id is the board id. Only a caller with the
+ * `run_session` capability sees them. The map switch control is removed: no public route lists the
+ * battlemaps, so the App Shell cannot offer a map to switch to (TASK-0954).
  */
 function renderBoardDmControls(app: RunefobleApp) {
   if (resolveBoardDmAccess(app.campaignCapabilities) !== 'allowed') return '';
   return html`<div class="dm-board-controls" role="region" aria-label="DM Board Controls">
-    <runefoble-dm-trap-controls .boardId=${app.sessionId} .targetX=${app.boardTarget?.targetX ?? null} .targetY=${app.boardTarget?.targetY ?? null} @open-map-switcher=${() => { app.isMapSwitcherOpen = true; }}></runefoble-dm-trap-controls>
-    <runefoble-map-switcher .boardId=${app.sessionId} .open=${app.isMapSwitcherOpen} @switcher-closed=${() => { app.isMapSwitcherOpen = false; }} @map-switched=${() => { app.isMapSwitcherOpen = false; app.reloadRouteData(); }}></runefoble-map-switcher>
+    <runefoble-dm-trap-controls .boardId=${app.sessionId} .targetX=${app.boardTarget?.targetX ?? null} .targetY=${app.boardTarget?.targetY ?? null}></runefoble-dm-trap-controls>
   </div>`;
 }
 
@@ -78,7 +79,7 @@ export function renderSessionActive(app: RunefobleApp) {
       ${renderEndSessionControl(app, canRunSession)}
       ${canRunSession ? html`<div class="dm-party-inspector" role="region" aria-label="DM Party Inspector"><span class="dm-badge">DM Party Inspector</span><select class="dm-character-switcher" aria-label="Switch inspected character" @change=${(e: Event) => switchDmCharacter(app, (e.target as HTMLSelectElement).value)}>${app.characters.map((c) => html`<option value="${c.id}" ?selected=${c.id === char?.id}>${c.name} (${c.characterClass} Lv ${c.level})</option>`)}</select></div>` : ''}
       ${char ? html`<runefoble-character-card .characterName=${char.name} .characterClass=${`${char.characterClass}${char.level ? ` Lvl ${char.level}` : ''}`} .level=${char.level} .currentHp=${char.currentHp} .maxHp=${char.maxHp} .armorClass=${char.armorClass} .portraitUrl=${char.portraitUrl || ''} .isAiStandIn=${Boolean(char.isAiStandIn)}></runefoble-character-card>
-      <button class="btn-toggle-directive" @click=${() => { app.isAbsenteeDirectiveOpen = true; }}>📋 Stance Directives</button>` : html`<div class="empty-state" data-testid="active-character-empty"><p>No character is bound to this session. Choose a character in the session lobby.</p></div>`}
+      ${char.isAiStandIn ? html`<button class="btn-toggle-directive" @click=${() => openAbsenteeDrawer(app)}>📋 Stance Directives</button>` : ''}` : html`<div class="empty-state" data-testid="active-character-empty"><p>No character is bound to this session. Choose a character in the session lobby.</p></div>`}
       <runefoble-plugin-slot slot-id="sidebar-tool" .showFallback=${false}></runefoble-plugin-slot>
       <runefoble-plugin-slot slot-id="dice-panel" .showFallback=${false} .pluginProps=${{ 'default-dice-roller': { sessionId: app.sessionId, rollerName: char?.name ?? '' } }}></runefoble-plugin-slot>
     </div>

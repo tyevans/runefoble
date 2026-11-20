@@ -10,6 +10,7 @@
  */
 
 import { appDataService } from './services/app-data-service.ts';
+import { saveStandInPolicyChange } from './app/stand-in-policy.ts';
 import type { DataResult } from './services/data-result.ts';
 
 export interface SheetAppHost {
@@ -124,12 +125,18 @@ export async function handleSheetRemoveCondition(host: SheetAppHost, charId: str
   host.showToast(`Condition ${condition} removed`);
 }
 
-/** Saves stand-in guardrails. Shows success and the new guardrails only after the gateway confirms. */
-/** Saves the stand-in guardrails. The body holds only the policy fields: the character is in the path. */
+/**
+ * Saves the stand-in guardrails. The form holds no stance, so the stored stance is kept (TASK-0954).
+ * The sheet shows the saved policy only after the gateway confirms it.
+ */
 export async function handleGuardrailsSaved(host: SheetAppHost, charId: string, e: CustomEvent) {
-  const { characterId: _characterId, ...policy } = e.detail ?? {};
-  if (!(await commit(host, appDataService.updateCharacterGuardrails(charId, policy)))) return;
-  patchSelected(host, () => ({ stand_in_guardrails: policy, standInGuardrails: policy }));
+  const { characterId: _characterId, ...change } = e.detail ?? {};
+  const saved = await saveStandInPolicyChange(charId, change);
+  if (!saved.ok) {
+    host.showToast(`Not saved. ${saved.message}`);
+    return;
+  }
+  patchSelected(host, () => ({ stand_in_guardrails: saved.data, standInGuardrails: saved.data }));
   host.showToast('Tactical Guardrails Saved!');
 }
 

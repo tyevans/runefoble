@@ -9,6 +9,7 @@ export * from './runefoble-faction-radar.styles.ts';
 export * from './faction_radar/index.ts';
 export * from './runefoble-faction-espionage.ts';
 export * from './runefoble-faction-espionage.styles.ts';
+export * from './absentee-stances.ts';
 export * from './runefoble-absentee-directive.ts';
 export * from './runefoble-absentee-directive.styles.ts';
 export * from './runefoble-absentee-vote-card.ts';

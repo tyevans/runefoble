@@ -158,6 +158,8 @@ export class AppDataService {
   prepareCharacterSpell(characterId: string, spellName: string, isPrepared = true): Promise<DataResult<any>> { return mutateCharacterPrepareSpell(this, characterId, spellName, isPrepared); }
   restoreCharacterSpellSlot(characterId: string, slotLevel: number): Promise<DataResult<any>> { return mutateCharacterRestoreSlot(this, characterId, slotLevel); }
   updateCharacterGuardrails(characterId: string, payload: any): Promise<DataResult<any>> { return mutateCharacterGuardrails(this, characterId, payload); }
+  /** Reads the stored stand-in guardrail policy, including the chosen stance (TASK-0954). */
+  fetchCharacterGuardrails(characterId: string): Promise<DataResult<any>> { return this.request<any>(`${this.apiBase}/characters/${characterId}/guardrails`); }
 
   async fetchRosterCampaignOptions(): Promise<DataResult<RosterCampaignOption[]>> {
     const res = await this.fetchCampaigns();

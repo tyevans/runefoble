@@ -102,3 +102,30 @@ export const LightThemePreview: Story = {
     </div>
   `,
 };
+
+export const NoStanceSet: Story = {
+  render: () => html`
+    <runefoble-absentee-directive
+      characterName="Sarah"
+      characterClass="Life Domain Cleric (Lvl 5)"
+      .standInActive=${true}
+      currentStance=""
+      .currentHp=${38}
+      .maxHp=${38}
+      .penalties=${[]}
+    ></runefoble-absentee-directive>
+  `,
+};
+
+export const PlayerPresent: Story = {
+  render: () => html`
+    <runefoble-absentee-directive
+      characterName="Sarah"
+      characterClass="Life Domain Cleric (Lvl 5)"
+      .standInActive=${false}
+      currentStance=""
+      .currentHp=${38}
+      .maxHp=${38}
+    ></runefoble-absentee-directive>
+  `,
+};
