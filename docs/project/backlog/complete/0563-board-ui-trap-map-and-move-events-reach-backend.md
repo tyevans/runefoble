@@ -26,7 +26,7 @@ Complete
 Several board microfrontend events are dispatched but no listener calls the backend. The DM trap controls, map switcher, and token move send events that go nowhere, or go to the wrong socket message type. This task maps each UI event to its public HTTP route or WebSocket action, and checks the response in the owning component.
 
 ## Problem Statement
-- `services/board_state/ui/src/runefoble-dm-trap-controls.ts` dispatches `trap-armed`, `trap-placed`, and `open-map-switcher`. `services/board_state/ui/src/runefoble-map-switcher.ts` dispatches `map-switched` (w1-board-state F9). No file in `frontend/src` or `services/*/ui/src` listens for these names.
+- `services/board_state/ui/src/runefoble-dm-trap-controls.ts` dispatches `trap-armed`, `trap-placed`, and `open-map-switcher`. `services/board_state/ui/src/runefoble-map-switcher.ts` (removed) dispatches `map-switched` (w1-board-state F9). No file in `frontend/src` or `services/*/ui/src` listens for these names.
 - The component does not call `/api/v1/boards/*/traps` or `switch-map`.
 - `frontend/src/runefoble-app.ts` sends `move-token` as `{type:'board_move'}` on the gateway session socket. The board service expects `{action:'confirm_move'}` on `/ws/boards/{id}`.
 - `TASK-0388` (proposed) covers Playwright coverage of these components. It does not cover backend wiring.

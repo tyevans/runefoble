@@ -39,7 +39,7 @@ Game Masters managing dynamic dungeons need straightforward tactile controls on 
 ## Detailed Specification & Implementation Plan
 1. **DM Hidden Layer Toolbar (`services/board_state/ui/src/runefoble-dm-trap-controls.ts`)**:
    - Palette for selecting trap types (spike pit, glyph of warding, tripwire) and arming cells (< 140 lines).
-2. **Multi-Map Switcher Modal (`services/board_state/ui/src/runefoble-map-switcher.ts`)**:
+2. **Multi-Map Switcher Modal (`services/board_state/ui/src/runefoble-map-switcher.ts` (removed))**:
    - Quick-switcher thumbnail grid of active campaign battlemaps with one-click teleport action (< 140 lines).
 3. **Component Styles (`services/board_state/ui/src/runefoble-dm-trap-controls.styles.ts`)**:
    - Bauhaus-aligned styles and DM-only HUD styling (< 110 lines).
