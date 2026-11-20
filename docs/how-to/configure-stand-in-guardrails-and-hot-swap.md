@@ -21,6 +21,7 @@ These names are the fields of `StandInGuardrailPolicy` (`libs/runefoble_platform
 - `avoid_melee` (bool, default `true`): Forces ranged positioning when enemies enter close proximity.
 - `permadeath_safeguard` (bool, default `true`): Stabilizes the character at 0 HP. See section 2.
 - `custom_priorities` (list of strings, default `[]`): Ordered target names. The stand-in engines pick the first priority that names a visible or scene target. They also pass the list to the model as prompt text.
+- `stance` (string or `null`, default `null`): The absentee tactical stance the player chose: `"defensive"`, `"cautious"` or `"heroic"`. Any other value fails with HTTP 422. `null` means that no stance is chosen. No default stance is stored (TASK-0954). Section 6 describes how the drawer saves it.
 
 An unknown name fails. The Watcher, the inference worker, and the character sheet write route return HTTP 422 with the field name. A field that a request omits takes its default.
 
@@ -52,6 +53,7 @@ curl -X PUT http://localhost:8000/api/v1/characters/char-sarah-cleric/guardrails
     "protect_ally_hp_threshold": 0.3,
     "avoid_melee": true,
     "risk_threshold": "cautious",
+    "stance": "cautious",
     "custom_priorities": [
       "Save Level 3 slots for Revivify"
     ]
@@ -232,6 +234,22 @@ When players are away from their primary desktop setup, the `<runefoble-absentee
 </runefoble-absentee-directive>
 ```
 
+The component has no default character name, stance or stand-in state. The App Shell passes each value:
+- `standInActive`: the real stand-in flag of the bound character. `false` shows "Player Present".
+- `currentStance`: the saved stance. An empty value shows "No stance set".
+- `characterName` and `characterClass`: from the character record.
+
+The App Shell shows the "Stance Directives" button only for a bound character that is an active stand-in (`isAiStandIn`). The drawer reads the character and the stored policy when it opens.
+
+### Saving a Stance
+
+The `PUT /api/v1/characters/{id}/guardrails` body is the full policy. A save that changes one field therefore reads the stored policy first:
+1. The App Shell reads `GET /api/v1/characters/{id}/guardrails`.
+2. It sets `stance` to the chosen id and keeps the other fields.
+3. It sends the full policy with `PUT`.
+
+The drawer shows the new stance only after the gateway returns 2xx. On a refusal, it keeps the old stance and shows the server message. The character sheet guardrail form keeps the stored stance in the same way.
+
 ### Tactical Posture Presets
 - **Defensive (`defensive`)**: Prioritizes ally protection, healing wounded companions, preserving high-level spell slots, and avoiding frontline melee.
 - **Cautious (`cautious`)**: Ranged spell and projectile support while conserving slots for emergencies.
@@ -239,7 +257,7 @@ When players are away from their primary desktop setup, the `<runefoble-absentee
 
 ### Remote Party Decision Voting (`<runefoble-absentee-vote-card>`)
 Active party decisions (e.g. resting in dangerous dungeons, pressing forward, or dividing loot) render an interactive vote card that triggers physical haptic vibration pulses (`navigator.vibrate([100, 50, 100])`):
-- `@directive-changed`: Dispatched when the player shifts tactical stance.
+- `@stance-selected`: Dispatched when the player picks a stance. The component does not change its stance. The host saves the stance and sets `currentStance` only after the server confirms it.
 - `@vote-cast`: Dispatched when the player records a vote on an active party decision poll.
 - `@haptic-pulse`: Emitted when tactile vibration events fire.
 

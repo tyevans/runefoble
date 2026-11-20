@@ -232,7 +232,7 @@ Gateway routes read by the App Shell (`frontend/src/services/campaign-hub-client
   - `canvas-renderer.ts`: Pure 2D canvas drawing routines (grid lines, cell density gradients, movement corridor vectors, hazard callouts, knockout glyphs).
   - `heatmap-controls.template.ts`: Metric filter buttons (`all`, `damage`, `hit`, `movement`), legend gradient scale, and event summary statistics.
   - `cell-inspector.template.ts`: Hovered/selected coordinate card, damage breakdown, and casualty listings.
-- `<runefoble-chronicle-timeline>`: Interactive scrubber with auto-playback and click-to-play audio recap snippets.
+- `<runefoble-chronicle-timeline>`: Interactive scrubber with auto-playback. The audio recap control was removed (TASK-0954): no public route serves recap audio.
 - Interactive Storybook stories are co-located in `services/campaign_analytics/ui/src/runefoble-campaign-analytics.stories.ts` (with reusable mock datasets modularized in `services/campaign_analytics/ui/src/fixtures/campaign-analytics.fixtures.ts`) and `services/campaign_analytics/ui/src/runefoble-combat-heatmap.stories.ts` with test states for `DefaultAllWeights`, `DamageFilter`, `StrikesFilter`, `TrafficMovementFilter`, `EmptyState`, `ActiveCombatTelemetry`, `VictoryCelebration`, and `TotalPartyKill`.
 
 ---
