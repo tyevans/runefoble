@@ -29,5 +29,5 @@ Runefoble uses a component-driven frontend architecture built with **Lit Web Com
 - **🎲 Tactical Board (`<runefoble-board>`)**: Kinetic tokens, grid snapping, 5-foot measurement rulers, hazard zones, and spoken movement ghost previews.
 - **👁️ The Watcher AI Feed (`<runefoble-watcher-feed>`)**: Narrative event streaming, intent proposals, atmospheric recaps, and DM veto controls.
 - **📜 Character Cards (`<runefoble-character-card>`)**: Live HP meters, condition tags, drunk/foolishness absence penalties, and inventory trackers.
-- **🎙️ Voice Agent & Audio Indicator (`<runefoble-voice-controls>`)**: WebRTC audio streaming, live frequency spectrum visualizer, and DM voice modulator.
+- **🎙️ Voice Agent & Audio Indicator (`<runefoble-voice-controls>`)**: Push to Talk: hold to record one utterance, a live microphone level meter, and the transcript or error of the upload (TASK-0946).
 - **⚙️ Settings & Theme Matrix (`<runefoble-settings-modal>`)**: Bauhaus light and dark mode switches, WCAG contrast compliance, and color palettes.

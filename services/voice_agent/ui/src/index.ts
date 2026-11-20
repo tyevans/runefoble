@@ -10,3 +10,4 @@ export * from './mobile_companion/index.ts';
 export * from './runefoble-vocal-modulator.ts';
 export * from './runefoble-vocal-modulator.styles.ts';
 export * from './runefoble-vocal-sliders.ts';
+export * from './wav-encoder.ts';

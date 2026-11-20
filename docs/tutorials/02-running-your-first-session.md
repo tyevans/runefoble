@@ -101,13 +101,13 @@ Status: `Not yet available`. Blockers: an App Shell task that is not yet filed, 
 
 What works today:
 
-- Push to Talk on the voice controls toggles the listening state. The control draws a waveform from the microphone.
-- The control does not send audio or text to a server.
+- Hold Push to Talk (or hold Space on the button) and speak. Release the button to send the utterance.
+- The App Shell sends the audio to `POST /api/v1/voice/transcribe` with your board token and its cell. The control shows the transcript (`Heard: "..."`), or the error when the upload fails (TASK-0946).
 
 What does not work today:
 
 - `POST /api/v1/watcher/speak-and-act` proxies to The Watcher intent route. The Watcher parses the transcript. Nothing moves the token on the board yet.
-- No App Shell code calls `POST /api/v1/voice/transcribe`, `POST /api/v1/watcher/transcribe-and-act`, or `POST /api/v1/watcher/speak-and-act`.
+- No end-to-end scenario covers the spoken move yet (TASK-0947).
 - Nothing moves a token from a spoken command.
 
 ## Step 4: Run a Stand-In Turn for an Absent Player

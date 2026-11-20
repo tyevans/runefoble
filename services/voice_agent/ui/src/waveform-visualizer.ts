@@ -1,15 +1,13 @@
 export interface WaveformDrawOptions {
   canvas: HTMLCanvasElement;
-  isListening: boolean;
+  /** The microphone analyser. Null when no microphone is open: the idle baseline is drawn. */
   analyser: AnalyserNode | null;
   activeFilters: string[];
-  simPhase: number;
 }
 
 export interface WaveformMetrics {
   level: number;
   peak: number;
-  nextSimPhase: number;
 }
 
 function getComputedColor(element: Element, varName: string, fallback: string): string {
@@ -25,13 +23,14 @@ function getComputedColor(element: Element, varName: string, fallback: string): 
 }
 
 /**
- * Render real-time audio waveform or idle baseline onto HTML5 canvas with Bauhaus styling.
+ * Draws the microphone waveform from the analyser, or the idle baseline when no analyser is open.
+ * The level and peak come from real input only (TASK-0946). No waveform is synthesised.
  */
 export function renderAudioWaveform(options: WaveformDrawOptions): WaveformMetrics {
-  const { canvas, isListening, analyser, activeFilters, simPhase } = options;
+  const { canvas, analyser, activeFilters } = options;
   const ctx = canvas.getContext('2d');
   if (!ctx) {
-    return { level: 0, peak: 0, nextSimPhase: simPhase };
+    return { level: 0, peak: 0 };
   }
 
   const width = canvas.width;
@@ -54,7 +53,7 @@ export function renderAudioWaveform(options: WaveformDrawOptions): WaveformMetri
   ctx.lineTo(width, height / 2);
   ctx.stroke();
 
-  if (!isListening) {
+  if (!analyser) {
     // Muted idle dashed baseline
     ctx.strokeStyle = getComputedColor(canvas, '--rf-text-muted', 'rgba(128, 128, 128, 0.5)');
     ctx.lineWidth = 1.5;
@@ -64,47 +63,23 @@ export function renderAudioWaveform(options: WaveformDrawOptions): WaveformMetri
     ctx.lineTo(width, height / 2);
     ctx.stroke();
     ctx.setLineDash([]);
-    return { level: 0, peak: 0, nextSimPhase: simPhase };
+    return { level: 0, peak: 0 };
   }
 
-  let level = 0;
+  let sum = 0;
   let peak = 0;
   const points: number[] = [];
   const sampleCount = 64;
-  let nextPhase = simPhase;
-
-  if (analyser) {
-    const data = new Uint8Array(analyser.frequencyBinCount);
-    analyser.getByteTimeDomainData(data);
-    let sum = 0;
-    for (let i = 0; i < sampleCount; i++) {
-      const idx = Math.floor((i / sampleCount) * data.length);
-      const val = (data[idx] - 128) / 128;
-      points.push(val);
-      sum += val * val;
-      peak = Math.max(peak, Math.abs(val));
-    }
-    level = Math.min(1, Math.sqrt(sum / sampleCount) * 2);
-  } else {
-    // Simulated reactive audio synthesis
-    nextPhase += 0.12;
-    const isDrunk = activeFilters.includes('drunk');
-    const isWhisper = activeFilters.includes('whisper');
-    const wobble = isDrunk ? Math.sin(nextPhase * 0.5) * 0.35 : 0;
-    const amp = isWhisper ? 0.3 : 0.75;
-
-    for (let i = 0; i < sampleCount; i++) {
-      const t = (i / sampleCount) * Math.PI * 4;
-      const val =
-        (Math.sin(t + nextPhase) * 0.6 +
-          Math.sin(t * 2.3 - nextPhase) * 0.3 +
-          wobble) *
-        amp;
-      points.push(val);
-      peak = Math.max(peak, Math.abs(val));
-    }
-    level = 0.55 + Math.sin(nextPhase * 0.8) * 0.25;
+  const data = new Uint8Array(analyser.frequencyBinCount);
+  analyser.getByteTimeDomainData(data);
+  for (let i = 0; i < sampleCount; i++) {
+    const idx = Math.floor((i / sampleCount) * data.length);
+    const val = (data[idx] - 128) / 128;
+    points.push(val);
+    sum += val * val;
+    peak = Math.max(peak, Math.abs(val));
   }
+  const level = Math.min(1, Math.sqrt(sum / sampleCount) * 2);
 
   // Active waveform stroke
   const strokeColor = activeFilters.includes('drunk')
@@ -129,6 +104,5 @@ export function renderAudioWaveform(options: WaveformDrawOptions): WaveformMetri
   return {
     level: Math.round(level * 100) / 100,
     peak: Math.round(peak * 100) / 100,
-    nextSimPhase: nextPhase,
   };
 }

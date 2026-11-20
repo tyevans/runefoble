@@ -68,16 +68,7 @@ export const voiceControlsStyles = css`
     text-transform: uppercase;
     letter-spacing: 0.5px;
   }
-  .badge-webrtc.connected { background: var(--rf-bg-surface); color: var(--rf-accent-secondary); }
-  .badge-webrtc.disconnected { background: var(--rf-bg-canvas); color: var(--rf-text-muted); }
-  .badge-webrtc.connecting, .badge-webrtc.reconnecting { background: var(--rf-accent-tertiary); color: var(--rf-text-primary); }
-  .badge-webrtc.failed { background: var(--rf-accent-primary); color: var(--rf-text-inverse); }
-  .badge-warning { background: var(--rf-accent-primary); color: var(--rf-text-inverse); animation: pulse-warning 1.8s infinite; }
   .badge-dsp { background: var(--rf-accent-tertiary); color: var(--rf-text-primary); }
-  @keyframes pulse-warning {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.75; }
-  }
   .main-controls-row {
     display: flex;
     justify-content: space-between;
@@ -132,6 +123,8 @@ export const voiceControlsStyles = css`
     align-items: center;
     gap: 8px;
     font-family: inherit;
+    touch-action: none;
+    user-select: none;
     white-space: nowrap;
     transition: transform 0.1s ease, box-shadow 0.1s ease;
   }
@@ -145,6 +138,19 @@ export const voiceControlsStyles = css`
   }
   .mic-button:disabled { opacity: 0.5; cursor: not-allowed; }
   .mic-button.listening { background: var(--rf-accent-tertiary); color: var(--rf-text-primary); }
+  .utterance-result,
+  .utterance-status,
+  .utterance-error {
+    font-size: 0.85rem;
+    padding: 6px 10px;
+    border: var(--rf-border-width, 2px) solid var(--rf-border-color);
+    border-radius: var(--rf-border-radius, 0px);
+    background: var(--rf-bg-surface);
+    color: var(--rf-text-primary);
+  }
+  .utterance-status { color: var(--rf-text-muted); }
+  .utterance-label { font-weight: 700; text-transform: uppercase; font-size: 0.72rem; }
+  .utterance-error { background: var(--rf-accent-primary); color: var(--rf-text-inverse); font-weight: 700; }
   .panel-instruction {
     font-size: 0.8rem;
     color: var(--rf-text-muted);
