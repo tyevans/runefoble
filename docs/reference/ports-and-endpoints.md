@@ -46,6 +46,8 @@ When running the local development environment via `make dev`, Vite proxies requ
 | `/oauth` | `http://localhost:8080` (`zitadel`) | Zitadel OIDC token and discovery endpoints used by the dev proxy. The browser reaches Zitadel at `auth.localhost` for sign-in. The App Shell callback is `/auth/callback` and is served by the SPA fallback |
 | `/healthz` | `http://localhost:8000` (`gateway-api`) | Gateway liveness check |
 
+The App Shell invite route is the hash route `#/join/<token>`. The browser never sends the fragment to the server, so it needs no ingress rule. The sign-in callback keeps this path in `sessionStorage` (ADR-0023).
+
 ## Microservice Internal Ports
 
 | Service | Internal Port | OpenAPI Path |

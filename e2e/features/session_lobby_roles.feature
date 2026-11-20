@@ -34,7 +34,7 @@ Feature: Session Lobby Controls Follow the Caller's Campaign Capabilities
     Then the lobby readiness summary reads "No players have joined"
 
   # TASK-0889: a campaign player takes a seat through the gateway join route.
-  # Setup: the DM issues an invite, and the player redeems it through the public join route.
+  # Setup: the DM issues an invite, and the player redeems it in the App Shell invite link (TASK-0950).
   Scenario: A seated player is counted, and readiness updates the summary
     Given the DM issues a player invite to the campaign
     And I am logged in as a "player"

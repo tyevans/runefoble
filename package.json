@@ -9,7 +9,7 @@
     "storybook": "pnpm --filter frontend run storybook",
     "build-storybook": "pnpm --filter frontend run build-storybook",
     "typecheck": "pnpm -r run typecheck && pnpm run e2e:typecheck",
-    "e2e:typecheck": "tsc -p e2e/tsconfig.json",
+    "e2e:typecheck": "tsc -p e2e/tsconfig.json && bddgen",
     "test:bdd": "bddgen",
     "test:e2e": "bddgen && playwright test",
     "test:e2e:ui": "bddgen && playwright test --ui",

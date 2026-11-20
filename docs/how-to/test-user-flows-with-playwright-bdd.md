@@ -93,7 +93,7 @@ Do these steps in the Background, in this order:
 
 1. Sign in the DM. The DM creates the campaign through `POST /api/v1/campaigns`.
 2. The DM creates the session through `POST /api/v1/campaigns/{campaign_id}/sessions` (`frontdoorApi.createCampaignSession`).
-3. For each player, the DM issues an invite (`createCampaignInvite`). The player redeems it (`joinCampaign`).
+3. For each player, the DM issues an invite (`createCampaignInvite`). The player opens the invite link in the App Shell and clicks the join button (`joinCampaignThroughInviteLink` in `e2e/support/invite_join.ts`). No step calls the join API (TASK-0950).
 4. Each player creates a character (`createCharacter`). Do not send `level`. The character service does not keep it at creation.
 5. Each player takes a seat through `POST /api/v1/sessions/{session_id}/join` (`frontdoorApi.joinSession`).
 6. Store each id from the replies in `world`.

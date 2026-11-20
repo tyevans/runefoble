@@ -44,7 +44,7 @@ Feature: Lobby readiness and stand-in survive a reload
 
   Scenario: The DM can launch while a seat is not ready
     Given Evelyn creates campaign "Launch Campaign" with session "Lobby 17" through the gateway
-    And Valeros redeems a player invite to the campaign in a separate browser
+    And Valeros redeems a player invite to the campaign in a browser
     And Valeros takes a seat in "Lobby 17" with a new character "Valeros the Bold"
     And Evelyn opens the lobby of "Lobby 17"
     And Valeros opens the lobby of "Lobby 17"

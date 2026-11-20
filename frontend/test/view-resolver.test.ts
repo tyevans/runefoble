@@ -14,6 +14,7 @@ import { installFakeGateway, type FakeGateway } from './support/fake-gateway.ts'
 const MATRIX: Array<[string, string]> = [
   ['#/login', 'login'],
   ['#/register', 'login'],
+  ['#/join/tok-1', 'campaign-join'],
   ['#/campaigns', 'campaigns'],
   ['#/campaigns/c1', 'campaign-detail'],
   ['#/campaigns/c1/characters', 'campaign-characters'],
@@ -36,6 +37,13 @@ describe('resolveActiveView', () => {
       assert.equal(resolveActiveView(new Router().match(path)), view);
     });
   }
+
+  it('keeps the invite token out of the breadcrumb labels of the join route', () => {
+    const route = new Router().match('#/join/tok-secret-9');
+    assert.equal(route?.params.token, 'tok-secret-9');
+    assert.deepEqual(route?.breadcrumbs.map((item) => item.label), ['Join Campaign']);
+    assert.ok(!JSON.stringify(route?.breadcrumbs).includes('tok-secret-9'));
+  });
 
   it('resolves a missing route to the campaign hub', () => {
     assert.equal(resolveActiveView(null), 'campaigns');

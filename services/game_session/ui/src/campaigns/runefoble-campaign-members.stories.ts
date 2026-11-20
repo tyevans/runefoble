@@ -52,7 +52,6 @@ export const GmManagementMode: Story = {
       current-user-id="usr-evelyn"
       .canManage=${true}
       .members=${sampleMembers}
-      invite-token="sample_invite_token_xyz"
     ></runefoble-campaign-members>
   `,
 };
