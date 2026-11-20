@@ -13,7 +13,7 @@ import assert from 'node:assert/strict';
 import { loadActiveSessionData } from '../../src/app/session-data-loader.ts';
 import type { MatchedRoute } from '../../src/router/index.ts';
 import type { RunefobleApp } from '../../src/runefoble-app.ts';
-import { installFakeGateway, type FakeGateway } from '../support/fake-gateway.ts';
+import { installFakeGateway, type FakeGateway, type GatewayRoute } from '../support/fake-gateway.ts';
 import { FALLBACK_CAMPAIGNS, FALLBACK_CHARACTERS } from '../support/app-data-service.fixtures.ts';
 import { OWNER_BOARD_STATE, OWNER_SESSION_STATE } from '../support/owner-wire-fixtures.ts';
 
@@ -23,7 +23,7 @@ const CHRONICLE = [{ event_id: 'ev-1', kind: 'session_started', occurred_at: '20
 function installSessionGateway(
   board: { status?: number; body?: unknown },
   runSession = true,
-  session: { status?: number; body?: unknown } = { body: OWNER_SESSION_STATE },
+  session: GatewayRoute = { body: OWNER_SESSION_STATE },
 ): FakeGateway {
   return installFakeGateway({
     'GET /api/v1/boards/session-new': board,
@@ -33,6 +33,11 @@ function installSessionGateway(
     'GET /api/v1/campaigns/4': { body: FALLBACK_CAMPAIGNS[0] },
     'GET /api/v1/campaigns/4/capabilities': { body: { manage: runSession, run_session: runSession, play: true, view: true } },
   });
+}
+
+/** The reads of the session state. The status read is the first; a DM with no board reads the seats too. */
+function sessionReads(fake: FakeGateway): number {
+  return fake.calls.filter((call) => call.method === 'GET' && call.path === '/api/v1/sessions/session-new').length;
 }
 
 function newHost(): RunefobleApp {
@@ -96,18 +101,26 @@ describe('Live session load without a board', () => {
       { characterId: 'char-valeros', characterName: 'Valeros of Korvosa' },
       { characterId: 'char-kyra', characterName: 'Kyra the Sun Maiden' },
     ]);
+    assert.equal(sessionReads(gateway), 2);
   });
 
   it('does not read the seats for a player, who has no set-up control', async () => {
-    gateway = installSessionGateway({ status: 404, body: { detail: 'Board not found' } }, false, { status: 500, body: { detail: 'not read' } });
+    gateway = installSessionGateway({ status: 404, body: { detail: 'Board not found' } }, false);
     const host = newHost();
     await loadActiveSessionData(host, ROUTE);
     assert.equal(host.loadError, null);
     assert.deepEqual(host.sessionSeats, []);
+    // The one read of the session is the status read (TASK-0953). A seat read would be a second.
+    assert.equal(sessionReads(gateway), 1);
   });
 
   it('shows the error view when the DM seat read fails', async () => {
-    gateway = installSessionGateway({ status: 404, body: { detail: 'Board not found' } }, true, { status: 503, body: { detail: 'Session service unavailable' } });
+    let reads = 0;
+    const seatReadFails: GatewayRoute = () => {
+      reads += 1;
+      return reads === 1 ? { body: OWNER_SESSION_STATE } : { status: 503, body: { detail: 'Session service unavailable' } };
+    };
+    gateway = installSessionGateway({ status: 404, body: { detail: 'Board not found' } }, true, seatReadFails);
     const host = newHost();
     await loadActiveSessionData(host, ROUTE);
     assert.equal(host.loadError?.status, 503);

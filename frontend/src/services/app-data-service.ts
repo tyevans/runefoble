@@ -182,6 +182,24 @@ export class AppDataService {
   }
 
   /**
+   * Moves an active session to `ended` through the gateway end route (TASK-0953). game_session
+   * checks `session.control` and refuses an end from any status but `active`. The gateway then
+   * sends `session_ended` to every session socket.
+   */
+  async endSession(sessionId: string): Promise<DataResult<{ status: string }>> {
+    const res = await this.request<{ status: string }>(`${this.apiBase}/sessions/${sessionId}/end`, { method: 'POST' });
+    return res.ok ? requireFields(res.data, { status: isString }) : res;
+  }
+
+  /** Reads the status of a session (`lobby`, `active` or `ended`) from the owner state (TASK-0953). */
+  async fetchSessionStatus(sessionId: string): Promise<DataResult<string>> {
+    const res = await this.request<{ status: string }>(`${this.apiBase}/sessions/${sessionId}`);
+    if (!res.ok) return res;
+    const checked = requireFields(res.data, { status: isString });
+    return checked.ok ? dataOk(checked.data.status) : checked;
+  }
+
+  /**
    * Reads the session board (TASK-0906). A 404 means that no board exists yet for the session.
    * It gives the typed `no_board` state. Every other failure stays a failure.
    */

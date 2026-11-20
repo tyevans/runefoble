@@ -10,6 +10,7 @@ import { appDataService } from '../services/app-data-service.ts';
 import { router } from '../router/index.ts';
 import type { RunefobleApp } from '../runefoble-app.ts';
 import { handleToggleStandIn } from '../vtt-mesh-handlers.ts';
+import { markSessionEnded } from './session-messages.ts';
 
 /**
  * Starts the session through the gateway start route, then opens the live tabletop (TASK-0910).
@@ -30,6 +31,26 @@ export async function launchSession(host: RunefobleApp, e: CustomEvent): Promise
     return;
   }
   await router.navigate(`#/campaigns/${cId}/sessions/${sId}`);
+}
+
+/**
+ * Ends the active session through the gateway end route (TASK-0953). game_session checks
+ * `session.control`. A refusal shows the owner's message and keeps the session live. A success
+ * shows the recap; the `session_ended` frame gives the same result to every other view.
+ */
+export async function endSession(host: RunefobleApp): Promise<void> {
+  const sId = host.sessionId;
+  if (!sId) {
+    host.showToast('Session not ended. The session is not known.');
+    return;
+  }
+  const ended = await appDataService.endSession(sId);
+  if (!ended.ok) {
+    host.isEndSessionConfirmOpen = false;
+    host.showToast(`Session not ended: ${ended.message}`);
+    return;
+  }
+  markSessionEnded(host);
 }
 
 /** Toggles the stand-in for a player. An absent player opens the directives drawer. */
