@@ -25,6 +25,7 @@ This registry records every architectural decision in Runefoble. Numbers are all
 | ADR-0019 | Agent Constitution and Diataxis Documentation | Accepted | 2026-11-17 | [`adr-0019-agent-constitution-and-diataxis-documentation.md`](accepted/adr-0019-agent-constitution-and-diataxis-documentation.md) |
 | ADR-0020 | Declarative Dynamic Tool Handlers | Accepted | 2026-11-17 | [`adr-0020-declarative-dynamic-tool-handlers.md`](accepted/adr-0020-declarative-dynamic-tool-handlers.md) |
 | ADR-0021 | Bounded Context Packages Inside game_session | Accepted | 2026-11-19 | [`adr-0021-game-session-internal-bounded-contexts.md`](accepted/adr-0021-game-session-internal-bounded-contexts.md) |
+| ADR-0022 | Grammar-First Intent Routing for the Voice Loop | Accepted | 2026-11-19 | [`adr-0022-grammar-first-voice-intent-routing.md`](accepted/adr-0022-grammar-first-voice-intent-routing.md) |
 
 ## spec-ops Baseline Mapping
 

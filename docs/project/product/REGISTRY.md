@@ -26,3 +26,4 @@
 | PRD-0022 | Extensible Modder Platform, Universal VTT Asset Bridge & FastMCP Tool Registry | Accepted | 2026-09-26 | [`prd-0022-extensible-modder-platform-and-mcp-registry.md`](accepted/prd-0022-extensible-modder-platform-and-mcp-registry.md) |
 | PRD-0023 | Unified Frontend Experience with User Authentication, Campaign Hub, and Session Orchestration | Accepted | 2026-09-27 | [`prd-0023-unified-frontend-application-shell-and-campaign-hub.md`](accepted/prd-0023-unified-frontend-application-shell-and-campaign-hub.md) |
 | PRD-0024 | Settlement Haven Builder, Living Urban Ecosystem & Mobile Web Minigames | Accepted | 2026-09-27 | [`prd-0024-settlement-haven-builder-and-mobile-minigames.md`](accepted/prd-0024-settlement-haven-builder-and-mobile-minigames.md) |
+| PRD-0025 | Voice-First Release One for a Private Group | Accepted | 2026-11-19 | [`prd-0025-voice-first-release-one.md`](accepted/prd-0025-voice-first-release-one.md) |

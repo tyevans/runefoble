@@ -8,10 +8,11 @@ dependencies:
 governing_adrs:
 - ADR-0005
 - ADR-0015
-governing_prds: []
+governing_prds:
+- PRD-0025
 governing_stories: []
 target_bc: core
-target_release: 0.9.0
+target_release: 1.0.0
 ---
 
 # TASK-0933: The Last Five Services Gate Readiness, and a Waiting Deploy Cannot Deadlock
