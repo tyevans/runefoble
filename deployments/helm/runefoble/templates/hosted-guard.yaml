@@ -1,0 +1,79 @@
+{{- /*
+Hosted render guard (TASK-0955, ADR-0015 c and f). A staging or production render fails when a
+hosted key still holds a placeholder (REPLACE-ME) or a development default. The file renders no
+object. The local render is not affected. Each check names the key path that failed.
+Docs: docs/reference/hosted-profile.md.
+*/ -}}
+
+{{- define "runefoble.hosted.isPlaceholderOrDevHost" -}}
+{{- $v := toString . -}}
+{{- if or (contains "REPLACE-ME" $v) (contains "localhost" $v) (hasSuffix ".local" $v) -}}true{{- end -}}
+{{- end -}}
+
+{{- define "runefoble.hosted.isPlaceholderOrDevUri" -}}
+{{- $v := toString . -}}
+{{- if or (contains "REPLACE-ME" $v) (contains "localhost" $v) (hasPrefix "http://" $v) (contains ".local/" $v) -}}true{{- end -}}
+{{- end -}}
+
+{{- define "runefoble.hosted.fail" -}}
+{{- fail (printf "%s is not valid for a %s render. It must not hold a placeholder (REPLACE-ME) or a development default. Found: %s" .key .env (toString .value)) -}}
+{{- end -}}
+
+{{- $env := .Values.global.environment -}}
+{{- if or (eq $env "staging") (eq $env "production") -}}
+
+{{- $domain := required "global.domain must be set for a hosted render" .Values.global.domain -}}
+{{- if include "runefoble.hosted.isPlaceholderOrDevHost" $domain -}}
+{{- include "runefoble.hosted.fail" (dict "key" "global.domain" "value" $domain "env" $env) -}}
+{{- end -}}
+
+{{- range $i, $host := .Values.ingress.hosts -}}
+{{- $name := required (printf "ingress.hosts[%d].host must be set for a hosted render" $i) $host.host -}}
+{{- if include "runefoble.hosted.isPlaceholderOrDevHost" $name -}}
+{{- include "runefoble.hosted.fail" (dict "key" (printf "ingress.hosts[%d].host" $i) "value" $name "env" $env) -}}
+{{- end -}}
+{{- end -}}
+
+{{- $externalDomain := required "zitadel.externalDomain must be set for a hosted render" .Values.zitadel.externalDomain -}}
+{{- if include "runefoble.hosted.isPlaceholderOrDevHost" $externalDomain -}}
+{{- include "runefoble.hosted.fail" (dict "key" "zitadel.externalDomain" "value" $externalDomain "env" $env) -}}
+{{- end -}}
+
+{{- $mailpit := required "mailpit.enabled must be set for a hosted render" .Values.mailpit.enabled -}}
+{{- if eq (toString $mailpit) "true" -}}
+{{- include "runefoble.hosted.fail" (dict "key" "mailpit.enabled" "value" $mailpit "env" $env) -}}
+{{- end -}}
+
+{{- $devMode := required "zitadel.bootstrap.devMode must be set for a hosted render" .Values.zitadel.bootstrap.devMode -}}
+{{- if eq (toString $devMode) "true" -}}
+{{- include "runefoble.hosted.fail" (dict "key" "zitadel.bootstrap.devMode" "value" $devMode "env" $env) -}}
+{{- end -}}
+
+{{- $externalSecure := required "zitadel.externalSecure must be set for a hosted render" .Values.zitadel.externalSecure -}}
+{{- if eq (toString $externalSecure) "false" -}}
+{{- include "runefoble.hosted.fail" (dict "key" "zitadel.externalSecure" "value" $externalSecure "env" $env) -}}
+{{- end -}}
+
+{{- $expiry := required "zitadel.bootstrap.patExpirationDate must be set for a hosted render" .Values.zitadel.bootstrap.patExpirationDate -}}
+{{- if or (hasPrefix "2099" (toString $expiry)) (contains "REPLACE-ME" (toString $expiry)) -}}
+{{- include "runefoble.hosted.fail" (dict "key" "zitadel.bootstrap.patExpirationDate" "value" $expiry "env" $env) -}}
+{{- end -}}
+
+{{- range $i, $uri := required "zitadel.bootstrap.redirectUris must be set for a hosted render" .Values.zitadel.bootstrap.redirectUris -}}
+{{- if include "runefoble.hosted.isPlaceholderOrDevUri" $uri -}}
+{{- include "runefoble.hosted.fail" (dict "key" (printf "zitadel.bootstrap.redirectUris[%d]" $i) "value" $uri "env" $env) -}}
+{{- end -}}
+{{- end -}}
+
+{{- range $i, $uri := required "zitadel.bootstrap.postLogoutRedirectUris must be set for a hosted render" .Values.zitadel.bootstrap.postLogoutRedirectUris -}}
+{{- if include "runefoble.hosted.isPlaceholderOrDevUri" $uri -}}
+{{- include "runefoble.hosted.fail" (dict "key" (printf "zitadel.bootstrap.postLogoutRedirectUris[%d]" $i) "value" $uri "env" $env) -}}
+{{- end -}}
+{{- end -}}
+
+{{- $adminEmail := required "zitadel.adminEmail must be set for a hosted render" .Values.zitadel.adminEmail -}}
+{{- if or (contains "REPLACE-ME" $adminEmail) (hasSuffix "@runefoble.local" $adminEmail) -}}
+{{- include "runefoble.hosted.fail" (dict "key" "zitadel.adminEmail" "value" $adminEmail "env" $env) -}}
+{{- end -}}
+
+{{- end -}}
