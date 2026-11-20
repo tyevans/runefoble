@@ -52,14 +52,16 @@ def test_spicedb_schema_job_does_not_migrate_the_datastore_concurrently():
             d
             for d in docs
             if d.get("kind") == "Job"
-            and d.get("metadata", {}).get("name") == "spicedb-schema-migration"
+            and d.get("metadata", {}).get("name", "").startswith("spicedb-schema-migration-")
         ),
         None,
     )
     assert schema_job is not None, "spicedb-schema-migration Job manifest not found"
 
+    # A plain Job, not a hook: the app pods wait for the schema, so a post-install hook
+    # would deadlock `helm install --wait` (TASK-0933).
     annotations = schema_job["metadata"].get("annotations", {})
-    assert "post-install,post-upgrade" in annotations.get("helm.sh/hook", "")
+    assert "helm.sh/hook" not in annotations
 
     pod_spec = schema_job["spec"]["template"]["spec"]
     assert not pod_spec.get("initContainers"), "schema Job must not run a migration initContainer"

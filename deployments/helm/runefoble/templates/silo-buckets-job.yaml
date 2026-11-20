@@ -1,22 +1,23 @@
 {{- if and .Values.silo.enabled .Values.silo.bucketJob.enabled -}}
 {{- /*
-Bucket Job for Silo (TASK-0924). It runs after install and upgrade, and creates every bucket in
-`silo.buckets`. `mc mb --ignore-existing` makes it idempotent: an existing bucket is not an
-error. The client image has no shell, so the Job does not wait in a loop. While Silo is not
-ready, `mc` exits with an error and the Job restarts the pod, up to `bucketJob.backoffLimit`.
+Bucket Job for Silo (TASK-0924, TASK-0933). It creates every bucket in `silo.buckets`. It is a
+plain Job, not a Helm hook. asset-forge is Ready only when the bucket exists (TASK-0931). A
+post-install hook would start after the release is Ready, so `helm install --wait` would wait
+for asset-forge and asset-forge would wait for the hook. The Job does not depend on any app.
+A Job spec is immutable, so the name carries a hash of the bucket list and the client image.
+`mc mb --ignore-existing` makes it idempotent: an existing bucket is not an error. The client
+image has no shell, so the Job does not wait in a loop. While Silo is not ready, `mc` exits with
+an error and the Job restarts the pod, up to `bucketJob.backoffLimit`.
 The client reads the Silo endpoint and credentials from MC_HOST_silo. Kubernetes expands the
 two Secret variables into that URL, so the Silo keys must be URL-safe.
 */ -}}
+{{- $jobHash := printf "%v|%s" .Values.silo.buckets .Values.silo.bucketJob.image | sha256sum | trunc 8 }}
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: silo-buckets
+  name: silo-buckets-{{ $jobHash }}
   labels:
     app: silo-buckets
-  annotations:
-    "helm.sh/hook": post-install,post-upgrade
-    "helm.sh/hook-weight": "5"
-    "helm.sh/hook-delete-policy": before-hook-creation
 spec:
   backoffLimit: {{ .Values.silo.bucketJob.backoffLimit }}
   template:

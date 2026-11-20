@@ -142,12 +142,21 @@ The values that differ per service come from the services entry: databaseDriver.
 {{- end -}}
 
 {{/*
-Container probes of one app service (TASK-0930). Call with the service entry of .Values.services
-and pipe to nindent. Every app container gets an HTTP readiness probe: path readinessPath
-(default /readyz) and time limit readinessTimeoutSeconds (default 3, longer than the 2.5 s limit
-of one dependency check). A liveness probe renders only when livenessPath is set.
+Container probes of one app service (TASK-0930, TASK-0933). Call with the service entry of
+.Values.services and pipe to nindent. Every app container gets three probes:
+- startupProbe: GET /healthz, every startupPeriodSeconds (default 5) for startupFailureThreshold
+  tries (default 36). The budget is 180 s. The kubelet holds the other two probes until it passes.
+- readinessProbe: path readinessPath (default /readyz) and time limit readinessTimeoutSeconds
+  (default 3, longer than the 2.5 s limit of one dependency check).
+- livenessProbe: only when livenessPath is set.
 */}}
 {{- define "runefoble.probes" -}}
+startupProbe:
+  httpGet:
+    path: /healthz
+    port: {{ .port }}
+  periodSeconds: {{ .startupPeriodSeconds | default 5 }}
+  failureThreshold: {{ .startupFailureThreshold | default 36 }}
 readinessProbe:
   httpGet:
     path: {{ .readinessPath | default "/readyz" }}

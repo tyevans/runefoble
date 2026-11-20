@@ -1,14 +1,16 @@
 {{- if and .Values.spicedb.enabled .Values.spicedb.schemaJob.enabled -}}
+{{- /*
+Schema writer (TASK-0933). It is a plain ConfigMap and Job, not Helm hooks. The app pods wait for
+the schema (spicedb_probe reads it), so a post-install hook would deadlock `helm install --wait`.
+The Job name carries a hash of the schema and the client image, because a Job spec is immutable.
+*/ -}}
+{{- $schemaHash := printf "%s|%s" (.Files.Get "files/runefoble.zed") .Values.spicedb.schemaJob.image | sha256sum | trunc 8 }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: spicedb-schema
   labels:
     app: spicedb-schema
-  annotations:
-    "helm.sh/hook": pre-install,pre-upgrade,post-install,post-upgrade
-    "helm.sh/hook-weight": "-5"
-    "helm.sh/hook-delete-policy": before-hook-creation
 data:
   runefoble.zed: |-
 {{ .Files.Get "files/runefoble.zed" | indent 4 }}
@@ -16,13 +18,9 @@ data:
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: spicedb-schema-migration
+  name: spicedb-schema-migration-{{ $schemaHash }}
   labels:
     app: spicedb-schema-migration
-  annotations:
-    "helm.sh/hook": post-install,post-upgrade
-    "helm.sh/hook-weight": "5"
-    "helm.sh/hook-delete-policy": before-hook-creation
 spec:
   backoffLimit: {{ .Values.spicedb.schemaJob.backoffLimit | default 10 }}
   template:

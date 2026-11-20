@@ -40,7 +40,7 @@ def test_chart_renders_inference_worker_service_on_port_8100():
 
 
 def test_chart_renders_inference_worker_deployment_with_probe_and_env():
-    """The Deployment serves on 8100, probes /healthz, and keeps the Redis consumer off."""
+    """The Deployment serves on 8100, probes /readyz, and keeps the Redis consumer off."""
     deployment = _find(_rendered_documents(), "Deployment", "inference-worker")
     container = deployment["spec"]["template"]["spec"]["containers"][0]
 
@@ -62,7 +62,7 @@ def test_chart_renders_inference_worker_deployment_with_probe_and_env():
     }
 
     probe = container["readinessProbe"]["httpGet"]
-    assert probe == {"path": "/healthz", "port": WORKER_PORT}
+    assert probe == {"path": "/readyz", "port": WORKER_PORT}
 
 
 def test_swagger_hub_lists_inference_worker_openapi():
