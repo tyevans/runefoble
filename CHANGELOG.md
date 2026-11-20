@@ -93,6 +93,7 @@ The MCP gateway subpackages re-export no names, and the gateway has one entrypoi
 - Campaign analytics worker `process_event` alias, tracking property wrappers, and package root re-exports. Callers use `handle_event`. (TASK-0500)
 
 ### Added
+Hosted values profile (`deployments/helm/runefoble/values.hosted.example.yaml`) and a render guard. A staging or production render fails on any `REPLACE-ME` placeholder or development default, and names the key path. The local render is unchanged.
 The session chronicle records board token moves ("Valeros the Bold moved to (3, 3)") from the board `TokenMoved` event, once per event, and the gateway sends the line live to the feed.
 The DM sets up the session battlemap from the "No battlemap yet" state: one gateway call creates the board and places a token for each seated character, and the gateway sends `board_ready` to the session after the tokens are placed.
 The Watcher publishes `runefoble.events.watcher.whisper_recorded` after it saves a DM whisper. The whisper routes answer `503` when the stream is unreachable. The gateway sends each whisper as a `dm_whisper` session frame only to sockets whose caller holds `session.control` when the socket opens.

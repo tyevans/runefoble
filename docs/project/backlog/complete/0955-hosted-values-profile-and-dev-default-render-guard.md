@@ -1,7 +1,7 @@
 ---
 id: '0955'
 title: Hosted Values Profile and Dev-Default Render Guard
-status: Refined
+status: Complete
 created: 2026-11-19
 dependencies: []
 governing_adrs:
@@ -18,7 +18,7 @@ target_release: 1.0.0
 
 ## Status
 
-Refined. Release One hosting slice 1 of 11 (PRD-0025, outcome 4). Other hosting records depend on this one.
+Complete
 
 ## Summary
 
