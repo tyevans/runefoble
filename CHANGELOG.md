@@ -1339,6 +1339,7 @@ The App Shell auth service keeps JWT claim handling, session storage and session
 - **Documentation & Build Navigation**: Featured the Platform Showcase and Changelog in `zensical.toml` and root documentation landing page (`docs/index.md`), and enhanced `scripts/build_docs.py` to synchronize `CHANGELOG.md` to `docs/changelog.md` during documentation compilation.
 
 ### Fixed
+A spoken move now stages the destination that the speech requests: a named target resolves to the nearest free cell next to it, coordinates and distances are read from both engines, and a missing origin returns 422 instead of moving from (0, 0). The Watcher forwards the speaker's bearer to the board read.
 The combat reaction prompt stays closed and idle until it receives a real reaction, and the App Shell no longer mounts it as a default sidebar plugin.
 A token moved by drag no longer jumps back to its old cell. Each App Shell render put the last board read back into the board; the session view now passes tokens only when a new board read replaces them. Board socket frames carry a board version, and an older board read no longer replaces a newer one.
 - A token moved by drag no longer jumps back to its old cell. Each App Shell render put the last board read back into the board, over the move from the board socket. The session view now passes the tokens only when a new board read replaces them. (TASK-0938)

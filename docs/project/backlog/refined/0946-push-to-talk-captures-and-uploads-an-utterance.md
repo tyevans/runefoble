@@ -65,6 +65,10 @@ Push to Talk only flips a flag, and it draws a level meter. No code sends audio.
 6. Remove the `● WebRTC Live` text (`:177`), the `simulated` property (`:20`) and every branch that draws a fake level. Keep the analyser for the level meter, which is real input.
 7. Do not change the duplex controls (`runefoble-voice-duplex-controls.ts`). They are out of scope for release one.
 
+## TASK-0942 Note (2026-11-19)
+
+Since TASK-0942, The Watcher returns 422 for a spoken or typed move without `from_x` and `from_y`, and it never moves from (0, 0). The caller must send `token_id`, `from_x`, `from_y`, `grid_cols` and `grid_rows` for the speaker's token. The voice agent forward (`services/voice_agent/src/voice_agent/routers/transcribe.py`) sends none of these today. Read them from the board state that the App Shell holds, and send them with the command.
+
 ## Frontdoor Blackbox Test Plan
 
 - Pytest through the gateway (`tests/test_blackbox_gateway_voice_transcribe.py`, new): a valid WAV body returns 200 with the transcript and `source` `audio`. A body with no audio and no transcript returns 422. A request without a bearer returns 401. A speaker that is not the caller returns 403. The test uses the live voice_agent and the STT engine that the test settings select. No substitute transcript is allowed in any deployed environment (ADR-0015 Context item 4).

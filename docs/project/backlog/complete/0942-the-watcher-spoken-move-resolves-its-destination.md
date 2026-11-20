@@ -1,7 +1,7 @@
 ---
 id: '0942'
 title: The Watcher's Spoken Move Resolves Its Destination
-status: Refined
+status: Complete
 created: 2026-11-19
 dependencies: []
 governing_adrs:
@@ -19,7 +19,7 @@ target_release: 1.0.0
 
 ## Status
 
-Refined. First slice of the voice loop (PRD-0025, ADR-0022).
+Complete
 
 ## Summary
 

@@ -62,6 +62,10 @@ The session view has no command input. A player can speak a move only through a 
 7. Mount the element in `frontend/src/views/session-view.ts` next to `<runefoble-voice-controls>` (`:59-61`). Pass the props from the app state: the board token of the active character, its cell, and the board size.
 8. Do not change `frontend/src/views/session-view.ts:34` (the `confirm-ghost` forwarding). Note it as a known side path in the record of this task only.
 
+## TASK-0942 Note (2026-11-19)
+
+Since TASK-0942, The Watcher returns 422 for a spoken or typed move without `from_x` and `from_y`, and it never moves from (0, 0). The caller must send `token_id`, `from_x`, `from_y`, `grid_cols` and `grid_rows` for the speaker's token. The voice agent forward (`services/voice_agent/src/voice_agent/routers/transcribe.py`) sends none of these today. Read them from the board state that the App Shell holds, and send them with the command.
+
 ## Frontdoor Blackbox Test Plan
 
 - Playwright scenario `e2e/features/voice_typed_command.feature`. Steps use the UI only. Setup follows the Background of `e2e/features/session_lobby_and_vtt.feature` (campaign, seats, launch, battlemap set-up through the UI).
