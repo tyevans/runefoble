@@ -1,7 +1,7 @@
 ---
 id: '0949'
 title: DM Whispers Come from the Language Model, and a Veto Stops the Action
-status: Refined
+status: Complete
 created: 2026-11-19
 dependencies:
 - '0943'
@@ -23,7 +23,7 @@ target_release: 1.0.0
 
 ## Status
 
-Refined. Removes the invented whispers and connects the veto button to a real route. Covers PRD-0025 "The DM sees invented whispers, and the Veto button does nothing."
+Complete
 
 ## Summary
 

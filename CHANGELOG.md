@@ -1352,6 +1352,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **Documentation & Build Navigation**: Featured the Platform Showcase and Changelog in `zensical.toml` and root documentation landing page (`docs/index.md`), and enhanced `scripts/build_docs.py` to synchronize `CHANGELOG.md` to `docs/changelog.md` during documentation compilation.
 
 ### Fixed
+- DM whispers come only from the language model. A new session has no whispers. `POST /api/v1/watcher/whispers/generate` records one narration whisper from the narration port, or answers `503` when no model is configured. `GET /api/v1/watcher/whispers` returns `narration_engine`, and the whisper bar shows "No language model is configured for whispers." when it is `none`. The Veto button now calls `POST /api/v1/watcher/veto`, and the vetoed action does not run. (TASK-0949)
 - Session view controls work or are removed: the stance drawer shows the real stand-in state and keeps the chosen stance, and the DM board has no hidden-layer toggle. (TASK-0954)
 - The session view reads the caller's own seat and its stand-in state. A route change closes the stance drawer, and the lobby reads the roster again when the live connection opens and after each seat change. (TASK-0974)
 - Every app service gates `/readyz`, every app pod has a 180 s startup probe, and the Silo bucket and SpiceDB schema Jobs no longer deadlock `helm --wait`. (TASK-0933)
