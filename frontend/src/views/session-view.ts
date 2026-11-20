@@ -5,13 +5,14 @@
 import { html } from 'lit';
 import { guard } from 'lit/directives/guard.js';
 import type { RunefobleApp } from '../runefoble-app.ts';
-import { handleBoardAoEPlace, handleBoardConfirmGhost, handleBoardSpellVFX, handleBoardTokenAction } from '../vtt-mesh-handlers.ts';
+import { handleBoardAoEPlace, handleBoardConfirmGhost, handleBoardSpellVFX, handleBoardTokenAction, handleSpeakCommand } from '../vtt-mesh-handlers.ts';
 import { switchDmCharacter } from '../app/character-actions.ts';
 import { recordBoardMoveTarget, resolveBoardDmAccess } from '../app/board-dm-controls.ts';
 import { handleBoardSetUp } from '../app/board-setup-actions.ts';
 import { endSession } from '../app/session-actions.ts';
 import { openAbsenteeDrawer } from '../app/absentee-actions.ts';
 import { findCallerSeat } from '../app/active-character.ts';
+import { speakerTokenCell } from '../app/command-bar-context.ts';
 
 /**
  * The DM ends an active session (TASK-0953). Only a caller with the `run_session` capability sees
@@ -54,7 +55,7 @@ function renderBoardDmControls(app: RunefobleApp) {
 function renderBoardArea(app: RunefobleApp, canRunSession: boolean) {
   if (app.boardKind === 'loading') return html`<div class="board-loading" role="status" aria-live="polite">Loading the battlemap...</div>`;
   if (app.boardKind === 'no_board') return html`<runefoble-board-empty ?can-set-up-map=${canRunSession} .campaignId=${app.campaignId} .sessionId=${app.sessionId} .seats=${guard([app.sessionSeats], () => app.sessionSeats)} @board-set-up=${(e: CustomEvent) => handleBoardSetUp(app, e)}></runefoble-board-empty>`;
-  return html`<runefoble-board .cols=${app.boardCols} .rows=${app.boardRows} .tokens=${guard([app.tokens], () => app.tokens)} .fogOfWar=${true} .websocketUrl=${app.getWebSocketUrl()} @token-action=${(e: CustomEvent) => handleBoardTokenAction(e, app.sessionSocket.current)} @aoe-place=${(e: CustomEvent) => handleBoardAoEPlace(e, app.sessionSocket.current)} @spell-vfx-triggered=${(e: CustomEvent) => handleBoardSpellVFX(e, app.sessionSocket.current)} @confirm-ghost=${(e: CustomEvent) => handleBoardConfirmGhost(e, app.sessionSocket.current)} @move-token=${(e: CustomEvent) => recordBoardMoveTarget(app, e)}></runefoble-board>
+  return html`<runefoble-board .cols=${app.boardCols} .rows=${app.boardRows} .tokens=${guard([app.tokens], () => app.tokens)} .fogOfWar=${true} .websocketUrl=${app.getWebSocketUrl()} @token-action=${(e: CustomEvent) => handleBoardTokenAction(e, app.sessionSocket.current)} @aoe-place=${(e: CustomEvent) => handleBoardAoEPlace(e, app.sessionSocket.current)} @spell-vfx-triggered=${(e: CustomEvent) => handleBoardSpellVFX(e, app.sessionSocket.current)} @confirm-ghost=${(e: CustomEvent) => handleBoardConfirmGhost(e, app.sessionSocket.current)} @move-token=${(e: CustomEvent) => recordBoardMoveTarget(app, e)} @tokens-changed=${(e: CustomEvent) => { app.shownTokens = e.detail.tokens; }}></runefoble-board>
       ${renderBoardDmControls(app)}`;
 }
 
@@ -89,6 +90,16 @@ export function renderSessionActive(app: RunefobleApp) {
     <runefoble-watcher-feed .events=${app.events}></runefoble-watcher-feed>
   </div>
   <div class="voice-container">
+    ${renderCommandBar(app, char)}
     <runefoble-voice-controls .isListening=${app.isListening} @voice-toggle=${() => { app.isListening = !app.isListening; }}></runefoble-voice-controls>
   </div>`;
+}
+
+/**
+ * The typed command bar (TASK-0945). The speaker is the active character. Its token and cell
+ * come from the tokens that the board shows. Without a board the bar has no token and is disabled.
+ */
+function renderCommandBar(app: RunefobleApp, char: { id: string; name: string } | null) {
+  const cell = speakerTokenCell(app.boardKind === 'board' ? app.shownTokens : [], char?.id);
+  return html`<runefoble-command-bar .sessionId=${app.sessionId} .campaignId=${app.campaignId} .speakerId=${char?.id ?? ''} .speakerName=${char?.name ?? ''} .tokenId=${cell.tokenId} .fromX=${cell.fromX} .fromY=${cell.fromY} .gridCols=${app.boardCols} .gridRows=${app.boardRows} .status=${app.commandStatus} @speak-command=${(e: CustomEvent) => handleSpeakCommand(app, e)}></runefoble-command-bar>`;
 }

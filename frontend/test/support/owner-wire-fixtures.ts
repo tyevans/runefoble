@@ -57,11 +57,11 @@ export const OWNER_CAMPAIGN_MEMBERS = [
 export const OWNER_BOARD_TOKENS = {
   'tok-valeros': {
     token_id: 'tok-valeros', name: 'Valeros', token_type: 'pc', x: 2, y: 3, hp: 38, is_friendly: true,
-    vision_radius: 4, active_hazard: null, hazard_status: null, active_action: null,
+    vision_radius: 4, active_hazard: null, hazard_status: null, active_action: null, character_id: 'char-valeros',
   },
   'tok-ghoul-1': {
     token_id: 'tok-ghoul-1', name: 'Ghoul', token_type: 'monster', x: 7, y: 6, hp: null, is_friendly: false,
-    vision_radius: 2, active_hazard: null, hazard_status: null, active_action: 'attack',
+    vision_radius: 2, active_hazard: null, hazard_status: null, active_action: 'attack', character_id: null,
   },
 };
 
