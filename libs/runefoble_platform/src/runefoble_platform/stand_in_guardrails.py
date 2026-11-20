@@ -46,3 +46,7 @@ class StandInGuardrailPolicy(BaseModel):
     avoid_melee: bool = True
     permadeath_safeguard: bool = True
     custom_priorities: list[str] = Field(default_factory=list)
+    stance: Literal["defensive", "cautious", "heroic"] | None = Field(
+        default=None,
+        description="Absentee tactical stance the player chose. None until the player chooses one",
+    )

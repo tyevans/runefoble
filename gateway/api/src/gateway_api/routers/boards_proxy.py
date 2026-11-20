@@ -73,6 +73,18 @@ ROUTES = (
         body_model=TokenMoveRequest,
         principal=True,
     ),
+    ProxyRoute(
+        "POST",
+        "/api/v1/boards/{session_id}/traps",
+        (),
+        SERVICE,
+        name="create_trap",
+        doc="Arm a secret DM trap on the board (board_state checks `board.manage_traps`).",
+        owner=owner_routes.create_trap,
+        body="json",
+        status_code=201,
+        principal=True,
+    ),
 )
 
 register_proxy_routes(router, ROUTES)

@@ -37,6 +37,7 @@ SHARED_DEFAULT_POLICY: dict[str, Any] = {
     "avoid_melee": True,
     "permadeath_safeguard": True,
     "custom_priorities": [],
+    "stance": None,
 }
 
 
