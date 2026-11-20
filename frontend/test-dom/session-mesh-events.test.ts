@@ -112,7 +112,11 @@ describe('dm_whisper session message', () => {
   it('adds the whisper to a mounted whisper bar', async () => {
     const bar = await mount<HTMLElement & { whispers: Array<{ content: string }> }>('runefoble-dm-whisper-bar');
 
-    handleSessionMessage(HOST, { type: 'dm_whisper', whisper_id: 'w-1', whisper_type: 'narrative_secret', content: 'The door hums.' });
+    handleSessionMessage(HOST, {
+      type: 'dm_whisper',
+      sessionId: 'sess-1',
+      whisper: { whisper_id: 'w-1', whisper_type: 'narration', content: 'The door hums.', timestamp: '2026-11-20T19:00:00Z' },
+    });
 
     expect(bar.whispers.at(-1)?.content).toBe('The door hums.');
   });
