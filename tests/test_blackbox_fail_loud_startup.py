@@ -91,10 +91,32 @@ def startup_redis_url() -> Iterator[str]:
         yield url
 
 
+# A deployed game_session needs the Zitadel provisioner token for invite accounts (TASK-0967).
+# The tests below check other start-up rules, so each one supplies a token.
+PROVISIONER = {"RUNEFOBLE_ZITADEL_SERVICE_TOKEN": "test-provisioner-token"}
+
+
+def test_game_session_refuses_to_start_in_deployed_mode_without_the_provisioner_token() -> None:
+    """A deployed game_session with no Zitadel provisioner token stops at start-up (ADR-0023 c)."""
+    result = start_game_session(
+        {
+            "RUNEFOBLE_ENVIRONMENT": "production",
+            "RUNEFOBLE_WATCHER_URL": "http://the-watcher:8001",
+            "RUNEFOBLE_ZITADEL_SERVICE_TOKEN": None,
+        },
+        REPO_ROOT,
+    )
+
+    assert result.returncode != 0
+    assert "RUNEFOBLE_ZITADEL_SERVICE_TOKEN must be set" in result.stderr
+    assert STARTED_MARKER not in result.stdout
+
+
 def test_game_session_refuses_to_start_in_deployed_mode_without_watcher_url() -> None:
     """RUNEFOBLE_WATCHER_URL unset in staging or production stops game_session at start-up."""
     result = start_game_session(
-        {"RUNEFOBLE_ENVIRONMENT": "production", "RUNEFOBLE_WATCHER_URL": None}, REPO_ROOT
+        {"RUNEFOBLE_ENVIRONMENT": "production", "RUNEFOBLE_WATCHER_URL": None, **PROVISIONER},
+        REPO_ROOT,
     )
 
     assert result.returncode != 0
@@ -112,6 +134,7 @@ def test_game_session_refuses_to_start_in_deployed_mode_without_a_reachable_even
     result = start_game_session(
         {
             "RUNEFOBLE_ENVIRONMENT": "production",
+            **PROVISIONER,
             "RUNEFOBLE_WATCHER_URL": "http://the-watcher:8001",
             "RUNEFOBLE_EVENT_STORE_BACKEND": "postgresql",
             "RUNEFOBLE_DATABASE_URL": closed_dsn,
@@ -129,6 +152,7 @@ def test_game_session_refuses_the_memory_event_store_in_deployed_mode() -> None:
     result = start_game_session(
         {
             "RUNEFOBLE_ENVIRONMENT": "production",
+            **PROVISIONER,
             "RUNEFOBLE_WATCHER_URL": "http://the-watcher:8001",
             "RUNEFOBLE_EVENT_STORE_BACKEND": "memory",
         },
@@ -167,6 +191,7 @@ def test_game_session_starts_in_deployed_mode_with_watcher_url(
     result = start_game_session(
         {
             "RUNEFOBLE_ENVIRONMENT": "production",
+            **PROVISIONER,
             "RUNEFOBLE_WATCHER_URL": "http://the-watcher:8001",
             "RUNEFOBLE_EVENT_STORE_BACKEND": "postgresql",
             "RUNEFOBLE_DATABASE_URL": str(postgres_service["dsn"]),
