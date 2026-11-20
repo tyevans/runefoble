@@ -11,8 +11,13 @@ import type { RunefobleApp } from '../runefoble-app.ts';
 import { appDataService } from '../services/app-data-service.ts';
 import { saveStandInPolicyChange } from './stand-in-policy.ts';
 
-/** Opens the stance drawer for the bound character after the gateway reads its stand-in state. */
+/**
+ * Opens the stance drawer for the bound character after the gateway reads its stand-in state.
+ * The drawer stays closed when the route changed during the reads, for example when the player
+ * marks the seat absent in the lobby and then goes to the session view.
+ */
 export async function openAbsenteeDrawer(host: RunefobleApp): Promise<void> {
+  const startRoute = host.currentRoute;
   const charId = host.activeCharacter?.id;
   if (!charId) {
     host.showToast('Stance drawer not opened. No character is bound to this session.');
@@ -22,6 +27,7 @@ export async function openAbsenteeDrawer(host: RunefobleApp): Promise<void> {
     appDataService.fetchSessionState(host.sessionId),
     appDataService.fetchCharacterGuardrails(charId),
   ]);
+  if (host.currentRoute !== startRoute) return;
   if (!session.ok) {
     host.showToast(`Stance drawer not opened. ${session.message}`);
     return;

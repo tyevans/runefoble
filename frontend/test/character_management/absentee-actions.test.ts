@@ -21,6 +21,7 @@ interface Host {
   characters: any[];
   absenteeStance: string;
   isAbsenteeDirectiveOpen: boolean;
+  currentRoute: unknown;
   toasts: string[];
   showToast(m: string): void;
 }
@@ -35,6 +36,7 @@ function makeHost(): Host {
     characters: [char],
     absenteeStance: '',
     isAbsenteeDirectiveOpen: false,
+    currentRoute: { pattern: '#/campaigns/:campaignId/sessions/:sessionId/lobby' },
     toasts: [],
     showToast(m: string) { this.toasts.push(m); },
   };
@@ -56,6 +58,20 @@ describe('opening the stance drawer reads the caller seat from the session state
     assert.equal(host.isAbsenteeDirectiveOpen, true);
     assert.equal(findCallerSeat(host.sessionParticipants, 'user-fixture')?.isStandInActive, true);
     assert.equal(host.absenteeStance, 'cautious');
+  });
+
+  it('stays closed when the route changes before the reads answer', async () => {
+    gateway = installFakeGateway({
+      'GET /api/v1/sessions/session-tomb-14': { body: OWNER_SESSION_STATE },
+      'GET /api/v1/characters/char-7/guardrails': { body: { stance: 'cautious' } },
+    });
+    const host = makeHost();
+
+    const opening = openAbsenteeDrawer(host as any);
+    host.currentRoute = { pattern: '#/campaigns/:campaignId/sessions/:sessionId' };
+    await opening;
+
+    assert.equal(host.isAbsenteeDirectiveOpen, false);
   });
 
   it('does not read the character record for the stand-in flag', async () => {

@@ -98,6 +98,7 @@ export async function toggleReadiness(host: RunefobleApp, e: CustomEvent<ToggleR
  * read again after a saved change. An absent seat opens the directives drawer when the player set it.
  */
 export async function toggleStandIn(host: RunefobleApp, e: CustomEvent<ToggleStandInEventDetail>): Promise<void> {
+  const startRoute = host.currentRoute;
   const sId = e.detail?.sessionId || host.sessionId;
   const userId = e.detail?.userId;
   const isAbsent = e.detail?.isAbsent === true;
@@ -113,7 +114,8 @@ export async function toggleStandIn(host: RunefobleApp, e: CustomEvent<ToggleSta
     return;
   }
   await reloadRoster(host, sId);
-  if (isAbsent && userId === host.currentUserId) {
+  // A player who left the lobby during the save does not get the drawer in the next view.
+  if (isAbsent && userId === host.currentUserId && host.currentRoute === startRoute) {
     await openAbsenteeDrawer(host);
     host.showToast('Stand-In Activated: Directives drawer opened');
   }
