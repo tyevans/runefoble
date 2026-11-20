@@ -38,6 +38,11 @@ def calculate_steps(raw_distance: int, unit: str | None) -> int:
     return raw_distance
 
 
+def chebyshev_steps(a: tuple[int, int], b: tuple[int, int]) -> int:
+    """Return the grid distance between two cells. A diagonal step counts as one step."""
+    return max(abs(a[0] - b[0]), abs(a[1] - b[1]))
+
+
 def calculate_bounded_destination(
     from_x: int,
     from_y: int,

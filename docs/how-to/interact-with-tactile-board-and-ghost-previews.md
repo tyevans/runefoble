@@ -63,6 +63,12 @@ Per PRD-0013 and US-0043 ("Speak and the board obeys"), spoken voice actions sta
 1. **Sub-200ms Latency**: The board microfrontend receives a `ghost_preview` message over the board socket (`/ws/boards/{session_id}`).
    - **Spoken move source (TASK-0814)**: The client calls `POST /api/v1/watcher/speak-and-act`. For a move, The Watcher proposes it to `board_state` at `POST /api/v1/boards/{session_id}/ghost-previews`, with the speaker's own bearer. The board stages the preview and broadcasts `ghost_preview` (`status: staged`) to every socket of the session. The proposal does not move the token.
    - **Manual preview**: A socket frame `ghost_preview` with `token_id`, `to_x`, and `to_y` stages the same preview.
+   - **Origin (TASK-0942)**: The client sends `from_x` and `from_y` with the speech. Without them the route returns `422`. The Watcher never uses `(0, 0)` as an origin.
+   - **Destination (TASK-0942)**: The Watcher reads the destination keys in this order:
+     1. A named token (`target_token`, `target_token_name`, `target_token_id` or `target`). The destination is the free cell next to that token that is nearest to the origin. Grid distance counts a diagonal step as one step. A tie goes to the lower `y`, then the lower `x`.
+     2. Coordinates: `to_x` and `to_y` (grammar), or `target_x` and `target_y` (worker). The cell must lie inside the grid.
+     3. A distance: `dx` and `dy`. The destination is the origin moved by that distance, kept inside the grid.
+   - **Refused speech stages nothing**: `422` for a missing origin, a move with no destination, a coordinate outside the grid, or a target name that no token carries. `409` for two tokens with the same name, or for a named token with no free neighbour. No `ghost_preview` frame is sent in these cases.
 2. **Visual Staging Reticle**:
    - A semi-transparent ghost token (50% opacity with a pulsing Bauhaus accent ring) appears at the destination coordinates.
    - An animated dashed targeting vector line connects the origin cell to the destination with an arrowhead reticle.

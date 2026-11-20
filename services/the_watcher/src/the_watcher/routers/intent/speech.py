@@ -8,6 +8,7 @@ from runefoble_events.events import (
 )
 from runefoble_platform.event_publish import publish_best_effort
 from runefoble_platform.identifiers import opaque_aggregate_id
+from the_watcher.board_client import fetch_visible_tokens
 from the_watcher.board_preview import propose_move_preview
 from the_watcher.container_access import Engines, EventBus
 from the_watcher.dependencies import STREAM_WATCHER, require_session_permission, require_speaker
@@ -16,6 +17,13 @@ from the_watcher.identity import CallerId, get_principal
 from the_watcher.models import (
     IntentResult,
     SpeechInputRequest,
+)
+from the_watcher.move_destination import (
+    check_in_grid,
+    check_origin,
+    coordinate_target,
+    named_target,
+    resolve_named_target,
 )
 from the_watcher.watcher_ai import TheWatcherEngine
 
@@ -33,7 +41,8 @@ async def process_speech_action(
     """Parse player speech and propose a move as a ghost preview. Only player confirm commits it."""
     await require_session_permission(caller_id, req.session_id, "session.participate")
     await require_speaker(caller_id, req.speaker_id)
-    intent = await load_watcher_ports(engines.watcher).intent.parse(req)
+    authorization = request.headers.get("authorization")
+    intent = await load_watcher_ports(engines.watcher).intent.parse(req, authorization)
 
     bus = event_bus.get()
     session_uuid = opaque_aggregate_id(req.session_id, field="session_id")
@@ -66,21 +75,15 @@ async def process_speech_action(
 async def _propose_move(
     request: Request, req: SpeechInputRequest, intent: IntentResult, engine_: TheWatcherEngine
 ) -> None:
-    """Send the move to board_state as a proposal. The board commits nothing until confirm."""
+    """Send the move to board_state as a proposal. The board commits nothing until confirm.
+
+    Every check runs before the proposal is sent. A failed check stages no preview (TASK-0942).
+    """
     authorization = request.headers.get("authorization")
     if not authorization:
         raise HTTPException(status_code=401, detail="A bearer token is required to propose a move")
-    from_x = req.from_x if req.from_x is not None else 0
-    from_y = req.from_y if req.from_y is not None else 0
-    if "to_x" in intent.parameters and "to_y" in intent.parameters:
-        to_x = int(intent.parameters["to_x"])
-        to_y = int(intent.parameters["to_y"])
-    else:
-        dx = intent.parameters.get("dx", 0)
-        dy = intent.parameters.get("dy", 0)
-        to_x, to_y = engine_.calculate_bounded_destination(
-            from_x, from_y, dx, dy, cols=req.grid_cols, rows=req.grid_rows
-        )
+    origin = check_origin(req.from_x, req.from_y)
+    to_x, to_y = await _destination(req, intent, origin, authorization, engine_)
     await propose_move_preview(
         WatcherEngineSettings().board_state_url,
         authorization,
@@ -94,4 +97,40 @@ async def _propose_move(
             "from_x": req.from_x,
             "from_y": req.from_y,
         },
+    )
+
+
+async def _destination(
+    req: SpeechInputRequest,
+    intent: IntentResult,
+    origin: tuple[int, int],
+    authorization: str,
+    engine_: TheWatcherEngine,
+) -> tuple[int, int]:
+    """Choose the destination cell. The order is named token, then coordinates, then distance.
+
+    An intent with none of these keys has no destination. That is a client error (422), never
+    a zero-length move.
+    """
+    params = intent.parameters
+    names, token_id = named_target(params)
+    if names or token_id:
+        tokens = await fetch_visible_tokens(
+            WatcherEngineSettings().board_state_url, req.session_id, authorization
+        )
+        return resolve_named_target(names, token_id, tokens, origin, req.grid_cols, req.grid_rows)
+    if (cell := coordinate_target(params)) is not None:
+        return check_in_grid(cell, req.grid_cols, req.grid_rows)
+    if "dx" in params or "dy" in params:
+        return engine_.calculate_bounded_destination(
+            origin[0],
+            origin[1],
+            params.get("dx", 0),
+            params.get("dy", 0),
+            cols=req.grid_cols,
+            rows=req.grid_rows,
+        )
+    raise HTTPException(
+        status_code=422,
+        detail="A move needs a destination: a named token, coordinates or a distance.",
     )

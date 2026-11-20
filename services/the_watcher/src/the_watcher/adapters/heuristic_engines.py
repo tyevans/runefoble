@@ -29,7 +29,7 @@ class HeuristicIntentParser(IntentParser):
     def __init__(self, engine: TheWatcherEngine) -> None:
         self._engine = engine
 
-    async def parse(self, req: SpeechInputRequest) -> IntentResult:
+    async def parse(self, req: SpeechInputRequest, authorization: str | None) -> IntentResult:
         return self._engine.parse_speech_intent(req.transcript, req.speaker_name)
 
 

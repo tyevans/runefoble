@@ -11,10 +11,13 @@ from the_watcher.dependencies import logger
 TOKEN_FIELDS = ("token_id", "name", "token_type", "x", "y", "hp", "is_friendly")
 
 
-async def fetch_visible_tokens(base_url: str | None, session_id: str) -> list[dict[str, Any]]:
+async def fetch_visible_tokens(
+    base_url: str | None, session_id: str, authorization: str | None
+) -> list[dict[str, Any]]:
     """Return the tokens on the session board. A session with no board has no tokens.
 
-    Any other failure, or a missing board state URL, is raised as HTTP 503.
+    The speaker's own bearer header goes to board_state, which verifies it (ADR-0015 c). Any
+    other failure, or a missing board state URL, is raised as HTTP 503.
     """
     unavailable = HTTPException(
         status_code=503,
@@ -26,7 +29,10 @@ async def fetch_visible_tokens(base_url: str | None, session_id: str) -> list[di
 
     try:
         async with httpx.AsyncClient(timeout=2.0) as client:
-            res = await client.get(f"{base_url}/api/v1/boards/{session_id}")
+            res = await client.get(
+                f"{base_url}/api/v1/boards/{session_id}",
+                headers={"Authorization": authorization} if authorization else {},
+            )
     except httpx.HTTPError as e:
         logger.error("Board state service unreachable at %s: %s", base_url, e)
         raise unavailable from e

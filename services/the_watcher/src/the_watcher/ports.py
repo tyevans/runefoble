@@ -25,8 +25,8 @@ class IntentParser(ABC):
     engine_name: ClassVar[str]
 
     @abstractmethod
-    async def parse(self, req: SpeechInputRequest) -> IntentResult:
-        """Return the intent for one utterance.
+    async def parse(self, req: SpeechInputRequest, authorization: str | None) -> IntentResult:
+        """Return the intent for one utterance. `authorization` is the speaker's bearer header.
 
         Raises EngineUnavailableError when the engine cannot parse the utterance.
         """
