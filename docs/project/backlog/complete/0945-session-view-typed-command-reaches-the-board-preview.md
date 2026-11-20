@@ -1,7 +1,7 @@
 ---
 id: '0945'
 title: A Typed Command in the Session View Reaches the Board Preview
-status: Refined
+status: Complete
 created: 2026-11-19
 dependencies:
 - '0942'
@@ -23,7 +23,7 @@ target_release: 1.0.0
 
 ## Status
 
-Refined. First user-facing slice of the voice loop. It proves the browser half of the board path without a microphone.
+Complete
 
 ## Summary
 

@@ -93,6 +93,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Campaign analytics worker `process_event` alias, tracking property wrappers, and package root re-exports. Callers use `handle_event`. (TASK-0500)
 
 ### Added
+- Players can type a command in the session view. The command bar (`<runefoble-command-bar>`) sends it to The Watcher through `POST /api/v1/watcher/speak-and-act`. A typed move shows a ghost preview, and the token moves only when the player confirms it. Board tokens carry `character_id`, and `<runefoble-board>` emits `tokens-changed`. `make e2e-watcher-down` and `make e2e-watcher-up` stop and start The Watcher for fault journeys. (TASK-0945)
 - The grammar parses "move my warrior to the chest", "move the warrior to the chest" and "move Valeros to the chest"; the mover is always the speaker's token. (TASK-0944)
 - The grammar parses "move my warrior to the chest", "move the warrior to the chest" and "move Valeros to the chest"; the mover is always the speaker's token.
 - The DM ends an active session (`POST /api/v1/sessions/{id}/end`, SpiceDB control) and every player sees the session recap.
