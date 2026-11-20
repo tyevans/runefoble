@@ -51,6 +51,7 @@ dist/
 .env
 .env.local
 .env.*.local
+.env.worker
 
 # Agent state & isolated worktrees
 .agents/

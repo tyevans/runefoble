@@ -161,6 +161,30 @@ The helper sets these names for each container. The per-service keys in `service
 
 The database host is the Service `postgres`. The OTel host is the Service `otel-collector`. Both names are fixed in the helper. Change `postgres.port` or `observability.otelCollector.grpcPort` in `values.yaml`, and every URL follows it.
 
+## Inference worker and Watcher call budgets (TASK-0948)
+
+The worker and The Watcher read these settings from the environment. The chart sets each one
+from the value named in the last column. An unset value adds no env entry, so the code default
+applies. The hosted example sets all of them.
+
+| Environment variable | Code default | Chart value | Read by and rule |
+|---|---|---|---|
+| `RUNEFOBLE_WORKER_OPENAI_API_KEY` | `not-required` when unset | Secret key from `services.inferenceWorker.openaiApiKeySecret` (`name`, `key`) | `inference_worker`. A blank value stops start-up. A hosted render requires the Secret (`hosted-guard-model.yaml`). |
+| `RUNEFOBLE_WORKER_OLLAMA_BASE_URL` | `http://127.0.0.1:11434` | `services.inferenceWorker.ollamaBaseUrl` | `inference_worker` with `backend: ollama`. |
+| `RUNEFOBLE_WORKER_OLLAMA_MODEL` | `qwen3.5:9b` | `services.inferenceWorker.ollamaModel` | `inference_worker` with `backend: ollama`. |
+| `RUNEFOBLE_WORKER_TEMPERATURE` | `0.7` | `services.inferenceWorker.temperature` | `inference_worker`. Zero is a value and is passed. |
+| `RUNEFOBLE_WORKER_MAX_TOKENS` | `512` | `services.inferenceWorker.maxTokens` | `inference_worker`. |
+| `RUNEFOBLE_WORKER_TIMEOUT_SECONDS` | `30.0` | `services.inferenceWorker.timeoutSeconds` | `inference_worker`. The model client makes no retry, so this value bounds the whole call. |
+| `RUNEFOBLE_WATCHER_INTENT_TIMEOUT_S` | `2.0` | `services.theWatcher.env` | `the_watcher` intent call to the worker. Out of budget: `503`. |
+| `RUNEFOBLE_WATCHER_STAND_IN_TIMEOUT_S` | `10.0` | `services.theWatcher.env` | `the_watcher` stand-in call to the worker. Out of budget: `503`. |
+| `RUNEFOBLE_WATCHER_NARRATION_TIMEOUT_S` | `10.0` | `services.theWatcher.env` | `the_watcher` narration calls to the worker, including audience narration. Out of budget: `503` or a notice. |
+| `RUNEFOBLE_WATCHER_BOARD_TIMEOUT_S` | `2.0` | `services.theWatcher.env` | `the_watcher` reads of visible tokens from `board_state`. |
+| `RUNEFOBLE_WATCHER_PROPOSAL_TIMEOUT_S` | `2.0` | `services.theWatcher.env` | `the_watcher` move proposal to `board_state`. |
+
+The gateway speak-and-act budget is a code constant, `SPEAK_AND_ACT_TIMEOUT_S`, in
+`gateway/api/src/gateway_api/routers/watcher_speech_proxy.py`. It is `8.0` s. It must be greater
+than the sum of the intent, board read and proposal budgets. At the defaults the sum is `6.0` s.
+
 ## Cross-Service URLs (TASK-0624)
 
 `RUNEFOBLE_WATCHER_INTENT_ENGINE`, `RUNEFOBLE_WATCHER_STAND_IN_ENGINE` and `RUNEFOBLE_WATCHER_NARRATION_ENGINE` are not URLs. Each selects one of The Watcher's engine ports: `inference_worker` or `none` (default). The intent port always parses with the grammar first. It sends only `narrative` speech to the worker. `none` means the port has no engine. The stand-in and narration routes then return `503`. The chart sets all three to `inference_worker` on `the-watcher` through `services.theWatcher.env`. A port set to `inference_worker` needs `RUNEFOBLE_INFERENCE_URL` and fails at start-up without it.

@@ -73,10 +73,10 @@ The speech path has four steps. Each step has its own status.
 
 | Step | Status | Evidence | Blocking task |
 |---|---|---|---|
-| Speech to text (`/api/v1/voice/transcribe`) | **In progress** | `tests/test_blackbox_voice_transcribe_input.py`, `tests/test_blackbox_streaming_whisper_e2e.py` | TASK-0509 (no UI caller) |
-| Text to intent (intent routes) | **In progress** | `tests/test_speech_to_intent.py`, `tests/test_blackbox_intent_disambiguation_flow.py` | TASK-0509 (no UI caller) |
+| Speech to text (`/api/v1/voice/transcribe`) | **In progress** | `tests/test_blackbox_voice_transcribe_input.py`, `tests/test_blackbox_streaming_whisper_e2e.py` | TASK-0942 to TASK-0947 (no UI caller) |
+| Text to intent (intent routes) | **In progress** | `tests/test_speech_to_intent.py`, `tests/test_blackbox_intent_disambiguation_flow.py` | TASK-0942 to TASK-0947 (no UI caller) |
 | Gateway speak-and-act (`/api/v1/watcher/speak-and-act`) | **Live** | Proxies to The Watcher intent route, which parses the transcript (`gateway/api/src/gateway_api/routers/watcher_speech_proxy.py`, `tests/test_blackbox_gateway_speech_proxy.py`) | None |
-| Board change from speech | **Live** (preview) | A spoken move stages a ghost preview on the board socket. Only the player's `confirm_move` commits it (`tests/test_blackbox_spoken_move_preview.py`) | TASK-0509 (voice trigger) |
+| Board change from speech | **Live** (preview) | A spoken move stages a ghost preview on the board socket. Only the player's `confirm_move` commits it (`tests/test_blackbox_spoken_move_preview.py`) | TASK-0942 to TASK-0947 (voice trigger) |
 
 The speech targets are not measured. The 500 millisecond target has no latency test.
 
@@ -99,7 +99,9 @@ The speech targets are not measured. The 500 millisecond target has no latency t
 
 - **Live**: DM co-pilot whispers and veto override. A human DM can reject any AI action. Test: `tests/test_blackbox_dm_copilot_whispers.py` (TASK-0053).
 - **Live**: Disambiguation and compound actions through the API. Tests: `tests/test_blackbox_intent_disambiguation_flow.py`, `tests/test_blackbox_intent_compound_combos.py` (TASK-0054).
-- **Planned**: Autonomous DM mode, which runs a full session. The LLM provider path is not wired. Blocking tasks: TASK-0448, TASK-0449.
+- **Live**: LLM narration and stand-ins. The Watcher calls the inference worker for DM narration, audience narration and stand-in decisions when each port is set to `inference_worker` (TASK-0943, TASK-0948). Each call has its own budget, and a failed or slow call returns `503`.
+- **Live**: The grammar parses every spoken transcript first. The worker parses only the speech that the grammar returns as narrative (ADR-0022, TASK-0943).
+- **Planned**: Autonomous DM mode, which runs a full session.
 - **Planned**: Wake-word activation (US-0024). No backlog task exists yet.
 
 ### 3. Missing Player Stand-Ins
