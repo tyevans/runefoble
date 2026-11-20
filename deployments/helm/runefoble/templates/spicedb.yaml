@@ -15,6 +15,7 @@ spec:
       labels:
         app: spicedb
     spec:
+      {{- include "runefoble.imagePullSecrets" $ }}
       initContainers:
         - name: spicedb-migrate
           image: {{ .Values.spicedb.image }}

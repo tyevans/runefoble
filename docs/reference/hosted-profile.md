@@ -36,6 +36,8 @@ An unset key that the guard reads also fails the render. The guard never takes a
 | `services.campaignLore.embeddingApiKeySecret` | `campaign-lore-embedding` | Fails when it is empty or holds `REPLACE-ME`. The chart renders no Secret with this name in a hosted render. The operator creates it with the key `api-key`. |
 | `ingress.hosts[].host` | `REPLACE-ME` and `auth.REPLACE-ME` | Fails on `REPLACE-ME`, `localhost`, or a `.local` suffix. |
 | `zitadel.externalDomain` | `auth.REPLACE-ME` | Fails on `REPLACE-ME`, `localhost`, or a `.local` suffix. |
+| `global.imagePullSecrets` | `[]` | Names of pull Secrets for the registry. No guard. The chart adds them to every pod spec. |
+| `values.images.yaml` (file, passed with `-f`) | Not in the example. Full image references with digests. | Guard on every `image` key: registry host, `@sha256:`, no `REPLACE-ME`, `localhost`, or `.local/`. See [Image references](#image-references). |
 | `zitadel.externalPort` | `443` | No guard. Must match the public port. |
 | `zitadel.externalSecure` | `true` | Fails when `false`. |
 | `zitadel.adminEmail` | `admin@REPLACE-ME` | Fails on `REPLACE-ME` or the `@runefoble.local` suffix. |
@@ -48,6 +50,36 @@ An unset key that the guard reads also fails the render. The guard never takes a
 | `ingress.tls.clusterIssuer` | `REPLACE-ME` | Required with `certManager`. Fails on `REPLACE-ME`. Name of a ClusterIssuer that you install. |
 | `ingress.tls.secretName` | `""` | Required with `existingSecret`. Fails on `REPLACE-ME`. Name of a `kubernetes.io/tls` Secret that you create. |
 | `ingress.httpsRedirect` | `true` | Fails unless `true`. Plain HTTP answers 301 to HTTPS. See [TLS and HTTP redirect rules](ports-and-endpoints.md#tls-and-http-redirect-rules-hosted). |
+
+## Image references
+
+A hosted render pulls images from a registry. It does not use the local Kind cache. Pass the image
+file after the hosted values file:
+
+```sh
+helm template runefoble deployments/helm/runefoble -f <your-hosted-values.yaml> -f deployments/helm/runefoble/values.images.yaml
+```
+
+`values.images.yaml` holds one full reference for each image. The Runefoble lines are written by
+`make images-push IMAGE_REGISTRY=<host>/<path>`. The file holds `REPLACE-ME` until the push runs.
+Third-party images carry the digest of their tag. The chart keeps the local tags in `values.yaml`.
+The local render does not read the image file.
+
+The guard checks every `image` key in a hosted render (`templates/hosted-guard-images.yaml`). It
+fails the render when an image:
+
+- has no registry host (the first path segment must contain a dot or a colon),
+- has no digest (`@sha256:`),
+- holds `REPLACE-ME`, `localhost`, or a `.local/` path.
+
+The failure message names the key path, for example `services.gatewayApi.image`.
+
+## Pull Secrets
+
+`global.imagePullSecrets` is a list of Secret names (`kubernetes.io/dockerconfigjson`). The chart
+adds the list to every Deployment, StatefulSet, and Job pod spec. When the list is empty, the chart
+renders no `imagePullSecrets` key. The chart does not create the Secret. The operator creates it
+(D2b, with the credential stored through [`hosted-secrets.md`](hosted-secrets.md)).
 
 ## Placeholder marker
 

@@ -30,6 +30,7 @@ spec:
       labels:
         app: spicedb-schema-migration
     spec:
+      {{- include "runefoble.imagePullSecrets" $ }}
       restartPolicy: OnFailure
       # No migration here. The spicedb Deployment migrates the datastore in its init container.
       # A second migration at install time deadlocks on CREATE INDEX CONCURRENTLY. This Job

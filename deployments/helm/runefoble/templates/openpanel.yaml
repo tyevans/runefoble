@@ -15,6 +15,7 @@ spec:
       labels:
         app: openpanel
     spec:
+      {{- include "runefoble.imagePullSecrets" $ }}
       containers:
         - name: openpanel
           image: {{ .Values.openpanel.image }}

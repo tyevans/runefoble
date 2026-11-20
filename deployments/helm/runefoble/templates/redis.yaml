@@ -16,6 +16,7 @@ spec:
       labels:
         app: runefoble-redis
     spec:
+      {{- include "runefoble.imagePullSecrets" $ }}
       containers:
         - name: redis
           image: {{ .Values.redis.image }}

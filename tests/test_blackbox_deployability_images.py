@@ -367,3 +367,31 @@ def test_built_frontend_image_serves_app_shell_index_html():
         assert "<runefoble-app>" in deep_link
     finally:
         subprocess.run(["docker", "rm", "-f", container_id], capture_output=True, timeout=120)
+
+
+def test_images_push_dry_run_lists_every_row_a_push_and_the_digest_step():
+    """`make -n images-push` prints each image row, a docker push and the digest recorder. It runs nothing."""
+    result = run_command(
+        ["make", "-n", "images-push", "IMAGE_REGISTRY=registry.example.com/team"],
+        cwd=REPO_ROOT,
+        timeout=60,
+    )
+    assert result.returncode == 0, result.stderr
+    output = result.stdout
+    assert "docker push" in output
+    assert "docker build" in output
+    assert "scripts/record_image_digests.py" in output
+    assert "registry.example.com/team/runefoble" in output
+    assert "services/audience_studio/Dockerfile" in output
+    assert "frontend/Dockerfile" in output
+    assert "kind load" not in output
+    for row in read_image_table():
+        assert f"{row.name}|{row.service}|{row.app}|{row.port}" in output
+
+
+def test_images_push_refuses_to_run_without_a_registry():
+    """`make images-push` stops before any build when IMAGE_REGISTRY is empty."""
+    result = run_command(["make", "images-push"], cwd=REPO_ROOT, timeout=60)
+
+    assert result.returncode != 0
+    assert "IMAGE_REGISTRY" in (result.stdout + result.stderr)

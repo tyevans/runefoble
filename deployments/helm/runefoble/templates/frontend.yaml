@@ -16,6 +16,7 @@ spec:
       annotations:
         checksum/runtime-config: {{ include (print $.Template.BasePath "/frontend-runtime-config.yaml") . | sha256sum }}
     spec:
+      {{- include "runefoble.imagePullSecrets" $ }}
       # The init container fills in the client ID and project ID from the Secret that the bootstrap
       # Job writes. The pod waits until that Secret exists.
       initContainers:

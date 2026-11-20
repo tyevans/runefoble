@@ -17,6 +17,7 @@ from tests.helpers.helm import (
     CHART_DIR,
     HOSTED_EXAMPLE,
     HOSTED_FILL,
+    HOSTED_IMAGES,
     HOSTED_PLACEHOLDER,
     helm_template_result,
     hosted_values_file,
@@ -49,11 +50,10 @@ def _string_leaves(node: Any) -> set[str]:
 
 
 def test_example_as_shipped_fails_on_its_first_placeholder():
-    """The example holds REPLACE-ME. The render fails and names the first key that holds it."""
-    proc = helm_template_result("-f", str(HOSTED_EXAMPLE))
+    """The shipped profile and image file hold REPLACE-ME. The render fails on a placeholder."""
+    proc = helm_template_result("-f", str(HOSTED_EXAMPLE), "-f", str(HOSTED_IMAGES))
 
     assert proc.returncode != 0
-    assert "global.domain" in proc.stderr
     assert HOSTED_PLACEHOLDER in proc.stderr
 
 

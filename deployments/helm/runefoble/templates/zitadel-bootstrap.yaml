@@ -73,6 +73,7 @@ spec:
       labels:
         app: zitadel-bootstrap
     spec:
+      {{- include "runefoble.imagePullSecrets" $ }}
       serviceAccountName: zitadel-bootstrap
       automountServiceAccountToken: true
       restartPolicy: OnFailure

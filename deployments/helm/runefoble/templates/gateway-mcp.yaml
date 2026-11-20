@@ -19,6 +19,7 @@ spec:
       labels:
         app: gateway-mcp
     spec:
+      {{- include "runefoble.imagePullSecrets" $ }}
       containers:
         - name: gateway-mcp
           image: {{ $mcp.image }}

@@ -7,6 +7,9 @@
 global:
   environment: production
   domain: REPLACE-ME
+  # Names of the Secrets that hold the registry credential (kubernetes.io/dockerconfigjson). Create
+  # each Secret yourself. Every pod spec pulls with these names (TASK-0960). Example: - name: runefoble-registry
+  imagePullSecrets: []
 
 # Name of a Secret that you create. It holds the keys listed in templates/secret.yaml.
 credentials:
