@@ -29,7 +29,7 @@ For a dependency that has no shared check (for example an owning service), write
 
 Register a dependency only when the main work of the service needs it. For example, `board_state` uses Silo only for the UVTT import, so its gate does not probe Silo. A Silo that is not up must not hold the whole board out of service.
 
-The Silo check of `asset_forge` needs the asset bucket. The Silo bucket Job (`silo-buckets-job.yaml`) is a Helm `post-install` and `post-upgrade` hook. Do not use `helm install --wait` on a new cluster: Helm then waits for `asset-forge` to be ready before it runs the Job that creates the bucket.
+The Silo check of `asset_forge` needs the asset bucket. The Silo bucket Job (`silo-buckets-job.yaml`) creates that bucket. It is a plain Job, not a Helm hook. A hook runs only after the release is Ready, so a hook that asset-forge waits for would deadlock `helm install --wait`. The SpiceDB schema Job has the same design, because the SpiceDB probe reads the schema (TASK-0933). Keep any Job that an app waits for out of the hooks.
 
 ## 1. Add the route
 
@@ -42,7 +42,7 @@ app.add_api_route("/healthz", health_check, methods=["GET"])
 add_readiness_route(app, "game_session")
 ```
 
-The route is public, as `/healthz` is. Add `/readyz` to the public paths of each test that calls every OpenAPI route without a bearer (for example `tests/test_blackbox_service_identity.py` and `tests/test_blackbox_service_bearer_verification.py`).
+The route is public, as `/healthz` is. A service with a FastMCP app (gateway-mcp) adds a custom route and calls `readiness_response(gate, service)`. Add `/readyz` to the public paths of each test that calls every OpenAPI route without a bearer (for example `tests/test_blackbox_service_identity.py` and `tests/test_blackbox_service_bearer_verification.py`).
 
 ## 2. Set the gate in the lifespan
 
@@ -70,7 +70,7 @@ async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
     ...
 ```
 
-The reference implementations are `services/game_session/src/game_session/main.py` (event store, SpiceDB, Redis), `services/asset_forge/src/asset_forge/main.py` (event store, SpiceDB, Redis, Silo) and `gateway/api/src/gateway_api/routers/health.py` (SpiceDB, Redis). [Ports and endpoints](../reference/ports-and-endpoints.md) lists the dependencies of each gated service.
+The reference implementations are `services/game_session/src/game_session/main.py` (event store, SpiceDB, Redis), `services/asset_forge/src/asset_forge/main.py` (event store, SpiceDB, Redis, Silo) and `gateway/api/src/gateway_api/routers/health.py` (SpiceDB, Redis). `gateway/mcp/src/gateway_mcp/server.py` (SpiceDB) shows the FastMCP route. `services/inference_worker/src/inference_worker/api.py` gates on its LLM port: `set_llm_port` registers the port as the `llm_backend` dependency. The worker never listens while its backend is down, because the lifespan refuses to start. So its `/readyz` answers 200 once started. [Ports and endpoints](../reference/ports-and-endpoints.md) lists the dependencies of each gated service.
 
 ## 3. Use the default Helm probe
 
@@ -79,10 +79,11 @@ The shared template helper `runefoble.probes` (`deployments/helm/runefoble/templ
 | Key | Default | Meaning |
 |---|---|---|
 | `readinessPath` | `/readyz` | Readiness probe path on the service port. |
+| `startupPeriodSeconds`, `startupFailureThreshold` | `5`, `36` | Startup probe on `/healthz`: a 180 s budget for a cold start. The liveness probe waits for it. |
 | `readinessTimeoutSeconds` | `3` | Time limit of one probe call. It must be longer than the 2.5 second check limit. |
 | `livenessPath` | not set | Liveness probe path. No liveness probe when it is not set. |
 
-A service that has no `/readyz` yet sets `readinessPath: /healthz`. When you add `/readyz` to the service, remove that line so that the default applies. Then run `make helm-lint` and `make helm-template`, and add the service to `GATED` in `tests/test_blackbox_helm_readiness_probes.py`.
+Do not set `readinessPath: /healthz` for a service. Add `/readyz` to the service and keep the default. Then run `make helm-lint` and `make helm-template`, and add the service to `GATED` in `tests/test_blackbox_helm_readiness_probes.py`.
 
 ## 4. Test through the frontdoor
 
@@ -93,7 +94,7 @@ Test the gate with a dependency that is not up yet. `tests/helpers/tcp_relay.py`
 3. If the service has a write route that needs the dependency, call it. Expect `503` and a log line that names the failure.
 4. Call `relay.come_up()`. Poll `GET /readyz` until it answers `200`.
 
-The reference tests are `tests/test_blackbox_game_session_readiness.py`, `tests/test_blackbox_gateway_readiness.py` and `tests/test_blackbox_service_readiness.py`. The last one runs one set of tests over each service in its `SERVICES` table. Add a new gated service to that table. For Silo, use the `silo_double` fixture: set `outage` or clear `buckets` instead of a TCP relay.
+The reference tests are `tests/test_blackbox_game_session_readiness.py`, `tests/test_blackbox_gateway_readiness.py`, `tests/test_blackbox_service_readiness.py` and `tests/test_blackbox_service_readiness_rest.py` (rules-compendium, campaign-analytics, gateway-mcp, voice-agent and inference-worker). The last one runs one set of tests over each service in its `SERVICES` table. Add a new gated service to that table. For Silo, use the `silo_double` fixture: set `outage` or clear `buckets` instead of a TCP relay.
 
 ## Related
 

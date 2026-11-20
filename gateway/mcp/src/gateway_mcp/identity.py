@@ -27,7 +27,7 @@ from starlette.types import ASGIApp, Receive, Scope, Send
 
 logger = logging.getLogger("runefoble.gateway_mcp.identity")
 
-PUBLIC_PATHS = frozenset({"/healthz"})
+PUBLIC_PATHS = frozenset({"/healthz", "/readyz"})
 
 # The verifier for this process, built from platform settings on first use. Tests replace it.
 get_verifier, set_verifier = make_verifier_holder(

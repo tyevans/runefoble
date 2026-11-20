@@ -221,7 +221,7 @@ def _rendered_helm_documents() -> list[dict]:
 
 
 def test_voice_agent_chart_mounts_model_cache_and_probes_readiness():
-    """The voice agent Deployment mounts a model cache PVC, disables download, and probes /healthz."""
+    """The voice agent Deployment mounts a model cache PVC, disables download, and probes /readyz."""
     documents = _rendered_helm_documents()
     pvcs = [d for d in documents if d.get("kind") == "PersistentVolumeClaim"]
     deployments = {d["metadata"]["name"]: d for d in documents if d.get("kind") == "Deployment"}
@@ -239,7 +239,7 @@ def test_voice_agent_chart_mounts_model_cache_and_probes_readiness():
     assert env["RUNEFOBLE_VOICE_STT_MODEL_SIZE"]
 
     probe = container["readinessProbe"]["httpGet"]
-    assert probe["path"] == "/healthz"
+    assert probe["path"] == "/readyz"
     assert probe["port"] == 8005
     assert voice["securityContext"]["fsGroup"] == 10001
 

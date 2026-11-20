@@ -17,7 +17,7 @@ from typing import Any
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.errors import ServiceUnavailableError
 from runefoble_platform.event_sourcing import normalize_async_postgres_url
-from sqlalchemy import func, select
+from sqlalchemy import func, select, text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 
@@ -102,6 +102,11 @@ class CampaignAnalyticsStorage:
 
     async def dispose(self) -> None:
         await self.engine.dispose()
+
+    async def ping(self) -> None:
+        """Run one query on PostgreSQL. Errors propagate to the readiness check."""
+        async with self.engine.connect() as conn:
+            await conn.execute(text("SELECT 1"))
 
     @contextlib.asynccontextmanager
     async def projection(self, stream: str, message_id: str) -> AsyncIterator[ProjectionTx]:

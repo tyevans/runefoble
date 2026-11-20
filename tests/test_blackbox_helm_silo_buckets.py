@@ -1,8 +1,9 @@
-"""The Helm chart creates the Silo buckets with a hook Job (TASK-0924, ADR-0005).
+"""The Helm chart creates the Silo buckets with a plain Job (TASK-0924, TASK-0933, ADR-0005).
 
 Without the buckets, every Silo write fails and every forge request answers 503. The Job
-runs after install and upgrade, creates each bucket in `silo.buckets`, and skips a bucket
-that exists. It reads the Silo keys from the credentials Secret.
+creates each bucket in `silo.buckets` and skips a bucket that exists. It reads the Silo keys
+from the credentials Secret. It is not a Helm hook: asset-forge waits for the bucket, so a
+post-install hook would wait for asset-forge and `helm install --wait` would never finish.
 """
 
 from __future__ import annotations
@@ -16,7 +17,7 @@ def _bucket_jobs(*extra_args: str) -> list[dict]:
     return [
         doc
         for doc in render_chart(*extra_args)
-        if doc.get("kind") == "Job" and doc["metadata"]["name"] == "silo-buckets"
+        if doc.get("kind") == "Job" and doc["metadata"]["name"].startswith("silo-buckets-")
     ]
 
 
@@ -26,13 +27,19 @@ def _container(job: dict) -> dict:
     return containers[0]
 
 
-def test_bucket_job_is_a_post_install_and_post_upgrade_hook() -> None:
+def test_bucket_job_is_a_plain_job_and_not_a_helm_hook() -> None:
     jobs = _bucket_jobs()
     assert len(jobs) == 1
-    annotations = jobs[0]["metadata"]["annotations"]
-    assert set(annotations["helm.sh/hook"].split(",")) == {"post-install", "post-upgrade"}
-    assert annotations["helm.sh/hook-delete-policy"] == "before-hook-creation"
+    assert "helm.sh/hook" not in jobs[0]["metadata"].get("annotations", {})
     assert jobs[0]["spec"]["template"]["spec"]["restartPolicy"] == "OnFailure"
+
+
+def test_bucket_job_name_changes_when_the_bucket_list_changes() -> None:
+    """A Job spec is immutable, so a new bucket list gets a new Job name."""
+    base = _bucket_jobs()[0]["metadata"]["name"]
+    changed = _bucket_jobs("--set", "silo.buckets={only-one}")[0]["metadata"]["name"]
+    assert base != changed
+    assert base == _bucket_jobs()[0]["metadata"]["name"]
 
 
 def test_bucket_job_creates_every_bucket_and_skips_existing_ones() -> None:

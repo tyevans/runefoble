@@ -20,6 +20,7 @@ from fastapi import APIRouter, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from runefoble_auth.authz_http import install_authz_error_handlers
+from runefoble_auth.readiness import spicedb_probe
 from runefoble_auth.settings import load_spicedb_settings
 from runefoble_auth.wiring import verifier_from_settings
 from runefoble_platform.config import PlatformSettings
@@ -27,6 +28,12 @@ from runefoble_platform.consumer_group import RedisConsumerGroup
 from runefoble_platform.event_bus import EventBusProvider
 from runefoble_platform.event_publish import event_publish_failures
 from runefoble_platform.event_sourcing import create_aggregate_repository
+from runefoble_platform.readiness import (
+    ReadinessGate,
+    add_readiness_route,
+    redis_probe,
+    set_readiness_gate,
+)
 from runefoble_platform.stream_consumer import consumer_statuses
 from runefoble_platform.ui_manifest import ui_manifest_router
 from sqlalchemy.exc import SQLAlchemyError
@@ -73,6 +80,9 @@ def health_check(request: Request) -> JSONResponse:
     )
 
 
+add_readiness_route(system_router, "campaign_analytics")
+
+
 @system_router.get("/metrics", tags=["Observability"])
 async def get_metrics() -> dict[str, Any]:
     """Prometheus-compatible telemetry metrics."""
@@ -112,6 +122,16 @@ def create_app(settings: PlatformSettings, event_bus: EventBusProvider) -> FastA
             )
             set_storage(storage)
             set_worker(worker)
+            set_readiness_gate(
+                app,
+                ReadinessGate(
+                    {
+                        "postgres": storage.ping,
+                        "redis": redis_probe(lambda: bus),
+                        "spicedb": spicedb_probe(),
+                    }
+                ),
+            )
             await worker.start()
         except BaseException:
             set_storage(None)

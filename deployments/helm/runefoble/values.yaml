@@ -170,7 +170,7 @@ silo:
   image: cgr.dev/chainguard/minio@sha256:7618b82bba99aadd77fcf59eb6cfd89b4b8b8e01ac796c474d57a1c1abf17e79
   port: 9000
   consolePort: 9001
-  # Buckets that the bucket Job (silo-buckets-job.yaml) creates after install and upgrade.
+  # Buckets that the bucket Job (silo-buckets-job.yaml) creates on install and upgrade.
   # The Job skips a bucket that exists.
   buckets:
     - runefoble-assets
@@ -288,11 +288,13 @@ swaggerUI:
 #   environment
 #   databaseDriver               SQLAlchemy URL driver. Default postgresql+asyncpg.
 #   configMap                    Keys of the <name>-config ConfigMap that is loaded with envFrom.
-#   readinessPath                Readiness probe path on the service port. Default /readyz, the
-#                                route that answers 200 only after each dependency answered once
-#                                (TASK-0930). A service that has no /readyz yet sets /healthz.
+#   readinessPath                Readiness probe path. Default /readyz (TASK-0930).
 #   readinessTimeoutSeconds      Time limit of one readiness probe call. Default 3.
 #   livenessPath                 Liveness probe path. No liveness probe when it is not set.
+#   startupPeriodSeconds,        Startup probe on /healthz: 5 s x 36 tries, a 180 s budget. On
+#   startupFailureThreshold      2026-11-19 a full restart of 15 services took more than 35 s for
+#                                game-session to listen. The liveness probe (5 s delay, 3 failures)
+#                                then killed it (exit 137). The startup probe holds it back (TASK-0933).
 #   modelCache, podSecurityContext  Volume for model files, and the pod security context.
 services:
   gatewayApi:
@@ -351,7 +353,6 @@ services:
     consumers: [game-session, gateway-api]
     # The Watcher port sends the service credential on each transcript forward (TASK-0732).
     serviceCredential: true
-    readinessPath: /healthz
     # Speech-to-text engine. faster-whisper runs in-process and needs the model cache below.
     # whisper-cpp calls a whisper.cpp HTTP server at sttBaseUrl (for example http://<host>:8080)
     # and needs no model cache. The chart drops the cache volume for whisper-cpp.
@@ -390,7 +391,6 @@ services:
     image: runefoble/rules-compendium:0.1.0
     replicas: 1
     port: 8007
-    readinessPath: /healthz  # No /readyz yet (TASK-0930 follow-up).
     urlEnv: RUNEFOBLE_RULES_COMPENDIUM_URL
     # game-session reads enemy challenge ratings at encounter start (TASK-0918).
     consumers: [game-session, gateway-api, gateway-mcp]
@@ -401,7 +401,7 @@ services:
     replicas: 1
     port: 8008
     # /readyz (the default) waits for the event store, SpiceDB, Redis and the Silo asset
-    # bucket (TASK-0931). The Silo bucket Job creates the bucket after install.
+    # bucket (TASK-0931). The Silo bucket Job creates the bucket. It is not a hook (TASK-0933).
     urlEnv: RUNEFOBLE_ASSET_FORGE_URL
     consumers: [gateway-api]
     siloCredentials: true
@@ -448,7 +448,6 @@ services:
     image: runefoble/campaign-analytics:0.1.0
     replicas: 1
     port: 8011
-    readinessPath: /healthz  # No /readyz yet (TASK-0930 follow-up).
     urlEnv: RUNEFOBLE_CAMPAIGN_ANALYTICS_URL
     consumers: [gateway-api]
     siloEndpoint: false
@@ -467,7 +466,6 @@ services:
     image: runefoble/inference-worker:0.1.0
     replicas: 1
     port: 8100
-    readinessPath: /healthz  # No /readyz yet (TASK-0930 follow-up).
     backend: openai_compatible
     # Required when backend is openai_compatible. Empty means no base URL is set, so the worker
     # refuses to start until an endpoint is configured.
@@ -483,7 +481,6 @@ services:
     image: runefoble/gateway-mcp:0.1.0
     replicas: 1
     port: 8012
-    readinessPath: /healthz  # No /readyz yet (TASK-0930 follow-up).
 
 # Frontend Application
 frontend:

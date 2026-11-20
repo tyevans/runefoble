@@ -13,10 +13,18 @@ from pathlib import Path
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from runefoble_auth.authz_http import install_authz_error_handlers
+from runefoble_auth.readiness import spicedb_probe
 from runefoble_platform.aggregate_loading import register_store_unavailable_handlers
 from runefoble_platform.engine_ports import EngineUnavailableError, engine_unavailable_handler
 from runefoble_platform.event_publish import event_publish_failures, install_publish_failure_handler
 from runefoble_platform.event_sourcing import get_event_store
+from runefoble_platform.readiness import (
+    ReadinessGate,
+    add_readiness_route,
+    event_store_probe,
+    redis_probe,
+    set_readiness_gate,
+)
 from runefoble_platform.ui_manifest import ui_manifest_router
 from voice_agent.companion_routes import router as companion_router
 from voice_agent.companion_socket_routes import router as companion_socket_router
@@ -36,7 +44,7 @@ from voice_agent.models import (
     TTSResponse,
     VoicePersona,
 )
-from voice_agent.readiness import speech_readiness_problems
+from voice_agent.readiness import speech_readiness_problems, stt_probe, tts_probe
 from voice_agent.routers import (
     aec_diagnostics_router,
     audio_filters_router,
@@ -66,6 +74,18 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     get_streaming_pipeline()
     get_speech_synthesizer()
     async with event_bus_provider.lifespan(_app):
+        set_readiness_gate(
+            _app,
+            ReadinessGate(
+                {
+                    "event_store": event_store_probe(),
+                    "spicedb": spicedb_probe(),
+                    "redis": redis_probe(get_event_bus),
+                    "stt": stt_probe(),
+                    "tts": tts_probe(),
+                }
+            ),
+        )
         yield
 
 
@@ -102,6 +122,9 @@ app.include_router(
         summary="Advertise vendored microfrontend components for voice agent",
     )
 )
+
+
+add_readiness_route(app, "voice_agent")
 
 
 @app.get("/healthz")

@@ -10,8 +10,10 @@ keeps no app instance of its own, so two apps never share a registry.
 import uvicorn
 from mcp.server.fastmcp import FastMCP
 from runefoble_auth.principal import require_principal
+from runefoble_auth.readiness import spicedb_probe
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.event_publish import event_publish_failures
+from runefoble_platform.readiness import ReadinessGate, readiness_response, set_readiness_gate
 from runefoble_platform.telemetry import init_telemetry
 from starlette.requests import Request
 from starlette.responses import JSONResponse
@@ -52,12 +54,18 @@ def build_mcp(container: GatewayMcpContainer) -> FastMCP:
             }
         )
 
+    @mcp.custom_route("/readyz", methods=["GET"])
+    async def readyz(request: Request) -> JSONResponse:
+        """Report ready when SpiceDB answered once. The gate is set by `build_http_app`."""
+        return await readiness_response(request.app.state.readiness_gate, "gateway_mcp")
+
     return mcp
 
 
 def build_http_app(container: GatewayMcpContainer) -> BearerTransportAuth:
     """Return the MCP app with the tool admin routes. Every request needs a verified bearer (ADR-0015 c)."""
     app = build_mcp(container).streamable_http_app()
+    set_readiness_gate(app, ReadinessGate({"spicedb": spicedb_probe()}))
     mount_tools_registry(app, require_principal(get_verifier), container)
     return BearerTransportAuth(app)
 
