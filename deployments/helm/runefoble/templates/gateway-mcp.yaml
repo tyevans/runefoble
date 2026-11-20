@@ -23,6 +23,10 @@ spec:
       containers:
         - name: gateway-mcp
           image: {{ $mcp.image }}
+          {{- with $mcp.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           ports:
             - containerPort: {{ $mcp.port }}
           env:

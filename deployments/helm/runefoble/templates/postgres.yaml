@@ -50,6 +50,10 @@ spec:
       containers:
         - name: postgres
           image: {{ .Values.postgres.image }}
+          {{- with .Values.postgres.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           ports:
             - containerPort: {{ .Values.postgres.port }}
           # About 17 Runefoble clients each hold a connection pool. The server default of 100 is too low.

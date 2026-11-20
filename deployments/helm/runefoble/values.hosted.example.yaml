@@ -4,6 +4,19 @@
 # The chart fails the render until every REPLACE-ME is gone and no development default remains.
 # Do not put a credential value in this file. Create the Secret named in credentials.existingSecret.
 # See docs/reference/hosted-profile.md for every key and the check that guards it.
+# Resource sizes (TASK-0962). These are starting estimates. They are NOT measured values.
+# The measured load run (decision D11) sets the final numbers. Replace them before a release.
+# Each anchor sets requests (cpu and memory) and a memory limit. The guard requires both memory values.
+x-size-small: &small
+  requests: {cpu: 100m, memory: 256Mi}
+  limits: {memory: 512Mi}
+x-size-medium: &medium
+  requests: {cpu: 250m, memory: 512Mi}
+  limits: {memory: 1Gi}
+x-size-large: &large
+  requests: {cpu: 500m, memory: 1Gi}
+  limits: {memory: 2Gi}
+
 global:
   environment: production
   domain: REPLACE-ME
@@ -61,6 +74,9 @@ zitadel:
   externalSecure: true
   # Operator mail address for the first admin account.
   adminEmail: admin@REPLACE-ME
+  resources: *medium
+  # Sidecar that writes the admin token to the bootstrap Secret. It runs in the zitadel pod.
+  patPublisherResources: *small
   bootstrap:
     # Short expiry for the bootstrap token. Set a date that suits your rotation policy.
     patExpirationDate: "2027-01-01T00:00:00Z"
@@ -69,6 +85,7 @@ zitadel:
     postLogoutRedirectUris:
       - https://REPLACE-ME/
     devMode: false
+    resources: *small
 
 # Development-only workloads. A hosted render runs without them (PRD-0025 outcome 4).
 # Mailpit captures mail. Swagger UI lists the OpenAPI specs. OpenPanel is analytics (D6: off).
@@ -77,13 +94,68 @@ mailpit:
   enabled: false
 swaggerUI:
   enabled: false
+  resources: *small
 openpanel:
   enabled: false
+  resources: *medium
+
+frontend:
+  resources: *small
+  initResources: *small
+
+postgres:
+  resources: *large
+
+silo:
+  resources: *medium
+  bucketJob:
+    resources: *small
+
+spicedb:
+  resources: *medium
+  migrateResources: *small
+  schemaJob:
+    resources: *small
+
+observability:
+  otelCollector:
+    resources: *small
+  loki:
+    resources: *medium
+  grafana:
+    resources: *medium
 
 services:
   campaignLore:
     # Secret that you create. It holds the embedding endpoint key under the key api-key.
     embeddingApiKeySecret: campaign-lore-embedding
+    resources: *medium
+  gatewayApi:
+    resources: *medium
+  theWatcher:
+    resources: *medium
+  boardState:
+    resources: *medium
+  characterSheet:
+    resources: *medium
+  gameSession:
+    resources: *medium
+  voiceAgent:
+    resources: *large
+  rulesCompendium:
+    resources: *medium
+  assetForge:
+    resources: *medium
+  soundscape:
+    resources: *small
+  audienceStudio:
+    resources: *medium
+  campaignAnalytics:
+    resources: *small
+  inferenceWorker:
+    resources: *small
+  gatewayMcp:
+    resources: *small
 
 # Daily PostgreSQL backup to an S3-compatible bucket outside the cluster (TASK-0961).
 # The keys access-key and secret-key come from the Secret named in backup.credentialsSecret.

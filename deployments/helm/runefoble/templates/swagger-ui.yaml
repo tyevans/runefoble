@@ -26,6 +26,10 @@ spec:
       containers:
         - name: swagger-ui
           image: {{ .Values.swaggerUI.image }}
+          {{- with .Values.swaggerUI.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           ports:
             - containerPort: {{ .Values.swaggerUI.port }}
           env:

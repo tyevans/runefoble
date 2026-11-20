@@ -20,6 +20,10 @@ spec:
       containers:
         - name: silo
           image: {{ .Values.silo.image }}
+          {{- with .Values.silo.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           args: ["server", "/data", "--console-address", ":{{ .Values.silo.consolePort }}"]
           ports:
             - containerPort: {{ .Values.silo.port }}

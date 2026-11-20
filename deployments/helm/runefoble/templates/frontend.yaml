@@ -22,6 +22,10 @@ spec:
       initContainers:
         - name: render-runtime-config
           image: {{ .Values.frontend.image }}
+          {{- with .Values.frontend.initResources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           imagePullPolicy: {{ .Values.frontend.imagePullPolicy | default "IfNotPresent" }}
           command: ["sh", "-c"]
           args:
@@ -49,6 +53,10 @@ spec:
       containers:
         - name: frontend
           image: {{ .Values.frontend.image }}
+          {{- with .Values.frontend.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           imagePullPolicy: {{ .Values.frontend.imagePullPolicy | default "IfNotPresent" }}
           ports:
             - containerPort: {{ .Values.frontend.port }}

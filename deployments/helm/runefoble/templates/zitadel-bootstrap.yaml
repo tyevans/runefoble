@@ -80,6 +80,10 @@ spec:
       containers:
         - name: bootstrap
           image: {{ .Values.services.gatewayApi.image }}
+          {{- with .Values.zitadel.bootstrap.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           command: ["python", "-m", "zitadel_bootstrap.job"]
           env:
             # The Job package lives in the image source tree, outside the uv workspace members.

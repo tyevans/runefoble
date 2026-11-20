@@ -19,6 +19,10 @@ spec:
       containers:
         - name: openpanel
           image: {{ .Values.openpanel.image }}
+          {{- with .Values.openpanel.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           ports:
             - containerPort: {{ .Values.openpanel.port }}
           env:

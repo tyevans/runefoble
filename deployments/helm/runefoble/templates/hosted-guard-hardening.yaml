@@ -1,0 +1,52 @@
+{{- /*
+Hosted render guard for workload hardening (TASK-0962). It runs with the TASK-0955 guard in
+hosted-guard.yaml. It renders no object. The local render is not affected. Each check names the
+key path that failed. Docs: docs/reference/hosted-profile.md.
+
+Resources: every container of every Deployment, StatefulSet, and Job needs a memory request and
+a memory limit. CPU limits are not required (see the hosted profile page).
+*/ -}}
+
+{{- define "runefoble.hardening.requireMemory" -}}
+{{- $res := .resources | default dict -}}
+{{- $request := dig "requests" "memory" "" $res | toString -}}
+{{- $limit := dig "limits" "memory" "" $res | toString -}}
+{{- if or (eq $request "") (contains "REPLACE-ME" $request) -}}
+{{- fail (printf "%s.requests.memory must be set for a %s render. Found: %q" .key .env $request) -}}
+{{- end -}}
+{{- if or (eq $limit "") (contains "REPLACE-ME" $limit) -}}
+{{- fail (printf "%s.limits.memory must be set for a %s render. Found: %q" .key .env $limit) -}}
+{{- end -}}
+{{- end -}}
+
+{{- $env := .Values.global.environment -}}
+{{- if or (eq $env "staging") (eq $env "production") -}}
+
+{{- range $name, $svc := .Values.services -}}
+{{- include "runefoble.hardening.requireMemory" (dict "key" (printf "services.%s.resources" $name) "resources" $svc.resources "env" $env) -}}
+{{- end -}}
+
+{{- $workloads := list
+  (dict "key" "frontend.resources" "resources" .Values.frontend.resources)
+  (dict "key" "frontend.initResources" "resources" .Values.frontend.initResources)
+  (dict "key" "postgres.resources" "resources" .Values.postgres.resources)
+  (dict "key" "redis.resources" "resources" .Values.redis.resources)
+  (dict "key" "silo.resources" "resources" .Values.silo.resources)
+  (dict "key" "silo.bucketJob.resources" "resources" .Values.silo.bucketJob.resources)
+  (dict "key" "zitadel.resources" "resources" .Values.zitadel.resources)
+  (dict "key" "zitadel.patPublisherResources" "resources" .Values.zitadel.patPublisherResources)
+  (dict "key" "zitadel.bootstrap.resources" "resources" .Values.zitadel.bootstrap.resources)
+  (dict "key" "spicedb.resources" "resources" .Values.spicedb.resources)
+  (dict "key" "spicedb.migrateResources" "resources" .Values.spicedb.migrateResources)
+  (dict "key" "spicedb.schemaJob.resources" "resources" .Values.spicedb.schemaJob.resources)
+  (dict "key" "observability.otelCollector.resources" "resources" .Values.observability.otelCollector.resources)
+  (dict "key" "observability.loki.resources" "resources" .Values.observability.loki.resources)
+  (dict "key" "observability.grafana.resources" "resources" .Values.observability.grafana.resources)
+  (dict "key" "openpanel.resources" "resources" .Values.openpanel.resources)
+  (dict "key" "swaggerUI.resources" "resources" .Values.swaggerUI.resources)
+-}}
+{{- range $workloads -}}
+{{- include "runefoble.hardening.requireMemory" (merge (dict "env" $env) .) -}}
+{{- end -}}
+
+{{- end -}}

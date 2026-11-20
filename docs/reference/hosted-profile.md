@@ -140,6 +140,21 @@ adds the list to every Deployment, StatefulSet, and Job pod spec. When the list 
 renders no `imagePullSecrets` key. The chart does not create the Secret. The operator creates it
 (D2b, with the credential stored through [`hosted-secrets.md`](hosted-secrets.md)).
 
+## Workload resources
+
+Every container of every Deployment, StatefulSet, and Job needs `requests.memory` and
+`limits.memory`. The hosted guard (`templates/hosted-guard-hardening.yaml`) fails the render and
+names the first key that lacks one. CPU limits are optional. The chart sets no CPU limit, so a
+workload can use idle CPU. Requests set the scheduling share for each container.
+
+The sizes sit in the hosted example. Each `resources` key uses a YAML anchor (`*small`, `*medium`,
+`*large`). The example sizes are starting estimates. They are not measured. The measured load run
+(decision D11) sets the final values.
+
+Every workload runs one replica. The hosted render has no HorizontalPodAutoscaler and no
+PodDisruptionBudget. PRD-0025 sets no autoscaling. `gateway-mcp` keeps state in memory, so it
+must stay at one replica.
+
 ## Placeholder marker
 
 `REPLACE-ME` marks every value that an operator must set. The guard fails on it in every

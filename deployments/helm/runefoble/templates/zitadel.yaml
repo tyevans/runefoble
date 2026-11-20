@@ -68,6 +68,10 @@ spec:
       containers:
         - name: zitadel
           image: {{ .Values.zitadel.image }}
+          {{- with .Values.zitadel.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           args: ["start-from-init", "--masterkeyFromEnv", "--tlsMode", "disabled"]
           ports:
             - containerPort: {{ .Values.zitadel.port }}
@@ -151,6 +155,10 @@ spec:
             {{- end }}
         - name: pat-publisher
           image: {{ .Values.services.gatewayApi.image }}
+          {{- with .Values.zitadel.patPublisherResources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           command: ["python", "-m", "runefoble_auth.zitadel_pat_publisher"]
           volumeMounts:
             - name: bootstrap
