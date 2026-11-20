@@ -1,7 +1,7 @@
 ---
 id: '0960'
 title: Image Registry Value and Digest Pins for Every Hosted Image
-status: Refined
+status: Complete
 created: 2026-11-19
 dependencies:
 - '0955'
@@ -19,7 +19,7 @@ target_release: 1.0.0
 
 ## Status
 
-Refined. Release One hosting slice 7 (PRD-0025, outcome 6: CI builds the images, and a hosted install pulls them).
+Complete
 
 ## Summary
 

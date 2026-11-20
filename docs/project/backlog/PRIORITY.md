@@ -567,7 +567,7 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 560. **TASK-0957 (Complete)**: [`0957-dev-only-routes-are-off-in-the-hosted-profile.md`](complete/0957-dev-only-routes-are-off-in-the-hosted-profile.md) — Development-Only Public Routes Are Off in the Hosted Profile
 561. **TASK-0959 (Complete)**: [`0959-hosted-secret-contract.md`](complete/0959-hosted-secret-contract.md) — Every Operator Credential Comes From a Named Secret in the Hosted Profile
 562. **TASK-0958 (Refined)**: [`0958-zitadel-real-smtp-invite-only-sign-up-and-first-admin.md`](refined/0958-zitadel-real-smtp-invite-only-sign-up-and-first-admin.md) — Zitadel Uses Real SMTP, Closed Registration, and a First Admin on the Public Domain
-563. **TASK-0960 (Refined)**: [`0960-image-registry-and-digest-pins.md`](refined/0960-image-registry-and-digest-pins.md) — Image Registry Value and Digest Pins for Every Hosted Image
+563. **TASK-0960 (Complete)**: [`0960-image-registry-and-digest-pins.md`](complete/0960-image-registry-and-digest-pins.md) — Image Registry Value and Digest Pins for Every Hosted Image
 564. **TASK-0961 (Refined)**: [`0961-database-backups-and-restore-test.md`](refined/0961-database-backups-and-restore-test.md) — Daily PostgreSQL Backup to Storage Outside the Cluster, and a Tested Restore
 565. **TASK-0966 (Proposed)**: [`0966-redis-auth-and-observability-volumes.md`](proposed/0966-redis-auth-and-observability-volumes.md) — Redis Requires a Password, and Loki and Grafana Keep Their Data
 566. **TASK-0962 (Refined)**: [`0962-resource-requests-network-policies-and-pod-security.md`](refined/0962-resource-requests-network-policies-and-pod-security.md) — Resource Requests, Network Policies, and Pod Security for the Hosted Release
