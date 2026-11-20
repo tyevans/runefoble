@@ -32,7 +32,7 @@ function sessionApp(currentUserId: string): RunefobleApp {
     tokens: [],
     events: [],
     atmosphere: {},
-    isListening: false,
+    voiceUtterance: { sending: false, transcript: '', watcherError: '', uploadError: '' },
     activeCharacter: bind(),
     resolveActiveCharacter: bind,
     getWebSocketUrl: () => 'ws://127.0.0.1:9/ws/boards/sess-1',

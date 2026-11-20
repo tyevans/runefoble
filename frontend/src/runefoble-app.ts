@@ -40,6 +40,7 @@ import type { SessionParticipant } from './services/owner-wire-mappers.ts';
 import type { BoardTarget } from './app/board-dm-controls.ts';
 import type { RunefobleHeader } from './components/runefoble-header.ts';
 import { IDLE_JOIN_STATE, type JoinViewState } from './app/campaign-join-actions.ts';
+import { IDLE_VOICE_UTTERANCE, type VoiceUtteranceView } from './app/voice-utterance-actions.ts';
 
 @customElement('runefoble-app')
 export class RunefobleApp extends LitElement {
@@ -53,7 +54,7 @@ export class RunefobleApp extends LitElement {
   @state() public isSettingsOpen = false;
   @state() public currentTheme = 'bauhaus';
   @state() public currentColorMode: 'light' | 'dark' | 'system' = 'system';
-  @state() public isListening = false;
+  @state() public voiceUtterance: VoiceUtteranceView = IDLE_VOICE_UTTERANCE;
   @state() public socketConnected = false;
   @state() public campaignId = '';
   @state() public sessionId = '';
