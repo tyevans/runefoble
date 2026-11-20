@@ -235,11 +235,11 @@ When players are away from their primary desktop setup, the `<runefoble-absentee
 ```
 
 The component has no default character name, stance or stand-in state. The App Shell passes each value:
-- `standInActive`: the real stand-in flag of the bound character. `false` shows "Player Present".
+- `standInActive`: the stand-in flag of the caller seat, `is_stand_in_active` on the session participant. `false` shows "Player Present".
 - `currentStance`: the saved stance. An empty value shows "No stance set".
 - `characterName` and `characterClass`: from the character record.
 
-The App Shell shows the "Stance Directives" button only for a bound character that is an active stand-in (`isAiStandIn`). The drawer reads the character and the stored policy when it opens.
+The App Shell shows the "Stance Directives" button only when the caller seat is an active stand-in. The session load reads `GET /api/v1/sessions/{id}` on every load, and it keeps each seat with its stand-in state. A `player_stand_in` frame updates the caller seat. The character record flag is not read for this (TASK-0974). When the drawer opens, it reads the session state and the stored policy again.
 
 ### Saving a Stance
 

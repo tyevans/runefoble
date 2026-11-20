@@ -1,7 +1,7 @@
 /**
  * The absentee stance drawer shows the real stand-in state and the saved stance (TASK-0954).
  *
- * The gateway is faked at the fetch boundary. Opening the drawer reads the character and its
+ * The gateway is faked at the fetch boundary. Opening the drawer reads the session state and the
  * guardrail policy. Saving a stance writes the full policy. The drawer shows a stance only after
  * the gateway confirms it. Governing ADRs: ADR-0015, ADR-0013.
  */
@@ -10,9 +10,14 @@ import { afterEach, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { installFakeGateway, type FakeGateway } from '../support/fake-gateway.ts';
 import { openAbsenteeDrawer, saveAbsenteeStance } from '../../src/app/absentee-actions.ts';
+import { findCallerSeat } from '../../src/app/active-character.ts';
+import { OWNER_PARTICIPANTS, OWNER_SESSION_STATE } from '../support/owner-wire-fixtures.ts';
 
 interface Host {
   activeCharacter: any;
+  sessionId: string;
+  currentUserId: string;
+  sessionParticipants: any[];
   characters: any[];
   absenteeStance: string;
   isAbsenteeDirectiveOpen: boolean;
@@ -24,6 +29,9 @@ function makeHost(): Host {
   const char = { id: 'char-7', name: 'Seoni', isAiStandIn: false };
   return {
     activeCharacter: char,
+    sessionId: 'session-tomb-14',
+    currentUserId: 'user-fixture',
+    sessionParticipants: [],
     characters: [char],
     absenteeStance: '',
     isAbsenteeDirectiveOpen: false,
@@ -32,13 +40,13 @@ function makeHost(): Host {
   };
 }
 
-describe('opening the stance drawer reads the real stand-in state', () => {
+describe('opening the stance drawer reads the caller seat from the session state', () => {
   let gateway: FakeGateway | undefined;
   afterEach(() => { gateway?.restore(); gateway = undefined; });
 
-  it('takes the stand-in flag from the character and the stance from the stored policy', async () => {
+  it('takes the stand-in state from the caller seat and the stance from the stored policy', async () => {
     gateway = installFakeGateway({
-      'GET /api/v1/characters/char-7': { body: { id: 'char-7', name: 'Seoni', isAiStandIn: true, owner_id: 'user-seoni' } },
+      'GET /api/v1/sessions/session-tomb-14': { body: { ...OWNER_SESSION_STATE, participants: { ...OWNER_PARTICIPANTS, 'user-fixture': { ...OWNER_PARTICIPANTS['user-fixture'], is_stand_in_active: true } } } },
       'GET /api/v1/characters/char-7/guardrails': { body: { stance: 'cautious' } },
     });
     const host = makeHost();
@@ -46,14 +54,26 @@ describe('opening the stance drawer reads the real stand-in state', () => {
     await openAbsenteeDrawer(host as any);
 
     assert.equal(host.isAbsenteeDirectiveOpen, true);
-    assert.equal(host.activeCharacter.isAiStandIn, true);
-    assert.equal(host.characters[0].isAiStandIn, true);
+    assert.equal(findCallerSeat(host.sessionParticipants, 'user-fixture')?.isStandInActive, true);
     assert.equal(host.absenteeStance, 'cautious');
+  });
+
+  it('does not read the character record for the stand-in flag', async () => {
+    gateway = installFakeGateway({
+      'GET /api/v1/sessions/session-tomb-14': { body: OWNER_SESSION_STATE },
+      'GET /api/v1/characters/char-7/guardrails': { body: { stance: 'cautious' } },
+    });
+    const host = makeHost();
+
+    await openAbsenteeDrawer(host as any);
+
+    assert.equal(gateway.calls.some((c) => c.path === '/api/v1/characters/char-7'), false);
+    assert.equal(findCallerSeat(host.sessionParticipants, 'user-fixture')?.isStandInActive, false);
   });
 
   it('shows no stance when the player has not chosen one', async () => {
     gateway = installFakeGateway({
-      'GET /api/v1/characters/char-7': { body: { id: 'char-7', isAiStandIn: true, owner_id: 'user-seoni' } },
+      'GET /api/v1/sessions/session-tomb-14': { body: OWNER_SESSION_STATE },
       'GET /api/v1/characters/char-7/guardrails': { body: { stance: null } },
     });
     const host = makeHost();
@@ -63,9 +83,9 @@ describe('opening the stance drawer reads the real stand-in state', () => {
     assert.equal(host.absenteeStance, '');
   });
 
-  it('keeps the drawer closed and shows the server message when the read fails', async () => {
+  it('keeps the drawer closed and shows the server message when the session read fails', async () => {
     gateway = installFakeGateway({
-      'GET /api/v1/characters/char-7': { status: 503, body: { detail: 'Character service is unavailable.' } },
+      'GET /api/v1/sessions/session-tomb-14': { status: 503, body: { detail: 'Session service is unavailable.' } },
       'GET /api/v1/characters/char-7/guardrails': { body: { stance: 'heroic' } },
     });
     const host = makeHost();

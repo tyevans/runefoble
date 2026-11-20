@@ -35,6 +35,7 @@ Feature: Session view controls work or are removed
     Then no "Stance Directives" button is shown to Valeros
 
   Scenario: The DM board shows no hidden-layer toggle
-    Given Evelyn launches the session and sets up the battlemap
+    Given Valeros opens the lobby of "Stance Lobby"
+    And Evelyn launches the session and sets up the battlemap
     Then no "Hidden" layer toggle is shown
     And the "Arm Cell" control is shown
