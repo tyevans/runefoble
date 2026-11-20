@@ -12,6 +12,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from gateway_api.account_invite_limits import build_account_invite_limits
 from gateway_api.auth_sync import router as auth_sync_router
 from gateway_api.cors import install_cors
 from gateway_api.dependencies import event_bus_provider, get_event_bus, platform_settings
@@ -31,6 +32,7 @@ from gateway_api.routers import (
     spectator_router,
     voice_proxy_router,
 )
+from gateway_api.routers.account_invites_proxy import router as account_invites_router
 from gateway_api.routers.assets_proxy import router as assets_router
 from gateway_api.routers.audience import router as audience_router
 from gateway_api.routers.caravan_proxy import router as caravan_router
@@ -56,6 +58,7 @@ from runefoble_platform.telemetry import init_telemetry
 async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Build the upstream clients and start the session frame consumer. Stop both at shutdown."""
     app.state.upstreams = UpstreamRegistry.from_settings(PlatformSettings())
+    app.state.account_invite_limits = build_account_invite_limits()
     set_readiness_gate(app, readiness_gate())
     try:
         async with event_bus_provider.lifespan(app):
@@ -86,6 +89,7 @@ install_cors(app, platform_settings.cors_origins)
 app.include_router(health_router)
 app.include_router(auth_router)
 app.include_router(campaigns_router)
+app.include_router(account_invites_router)
 app.include_router(boards_router)
 app.include_router(sessions_router)
 app.include_router(analytics_views_router)

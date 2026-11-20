@@ -139,6 +139,13 @@ class JoinCampaignRequest(BaseModel):
     invite_token: str
 
 
+class CreateAccountRequest(BaseModel):
+    """Body of the invite account route. game_session validates the email (ADR-0023 b)."""
+
+    email: str = Field(..., min_length=3, max_length=254)
+    display_name: str = Field(..., min_length=1, max_length=100)
+
+
 class JoinSessionRequest(BaseModel):
     """Take a lobby seat with one character. game_session checks `session.participate`."""
 

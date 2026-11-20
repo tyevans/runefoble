@@ -55,6 +55,9 @@ spec:
             {{- if $svc.serviceCredential }}
             {{- include "runefoble.serviceCredentialEnv" $ | nindent 12 }}
             {{- end }}
+            {{- if $svc.zitadelProvisioner }}
+            {{- include "runefoble.zitadelProvisionerEnv" $ | nindent 12 }}
+            {{- end }}
             {{- if or (not (hasKey $svc "eventStore")) $svc.eventStore }}
             - name: RUNEFOBLE_EVENT_STORE_BACKEND
               value: "postgresql"

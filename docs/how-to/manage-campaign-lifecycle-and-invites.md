@@ -164,9 +164,53 @@ curl -X POST "http://localhost:8000/api/v1/campaigns/join" \
 |---|---|---|
 | Unknown token | `400` | `invalid_invite` |
 | Invite past `expires_at` | `410` | `invite_expired` |
-| `max_uses` reached | `409` | `invite_exhausted` |
+| `max_uses` reached | `410` | `invite_exhausted` |
 
 A user who is already a member gets `200` again. The join does not use up another invite slot. The owner gets `200` with role `owner`.
+
+A person whose account came from an invite link (section 4a) completes the join here too. Their join is complete when the response is `200`. It does not use an invite slot, because the account already used one.
+
+---
+
+## 4a. Creating an Account from an Invite Link
+
+ADR-0023 lets a person with no account join through an invite link. The person gives a display name and an email. Runefoble asks Zitadel to create the user with no password. Zitadel sends its own email. The person sets the password and verifies the address on the Zitadel page. Runefoble never receives the password.
+
+```bash
+curl -X POST "http://localhost:8000/api/v1/campaigns/invites/dGVzdF9pbnZpdGVfdG9rZW4/accounts" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "friend@example.com",
+    "display_name": "Ada Lovelace"
+  }'
+```
+
+No bearer token is needed. The reply is the same for a new email and for an email that already has an account. An existing account gets a password-reset email instead.
+
+**Response (`202 Accepted`):**
+```json
+{
+  "status": "accepted",
+  "message": "Check your email to finish creating your account."
+}
+```
+
+| Case | Status | `detail.error` |
+|---|---|---|
+| Token matches no invite | `404` | `invite_not_found` |
+| Invite past `expires_at` | `410` | `invite_expired` |
+| `max_uses` reached | `410` | `invite_exhausted` |
+| Malformed body | `422` | (validation) |
+| Too many requests for the client or the invite | `429` with `Retry-After` | (gateway) |
+| Zitadel unavailable | `503` | `account_provider_unavailable` |
+
+Each refused case makes no call to Zitadel. A `503` records no invite use and creates no account.
+
+After the person sets the password and signs in, the App Shell returns to the join link. The join route (section 4) completes the pending join. Until then the person has no campaign relation.
+
+The limits are 20 requests for each client address and 30 requests for each invite, in one hour. A refused request waits for the `Retry-After` time. The full rules are in [Identity and Token Contract](../reference/identity-and-token-contract.md#invite-account-route-adr-0023).
+
+---
 
 **Response (`200 OK`):**
 ```json
@@ -415,7 +459,7 @@ The gateway holds no campaign, invite, membership, or session state. Each campai
 
 - `game_session` unreachable or not configured: the gateway returns `503` with `{"detail": "Upstream service is unavailable", "upstream": "game_session"}`.
 - `game_session` returns a 5xx: the gateway returns `502` with the same body shape.
-- `game_session` returns a 4xx (for example `403 permission_denied`, `404 campaign_not_found`, `409 invite_exhausted`): the gateway returns that status and body unchanged.
+- `game_session` returns a 4xx (for example `403 permission_denied`, `404 campaign_not_found`, `410 invite_exhausted`): the gateway returns that status and body unchanged.
 - An unknown campaign ID returns `404` with `campaign_not_found`. The owner checks existence before permission, so a caller cannot read a fixture campaign for an unknown ID.
 
 ## 11. Campaign Detail Hero Header & Metadata Component

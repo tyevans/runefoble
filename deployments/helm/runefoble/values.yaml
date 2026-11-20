@@ -225,6 +225,16 @@ zitadel:
   # Kubernetes Secret written by the bootstrap Job. Keys: project-id, client-id.
   client:
     secretName: runefoble-zitadel-client
+  # Zitadel service token that game_session uses to create accounts from invite links
+  # (ADR-0023 c). It is read only by services with `zitadelProvisioner: true`. Hosted
+  # environments set `secretName` to a Secret that they manage, with a service user that
+  # holds only the user write permission. An empty `secretName` renders no token. The local
+  # cluster then uses the admin token of the bootstrap Job (DEV-ONLY, Kind only).
+  provisioner:
+    secretName: ""
+    secretKey: pat
+    # Zitadel organization that owns the accounts. Empty means the organization of the token.
+    orgId: ""
 
 # Zanzibar Authorization (SpiceDB self-hosted)
 spicedb:
@@ -340,6 +350,8 @@ services:
     urlEnv: RUNEFOBLE_GAME_SESSION_URL
     consumers: [gateway-api, campaign-lore, gateway-mcp]
     serviceCredential: true
+    # Creates the player account of an invite link through Zitadel (ADR-0023 c).
+    zitadelProvisioner: true
     # /readyz (the default) waits for the event store, SpiceDB and Redis (TASK-0929).
     livenessPath: /healthz
   voiceAgent:
