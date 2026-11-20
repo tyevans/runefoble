@@ -112,6 +112,7 @@ markers = [
     "docker: builds and runs Docker images; needs a reachable Docker daemon",
     "serial: checks wall-clock time or starts a browser; the gate runs it after the parallel run",
     "authz_live: runs against a live SpiceDB container with runefoble.zed loaded (make test-authz-live)",
+    "requires_kind: runs against a live Kind cluster and Helm releases; opt in with its environment variables",
 ]
 
 [tool.importlinter]

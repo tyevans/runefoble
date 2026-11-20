@@ -168,3 +168,70 @@ def test_generated_secret_rows_match_the_chart_values():
 def test_generated_secret_rows_list_their_keys(name_cell: str, expected: set[str]):
     """Each generated Secret row lists the keys that its writer sets."""
     assert _contract_keys(name_cell) == expected
+
+
+BACKUP_NAME_CELL = "backup.credentialsSecret"
+TEAM_BACKUP_SECRET = "team-backup-credentials"
+BACKUP_ENCRYPTION_KEY = "encryption-passphrase"
+
+
+def _backup_secret_refs(docs: list[dict[str, Any]]) -> set[tuple[str, str]]:
+    """Return (secret name, key) for every env entry of the backup CronJob and restore Job."""
+    refs: set[tuple[str, str]] = set()
+    for doc in docs:
+        if doc.get("kind") == "CronJob":
+            pod_spec = doc["spec"]["jobTemplate"]["spec"]["template"]["spec"]
+        elif doc.get("kind") == "Job" and doc["metadata"]["name"] == "postgres-restore":
+            pod_spec = doc["spec"]["template"]["spec"]
+        else:
+            continue
+        for container in pod_spec.get("initContainers", []) + pod_spec.get("containers", []):
+            for item in container.get("env", []):
+                ref = item.get("valueFrom", {}).get("secretKeyRef")
+                if ref is not None:
+                    refs.add((ref["name"], ref["key"]))
+    return refs
+
+
+def test_backup_rows_list_the_keys_that_the_backup_reads_without_encryption(tmp_path: Path):
+    """Without encryption, the backup and restore read access-key and secret-key only."""
+    docs = render_chart(
+        "-f",
+        str(
+            hosted_values_file(
+                tmp_path,
+                **{
+                    "backup.credentialsSecret": TEAM_BACKUP_SECRET,
+                    "restore.enabled": True,
+                    "restore.objectPrefix": "postgres/2026-11-18",
+                },
+            )
+        ),
+    )
+
+    read = {key for name, key in _backup_secret_refs(docs) if name == TEAM_BACKUP_SECRET}
+
+    assert read == _contract_keys(BACKUP_NAME_CELL) - {BACKUP_ENCRYPTION_KEY}
+
+
+def test_backup_rows_list_the_keys_that_the_backup_reads_with_encryption(tmp_path: Path):
+    """With encryption, the backup and restore also read the passphrase key."""
+    docs = render_chart(
+        "-f",
+        str(
+            hosted_values_file(
+                tmp_path,
+                **{
+                    "backup.credentialsSecret": TEAM_BACKUP_SECRET,
+                    "backup.encryption.enabled": True,
+                    "restore.enabled": True,
+                    "restore.objectPrefix": "postgres/2026-11-18",
+                },
+            )
+        ),
+    )
+
+    read = {key for name, key in _backup_secret_refs(docs) if name == TEAM_BACKUP_SECRET}
+
+    assert read == _contract_keys(BACKUP_NAME_CELL)
+    assert BACKUP_ENCRYPTION_KEY in read
