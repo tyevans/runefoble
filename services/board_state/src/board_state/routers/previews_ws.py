@@ -81,6 +81,7 @@ async def _handle_confirm_move(session_id: str, data: dict[str, Any]) -> None:
         "x": tok.x,
         "y": tok.y,
         "active_hazard": tok.active_hazard,
+        "version": board.version,
         **outcome.as_wire(),
     }
     await board_ws_manager.broadcast(session_id, msg)
@@ -113,13 +114,15 @@ async def _connected_frame(session_id: str) -> dict[str, Any]:
     """The first frame: the board tokens at subscribe time, keyed by token id.
 
     A client can read the board before its socket opens. The snapshot covers any move that
-    was saved in between.
+    was saved in between. `version` is the board version of the snapshot. A client keeps the
+    newest version it applied, so a snapshot read before a later move never moves a token back.
     """
     board = await get_board(session_id)
     return {
         "type": "connected",
         "session_id": session_id,
         "message": "Connected to tactical board real-time stream.",
+        "version": board.version,
         "tokens": {tid: t.model_dump(mode="json") for tid, t in board.state.tokens.items()},
     }
 

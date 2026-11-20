@@ -28,6 +28,49 @@ function makeHost() {
   };
 }
 
+describe('board frames keep the newest board version (TASK-0938)', () => {
+  it('a connected snapshot with an older version does not move a token back', () => {
+    const host = { ...makeHost(), boardVersion: null as number | null };
+
+    handleBoardSocketMessage(host, { action: 'token_moved', token_id: 'valeros', x: 3, y: 3, version: 5 });
+    handleBoardSocketMessage(host, {
+      type: 'connected',
+      version: 4,
+      tokens: { valeros: { token_id: 'valeros', name: 'Valeros', x: 1, y: 1 }, kyra: { token_id: 'kyra', name: 'Kyra', x: 4, y: 4 } },
+    });
+
+    assert.deepEqual([host.tokens[0].x, host.tokens[0].y], [3, 3]);
+    assert.equal(host.boardVersion, 5);
+  });
+
+  it('a token_moved frame with an older version does not replace a newer snapshot', () => {
+    const host = { ...makeHost(), boardVersion: null as number | null };
+
+    handleBoardSocketMessage(host, {
+      type: 'connected',
+      version: 7,
+      tokens: { valeros: { token_id: 'valeros', name: 'Valeros', x: 6, y: 6 }, kyra: { token_id: 'kyra', name: 'Kyra', x: 4, y: 4 } },
+    });
+    handleBoardSocketMessage(host, { action: 'token_moved', token_id: 'valeros', x: 3, y: 3, version: 6 });
+
+    assert.deepEqual([host.tokens[0].x, host.tokens[0].y], [6, 6]);
+  });
+
+  it('a newer snapshot replaces the shown tokens', () => {
+    const host = { ...makeHost(), boardVersion: null as number | null };
+
+    handleBoardSocketMessage(host, { action: 'token_moved', token_id: 'valeros', x: 3, y: 3, version: 5 });
+    handleBoardSocketMessage(host, {
+      type: 'connected',
+      version: 6,
+      tokens: { valeros: { token_id: 'valeros', name: 'Valeros', x: 3, y: 4 }, kyra: { token_id: 'kyra', name: 'Kyra', x: 4, y: 4 } },
+    });
+
+    assert.deepEqual([host.tokens[0].x, host.tokens[0].y], [3, 4]);
+    assert.equal(host.boardVersion, 6);
+  });
+});
+
 describe('board token updates', () => {
   it('token_moved puts a new list and a new token on the host', () => {
     const host = makeHost();

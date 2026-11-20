@@ -11,6 +11,8 @@ import { snapAngle } from './aoe_geometry.ts';
 
 export interface BoardActionsHost {
   tokens: BoardToken[];
+  /** The newest board version applied from a socket frame. Null before the first versioned frame. */
+  boardVersion: number | null;
   activeAoE: AoETemplateConfig | null;
   aoeAffectedTokenIds: string[];
   aoeAffectedCells: [number, number][];
@@ -52,13 +54,29 @@ export function boardTokenFromPlaced(token: any): BoardToken | null {
 }
 
 /**
+ * Keeps the newest board version. Returns false for a frame that is older than the newest version
+ * applied (TASK-0938). A snapshot read before a later move can arrive after that move's frame.
+ * A frame without a version carries no order, so it is applied.
+ */
+function acceptBoardVersion(host: { boardVersion: number | null }, version: unknown): boolean {
+  if (!Number.isInteger(version)) return true;
+  const newest = version as number;
+  if (host.boardVersion !== null && newest < host.boardVersion) return false;
+  host.boardVersion = newest;
+  return true;
+}
+
+/**
  * Applies the token snapshot of the board socket `connected` frame: a map of token id to
  * PlacedTokenState at subscribe time. The board can be read before its socket opens, so a move
- * saved in between is only in the snapshot. The server state replaces the shown token list.
- * A frame without a token map changes nothing.
+ * saved in between is only in the snapshot. The server state replaces the shown token list,
+ * unless the snapshot is older than a frame already applied. A frame without a token map
+ * changes nothing.
  */
-function applyConnectedSnapshot(host: { tokens: BoardToken[] }, tokens: unknown): void {
+function applyConnectedSnapshot(host: { tokens: BoardToken[]; boardVersion: number | null }, frame: any): void {
+  const tokens = frame.tokens;
   if (tokens === null || typeof tokens !== 'object' || Array.isArray(tokens)) return;
+  if (!acceptBoardVersion(host, frame.version)) return;
   const shown = new Map(host.tokens.map((t) => [t.id, t]));
   const next: BoardToken[] = [];
   for (const entry of Object.values(tokens)) {
@@ -191,12 +209,12 @@ export function handleBoardSocketMessage(
   } else if (action === 'token_moved' || action === 'preview_cancelled') {
     host.ghostEngine?.cancel();
     if (action === 'token_moved') {
-      if (typeof data.x === 'number' && typeof data.y === 'number') {
+      if (typeof data.x === 'number' && typeof data.y === 'number' && acceptBoardVersion(host, data.version)) {
         replaceToken(host, data.token_id, { x: data.x, y: data.y });
       }
     }
   } else if (data.type === 'connected') {
-    applyConnectedSnapshot(host, data.tokens);
+    applyConnectedSnapshot(host, data);
   } else if (data.type === 'token_placed') {
     const placed = boardTokenFromPlaced(data.token);
     if (placed) addPlacedToken(host, placed);

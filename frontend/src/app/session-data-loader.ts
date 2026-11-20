@@ -30,11 +30,24 @@ export async function loadLobbyData(host: RunefobleApp, route: MatchedRoute): Pr
   host.characters = chars.data;
 }
 
+/** The number of the newest board read that started for each host (TASK-0938). */
+const newestBoardRead = new WeakMap<RunefobleApp, number>();
+
+/** Numbers a new board read. Each read is numbered in the order that it starts. */
+function startBoardRead(host: RunefobleApp): number {
+  const readNo = (newestBoardRead.get(host) ?? 0) + 1;
+  newestBoardRead.set(host, readNo);
+  return readNo;
+}
+
 /**
  * Copies the session board to the host. A session without a board keeps no tokens, and the
  * view shows the no-battlemap state in the board area (TASK-0906).
+ * A read that answers after a newer read started is dropped (TASK-0938). Its tokens are older
+ * than the newer read, and they would move the board back.
  */
-function applyBoard(host: RunefobleApp, board: SessionBoard): void {
+function applyBoard(host: RunefobleApp, board: SessionBoard, readNo: number): void {
+  if (newestBoardRead.get(host) !== readNo) return;
   host.boardKind = board.kind;
   if (board.kind === 'no_board') {
     host.tokens = [];
@@ -53,6 +66,7 @@ function applyBoard(host: RunefobleApp, board: SessionBoard): void {
 export async function loadActiveSessionData(host: RunefobleApp, route: MatchedRoute): Promise<void> {
   const cId = route.params.campaignId ?? '';
   const sId = route.params.sessionId ?? '';
+  const readNo = startBoardRead(host);
   const [boardData, events, chars, camp, caps] = await Promise.all([
     appDataService.fetchBoardState(sId),
     appDataService.fetchSessionEvents(sId),
@@ -67,7 +81,7 @@ export async function loadActiveSessionData(host: RunefobleApp, route: MatchedRo
   if (!seats.ok) return failLoad(host, seats);
   setCurrentCampaign(host, camp.data);
   setCampaignCapabilities(host, caps.data);
-  applyBoard(host, boardData.data);
+  applyBoard(host, boardData.data, readNo);
   host.sessionSeats = seats.data;
   host.atmosphere = { location_name: host.sessionTitle };
   const liveEvents = host.events.filter((e) => !events.data.some((ev) => ev.id === e.id));

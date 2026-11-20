@@ -50,6 +50,8 @@ export class RunefobleBoard extends LitElement {
   public physicsBridge: PhysicsBridge | null = null;
   private resizeObserver: ResizeObserver | null = null;
   ws: WebSocket | null = null;
+  /** The newest board version applied from a socket frame (TASK-0938). */
+  boardVersion: number | null = null;
   private readonly auth = new AuthConsumerController(this);
 
   connectedCallback() {
@@ -155,6 +157,8 @@ export class RunefobleBoard extends LitElement {
       console.error('The board socket was not opened: no signed-in session.');
       return;
     }
+    // A board version orders the frames of one socket stream. A new socket starts a new order.
+    this.boardVersion = null;
     this.ws = new WebSocket(url, websocketProtocols(token));
     this.ws.onmessage = (event) => { try { this.handleIncomingSocketMessage(JSON.parse(event.data)); } catch {} };
   }
