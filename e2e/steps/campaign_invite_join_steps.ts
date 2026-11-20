@@ -44,10 +44,16 @@ async function generatePlayerLink(page: Page): Promise<string> {
   await openInviteModal(page);
   const modal = membersModal(page);
   await modal.locator('#invite-role-select').selectOption({ value: 'player' });
-  await modal.getByRole('button', { name: 'Generate Link', exact: true }).click();
   const linkInput = modal.locator('.invite-link-input');
-  await expect.poll(async () => linkInput.inputValue(), { timeout: 10_000 }).toMatch(/#\/join\//);
-  return linkInput.inputValue();
+  const previous = (await linkInput.count()) > 0 ? await linkInput.inputValue() : '';
+  await modal.getByRole('button', { name: 'Generate Link', exact: true }).click();
+  // Accept only a link that this click produced. A link from an earlier invite is never the new one (TASK-0973).
+  await expect
+    .poll(async () => ((await linkInput.count()) > 0 ? linkInput.inputValue() : ''), { timeout: 10_000 })
+    .toMatch(/#\/join\//);
+  const link = await linkInput.inputValue();
+  expect(link).not.toBe(previous);
+  return link;
 }
 
 function storeInviteLink(world: { set(key: string, value: unknown): void }, link: string): void {

@@ -177,6 +177,8 @@ A person whose account came from an invite link (section 4a) completes the join 
 
 The invite field shows no link until the DM clicks "Generate Link" in the current view. The App Shell never shows a placeholder token.
 
+While the request is out, the field and "Copy Link" are empty and disabled. "Generate Link" is also disabled. The App Shell clears the previous link when the request starts. A refused request shows the server message and no link. "Copy Link" copies only the link that the field shows at that time. Opening the invite modal for another campaign shows no link from the previous campaign.
+
 ---
 
 ## 4a. Creating an Account from an Invite Link

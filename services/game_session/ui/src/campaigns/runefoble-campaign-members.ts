@@ -41,6 +41,8 @@ export class RunefobleCampaignMembers extends LitElement {
   @property({ type: String, attribute: 'current-user-id' }) currentUserId = '';
   /** The full invite URL from the App Shell, or an empty string before the DM generates a link (ADR-0015). */
   @property({ type: String, attribute: 'invite-url' }) inviteUrl = '';
+  /** True while the App Shell waits for a Generate Link reply. The field and Copy Link stay empty and disabled (TASK-0973). */
+  @property({ type: Boolean, attribute: 'invite-pending' }) invitePending = false;
 
   @state() private isInviteOpen = false;
   @state() private selectedInviteRole: 'player' | 'spectator' = 'player';
@@ -73,6 +75,7 @@ export class RunefobleCampaignMembers extends LitElement {
   }
 
   private handleGenerateInvite(): void {
+    if (this.invitePending) return;
     this.dispatchEvent(new CustomEvent<CreateInviteEventDetail>('create-invite', {
       detail: { campaignId: this.campaignId, role: this.selectedInviteRole },
       bubbles: true,
@@ -82,6 +85,7 @@ export class RunefobleCampaignMembers extends LitElement {
 
   private async copyInviteLink(): Promise<void> {
     const link = this.inviteUrl;
+    if (!link || this.invitePending) return;
     try {
       if (typeof navigator === 'undefined' || !navigator.clipboard?.writeText) throw new Error('Clipboard unavailable');
       await navigator.clipboard.writeText(link);
@@ -169,15 +173,15 @@ export class RunefobleCampaignMembers extends LitElement {
                 <option value="player">Player</option>
                 <option value="spectator">Spectator</option>
               </select>
-              <button class="btn-generate-link" @click=${this.handleGenerateInvite} type="button">Generate Link</button>
+              <button class="btn-generate-link" @click=${this.handleGenerateInvite} ?disabled=${this.invitePending} type="button">Generate Link</button>
             </div>
           </div>
-          ${this.inviteUrl ? html`
+          ${this.inviteUrl || this.invitePending ? html`
             <div class="form-group">
               <label class="form-label">Shareable Link</label>
               <div class="invite-link-row">
-                <input type="text" class="form-input invite-link-input" readonly .value=${this.inviteUrl} />
-                <button class="btn-copy" @click=${this.copyInviteLink} type="button">
+                <input type="text" class="form-input invite-link-input" readonly .value=${this.inviteUrl} ?disabled=${this.invitePending || !this.inviteUrl} />
+                <button class="btn-copy" @click=${this.copyInviteLink} ?disabled=${this.invitePending || !this.inviteUrl} type="button">
                   ${this.copyState === 'copied' ? 'Copied!' : 'Copy Link'}
                 </button>
               </div>

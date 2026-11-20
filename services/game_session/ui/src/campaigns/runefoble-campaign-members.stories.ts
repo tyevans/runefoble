@@ -1,7 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/web-components';
 import { html } from 'lit';
+import { ref } from 'lit/directives/ref.js';
 import './runefoble-campaign-members.ts';
 import type { CampaignMember } from './types.ts';
+import type { RunefobleCampaignMembers } from './runefoble-campaign-members.ts';
 
 const meta: Meta = {
   title: 'GameSession/CampaignMembers',
@@ -101,6 +103,26 @@ export const ManagerWithDmAliasRole: Story = {
       current-user-id="usr-evelyn"
       .canManage=${true}
       .members=${[{ ...sampleMembers[0], role: 'owner' }, { ...sampleMembers[1], role: 'dm' }]}
+    ></runefoble-campaign-members>
+  `,
+};
+
+/** The invite modal opens after the element mounts. The microtask keeps the state change out of the render. */
+const openInviteAfterMount = (el: Element | undefined) => {
+  if (!el) return;
+  queueMicrotask(() => (el as RunefobleCampaignMembers).openInviteModal());
+};
+
+export const GeneratingInviteLink: Story = {
+  render: () => html`
+    <runefoble-campaign-members
+      campaign-id="camp-drakkenheim-001"
+      campaign-title="Shadows of Drakkenheim"
+      current-user-id="usr-evelyn"
+      .canManage=${true}
+      .members=${sampleMembers}
+      .invitePending=${true}
+      ${ref(openInviteAfterMount)}
     ></runefoble-campaign-members>
   `,
 };
