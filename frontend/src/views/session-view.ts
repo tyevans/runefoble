@@ -14,6 +14,7 @@ import { openAbsenteeDrawer } from '../app/absentee-actions.ts';
 import { findCallerSeat } from '../app/active-character.ts';
 import { speakerTokenCell } from '../app/command-bar-context.ts';
 import { handleActionVetoed, whisperBarProps } from '../app/whisper-bar-actions.ts';
+import { handleVoiceUtterance } from '../app/voice-utterance-actions.ts';
 
 /**
  * The DM ends an active session (TASK-0953). Only a caller with the `run_session` capability sees
@@ -92,7 +93,7 @@ export function renderSessionActive(app: RunefobleApp) {
   </div>
   <div class="voice-container">
     ${renderCommandBar(app, char)}
-    <runefoble-voice-controls .isListening=${app.isListening} @voice-toggle=${() => { app.isListening = !app.isListening; }}></runefoble-voice-controls>
+    <runefoble-voice-controls .sending=${app.voiceUtterance.sending} .transcript=${app.voiceUtterance.transcript} .watcherError=${app.voiceUtterance.watcherError} .uploadError=${app.voiceUtterance.uploadError} @voice-utterance=${(e: CustomEvent) => handleVoiceUtterance(app, e, char?.id)}></runefoble-voice-controls>
   </div>`;
 }
 

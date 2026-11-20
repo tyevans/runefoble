@@ -10,6 +10,7 @@
  */
 
 import type { RunefobleApp } from '../runefoble-app.ts';
+import { speakerTokenCell } from './command-bar-context.ts';
 import { requestData } from '../services/shell-request.ts';
 import { isString, requireFields } from '../services/required-fields.ts';
 
@@ -46,6 +47,21 @@ function failed(uploadError: string): VoiceUtteranceView {
 
 function failureText(status: number, message: string): string {
   return status > 0 ? `Push to Talk failed (${status}): ${message}` : `Push to Talk failed: ${message}`;
+}
+
+/**
+ * The board origin of the character's token, as the board shows it (TASK-0945 `tokens-changed`).
+ * Null without a board, or when the character has no token on it.
+ */
+export function speakerBoardOrigin(host: RunefobleApp, characterId: string | null | undefined): SpeakerBoardOrigin | null {
+  const cell = speakerTokenCell(host.boardKind === 'board' ? host.shownTokens : [], characterId);
+  if (cell.tokenId === null || cell.fromX === null || cell.fromY === null) return null;
+  return { token_id: cell.tokenId, from_x: cell.fromX, from_y: cell.fromY, grid_cols: host.boardCols, grid_rows: host.boardRows };
+}
+
+/** The `voice-utterance` handler of the session view. The speaker's token is the character's token. */
+export function handleVoiceUtterance(host: RunefobleApp, e: CustomEvent<{ audioBase64: string }>, characterId: string | null | undefined): Promise<void> {
+  return sendVoiceUtterance(host, e.detail.audioBase64, speakerBoardOrigin(host, characterId));
 }
 
 /** Posts one utterance and puts the reply, or the failure, on `host.voiceUtterance`. */

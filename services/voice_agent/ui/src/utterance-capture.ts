@@ -12,13 +12,16 @@ import { bytesToBase64, encodeWav, UTTERANCE_SAMPLE_RATE } from './wav-encoder.t
 
 export class UtteranceCapture {
   private readonly chunks: Blob[] = [];
+  private readonly stream: MediaStream;
+  private readonly audioCtx: AudioContext;
+  private readonly recorder: MediaRecorder;
+  readonly analyser: AnalyserNode;
 
-  private constructor(
-    private readonly stream: MediaStream,
-    private readonly audioCtx: AudioContext,
-    private readonly recorder: MediaRecorder,
-    readonly analyser: AnalyserNode,
-  ) {
+  private constructor(stream: MediaStream, audioCtx: AudioContext, recorder: MediaRecorder, analyser: AnalyserNode) {
+    this.stream = stream;
+    this.audioCtx = audioCtx;
+    this.recorder = recorder;
+    this.analyser = analyser;
     recorder.addEventListener('dataavailable', (e) => {
       if (e.data.size > 0) this.chunks.push(e.data);
     });

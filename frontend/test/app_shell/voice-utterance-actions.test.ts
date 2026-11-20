@@ -10,7 +10,7 @@
 
 import { afterEach, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { IDLE_VOICE_UTTERANCE, sendVoiceUtterance } from '../../src/app/voice-utterance-actions.ts';
+import { IDLE_VOICE_UTTERANCE, sendVoiceUtterance, speakerBoardOrigin } from '../../src/app/voice-utterance-actions.ts';
 import type { RunefobleApp } from '../../src/runefoble-app.ts';
 import { installFakeGateway, type FakeGateway } from '../support/fake-gateway.ts';
 
@@ -112,5 +112,23 @@ describe('Push to Talk upload in the App Shell', () => {
 
     assert.equal(gateway.calls.length, 0);
     assert.match(app.voiceUtterance.uploadError, /session is not known/);
+  });
+});
+
+describe('speaker board origin', () => {
+  const shown = [
+    { id: 'tok-valeros', name: 'Valeros', x: 4, y: 5, characterId: 'char-valeros' },
+    { id: 'tok-ghoul', name: 'Ghoul', x: 7, y: 6 },
+  ];
+
+  it('is the shown cell of the character token and the board size', () => {
+    const app = host({ boardKind: 'board', shownTokens: shown, boardCols: 12, boardRows: 10 });
+    assert.deepEqual(speakerBoardOrigin(app, 'char-valeros'), { token_id: 'tok-valeros', from_x: 4, from_y: 5, grid_cols: 12, grid_rows: 10 });
+  });
+
+  it('is null when the character has no token or the session has no board', () => {
+    assert.equal(speakerBoardOrigin(host({ boardKind: 'board', shownTokens: shown }), 'char-sarah'), null);
+    assert.equal(speakerBoardOrigin(host({ boardKind: 'no_board', shownTokens: shown }), 'char-valeros'), null);
+    assert.equal(speakerBoardOrigin(host({ boardKind: 'board', shownTokens: shown }), undefined), null);
   });
 });
