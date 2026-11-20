@@ -81,3 +81,28 @@ services:
   campaignLore:
     # Secret that you create. It holds the embedding endpoint key under the key api-key.
     embeddingApiKeySecret: campaign-lore-embedding
+
+# Daily PostgreSQL backup to an S3-compatible bucket outside the cluster (TASK-0961).
+# The keys access-key and secret-key come from the Secret named in backup.credentialsSecret.
+# Add the key encryption-passphrase to that Secret when encryption.enabled is true.
+backup:
+  enabled: true
+  # HTTPS endpoint outside the cluster. Use the bucket owner's endpoint. The guard rejects http://.
+  endpoint: https://REPLACE-ME
+  bucket: REPLACE-ME
+  # Secret that you create. It holds the keys access-key and secret-key for the bucket.
+  credentialsSecret: runefoble-backup-credentials
+  # S3 client image, pinned by digest. It needs no shell.
+  image: cgr.dev/chainguard/minio-client@sha256:47e7c343d1e0f0ae23ebd23d3ed095dffaa0ac397ec75a871829a6f9e075134c
+  # Cron schedule in UTC. The default runs daily at 02:17.
+  schedule: "17 2 * * *"
+  # Documentation only. The bucket lifecycle rule enforces this period. The chart never deletes objects.
+  retentionDays: 30
+  encryption:
+    enabled: false
+
+# Restore of one backup into a fresh release (TASK-0961). Off by default. Turn it on for one install.
+restore:
+  enabled: false
+  # Prefix that the backup Job logs, for example postgres/2026-11-18. Required when enabled is true.
+  objectPrefix: ""

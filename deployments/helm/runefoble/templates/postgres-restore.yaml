@@ -1,0 +1,131 @@
+{{- /*
+PostgreSQL restore Job (TASK-0961, PRD-0025 outcome 5). Off by default: the chart renders it only
+when restore.enabled is true. It runs once, after install, so it fits a fresh release. It does not
+run on upgrade.
+
+Set restore.objectPrefix to the prefix that the backup Job logs, for example postgres/2026-11-18.
+The initContainer `download` (S3 client, no shell) copies that prefix to the emptyDir /restore.
+The container `restore` (PostgreSQL image, has a shell) decrypts each object when it ends in .enc,
+then runs pg_restore for each database dump. Each dump name is the database name.
+
+The restore replaces the objects of each dumped database (--clean --if-exists). Stop writers
+first, or restart the services after the restore. The runbook (TASK-0965) lists the steps.
+*/ -}}
+{{- $restore := .Values.restore | default (dict) -}}
+{{- if eq (toString $restore.enabled) "true" -}}
+{{- $backup := .Values.backup | default (dict) -}}
+{{- $secret := required "backup.credentialsSecret must name a Secret when restore.enabled is true" $backup.credentialsSecret -}}
+{{- $bucket := required "backup.bucket must be set when restore.enabled is true" $backup.bucket -}}
+{{- $endpoint := required "backup.endpoint must be set when restore.enabled is true" $backup.endpoint -}}
+{{- $image := required "backup.image must be set when restore.enabled is true" $backup.image -}}
+{{- $prefix := required "restore.objectPrefix must name the backup prefix, for example postgres/2026-11-18" $restore.objectPrefix -}}
+{{- $scheme := regexFind "^https?" $endpoint -}}
+{{- if not $scheme -}}
+{{- fail (printf "backup.endpoint must start with http:// or https://. Found: %s" $endpoint) -}}
+{{- end -}}
+{{- $host := regexReplaceAll "^https?://" $endpoint "" | trimSuffix "/" -}}
+{{- $encryption := $backup.encryption | default (dict) -}}
+{{- $encrypt := eq (toString $encryption.enabled) "true" -}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: postgres-restore
+  labels:
+    app: postgres-restore
+  annotations:
+    "helm.sh/hook": post-install
+    "helm.sh/hook-weight": "10"
+    "helm.sh/hook-delete-policy": before-hook-creation
+spec:
+  # A failed restore leaves a partial database. A retry would repeat it, so the Job never retries.
+  backoffLimit: 0
+  template:
+    metadata:
+      labels:
+        app: postgres-restore
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      initContainers:
+        - name: download
+          image: {{ $image | quote }}
+          args:
+            - --config-dir
+            - /tmp/mc
+            - cp
+            - --recursive
+            - {{ printf "backup/%s/%s/" $bucket (trimSuffix "/" $prefix) | quote }}
+            - /restore/
+          env:
+            - name: BACKUP_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $secret | quote }}
+                  key: access-key
+            - name: BACKUP_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $secret | quote }}
+                  key: secret-key
+            - name: MC_HOST_backup
+              value: {{ printf "%s://$(BACKUP_ACCESS_KEY):$(BACKUP_SECRET_KEY)@%s" $scheme $host | quote }}
+          volumeMounts:
+            - name: restore
+              mountPath: /restore
+            - name: tmp
+              mountPath: /tmp
+      containers:
+        - name: restore
+          image: {{ .Values.postgres.image | quote }}
+          command:
+            - /bin/bash
+            - -ec
+            - |
+              # The post-install hook can start before PostgreSQL accepts connections. Wait up to 3 minutes.
+              for attempt in $(seq 1 90); do
+                pg_isready -q && break
+                sleep 2
+              done
+              pg_isready -q
+              shopt -s nullglob
+              objects=(/restore/*)
+              if [ "${#objects[@]}" -eq 0 ]; then
+                echo "no backup object was downloaded" >&2
+                exit 1
+              fi
+              for object in "${objects[@]}"; do
+                dump="$object"
+                case "$object" in
+                  *.enc)
+                    dump="${object%.enc}"
+                    openssl enc -d -aes-256-cbc -pbkdf2 -pass env:BACKUP_ENCRYPTION_PASSPHRASE -in "$object" -out "$dump"
+                    ;;
+                esac
+                db="$(basename "$dump" .dump)"
+                pg_restore --clean --if-exists --no-owner --exit-on-error --dbname="$db" "$dump"
+                echo "restored database $db"
+              done
+          env:
+            - name: PGHOST
+              value: postgres
+            - name: PGPORT
+              value: {{ .Values.postgres.port | quote }}
+            - name: PGUSER
+              value: {{ .Values.postgres.username | quote }}
+            {{- include "runefoble.secretEnv" (dict "root" $ "name" "PGPASSWORD" "key" "postgres-password") | nindent 12 }}
+            {{- if $encrypt }}
+            - name: BACKUP_ENCRYPTION_PASSPHRASE
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $secret | quote }}
+                  key: encryption-passphrase
+            {{- end }}
+          volumeMounts:
+            - name: restore
+              mountPath: /restore
+      volumes:
+        - name: restore
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
+{{- end -}}

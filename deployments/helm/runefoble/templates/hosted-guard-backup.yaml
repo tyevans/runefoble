@@ -1,0 +1,45 @@
+{{- /*
+Hosted render guard for the PostgreSQL backup (TASK-0961, ADR-0015 f). A staging or production
+render fails when backup.enabled is not true, when backup.endpoint is not an https:// URL outside
+the cluster, or when a backup key still holds a placeholder. The file renders no object. Each
+failure names the key path. Docs: docs/reference/hosted-profile.md.
+*/ -}}
+{{- define "runefoble.hosted.backup.placeholder" -}}
+{{- if contains "REPLACE-ME" (toString .value) -}}
+{{- fail (printf "%s is not valid for a %s render. It must not hold a placeholder (REPLACE-ME). Found: %s" .key .env (toString .value)) -}}
+{{- end -}}
+{{- end -}}
+
+{{- $env := .Values.global.environment -}}
+{{- if or (eq $env "staging") (eq $env "production") -}}
+
+{{- $backup := .Values.backup | default (dict) -}}
+{{- if ne (toString $backup.enabled) "true" -}}
+{{- fail (printf "backup.enabled must be true for a %s render. A hosted release needs a daily PostgreSQL backup outside the cluster. Found: %s" $env (toString $backup.enabled)) -}}
+{{- end -}}
+
+{{- $endpoint := required "backup.endpoint must be set for a hosted render" $backup.endpoint | toString -}}
+{{- if not (hasPrefix "https://" $endpoint) -}}
+{{- fail (printf "backup.endpoint must start with https:// for a %s render. Found: %s" $env $endpoint) -}}
+{{- end -}}
+{{- if or (contains "localhost" $endpoint) (contains "svc.cluster.local" $endpoint) -}}
+{{- fail (printf "backup.endpoint must be outside the cluster for a %s render. Found: %s" $env $endpoint) -}}
+{{- end -}}
+{{- include "runefoble.hosted.backup.placeholder" (dict "key" "backup.endpoint" "value" $endpoint "env" $env) -}}
+
+{{- $bucket := required "backup.bucket must be set for a hosted render" $backup.bucket | toString -}}
+{{- include "runefoble.hosted.backup.placeholder" (dict "key" "backup.bucket" "value" $bucket "env" $env) -}}
+
+{{- $secret := required "backup.credentialsSecret must be set for a hosted render" $backup.credentialsSecret | toString -}}
+{{- include "runefoble.hosted.backup.placeholder" (dict "key" "backup.credentialsSecret" "value" $secret "env" $env) -}}
+
+{{- $image := required "backup.image must be set for a hosted render" $backup.image | toString -}}
+{{- include "runefoble.hosted.backup.placeholder" (dict "key" "backup.image" "value" $image "env" $env) -}}
+
+{{- $restore := .Values.restore | default (dict) -}}
+{{- if eq (toString $restore.enabled) "true" -}}
+{{- $prefix := required "restore.objectPrefix must be set when restore.enabled is true" $restore.objectPrefix | toString -}}
+{{- include "runefoble.hosted.backup.placeholder" (dict "key" "restore.objectPrefix" "value" $prefix "env" $env) -}}
+{{- end -}}
+
+{{- end -}}
