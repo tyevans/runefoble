@@ -919,3 +919,4 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 913. **TASK-0933 (Refined)**: [`0933-last-five-services-gate-readiness.md`](refined/0933-last-five-services-gate-readiness.md) — The Last Five Services Gate Readiness, and a Waiting Deploy Cannot Deadlock
 914. **TASK-0934 (Refined)**: [`0934-service-client-limits-the-connect-time.md`](refined/0934-service-client-limits-the-connect-time.md) — The Service Client Limits the Connect Time to an Owner
 915. **TASK-0935 (Refined)**: [`0935-chronicle-records-board-token-moves.md`](refined/0935-chronicle-records-board-token-moves.md) — The Session Chronicle Records Board Token Moves
+916. **TASK-0936 (Refined)**: [`0936-service-client-recovers-from-stale-pooled-connections.md`](refined/0936-service-client-recovers-from-stale-pooled-connections.md) — The Service Client Recovers From Stale Pooled Connections After an Owner Restart
