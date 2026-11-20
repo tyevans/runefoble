@@ -163,7 +163,7 @@ The database host is the Service `postgres`. The OTel host is the Service `otel-
 
 ## Cross-Service URLs (TASK-0624)
 
-`RUNEFOBLE_WATCHER_ENGINE` is not a URL. It selects The Watcher's engine adapters: `inference_worker` (default) or `heuristic`. The chart sets it on `the-watcher` through `services.theWatcher.env`. With `inference_worker`, The Watcher needs `RUNEFOBLE_INFERENCE_URL` and fails at start-up without it.
+`RUNEFOBLE_WATCHER_INTENT_ENGINE`, `RUNEFOBLE_WATCHER_STAND_IN_ENGINE` and `RUNEFOBLE_WATCHER_NARRATION_ENGINE` are not URLs. Each selects one of The Watcher's engine ports: `inference_worker` or `none` (default). The intent port always parses with the grammar first. It sends only `narrative` speech to the worker. `none` means the port has no engine. The stand-in and narration routes then return `503`. The chart sets all three to `inference_worker` on `the-watcher` through `services.theWatcher.env`. A port set to `inference_worker` needs `RUNEFOBLE_INFERENCE_URL` and fails at start-up without it.
 
 The chart sets each service-to-service URL. The URL uses the in-cluster service name and the port from `services.<name>.port`. The chart renders each key only on the containers listed below. Each service reads its URL from the environment. No code default uses `localhost`.
 

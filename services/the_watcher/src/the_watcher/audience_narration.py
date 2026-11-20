@@ -54,7 +54,7 @@ RECORD_ATTEMPTS = 3
 NARRATION_WHISPER = "audience_narration"
 UNAVAILABLE_WHISPER = "narration_unavailable"
 UNAVAILABLE_REASON = "The inference worker did not return narration for this modifier."
-HEURISTIC_REASON = "The Watcher runs on the heuristic engine. Narration needs the inference worker."
+NOT_CONFIGURED_REASON = "Narration is not configured. RUNEFOBLE_WATCHER_NARRATION_ENGINE is 'none'."
 
 
 def _new_whisper_log(aggregate_id: object) -> WhisperAggregate:
@@ -87,8 +87,8 @@ async def _narrate(modifier: AudienceModifierApproved) -> tuple[str, str, dict[s
         "modifier_type": modifier.modifier_type,
     }
     settings = WatcherEngineSettings()
-    if settings.watcher_engine == "heuristic":
-        return UNAVAILABLE_WHISPER, HEURISTIC_REASON, base
+    if settings.watcher_narration_engine == "none":
+        return UNAVAILABLE_WHISPER, NOT_CONFIGURED_REASON, base
     if settings.inference_url is None:
         raise refusal(modifier, "cannot be narrated because RUNEFOBLE_INFERENCE_URL is not set.")
     payload = {

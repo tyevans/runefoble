@@ -186,7 +186,7 @@ async def test_watcher_speech_surfaces_worker_503(use_worker_backend, monkeypatc
     speech_payload = {
         "speaker_id": "user-1",
         "speaker_name": "Valeros",
-        "transcript": "I strike the goblin with my sword",
+        "transcript": "I search the bookshelf for a map",
         "session_id": "sess-1",
         "campaign_id": "camp-1",
     }
@@ -214,7 +214,7 @@ async def test_watcher_speech_unreachable_worker_is_503_not_template(monkeypatch
     speech_payload = {
         "speaker_id": "user-1",
         "speaker_name": "Valeros",
-        "transcript": "I strike the goblin with my sword",
+        "transcript": "I search the bookshelf for a map",
         "session_id": "sess-1",
         "campaign_id": "camp-1",
     }

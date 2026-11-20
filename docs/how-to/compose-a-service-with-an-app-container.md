@@ -133,7 +133,7 @@ The Watcher has one package, so its container is smaller. The paths are relative
 | `main.py` | `create_app(build=build_container)` and `app = create_app()` |
 | `dependencies.py` | Stream names, the service logger, and the SpiceDB permission checks. It holds no state. |
 
-`build_container` loads the SpiceDB settings, builds the event store, and builds the engine ports once. A missing preshared key, an unreachable or memory event store in a deployed environment, or `RUNEFOBLE_WATCHER_ENGINE=inference_worker` without `RUNEFOBLE_INFERENCE_URL` stops start-up. The copilot engine, the whisper service, and the disambiguation store get their repositories from `assemble_container`. The lifespan re-arms the open copilot timers, and it gives the whisper repository to the audience narration consumer.
+`build_container` loads the SpiceDB settings, builds the event store, and builds the engine ports once. A missing preshared key, an unreachable or memory event store in a deployed environment, or a Watcher port setting (`RUNEFOBLE_WATCHER_INTENT_ENGINE`, `RUNEFOBLE_WATCHER_STAND_IN_ENGINE` or `RUNEFOBLE_WATCHER_NARRATION_ENGINE`) set to `inference_worker` without `RUNEFOBLE_INFERENCE_URL` stops start-up. The copilot engine, the whisper service, and the disambiguation store get their repositories from `assemble_container`. The lifespan re-arms the open copilot timers, and it gives the whisper repository to the audience narration consumer.
 
 The engine ports are not in the container. The routes build them from the environment on each request (`load_watcher_ports`).
 

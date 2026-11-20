@@ -6,8 +6,6 @@ from httpx import ASGITransport, AsyncClient
 from runefoble_auth.mock import MockSpiceDBClient
 from runefoble_events.events import StandInPolicyUpdated, StandInStabilized
 from runefoble_platform.event_deserializer import deserialize_event
-from runefoble_platform.stand_in_guardrails import GuardrailName, StandInGuardrailPolicy
-from the_watcher.watcher_ai import TheWatcherEngine
 
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.ws_identity import bearer
@@ -26,11 +24,6 @@ GUARDRAILS_PAYLOAD = {
 @pytest.fixture
 def mock_redis() -> MockAsyncRedis:
     return MockAsyncRedis()
-
-
-@pytest.fixture
-def watcher_engine() -> TheWatcherEngine:
-    return TheWatcherEngine()
 
 
 # --- 1. Character Tactical Guardrails & Zanzibar Authorization ---
@@ -101,58 +94,6 @@ async def test_character_guardrails_configuration_and_events(
     policy_events = [e for e in events if isinstance(e, StandInPolicyUpdated)]
     assert len(policy_events) >= 1 and policy_events[0].character_id == str(char_id)
     assert policy_events[0].guardrails["preserve_spell_slots"] == {"3": 1}
-
-
-# --- 2. Stand-In Graph Policy Evaluation & Humorous Penalty Adaptation ---
-
-
-def test_stand_in_guardrails_evaluation_and_humorous_adaptation(watcher_engine: TheWatcherEngine):
-    """Verify stand-in AI evaluates guardrails while adapting penalties (US-0025)."""
-    gr = StandInGuardrailPolicy.model_validate(
-        {**GUARDRAILS_PAYLOAD, "preserve_spell_slots": {3: 1}}
-    )
-
-    # Scenario A: Protect Marcus when wounded (under 'drunk' penalty)
-    action_heal = watcher_engine.generate_stand_in_action(
-        character_name="Kyra",
-        character_class="Cleric",
-        penalties=["drunk"],
-        scene_context="Goblins surround camp. Marcus is wounded and under 30% HP.",
-        personality_traits=["valiant"],
-        guardrails=gr,
-    )
-    assert action_heal.action_type == "cast_spell"
-    assert "Marcus" in action_heal.dialogue and "Hic" in action_heal.dialogue
-    assert action_heal.guardrails_applied == [GuardrailName.PROTECT_ALLIES]
-    assert action_heal.dice_roll_required == "1d20-2"
-    assert "healing magic to protect Marcus" in action_heal.action_description
-
-    # Scenario B: Preserve Level 3 spell slots for Revivify
-    action_spell = watcher_engine.generate_stand_in_action(
-        character_name="Kyra",
-        character_class="Cleric",
-        penalties=["drunk"],
-        scene_context="In combat with a shadow demon. Needs to cast a spell.",
-        personality_traits=["scholarly"],
-        guardrails=gr,
-    )
-    assert action_spell.action_type == "cast_spell"
-    assert action_spell.guardrails_applied == [GuardrailName.PRESERVE_SPELL_SLOTS]
-    assert "Revivify" in action_spell.dialogue or "Level 3" in action_spell.dialogue
-    assert "cantrip" in action_spell.action_description.lower()
-
-    # Scenario C: Avoid frontline melee (under 'foolishness' penalty)
-    action_ranged = watcher_engine.generate_stand_in_action(
-        character_name="Kyra",
-        character_class="Cleric",
-        penalties=["foolishness"],
-        scene_context="Melee vanguard clash in open arena.",
-        personality_traits=["valiant"],
-        guardrails=gr,
-    )
-    assert action_ranged.action_type == "ranged_attack"
-    assert action_ranged.guardrails_applied == [GuardrailName.AVOID_MELEE]
-    assert "ranged" in action_ranged.dialogue.lower() or "melee" in action_ranged.dialogue.lower()
 
 
 # --- 3. Aggregate Invariant: Zero-HP Permadeath Safeguard ---

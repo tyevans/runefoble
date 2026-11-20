@@ -48,9 +48,9 @@ As Milestone 5 and 6 introduce autonomous NPC factions and deeper party tactics,
   - [`us-0025-personalized-ai-stand-in-tactical-policies.md`](../../user_stories/accepted/us-0025-personalized-ai-stand-in-tactical-policies.md)
 
 ## Detailed Specification & Implementation Plan
-1. **Tactical Guardrails Evaluator (`services/the_watcher/src/the_watcher/stand_in_guardrails.py`)**:
+1. **Tactical Guardrails Evaluator (`services/the_watcher/src/the_watcher/stand_in_guardrails.py` (removed))**:
    - `evaluate_tactical_guardrails`: Ally protection matching, melee distance heuristics, spell slot preservation checks, and triage logic (< 140 lines).
-2. **Persona & Penalty Simulator (`services/the_watcher/src/the_watcher/stand_in_persona.py`)**:
+2. **Persona & Penalty Simulator (`services/the_watcher/src/the_watcher/stand_in_persona.py` (removed))**:
    - `apply_penalty_modifiers`: Dialogue flavor injection, disadvantage formulas, and personality trait weighting (< 140 lines).
 3. **Chronicle Recap Generator (`services/the_watcher/src/the_watcher/stand_in_recap.py`)**:
    - `generate_absentee_recap`: Chronicle paragraph construction, comedic excuse formatting, and MVP highlight extraction (< 110 lines).

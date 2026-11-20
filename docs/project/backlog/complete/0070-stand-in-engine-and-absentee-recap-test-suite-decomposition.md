@@ -25,7 +25,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/100
 Complete
 
 ## Summary
-Decompose `tests/test_stand_in_engine.py` (removed) (342 lines, 68.4% of limit) into two focused test modules (`tests/test_stand_in_tactics_unit.py` and `tests/test_blackbox_stand_in_service.py`) to prevent breaching Hard Invariant 6 (File length limit < 500 lines) as stand-in policy guardrails and mid-session hot-swap handoffs expand.
+Decompose `tests/test_stand_in_engine.py` (removed) (342 lines, 68.4% of limit) into two focused test modules (`tests/test_stand_in_tactics_unit.py` (removed) and `tests/test_blackbox_stand_in_service.py`) to prevent breaching Hard Invariant 6 (File length limit < 500 lines) as stand-in policy guardrails and mid-session hot-swap handoffs expand.
 
 ## Problem Statement
 `tests/test_stand_in_engine.py` (removed) currently spans 342 lines and conjoins two distinct test paradigms across two separate microservices:
@@ -41,7 +41,7 @@ As stand-in policy guardrails and DM co-pilot whispers evolve, this test suite w
 - **ADR-0009: Continuous Backlog Refinement and Technical Debt Management**: Preemptive test splitting.
 
 ## Proposed Decomposition
-1. **Stand-In Tactics & Personality Unit Suite (`tests/test_stand_in_tactics_unit.py`)**:
+1. **Stand-In Tactics & Personality Unit Suite (`tests/test_stand_in_tactics_unit.py` (removed))**:
    - Unit tests for penalty modifiers (dice roll formula adjustments, slurred dialogue, defensive positioning, and distraction effects).
    - Personality trait flavor integration with combined penalty conditions (< 150 lines).
 2. **Blackbox Stand-In & Recap Service Suite (`tests/test_blackbox_stand_in_service.py`)**:

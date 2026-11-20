@@ -26,9 +26,9 @@ The guardrail policy has three gaps. Autopilot forwards an untyped dict to The W
 
 ## Problem Statement
 - `services/game_session/src/game_session/routers/autopilot.py:85` and `:105`: `request_data.guardrails` is an untyped dict. Unknown keys return 422 at The Watcher, and game_session then falls back to its local engine with no log entry.
-- `services/the_watcher/src/the_watcher/stand_in_guardrails.py:35`: the local engine reports `"Prioritized protection for {ally}"`, not a guardrail name.
+- `services/the_watcher/src/the_watcher/stand_in_guardrails.py` (removed). At line 35 the local engine reported `"Prioritized protection for {ally}"`, not a guardrail name.
 - `services/inference_worker/src/inference_worker/graphs/stand_in_graph.py:64-66`: `preserve_spell_slots` appears only in prompt notes. No mock-mode rule enforces it.
-- `services/the_watcher/src/the_watcher/stand_in_guardrails.py` reads `custom_priorities` and `preserve_spell_slots` but does not enforce them either.
+- `services/the_watcher/src/the_watcher/stand_in_guardrails.py` (removed) reads `custom_priorities` and `preserve_spell_slots` but does not enforce them either.
 
 ## Documentation & Architecture Review
 - PRD-0002 and US-0025: guardrails are personal tactical policies. The contract must match the stored policy.

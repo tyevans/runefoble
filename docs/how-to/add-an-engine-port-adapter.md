@@ -28,7 +28,9 @@ Current engine ports:
 | `asset_forge` | `RUNEFOBLE_WARDROBE_GENERATOR` | `WardrobeGenerator` | `placeholder` | none (no failure path) | none |
 | `rules_compendium` | `RUNEFOBLE_RULES_EMBEDDING` | `redstring.EmbeddingProvider` | `lexical`, `openai_compatible` | none (see Known Gaps) | none |
 | `inference_worker` | `RUNEFOBLE_WORKER_BACKEND` | `LLMPort` | `openai_compatible`, `ollama` | `backend_unavailable` | `backend` (flat body, see Known Gaps) |
-| `the_watcher` | `RUNEFOBLE_WATCHER_ENGINE` | `IntentParser`, `StandInDecider`, `SceneNarrator` (one setting selects all three) | `inference_worker`, `heuristic` | `backend_unavailable` | `backend` |
+| `the_watcher` | `RUNEFOBLE_WATCHER_INTENT_ENGINE` | `IntentParser` (the grammar runs first; only `narrative` speech goes to the adapter) | `inference_worker`, `none` | `backend_unavailable` | `backend` |
+| `the_watcher` | `RUNEFOBLE_WATCHER_STAND_IN_ENGINE` | `StandInDecider` | `inference_worker`, `none` | `backend_unavailable` | `backend` |
+| `the_watcher` | `RUNEFOBLE_WATCHER_NARRATION_ENGINE` | `SceneNarrator` | `inference_worker`, `none` | `backend_unavailable` | `backend` |
 
 ## Steps
 
@@ -157,4 +159,5 @@ uv run pytest -q -p no:randomly tests/test_engine_port_adapters.py tests/test_bl
 - The inference worker has no canned adapter. A `mock` value is refused, and the worker adds no keyword or template path. ADR-0015 decision 4 forbids those fallbacks in every environment.
 - `campaign_lore` builds its ports with a `match` and `assert_never`. It is not yet on `build_adapter`.
 - The Watcher builds its ports from the environment on each request (`load_watcher_ports` in `the_watcher/engine_selection.py`), not once as a singleton. The ports are not in the app container yet. `build_container` runs the same build once in the lifespan, so a bad setting stops start-up. Tests set the environment with `monkeypatch`. The worker adapters get `RUNEFOBLE_SERVICE_CREDENTIAL` from the same settings (`WatcherEngineSettings.service_credential`). Without it, a worker call answers `503`.
-- The Watcher routes `compound.py` (speech parse) and the stand-in recap still call the local engine directly. They do not yet go through a port. The recap has no worker path.
+- The Watcher stand-in recap still calls the local rule engine directly. It is not a port and has no worker path.
+- The Watcher intent port follows ADR-0022. `none` on the intent setting is not a fallback. It means the port has no LLM engine. The grammar still parses every transcript, and a `narrative` result returns `Not understood.`. A worker failure returns `503`, and the grammar does not run again. Each port setting is separate. The old `RUNEFOBLE_WATCHER_ENGINE` name is removed with no alias.

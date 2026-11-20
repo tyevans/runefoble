@@ -106,10 +106,13 @@ def create_app(build: ContainerBuilder = build_container) -> FastAPI:
 
     @app.get("/healthz")
     async def health_check(request: Request):
+        settings = WatcherEngineSettings()
         return {
             "status": "ok",
             "service": "the_watcher",
-            "watcher_engine": WatcherEngineSettings().watcher_engine,
+            "intent_engine": settings.watcher_intent_engine,
+            "stand_in_engine": settings.watcher_stand_in_engine,
+            "narration_engine": settings.watcher_narration_engine,
             "event_publish_failures": event_publish_failures(),
             "consumers": consumer_statuses(getattr(request.app.state, "consumers", {})),
         }

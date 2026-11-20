@@ -86,7 +86,7 @@ def worker(monkeypatch: pytest.MonkeyPatch) -> Iterator[WorkerDouble]:
     double = WorkerDouble()
     with serve(_worker_app(double)) as url:
         double.url = url
-        monkeypatch.setenv("RUNEFOBLE_WATCHER_ENGINE", "inference_worker")
+        monkeypatch.setenv("RUNEFOBLE_WATCHER_NARRATION_ENGINE", "inference_worker")
         monkeypatch.setenv("RUNEFOBLE_INFERENCE_URL", url)
         yield double
 
@@ -237,7 +237,7 @@ def test_unreachable_worker_records_an_unavailable_notice(
     watcher_app: FastAPI, mock_bus: MockAsyncRedis, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     campaign_id, session_id = _create_session()
-    monkeypatch.setenv("RUNEFOBLE_WATCHER_ENGINE", "inference_worker")
+    monkeypatch.setenv("RUNEFOBLE_WATCHER_NARRATION_ENGINE", "inference_worker")
     monkeypatch.setenv("RUNEFOBLE_INFERENCE_URL", closed_port_url())
 
     with TestClient(watcher_app) as client:

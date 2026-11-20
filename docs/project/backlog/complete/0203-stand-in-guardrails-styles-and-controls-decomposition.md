@@ -45,7 +45,7 @@ Decompose `services/character_sheet/ui/src/runefoble-stand-in-guardrails.ts` (31
    - Refactor root `<runefoble-stand-in-guardrails>` element to import external styles and templates, focusing strictly on property state and event dispatching (< 130 lines).
 4. **Verification**:
    - Verify Storybook stories for `<runefoble-stand-in-guardrails>` render with zero visual regressions.
-   - Run blackbox tests in `tests/test_blackbox_stand_in_guardrails.py`.
+   - Run blackbox tests in `tests/test_blackbox_stand_in_guardrails.py` (removed).
 
 ## INVEST Criteria Evaluation
 - **Independent (I)**: Changes strictly localized to `services/character_sheet/ui/src/runefoble-stand-in-guardrails*`.
