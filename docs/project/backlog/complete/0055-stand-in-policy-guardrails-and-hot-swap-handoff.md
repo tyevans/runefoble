@@ -53,7 +53,7 @@ Missing players currently rely on static class archetype behaviors. They cannot 
 4. **Zero-HP Permadeath Safeguard**:
    - Enforce an aggregate invariant: when damage reduces a stand-in character to 0 HP, automatically stabilize or trigger unconciousness without death save failures.
 5. **Frontdoor Blackbox Verification**:
-   - Comprehensive test suite in `tests/test_blackbox_stand_in_guardrails.py`.
+   - Comprehensive test suite in `tests/test_blackbox_stand_in_guardrails.py` (removed).
 
 ## INVEST Criteria Evaluation
 - **Independent (I)**: Operates within existing character sheet and session state machines without external service blocking.
@@ -72,7 +72,7 @@ Missing players currently rely on static class archetype behaviors. They cannot 
 3. **Permadeath Safeguard Invariant**:
    - Unit and blackbox assertions verify stand-in character stabilizes at 0 HP.
 4. **Frontdoor Blackbox Test Suite**:
-   - `tests/test_blackbox_stand_in_guardrails.py` verifying guardrail enforcement, live hot-swap, and zero-HP stabilization.
+   - `tests/test_blackbox_stand_in_guardrails.py` (removed) verifying guardrail enforcement, live hot-swap, and zero-HP stabilization.
 5. **Quality Gates**:
    - Conforms strictly to Hard Invariant 6 (< 500 lines per file).
    - Passes `uv run pytest tests/test_blackbox_stand_in_guardrails.py` and `uv run ruff check`.
