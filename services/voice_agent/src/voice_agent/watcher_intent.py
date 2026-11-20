@@ -25,7 +25,9 @@ from runefoble_platform.service_credential import expected_service_credential
 
 WATCHER_SERVICE = "the_watcher"
 TRANSCRIBE_AND_ACT_PATH = "/api/v1/watcher/transcribe-and-act"
-WATCHER_TIMEOUT_SECONDS = 5.0
+# The Watcher can use its intent, board and proposal budgets in turn (2 s each by default).
+# This budget is larger, so a slow Watcher answer reaches the player as the Watcher reply.
+WATCHER_TIMEOUT_SECONDS = 7.0
 
 
 @dataclass(frozen=True)
