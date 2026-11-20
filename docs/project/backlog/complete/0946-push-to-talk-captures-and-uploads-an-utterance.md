@@ -1,7 +1,7 @@
 ---
 id: '0946'
 title: Push to Talk Captures an Utterance and Uploads It for Transcription
-status: Refined
+status: Complete
 created: 2026-11-19
 dependencies:
 - '0945'
@@ -23,7 +23,7 @@ target_release: 1.0.0
 
 ## Status
 
-Refined. Second user-facing slice of the voice loop. It connects the microphone to the transcribe route.
+Complete
 
 ## Summary
 

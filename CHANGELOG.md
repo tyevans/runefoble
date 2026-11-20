@@ -93,6 +93,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Campaign analytics worker `process_event` alias, tracking property wrappers, and package root re-exports. Callers use `handle_event`. (TASK-0500)
 
 ### Added
+- Push to Talk sends audio for transcription. Hold the button (or Space) to record one utterance. The browser encodes it as 16 kHz mono WAV and sends it through the new gateway route `POST /api/v1/voice/transcribe` with the speaker's board token and cell. The control shows the transcript, The Watcher error, or the upload failure. The false "WebRTC Live" badge, the simulated waveform and the fake link metrics are removed, and the `voice-toggle` and `voice-state` events are gone. (TASK-0946)
 - Players can type a command in the session view. The command bar (`<runefoble-command-bar>`) sends it to The Watcher through `POST /api/v1/watcher/speak-and-act`. A typed move shows a ghost preview, and the token moves only when the player confirms it. Board tokens carry `character_id`, and `<runefoble-board>` emits `tokens-changed`. `make e2e-watcher-down` and `make e2e-watcher-up` stop and start The Watcher for fault journeys. (TASK-0945)
 - The grammar parses "move my warrior to the chest", "move the warrior to the chest" and "move Valeros to the chest"; the mover is always the speaker's token. (TASK-0944)
 - The grammar parses "move my warrior to the chest", "move the warrior to the chest" and "move Valeros to the chest"; the mover is always the speaker's token.
