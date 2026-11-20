@@ -93,6 +93,10 @@ The MCP gateway subpackages re-export no names, and the gateway has one entrypoi
 - Campaign analytics worker `process_event` alias, tracking property wrappers, and package root re-exports. Callers use `handle_event`. (TASK-0500)
 
 ### Added
+The grammar parses "move my warrior to the chest", "move the warrior to the chest" and "move Valeros to the chest"; the mover is always the speaker's token.
+The DM ends an active session (`POST /api/v1/sessions/{id}/end`, SpiceDB control) and every player sees the session recap.
+The invite link opens a join page in the App Shell (`#/join/<token>`): a signed-out friend creates an account from the link and joins after sign-in; the sample invite token placeholder is gone.
+A campaign invite link creates the player account through Zitadel (ADR-0023): Zitadel self-registration is off in the hosted profile, Runefoble sends one Set Password link and never handles a password, invites are rate limited per client and per invite behind trusted proxies, and the first sign-in completes the pending join.
 Zitadel sends account e-mail through the operator SMTP provider in hosted renders (`zitadel.smtp`, password from the credentials Secret), the hosted profile closes Zitadel self-registration (ADR-0023 a), and the hosted guard rejects an unset or placeholder SMTP host or sender, plain SMTP, and open registration.
 Hosted image references: `make images-push IMAGE_REGISTRY=<host>/<path>` builds and pushes the service images and records each digest in `deployments/helm/runefoble/values.images.yaml`; base and third-party images are pinned by digest, `global.imagePullSecrets` renders on every pod spec, and the hosted guard fails an image with no registry host, no digest, or a placeholder.
 Hosted Secret contract in `docs/reference/hosted-secrets.md`: every operator and generated Secret key that a hosted release reads, pinned to the render by a test. A staging or production render fails when the campaign-lore Secret name is empty. The local credential Secret holds an empty `smtp-password` key for TASK-0958.
@@ -199,6 +203,8 @@ The campaign rules tab at `#/campaigns/:campaignId/rules`. The homebrew forge re
   - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
 
 ### Changed
+The inference worker reads its API key from a Secret and its generation settings and timeouts from Helm, and The Watcher's engine budgets come from settings.
+The Watcher routes spoken commands grammar first (ADR-0022): one setting per engine port (intent, stand-in, narration), only unparsed speech goes to the model, and a model failure returns 503 with no retry on another engine.
 The hosted profile turns off Mailpit, Swagger UI and OpenPanel and serves no `/mail`, `/docs`, `/swagger-ui` or `/analytics` route. A hosted render fails when an Ingress path reaches a development prefix or a disabled development workload.
 `POST /api/v1/characters` stores `level` (1-20) and `portraitUrl` at creation, and the create and read replies return them. `CharacterCreated` carries `level` and `portrait_url`. A bad level or portrait returns 422
 The caravan board sends accept, dispatch and fulfil through one shared `@runefoble/ui-core` request with the shell bearer. It does not send `x-user-id`. A refused action shows distinct text: a sign-in text for `401`, a not-authorized text for `403`, `Service unavailable: <detail>` for `503`, else the server detail.
@@ -1342,6 +1348,11 @@ The App Shell auth service keeps JWT claim handling, session storage and session
 - **Documentation & Build Navigation**: Featured the Platform Showcase and Changelog in `zensical.toml` and root documentation landing page (`docs/index.md`), and enhanced `scripts/build_docs.py` to synchronize `CHANGELOG.md` to `docs/changelog.md` during documentation compilation.
 
 ### Fixed
+Every app service gates `/readyz`, every app pod has a 180 s startup probe, and the Silo bucket and SpiceDB schema Jobs no longer deadlock `helm --wait`.
+The invite link field and Copy Link clear while a new link is generated, so a DM never copies a stale link.
+The session binds only the caller's own character: the frontend reads `owner_id`, prefers the caller's seat, and shows the empty state when the caller has none. Lobby and session loads read the roster every time.
+Lobby readiness and the AI stand-in survive a reload: they go through game_session, the gateway sends the frames only after the owner saves, the DM can mark any seat absent, and a player only their own.
+Dice rolls go through the server: the roller posts to `POST /api/v1/sessions/{id}/roll`, shows the stored result, and every player sees the roll in the chronicle.
 A spoken move now stages the destination that the speech requests: a named target resolves to the nearest free cell next to it, coordinates and distances are read from both engines, and a missing origin returns 422 instead of moving from (0, 0). The Watcher forwards the speaker's bearer to the board read.
 The combat reaction prompt stays closed and idle until it receives a real reaction, and the App Shell no longer mounts it as a default sidebar plugin.
 A token moved by drag no longer jumps back to its old cell. Each App Shell render put the last board read back into the board; the session view now passes tokens only when a new board read replaces them. Board socket frames carry a board version, and an older board read no longer replaces a newer one.

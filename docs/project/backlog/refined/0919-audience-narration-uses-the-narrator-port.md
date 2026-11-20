@@ -25,7 +25,7 @@ Refined
 - `services/the_watcher/src/the_watcher/audience_narration.py:82-84`: `settings = WatcherEngineSettings()` per call, then `if settings.watcher_engine == "heuristic"`.
 - `:85-98`: a direct `call_worker(settings.inference_url, WORKER_PATH, ...)` beside the port.
 - `services/the_watcher/src/the_watcher/engine_selection.py:51-56`: `WatcherPorts.narrator` is the selected `SceneNarrator`. `:99`: the heuristic choice maps to `HeuristicSceneNarrator`.
-- `services/the_watcher/src/the_watcher/adapters/heuristic_engines.py:55-60`: the heuristic narrator raises `EngineUnavailableError`.
+- `services/the_watcher/src/the_watcher/adapters/heuristic_engines.py` (removed): the heuristic narrator raises `EngineUnavailableError`.
 
 ## Documentation & Architecture Review
 - ADR-0015 problem 4. `docs/how-to/add-an-engine-port-adapter.md`: engine names are read only in the selection module.

@@ -1,7 +1,7 @@
 ---
 id: '0973'
 title: The Invite Link Field Shows Only the Newest Link
-status: Refined
+status: Complete
 created: 2026-11-19
 dependencies:
 - '0950'
@@ -21,7 +21,7 @@ target_release: 1.0.0
 
 ## Status
 
-Refined
+Complete
 
 ## Summary
 

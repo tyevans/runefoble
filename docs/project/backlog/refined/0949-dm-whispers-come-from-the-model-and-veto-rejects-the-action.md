@@ -36,7 +36,7 @@ The DM bar shows three whispers that the code wrote in advance. The whisper gene
 - `services/the_watcher/src/the_watcher/copilot_whispers.py:116`: `list_whispers` seeds the log with those texts when the log is empty.
 - `services/the_watcher/src/the_watcher/copilot_whispers.py:142-156`: `generate_whispers` records the same fixed texts (call at `:151`). No narration port is called.
 - `services/the_watcher/src/the_watcher/adapters/worker_engines.py:99-129`: the worker narrator exists. It returns `narrative` and `suggested_dm_prompts`.
-- `services/the_watcher/src/the_watcher/adapters/heuristic_engines.py:55-60` (deleted by TASK-0943): the old narrator raised 503 with no text.
+- `services/the_watcher/src/the_watcher/adapters/heuristic_engines.py` (removed) (deleted by TASK-0943): the old narrator raised 503 with no text.
 - `services/the_watcher/ui/src/runefoble-dm-whisper-bar.ts:137-141`: `handleVeto` dispatches `action-vetoed`. A search of `frontend/src` and `services/*/ui/src` found no listener for `action-vetoed`.
 - `services/the_watcher/ui/src/runefoble-dm-whisper-bar.ts:125-131`: `handleApprove` dispatches `action-approved`. No listener exists either. This is the same gap for approve. It is out of scope here (see the Detailed Specification, step 7).
 - `services/the_watcher/src/the_watcher/routers/copilot/actions.py:29-41`: the veto route exists. It requires DM permission (`require_dm`).

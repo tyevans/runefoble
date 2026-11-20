@@ -1,7 +1,7 @@
 ---
 id: '0967'
 title: A Campaign Invite Link Creates the Player Account Through Zitadel
-status: Refined
+status: Complete
 created: 2026-11-19
 dependencies: []
 governing_adrs:
@@ -20,7 +20,7 @@ target_release: 1.0.0
 
 ## Status
 
-Refined
+Complete
 
 ## Summary
 

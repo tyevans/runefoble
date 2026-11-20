@@ -1,7 +1,7 @@
 ---
 id: '0948'
 title: The Inference Worker Takes Its Hosted Settings from Helm, and the Watcher Budgets Are Configurable
-status: Refined
+status: Complete
 created: 2026-11-19
 dependencies:
 - '0943'
@@ -20,7 +20,7 @@ target_release: 1.0.0
 
 ## Status
 
-Refined. Infrastructure and documentation slice that supports the hosted release. It follows TASK-0943, which fixes the engine settings.
+Complete
 
 ## Summary
 

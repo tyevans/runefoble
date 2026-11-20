@@ -1,7 +1,7 @@
 ---
 id: '0972'
 title: The Session Binds the Caller's Own Character, Never Another Player's
-status: Refined
+status: Complete
 created: 2026-11-19
 dependencies:
 - '0951'
@@ -21,7 +21,7 @@ target_release: 1.0.0
 
 ## Status
 
-Refined
+Complete
 
 ## Summary
 

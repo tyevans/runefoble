@@ -1,7 +1,7 @@
 ---
 id: '0952'
 title: Lobby Readiness and Stand-In Are Kept After a Reload
-status: Refined
+status: Complete
 created: 2026-11-19
 dependencies: []
 governing_adrs:
@@ -20,7 +20,7 @@ target_release: 1.0.0
 
 ## Status
 
-Refined. Release One (PRD-0025). Journey steps 8, 9 and 10 of `.audit/research/r1-core-journeys.md`.
+Complete
 
 ## Summary
 

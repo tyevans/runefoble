@@ -1,7 +1,7 @@
 ---
 id: '0951'
 title: A Dice Roll Goes Through the Server and Shows in the Chronicle
-status: Refined
+status: Complete
 created: 2026-11-19
 dependencies: []
 governing_adrs:
@@ -20,7 +20,7 @@ target_release: 1.0.0
 
 ## Status
 
-Refined. Release One (PRD-0025). Journey step 15 of `.audit/research/r1-core-journeys.md`. The spoken form "roll a d20" is task TASK-0944, not this task.
+Complete
 
 ## Summary
 

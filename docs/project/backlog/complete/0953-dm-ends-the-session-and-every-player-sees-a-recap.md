@@ -1,7 +1,7 @@
 ---
 id: '0953'
 title: The DM Ends the Session and Every Player Sees a Recap
-status: Refined
+status: Complete
 created: 2026-11-19
 dependencies:
 - '0951'
@@ -22,7 +22,7 @@ target_release: 1.0.0
 
 ## Status
 
-Refined. Release One (PRD-0025). Journey step 19 of `.audit/research/r1-core-journeys.md`.
+Complete
 
 ## Summary
 

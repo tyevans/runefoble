@@ -1,7 +1,7 @@
 ---
 id: '0943'
 title: The Watcher Selects Each Engine Port by Its Own Setting, and Grammar Runs First
-status: Refined
+status: Complete
 created: 2026-11-19
 dependencies:
 - '0942'
@@ -20,7 +20,7 @@ target_release: 1.0.0
 
 ## Status
 
-Refined. Implements ADR-0022 (a) to (d). This is the largest slice of the voice loop. If the worker finds that it does not fit one slice, stop and report. Do not split it with a compatibility layer.
+Complete
 
 ## Summary
 
@@ -33,7 +33,7 @@ One switch, `RUNEFOBLE_WATCHER_ENGINE`, selects the intent parser, the stand-in 
 - `deployments/helm/runefoble/values.yaml:316`: `RUNEFOBLE_WATCHER_ENGINE: inference_worker`.
 - `services/the_watcher/src/the_watcher/routers/intent/speech.py:36`: the speech route calls the worker-backed intent port for every transcript.
 - `services/the_watcher/src/the_watcher/routers/intent/compound.py:59`: the compound route calls the grammar only, with no rule. ADR-0022 (a) and (b) give the rule.
-- `services/the_watcher/src/the_watcher/adapters/heuristic_engines.py:36-52`: the heuristic stand-in decider returns template text. ADR-0015 Context item 4 forbids this kind of output. `heuristic_engines.py:55-60`: the heuristic narrator raises 503 and has no text.
+- `services/the_watcher/src/the_watcher/adapters/heuristic_engines.py` (removed): the heuristic stand-in decider returns template text. ADR-0015 Context item 4 forbids this kind of output. `heuristic_engines.py:55-60`: the heuristic narrator raises 503 and has no text.
 - Docs that name the setting: `docs/reference/platform-services.md`, `docs/how-to/add-an-engine-port-adapter.md`, `docs/how-to/compose-a-service-with-an-app-container.md`, `docs/how-to/test-cross-service-calls-with-live-upstreams.md`, `docs/reference/inference-worker-response-contract.md`.
 - Tests that set the switch: `tests/helpers/watcher_engine.py:9-13`, `tests/test_blackbox_watcher_engine_ports.py`.
 

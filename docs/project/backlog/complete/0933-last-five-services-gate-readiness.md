@@ -1,7 +1,7 @@
 ---
 id: '0933'
 title: The Last Five Services Gate Readiness, and a Waiting Deploy Cannot Deadlock
-status: Refined
+status: Complete
 created: 2026-11-19
 dependencies:
 - '0931'
@@ -19,7 +19,7 @@ target_release: 1.0.0
 
 ## Status
 
-Refined. Follow-up of TASK-0931 (`.audit/work/0931.md`).
+Complete
 
 ## Summary
 

@@ -1,7 +1,7 @@
 ---
 id: '0944'
 title: The Grammar Parses Possessive and Named-Token Moves
-status: Refined
+status: Complete
 created: 2026-11-19
 dependencies:
 - '0943'
@@ -20,7 +20,7 @@ target_release: 1.0.0
 
 ## Status
 
-Refined. Depends on TASK-0943, so the grammar answers without a model.
+Complete
 
 ## Summary
 

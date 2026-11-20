@@ -1,7 +1,7 @@
 ---
 id: '0950'
 title: An Invite Link Opens a Join View in the App Shell
-status: Refined
+status: Complete
 created: 2026-11-19
 dependencies:
 - '0967'
@@ -23,7 +23,7 @@ target_release: 1.0.0
 
 ## Status
 
-Refined. Release One (PRD-0025). Journey step 1 of `.audit/research/r1-core-journeys.md`.
+Complete
 
 ## Summary
 
