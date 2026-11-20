@@ -22,6 +22,18 @@ CARDINAL_DIR_FIRST_PATTERN: re.Pattern[str] = re.compile(
     re.IGNORECASE,
 )
 
+# 2c. Possessive or named mover (TASK-0944): e.g. "move my warrior to the chest",
+# "move the warrior to the chest", "move Valeros to the chest". Group 1 is the subject (one to
+# three words). Group 2 is the target token name (one to four words). The subject is recorded
+# and never matched: the mover is always the speaker's token. "to" or "towards" cannot start a
+# subject, so "move to the goblin archer" keeps its own pattern.
+POSSESSIVE_MOVE_PATTERN: re.Pattern[str] = re.compile(
+    r"\b(?:move|step|walk|charge|run|advance|retreat|go)\s+(?:(?:my|the)\s+)?"
+    r"(?!(?:to|towards)\b)([a-zA-Z0-9_\-]+(?:\s+[a-zA-Z0-9_\-]+){0,2}?)\s+to\s+"
+    r"(?:the\s+)?([a-zA-Z0-9_\-]+(?:\s+[a-zA-Z0-9_\-]+){0,3})\s*(?:[.!?,]|$)",
+    re.IGNORECASE,
+)
+
 # 3. Flanking intent: e.g. "flank the skeleton"
 FLANK_PATTERN: re.Pattern[str] = re.compile(
     r"\bflank\s+(?:the\s+)?([a-zA-Z0-9_\-\s]+?)(?:[.!?,]|$)",

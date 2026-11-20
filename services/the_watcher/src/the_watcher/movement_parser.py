@@ -14,6 +14,7 @@ from the_watcher.grammars import (
     GENERIC_ATTACK_PATTERN,
     GENERIC_CHECK_PATTERN,
     MOVE_TO_TOKEN_PATTERN,
+    POSSESSIVE_MOVE_PATTERN,
     SKILL_PATTERN,
     SPELL_PATTERN,
     SPELL_TARGET_COORD_PATTERN,
@@ -88,6 +89,19 @@ class SpeechIntentParser:
         if m := CARDINAL_DIR_FIRST_PATTERN.search(text):
             return self._build_cardinal_intent(
                 m.group(1), int(m.group(2)), m.group(3), speaker_name
+            )
+
+        # 2c. Possessive or named mover: "move my warrior to the chest" (TASK-0944)
+        if m := POSSESSIVE_MOVE_PATTERN.search(text):
+            subject, tgt = m.group(1).strip(), m.group(2).strip()
+            p = {"action": "move_to_token", "subject": subject, "target_token": tgt, "target": tgt}
+            return _intent(
+                "move",
+                0.92,
+                p,
+                tgt,
+                f"Move {subject} to {tgt}",
+                f"The Watcher moves {speaker_name} towards {tgt}.",
             )
 
         # 3. Flanking intent: "flank the skeleton"
