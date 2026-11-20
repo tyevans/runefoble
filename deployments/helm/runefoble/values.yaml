@@ -313,9 +313,13 @@ services:
     consumers: [game-session, voice-agent, gateway-api, gateway-mcp]
     serviceCredential: true
     env:
-      # Selects the engine adapter for every Watcher port (ADR-0015 decision 4). The worker
-      # URL comes from services.inferenceWorker. Start-up fails when that URL is missing.
-      RUNEFOBLE_WATCHER_ENGINE: inference_worker
+      # One setting per engine port (ADR-0022 d). Each accepts `inference_worker` or `none`.
+      # The intent port parses with the grammar first and sends only narrative speech to the
+      # worker. The worker URL comes from services.inferenceWorker. Start-up fails when a
+      # port is `inference_worker` and that URL is missing.
+      RUNEFOBLE_WATCHER_INTENT_ENGINE: inference_worker
+      RUNEFOBLE_WATCHER_STAND_IN_ENGINE: inference_worker
+      RUNEFOBLE_WATCHER_NARRATION_ENGINE: inference_worker
   boardState:
     swaggerName: "Board State Engine"
     image: runefoble/board-state:0.1.0

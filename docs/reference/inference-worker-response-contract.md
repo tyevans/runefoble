@@ -99,8 +99,10 @@ Configuration:
 
 | Variable | Use |
 |---|---|
-| `RUNEFOBLE_INFERENCE_URL` | Base URL of the inference worker. Required while `RUNEFOBLE_WATCHER_ENGINE` is `inference_worker`, the default. The Watcher fails at start-up when it is unset. |
-| `RUNEFOBLE_WATCHER_ENGINE` | `inference_worker` (default) or `heuristic`. `heuristic` runs the local rule engine for speech and stand-in only. Narration returns 503 under `heuristic`. |
+| `RUNEFOBLE_INFERENCE_URL` | Base URL of the inference worker. Required while any Watcher port setting is `inference_worker`. The Watcher fails at start-up when it is unset. |
+| `RUNEFOBLE_WATCHER_INTENT_ENGINE` | `inference_worker` or `none` (default). The grammar parses every transcript first. Only `narrative` speech goes to the worker. `none` returns "Not understood." for that speech. |
+| `RUNEFOBLE_WATCHER_STAND_IN_ENGINE` | `inference_worker` or `none` (default). `none` returns 503. |
+| `RUNEFOBLE_WATCHER_NARRATION_ENGINE` | `inference_worker` or `none` (default). `none` returns 503. |
 | `RUNEFOBLE_BOARD_STATE_URL` | Base URL of the board state service. Speech reads the session board to send `visible_tokens`. |
 
 | Watcher route | Worker call | Result fields |
