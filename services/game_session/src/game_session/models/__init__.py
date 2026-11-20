@@ -34,6 +34,7 @@ from game_session.models.session import (
     LeaveSessionResponse,
     ParticipantState,
     ReadinessRequest,
+    SeatStandInRequest,
     SelectLobbyCharacterRequest,
 )
 from game_session.models.transitions import GameSessionTransitionsMixin
@@ -62,6 +63,7 @@ __all__ = [
     "NextTurnRequest",
     "ParticipantState",
     "ReadinessRequest",
+    "SeatStandInRequest",
     "SelectLobbyCharacterRequest",
     "ReactionTransitionsMixin",
     "ReadyActionRequest",

@@ -63,6 +63,12 @@ class JoinSessionRequest(BaseModel):
     character_class: str
 
 
+class SeatStandInRequest(BaseModel):
+    """Set or release the AI stand-in of one seat (TASK-0952). `true` marks the seat absent."""
+
+    is_absent: bool
+
+
 class LeaveSessionRequest(BaseModel):
     reason: str = "disconnected"
 

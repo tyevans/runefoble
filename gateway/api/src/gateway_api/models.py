@@ -147,6 +147,25 @@ class JoinSessionRequest(BaseModel):
     character_class: str = Field(..., min_length=1)
 
 
+class ReadinessRequest(BaseModel):
+    """Set the caller's lobby readiness. game_session checks `session.participate`."""
+
+    is_ready: bool
+
+
+class SelectLobbyCharacterRequest(BaseModel):
+    """The character the caller brings to the lobby. game_session checks `session.participate`."""
+
+    character_id: str = Field(..., min_length=1)
+
+
+class SeatStandInRequest(BaseModel):
+    """Set or release the AI stand-in of one seat. game_session checks `participate` for the
+    seat's own player and `control` for any other caller (TASK-0952)."""
+
+    is_absent: bool
+
+
 class CreateCampaignSessionRequest(BaseModel):
     title: str = Field(..., min_length=1, max_length=120)
     scheduled_at: str | None = None

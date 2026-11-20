@@ -26,6 +26,7 @@ from game_session.models import (
     ReadinessRequest,
     RollDiceRequest,
     RollDiceResponse,
+    SeatStandInRequest,
     SelectLobbyCharacterRequest,
 )
 from game_session.play.repositories import SessionRepo
@@ -33,7 +34,9 @@ from game_session.routers.session_auth import (
     SessionController,
     SessionParticipant,
     SessionReader,
+    session_permission,
 )
+from game_session.shared.identity import CallerId
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.permissions import require_subject
 from runefoble_platform.aggregate_loading import load_or_404
@@ -161,6 +164,73 @@ async def _call_character_sheet(call: Awaitable[None]) -> None:
         await call
     except CharacterSheetUnavailableError as e:
         raise HTTPException(status_code=503, detail=str(e)) from e
+
+
+@router.post(
+    "/api/v1/sessions/{session_id}/seats/{player_id}/stand-in", response_model=GameSessionState
+)
+async def set_seat_stand_in(
+    session_id: UUID,
+    player_id: str,
+    req: SeatStandInRequest,
+    caller: CallerId,
+    authorization: Annotated[str, Header(alias="Authorization")],
+    repo: SessionRepo,
+) -> GameSessionState:
+    """Set or release the AI stand-in of one seat (TASK-0952).
+
+    A player sets their own seat and needs `session.participate`. A caller with `session.control`
+    (the DM, `campaign#run_session`) sets any seat. Any other caller gets 403. The owner checks
+    both through SpiceDB, never a role name. `is_absent` true records the absence and activates
+    the lobby character's stand-in. `is_absent` false releases the stand-in and marks the seat present.
+    """
+    await _require_seat_changer(session_id, player_id, caller)
+    call_auth = authorization if caller == player_id else None
+    session = await _load_session(repo, session_id)
+    if req.is_absent:
+        try:
+            session.leave_player(player_id=player_id, reason="absent")
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e)) from e
+        character_id = session.state.lobby_characters.get(player_id)
+        if character_id is not None:
+            await _call_character_sheet(
+                activate_stand_in(character_id, session_id, authorization=call_auth)
+            )
+    else:
+        # Read the stand-in before the seat is marked present, which clears its flag.
+        stand_in_character_id = _active_stand_in_character(session.state, player_id)
+        if stand_in_character_id is not None:
+            await _call_character_sheet(
+                release_stand_in(stand_in_character_id, session_id, authorization=call_auth)
+            )
+        try:
+            _mark_present(session, player_id)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e)) from e
+    await repo.save(session)
+    return session.state
+
+
+async def _require_seat_changer(session_id: UUID, player_id: str, caller: str) -> None:
+    """The seat's own player needs `participate`. Any other caller needs `control` (TASK-0952)."""
+    if caller == player_id:
+        await session_permission("participate")(session_id, caller)
+    else:
+        await session_permission("control")(session_id, caller)
+
+
+def _mark_present(session: GameSessionAggregate, player_id: str) -> None:
+    """Mark a stored seat present again, with the seat's own character (TASK-0952)."""
+    participant = session.state.participants.get(player_id)
+    if participant is None:
+        raise ValueError(f"Player {player_id} is not in session")
+    session.join_player(
+        player_id=player_id,
+        character_id=participant.character_id,
+        character_name=participant.character_name,
+        character_class=participant.character_class,
+    )
 
 
 @router.post("/api/v1/sessions/{session_id}/lobby/readiness", response_model=GameSessionState)

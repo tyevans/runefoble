@@ -19,57 +19,6 @@ from tests.helpers.ws_identity import ws_subprotocols
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
-def test_vtt_websocket_mesh_multi_client_readiness_and_stand_in(
-    client_gw: TestClient, open_session
-) -> None:
-    """Verify multi-client WebSocket synchronization for session lobby readiness and stand-in toggles."""
-    session_id = open_session("mesh-tester")
-
-    with client_gw.websocket_connect(
-        f"/ws/session/{session_id}", subprotocols=ws_subprotocols("mesh-tester")
-    ) as ws_client_a:
-        conn_a = ws_client_a.receive_json()
-        assert conn_a["type"] == "connected"
-        assert conn_a["session_id"] == session_id
-
-        with client_gw.websocket_connect(
-            f"/ws/session/{session_id}", subprotocols=ws_subprotocols("mesh-tester")
-        ) as ws_client_b:
-            conn_b = ws_client_b.receive_json()
-            assert conn_b["type"] == "connected"
-
-            # Client A toggles readiness
-            readiness_payload = {
-                "type": "player_readiness",
-                "userId": "user-valeros",
-                "isReady": True,
-            }
-            ws_client_a.send_json(readiness_payload)
-
-            # Both connected peers receive the readiness broadcast
-            msg_b = ws_client_b.receive_json()
-            assert msg_b["type"] == "player_readiness"
-            assert msg_b["userId"] == "user-valeros"
-            assert msg_b["isReady"] is True
-
-            msg_a = ws_client_a.receive_json()
-            assert msg_a["type"] == "player_readiness"
-            assert msg_a["isReady"] is True
-
-            # Client B toggles AI stand-in for absent player
-            stand_in_payload = {
-                "type": "player_stand_in",
-                "userId": "user-kyra",
-                "isAbsent": True,
-            }
-            ws_client_b.send_json(stand_in_payload)
-
-            msg_a_stand_in = ws_client_a.receive_json()
-            assert msg_a_stand_in["type"] == "player_stand_in"
-            assert msg_a_stand_in["userId"] == "user-kyra"
-            assert msg_a_stand_in["isAbsent"] is True
-
-
 def test_vtt_websocket_mesh_aoe_templates_vfx_and_token_actions(
     client_gw: TestClient, open_session
 ) -> None:

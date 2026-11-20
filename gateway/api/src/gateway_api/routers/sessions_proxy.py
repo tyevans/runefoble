@@ -8,8 +8,8 @@ in `upstream_errors.py`: 503 when unreachable, 502 on upstream 5xx, upstream 4xx
 `hot-swap` keeps a gateway check because game_session does not check the same permission for
 the same caller: it needs `observe` here, and the owner checks `participate` and
 `character.edit`. `dm-override` and `atmosphere` have no gateway check: game_session checks
-`session.control`. `join` has no gateway check: game_session checks `participate` and seats
-the verified caller (TASK-0889). `end` has no gateway check: game_session checks `session.control`
+`session.control`. `join`, `lobby/character`, `seats/{player_id}/stand-in` and `lobby/readiness` have no gateway check: game_session
+checks `participate` or `control` for the caller and seat (TASK-0889, TASK-0952). `end` has no gateway check: game_session checks `session.control`
 and refuses an end from any status but `active`. `events` and `absentee-recap` keep their
 gateway check because game_session answers 404 for an unknown session before it checks
 `observe`. Without the gateway check, a caller could tell a session that exists from one that
@@ -23,9 +23,16 @@ from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from gateway_api.auth import get_principal, require_zanzibar_permission
+from gateway_api.auth import CallerPrincipal, get_principal, require_zanzibar_permission
 from gateway_api.dependencies import ws_manager
-from gateway_api.models import AtmosphereUpdateRequest, DMOverrideRequest, JoinSessionRequest
+from gateway_api.models import (
+    AtmosphereUpdateRequest,
+    DMOverrideRequest,
+    JoinSessionRequest,
+    ReadinessRequest,
+    SeatStandInRequest,
+    SelectLobbyCharacterRequest,
+)
 from gateway_api.proxy import UPSTREAM_INVALID_DETAIL, forward_bytes, forward_json, owner_route
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from runefoble_platform.service_client import owner_routes
@@ -74,6 +81,24 @@ async def join_session_proxy(session_id: str, req: JoinSessionRequest, request: 
     )
 
 
+@router.post("/api/v1/sessions/{session_id}/lobby/character", dependencies=_VERIFIED)
+async def select_lobby_character_proxy(
+    session_id: str, req: SelectLobbyCharacterRequest, request: Request
+) -> Any:
+    """Record the lobby character of the caller (game_session checks 'participate').
+
+    The owner needs this character to hand it to the AI stand-in when the caller leaves.
+    """
+    route = owner_route(owner_routes.select_lobby_character, session_id)
+    return await forward_json(
+        request,
+        service=SERVICE,
+        method=route.method,
+        path=route.path,
+        json_body=req.model_dump(mode="json"),
+    )
+
+
 @router.post("/api/v1/sessions/{session_id}/roll", dependencies=_VERIFIED)
 async def roll_dice_proxy(session_id: str, request: Request) -> Any:
     """Evaluate a dice roll for the verified caller (game_session checks 'participate').
@@ -83,6 +108,54 @@ async def roll_dice_proxy(session_id: str, request: Request) -> Any:
     """
     route = owner_route(owner_routes.roll_session, session_id)
     return await forward_bytes(request, service=SERVICE, method=route.method, path=route.path)
+
+
+@router.post("/api/v1/sessions/{session_id}/lobby/readiness", dependencies=_VERIFIED)
+async def set_lobby_readiness_proxy(
+    session_id: str, req: ReadinessRequest, request: Request, user: CallerPrincipal
+) -> Any:
+    """Record the caller's lobby readiness (game_session checks 'participate').
+
+    The gateway stores nothing. After the owner saves the readiness, the gateway tells every
+    session socket with `player_readiness`. A reload reads the stored value from the owner.
+    """
+    route = owner_route(owner_routes.set_lobby_readiness, session_id)
+    state = await forward_json(
+        request,
+        service=SERVICE,
+        method=route.method,
+        path=route.path,
+        json_body=req.model_dump(mode="json"),
+    )
+    await ws_manager.broadcast(
+        session_id, {"type": "player_readiness", "userId": user.user_id, "isReady": req.is_ready}
+    )
+    return state
+
+
+@router.post("/api/v1/sessions/{session_id}/seats/{player_id}/stand-in", dependencies=_VERIFIED)
+async def set_seat_stand_in_proxy(
+    session_id: str, player_id: str, req: SeatStandInRequest, request: Request
+) -> Any:
+    """Set or release the AI stand-in of one seat (game_session checks 'participate' for the seat's
+    own player, and 'control' for any other caller).
+
+    After the owner saves the change, the gateway tells every session socket with `player_stand_in`.
+    The gateway stores nothing.
+    """
+    route = owner_route(owner_routes.set_seat_stand_in, session_id, player_id)
+    state = await forward_json(
+        request,
+        service=SERVICE,
+        method=route.method,
+        path=route.path,
+        json_body=req.model_dump(mode="json"),
+    )
+    await ws_manager.broadcast(
+        session_id,
+        {"type": "player_stand_in", "userId": player_id, "isAbsent": req.is_absent},
+    )
+    return state
 
 
 @router.post("/api/v1/sessions/{session_id}/start", dependencies=_VERIFIED)

@@ -7,8 +7,10 @@ Mesh frames carry the kind in `type` and may carry a payload field named `action
 hold. Other fields pass through unchanged, because each kind carries its own payload.
 
 Server kinds are not client kinds. `session_started` comes only from the gateway start route, and `session_ended` only from the gateway end route (TASK-0953).
-`turn_advanced`, `dice_rolled`, `token_moved` and `dm_whisper` have owner routes or owner
-sockets, so a client frame of these kinds is an `UNKNOWN_FRAME`.
+`player_readiness` and `player_stand_in` come only from the gateway readiness and seat stand-in
+routes after the owner saves the change. `turn_advanced`, `dice_rolled`, `token_moved` and
+`dm_whisper` have owner routes or owner sockets. A client frame of any of these kinds is an
+`UNKNOWN_FRAME`.
 """
 
 from __future__ import annotations
@@ -21,8 +23,6 @@ from pydantic import BaseModel, ConfigDict, ValidationError, model_validator
 
 CLIENT_FRAME_PERMISSIONS: Mapping[str, str] = MappingProxyType(
     {
-        "player_readiness": "participate",
-        "player_stand_in": "participate",
         "token_action": "participate",
         "aoe_placed": "participate",
         "spell_vfx": "participate",
