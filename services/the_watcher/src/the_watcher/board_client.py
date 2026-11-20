@@ -12,7 +12,11 @@ TOKEN_FIELDS = ("token_id", "name", "token_type", "x", "y", "hp", "is_friendly")
 
 
 async def fetch_visible_tokens(
-    base_url: str | None, session_id: str, authorization: str | None
+    base_url: str | None,
+    session_id: str,
+    authorization: str | None,
+    *,
+    timeout_s: float,
 ) -> list[dict[str, Any]]:
     """Return the tokens on the session board. A session with no board has no tokens.
 
@@ -28,7 +32,7 @@ async def fetch_visible_tokens(
         raise unavailable
 
     try:
-        async with httpx.AsyncClient(timeout=2.0) as client:
+        async with httpx.AsyncClient(timeout=timeout_s) as client:
             res = await client.get(
                 f"{base_url}/api/v1/boards/{session_id}",
                 headers={"Authorization": authorization} if authorization else {},

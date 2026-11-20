@@ -14,9 +14,11 @@ from gateway_api.proxy_table import ProxyRoute, register_proxy_routes
 
 SERVICE = "the_watcher"
 
-# The Watcher calls the inference worker (2.0 s) and board_state for visible tokens (2.0 s).
-# The gateway waits longer than the owner's worst case, so the owner answers first.
-SPEAK_AND_ACT_TIMEOUT_S = 5.0
+# Budget rule (TASK-0948): this timeout must be greater than the sum of The Watcher's intent
+# budget, board read budget and proposal budget (RUNEFOBLE_WATCHER_INTENT_TIMEOUT_S,
+# RUNEFOBLE_WATCHER_BOARD_TIMEOUT_S, RUNEFOBLE_WATCHER_PROPOSAL_TIMEOUT_S; defaults 2 s each,
+# sum 6 s). The gateway waits longer than the owner's worst case, so the owner answers first.
+SPEAK_AND_ACT_TIMEOUT_S = 8.0
 
 router = APIRouter(tags=["Tabletop & Game Sessions"])
 

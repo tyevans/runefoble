@@ -190,6 +190,14 @@ services:
     resources: *medium
   theWatcher:
     resources: *medium
+    # Call budgets in seconds (TASK-0948). The gateway speak-and-act budget is 8 s, which is more
+    # than the sum of the intent, board read and proposal budgets. Keep that rule when you change one.
+    env:
+      RUNEFOBLE_WATCHER_INTENT_TIMEOUT_S: "2.0"
+      RUNEFOBLE_WATCHER_STAND_IN_TIMEOUT_S: "10.0"
+      RUNEFOBLE_WATCHER_NARRATION_TIMEOUT_S: "10.0"
+      RUNEFOBLE_WATCHER_BOARD_TIMEOUT_S: "2.0"
+      RUNEFOBLE_WATCHER_PROPOSAL_TIMEOUT_S: "2.0"
   boardState:
     resources: *medium
   characterSheet:
@@ -212,6 +220,14 @@ services:
     resources: *small
   inferenceWorker:
     resources: *small
+    # Secret that you create. It holds the model endpoint key. The key name is set below.
+    openaiApiKeySecret:
+      name: inference-worker-openai
+      key: api-key
+    # Generation settings. Each value must be set here, or the worker default applies.
+    temperature: 0.7
+    maxTokens: 512
+    timeoutSeconds: 30
   gatewayMcp:
     resources: *small
 

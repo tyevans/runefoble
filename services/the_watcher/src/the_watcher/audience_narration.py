@@ -48,7 +48,6 @@ GROUP_NAME = "the_watcher_narration_workers"
 WORKER_NAME = "the_watcher_narration_consumer_1"
 AUDIENCE_STREAM = "runefoble.events.audience"
 WORKER_PATH = "/inference/v1/dm-narration"
-WORKER_TIMEOUT_S = 10.0
 RECORD_ATTEMPTS = 3
 
 NARRATION_WHISPER = "audience_narration"
@@ -101,7 +100,7 @@ async def _narrate(modifier: AudienceModifierApproved) -> tuple[str, str, dict[s
             settings.inference_url,
             WORKER_PATH,
             payload,
-            timeout=WORKER_TIMEOUT_S,
+            timeout=settings.watcher_narration_timeout_s,
             credential=settings.service_credential,
         )
     except (EngineUnavailableError, HTTPException) as exc:

@@ -51,6 +51,8 @@ class OpenAICompatibleLLM(LLMPort):
             temperature=temperature,
             max_completion_tokens=max_tokens,
             timeout=timeout_seconds,
+            # A retry would spend the budget twice. The caller's budget bounds the whole call.
+            max_retries=0,
         )
 
     async def check_ready(self) -> None:

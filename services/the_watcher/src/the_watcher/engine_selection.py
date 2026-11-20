@@ -12,7 +12,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal
 
-from pydantic import SecretStr, field_validator
+from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from runefoble_platform.engine_ports import build_adapter
 from the_watcher.adapters.grammar_first import GrammarFirstIntentParser
@@ -44,6 +44,12 @@ class WatcherEngineSettings(BaseSettings):
     board_state_url: str | None = None
     # The worker refuses a call without it (ADR-0015 e). The Watcher then answers 503.
     service_credential: SecretStr | None = None
+    # Call budgets in seconds. A call that runs out of budget answers 503 (ADR-0015).
+    watcher_intent_timeout_s: float = Field(default=2.0, gt=0)
+    watcher_stand_in_timeout_s: float = Field(default=10.0, gt=0)
+    watcher_narration_timeout_s: float = Field(default=10.0, gt=0)
+    watcher_board_timeout_s: float = Field(default=2.0, gt=0)
+    watcher_proposal_timeout_s: float = Field(default=2.0, gt=0)
 
     @field_validator("inference_url", "board_state_url", mode="before")
     @classmethod
@@ -83,7 +89,9 @@ def build_watcher_ports(settings: WatcherEngineSettings, grammar: TheWatcherEngi
             settings.watcher_stand_in_engine,
             {
                 "inference_worker": lambda: WorkerStandInDecider(
-                    _worker_url(settings), settings.service_credential
+                    _worker_url(settings),
+                    settings.service_credential,
+                    timeout_s=settings.watcher_stand_in_timeout_s,
                 ),
                 NONE_ENGINE: UnconfiguredStandInDecider,
             },
@@ -93,7 +101,9 @@ def build_watcher_ports(settings: WatcherEngineSettings, grammar: TheWatcherEngi
             settings.watcher_narration_engine,
             {
                 "inference_worker": lambda: WorkerSceneNarrator(
-                    _worker_url(settings), settings.service_credential
+                    _worker_url(settings),
+                    settings.service_credential,
+                    timeout_s=settings.watcher_narration_timeout_s,
                 ),
                 NONE_ENGINE: UnconfiguredSceneNarrator,
             },
@@ -111,6 +121,8 @@ def _intent_port(settings: WatcherEngineSettings, grammar: TheWatcherEngine) -> 
                 base_url=_worker_url(settings),
                 board_state_url=settings.board_state_url,
                 credential=settings.service_credential,
+                intent_timeout_s=settings.watcher_intent_timeout_s,
+                board_timeout_s=settings.watcher_board_timeout_s,
             ),
             NONE_ENGINE: lambda: None,
         },

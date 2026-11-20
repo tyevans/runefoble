@@ -22,7 +22,7 @@ def parse_json_object(content: str) -> dict[str, Any]:
 def require_field(data: dict[str, Any], key: str, backend: str) -> Any:
     """Return `data[key]`. Raise EngineUnavailableError when the model omitted it or left it empty.
 
-    The worker has no substitute for a field that the model did not produce (ADR-0015 decision 4).
+    The worker has no substitute for a field that the model did not produce (ADR-0015 Context item 4).
     """
     value = data.get(key)
     if not value:
