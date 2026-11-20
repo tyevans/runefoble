@@ -15,6 +15,23 @@
 | `/mail`, `/mailpit` | `mailpit:8025` | Self-hosted Mailpit email testing & mock SMTP Web UI and API |
 | `/` | `frontend:80` | Lit + Vite web application (catch-all, lowest precedence) |
 
+## TLS and HTTP Redirect Rules (hosted)
+
+The `ingress.tls` and `ingress.httpsRedirect` keys select the TLS source and the redirect. Both keys are
+read with defaults, and `values.yaml` does not list them. The local render uses the defaults.
+
+| Setting | Local default | Hosted value (example) | Rendered result |
+|---|---|---|---|
+| `ingress.tls.mode` | `none` | `certManager` or `existingSecret` | `none`: HTTP on the `web` entrypoint, no `tls:` block. `certManager`: the application Ingress has a `tls:` block for every host with Secret `<release>-tls`, and the annotation `cert-manager.io/cluster-issuer` carries `ingress.tls.clusterIssuer`. `existingSecret`: the `tls:` block names `ingress.tls.secretName` and adds no issuer annotation |
+| `ingress.httpsRedirect` | `false` | `true` | A Traefik `Middleware` (`traefik.io/v1alpha1`, `redirectScheme` to `https`, `permanent: true`) and a second Ingress `<release>-ingress-http-redirect`. The second Ingress uses only the `web` entrypoint, the Middleware annotation, and one `/` path |
+
+Rules:
+- A TLS mode other than `none` moves the application Ingress to the `websecure` entrypoint. The application Ingress never serves plain HTTP when a mode is set.
+- The chart never installs cert-manager. The operator installs the ClusterIssuer or creates the TLS Secret.
+- `httpsRedirect: true` with `ingress.tls.mode: none` fails the render.
+- A hosted render (`global.environment` `staging` or `production`) fails when `ingress.tls.mode` is `none`, when `ingress.httpsRedirect` is not `true`, or when the issuer or Secret name holds `REPLACE-ME`. See [Hosted values profile](hosted-profile.md).
+- The Middleware needs the Traefik v3 CRDs (`traefik.io/v1alpha1`). `make cluster-up` installs an unpinned Traefik chart. Pin the Traefik version in the hosted runbook.
+
 ## Local Development Vite Proxy Routes (localhost:5173)
 
 When running the local development environment via `make dev`, Vite proxies requests to local backend services to prevent 502 Bad Gateway and un-proxied SPA interception errors:

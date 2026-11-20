@@ -43,6 +43,10 @@ An unset key that the guard reads also fails the render. The guard never takes a
 | `zitadel.bootstrap.postLogoutRedirectUris` | `https://REPLACE-ME/` | Same check as `redirectUris`. |
 | `zitadel.bootstrap.devMode` | `false` | Fails when `true`. |
 | `mailpit.enabled` | `false` | Fails when `true`. Mailpit is a development mail capture. |
+| `ingress.tls.mode` | `certManager` | Fails unless `certManager` or `existingSecret`. `none` serves HTTP only. |
+| `ingress.tls.clusterIssuer` | `REPLACE-ME` | Required with `certManager`. Fails on `REPLACE-ME`. Name of a ClusterIssuer that you install. |
+| `ingress.tls.secretName` | `""` | Required with `existingSecret`. Fails on `REPLACE-ME`. Name of a `kubernetes.io/tls` Secret that you create. |
+| `ingress.httpsRedirect` | `true` | Fails unless `true`. Plain HTTP answers 301 to HTTPS. See [TLS and HTTP redirect rules](ports-and-endpoints.md#tls-and-http-redirect-rules-hosted). |
 
 ## Placeholder marker
 

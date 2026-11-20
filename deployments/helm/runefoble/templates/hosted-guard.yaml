@@ -76,4 +76,26 @@ Docs: docs/reference/hosted-profile.md.
 {{- include "runefoble.hosted.fail" (dict "key" "zitadel.adminEmail" "value" $adminEmail "env" $env) -}}
 {{- end -}}
 
+{{- $tlsMode := dig "tls" "mode" "none" .Values.ingress | toString -}}
+{{- if not (or (eq $tlsMode "certManager") (eq $tlsMode "existingSecret")) -}}
+{{- fail (printf "ingress.tls.mode must be certManager or existingSecret for a %s render. Found: %s. A hosted site serves HTTPS only." $env $tlsMode) -}}
+{{- end -}}
+{{- if eq $tlsMode "certManager" -}}
+{{- $issuer := required "ingress.tls.clusterIssuer must be set for a hosted render with certManager" (include "runefoble.ingress.clusterIssuer" .) -}}
+{{- if contains "REPLACE-ME" $issuer -}}
+{{- include "runefoble.hosted.fail" (dict "key" "ingress.tls.clusterIssuer" "value" $issuer "env" $env) -}}
+{{- end -}}
+{{- end -}}
+{{- if eq $tlsMode "existingSecret" -}}
+{{- $secretName := required "ingress.tls.secretName must be set for a hosted render with existingSecret" (include "runefoble.ingress.tlsSecretName" .) -}}
+{{- if contains "REPLACE-ME" $secretName -}}
+{{- include "runefoble.hosted.fail" (dict "key" "ingress.tls.secretName" "value" $secretName "env" $env) -}}
+{{- end -}}
+{{- end -}}
+
+{{- $httpsRedirect := required "ingress.httpsRedirect must be set for a hosted render" .Values.ingress.httpsRedirect -}}
+{{- if ne (toString $httpsRedirect) "true" -}}
+{{- include "runefoble.hosted.fail" (dict "key" "ingress.httpsRedirect" "value" $httpsRedirect "env" $env) -}}
+{{- end -}}
+
 {{- end -}}
