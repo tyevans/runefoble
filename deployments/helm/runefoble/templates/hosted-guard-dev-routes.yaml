@@ -1,0 +1,35 @@
+{{- /*
+Hosted dev-route guard (TASK-0957, PRD-0025 outcome 4). A staging or production render fails when
+an Ingress path serves a development prefix (/mail, /mailpit, /docs, /swagger-ui, /analytics), or
+when an Ingress path targets a development workload that is off (mailpit, swagger-ui, openpanel).
+The file renders no object. The local render is not affected. Docs: docs/reference/hosted-profile.md.
+*/ -}}
+
+{{- $env := .Values.global.environment -}}
+{{- if or (eq $env "staging") (eq $env "production") -}}
+
+{{- $devPrefixes := list "/mail" "/mailpit" "/docs" "/swagger-ui" "/analytics" -}}
+{{- range $hi, $host := .Values.ingress.hosts -}}
+{{- range $pi, $p := $host.paths -}}
+{{- $path := toString $p.path -}}
+{{- $svc := toString $p.service -}}
+{{- $key := printf "ingress.hosts[%d].paths[%d].path" $hi $pi -}}
+
+{{- range $prefix := $devPrefixes -}}
+{{- if or (eq $path $prefix) (hasPrefix (printf "%s/" $prefix) $path) -}}
+{{- include "runefoble.hosted.fail" (dict "key" $key "value" $path "env" $env) -}}
+{{- end -}}
+{{- end -}}
+
+{{- $on := false -}}
+{{- if eq $svc "mailpit" }}{{ $on = $.Values.mailpit.enabled }}{{ end -}}
+{{- if eq $svc "swagger-ui" }}{{ $on = $.Values.swaggerUI.enabled }}{{ end -}}
+{{- if eq $svc "openpanel" }}{{ $on = $.Values.openpanel.enabled }}{{ end -}}
+{{- if and (or (eq $svc "mailpit") (eq $svc "swagger-ui") (eq $svc "openpanel")) (ne (toString $on) "true") -}}
+{{- fail (printf "%s routes to %s, which is off in a %s render. Remove the path. Found: %s" $key $svc $env $path) -}}
+{{- end -}}
+
+{{- end -}}
+{{- end -}}
+
+{{- end -}}

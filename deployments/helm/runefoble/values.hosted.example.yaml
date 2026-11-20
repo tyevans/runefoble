@@ -28,18 +28,6 @@ ingress:
           pathType: Prefix
           service: gateway-api
           port: 8000
-        - path: /docs
-          pathType: Prefix
-          service: swagger-ui
-          port: 8080
-        - path: /swagger-ui
-          pathType: Prefix
-          service: swagger-ui
-          port: 8080
-        - path: /analytics
-          pathType: Prefix
-          service: openpanel
-          port: 3000
         - path: /ws/boards
           pathType: Prefix
           service: board-state
@@ -79,8 +67,14 @@ zitadel:
       - https://REPLACE-ME/
     devMode: false
 
-# Mailpit captures mail for development only. A hosted render runs without it.
+# Development-only workloads. A hosted render runs without them (PRD-0025 outcome 4).
+# Mailpit captures mail. Swagger UI lists the OpenAPI specs. OpenPanel is analytics (D6: off).
+# Each service still serves /openapi.json inside the cluster. No public route reaches them.
 mailpit:
+  enabled: false
+swaggerUI:
+  enabled: false
+openpanel:
   enabled: false
 
 services:
