@@ -16,7 +16,8 @@
     "runefoble-campaign-creator",
     "runefoble-campaign-members",
     "runefoble-campaign-header",
-    "runefoble-session-lobby"
+    "runefoble-session-lobby",
+    "runefoble-session-recap"
   ]
 }
 

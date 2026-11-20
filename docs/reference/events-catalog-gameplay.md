@@ -109,7 +109,7 @@ Part of the [Events Schema](events-schema.md). Each event identifier in this pag
   - `transferred_to_player`: Boolean (default True)
   - `active_turn`: Optional[Integer]
   - `round_number`: Optional[Integer]
-- **`SessionEnded`** (`runefoble.events.session.ended`): Emitted when the session concludes.
+- **`SessionEnded`** (`runefoble.events.session.ended`): Emitted when the DM ends an `active` session through `POST /api/v1/sessions/{session_id}/end` (TASK-0953). A lobby or an ended session refuses the end. The `summary` defaults to `Session ended.`, and the chronicle shows it as the last line of the recap.
   - `summary`: String
 - **`TokenMoveChronicled`** (`runefoble.events.session.token_move_chronicled`): Recorded by game_session when its `runefoble.events.board` consumer reads a `TokenMoved`. Published on `runefoble.events.session`. The session chronicle feed shows it as `<token_name> moved to (<to_x>, <to_y>)`, and the gateway sends it to the session sockets as a `chronicle_entry` frame.
   - `source_event_id`: String. The id of the board `TokenMoved` event. A redelivery of that event records nothing.

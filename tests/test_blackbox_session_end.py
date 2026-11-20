@@ -40,10 +40,16 @@ def _published_types(mock_bus: MockAsyncRedis, session_id: str) -> list[str]:
     return types
 
 
+def _start(session_client: TestClient, session_id: str, owner_id: str) -> None:
+    started = session_client.post(f"/api/v1/sessions/{session_id}/start", headers=bearer(owner_id))
+    assert started.status_code == 200, started.text
+
+
 def test_dm_ends_session_and_owner_publishes_session_ended(
     session_client: TestClient, mock_bus: MockAsyncRedis
 ) -> None:
     campaign_id, session_id = create_campaign_session(session_client, "dm_ender")
+    _start(session_client, session_id, "dm_ender")
 
     route = owner_routes.end_session(session_id)
     res = session_client.request(route.method, route.path, headers=bearer("dm_ender"))
@@ -63,8 +69,22 @@ def test_player_cannot_end_session(session_client: TestClient, mock_bus: MockAsy
     assert SESSION_ENDED not in _published_types(mock_bus, session_id)
 
 
+def test_ending_a_lobby_session_is_refused(
+    session_client: TestClient, mock_bus: MockAsyncRedis
+) -> None:
+    _campaign_id, session_id = create_campaign_session(session_client, "dm_ender_lobby")
+
+    res = session_client.post(
+        f"/api/v1/sessions/{session_id}/end", headers=bearer("dm_ender_lobby")
+    )
+
+    assert res.status_code == 400, res.text
+    assert SESSION_ENDED not in _published_types(mock_bus, session_id)
+
+
 def test_ending_an_ended_session_is_refused(session_client: TestClient) -> None:
     _campaign_id, session_id = create_campaign_session(session_client, "dm_ender_twice")
+    _start(session_client, session_id, "dm_ender_twice")
     first = session_client.post(
         f"/api/v1/sessions/{session_id}/end", headers=bearer("dm_ender_twice")
     )

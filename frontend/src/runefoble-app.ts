@@ -100,6 +100,9 @@ export class RunefobleApp extends LitElement {
   @state() public isAbsenteeDirectiveOpen = false;
   @state() public boardTarget: BoardTarget | null = null;
   @state() public isMapSwitcherOpen = false;
+  /** The session status from the owner: `active` while live, `ended` after the DM ends it (TASK-0953). */
+  @state() public sessionStatus = '';
+  @state() public isEndSessionConfirmOpen = false;
   private toastTimeout: ReturnType<typeof setTimeout> | null = null;
   private unlistenRouter: (() => void) | null = null;
   private unlistenAuth: (() => void) | null = null;

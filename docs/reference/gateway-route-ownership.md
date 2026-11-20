@@ -131,6 +131,7 @@ each route, and the mode in which the gateway serves it.
 | POST | `/api/v1/sessions/{session_id}/dm-override` | game_session | proxy | `gateway_api.routers.sessions_proxy` |
 | GET | `/api/v1/sessions/{session_id}/events` | game_session | proxy | `gateway_api.routers.sessions_proxy` |
 | POST | `/api/v1/sessions/{session_id}/hot-swap` | game_session | proxy | `gateway_api.routers.sessions_proxy` |
+| POST | `/api/v1/sessions/{session_id}/end` | game_session | proxy | `gateway_api.routers.sessions_proxy` |
 | POST | `/api/v1/sessions/{session_id}/join` | game_session | proxy | `gateway_api.routers.sessions_proxy` |
 | POST | `/api/v1/sessions/{session_id}/merchants/{merchant_id}/haggle` | game_session | proxy | `gateway_api.routers.downtime_proxy` |
 | POST | `/api/v1/sessions/{session_id}/rest/campfire` | game_session | proxy | `gateway_api.routers.downtime_proxy` |

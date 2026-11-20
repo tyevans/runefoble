@@ -9,6 +9,23 @@ import { handleBoardAoEPlace, handleBoardConfirmGhost, handleBoardSpellVFX, hand
 import { switchDmCharacter } from '../app/character-actions.ts';
 import { recordBoardMoveTarget, resolveBoardDmAccess } from '../app/board-dm-controls.ts';
 import { handleBoardSetUp } from '../app/board-setup-actions.ts';
+import { endSession } from '../app/session-actions.ts';
+
+/**
+ * The DM ends an active session (TASK-0953). Only a caller with the `run_session` capability sees
+ * the control, and only while the session is `active`. The first click asks for a confirm step.
+ */
+function renderEndSessionControl(app: RunefobleApp, canRunSession: boolean) {
+  if (!canRunSession || app.sessionStatus !== 'active') return '';
+  if (!app.isEndSessionConfirmOpen) {
+    return html`<button class="btn-end-session" @click=${() => { app.isEndSessionConfirmOpen = true; }}>End Session</button>`;
+  }
+  return html`<div class="end-session-confirm" role="group" aria-label="Confirm end of session">
+    <p>End this session for every player? Each player then sees the recap.</p>
+    <button class="btn-confirm-end" @click=${() => endSession(app)}>Confirm End</button>
+    <button class="btn-cancel-end" @click=${() => { app.isEndSessionConfirmOpen = false; }}>Cancel</button>
+  </div>`;
+}
 
 /**
  * The DM trap controls and the map switcher for the board. The session id is the board id.
@@ -39,10 +56,16 @@ function renderBoardArea(app: RunefobleApp, canRunSession: boolean) {
       ${renderBoardDmControls(app)}`;
 }
 
-/** Renders the live tabletop (party mode) or the spectator view for an active session. */
+/**
+ * Renders the live tabletop (party mode) or the spectator view for an active session.
+ * An ended session shows the recap of its chronicle to every caller (TASK-0953).
+ */
 export function renderSessionActive(app: RunefobleApp) {
   const char = app.activeCharacter ?? app.resolveActiveCharacter(app.campaignId);
   const canRunSession = Boolean(app.campaignCapabilities?.run_session);
+  if (app.sessionStatus === 'ended') {
+    return html`<runefoble-session-recap .sessionTitle=${app.sessionTitle} .entries=${app.events}></runefoble-session-recap>`;
+  }
   if (app.viewMode === 'spectator') {
     return html`<runefoble-spectator-view .sessionId=${app.sessionId} .cols=${app.boardCols} .rows=${app.boardRows} .tokens=${app.tokens} .atmosphere=${app.atmosphere} .chronicle=${app.events}></runefoble-spectator-view>`;
   }
@@ -52,6 +75,7 @@ export function renderSessionActive(app: RunefobleApp) {
       ${renderBoardArea(app, canRunSession)}
     </div>
     <div class="character-column">
+      ${renderEndSessionControl(app, canRunSession)}
       ${canRunSession ? html`<div class="dm-party-inspector" role="region" aria-label="DM Party Inspector"><span class="dm-badge">DM Party Inspector</span><select class="dm-character-switcher" aria-label="Switch inspected character" @change=${(e: Event) => switchDmCharacter(app, (e.target as HTMLSelectElement).value)}>${app.characters.map((c) => html`<option value="${c.id}" ?selected=${c.id === char?.id}>${c.name} (${c.characterClass} Lv ${c.level})</option>`)}</select></div>` : ''}
       ${char ? html`<runefoble-character-card .characterName=${char.name} .characterClass=${`${char.characterClass}${char.level ? ` Lvl ${char.level}` : ''}`} .level=${char.level} .currentHp=${char.currentHp} .maxHp=${char.maxHp} .armorClass=${char.armorClass} .portraitUrl=${char.portraitUrl || ''} .isAiStandIn=${Boolean(char.isAiStandIn)}></runefoble-character-card>
       <button class="btn-toggle-directive" @click=${() => { app.isAbsenteeDirectiveOpen = true; }}>📋 Stance Directives</button>` : html`<div class="empty-state" data-testid="active-character-empty"><p>No character is bound to this session. Choose a character in the session lobby.</p></div>`}

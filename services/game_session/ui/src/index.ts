@@ -21,3 +21,5 @@ export * from './runefoble-ready-action-card.ts';
 export * from './campaigns/index.ts';
 export * from './lobby/index.ts';
 export * from './campfire/index.ts';
+export * from './recap/runefoble-session-recap.ts';
+export * from './recap/recap-counts.ts';

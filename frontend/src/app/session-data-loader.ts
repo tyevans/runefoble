@@ -60,6 +60,14 @@ function applyBoard(host: RunefobleApp, board: SessionBoard, readNo: number): vo
 }
 
 /**
+ * Copies the owner's session status to the host. `ended` is final: a read that started before the
+ * end and answers after it cannot move the status back to `active` (TASK-0953).
+ */
+export function applySessionStatus(host: RunefobleApp, status: string): void {
+  host.sessionStatus = host.sessionStatus === 'ended' || status === 'ended' ? 'ended' : status;
+}
+
+/**
  * Loads the board, session events, and roster for an active session route.
  * A missing board is not a load failure. Any other failed read replaces the view with the error state.
  */
@@ -67,14 +75,17 @@ export async function loadActiveSessionData(host: RunefobleApp, route: MatchedRo
   const cId = route.params.campaignId ?? '';
   const sId = route.params.sessionId ?? '';
   const readNo = startBoardRead(host);
-  const [boardData, events, chars, camp, caps] = await Promise.all([
+  const [boardData, events, chars, camp, caps, status] = await Promise.all([
     appDataService.fetchBoardState(sId),
     appDataService.fetchSessionEvents(sId),
     host.characters.length > 0 ? Promise.resolve(dataOk(host.characters)) : appDataService.fetchCharacters(),
     appDataService.fetchCampaign(cId),
     appDataService.fetchCampaignCapabilities(cId),
+    appDataService.fetchSessionStatus(sId),
   ]);
-  if (!boardData.ok || !events.ok || !chars.ok || !camp.ok || !caps.ok) return failLoad(host, boardData, events, chars, camp, caps);
+  if (!boardData.ok || !events.ok || !chars.ok || !camp.ok || !caps.ok || !status.ok) {
+    return failLoad(host, boardData, events, chars, camp, caps, status);
+  }
   // The DM sets up a missing board with one token for each seat, so the DM view needs the seats (TASK-0922).
   const needsSeats = boardData.data.kind === 'no_board' && caps.data.run_session === true;
   const seats = needsSeats ? await appDataService.fetchSessionSeats(sId) : dataOk([]);
@@ -82,6 +93,7 @@ export async function loadActiveSessionData(host: RunefobleApp, route: MatchedRo
   setCurrentCampaign(host, camp.data);
   setCampaignCapabilities(host, caps.data);
   applyBoard(host, boardData.data, readNo);
+  applySessionStatus(host, status.data);
   host.sessionSeats = seats.data;
   host.atmosphere = { location_name: host.sessionTitle };
   const liveEvents = host.events.filter((e) => !events.data.some((ev) => ev.id === e.id));

@@ -31,6 +31,30 @@ export function sessionStartedRoute(shell: ShellSessionIds, msg: { sessionId?: u
   return `#/campaigns/${shell.campaignId}/sessions/${shell.sessionId}`;
 }
 
+/** The host fields that the end of a session changes. */
+export type SessionEndHost = Pick<RunefobleApp, 'sessionId' | 'sessionStatus' | 'isEndSessionConfirmOpen' | 'reloadRouteData'>;
+
+/**
+ * Moves the App Shell to the recap of an ended session (TASK-0953). The view shows the recap when
+ * the status is `ended`. A reload then reads the committed chronicle, so every line of the recap
+ * comes from the server, in commit order.
+ */
+export function markSessionEnded(host: SessionEndHost): void {
+  host.sessionStatus = 'ended';
+  host.isEndSessionConfirmOpen = false;
+  host.reloadRouteData();
+}
+
+/**
+ * Applies a `session_ended` frame to the shell (TASK-0953). The frame must name the shell's own
+ * session and carry `status: 'ended'`. Any other frame changes nothing.
+ */
+export function applySessionEndedFrame(host: SessionEndHost, msg: { sessionId?: unknown; status?: unknown }): boolean {
+  if (msg.sessionId !== host.sessionId || msg.status !== 'ended') return false;
+  markSessionEnded(host);
+  return true;
+}
+
 /** Adds a live chronicle line to the feed. A line that the feed already holds is not added again. */
 function appendChronicleEntry(host: RunefobleApp, entry: SessionChronicleEntry): void {
   if (host.events.some((e) => e.id === entry.event_id)) return;
