@@ -50,6 +50,8 @@ export class RunefobleBoard extends LitElement {
   public physicsBridge: PhysicsBridge | null = null;
   private resizeObserver: ResizeObserver | null = null;
   ws: WebSocket | null = null;
+  /** The newest board version applied from a socket frame (TASK-0938). */
+  boardVersion: number | null = null;
   private readonly auth = new AuthConsumerController(this);
 
   connectedCallback() {

@@ -1409,6 +1409,7 @@ A board socket `confirm_move` onto a trapped path sends `trap_triggered` and `mo
   - Added cross-directory canonical task deduplication in `list_all_tasks` (`complete` > `refined` > `proposed`), preventing duplicate task processing across lifecycle directories.
   - Added unit test suite in `tests/test_backlog_queue.py` validating resilience against missing files, broken symlinks, and cross-folder transitions.
 - **Project Visualizer Local Script Syntax & Favicon**: Fixed missing closing bracket in `agy_launcher.js` DOM listener causing `Uncaught SyntaxError` on local server, added automated Node.js syntax verification tests for all client scripts and bundles, and eliminated browser 404 console errors by handling `/favicon.ico` with 204 No Content and embedding an inline SVG dice icon.
+- A board move the player makes is shown on that player's board. The board keeps the newest board version it applied, so a `connected` snapshot read before a move cannot move the token back, and the App Shell drops a board read that answers after a newer read started (TASK-0938).
 
 ---
 ## [0.2.0] - 2026-09-26

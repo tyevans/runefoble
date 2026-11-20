@@ -101,6 +101,12 @@ The board shows a refused action in an alert line (`role="alert"`) above the gri
 - When the board socket is not open, the board shows "The board connection is not open, so the move was not sent."
 - The next move clears the alert line.
 
+### Frame Order on the Board Socket
+
+- Each `connected` and `token_moved` frame carries the board `version`. The board keeps the newest version that it applied (TASK-0938).
+- A frame with an older version does not change the board. A `connected` snapshot can arrive after a newer `token_moved` frame, because the snapshot is read before the move is saved. The board then keeps the moved token.
+- A board read from the App Shell replaces the tokens. Two reads of one session apply in the order they started. A read that answers after a newer read started is dropped.
+
 ### 4.1 Event-to-Route Table
 
 Each board UI event maps to one public route or socket action. The owning component renders the server response. It does not show an optimistic result (TASK-0563).

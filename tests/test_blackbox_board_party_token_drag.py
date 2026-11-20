@@ -243,3 +243,23 @@ def test_a_board_socket_opened_after_a_move_gets_the_moved_token_on_connect(
     assert connected["type"] == "connected", connected
     token = connected["tokens"][token_id]
     assert (token["name"], token["x"], token["y"]) == ("Valeros the Bold", 3, 3)
+
+
+def test_board_frames_carry_the_board_version_so_a_stale_snapshot_cannot_win(
+    gateway: TestClient, board_state_upstream: str
+) -> None:
+    """A `connected` snapshot can arrive after a newer `token_moved` (TASK-0938).
+
+    The snapshot and each move frame carry the board version. The board UI keeps the newest
+    version it applied, so a snapshot with an older version never moves a token back.
+    """
+    session_id, token_id = _set_up_table(gateway)
+
+    with _board_socket(board_state_upstream, session_id, PLAYER) as ws:
+        connected = _next_frame(ws)
+        ws.send(_move(token_id, to_x=3, to_y=3))
+        moved = _next_frame(ws)
+
+    assert isinstance(connected["version"], int), connected
+    assert isinstance(moved["version"], int), moved
+    assert moved["version"] > connected["version"], (connected, moved)
