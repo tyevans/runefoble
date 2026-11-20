@@ -917,3 +917,5 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 911. **TASK-0931 (Complete)**: [`0931-remaining-services-gate-readiness-on-their-dependencies.md`](complete/0931-remaining-services-gate-readiness-on-their-dependencies.md) — The Remaining Services Gate Readiness on Their Dependencies
 912. **TASK-0932 (Complete)**: [`0932-board-drag-sends-one-move-and-shows-refusals.md`](complete/0932-board-drag-sends-one-move-and-shows-refusals.md) — The Board Drag Sends One Move and Shows Refusals
 913. **TASK-0933 (Refined)**: [`0933-last-five-services-gate-readiness.md`](refined/0933-last-five-services-gate-readiness.md) — The Last Five Services Gate Readiness, and a Waiting Deploy Cannot Deadlock
+914. **TASK-0934 (Refined)**: [`0934-service-client-limits-the-connect-time.md`](refined/0934-service-client-limits-the-connect-time.md) — The Service Client Limits the Connect Time to an Owner
+915. **TASK-0935 (Refined)**: [`0935-chronicle-records-board-token-moves.md`](refined/0935-chronicle-records-board-token-moves.md) — The Session Chronicle Records Board Token Moves
