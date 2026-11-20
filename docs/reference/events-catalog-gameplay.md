@@ -264,6 +264,7 @@ Part of the [Events Schema](events-schema.md). Each event identifier in this pag
   - `impact_energy`: Float
   - `normal_x`: Float, `normal_y`: Float, `normal_z`: Float
   - `details`: Dict[str, Any]
+- **`DiceRolled`**: Not a gameplay event. It is the server roll that `POST /api/v1/sessions/{session_id}/roll` records. Its catalogue entry and its `dice_rolled` session frame are in [`events-catalog-characters-watcher.md`](events-catalog-characters-watcher.md) (TASK-0951).
 - **`DiceSettled`**: Emitted when physical tumbling dice come to rest on the tactical board (`runefoble.events.dice.settled`).
   - `session_id`: String
   - `board_id`: String
