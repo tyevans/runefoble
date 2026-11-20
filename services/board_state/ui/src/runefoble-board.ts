@@ -157,6 +157,8 @@ export class RunefobleBoard extends LitElement {
       console.error('The board socket was not opened: no signed-in session.');
       return;
     }
+    // A board version orders the frames of one socket stream. A new socket starts a new order.
+    this.boardVersion = null;
     this.ws = new WebSocket(url, websocketProtocols(token));
     this.ws.onmessage = (event) => { try { this.handleIncomingSocketMessage(JSON.parse(event.data)); } catch {} };
   }
