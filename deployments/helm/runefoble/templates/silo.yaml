@@ -16,6 +16,7 @@ spec:
       labels:
         app: silo
     spec:
+      {{- include "runefoble.imagePullSecrets" $ }}
       containers:
         - name: silo
           image: {{ .Values.silo.image }}

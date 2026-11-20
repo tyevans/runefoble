@@ -1,0 +1,41 @@
+{{- /*
+Hosted image guard (TASK-0960). A staging or production render fails when any image in .Values
+has no registry host, has no digest, or still holds a placeholder or a development host. The
+walk covers every `image` key, so it covers the Python services, the third-party images and the
+App Shell. The file renders no object. The local render is not affected.
+Docs: docs/reference/hosted-profile.md. The fail helper lives in hosted-guard.yaml.
+*/ -}}
+
+{{- define "runefoble.hosted.checkImage" -}}
+{{- $key := .key -}}
+{{- $value := toString .value -}}
+{{- $env := .env -}}
+{{- if or (contains "REPLACE-ME" $value) (contains "localhost" $value) (contains ".local/" $value) -}}
+{{- include "runefoble.hosted.fail" (dict "key" $key "value" $value "env" $env) -}}
+{{- end -}}
+{{- $host := index (splitList "/" $value) 0 -}}
+{{- if not (or (contains "." $host) (contains ":" $host)) -}}
+{{- fail (printf "%s must name a registry host for a %s render, for example registry.example.com/runefoble/<name>:<version>@sha256:<digest>. Found: %s" $key $env $value) -}}
+{{- end -}}
+{{- if not (contains "@sha256:" $value) -}}
+{{- fail (printf "%s must pin a digest (@sha256:...) for a %s render. Found: %s" $key $env $value) -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "runefoble.hosted.checkImages" -}}
+{{- $path := .path -}}
+{{- $env := .env -}}
+{{- range $name, $value := .node -}}
+{{- $keyPath := trimPrefix "." (printf "%s.%s" $path $name) -}}
+{{- if and (eq $name "image") (kindIs "string" $value) -}}
+{{- include "runefoble.hosted.checkImage" (dict "key" $keyPath "value" $value "env" $env) -}}
+{{- else if kindIs "map" $value -}}
+{{- include "runefoble.hosted.checkImages" (dict "node" $value "path" $keyPath "env" $env) -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{- $env := .Values.global.environment -}}
+{{- if or (eq $env "staging") (eq $env "production") -}}
+{{- include "runefoble.hosted.checkImages" (dict "node" .Values "path" "" "env" $env) -}}
+{{- end -}}

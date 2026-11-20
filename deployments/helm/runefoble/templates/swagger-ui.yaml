@@ -22,6 +22,7 @@ spec:
       labels:
         app: swagger-ui
     spec:
+      {{- include "runefoble.imagePullSecrets" $ }}
       containers:
         - name: swagger-ui
           image: {{ .Values.swaggerUI.image }}

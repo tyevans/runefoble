@@ -24,6 +24,7 @@ spec:
       labels:
         app: silo-buckets
     spec:
+      {{- include "runefoble.imagePullSecrets" $ }}
       restartPolicy: OnFailure
       automountServiceAccountToken: false
       containers:

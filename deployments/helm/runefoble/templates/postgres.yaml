@@ -46,6 +46,7 @@ spec:
       labels:
         app: postgres
     spec:
+      {{- include "runefoble.imagePullSecrets" $ }}
       containers:
         - name: postgres
           image: {{ .Values.postgres.image }}

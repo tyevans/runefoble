@@ -11,6 +11,7 @@ import shutil
 import subprocess
 from collections.abc import Sequence
 from pathlib import Path
+from typing import Any
 
 import pytest
 import yaml
@@ -48,18 +49,45 @@ def render_chart(*extra_args: str) -> list[dict]:
 
 
 HOSTED_EXAMPLE = CHART_DIR / "values.hosted.example.yaml"
+HOSTED_IMAGES = CHART_DIR / "values.images.yaml"
 HOSTED_PLACEHOLDER = "REPLACE-ME"
 HOSTED_FILL = "hosted-test"
+HOSTED_TEST_REGISTRY = "registry.hosted-test.invalid"
+HOSTED_TEST_DIGEST = "sha256:" + "1" * 64
+
+
+def hosted_images_values() -> dict[str, Any]:
+    """Return a test copy of values.images.yaml. The Runefoble lines get a test registry and digest.
+
+    The committed file holds REPLACE-ME for those lines until a push records the real digest.
+    The third-party lines keep their committed digests.
+    """
+    text = HOSTED_IMAGES.read_text(encoding="utf-8")
+    text = text.replace(f"{HOSTED_PLACEHOLDER}/", f"{HOSTED_TEST_REGISTRY}/")
+    text = text.replace(f"@sha256:{HOSTED_PLACEHOLDER}", f"@{HOSTED_TEST_DIGEST}")
+    return yaml.safe_load(text)
+
+
+def _merge(base: dict[str, Any], extra: dict[str, Any]) -> dict[str, Any]:
+    """Merge `extra` into `base` key by key. Values in `extra` win."""
+    for key, value in extra.items():
+        if isinstance(value, dict) and isinstance(base.get(key), dict):
+            _merge(base[key], value)
+        else:
+            base[key] = value
+    return base
 
 
 def hosted_values_file(directory: Path, **overrides: object) -> Path:
     """Write a hosted values file with every REPLACE-ME filled in, then apply the overrides.
 
-    Each override is a dotted key path and a value, for example
-    `zitadel.externalSecure=False`. The file goes in `directory`, which the caller owns.
+    The file also carries the test image references from `hosted_images_values`, because a
+    hosted render fails without a registry and digest for every image. Each override is a
+    dotted key path and a value, for example `zitadel.externalSecure=False`. The file goes in
+    `directory`, which the caller owns.
     """
     text = HOSTED_EXAMPLE.read_text(encoding="utf-8").replace(HOSTED_PLACEHOLDER, HOSTED_FILL)
-    values = yaml.safe_load(text)
+    values = _merge(hosted_images_values(), yaml.safe_load(text))
     for dotted, value in overrides.items():
         node = values
         *parents, leaf = dotted.split(".")

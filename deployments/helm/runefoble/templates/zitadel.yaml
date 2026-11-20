@@ -60,6 +60,7 @@ spec:
       labels:
         app: zitadel
     spec:
+      {{- include "runefoble.imagePullSecrets" $ }}
       serviceAccountName: zitadel
       # Kubernetes would inject ZITADEL_PORT=tcp://<ip>:8080 from the Service named zitadel. Zitadel
       # reads ZITADEL_PORT as its listen port and fails to start. Turn off the service variables.

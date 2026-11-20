@@ -1,4 +1,4 @@
-.PHONY: help setup install-tools install-spec-ops cluster-up cluster-down images voice-model-cache helm-lint helm-template helm-check-event-store helm-deploy test test-authz-live test-entrypoints test-gateway test-property test-mutation test-e2e test-e2e-ui test-bdd e2e-lore-up e2e-lore-down e2e-game-session-up e2e-game-session-down lint lint-fix build check-ui-manifests dev dev-frontend dev-storybook dev-audience-studio dev-api dev-worker deploy-remote-worker pre-commit health-check clean-worktrees backlog-worker docs-build docs-serve visualize-project visualize-project-build prd-audit prd-decompose prd-create prd-sync
+.PHONY: help setup install-tools install-spec-ops cluster-up cluster-down images images-push voice-model-cachehelm-lint helm-template helm-check-event-store helm-deploy test test-authz-live test-entrypoints test-gateway test-property test-mutation test-e2e test-e2e-ui test-bdd e2e-lore-up e2e-lore-down e2e-game-session-up e2e-game-session-down lint lint-fix build check-ui-manifests dev dev-frontend dev-storybook dev-audience-studio dev-api dev-worker deploy-remote-worker pre-commit health-check clean-worktrees backlog-worker docs-build docs-serve visualize-project visualize-project-build prd-audit prd-decompose prd-create prd-sync
 
 
 CLUSTER_NAME ?= runefoble-local
@@ -110,6 +110,44 @@ PYTHON_IMAGE_ROWS = \
 VOICE_MODEL_SIZE ?= tiny.en
 VOICE_MODEL_HOST_DIR ?= .cache/voice-models
 VOICE_MODEL_POD_DIR ?= /var/lib/runefoble/whisper
+
+# Hosted image push (TASK-0960). `images-push` builds the images with the registry prefix, pushes
+# them, and records each pushed digest in IMAGE_VALUES. That file holds the full references that
+# `helm template -f` reads. The Kind path (`images`) does not use this target.
+IMAGE_REGISTRY ?=
+IMAGE_VALUES ?= $(HELM_CHART)/values.images.yaml
+
+images-push: ## Build, push every service image to IMAGE_REGISTRY and record the digests (hosted)
+	@test -n "$(IMAGE_REGISTRY)" || { echo "images-push needs IMAGE_REGISTRY, for example IMAGE_REGISTRY=registry.example.com/team"; exit 1; }
+	@for row in $(PYTHON_IMAGE_ROWS); do \
+	  name=$$(echo "$$row" | cut -d'|' -f1); \
+	  svc=$$(echo "$$row" | cut -d'|' -f2); \
+	  app=$$(echo "$$row" | cut -d'|' -f3); \
+	  port=$$(echo "$$row" | cut -d'|' -f4); \
+	  pkgs=$$(echo "$$row" | cut -d'|' -f5); \
+	  ref=$(IMAGE_REGISTRY)/runefoble/$$name:$(IMAGE_VERSION); \
+	  echo "==> Building $$ref (package $$svc, port $$port)"; \
+	  docker build -f $(PYTHON_DOCKERFILE) --build-arg SERVICE=$$svc --build-arg APP=$$app --build-arg PORT=$$port --build-arg SYSTEM_PACKAGES="$$pkgs" -t $$ref . || exit 1; \
+	  out=$$(docker push $$ref) || exit 1; \
+	  digest=$$(echo "$$out" | sed -n 's/.*digest: \(sha256:[0-9a-f]\{64\}\).*/\1/p' | tail -n 1); \
+	  test -n "$$digest" || { echo "no digest reported for $$ref"; exit 1; }; \
+	  echo "==> Pushed $$ref $$digest"; \
+	  uv run python scripts/record_image_digests.py $(IMAGE_VALUES) $$name $(IMAGE_REGISTRY) $(IMAGE_VERSION) $$digest || exit 1; \
+	done
+	@echo "==> Building and pushing runefoble/audience-studio (Node service, Dockerfile services/audience_studio/Dockerfile)"
+	docker build -f services/audience_studio/Dockerfile -t $(IMAGE_REGISTRY)/runefoble/audience-studio:$(IMAGE_VERSION) . || exit 1
+	out=$$(docker push $(IMAGE_REGISTRY)/runefoble/audience-studio:$(IMAGE_VERSION)) || exit 1; \
+	digest=$$(echo "$$out" | sed -n 's/.*digest: \(sha256:[0-9a-f]\{64\}\).*/\1/p' | tail -n 1); \
+	test -n "$$digest" || { echo "no digest reported for audience-studio"; exit 1; }; \
+	echo "==> Pushed audience-studio $$digest"; \
+	uv run python scripts/record_image_digests.py $(IMAGE_VALUES) audience-studio $(IMAGE_REGISTRY) $(IMAGE_VERSION) $$digest || exit 1
+	@echo "==> Building and pushing runefoble/frontend (App Shell, Dockerfile frontend/Dockerfile)"
+	docker build -f frontend/Dockerfile -t $(IMAGE_REGISTRY)/runefoble/frontend:$(IMAGE_VERSION) . || exit 1
+	out=$$(docker push $(IMAGE_REGISTRY)/runefoble/frontend:$(IMAGE_VERSION)) || exit 1; \
+	digest=$$(echo "$$out" | sed -n 's/.*digest: \(sha256:[0-9a-f]\{64\}\).*/\1/p' | tail -n 1); \
+	test -n "$$digest" || { echo "no digest reported for frontend"; exit 1; }; \
+	echo "==> Pushed frontend $$digest"; \
+	uv run python scripts/record_image_digests.py $(IMAGE_VALUES) frontend $(IMAGE_REGISTRY) $(IMAGE_VERSION) $$digest || exit 1
 
 images: ## Build every service image (Python and Node) and load it into the Kind cluster
 	@for row in $(PYTHON_IMAGE_ROWS); do \

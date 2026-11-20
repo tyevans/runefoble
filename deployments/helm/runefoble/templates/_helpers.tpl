@@ -164,3 +164,17 @@ livenessProbe:
   periodSeconds: 10
 {{- end }}
 {{- end -}}
+
+{{- /*
+Pull Secrets for every pod spec (TASK-0960). Renders nothing when global.imagePullSecrets is
+empty. Put it on its own line under a pod spec `spec:` (the pod spec keys sit at six spaces):
+  spec:
+    {{- include "runefoble.imagePullSecrets" $ }}
+    containers:
+*/ -}}
+{{- define "runefoble.imagePullSecrets" -}}
+{{- with default (list) .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+{{- end }}
+{{- end -}}

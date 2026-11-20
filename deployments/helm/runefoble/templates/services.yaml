@@ -35,6 +35,7 @@ spec:
       labels:
         app: {{ $name }}
     spec:
+      {{- include "runefoble.imagePullSecrets" $ }}
       containers:
         - name: {{ $name }}
           image: {{ $svc.image }}
