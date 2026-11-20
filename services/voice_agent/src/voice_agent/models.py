@@ -95,6 +95,13 @@ class TranscribeRequest(BaseModel):
     audio_base64: str | None = None
     is_whisper: bool = False
     target_character_id: str | None = None
+    # The speaker's board token and its cell (TASK-0942, TASK-0946). The Watcher needs them to
+    # stage a move. voice_agent forwards them as sent and never invents an origin.
+    token_id: str | None = None
+    from_x: int | None = None
+    from_y: int | None = None
+    grid_cols: int | None = None
+    grid_rows: int | None = None
 
 
 class TranscribeResponse(BaseModel):

@@ -25,6 +25,7 @@ logger = logging.getLogger("runefoble.voice_agent.transcribe")
 router = APIRouter(dependencies=[Depends(get_principal)], tags=["Speech Synthesis & Transcription"])
 
 TranscriptSource = Literal["audio", "client_text"]
+_BOARD_ORIGIN_FIELDS = {"token_id", "from_x", "from_y", "grid_cols", "grid_rows"}
 
 
 async def _transcript_from_request(req: TranscribeRequest) -> tuple[str, TranscriptSource]:
@@ -93,6 +94,7 @@ async def transcribe_speech(
 
     # 2. Forward to The Watcher with the speaker's own bearer (ADR-0015 c). A failed forward
     # keeps the transcript and reports the reason in `watcher_error` (TASK-0732).
+    # The board origin goes with the transcript, so The Watcher can stage a move (TASK-0942).
     forwarded = await get_streaming_pipeline().watcher.forward(
         {
             "speaker_id": req.speaker_id,
@@ -100,6 +102,7 @@ async def transcribe_speech(
             "transcript": transcript,
             "session_id": req.session_id,
             "campaign_id": req.campaign_id,
+            **req.model_dump(include=_BOARD_ORIGIN_FIELDS, exclude_none=True),
         },
         authorization,
     )

@@ -3,7 +3,8 @@
 Each route forwards the caller's bearer token to voice_agent. voice_agent verifies the token
 and checks the session permission itself (ADR-0015 c, Hard Invariant 1). The gateway keeps
 no room state and adds no permission check of its own. Paths match the owner's public paths.
-Each route is a row in `ROUTES` (TASK-0822). The bare `/voice/streams` paths are gone (TASK-0494).
+Each route is a row in `ROUTES` (TASK-0822).
+The transcribe route carries Push to Talk audio (TASK-0946). The bare `/voice/streams` paths are gone (TASK-0494).
 
 """
 
@@ -16,7 +17,27 @@ router = APIRouter(tags=["Voice Rooms"])
 
 VOICE_SERVICE = "voice_agent"
 
+# Budget rule (TASK-0946): the transcribe route runs speech-to-text, then forwards the transcript
+# to The Watcher (intent 2 s, board read 2 s, proposal 2 s; sum 6 s). Speech-to-text of one
+# utterance takes up to a few seconds more. The gateway waits 10 s, longer than the owner's
+# worst case, so the owner answers first.
+TRANSCRIBE_TIMEOUT_S = 10.0
+
 ROUTES = (
+    ProxyRoute(
+        "POST",
+        "/api/v1/voice/transcribe",
+        ("api", "v1", "voice", "transcribe"),
+        VOICE_SERVICE,
+        name="transcribe_speech",
+        doc=(
+            "Forward one Push to Talk utterance (WAV, base64) or typed text. voice_agent "
+            "transcribes it, checks the speaker, and forwards the transcript to The Watcher."
+        ),
+        body="json",
+        principal=True,
+        timeout=TRANSCRIBE_TIMEOUT_S,
+    ),
     ProxyRoute(
         "GET",
         "/api/v1/voice/rooms/{session_id}",
