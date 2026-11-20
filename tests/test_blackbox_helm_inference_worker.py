@@ -145,3 +145,10 @@ def test_watcher_budgets_are_set_in_the_hosted_render(tmp_path: Path) -> None:
     assert env["RUNEFOBLE_WATCHER_NARRATION_TIMEOUT_S"] == "10.0"
     assert env["RUNEFOBLE_WATCHER_BOARD_TIMEOUT_S"] == "2.0"
     assert env["RUNEFOBLE_WATCHER_PROPOSAL_TIMEOUT_S"] == "2.0"
+
+
+def test_the_watcher_gets_the_board_state_url() -> None:
+    """The Watcher reads board tokens and stages a move preview through board_state."""
+    env = _watcher_env(render_chart())
+
+    assert env["RUNEFOBLE_BOARD_STATE_URL"] == "http://board-state:8002"

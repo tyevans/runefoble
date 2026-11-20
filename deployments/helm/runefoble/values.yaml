@@ -343,7 +343,8 @@ services:
     replicas: 1
     port: 8002
     urlEnv: RUNEFOBLE_BOARD_STATE_URL
-    consumers: [gateway-api, gateway-mcp]
+    # The Watcher reads board tokens and stages move previews here (TASK-0942, TASK-0945).
+    consumers: [gateway-api, gateway-mcp, the-watcher]
     serviceCredential: true
     # The UVTT import stores map images in Silo with signed requests (TASK-0926).
     siloCredentials: true
