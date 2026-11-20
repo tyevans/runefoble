@@ -4,6 +4,19 @@
 # The chart fails the render until every REPLACE-ME is gone and no development default remains.
 # Do not put a credential value in this file. Create the Secret named in credentials.existingSecret.
 # See docs/reference/hosted-profile.md for every key and the check that guards it.
+# Resource sizes (TASK-0962). These are starting estimates. They are NOT measured values.
+# The measured load run (decision D11) sets the final numbers. Replace them before a release.
+# Each anchor sets requests (cpu and memory) and a memory limit. The guard requires both memory values.
+x-size-small: &small
+  requests: {cpu: 100m, memory: 256Mi}
+  limits: {memory: 512Mi}
+x-size-medium: &medium
+  requests: {cpu: 250m, memory: 512Mi}
+  limits: {memory: 1Gi}
+x-size-large: &large
+  requests: {cpu: 500m, memory: 1Gi}
+  limits: {memory: 2Gi}
+
 global:
   environment: production
   domain: REPLACE-ME
@@ -72,6 +85,9 @@ zitadel:
     passwordSecretKey: smtp-password
     fromAddress: noreply@REPLACE-ME
     fromName: Runefoble
+  resources: *medium
+  # Sidecar that writes the admin token to the bootstrap Secret. It runs in the zitadel pod.
+  patPublisherResources: *small
   bootstrap:
     # Short expiry for the bootstrap token. Set a date that suits your rotation policy.
     patExpirationDate: "2027-01-01T00:00:00Z"
@@ -83,6 +99,7 @@ zitadel:
     # true: the bootstrap Job turns off local self-registration. Only a campaign invite (TASK-0967)
     # and the Zitadel admin console create accounts (ADR-0023 a). The guard rejects false.
     closedRegistration: true
+    resources: *small
 
 # Development-only workloads. A hosted render runs without them (PRD-0025 outcome 4).
 # Mailpit captures mail. Swagger UI lists the OpenAPI specs. OpenPanel is analytics (D6: off).
@@ -91,13 +108,112 @@ mailpit:
   enabled: false
 swaggerUI:
   enabled: false
+  resources: *small
 openpanel:
   enabled: false
+  resources: *medium
+
+frontend:
+  resources: *small
+  initResources: *small
+
+postgres:
+  resources: *large
+
+silo:
+  resources: *medium
+  bucketJob:
+    resources: *small
+
+spicedb:
+  resources: *medium
+  migrateResources: *small
+  schemaJob:
+    resources: *small
+
+observability:
+  otelCollector:
+    resources: *small
+  loki:
+    resources: *medium
+  grafana:
+    resources: *medium
+
+# Network policies (TASK-0962). Only the hosted render uses them. The chart allows each path that a
+# consumers list names. It also allows the platform paths. Standard NetworkPolicy matches an IP
+# address, not a host name, so each external entry names one address (a /32) and its host.
+networkPolicy:
+  # Decision D2d. The namespace and pod labels of the ingress controller that routes to the paths above.
+  ingressController:
+    namespace: REPLACE-ME
+    podLabels:
+      app.kubernetes.io/name: traefik
+  # Address of the Kubernetes API server as the pods reach it (the endpoint, not the Service IP).
+  kubeApi:
+    - cidr: REPLACE-ME/32
+      port: 6443
+  # One entry per external endpoint. `from` is the service that calls it. `host` is the name you
+  # resolved to `cidr`. Decisions D10 (model, embedding, speech-to-text) and D4 (SMTP).
+  external:
+    - from: inference-worker
+      host: REPLACE-ME
+      cidr: REPLACE-ME/32
+      port: 443
+    - from: campaign-lore
+      host: REPLACE-ME
+      cidr: REPLACE-ME/32
+      port: 443
+    - from: voice-agent
+      host: REPLACE-ME
+      cidr: REPLACE-ME/32
+      port: 443
+    - from: zitadel
+      host: REPLACE-ME
+      cidr: REPLACE-ME/32
+      port: 587
+    # Backup and restore (TASK-0961) reach the bucket endpoint in backup.endpoint (decision D8).
+    - from: postgres-backup
+      host: REPLACE-ME
+      cidr: REPLACE-ME/32
+      port: 443
+    - from: postgres-restore
+      host: REPLACE-ME
+      cidr: REPLACE-ME/32
+      port: 443
 
 services:
   campaignLore:
     # Secret that you create. It holds the embedding endpoint key under the key api-key.
     embeddingApiKeySecret: campaign-lore-embedding
+    resources: *medium
+  gatewayApi:
+    resources: *medium
+  theWatcher:
+    resources: *medium
+  boardState:
+    resources: *medium
+  characterSheet:
+    resources: *medium
+  gameSession:
+    resources: *medium
+  voiceAgent:
+    resources: *large
+  rulesCompendium:
+    resources: *medium
+  assetForge:
+    resources: *medium
+  soundscape:
+    resources: *small
+  audienceStudio:
+    resources: *medium
+    # The Node image runs as the node user (UID 1000). Its Dockerfile sets USER node.
+    runAsUser: 1000
+  campaignAnalytics:
+    resources: *small
+  inferenceWorker:
+    resources: *small
+  gatewayMcp:
+    resources: *small
 
 # Daily PostgreSQL backup to an S3-compatible bucket outside the cluster (TASK-0961).
 # The keys access-key and secret-key come from the Secret named in backup.credentialsSecret.
@@ -115,11 +231,17 @@ backup:
   schedule: "17 2 * * *"
   # Documentation only. The bucket lifecycle rule enforces this period. The chart never deletes objects.
   retentionDays: 30
+  # Sizes of the dump and upload containers (TASK-0962).
+  dumpResources: *small
+  uploadResources: *small
   encryption:
     enabled: false
 
 # Restore of one backup into a fresh release (TASK-0961). Off by default. Turn it on for one install.
 restore:
   enabled: false
+  # Sizes of the download and restore containers (TASK-0962).
+  downloadResources: *small
+  restoreResources: *medium
   # Prefix that the backup Job logs, for example postgres/2026-11-18. Required when enabled is true.
   objectPrefix: ""

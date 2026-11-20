@@ -74,12 +74,20 @@ spec:
         app: zitadel-bootstrap
     spec:
       {{- include "runefoble.imagePullSecrets" $ }}
+      {{- if include "runefoble.hosted.profile" $ }}
+      securityContext:
+        {{- include "runefoble.hosted.podSecurity" (dict "extra" nil) | nindent 8 }}
+      {{- end }}
       serviceAccountName: zitadel-bootstrap
       automountServiceAccountToken: true
       restartPolicy: OnFailure
       containers:
         - name: bootstrap
           image: {{ .Values.services.gatewayApi.image }}
+          {{- with .Values.zitadel.bootstrap.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           command: ["python", "-m", "zitadel_bootstrap.job"]
           env:
             # The Job package lives in the image source tree, outside the uv workspace members.
@@ -115,4 +123,16 @@ spec:
             # true turns off local self-registration in the Zitadel default login policy (ADR-0023 a).
             - name: RUNEFOBLE_ZITADEL_CLOSED_REGISTRATION
               value: {{ dig "closedRegistration" false .Values.zitadel.bootstrap | quote }}
+          {{- if include "runefoble.hosted.profile" $ }}
+          securityContext:
+            {{- include "runefoble.hosted.appContainerSecurity" (dict "uid" 10001 "readOnly" true) | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+          {{- end }}
+      {{- if include "runefoble.hosted.profile" $ }}
+      volumes:
+        - name: tmp
+          emptyDir: {}
+      {{- end }}
 {{- end }}

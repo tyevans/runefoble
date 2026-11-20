@@ -3,6 +3,7 @@
   no ingress rule for it, so the public ingress never reaches the MCP endpoint.
 */ -}}
 {{- $mcp := .Values.services.gatewayMcp }}
+{{- $hosted := include "runefoble.hosted.profile" $ }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -20,9 +21,17 @@ spec:
         app: gateway-mcp
     spec:
       {{- include "runefoble.imagePullSecrets" $ }}
+      {{- if include "runefoble.hosted.profile" $ }}
+      securityContext:
+        {{- include "runefoble.hosted.podSecurity" (dict "extra" nil) | nindent 8 }}
+      {{- end }}
       containers:
         - name: gateway-mcp
           image: {{ $mcp.image }}
+          {{- with $mcp.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           ports:
             - containerPort: {{ $mcp.port }}
           env:
@@ -31,6 +40,18 @@ spec:
             {{- include "runefoble.zitadelServiceEnv" $ | nindent 12 }}
             {{- include "runefoble.serviceUrlEnv" (dict "root" $ "consumer" "gateway-mcp") | trim | nindent 12 }}
           {{- include "runefoble.probes" $mcp | nindent 10 }}
+          {{- if $hosted }}
+          securityContext:
+            {{- include "runefoble.hosted.appContainerSecurity" (dict "uid" ($mcp.runAsUser | default 10001) "readOnly" true) | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+          {{- end }}
+      {{- if $hosted }}
+      volumes:
+        - name: tmp
+          emptyDir: {}
+      {{- end }}
 ---
 apiVersion: v1
 kind: Service

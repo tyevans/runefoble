@@ -44,11 +44,23 @@ spec:
       labels:
         app: postgres-restore
     spec:
+      {{- if include "runefoble.hosted.profile" $ }}
+      securityContext:
+        {{- include "runefoble.hosted.podSecurity" (dict "extra" nil) | nindent 8 }}
+      {{- end }}
       restartPolicy: Never
       automountServiceAccountToken: false
       initContainers:
         - name: download
           image: {{ $image | quote }}
+          {{- with .Values.restore.downloadResources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- if include "runefoble.hosted.profile" $ }}
+          securityContext:
+            {{- include "runefoble.hosted.thirdPartyContainerSecurity" $ | nindent 12 }}
+          {{- end }}
           args:
             - --config-dir
             - /tmp/mc
@@ -77,6 +89,14 @@ spec:
       containers:
         - name: restore
           image: {{ .Values.postgres.image | quote }}
+          {{- with .Values.restore.restoreResources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- if include "runefoble.hosted.profile" $ }}
+          securityContext:
+            {{- include "runefoble.hosted.thirdPartyContainerSecurity" $ | nindent 12 }}
+          {{- end }}
           command:
             - /bin/bash
             - -ec

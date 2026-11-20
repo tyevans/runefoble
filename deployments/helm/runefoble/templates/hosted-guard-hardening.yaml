@@ -1,0 +1,82 @@
+{{- /*
+Hosted render guard for workload hardening (TASK-0962). It runs with the TASK-0955 guard in
+hosted-guard.yaml. It renders no object. The local render is not affected. Each check names the
+key path that failed. Docs: docs/reference/hosted-profile.md.
+
+Resources: every container of every Deployment, StatefulSet, and Job needs a memory request and
+a memory limit. CPU limits are not required (see the hosted profile page).
+*/ -}}
+
+{{- define "runefoble.hardening.requireMemory" -}}
+{{- $res := .resources | default dict -}}
+{{- $request := dig "requests" "memory" "" $res | toString -}}
+{{- $limit := dig "limits" "memory" "" $res | toString -}}
+{{- if or (eq $request "") (contains "REPLACE-ME" $request) -}}
+{{- fail (printf "%s.requests.memory must be set for a %s render. Found: %q" .key .env $request) -}}
+{{- end -}}
+{{- if or (eq $limit "") (contains "REPLACE-ME" $limit) -}}
+{{- fail (printf "%s.limits.memory must be set for a %s render. Found: %q" .key .env $limit) -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "runefoble.hardening.requireHostAddress" -}}
+{{- $cidr := toString .cidr -}}
+{{- if or (eq $cidr "") (contains "REPLACE-ME" $cidr) -}}
+{{- fail (printf "%s.cidr must be set for a %s render. Found: %q" .key .env $cidr) -}}
+{{- end -}}
+{{- $parts := splitList "/" $cidr -}}
+{{- if or (ne (len $parts) 2) (ne (index $parts 1) "32") -}}
+{{- fail (printf "%s.cidr must name one host address, as a /32 block, for a %s render. Found: %q" .key .env $cidr) -}}
+{{- end -}}
+{{- if or (eq (toString .host) "") (contains "REPLACE-ME" (toString .host)) -}}
+{{- fail (printf "%s.host must be set for a %s render. Found: %q" .key .env (toString .host)) -}}
+{{- end -}}
+{{- end -}}
+
+{{- $env := .Values.global.environment -}}
+{{- if or (eq $env "staging") (eq $env "production") -}}
+
+{{- range $name, $svc := .Values.services -}}
+{{- include "runefoble.hardening.requireMemory" (dict "key" (printf "services.%s.resources" $name) "resources" $svc.resources "env" $env) -}}
+{{- end -}}
+
+{{- $workloads := list
+  (dict "key" "frontend.resources" "resources" .Values.frontend.resources)
+  (dict "key" "frontend.initResources" "resources" .Values.frontend.initResources)
+  (dict "key" "postgres.resources" "resources" .Values.postgres.resources)
+  (dict "key" "redis.resources" "resources" .Values.redis.resources)
+  (dict "key" "silo.resources" "resources" .Values.silo.resources)
+  (dict "key" "silo.bucketJob.resources" "resources" .Values.silo.bucketJob.resources)
+  (dict "key" "zitadel.resources" "resources" .Values.zitadel.resources)
+  (dict "key" "zitadel.patPublisherResources" "resources" .Values.zitadel.patPublisherResources)
+  (dict "key" "zitadel.bootstrap.resources" "resources" .Values.zitadel.bootstrap.resources)
+  (dict "key" "spicedb.resources" "resources" .Values.spicedb.resources)
+  (dict "key" "spicedb.migrateResources" "resources" .Values.spicedb.migrateResources)
+  (dict "key" "spicedb.schemaJob.resources" "resources" .Values.spicedb.schemaJob.resources)
+  (dict "key" "observability.otelCollector.resources" "resources" .Values.observability.otelCollector.resources)
+  (dict "key" "observability.loki.resources" "resources" .Values.observability.loki.resources)
+  (dict "key" "observability.grafana.resources" "resources" .Values.observability.grafana.resources)
+  (dict "key" "openpanel.resources" "resources" .Values.openpanel.resources)
+  (dict "key" "swaggerUI.resources" "resources" .Values.swaggerUI.resources)
+  (dict "key" "backup.dumpResources" "resources" (.Values.backup | default dict).dumpResources)
+  (dict "key" "backup.uploadResources" "resources" (.Values.backup | default dict).uploadResources)
+  (dict "key" "restore.downloadResources" "resources" (.Values.restore | default dict).downloadResources)
+  (dict "key" "restore.restoreResources" "resources" (.Values.restore | default dict).restoreResources)
+-}}
+{{- range $workloads -}}
+{{- include "runefoble.hardening.requireMemory" (merge (dict "env" $env) .) -}}
+{{- end -}}
+
+{{- $np := required "networkPolicy must be set for a hosted render" .Values.networkPolicy -}}
+{{- $controllerNs := toString (required "networkPolicy.ingressController.namespace must be set for a hosted render" $np.ingressController.namespace) -}}
+{{- if contains "REPLACE-ME" $controllerNs -}}
+{{- fail (printf "networkPolicy.ingressController.namespace must name the ingress controller namespace for a %s render. Found: %s" $env $controllerNs) -}}
+{{- end -}}
+{{- range $i, $api := $np.kubeApi -}}
+{{- include "runefoble.hardening.requireHostAddress" (dict "key" (printf "networkPolicy.kubeApi[%d]" $i) "cidr" $api.cidr "host" "kubernetes API" "env" $env) -}}
+{{- end -}}
+{{- range $i, $ext := $np.external -}}
+{{- include "runefoble.hardening.requireHostAddress" (dict "key" (printf "networkPolicy.external[%d]" $i) "cidr" $ext.cidr "host" $ext.host "env" $env) -}}
+{{- end -}}
+
+{{- end -}}

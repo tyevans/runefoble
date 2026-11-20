@@ -1,4 +1,5 @@
 {{- with .Values.services.inferenceWorker }}
+{{- $hosted := include "runefoble.hosted.profile" $ }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -16,9 +17,17 @@ spec:
         app: inference-worker
     spec:
       {{- include "runefoble.imagePullSecrets" $ }}
+      {{- if include "runefoble.hosted.profile" $ }}
+      securityContext:
+        {{- include "runefoble.hosted.podSecurity" (dict "extra" nil) | nindent 8 }}
+      {{- end }}
       containers:
         - name: inference-worker
           image: {{ .image }}
+          {{- with .resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           ports:
             - containerPort: {{ .port }}
           env:
@@ -39,6 +48,18 @@ spec:
             - name: RUNEFOBLE_WORKER_REDIS_ENABLED
               value: "false"
           {{- include "runefoble.probes" . | nindent 10 }}
+          {{- if $hosted }}
+          securityContext:
+            {{- include "runefoble.hosted.appContainerSecurity" (dict "uid" (.runAsUser | default 10001) "readOnly" true) | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+          {{- end }}
+      {{- if $hosted }}
+      volumes:
+        - name: tmp
+          emptyDir: {}
+      {{- end }}
 ---
 apiVersion: v1
 kind: Service

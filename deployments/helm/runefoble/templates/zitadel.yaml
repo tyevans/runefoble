@@ -73,6 +73,10 @@ spec:
         app: zitadel
     spec:
       {{- include "runefoble.imagePullSecrets" $ }}
+      {{- if include "runefoble.hosted.profile" $ }}
+      securityContext:
+        {{- include "runefoble.hosted.podSecurity" (dict "extra" nil) | nindent 8 }}
+      {{- end }}
       serviceAccountName: zitadel
       # Kubernetes would inject ZITADEL_PORT=tcp://<ip>:8080 from the Service named zitadel. Zitadel
       # reads ZITADEL_PORT as its listen port and fails to start. Turn off the service variables.
@@ -80,6 +84,14 @@ spec:
       containers:
         - name: zitadel
           image: {{ .Values.zitadel.image }}
+          {{- if include "runefoble.hosted.profile" $ }}
+          securityContext:
+            {{- include "runefoble.hosted.thirdPartyContainerSecurity" $ | nindent 12 }}
+          {{- end }}
+          {{- with .Values.zitadel.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           args: ["start-from-init", "--masterkeyFromEnv", "--tlsMode", "disabled"]
           ports:
             - containerPort: {{ .Values.zitadel.port }}
@@ -183,11 +195,23 @@ spec:
             {{- end }}
         - name: pat-publisher
           image: {{ .Values.services.gatewayApi.image }}
+          {{- with .Values.zitadel.patPublisherResources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           command: ["python", "-m", "runefoble_auth.zitadel_pat_publisher"]
           volumeMounts:
             - name: bootstrap
               mountPath: {{ $patDir }}
               readOnly: true
+            {{- if include "runefoble.hosted.profile" $ }}
+            - name: tmp
+              mountPath: /tmp
+            {{- end }}
+          {{- if include "runefoble.hosted.profile" $ }}
+          securityContext:
+            {{- include "runefoble.hosted.appContainerSecurity" (dict "uid" 10001 "readOnly" true) | nindent 12 }}
+          {{- end }}
           env:
             - name: ZITADEL_PAT_PATH
               value: {{ $patPath | quote }}
@@ -202,6 +226,10 @@ spec:
       volumes:
         - name: bootstrap
           emptyDir: {}
+        {{- if include "runefoble.hosted.profile" $ }}
+        - name: tmp
+          emptyDir: {}
+        {{- end }}
 ---
 apiVersion: v1
 kind: Service

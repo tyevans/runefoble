@@ -60,6 +60,11 @@ An unset key that the guard reads also fails the render. The guard never takes a
 | `ingress.tls.mode` | `certManager` | Fails unless `certManager` or `existingSecret`. `none` serves HTTP only. |
 | `ingress.tls.clusterIssuer` | `REPLACE-ME` | Required with `certManager`. Fails on `REPLACE-ME`. Name of a ClusterIssuer that you install. |
 | `ingress.tls.secretName` | `""` | Required with `existingSecret`. Fails on `REPLACE-ME`. Name of a `kubernetes.io/tls` Secret that you create. |
+| `networkPolicy.ingressController.namespace` | `REPLACE-ME` | Fails on `REPLACE-ME`. The namespace of the ingress controller (decision D2d). |
+| `networkPolicy.kubeApi[].cidr` | `REPLACE-ME/32` | Fails on `REPLACE-ME` or on a block wider than one address. |
+| `networkPolicy.external[].cidr` | `REPLACE-ME/32` | Fails on `REPLACE-ME` or on a block wider than one address. |
+| `networkPolicy.external[].host` | `REPLACE-ME` | Fails on `REPLACE-ME`. Name of the endpoint that the address belongs to. |
+| `services.*.resources`, and each `resources` key of a workload | Anchors in the example | Fails when `requests.memory` or `limits.memory` is empty or holds `REPLACE-ME`. |
 | `ingress.httpsRedirect` | `true` | Fails unless `true`. Plain HTTP answers 301 to HTTPS. See [TLS and HTTP redirect rules](ports-and-endpoints.md#tls-and-http-redirect-rules-hosted). |
 | `backup.enabled` | `true` | Fails unless `true`. A hosted release needs the daily backup. Source: `templates/hosted-guard-backup.yaml`. |
 | `backup.endpoint` | `https://REPLACE-ME` | Fails unless it starts with `https://`. Fails on `REPLACE-ME`, `localhost`, or a `svc.cluster.local` host. The bucket must sit outside the cluster. |
@@ -158,6 +163,114 @@ The failure message names the key path, for example `services.gatewayApi.image`.
 adds the list to every Deployment, StatefulSet, and Job pod spec. When the list is empty, the chart
 renders no `imagePullSecrets` key. The chart does not create the Secret. The operator creates it
 (D2b, with the credential stored through [`hosted-secrets.md`](hosted-secrets.md)).
+
+## Workload resources
+
+Every container of every Deployment, StatefulSet, and Job needs `requests.memory` and
+`limits.memory`. The hosted guard (`templates/hosted-guard-hardening.yaml`) fails the render and
+names the first key that lacks one. CPU limits are optional. The chart sets no CPU limit, so a
+workload can use idle CPU. Requests set the scheduling share for each container.
+
+The sizes sit in the hosted example. Each `resources` key uses a YAML anchor (`*small`, `*medium`,
+`*large`). The example sizes are starting estimates. They are not measured. The measured load run
+(decision D11) sets the final values.
+
+Every workload runs one replica. The hosted render has no HorizontalPodAutoscaler and no
+PodDisruptionBudget. PRD-0025 sets no autoscaling. `gateway-mcp` keeps state in memory, so it
+must stay at one replica.
+
+## Network policies
+
+A hosted render (`staging` or `production`) renders the policies in
+`templates/network-policies.yaml`. The local render has none. The model is default deny. One
+policy selects every release pod for ingress and egress. Each allow rule names one path that the
+platform uses today:
+
+| Path | Rule source | Policies |
+|---|---|---|
+| Ingress controller to each routed service | `ingress.hosts[].paths` and `networkPolicy.ingressController` | `allow-ingress-<service>` |
+| Consumer to the service it calls | `services.*.urlEnv` and `consumers` | `allow-into-<service>`, `allow-egress-<consumer>` |
+| Any pod to the OTel collector | Every release pod (ports 4317 and 4318) | `allow-into-otel-collector`, `allow-egress-to-otel-collector` |
+| Application service to PostgreSQL, SpiceDB, Zitadel, Redis, and Silo | Platform env in `_helpers.tpl` and `services.yaml` | `allow-into-postgres` and the other `allow-into-*` platform policies |
+| Platform pods to their own dependencies | SpiceDB, Zitadel, OpenPanel, and the backup and restore Jobs to PostgreSQL, the schema Job to SpiceDB, the Silo Job to Silo, the collector and Grafana to Loki | `allow-egress-<pod>` |
+| Every pod to cluster DNS | UDP and TCP 53 in `networkPolicy.dnsNamespace` (default `kube-system`) | `allow-dns-egress` |
+| External endpoint (model, embedding, speech-to-text, SMTP, backup bucket) | `networkPolicy.external` | `allow-egress-external-<n>` |
+| Zitadel pod and bootstrap Job to the Kubernetes API | `networkPolicy.kubeApi` | `allow-egress-kube-api-<n>` |
+
+Rules for the external and API entries:
+
+- Standard NetworkPolicy matches an IP address. It cannot match a host name. Each entry names one
+  address as a `/32` block. The guard fails on a wider block or on a placeholder. Resolve each host
+  name to its address before you render. When the address changes, the render must change too.
+- Each entry names the service that calls it (`from`), the host (`host`), the address (`cidr`), and
+  the port. A pod with no entry has no external egress.
+
+`gateway-mcp` is a ClusterIP endpoint with no ingress path. No consumers list names it, so no pod
+may reach it. The hosted render tests check this.
+
+Kubelet health probes come from the node, not from a pod. Confirm that the probes pass under the
+chosen network plugin in the 0964 smoke job.
+
+### Enforcement
+
+Policies take effect only when the cluster network plugin enforces them. Kind uses kindnet by
+default. Kindnet does not enforce NetworkPolicy. A live check that depends on enforcement must run
+on a cluster with a policy-enforcing plugin (for example Calico). The 0964 smoke job names the
+plugin that it uses.
+
+### Network policy checks
+
+- A hosted render names the first key that lacks the ingress namespace (`networkPolicy.ingressController.namespace`)
+  or that holds a wide or placeholder address.
+- The blackbox tests in `tests/test_blackbox_helm_hosted_hardening.py` check each consumers pair
+  in both directions, each platform path, the ingress controller paths, and the single-address
+  external entries.
+
+## Pod security
+
+A hosted render sets these rules. The local render does not change.
+
+- Every pod runs with the `RuntimeDefault` seccomp profile.
+- Every container blocks privilege escalation (`allowPrivilegeEscalation: false`).
+- Every application container (the Python services, `gateway-mcp`, `inference-worker`, the
+  `pat-publisher` sidecar, and the Zitadel bootstrap Job) drops all capabilities, runs as a
+  numeric non-root UID, and mounts a read-only root filesystem with an `emptyDir` at `/tmp`.
+  The UID is the one in the image Dockerfile: `10001` for the Python images (see
+  `deployments/docker/python-service.Dockerfile`), and `1000` for `audience-studio` (its image
+  runs as `node`). The numeric value is required. A user name in the image cannot prove non-root.
+- The `HOME` variable of each application container is `/tmp` in a hosted render.
+- A service that writes to disk outside `/tmp` needs a volume for that path before its
+  `readOnlyRootFilesystem` can stay true. The audit of the Python sources found no such write.
+  The voice agent writes its model files to its model cache volume.
+
+## Security exceptions
+
+Third-party images choose their own users. Some start as root and switch users at run time. This
+list names each container that the hosted render does not restrict further. Each container keeps
+`allowPrivilegeEscalation: false` and the `RuntimeDefault` seccomp profile. For each container,
+the table names the reason. Enable the stricter settings only after you test the image.
+
+| Container | Workload | Reason |
+|---|---|---|
+| `postgres` | StatefulSet `postgres` | The image entrypoint runs as root, sets data ownership, and switches to the `postgres` user. |
+| `redis` | StatefulSet `runefoble-redis` | The image entrypoint runs as root and switches to the `redis` user. |
+| `silo` | StatefulSet `silo` | Third-party object store. Its UID and write paths are not verified in this chart. |
+| `zitadel` | Deployment `zitadel` | Third-party identity server. Its UID and write paths are not verified in this chart. |
+| `spicedb-migrate` | Deployment `spicedb` (init container) | Third-party authorization server image. Its UID is not verified in this chart. |
+| `spicedb` | Deployment `spicedb` | Third-party authorization server image. Its UID is not verified in this chart. |
+| `otel-collector` | Deployment `otel-collector` | Third-party collector image. Its UID is not verified in this chart. |
+| `loki` | Deployment `loki` | Third-party log store. Its UID and write paths are not verified in this chart. |
+| `grafana` | Deployment `grafana` | Third-party dashboard image. Its UID and write paths are not verified in this chart. |
+| `frontend` | Deployment `frontend` | The `nginx:alpine` image runs as root and listens on port 80. A non-root image on port 8080 is a follow-up. |
+| `render-runtime-config` | Deployment `frontend` (init container) | Same image as `frontend`. |
+| `dump` | CronJob `postgres-backup` (init container) | The `postgres` image. `pg_dump` runs under its entrypoint. |
+| `upload` | CronJob `postgres-backup` | Third-party MinIO client image. Its UID is not verified in this chart. |
+| `download` | Job `postgres-restore` (init container) | Third-party MinIO client image. Its UID is not verified in this chart. |
+| `restore` | Job `postgres-restore` | The `postgres` image. `psql` runs under its entrypoint. |
+| `create-buckets` | Job `silo-buckets` | Third-party MinIO client image. It writes its client configuration under `/tmp/mc`. |
+| `schema-writer` | Job `spicedb-schema-migration` | Third-party `zed` image. Its UID is not verified in this chart. |
+
+OpenPanel and Swagger UI are off in the hosted profile (TASK-0957). When you turn one on, add its container to this table.
 
 ## Placeholder marker
 
