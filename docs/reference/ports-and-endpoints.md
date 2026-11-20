@@ -189,7 +189,7 @@ Campaign Lore routes require a verified bearer token, except `/healthz`, `/ready
 | `voice-agent` | GET | `/api/v1/voice/streams/{session_id}/quality` | Queries stream bitrate, packet loss, and Opus codec mode |
 | `voice-agent` | POST | `/api/v1/voice/streams/{session_id}/report` | Submits RTCP receiver reports and dynamically adapts Opus bitrate/complexity within 200ms |
 | `voice-agent` | POST | `/api/v1/voice/filters/barge-in/evaluate` | Evaluates audio frames for vocal onset (<40ms) and applies 20ms cosine crossfade attenuation (<80ms halt) |
-| `voice-agent` | GET | `/healthz` | Readiness check. Reports the active speech engines as `stt_engine` (`faster-whisper` by default, or `whisper-cpp`) and `tts_engine` (default `espeak-ng`). For `whisper-cpp`, the route checks that the server answers `GET /healthz`. Returns `503` with `status: not_ready` and `problems` when a speech engine is not ready |
+| `voice-agent` | GET | `/healthz` | Diagnostic check (the readiness probe is `/readyz`). Reports the active speech engines as `stt_engine` (`faster-whisper` by default, or `whisper-cpp`) and `tts_engine` (default `espeak-ng`). For `whisper-cpp`, the route checks that the server answers `GET /healthz`. Returns `503` with `status: not_ready` and `problems` when a speech engine is not ready |
 | `voice-agent` | POST | `/api/v1/voice/dsp/apply` | Applies DSP filters to supplied base64 PCM or WAV audio. Returns `422` when `audio_base64` is missing or invalid. The route never synthesises a carrier tone |
 | `voice-agent` | POST | `/api/v1/voice/dsp/condition` | Conditions speech text for affliction filters (for example `drunk`). Input: `text`, `filters`. Returns `original_text`, `conditioned_text`, `active_filters`, and `dsp_config`. Returns no audio. Called by `game-session` over HTTP at `RUNEFOBLE_VOICE_AGENT_URL` (`http://voice-agent:8005` in Helm) for drink rolls with `speech_text` |
 | `voice-agent` | WS | `/ws/voice/{session_id}` | WebRTC voice room signaling. Verifies the bearer, then checks `session.observe` (close `4403` on refusal, `1011` when SpiceDB is unavailable). Owns the room state. A graceful shutdown closes the socket with `1012` and keeps the peer in the room (see [Graceful Restart Keeps Room Seats](../how-to/handle-neural-voice-duplex-and-speech-interruption.md#graceful-restart-keeps-room-seats)) |
@@ -454,7 +454,7 @@ Campaign Lore routes require a verified bearer token, except `/healthz`, `/ready
 | `gateway-mcp` | GET/PUT/DELETE | `/mcp/tools/{name}` | Inspects, updates, or deregisters runtime FastMCP tools without server restarts |
 | `gateway-mcp` | POST | `/mcp/tools/{name}/execute` | Evaluates a dynamic tool's declarative handler as the verified caller. Requires a bearer token. Body `user_id` is ignored |
 | `gateway-mcp` | MCP | `http://gateway-mcp:8012/mcp` (streamable HTTP) | Tabletop tools (`execute_agent_action_plan`, `cast_spell`, `modify_character_hp`, etc.) and resources `session://{session_id}/state` and `encounter://{session_id}/current`. Reached only inside the cluster. The caller sends its bearer on each MCP request. Without a verified bearer the request returns `401` before any tool runs |
-| `inference-worker` | GET | `/healthz` | Liveness and readiness check. Reports the active backend and model names. |
+| `inference-worker` | GET | `/healthz` | Liveness check. Reports the active backend and model names. |
 | `inference-worker` | POST | `/inference/v1/intent` | Parses a natural speech transcript into a `ParsedAction` list (`IntentParseResponse`) |
 | `inference-worker` | POST | `/inference/v1/dm-narration` | Generates DM narration and rulings (`DMNarrationResponse`) |
 | `inference-worker` | POST | `/inference/v1/stand-in-action` | Generates a stand-in action for an absent player's character (`StandInActionResponse`) |
@@ -475,8 +475,11 @@ These services serve `GET /readyz` as the readiness probe of the pod (Helm `read
 | `asset-forge` | Event store, SpiceDB, Redis, and the Silo asset bucket (one signed `HEAD`, `200` only) (TASK-0931). |
 | `soundscape` | Event store, SpiceDB, Redis (TASK-0931). |
 | `audience-studio` | Redis, PostgreSQL (see the `audience-studio` rows). |
-
-`voice-agent`, `rules-compendium`, `campaign-analytics`, `inference-worker`, and `gateway-mcp` still use `/healthz` as the readiness probe.
+| `voice-agent` | Event store, SpiceDB, Redis, the speech-to-text engine (`stt`), and the text-to-speech engine (`tts`) (TASK-0933). |
+| `rules-compendium` | Event store, SpiceDB (TASK-0933). |
+| `campaign-analytics` | PostgreSQL, Redis, SpiceDB (TASK-0933). |
+| `inference-worker` | The LLM backend (`llm_backend`). The worker does not listen while the backend is down (TASK-0933). |
+| `gateway-mcp` | SpiceDB. Its owning services are not probed (TASK-0933). |
 
 ## Gateway Health Route (`GET /healthz`)
 
