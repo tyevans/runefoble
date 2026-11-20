@@ -96,7 +96,7 @@ def cluster(tmp_path: Path) -> FakeCluster:
 
 @pytest.fixture
 def gateway(cluster: FakeCluster) -> Iterator[str]:
-    with serve(_gateway_double(cluster, ("game_session", "campaign_lore"))) as url:
+    with serve(_gateway_double(cluster, ("game_session", "campaign_lore", "the_watcher"))) as url:
         yield url
 
 
@@ -125,6 +125,16 @@ def test_down_scales_the_deployment_to_zero_and_waits_for_unreachable(cluster, g
         ["--context", CONTEXT, "scale", "deployment/campaign-lore", "--replicas=0"]
     ]
     assert "unreachable" in result.stdout
+
+
+def test_down_scales_the_watcher_for_the_typed_command_fault_journey(cluster, gateway):
+    """The typed command journey stops The Watcher (TASK-0945)."""
+    result = _run(cluster, gateway, "the_watcher", "down")
+
+    assert result.returncode == 0, result.stderr
+    assert cluster.calls() == [
+        ["--context", CONTEXT, "scale", "deployment/the-watcher", "--replicas=0"]
+    ]
 
 
 def test_up_scales_to_one_waits_for_the_rollout_and_for_operational(cluster, gateway):

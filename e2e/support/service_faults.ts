@@ -13,6 +13,7 @@ import { execFileSync } from 'node:child_process';
 const FAULT_TARGETS = {
   campaign_lore: 'e2e-lore',
   game_session: 'e2e-game-session',
+  the_watcher: 'e2e-watcher',
 } as const;
 
 export type FaultService = keyof typeof FAULT_TARGETS;

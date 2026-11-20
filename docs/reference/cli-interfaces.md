@@ -42,6 +42,8 @@
 | `make e2e-lore-down` | Scales `deployment/campaign-lore` on Kind to 0. Waits until the gateway `/healthz` reports `campaign_lore` as `unreachable` |
 | `make e2e-game-session-up` | The same as `make e2e-lore-up`, for `deployment/game-session` and `game_session` |
 | `make e2e-game-session-down` | The same as `make e2e-lore-down`, for `deployment/game-session` and `game_session` |
+| `make e2e-watcher-up` | The same as `make e2e-lore-up`, for `deployment/the-watcher` and `the_watcher` |
+| `make e2e-watcher-down` | The same as `make e2e-lore-down`, for `deployment/the-watcher` and `the_watcher` |
 | `make lint` | Runs Ruff lint and format checks, the hex colour gate (`scripts/check_hex_literals.py`, baseline `scripts/hex_baseline.json`), the Lit template gate (`scripts/check_lit_templates.py`: kebab-case attributes with no matching `attribute:`, and SVG fragments in `html` templates), mypy on the inference worker and the MCP gateway, frontend and e2e typechecks, and `helm lint` |
 | `make lint-fix` | Runs `ruff check --fix` and `ruff format` on the repository |
 | `make pre-commit` | Runs every pre-commit hook on all files with `uv run pre-commit run --all-files` |

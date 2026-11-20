@@ -27,6 +27,7 @@ KUBE_CONTEXT = "kind-runefoble-local"
 DEPLOYMENTS = {
     "campaign_lore": "campaign-lore",
     "game_session": "game-session",
+    "the_watcher": "the-watcher",
 }
 TARGET = {"down": (0, "unreachable"), "up": (1, "operational")}
 POLL_INTERVAL_S = 0.5

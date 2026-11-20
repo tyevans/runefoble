@@ -1,4 +1,4 @@
-.PHONY: help setup install-tools install-spec-ops cluster-up cluster-down images images-push voice-model-cachehelm-lint helm-template helm-check-event-store helm-deploy test test-authz-live test-entrypoints test-gateway test-property test-mutation test-e2e test-e2e-ui test-bdd e2e-lore-up e2e-lore-down e2e-game-session-up e2e-game-session-down lint lint-fix build check-ui-manifests dev dev-frontend dev-storybook dev-audience-studio dev-api dev-worker deploy-remote-worker pre-commit health-check clean-worktrees backlog-worker docs-build docs-serve visualize-project visualize-project-build prd-audit prd-decompose prd-create prd-sync
+.PHONY: help setup install-tools install-spec-ops cluster-up cluster-down images images-push voice-model-cachehelm-lint helm-template helm-check-event-store helm-deploy test test-authz-live test-entrypoints test-gateway test-property test-mutation test-e2e test-e2e-ui test-bdd e2e-lore-up e2e-lore-down e2e-game-session-up e2e-game-session-down e2e-watcher-up e2e-watcher-down lint lint-fix build check-ui-manifests dev dev-frontend dev-storybook dev-audience-studio dev-api dev-worker deploy-remote-worker pre-commit health-check clean-worktrees backlog-worker docs-build docs-serve visualize-project visualize-project-build prd-audit prd-decompose prd-create prd-sync
 
 
 CLUSTER_NAME ?= runefoble-local
@@ -285,6 +285,12 @@ e2e-game-session-up: ## Scale game-session on Kind back to 1 and wait until the 
 
 e2e-game-session-down: ## Scale game-session on Kind to 0 and wait until the gateway reports it unreachable (TASK-0909)
 	@uv run python scripts/e2e_service_fault.py game_session down
+
+e2e-watcher-up: ## Scale the-watcher on Kind back to 1 and wait until the gateway reports it operational (TASK-0945)
+	@uv run python scripts/e2e_service_fault.py the_watcher up
+
+e2e-watcher-down: ## Scale the-watcher on Kind to 0 and wait until the gateway reports it unreachable (TASK-0945)
+	@uv run python scripts/e2e_service_fault.py the_watcher down
 
 test-e2e: ## Run headless Playwright BDD suite against the Kind stack (real Zitadel sign-in, TASK-0525)
 	@echo "==> Running Playwright BDD end-to-end tests..."
