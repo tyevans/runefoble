@@ -44,10 +44,24 @@ An unset key that the guard reads also fails the render. The guard never takes a
 | `zitadel.bootstrap.postLogoutRedirectUris` | `https://REPLACE-ME/` | Same check as `redirectUris`. |
 | `zitadel.bootstrap.devMode` | `false` | Fails when `true`. |
 | `mailpit.enabled` | `false` | Fails when `true`. Mailpit is a development mail capture. |
+| `swaggerUI.enabled` | `false` | No guard on the key. A Swagger UI path fails the render (see [Development routes](#development-routes-and-the-analytics-decision-d6)). |
+| `openpanel.enabled` | `false` | No guard on the key. An OpenPanel path fails the render (see [Development routes](#development-routes-and-the-analytics-decision-d6)). |
+| `ingress.hosts[].paths[]` | No `/mail`, `/mailpit`, `/docs`, `/swagger-ui` or `/analytics` path | Fails on those prefixes. Fails on a path whose service is `mailpit`, `swagger-ui` or `openpanel` when that workload is off. |
 | `ingress.tls.mode` | `certManager` | Fails unless `certManager` or `existingSecret`. `none` serves HTTP only. |
 | `ingress.tls.clusterIssuer` | `REPLACE-ME` | Required with `certManager`. Fails on `REPLACE-ME`. Name of a ClusterIssuer that you install. |
 | `ingress.tls.secretName` | `""` | Required with `existingSecret`. Fails on `REPLACE-ME`. Name of a `kubernetes.io/tls` Secret that you create. |
 | `ingress.httpsRedirect` | `true` | Fails unless `true`. Plain HTTP answers 301 to HTTPS. See [TLS and HTTP redirect rules](ports-and-endpoints.md#tls-and-http-redirect-rules-hosted). |
+
+## Development routes and the analytics decision (D6)
+
+The guard in `templates/hosted-guard-dev-routes.yaml` fails a staging or production render when:
+
+- an Ingress path equals or sits below `/mail`, `/mailpit`, `/docs`, `/swagger-ui` or `/analytics`; or
+- an Ingress path targets `mailpit`, `swagger-ui` or `openpanel`, and that workload is off.
+
+The hosted example serves no development route. Each development workload is off there. A hosted render has no Mailpit, no Swagger UI page and no OpenPanel. Each service still serves `/openapi.json` inside the cluster (AGENTS.md, Hard Invariant 5). A removed route returns 404. The chart adds no substitute page.
+
+Decision D6 (analytics): off by default. OpenPanel is not public and no service needs it. The OpenPanel client (`libs/runefoble_platform/src/runefoble_platform/analytics/client.py`) has no call site in a service. A failed send logs a warning and does not raise, so an off workload cannot block a player action. To turn analytics on for a hosted site, first add authentication in front of the OpenPanel UI, then change the example and the guard in one record.
 
 ## Placeholder marker
 

@@ -2,6 +2,8 @@
 
 ## Overview
 
+> **Development only.** Mailpit runs in the local Kind render. The hosted profile has no Mailpit: `mailpit.enabled` is `false`, no `/mail` route exists, and the render fails if a `/mail` path or an enabled Mailpit reaches a hosted render. Zitadel sends no mail in a hosted render until real SMTP is configured (TASK-0958).
+
 Runefoble uses **Mailpit** (`axllent/mailpit`) as the local mock SMTP server and email inbox. Zitadel sends all account email through Mailpit. Zitadel sends sign-up verification, password reset, and invitation email. The gateway sends no email and issues no tokens.
 
 Mailpit provides:

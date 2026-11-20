@@ -17,9 +17,9 @@ Runefoble is designed around a Kubernetes-first microservices topology deployed 
 | **OpenTelemetry Collector** | `otel/opentelemetry-collector-contrib` | `otel-collector:4317` (gRPC), `4318` (HTTP) | None (Internal) | ADR-0005 | Null Tracer / No-op Span Processor |
 | **Loki** | `grafana/loki:3.0.0` | `loki:3100` | None (Internal) | ADR-0005 | Standard Python logging stdout |
 | **Grafana** | `grafana/grafana:11.0.0` | `grafana:3001` | None (Port-forward) | ADR-0005 | Local metrics console |
-| **OpenPanel** | `lindesvard/openpanel-dashboard:2.3.0` | `openpanel:3000` | `/analytics` | ADR-0005 | Mock Event Buffer |
-| **Swagger UI** | `swaggerapi/swagger-ui:v5.17.14` | `swagger-ui:8080` | `/docs`, `/swagger-ui` | ADR-0005 | Service `/openapi.json` direct endpoints |
-| **Mailpit (Mock SMTP & UI)** | `axllent/mailpit:v1.21.8` | `mailpit:1025` (SMTP), `8025` (HTTP) | `/mail`, `/mailpit` | ADR-0005 | None. An unreachable Mailpit raises `EmailTransportError` (HTTP 503) |
+| **OpenPanel** | `lindesvard/openpanel-dashboard:2.3.0` | `openpanel:3000` | `/analytics` (local only) | ADR-0005 | Mock Event Buffer |
+| **Swagger UI** | `swaggerapi/swagger-ui:v5.17.14` | `swagger-ui:8080` | `/docs`, `/swagger-ui` (local only) | ADR-0005 | Service `/openapi.json` direct endpoints |
+| **Mailpit (Mock SMTP & UI)** | `axllent/mailpit:v1.21.8` | `mailpit:1025` (SMTP), `8025` (HTTP) | `/mail`, `/mailpit` (local only) | ADR-0005 | None. An unreachable Mailpit raises `EmailTransportError` (HTTP 503) |
 | **Inference Worker (LLM, internal)** | First-party `services/inference_worker` | `inference-worker:8100` (HTTP, Helm `inference-worker` Deployment and Service) | Service credential `RUNEFOBLE_SERVICE_CREDENTIAL`, header `X-Runefoble-Service-Credential` (ADR-0015 e) | ADR-0007 | Chart default `backend: openai_compatible` (`RUNEFOBLE_WORKER_BACKEND=openai_compatible`; `openaiCompatibleBaseUrl` must name a reachable endpoint). `mock` is refused. No silent fallback |
 
 ---
@@ -105,11 +105,13 @@ Runefoble is designed around a Kubernetes-first microservices topology deployed 
 ### 7. OpenPanel (Privacy-Preserving Analytics)
 - **Role**: Event tracking and funnels measuring session starts, turn times, and stand-in AI activation rates.
 - **Environment Variables**: `RUNEFOBLE_OPENPANEL_ENDPOINT`, `RUNEFOBLE_OPENPANEL_CLIENT_ID`.
+- **Hosted state**: Off in the hosted profile (`openpanel.enabled: false`, decision D6). No public `/analytics` route. No service calls the OpenPanel client, so no player action waits on it.
 - **How-To Guide**: [Track Analytics Events](../how-to/track-analytics-events.md).
 
 ### 8. Mailpit (Mock SMTP Server & Email Testing UI)
 - **Role**: Captures developer and test emails locally without outbound email delivery. Powers user email signups, Zitadel OIDC account confirmation, OTP verification codes, and password reset flows.
-- **Web UI & REST API**: Accessible via Traefik Ingress at `/mail/` and `/mailpit/` (port 8025 internally).
+- **Web UI & REST API**: Accessible via Traefik Ingress at `/mail/` and `/mailpit/` (port 8025 internally). Local only.
+- **Hosted state**: Off in the hosted profile (`mailpit.enabled: false`). Never run it in a public cluster: it accepts any SMTP login.
 - **SMTP Server**: Listens on port 1025 internally for RFC-822 email transmission.
 - **Zitadel Integration**: Zitadel is configured via `ZITADEL_DEFAULTINSTANCE_SMTPCONFIGURATION_SMTP_HOST=mailpit:1025` to route all account verification emails directly into Mailpit.
 - **Environment Variables**: `RUNEFOBLE_MAILPIT_SMTP_HOST`, `RUNEFOBLE_MAILPIT_SMTP_PORT`, `RUNEFOBLE_MAILPIT_HTTP_URL`, `RUNEFOBLE_MAILPIT_ENABLED`.
