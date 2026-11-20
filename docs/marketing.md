@@ -106,7 +106,7 @@ The speech targets are not measured. The 500 millisecond target has no latency t
 
 - **Live**: Stand-in guardrails, takeover when a player leaves, and hot-swap handoff. Tests: `tests/test_blackbox_leave_activates_stand_in.py`, `tests/test_blackbox_stand_in_takeover.py`, `tests/test_blackbox_standin_guardrails_persistence.py` (TASK-0055, TASK-0357, TASK-0570).
 - **Live**: Absentee recap read API (chronicle feed and stand-in turns). Test: `tests/test_blackbox_session_chronicle.py` (TASK-0641).
-- **In progress**: Session penalties. The Watcher writes "Drunk" and "Foolishness" text (`services/the_watcher/src/the_watcher/stand_in_guardrails.py`). Penalty records are not yet reconciled for the DM. Blocking task: TASK-0462.
+- **In progress**: Session penalties. The inference worker writes "Drunk" and "Foolishness" text for the stand-in (`services/inference_worker/src/inference_worker/graphs/stand_in_graph.py`). Penalty records are not yet reconciled for the DM. Blocking task: TASK-0462.
 - **Planned**: Catch-up recap reel for returning players. Blocking task: TASK-0463.
 - **Planned**: Voice-cloned stand-in dialogue. Blocking task: TASK-0464.
 

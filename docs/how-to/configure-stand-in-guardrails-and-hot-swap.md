@@ -60,7 +60,7 @@ curl -X PUT http://localhost:8000/api/v1/characters/char-sarah-cleric/guardrails
 
 ### Reading the Applied Guardrails
 
-When the stand-in acts, The Watcher returns `guardrails_applied` in the response of `POST /api/v1/watcher/stand-in/act`. The list holds the names of the guardrails that the decision enforced, for example `["protect_allies"]`. Every name comes from the `GuardrailName` enumeration, and the local engine and the worker use the same names. A guardrail that did not change the decision is not listed. When the model backend names a guardrail, the worker reports it only if the request activated that guardrail. See `docs/reference/inference-worker-response-contract.md`.
+When the stand-in acts, The Watcher returns `guardrails_applied` in the response of `POST /api/v1/watcher/stand-in/act`. The list holds the names of the guardrails that the decision enforced, for example `["protect_allies"]`. Every name comes from the `GuardrailName` enumeration. The worker applies the guardrails and reports their names. A guardrail that did not change the decision is not listed. When the model backend names a guardrail, the worker reports it only if the request activated that guardrail. See `docs/reference/inference-worker-response-contract.md`.
 
 ```bash
 curl -X POST http://localhost:8001/api/v1/watcher/stand-in/act \
@@ -210,13 +210,10 @@ The `<runefoble-stand-in-guardrails>` custom element is vendored in `services/ch
 - `@guardrails-updated`: Dispatched when the player saves modified guardrail sliders and checkboxes.
 - `@request-hot-swap`: Dispatched when clicking the "Take Control" button to initiate mid-session hot-swap.
 
-## 5. Stand-In Decision Engine Architecture (TASK-0112)
+## 5. Stand-In Decision Engine Architecture (TASK-0112, TASK-0943)
 
-The stand-in decision logic within `services/the_watcher` is decoupled into focused sub-modules to preserve Hard Invariant 6 (< 500 lines limit):
-- `the_watcher.stand_in_guardrails`: Implements `evaluate_tactical_guardrails` for ally protection priority matching, melee distance heuristics, spell slot preservation checks, and emergency triage.
-- `the_watcher.stand_in_persona`: Implements `apply_penalty_modifiers` for humorous DM penalties (`drunk`, `foolishness`, `cowardice`, `greed`), disadvantage formulas, and personality trait weighting (`scholarly`, `valiant`, `impulsive`).
+The stand-in action comes only from the stand-in port (`RUNEFOBLE_WATCHER_STAND_IN_ENGINE`). The Watcher sends the character, the penalties and the guardrail policy to the inference worker. The worker applies the guardrails and the penalties. When the port is `none`, the route returns 503. The Watcher keeps no local stand-in rules (ADR-0015).
 - `the_watcher.stand_in_recap`: Implements `generate_absentee_recap` for humorous chronicle paragraphs, highlight summaries, and absentee excuse generation.
-- `the_watcher.stand_in_ai`: Lightweight `StandInAIEngine` facade orchestrating guardrail evaluation, penalty simulation, and chronicle recap delegation.
 
 ---
 
