@@ -69,6 +69,12 @@ describe('applyRouteState', () => {
     applyRouteState(host, new Router().match('#/campaigns/c1/sessions/s2')!);
     assert.equal(host.boardKind, 'loading');
   });
+
+  it('closes the stance drawer on every route change, so a lobby stand-in does not open it in the session view', () => {
+    const host: any = { selectedCharacterId: '', isAuthModalOpen: false, isAbsenteeDirectiveOpen: true };
+    applyRouteState(host, new Router().match('#/campaigns/c1/sessions/s1')!);
+    assert.equal(host.isAbsenteeDirectiveOpen, false);
+  });
 });
 
 describe('fetchSession without a title', () => {

@@ -12,12 +12,18 @@ type RouteStateHost = Pick<
   RunefobleApp,
   | 'currentRoute' | 'routeParams' | 'breadcrumbs' | 'campaignId' | 'campaignTitle'
   | 'sessionId' | 'sessionTitle' | 'selectedCharacterId' | 'isAuthModalOpen' | 'boardKind'
+  | 'isAbsenteeDirectiveOpen'
 >;
 
-/** Applies the route to the host. A login or register route opens the auth modal. A new session id resets the board to `loading`. */
+/**
+ * Applies the route to the host. A login or register route opens the auth modal. A new session id
+ * resets the board to `loading`. Each route change closes the stance drawer. The lobby opens it when
+ * the caller marks the seat absent, and the session view must not show it until the caller asks.
+ */
 export function applyRouteState(host: RouteStateHost, route: MatchedRoute): void {
   const { campaignId = '', sessionId = '', characterId } = route.params;
   host.currentRoute = route;
+  host.isAbsenteeDirectiveOpen = false;
   host.routeParams = route.params;
   host.breadcrumbs = route.breadcrumbs;
   host.campaignId = campaignId;
