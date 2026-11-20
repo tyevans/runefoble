@@ -242,12 +242,16 @@ the table names the reason. Enable the stricter settings only after you test the
 | `otel-collector` | Deployment `otel-collector` | Third-party collector image. Its UID is not verified in this chart. |
 | `loki` | Deployment `loki` | Third-party log store. Its UID and write paths are not verified in this chart. |
 | `grafana` | Deployment `grafana` | Third-party dashboard image. Its UID and write paths are not verified in this chart. |
-| `openpanel` | Deployment `openpanel` | Third-party analytics image. Its UID and write paths are not verified in this chart. |
-| `swagger-ui` | Deployment `swagger-ui` | Third-party static server. It listens on a port that needs a check before a UID change. |
 | `frontend` | Deployment `frontend` | The `nginx:alpine` image runs as root and listens on port 80. A non-root image on port 8080 is a follow-up. |
 | `render-runtime-config` | Deployment `frontend` (init container) | Same image as `frontend`. |
+| `dump` | CronJob `postgres-backup` (init container) | The `postgres` image. `pg_dump` runs under its entrypoint. |
+| `upload` | CronJob `postgres-backup` | Third-party MinIO client image. Its UID is not verified in this chart. |
+| `download` | Job `postgres-restore` (init container) | Third-party MinIO client image. Its UID is not verified in this chart. |
+| `restore` | Job `postgres-restore` | The `postgres` image. `psql` runs under its entrypoint. |
 | `create-buckets` | Job `silo-buckets` | Third-party MinIO client image. It writes its client configuration under `/tmp/mc`. |
 | `schema-writer` | Job `spicedb-schema-migration` | Third-party `zed` image. Its UID is not verified in this chart. |
+
+OpenPanel and Swagger UI are off in the hosted profile (TASK-0957). When you turn one on, add its container to this table.
 
 ## Placeholder marker
 

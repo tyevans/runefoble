@@ -58,6 +58,10 @@ a memory limit. CPU limits are not required (see the hosted profile page).
   (dict "key" "observability.grafana.resources" "resources" .Values.observability.grafana.resources)
   (dict "key" "openpanel.resources" "resources" .Values.openpanel.resources)
   (dict "key" "swaggerUI.resources" "resources" .Values.swaggerUI.resources)
+  (dict "key" "backup.dumpResources" "resources" (.Values.backup | default dict).dumpResources)
+  (dict "key" "backup.uploadResources" "resources" (.Values.backup | default dict).uploadResources)
+  (dict "key" "restore.downloadResources" "resources" (.Values.restore | default dict).downloadResources)
+  (dict "key" "restore.restoreResources" "resources" (.Values.restore | default dict).restoreResources)
 -}}
 {{- range $workloads -}}
 {{- include "runefoble.hardening.requireMemory" (merge (dict "env" $env) .) -}}

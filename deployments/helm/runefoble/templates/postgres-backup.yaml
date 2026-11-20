@@ -47,11 +47,23 @@ spec:
           labels:
             app: postgres-backup
         spec:
+          {{- if include "runefoble.hosted.profile" $ }}
+          securityContext:
+            {{- include "runefoble.hosted.podSecurity" (dict "extra" nil) | nindent 12 }}
+          {{- end }}
           restartPolicy: OnFailure
           automountServiceAccountToken: false
           initContainers:
             - name: dump
               image: {{ .Values.postgres.image | quote }}
+              {{- with .Values.backup.dumpResources }}
+              resources:
+                {{- toYaml . | nindent 16 }}
+              {{- end }}
+              {{- if include "runefoble.hosted.profile" $ }}
+              securityContext:
+                {{- include "runefoble.hosted.thirdPartyContainerSecurity" $ | nindent 16 }}
+              {{- end }}
               command:
                 - /bin/bash
                 - -ec
@@ -91,6 +103,14 @@ spec:
           containers:
             - name: upload
               image: {{ $image | quote }}
+              {{- with .Values.backup.uploadResources }}
+              resources:
+                {{- toYaml . | nindent 16 }}
+              {{- end }}
+              {{- if include "runefoble.hosted.profile" $ }}
+              securityContext:
+                {{- include "runefoble.hosted.thirdPartyContainerSecurity" $ | nindent 16 }}
+              {{- end }}
               args:
                 - --config-dir
                 - /tmp/mc

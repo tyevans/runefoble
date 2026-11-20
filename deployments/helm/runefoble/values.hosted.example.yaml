@@ -208,11 +208,17 @@ backup:
   schedule: "17 2 * * *"
   # Documentation only. The bucket lifecycle rule enforces this period. The chart never deletes objects.
   retentionDays: 30
+  # Sizes of the dump and upload containers (TASK-0962).
+  dumpResources: *small
+  uploadResources: *small
   encryption:
     enabled: false
 
 # Restore of one backup into a fresh release (TASK-0961). Off by default. Turn it on for one install.
 restore:
   enabled: false
+  # Sizes of the download and restore containers (TASK-0962).
+  downloadResources: *small
+  restoreResources: *medium
   # Prefix that the backup Job logs, for example postgres/2026-11-18. Required when enabled is true.
   objectPrefix: ""
