@@ -953,3 +953,4 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 945. **TASK-0937 (Proposed)**: [`0937-first-forge-after-a-restart-is-measured.md`](proposed/0937-first-forge-after-a-restart-is-measured.md) — The First Forge After an asset_forge Restart Is Measured
 946. **TASK-0940 (Proposed)**: [`0940-mypy-ratchet-for-every-python-package.md`](proposed/0940-mypy-ratchet-for-every-python-package.md) — The Lint Gate Type-Checks Every Python Package With a Ratchet
 947. **TASK-0941 (Proposed)**: [`0941-reaction-prompt-receives-real-reactions.md`](proposed/0941-reaction-prompt-receives-real-reactions.md) — The Reaction Prompt Receives Real Reactions From the Session
+948. **TASK-0968 (Proposed)**: [`0968-dice-roll-name-comes-from-the-bound-character.md`](proposed/0968-dice-roll-name-comes-from-the-bound-character.md) — The Dice Roll Name Comes From the Caller's Bound Character, Not From the Client
