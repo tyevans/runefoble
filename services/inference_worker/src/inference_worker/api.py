@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 from runefoble_platform.engine_ports import EngineUnavailableError
 from runefoble_platform.event_publish import event_publish_failures
+from runefoble_platform.readiness import ReadinessGate, add_readiness_route, set_readiness_gate
 
 from inference_worker.auth import service_credential_guard
 from inference_worker.config import WorkerSettings
@@ -33,12 +34,16 @@ stand_in_graph = None
 
 
 def set_llm_port(port: LLMPort) -> None:
-    """Make `port` the engine for every graph. The lifespan calls this once at start-up."""
+    """Make `port` the engine for every graph. The lifespan calls this once at start-up.
+
+    The port is also the one dependency of `/readyz` (TASK-0933).
+    """
     global llm_port, intent_graph, narration_graph, stand_in_graph
     llm_port = port
     intent_graph = build_intent_graph(port)
     narration_graph = build_narration_graph(port)
     stand_in_graph = build_stand_in_graph(port)
+    set_readiness_gate(app, ReadinessGate({"llm_backend": port.check_ready}))
 
 
 @asynccontextmanager
@@ -81,6 +86,9 @@ async def backend_unavailable_handler(
         status_code=503,
         content={"error": exc.error_code, "backend": exc.engine},
     )
+
+
+add_readiness_route(app, "inference_worker")
 
 
 @app.get("/healthz")

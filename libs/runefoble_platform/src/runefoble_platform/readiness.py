@@ -111,6 +111,21 @@ def set_readiness_gate(app: FastAPI, gate: ReadinessGate) -> None:
     app.state.readiness_gate = gate
 
 
+async def readiness_response(gate: ReadinessGate, service: str) -> JSONResponse:
+    """Answer 200 when every dependency answered once, else 503 with the failures by name.
+
+    Services whose router is not a FastAPI router (for example a FastMCP app) use this function
+    with their own route. `add_readiness_route` uses it too.
+    """
+    failures = await gate.pending()
+    if failures:
+        return JSONResponse(
+            status_code=503,
+            content={"status": "not_ready", "service": service, "pending": failures},
+        )
+    return JSONResponse(status_code=200, content={"status": "ready", "service": service})
+
+
 def add_readiness_route(app: FastAPI | APIRouter, service: str) -> None:
     """Add `GET /readyz`: 200 when every dependency answered once, else 503 with the failures.
 
@@ -120,13 +135,7 @@ def add_readiness_route(app: FastAPI | APIRouter, service: str) -> None:
 
     async def readiness(request: Request) -> JSONResponse:
         gate: ReadinessGate = request.app.state.readiness_gate
-        failures = await gate.pending()
-        if failures:
-            return JSONResponse(
-                status_code=503,
-                content={"status": "not_ready", "service": service, "pending": failures},
-            )
-        return JSONResponse(status_code=200, content={"status": "ready", "service": service})
+        return await readiness_response(gate, service)
 
     app.add_api_route(
         "/readyz",
@@ -143,6 +152,7 @@ __all__ = [
     "ReadinessProbe",
     "add_readiness_route",
     "event_store_probe",
+    "readiness_response",
     "redis_probe",
     "set_readiness_gate",
     "silo_probe",

@@ -11,10 +11,17 @@ from typing import Any
 from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from runefoble_auth.authz_http import install_authz_error_handlers
+from runefoble_auth.readiness import spicedb_probe
 from runefoble_platform.aggregate_loading import register_store_unavailable_handlers
 from runefoble_platform.config import EmbeddingEndpointSettings, RulesCompendiumSettings
 from runefoble_platform.event_publish import event_publish_failures
 from runefoble_platform.event_sourcing import get_event_store
+from runefoble_platform.readiness import (
+    ReadinessGate,
+    add_readiness_route,
+    event_store_probe,
+    set_readiness_gate,
+)
 from runefoble_platform.ui_manifest import ui_manifest_router
 
 from rules_compendium.projection import rebuild_homebrew_projection
@@ -31,6 +38,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     Start-up fails if the configured embedding provider is missing a setting, or if the
     event store cannot be read. The service never serves an empty homebrew index.
     """
+    set_readiness_gate(
+        app, ReadinessGate({"event_store": event_store_probe(), "spicedb": spicedb_probe()})
+    )
     engine = build_retrieval_engine(RulesCompendiumSettings(), EmbeddingEndpointSettings())
     await engine.initialize_srd_data()
     await rebuild_homebrew_projection(engine, get_event_store())
@@ -84,6 +94,9 @@ def health_check() -> dict[str, Any]:
         "service": "rules_compendium",
         "event_publish_failures": event_publish_failures(),
     }
+
+
+add_readiness_route(platform_router, "rules_compendium")
 
 
 # Build the event store now. A deployed service without a reachable store refuses to start (TASK-0707).
