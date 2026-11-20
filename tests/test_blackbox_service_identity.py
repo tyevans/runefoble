@@ -35,6 +35,9 @@ PUBLIC_PATHS = {
     "/healthz",
     "/readyz",
     "/ui/manifest",
+    # Public by design: a person without an account redeems an invite (ADR-0023). The route
+    # has its own blackbox tests in tests/test_blackbox_invite_account_creation.py.
+    "/api/v1/campaigns/invites/accounts",
 }
 WORKER_PAYLOADS = {
     "/inference/v1/intent": {

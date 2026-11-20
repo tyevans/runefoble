@@ -33,9 +33,11 @@ def test_dm_traps_manifest_endpoint(client: TestClient) -> None:
     assert data["package"] == "@runefoble/board-state-ui"
     assert data["version"] == "0.1.0"
     assert "runefoble-dm-trap-controls" in data["components"]
-    assert "runefoble-map-switcher" in data["components"]
+    assert (
+        "runefoble-map-switcher" not in data["components"]
+    )  # removed, no backend route (TASK-0954)
     assert "runefoble-dm-trap-controls" in data["tags"]
-    assert "runefoble-map-switcher" in data["tags"]
+    assert "runefoble-map-switcher" not in data["tags"]
     assert any("runefoble-dm-trap-controls.styles" in s for s in data["styles"])
     assert any("index.ts" in s for s in data["scripts"])
 
