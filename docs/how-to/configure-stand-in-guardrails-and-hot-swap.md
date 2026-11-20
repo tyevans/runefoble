@@ -121,11 +121,11 @@ curl -X POST http://localhost:8003/api/v1/characters/char-sarah-cleric/healthz \
 
 ## 2a. Leaving a Session Activates the Stand-In
 
-A player who leaves an active session hands the character to the AI stand-in. Choose the character in the lobby first, with `POST /api/v1/sessions/{session_id}/lobby/character`.
+A player who leaves an active session hands the character to the AI stand-in. Choose the character in the lobby first, with `POST /api/v1/sessions/{session_id}/lobby/character`. The lobby control `Mark Absent (AI Stand-In)` calls `POST /api/v1/sessions/{session_id}/seats/{player_id}/stand-in` through the gateway (TASK-0952). A player sets their own seat. The DM (`session.control`) sets any seat. The gateway stores nothing. It sends `player_stand_in` to the session sockets after the owner saves the change.
 
 ### Leave Path
 
-1. The player calls `POST /api/v1/sessions/{session_id}/leave` with a bearer token and `{"reason": "..."}`. The absent player is the verified caller. The caller needs `session.participate`; otherwise the route returns `403`. The body has no player id. The join, lobby readiness and lobby character routes work the same way.
+1. The player calls `POST /api/v1/sessions/{session_id}/leave` with a bearer token and `{"reason": "..."}`. The lobby uses the seat route instead (`POST /api/v1/sessions/{session_id}/seats/{player_id}/stand-in`, body `{"is_absent": true}`), which the DM may also call for another seat. The absent player is the verified caller. The caller needs `session.participate`; otherwise the route returns `403`. The body has no player id. The join, lobby readiness and lobby character routes work the same way.
 2. `game_session` records the absence in memory. It reads the lobby character for that player.
 3. If there is a lobby character, `game_session` calls `POST /api/v1/characters/{character_id}/stand-in` with `"active": true` on `character-sheet`. The call uses `RUNEFOBLE_CHARACTER_SHEET_URL` and forwards the player's bearer.
 4. `character-sheet` sets `is_stand_in_active`. Only then does `game_session` save the leave.
@@ -136,7 +136,7 @@ The leave response is the session state, plus `stand_in_character_id` (the chara
 
 ### Rejoin Path
 
-When an absent player calls `POST /api/v1/sessions/{session_id}/join` again, `game_session` releases the stand-in first. It calls the same stand-in route with `"active": false`. If `character-sheet` does not confirm, the join returns `503` and the player stays absent. A hot-swap takeover (section 3) releases the stand-in the same way.
+When an absent player calls `POST /api/v1/sessions/{session_id}/join` again (the lobby uses `POST .../seats/{player_id}/stand-in` with `{"is_absent": false}`, which the DM may also call), `game_session` releases the stand-in first. It calls the same stand-in route with `"active": false`. If `character-sheet` does not confirm, the join returns `503` and the player stays absent. A hot-swap takeover (section 3) releases the stand-in the same way.
 
 ---
 

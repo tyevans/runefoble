@@ -172,6 +172,24 @@ export class AppDataService {
     return this.request<unknown>(`${this.apiBase}/sessions/${sessionId}/join`, { method: 'POST', body: JSON.stringify(seat) });
   }
 
+  /** Records the verified caller's lobby character through the gateway route (TASK-0952). */
+  async selectLobbyCharacter(sessionId: string, characterId: string): Promise<DataResult<unknown>> {
+    return this.request<unknown>(`${this.apiBase}/sessions/${sessionId}/lobby/character`, { method: 'POST', body: JSON.stringify({ character_id: characterId }) });
+  }
+
+  /** Stores the verified caller's lobby readiness through the gateway route (TASK-0952). */
+  async setLobbyReadiness(sessionId: string, isReady: boolean): Promise<DataResult<unknown>> {
+    return this.request<unknown>(`${this.apiBase}/sessions/${sessionId}/lobby/readiness`, { method: 'POST', body: JSON.stringify({ is_ready: isReady }) });
+  }
+
+  /**
+   * Sets or releases the AI stand-in of one seat (TASK-0952). A player sets their own seat. The DM
+   * sets any seat. game_session checks both and answers 403 for any other caller.
+   */
+  async setSeatStandIn(sessionId: string, userId: string, isAbsent: boolean): Promise<DataResult<unknown>> {
+    return this.request<unknown>(`${this.apiBase}/sessions/${sessionId}/seats/${userId}/stand-in`, { method: 'POST', body: JSON.stringify({ is_absent: isAbsent }) });
+  }
+
   /**
    * Moves a lobby session to `active` through the gateway start route (TASK-0910). game_session
    * checks `session.control`. The gateway then sends `session_started` to every session socket.

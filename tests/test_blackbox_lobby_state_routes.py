@@ -124,7 +124,9 @@ def test_readiness_is_saved_by_the_owner_and_reaches_every_socket(gateway, lobby
 def test_readiness_without_a_token_is_refused_and_nothing_is_saved(gateway, lobby) -> None:
     _, session_id = lobby
 
-    refused = gateway.post(f"/api/v1/sessions/{session_id}/lobby/readiness", json={"is_ready": True})
+    refused = gateway.post(
+        f"/api/v1/sessions/{session_id}/lobby/readiness", json={"is_ready": True}
+    )
 
     assert refused.status_code == 401
     read = gateway.get(f"/api/v1/sessions/{session_id}", headers=bearer(PLAYER))

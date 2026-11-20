@@ -1,6 +1,7 @@
 import { LitElement, html, type PropertyValues, type TemplateResult } from 'lit';
 import { AssetImageSet, AuthConsumerController } from '@runefoble/ui-core';
 import { customElement, property, state } from 'lit/decorators.js';
+import { live } from 'lit/directives/live.js';
 import { sessionLobbyStyles } from './runefoble-session-lobby.styles.ts';
 import {
   type LobbyParticipant,
@@ -17,6 +18,9 @@ import { canTakeSeat } from './seat.ts';
 
 /** Row key of one participant image. Avatar and portrait are separate rows. */
 const imageKey = (userId: string, slot: 'avatar' | 'portrait') => `${userId}:${slot}`;
+
+/** The count the DM sees before launch. The launch rule does not wait for it (TASK-0952). */
+const seatsNotReadyText = (count: number) => `${count} ${count === 1 ? 'seat' : 'seats'} not ready`;
 
 @customElement('runefoble-session-lobby')
 export class RunefobleSessionLobby extends LitElement {
@@ -214,6 +218,7 @@ export class RunefobleSessionLobby extends LitElement {
   }
 
   private renderControls(p: LobbyParticipant, isSelf: boolean): TemplateResult {
+    // A player marks their own seat. The DM marks any seat (TASK-0952). The owner checks both.
     const canToggleAbsent = isSelf || this.isDm;
     const canToggleReady = isSelf && !p.isAbsent;
 
@@ -227,7 +232,7 @@ export class RunefobleSessionLobby extends LitElement {
                 <input
                   type="checkbox"
                   class="checkbox-ready"
-                  ?checked=${p.isReady}
+                  .checked=${live(p.isReady)}
                   @change=${(e: Event) => this.handleToggleReadiness(p.userId, (e.target as HTMLInputElement).checked)}
                 />
                 Ready to Play
@@ -240,7 +245,7 @@ export class RunefobleSessionLobby extends LitElement {
                 <input
                   type="checkbox"
                   class="checkbox-absent"
-                  ?checked=${p.isAbsent}
+                  .checked=${live(p.isAbsent)}
                   @change=${(e: Event) => this.handleToggleStandIn(p.userId, (e.target as HTMLInputElement).checked)}
                 />
                 Mark Absent (AI Stand-In)
@@ -292,6 +297,10 @@ export class RunefobleSessionLobby extends LitElement {
               <span class="readiness-summary-text">${summary.summaryText}</span>
             </div>
 
+            ${this.canUserLaunch && summary.notReadyCount > 0
+              ? html`<span class="launch-hint">${seatsNotReadyText(summary.notReadyCount)}</span>`
+              : ''}
+
             ${this.canUserLaunch
               ? html`
                   <button
@@ -314,7 +323,7 @@ export class RunefobleSessionLobby extends LitElement {
             ? html`
                 <div class="empty-state">
                   <h3>No Adventurers Assembled</h3>
-                  <p>Share the session invite link or wait for party members to check in.</p>
+                  <p>No party members have joined yet. Open the campaign to share the invite link.</p>
                 </div>
               `
             : html`

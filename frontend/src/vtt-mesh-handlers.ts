@@ -8,16 +8,10 @@
  * Event contract: docs/reference/microfrontend-architecture.md, "Session Mesh Events".
  * TASK-0358: Live Tabletop VTT WebSocket Event Mesh & Plugin Slots Integration.
  * TASK-0826: App Shell stops reaching into service component internals (audit F-07).
- * TASK-0761: typed lobby handlers, no `any` host.
+ * Lobby readiness and stand-in changes do not use this socket. They go through owner routes
+ * (session-actions.ts, TASK-0952).
  * ADR-0004, ADR-0005, ADR-0010, ADR-0013.
  */
-
-import type { LobbyParticipant } from '@runefoble/game-session-ui';
-
-/** The shell state that the lobby handlers update. */
-export interface LobbyHost {
-  lobbyParticipants: LobbyParticipant[];
-}
 
 /** Session message types that the shell forwards, mapped to the window event they dispatch. */
 const SESSION_MESH_EVENTS: Readonly<Record<string, string>> = {
@@ -37,24 +31,6 @@ export function dispatchSessionMessage(msg: { type?: unknown }): boolean {
   if (!type) return false;
   globalThis.dispatchEvent(new CustomEvent(SESSION_MESH_EVENTS[type], { detail: msg }));
   return true;
-}
-
-export function handleToggleReadiness(host: LobbyHost, e: CustomEvent, socket: WebSocket | null): void {
-  const { userId, isReady } = e.detail || {};
-  if (!userId) return;
-  host.lobbyParticipants = host.lobbyParticipants.map((p) => (p.userId === userId ? { ...p, isReady } : p));
-  if (socket?.readyState === WebSocket.OPEN) {
-    socket.send(JSON.stringify({ type: 'player_readiness', userId, isReady }));
-  }
-}
-
-export function handleToggleStandIn(host: LobbyHost, e: CustomEvent, socket: WebSocket | null): void {
-  const { userId, isAbsent } = e.detail || {};
-  if (!userId) return;
-  host.lobbyParticipants = host.lobbyParticipants.map((p) => (p.userId === userId ? { ...p, isAbsent } : p));
-  if (socket?.readyState === WebSocket.OPEN) {
-    socket.send(JSON.stringify({ type: 'player_stand_in', userId, isAbsent }));
-  }
 }
 
 export function handleBoardTokenAction(e: CustomEvent, socket: WebSocket | null): void {

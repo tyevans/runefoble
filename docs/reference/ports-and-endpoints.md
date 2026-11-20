@@ -111,6 +111,7 @@ Campaign Lore routes require a verified bearer token, except `/healthz`, `/ready
 | `game-session` | GET | `/api/v1/sessions/{session_id}/absentee-recap` | Returns the stand-in turns, penalties, and actions that the session recorded. Derived from stand-in actions only, never from fixed content. Returns an empty recap when no stand-in turn exists. The gateway checks `session.observe` before it forwards, so an unknown session gets `403` through the gateway (TASK-0641) |
 | `game-session` | POST | `/api/v1/sessions/{session_id}/start` | Transitions session from lobby to active and publishes `runefoble.events.session.started` event. Requires `session.control` |
 | `game-session` | POST | `/api/v1/sessions/{session_id}/join` | Seats the verified caller and their character in the session lobby. Requires `session.participate`. The body has no player id |
+| `game-session` | POST | `/api/v1/sessions/{session_id}/seats/{player_id}/stand-in` | Sets (`is_absent` true) or releases (`false`) the AI stand-in of one seat. The seat's own player needs `session.participate`. Any other caller needs `session.control` (the DM); others get `403`. Calls `character-sheet` with the caller's bearer, or with the service credential when the DM sets another seat (TASK-0952) |
 | `game-session` | POST | `/api/v1/sessions/{session_id}/leave` | Records the verified caller's absence, toggling character for AI stand-in takeover. Requires `session.participate`. The body has no player id |
 | `game-session` | POST | `/api/v1/campaigns/{campaign_id}/stronghold/treasury/contribute` | Debits the stronghold treasury for a frontier outpost. Requires `stronghold.manage`. Answers `409` on shortfall and records no event |
 | `game-session` | POST | `/api/v1/sessions/{session_id}/combat/start` | Starts combat encounter with initiative tracking and turn order. Requires `session.control` |
@@ -245,7 +246,7 @@ Campaign Lore routes require a verified bearer token, except `/healthz`, `/ready
 | `character-sheet` | POST | `/api/v1/characters/{id}/spells/prepare` | Prepares a spell in the character's active spellbook. With `is_prepared: false`, unprepares it and emits `SpellUnprepared` |
 | `character-sheet` | POST | `/api/v1/characters/{id}/spells/cast` | Expends a spell slot to cast a spell with slot exhaustion validation |
 | `character-sheet` | POST | `/api/v1/characters/{id}/spells/restore` | Restores spent spell slots to maximum (all levels, or one level with optional `slot_level`) |
-| `character-sheet` | POST | `/api/v1/characters/{id}/stand-in` | Activates or releases the AI stand-in for a character (body: `active`, optional `session_id`). Emits `StandInActivated` or `StandInReleased` |
+| `character-sheet` | POST | `/api/v1/characters/{id}/stand-in` | Activates or releases the AI stand-in for a character (body: `active`, optional `session_id`). Accepts the owner's `edit` grant or the service credential (TASK-0952). Emits `StandInActivated` or `StandInReleased` |
 | `character-sheet` | POST | `/api/v1/characters/{id}/health` | Updates character hit points with damage or healing (auto-stabilizes stand-in at 0 HP). Optional `session_id` names the session for the published `runefoble.events.character.health_changed` event |
 | `character-sheet` | POST | `/api/v1/characters/{id}/penalties` | Inflicts DM session miss penalty on absent player stand-in |
 | `character-sheet` | DELETE | `/api/v1/characters/{id}/penalties/{penalty_type}` | Clears active session penalty from character |
@@ -347,6 +348,9 @@ Campaign Lore routes require a verified bearer token, except `/healthz`, `/ready
 | `gateway-api` | POST | `/api/v1/sessions/{session_id}/join` | Proxies to `game_session`: seats the verified caller in the lobby. Body `{character_id, character_name, character_class}`. The gateway forwards the bearer and the body. The owner checks `participate` and answers `403` for a caller outside the campaign. `503` when game_session is unreachable (TASK-0889) |
 | `gateway-api` | POST | `/api/v1/sessions/{session_id}/roll` | Proxies to `game_session`: evaluates and records a dice roll for the verified caller. The body is `{formula, roller_name, roll_type}` and the gateway forwards it unchanged. The reply is the stored roll (`session_id`, `roller_id`, `roller_name`, `formula`, `total`, `rolls`, `is_crit`, `is_fumble`, `roll_type`). The owner checks `participate`, answers `403` to a caller outside the session, and `422` to a bad formula. `401` without a token. `503` when game_session is unreachable (TASK-0951) |
 | `gateway-api` | POST | `/api/v1/sessions/{session_id}/end` | Proxies to `game_session`: ends an `active` session (requires `control`; any other status answers `400`). Sends `session_ended` to every session socket after the owner's reply (TASK-0953) |
+| `gateway-api` | POST | `/api/v1/sessions/{session_id}/lobby/character` | Proxies to `game_session`: records the lobby character of the verified caller. Body `{character_id}`. The owner checks `participate`. The owner hands this character to the AI stand-in when the caller leaves (TASK-0952) |
+| `gateway-api` | POST | `/api/v1/sessions/{session_id}/lobby/readiness` | Proxies to `game_session`: stores the readiness of the verified caller. Body `{is_ready}`. The owner checks `participate`. After the owner saves it, the gateway sends `player_readiness` to every session socket. The gateway stores nothing (TASK-0952) |
+| `gateway-api` | POST | `/api/v1/sessions/{session_id}/seats/{player_id}/stand-in` | Proxies to `game_session`: sets (`is_absent` true) or releases (`false`) the AI stand-in of one seat. The owner checks `participate` for the seat's own player and `control` for any other caller (other callers get `403`). After the owner saves it, the gateway sends `player_stand_in` with `userId` and `isAbsent` (TASK-0952) |
 | `gateway-api` | POST | `/api/v1/sessions/{session_id}/hot-swap` | Proxies to `game_session`: hands turn control to a player. Body `{characterId}`. The caller is the player. The owner releases the stand-in in `character_sheet` (requires `observe`) |
 | `gateway-api` | POST | `/api/v1/sessions/{session_id}/turns/advance` | Proxies to `game_session` `next-turn`: advances the turn (requires `control`) |
 | `gateway-api` | POST | `/api/v1/sessions/{session_id}/dm-override` | Proxies to `game_session`: records a DM override (requires `control`) |
@@ -547,14 +551,14 @@ Frames and replies:
 
 | Client kind | Required `game_session` permission |
 |---|---|
-| `player_readiness` | `participate` |
-| `player_stand_in` | `participate` |
 | `token_action` | `participate` |
 | `aoe_placed` | `participate` |
 | `spell_vfx` | `participate` |
 | `confirm_ghost` | `participate` |
 
 The table is `CLIENT_FRAME_PERMISSIONS` in `gateway_api/session_frames.py`. A frame that passes all three checks goes to every socket of the session, sender included.
+
+`player_readiness` and `player_stand_in` are not client kinds (TASK-0952). A client that sends one gets `UNKNOWN_FRAME`. The gateway sends these two kinds only after the owner saves the change: `lobby/readiness` (`player_readiness`), `leave` (`player_stand_in`, `isAbsent` true) and `join` (`player_stand_in`, `isAbsent` false). The frame carries the verified caller as `userId`.
 
 Server kinds are not client kinds. A client frame of a server kind gets `UNKNOWN_FRAME`, also from the DM:
 
