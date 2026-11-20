@@ -43,11 +43,12 @@ None. Deployability.
 1. Gate `/readyz` for the five services with the shared helper (only the dependencies each uses) and set their probe paths.
 2. Remove the deadlock: create the buckets in a form that does not wait for app readiness (for example the bucket Job runs as a normal Job that waits for Silo, not as a post-install hook, or the asset-forge readiness waits for Silo but not the bucket and the upload path reports a missing bucket as a clear 503). Pick one, test it with `helm template`, and document it.
 3. Record in `docs/reference/cli-interfaces.md` whether `--wait` is supported.
+4. Add a `startupProbe` to every app deployment (default template and values), so that the liveness probe starts only after the service listens. On 2026-11-19 a rollout restart of all 15 services made game-session take more than 35 s to listen. The liveness probe (delay 5 s, 3 failures at 10 s) killed it (exit 137), and the next e2e scenarios got 503 `ConnectError`. Size the startup budget from a measured cold start under a full restart, and state it in the values comments.
 
 ## Frontdoor Blackbox Test Plan
 
 - Per service: unreachable dependency gives `/readyz` 503; reachable gives 200.
-- Helm template test: every probe calls `/readyz`; the bucket creation does not depend on hook order after app readiness.
+- Helm template test: every app deployment has a `startupProbe`, and every readiness probe calls `/readyz`; the bucket creation does not depend on hook order after app readiness.
 - Orchestrator on Kind: a full deploy and the full e2e suite.
 
 ## Definition of Done
