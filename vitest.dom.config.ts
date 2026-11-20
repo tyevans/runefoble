@@ -5,6 +5,8 @@
  * directory. Tests live in `test-dom/` and run in headless Chromium through Playwright.
  * Node-only unit tests stay in `test/` and run with `node --test`.
  * A package that needs a live loopback upstream passes `loopbackUpstreamCommands` (TASK-0758).
+ * A package that records from the microphone passes `fakeMicrophone` (TASK-0946). Chromium then
+ * grants the microphone without a prompt and plays a generated test tone as the input.
  *
  * The browser API server listens on 127.0.0.1 at a port that the operating system picks
  * (TASK-0909). The fixed default port 63315 let parallel runs in other worktrees block each
@@ -19,7 +21,11 @@ import type { BrowserCommand } from 'vitest/node';
 export interface DomTestOptions {
   /** Node-side commands that tests call through `commands` from `vitest/browser`. */
   commands?: Record<string, BrowserCommand<any>>;
+  /** Give the page a fake microphone that Chromium grants without a prompt. */
+  fakeMicrophone?: boolean;
 }
+
+const FAKE_MICROPHONE_ARGS = ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'];
 
 const BROWSER_API_HOST = '127.0.0.1';
 
@@ -52,7 +58,9 @@ export async function domTestConfig(packageDir: string, options: DomTestOptions 
       browser: {
         enabled: true,
         headless: true,
-        provider: playwright(),
+        provider: playwright(
+          options.fakeMicrophone ? { launchOptions: { args: FAKE_MICROPHONE_ARGS } } : {},
+        ),
         instances: [{ browser: 'chromium' }],
         // Failure screenshots would land in the source tree.
         screenshotFailures: false,

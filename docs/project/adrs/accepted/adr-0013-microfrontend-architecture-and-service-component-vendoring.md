@@ -29,7 +29,7 @@ We adopt a **Microfrontend Architecture** across the platform with **Service Com
 
 3. **Lit Web Components as Microfrontend Standard**:
    - All microfrontends are authored as standard W3C Custom Elements using Lit with Shadow DOM encapsulation.
-   - Microfrontends declare their interface strictly via DOM attributes/properties and emit standard CustomEvents (`@move-token`, `@voice-toggle`, etc.) composed across the Shadow DOM boundary.
+   - Microfrontends declare their interface strictly via DOM attributes/properties and emit standard CustomEvents (`@move-token`, `@voice-utterance`, etc.) composed across the Shadow DOM boundary.
    - Style isolation is guaranteed by the Shadow DOM, while Bauhaus theme tokens (`var(--rf-*)`) seamlessly penetrate shadow roots via standard CSS variable inheritance.
 
 4. **Pnpm Monorepo Workspace Integration**:

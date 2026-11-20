@@ -26,6 +26,7 @@ function sessionApp(): RunefobleApp {
     shownTokens: [],
     commandStatus: { kind: 'idle' },
     events: [],
+    voiceUtterance: { sending: false, transcript: '', watcherError: '', uploadError: '' },
     boardCols: 10,
     boardRows: 8,
     activeCharacter: VALEROS,

@@ -22,6 +22,7 @@ function sessionApp(boardKind: 'loading' | 'no_board' | 'board'): RunefobleApp {
     sessionParticipants: [],
     tokens: [],
     events: [],
+    voiceUtterance: { sending: false, transcript: '', watcherError: '', uploadError: '' },
     boardCols: 10,
     boardRows: 10,
     activeCharacter: null,

@@ -31,7 +31,7 @@ function sessionApp(standInActive: boolean, recordFlag = false): RunefobleApp {
     tokens: [],
     events: [],
     atmosphere: {},
-    isListening: false,
+    voiceUtterance: { sending: false, transcript: '', watcherError: '', uploadError: '' },
     activeCharacter: pickActiveCharacter(characters, '4', 'user-alice', null),
     resolveActiveCharacter: () => null,
     getWebSocketUrl: () => 'ws://127.0.0.1:9/ws/boards/sess-1',
