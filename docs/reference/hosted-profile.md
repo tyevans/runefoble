@@ -45,6 +45,14 @@ An unset key that the guard reads also fails the render. The guard never takes a
 | `zitadel.bootstrap.redirectUris` | `https://REPLACE-ME/auth/callback` | Fails on `REPLACE-ME`, `localhost`, `http://`, or a `.local/` path. |
 | `zitadel.bootstrap.postLogoutRedirectUris` | `https://REPLACE-ME/` | Same check as `redirectUris`. |
 | `zitadel.bootstrap.devMode` | `false` | Fails when `true`. |
+| `zitadel.bootstrap.closedRegistration` | `true` | Fails unless `true`. The bootstrap Job turns off local self-registration (ADR-0023 a). Source: `templates/hosted-guard-identity.yaml`. |
+| `zitadel.smtp.host` | `REPLACE-ME` | Required. Fails when empty, on `REPLACE-ME`, `localhost`, or a `.local` suffix. The SMTP provider host. |
+| `zitadel.smtp.port` | `587` | No guard. The SMTP port of the provider. |
+| `zitadel.smtp.tls` | `true` | Fails unless `true`. STARTTLS or implicit TLS, as the provider requires. |
+| `zitadel.smtp.user` | `REPLACE-ME` | Fails on `REPLACE-ME`. The SMTP login name. An empty value passes. |
+| `zitadel.smtp.fromAddress` | `noreply@REPLACE-ME` | Required. Fails on `REPLACE-ME` or a `.local` suffix. The sender address. |
+| `zitadel.smtp.fromName` | `Runefoble` | No guard. The sender name. |
+| `zitadel.smtp.passwordSecretKey` | `smtp-password` (default) | No guard. The key of the password in the credentials Secret. See [`hosted-secrets.md`](hosted-secrets.md). |
 | `mailpit.enabled` | `false` | Fails when `true`. Mailpit is a development mail capture. |
 | `swaggerUI.enabled` | `false` | No guard on the key. A Swagger UI path fails the render (see [Development routes](#development-routes-and-the-analytics-decision-d6)). |
 | `openpanel.enabled` | `false` | No guard on the key. An OpenPanel path fails the render (see [Development routes](#development-routes-and-the-analytics-decision-d6)). |
@@ -98,6 +106,17 @@ runbook (TASK-0965) holds the operator steps and the lifecycle rule.
 
 Configure a bucket lifecycle rule that expires objects under `postgres/` after `backup.retentionDays`.
 The chart does not delete dumps.
+
+## Account creation (D12)
+
+The hosted profile closes self-registration. Zitadel does not show a sign-up page to visitors.
+Two paths create an account:
+
+- A campaign invite. The invite link creates the account (ADR-0023 b to e, TASK-0967).
+- The Zitadel admin console. The first admin signs in with `zitadel.adminEmail`. The admin creates each other account. Zitadel sends the setup e-mail through the SMTP provider.
+
+The bootstrap Job sets the closed policy with `zitadel.bootstrap.closedRegistration`. See
+[Authenticate with Zitadel OIDC](../how-to/authenticate-with-zitadel-oidc.md#closed-registration).
 
 ## Development routes and the analytics decision (D6)
 

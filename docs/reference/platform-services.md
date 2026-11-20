@@ -116,7 +116,7 @@ Runefoble is designed around a Kubernetes-first microservices topology deployed 
 - **Web UI & REST API**: Accessible via Traefik Ingress at `/mail/` and `/mailpit/` (port 8025 internally). Local only.
 - **Hosted state**: Off in the hosted profile (`mailpit.enabled: false`). Never run it in a public cluster: it accepts any SMTP login.
 - **SMTP Server**: Listens on port 1025 internally for RFC-822 email transmission.
-- **Zitadel Integration**: Zitadel is configured via `ZITADEL_DEFAULTINSTANCE_SMTPCONFIGURATION_SMTP_HOST=mailpit:1025` to route all account verification emails directly into Mailpit.
+- **Zitadel Integration**: Zitadel is configured via `ZITADEL_DEFAULTINSTANCE_SMTPCONFIGURATION_SMTP_HOST=mailpit:1025` to route all account verification emails directly into Mailpit. A hosted render uses the SMTP provider in `zitadel.smtp` instead (TASK-0958).
 - **Environment Variables**: `RUNEFOBLE_MAILPIT_SMTP_HOST`, `RUNEFOBLE_MAILPIT_SMTP_PORT`, `RUNEFOBLE_MAILPIT_HTTP_URL`, `RUNEFOBLE_MAILPIT_ENABLED`.
 - **No Fallback**: `MailpitClient` keeps no sent mail in memory. When the SMTP server or the Mailpit HTTP API is down, `send_email` and the read methods raise `EmailTransportError`. `check_health` reports the failure cause in `http_error` and `smtp_error`.
 - **How-To Guide**: [Test Email Signups with Mailpit](../how-to/test-email-signups-with-mailpit.md).

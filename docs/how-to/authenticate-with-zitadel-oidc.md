@@ -150,8 +150,9 @@ Zitadel generates the project ID and the client ID when it runs. The chart canno
 2. Finds the project `runefoble` or creates it (`zitadel.bootstrap.projectName`).
 3. Finds the OIDC application `runefoble-web` or creates it (`zitadel.bootstrap.appName`). The application uses the authorization-code flow with PKCE, the `NONE` auth method (no client secret), and JWT access tokens. Its redirect URIs and post-logout URIs come from values.
 4. Converges the redirect URIs and post-logout URIs of an existing application to the values. It changes nothing when they already match.
-5. Finds the Zitadel Action `runefobleUsernameClaim` or creates it. It binds the Action to the flow "Complement Token" (id `2`), trigger "Pre access token creation" (id `5`). Other actions on that trigger stay bound. If the script, timeout, or `allowedToFail` value changed, the Job updates the Action in place. See [The username claim Action](#the-username-claim-action).
-6. Server-side applies the Secret `runefoble-zitadel-client`. It has two keys: `project-id` and `client-id`.
+5. Closes local self-registration when `zitadel.bootstrap.closedRegistration` is `true`. It reads the instance default login policy and sets `allowRegister` to `false`. It sends the other login settings back unchanged. It changes nothing when registration is already closed. When the value is `false`, the Job does not read or write the login policy. See [Closed registration](#closed-registration).
+6. Finds the Zitadel Action `runefobleUsernameClaim` or creates it. It binds the Action to the flow "Complement Token" (id `2`), trigger "Pre access token creation" (id `5`). Other actions on that trigger stay bound. If the script, timeout, or `allowedToFail` value changed, the Job updates the Action in place. See [The username claim Action](#the-username-claim-action).
+7. Server-side applies the Secret `runefoble-zitadel-client`. It has two keys: `project-id` and `client-id`.
 
 A second run creates no project, no application, and no Action. It writes the same Secret data.
 
@@ -201,6 +202,26 @@ Later upgrades run the Job again. It changes nothing when the project and applic
 
 Until the Job finishes, the pods that read the Secret stay in `CreateContainerConfigError`. The services and the frontend start when the Secret exists. The services read `RUNEFOBLE_ZITADEL_AUDIENCE` from `project-id`. The App Shell reads `clientId` and the project audience scope from `client-id` and `project-id`.
 
+### Closed registration
+
+Closed registration applies ADR-0023 (a). The hosted profile sets `zitadel.bootstrap.closedRegistration` to `true`. The Job then sets the instance default login policy `allowRegister` to `false`. A visitor on the sign-in page sees no sign-up link. Only the Zitadel admin console and a campaign invite (TASK-0967) create accounts.
+
+- Endpoints: `GET` and `PUT` `/admin/v1/policies/login`. The update replaces all login policy fields, so the Job sends each field back with its current value.
+- Scope: the instance default policy. An organization with its own login policy keeps that policy. Check each organization in the admin console.
+- Federated sign-in is not changed by `allowRegister`. Zitadel advisory 10001 states that it affects local registration only. Check the advisory before you rely on it.
+- The Job fails when Zitadel refuses the read or the write. It never skips the step silently.
+
+### SMTP for account e-mail
+
+Zitadel sends verification and setup e-mail through the SMTP provider in `zitadel.smtp`. The local render sends mail to Mailpit (`mailpit.enabled: true`). A hosted render uses the provider in the values:
+
+- `zitadel.smtp.host` and `zitadel.smtp.port` (default `587`).
+- `zitadel.smtp.tls`: `true` for STARTTLS or implicit TLS, as the provider requires. The guard rejects `false`.
+- `zitadel.smtp.user` and `zitadel.smtp.fromAddress` (the sender address) and `zitadel.smtp.fromName`.
+- The password is the key `smtp-password` in the Secret named in `credentials.existingSecret`. The chart reads it with `secretKeyRef`. It is never a plain value. See [Hosted Secrets](../reference/hosted-secrets.md).
+
+Zitadel reads the SMTP settings when it creates the instance. A later change to these values does not change a running instance. Change the SMTP settings in the Zitadel admin console, or in the API, too.
+
 ### Production values
 
 The values in `values.yaml` are for local Kind only. Before a shared deployment:
@@ -208,6 +229,8 @@ The values in `values.yaml` are for local Kind only. Before a shared deployment:
 - Set `zitadel.externalDomain` to a real domain and `zitadel.externalSecure` to `true`. Set `zitadel.externalPort` to the public port. The issuer follows these values.
 - Set `zitadel.bootstrap.devMode` to `false`. Use `https` redirect URIs and post-logout URIs.
 - Set `zitadel.bootstrap.redirectUris` and `postLogoutRedirectUris` to the public App Shell origin.
+- Set `zitadel.bootstrap.closedRegistration` to `true`. See [Closed registration](#closed-registration).
+- Set the `zitadel.smtp` values. See [SMTP for account e-mail](#smtp-for-account-e-mail).
 - Set `zitadel.bootstrap.patExpirationDate` to a short date. Rotate the admin PAT.
 - Set `credentials.existingSecret` (TASK-0626). Keep the admin PAT in your secret store.
 
