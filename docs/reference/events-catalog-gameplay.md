@@ -126,13 +126,14 @@ Part of the [Events Schema](events-schema.md). Each event identifier in this pag
   - `cell_size_px`: Integer
   - `grid_type`: "square" | "hex"
 - **`TokenPlaced`** (`runefoble.events.board.token_placed`): Emitted when a token is added to the grid.
-- **`EncounterPlacementsApplied`** (`runefoble.events.board.encounter_placements_applied`): Emitted when board_state applies one combat start's placements. It records `source_event_id`, so a redelivered combat start places nothing (TASK-0749).
   - `token_id`: String / UUID
   - `name`: String
   - `token_type`: "pc" | "monster" | "npc" | "obstacle" | "loot". A `loot` token is an item on the board (from an approved audience item drop). It is not a combatant and does not block movement.
   - `x`: Integer, `y`: Integer
   - `hp`: Optional[Integer]
   - `is_friendly`: Boolean
+  - `character_id`: Optional[String]. The character of a character token. `None` for a token without a character. The board read and the board socket frames carry it as `character_id` on each token, so a player client finds the token of its own character (TASK-0945).
+- **`EncounterPlacementsApplied`** (`runefoble.events.board.encounter_placements_applied`): Emitted when board_state applies one combat start's placements. It records `source_event_id`, so a redelivered combat start places nothing (TASK-0749).
 - **`CameraFocused`** (`runefoble.events.board.camera_focused`): Emitted when the board owner records a new spectator camera target (`turn_started` or `token_moved`). Fields: `target_x`, `target_y`, `zoom`, `duration_ms`, `easing`, `reason`, `active_token_id`, `active_character_id`, `focused_at`. The board aggregate replays it to restore the camera.
 - **`TokenMoved`** (`runefoble.events.board.token_moved`): Emitted when a token traverses grid coordinates. game_session reads it to record `TokenMoveChronicled` in the session chronicle.
   - `token_id`: String

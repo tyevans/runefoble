@@ -20,6 +20,8 @@ class TokenPlaced(BaseRunefobleEvent):
     y: int
     hp: int | None = None
     is_friendly: bool = False
+    # The character of a character token. None for a token without a character (TASK-0945).
+    character_id: str | None = None
 
 
 @register_event("runefoble.events.board.token_moved")

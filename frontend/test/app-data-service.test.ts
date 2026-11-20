@@ -73,6 +73,9 @@ describe('AppDataService success path through the gateway', () => {
     assert.equal(board.data.cols, 12);
     assert.equal(board.data.tokens.length, Object.keys(OWNER_BOARD_TOKENS).length);
     assert.equal(board.data.tokens[0].name, 'Valeros');
+    // The character token names its character. A token without a character has none (TASK-0945).
+    assert.equal(board.data.tokens[0].characterId, 'char-valeros');
+    assert.equal(board.data.tokens[1].characterId, undefined);
 
     const lobby = await service.fetchLobbyState('4', 'session-tomb-14');
     assert.ok(lobby.ok);

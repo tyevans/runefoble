@@ -110,6 +110,7 @@ Source: `playwright.config.ts`.
 | `make test-e2e-ui` | `pnpm exec bddgen`, then `pnpm exec playwright test --ui $(ARGS)` with the same token | Yes |
 | `make e2e-lore-down`, `make e2e-lore-up` | `scripts/e2e_service_fault.py campaign_lore down` or `up` (see "Service Faults") | No |
 | `make e2e-game-session-down`, `make e2e-game-session-up` | `scripts/e2e_service_fault.py game_session down` or `up` | No |
+| `make e2e-watcher-down`, `make e2e-watcher-up` | `scripts/e2e_service_fault.py the_watcher down` or `up` | No |
 | `scripts/test_ci_e2e.sh` | Starts the dev servers on `:8000` and `:5173`. It does not start Zitadel or the Kind stack, so it cannot run the real sign-in flow. | Yes |
 
 `make test-e2e` runs this command to read the admin token. The token exists only in the environment of that one process:
@@ -132,6 +133,7 @@ A journey that must see an unavailable owner stops that owner on Kind. It does n
 |---|---|---|---|
 | `campaign_lore` | `campaign-lore` | `e2e-lore-down`, `e2e-lore-up` | `@lore-down` |
 | `game_session` | `game-session` | `e2e-game-session-down`, `e2e-game-session-up` | `@game-session-down` |
+| `the_watcher` | `the-watcher` | `e2e-watcher-down`, `e2e-watcher-up` | `@watcher-down` |
 
 `down` does these steps:
 

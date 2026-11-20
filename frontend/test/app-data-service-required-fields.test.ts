@@ -135,7 +135,7 @@ describe('AppDataService board mapper reads BoardState', () => {
     assert.equal(board.data.tokens.length, Object.keys(OWNER_BOARD_TOKENS).length);
     const valeros = board.data.tokens.find((t) => t.id === 'tok-valeros');
     assert.deepEqual(valeros, {
-      id: 'tok-valeros', name: 'Valeros', x: 2, y: 3, hp: 38, visionRadius: 4, activeAction: null,
+      id: 'tok-valeros', name: 'Valeros', x: 2, y: 3, hp: 38, visionRadius: 4, activeAction: null, characterId: 'char-valeros',
     });
     const ghoul = board.data.tokens.find((t) => t.id === 'tok-ghoul-1');
     assert.equal(ghoul?.hp, undefined, 'a null owner hp maps to no hp');

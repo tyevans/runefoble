@@ -20,11 +20,13 @@
     "./faction_radar/types": "./src/faction_radar/types.ts",
     "./runefoble-faction-espionage": "./src/runefoble-faction-espionage.ts",
     "./runefoble-absentee-directive": "./src/runefoble-absentee-directive.ts",
-    "./runefoble-absentee-vote-card": "./src/runefoble-absentee-vote-card.ts"
+    "./runefoble-absentee-vote-card": "./src/runefoble-absentee-vote-card.ts",
+    "./runefoble-command-bar": "./src/runefoble-command-bar.ts",
+    "./command-bar-body": "./src/command-bar-body.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "node --experimental-strip-types --test test/*.test.ts",
+    "test": "node --experimental-strip-types --test test/*.test.ts && vitest run",
     "build": "tsc --noEmit"
   },
   "dependencies": {

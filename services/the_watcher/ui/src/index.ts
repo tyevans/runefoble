@@ -13,3 +13,6 @@ export * from './absentee-stances.ts';
 export * from './runefoble-absentee-directive.ts';
 export * from './runefoble-absentee-directive.styles.ts';
 export * from './runefoble-absentee-vote-card.ts';
+export * from './command-bar-body.ts';
+export * from './runefoble-command-bar.ts';
+export * from './runefoble-command-bar.styles.ts';

@@ -23,7 +23,7 @@ export const appShellStyles = css`
   }
 
   .character-column { display: flex; flex-direction: column; gap: 16px; }
-  .voice-container { margin-top: 24px; }
+  .voice-container { margin-top: 24px; display: flex; flex-direction: column; gap: 12px; }
 
   .campaign-hub-layout {
     display: flex; flex-direction: column; gap: 20px;

@@ -47,6 +47,7 @@ class TokensHandlerMixin(ActionsHandlerMixin):
         hp: int | None = None,
         is_friendly: bool = False,
         vision_radius: int = 2,
+        character_id: str | None = None,
     ) -> None:
         """Place a token onto the grid with spatial bounds check and fog update."""
         validate_point_within_bounds(x, y, self.state.cols, self.state.rows, "Placement")
@@ -60,6 +61,7 @@ class TokensHandlerMixin(ActionsHandlerMixin):
             y=y,
             hp=hp,
             is_friendly=is_friendly,
+            character_id=character_id,
         )
         if is_friendly and self.state.fog_of_war_enabled:
             self._sync_revealed_fog(str(token_id), x, y, vision_radius)

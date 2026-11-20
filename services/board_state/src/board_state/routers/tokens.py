@@ -51,6 +51,7 @@ async def place_token(session_id: str, req: PlaceTokenRequest, user_id: CallerId
         hp=req.hp,
         is_friendly=req.is_friendly,
         vision_radius=req.vision_radius,
+        character_id=req.character_id,
     )
     await save_and_publish(repo, board, get_event_bus())
     token = board.state.tokens[token_id]

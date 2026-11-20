@@ -171,6 +171,8 @@ export function boardFromOwner(data: any): DataResult<{ cols: number; rows: numb
       hp: token.hp ?? undefined,
       visionRadius: token.vision_radius,
       activeAction: token.active_action ?? null,
+      // The character of a character token, so the session view finds the caller's token (TASK-0945).
+      ...(typeof token.character_id === 'string' && token.character_id ? { characterId: token.character_id } : {}),
     });
   }
   return dataOk({ cols: size.data.cols, rows: size.data.rows, tokens: list });

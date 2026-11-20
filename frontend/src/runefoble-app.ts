@@ -12,7 +12,7 @@ import { router, registerAuthGuard, type BreadcrumbItem, type MatchedRoute, type
 import { resolveActiveView, type AppActiveView } from './router/view-resolver.ts';
 import type { BoardToken, PartySeat } from '@runefoble/board-state-ui';
 import type { SessionBoard } from './services/session-board.ts';
-import type { WatcherFeedEvent } from '@runefoble/the-watcher-ui';
+import type { CommandBarStatus, WatcherFeedEvent } from '@runefoble/the-watcher-ui';
 import type {
   CampaignItem,
   CampaignMember,
@@ -108,6 +108,10 @@ export class RunefobleApp extends LitElement {
   /** The stance the player saved, read from the stand-in policy. '' until one is chosen (TASK-0954). */
   @state() public absenteeStance = '';
   @state() public boardTarget: BoardTarget | null = null;
+  /** The tokens that the board shows, from its `tokens-changed` event. The command bar reads the speaker's cell here (TASK-0945). */
+  @state() public shownTokens: BoardToken[] = [];
+  /** What the typed command bar shows: the reply or the error of the last command (TASK-0945). */
+  @state() public commandStatus: CommandBarStatus = { kind: 'idle' };
   /** The session status from the owner: `active` while live, `ended` after the DM ends it (TASK-0953). */
   @state() public sessionStatus = '';
   @state() public isEndSessionConfirmOpen = false;

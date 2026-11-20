@@ -67,6 +67,8 @@ runefoble/
 │   │       ├── runefoble-autonomous-dm.ts
 │   │       ├── runefoble-autonomous-dm.styles.ts
 │   │       ├── runefoble-dm-whisper-bar.ts
+│   │       ├── runefoble-command-bar.ts
+│   │       ├── command-bar-body.ts
 │   │       ├── runefoble-faction-radar.ts
 │   │       ├── runefoble-faction-radar.styles.ts
 │   │       ├── runefoble-faction-radar.stories.ts
@@ -98,10 +100,10 @@ runefoble/
 
 | Service Bounded Context | NPM Package Name | Vendored Custom Elements | Storybook Story Path |
 |---|---|---|---|
-| `board_state` | `@runefoble/board-state-ui` | `<runefoble-board>` (events `move-token` and `move-rejected`; shows a refused board action, from a server `error` frame or a closed socket, in a `role="alert"` line), `<runefoble-board-empty>` (no-battlemap-yet state; `can-set-up-map` shows the DM hint and the "Set up battlemap" control; properties `campaignId`, `sessionId`, `seats`, `apiBaseUrl`; event `board-set-up` with `{ sessionId, failure }`), `<runefoble-map-uploader>` (subviews: `<runefoble-map-dropzone>`, `<runefoble-map-grid-config>`) | `services/board_state/ui/src/*.stories.ts` |
+| `board_state` | `@runefoble/board-state-ui` | `<runefoble-board>` (events `move-token`, `move-rejected`, and `tokens-changed` with `{ tokens }` after each change of the shown tokens; each token carries `characterId` for a character token; shows a refused board action, from a server `error` frame or a closed socket, in a `role="alert"` line), `<runefoble-board-empty>` (no-battlemap-yet state; `can-set-up-map` shows the DM hint and the "Set up battlemap" control; properties `campaignId`, `sessionId`, `seats`, `apiBaseUrl`; event `board-set-up` with `{ sessionId, failure }`), `<runefoble-map-uploader>` (subviews: `<runefoble-map-dropzone>`, `<runefoble-map-grid-config>`) | `services/board_state/ui/src/*.stories.ts` |
 | `character_sheet` | `@runefoble/character-sheet-ui` | `<runefoble-character-card>`, `<runefoble-character-sheet>`, `<runefoble-absentee-recap>` (defined and exported; the App Shell does not mount it yet), `<runefoble-stand-in-guardrails>` | `services/character_sheet/ui/src/*.stories.ts` |
 | `game_session` | `@runefoble/game-session-ui` | `<runefoble-campaign-join>` (the join view of `#/join/:token`, ADR-0023; property `inviteToken`, `phase` (`account-form`, `account-sending`, `account-refused`, `account-accepted`, `join-ready`, `joining`, `joined`, `join-refused`), `message`, `campaignId`, `memberRole`; events `account-requested` with `{inviteToken, email, displayName}`, `join-requested` with `{inviteToken}`, `sign-in-requested`; the App Shell runs the requests), `<runefoble-initiative-tracker>`, `<runefoble-dice-roller>`, `<runefoble-spectator-view>`, `<runefoble-combat-reaction-prompt>`, `<runefoble-ready-action-card>`, `<runefoble-session-recap>` (the App Shell mounts it when the session status is `ended`; lists the chronicle lines and the dice, move and stand-in counts; TASK-0953) | `services/game_session/ui/src/*.stories.ts` |
-| `the_watcher` | `@runefoble/the-watcher-ui` | `<runefoble-watcher-feed>`, `<runefoble-autonomous-dm>`, `<runefoble-dm-whisper-bar>`, `<runefoble-faction-radar>`, `<runefoble-faction-espionage>` | `services/the_watcher/ui/src/*.stories.ts` |
+| `the_watcher` | `@runefoble/the-watcher-ui` | `<runefoble-watcher-feed>`, `<runefoble-autonomous-dm>`, `<runefoble-dm-whisper-bar>`, `<runefoble-command-bar>` (typed command; see "Component Specification: `<runefoble-command-bar>`"), `<runefoble-faction-radar>`, `<runefoble-faction-espionage>` | `services/the_watcher/ui/src/*.stories.ts` |
 | `asset_forge` | `@runefoble/asset-forge-ui` | `<runefoble-asset-forge>`, `<runefoble-print-forge>` | `services/asset_forge/ui/src/*.stories.ts` |
 | `voice_agent` | `@runefoble/voice-agent-ui` | `<runefoble-voice-controls>`, `<runefoble-audio-indicator>`, `<runefoble-mobile-companion>` (subviews: `<audio-stream-controller>`, `<haptic-ping-panel>`, `<connection-status-badge>`), `<runefoble-voice-duplex-controls>` | `services/voice_agent/ui/src/*.stories.ts` |
 | `frontend` (App Shell) | `frontend` | `<runefoble-app>`, `<runefoble-settings-modal>`, `<runefoble-theme-switcher>` | `frontend/src/stories/runefoble-settings-modal.stories.ts` |
@@ -281,6 +283,31 @@ The `@runefoble/voice-agent-ui` package vendors `<runefoble-voice-controls>` for
 - **WebAudio `AnalyserNode` Loop**: Renders 60fps reactive waveforms to an HTML5 `<canvas>` element using time-domain data (or simulated harmonic synthesis during tests / absence of physical mic).
 - **Affliction DSP Styling**: Adapts waveform stroke color to Canary Yellow (`var(--rf-accent-tertiary, #ffb703)`) and introduces drunken phase wobbles when inebriation filters are active.
 - **Low Bandwidth Warning**: Highlights degraded WebRTC channels (`bandwidthQuality === 'low'` or `packetsLost > 5`) with a pulsing warning badge.
+
+## Component Specification: `<runefoble-command-bar>`
+
+The `@runefoble/the-watcher-ui` package vendors `<runefoble-command-bar>` (TASK-0945). A player types the same command that the player can speak. The element calls no network. The App Shell posts the event body to `POST /api/v1/watcher/speak-and-act` with the shell bearer (`frontend/src/vtt-mesh-handlers.ts`, `handleSpeakCommand`). A move reply stages a ghost preview on the board socket. The player confirms the preview on `<runefoble-board>`.
+
+### Properties & Attributes
+
+| Property | Type | Default | Description |
+|---|---|---|---|
+| `sessionId` | `string` | `''` | The live session. |
+| `campaignId` | `string` | `''` | The campaign of the session. |
+| `speakerId` | `string` | `''` | The speaker. The App Shell sends the id of the active character. The Watcher accepts the caller or a character that the caller can edit. |
+| `speakerName` | `string` | `''` | The name of the speaker. |
+| `tokenId` | `string \| null` | `null` | The board token of the speaker. |
+| `fromX`, `fromY` | `number \| null` | `null` | The cell of the token. The App Shell reads it from the board `tokens-changed` event, so it follows each move. |
+| `gridCols`, `gridRows` | `number` | `12` | The board size. |
+| `status` | `CommandBarStatus` | `{ kind: 'idle' }` | What the bar shows. The host sets `sending`, then `reply` with the `watcher_reply` text, or `error` with `HTTP <status>: <detail>`. |
+
+When `tokenId`, `fromX` or `fromY` is missing, the input is disabled and the bar says "No character token is on the board." A `reply` clears the typed text. An `error` keeps it.
+
+### Dispatched CustomEvents
+
+| Event Name | Detail Payload | Description |
+|---|---|---|
+| `speak-command` | `{ speaker_id, speaker_name, transcript, session_id, campaign_id, token_id, from_x, from_y, grid_cols, grid_rows }` | Dispatched on Send or Enter for a transcript that is not blank. The body is The Watcher `SpeechInputRequest`. No event is sent while `status` is `sending`. |
 
 ## Component Specification: `<runefoble-mobile-companion>`
 
