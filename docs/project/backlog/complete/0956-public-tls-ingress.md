@@ -1,7 +1,7 @@
 ---
 id: '0956'
 title: Public TLS Ingress with an HTTP-to-HTTPS Redirect
-status: Refined
+status: Complete
 created: 2026-11-19
 dependencies:
 - '0955'
@@ -19,7 +19,7 @@ target_release: 1.0.0
 
 ## Status
 
-Refined. Release One hosting slice 2 (PRD-0025, outcome 4: the hosted profile serves HTTPS only).
+Complete
 
 ## Summary
 
