@@ -15,6 +15,7 @@ from runefoble_platform.event_deserializer import deserialize_event
 
 from tests.helpers.campaign_setup import create_owned_campaign_async
 from tests.helpers.game_session_app import session_app
+from tests.helpers.live_services import serve
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.spicedb_factory import make_table_runner
 from tests.helpers.stand_in_policy import create_character
@@ -24,6 +25,7 @@ from tests.helpers.watcher_double import (
     serve_watcher_double,
     watcher_stand_in_app,
 )
+from tests.helpers.watcher_engine import select_worker_engine, stand_in_worker_double
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
@@ -40,34 +42,38 @@ def mock_redis() -> MockAsyncRedis:
 
 
 @pytest.mark.asyncio
-async def test_watcher_stand_in_event_emission(mock_redis: MockAsyncRedis, use_redis_client):
+async def test_watcher_stand_in_event_emission(
+    mock_redis: MockAsyncRedis, use_redis_client, monkeypatch
+):
     """POST /api/v1/watcher/stand-in/act must publish StandInActionDecided and AbsencePenaltyApplied."""
     use_redis_client(mock_redis)
 
     session_id, campaign_id = str(uuid4()), str(uuid4())
     await make_table_runner("test-user", session_id, campaign_id)
     transport = ASGITransport(app=watcher_app)
-    async with AsyncClient(
-        transport=transport,
-        base_url="http://test",
-        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"},
-    ) as client:
-        resp = await client.post(
-            "/api/v1/watcher/stand-in/act",
-            json={
-                "character_name": "Kyra",
-                "character_class": "Cleric",
-                "penalties": ["drunk", "foolishness"],
-                "scene_context": "Orc raiders attacking bridge",
-                "personality_traits": ["valiant"],
-                "session_id": session_id,
-                "campaign_id": campaign_id,
-            },
-        )
-        assert resp.status_code == 200
-        action_data = resp.json()
-        assert action_data["character_name"] == "Kyra"
-        assert action_data["dice_roll_required"] == "1d20-2"
+    with serve(stand_in_worker_double()) as worker_url:
+        select_worker_engine(monkeypatch, worker_url)
+        async with AsyncClient(
+            transport=transport,
+            base_url="http://test",
+            headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"},
+        ) as client:
+            resp = await client.post(
+                "/api/v1/watcher/stand-in/act",
+                json={
+                    "character_name": "Kyra",
+                    "character_class": "Cleric",
+                    "penalties": ["drunk", "foolishness"],
+                    "scene_context": "Orc raiders attacking bridge",
+                    "personality_traits": ["valiant"],
+                    "session_id": session_id,
+                    "campaign_id": campaign_id,
+                },
+            )
+            assert resp.status_code == 200
+            action_data = resp.json()
+            assert action_data["character_name"] == "Kyra"
+            assert action_data["source"] == "llm"
 
     # Verify runefoble.events.watcher stream received events
     assert "runefoble.events.watcher" in mock_redis.streams

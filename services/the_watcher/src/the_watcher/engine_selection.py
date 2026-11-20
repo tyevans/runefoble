@@ -1,7 +1,9 @@
-"""Selects The Watcher's engine adapters from settings.
+"""Selects The Watcher's engine adapters from settings, one setting per port (ADR-0022 d).
 
-`RUNEFOBLE_WATCHER_ENGINE` picks one engine family for all three ports. The lifespan builds
-the ports once, so a missing worker URL stops start-up. Request handlers build them again
+`RUNEFOBLE_WATCHER_INTENT_ENGINE`, `RUNEFOBLE_WATCHER_STAND_IN_ENGINE` and
+`RUNEFOBLE_WATCHER_NARRATION_ENGINE` each accept `inference_worker` or `none`. `none` means the
+port has no engine. The intent port always parses with the grammar first (ADR-0022 a). The lifespan
+builds the ports once, so a missing worker URL stops start-up. Request handlers build them again
 from the same settings, so each request reads the current environment.
 """
 
@@ -13,11 +15,8 @@ from typing import Literal
 from pydantic import SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from runefoble_platform.engine_ports import build_adapter
-from the_watcher.adapters.heuristic_engines import (
-    HeuristicIntentParser,
-    HeuristicSceneNarrator,
-    HeuristicStandInDecider,
-)
+from the_watcher.adapters.grammar_first import GrammarFirstIntentParser
+from the_watcher.adapters.unconfigured import UnconfiguredSceneNarrator, UnconfiguredStandInDecider
 from the_watcher.adapters.worker_engines import (
     WorkerIntentParser,
     WorkerSceneNarrator,
@@ -26,16 +25,21 @@ from the_watcher.adapters.worker_engines import (
 from the_watcher.ports import IntentParser, SceneNarrator, StandInDecider
 from the_watcher.watcher_ai import TheWatcherEngine
 
-WatcherEngineName = Literal["inference_worker", "heuristic"]
-WATCHER_ENGINE_SETTING = "RUNEFOBLE_WATCHER_ENGINE"
+WatcherEngineName = Literal["inference_worker", "none"]
+INTENT_ENGINE_SETTING = "RUNEFOBLE_WATCHER_INTENT_ENGINE"
+STAND_IN_ENGINE_SETTING = "RUNEFOBLE_WATCHER_STAND_IN_ENGINE"
+NARRATION_ENGINE_SETTING = "RUNEFOBLE_WATCHER_NARRATION_ENGINE"
+NONE_ENGINE = "none"
 
 
 class WatcherEngineSettings(BaseSettings):
-    """Engine selection. `RUNEFOBLE_WATCHER_ENGINE` defaults to the inference worker."""
+    """Engine selection for each port. Every port defaults to `none` (not configured)."""
 
     model_config = SettingsConfigDict(env_prefix="RUNEFOBLE_", extra="ignore")
 
-    watcher_engine: WatcherEngineName = "inference_worker"
+    watcher_intent_engine: WatcherEngineName = "none"
+    watcher_stand_in_engine: WatcherEngineName = "none"
+    watcher_narration_engine: WatcherEngineName = "none"
     inference_url: str | None = None
     board_state_url: str | None = None
     # The worker refuses a call without it (ADR-0015 e). The Watcher then answers 503.
@@ -61,54 +65,59 @@ class WatcherPorts:
 def _worker_url(settings: WatcherEngineSettings) -> str:
     if settings.inference_url is None:
         raise RuntimeError(
-            "RUNEFOBLE_WATCHER_ENGINE is 'inference_worker' but RUNEFOBLE_INFERENCE_URL is not set. "
-            "Set the inference worker URL, or set RUNEFOBLE_WATCHER_ENGINE to 'heuristic'."
+            "A Watcher engine port is 'inference_worker' but RUNEFOBLE_INFERENCE_URL is not set. "
+            "Set the inference worker URL, or set the port setting to 'none'."
         )
     return settings.inference_url
 
 
-def build_watcher_ports(
-    settings: WatcherEngineSettings, heuristic: TheWatcherEngine
-) -> WatcherPorts:
-    """Build the three ports that `settings` selects. Only the selected factories run."""
-    setting = WATCHER_ENGINE_SETTING
-    value = settings.watcher_engine
+def build_watcher_ports(settings: WatcherEngineSettings, grammar: TheWatcherEngine) -> WatcherPorts:
+    """Build the three ports that `settings` selects. Only the selected factories run.
+
+    `grammar` is the rule parser. The intent port runs it first for every transcript.
+    """
     return WatcherPorts(
-        intent=build_adapter(
-            setting,
-            value,
-            {
-                "inference_worker": lambda: WorkerIntentParser(
-                    base_url=_worker_url(settings),
-                    board_state_url=settings.board_state_url,
-                    credential=settings.service_credential,
-                ),
-                "heuristic": lambda: HeuristicIntentParser(heuristic),
-            },
-        ),
+        intent=_intent_port(settings, grammar),
         stand_in=build_adapter(
-            setting,
-            value,
+            STAND_IN_ENGINE_SETTING,
+            settings.watcher_stand_in_engine,
             {
                 "inference_worker": lambda: WorkerStandInDecider(
                     _worker_url(settings), settings.service_credential
                 ),
-                "heuristic": lambda: HeuristicStandInDecider(heuristic),
+                NONE_ENGINE: UnconfiguredStandInDecider,
             },
         ),
         narrator=build_adapter(
-            setting,
-            value,
+            NARRATION_ENGINE_SETTING,
+            settings.watcher_narration_engine,
             {
                 "inference_worker": lambda: WorkerSceneNarrator(
                     _worker_url(settings), settings.service_credential
                 ),
-                "heuristic": HeuristicSceneNarrator,
+                NONE_ENGINE: UnconfiguredSceneNarrator,
             },
         ),
     )
 
 
-def load_watcher_ports(heuristic: TheWatcherEngine) -> WatcherPorts:
+def _intent_port(settings: WatcherEngineSettings, grammar: TheWatcherEngine) -> IntentParser:
+    """The grammar always runs. The worker is the fallthrough only when its setting selects it."""
+    llm: IntentParser | None = build_adapter(
+        INTENT_ENGINE_SETTING,
+        settings.watcher_intent_engine,
+        {
+            "inference_worker": lambda: WorkerIntentParser(
+                base_url=_worker_url(settings),
+                board_state_url=settings.board_state_url,
+                credential=settings.service_credential,
+            ),
+            NONE_ENGINE: lambda: None,
+        },
+    )
+    return GrammarFirstIntentParser(grammar, llm)
+
+
+def load_watcher_ports(grammar: TheWatcherEngine) -> WatcherPorts:
     """Read the current environment and build the selected ports. Raises on a bad setting."""
-    return build_watcher_ports(WatcherEngineSettings(), heuristic)
+    return build_watcher_ports(WatcherEngineSettings(), grammar)

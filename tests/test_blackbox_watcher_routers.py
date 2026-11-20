@@ -10,8 +10,10 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 
+from tests.helpers.live_services import serve
 from tests.helpers.spicedb_factory import bind_character_owner, make_table_runner
 from tests.helpers.the_watcher_app import watcher_app
+from tests.helpers.watcher_engine import select_worker_engine, stand_in_worker_double
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
@@ -137,20 +139,22 @@ def test_watcher_narrate_frontdoor(watcher_client):
     assert res_narrate.json()["detail"]["error"] == "backend_unavailable"
 
 
-def test_watcher_stand_in_frontdoor(watcher_client):
+def test_watcher_stand_in_frontdoor(watcher_client, monkeypatch):
     """Verify missing player stand-in and chronicle recap frontdoors."""
     sid, cid = _bound_session()
-    res_stand_in = watcher_client.post(
-        "/api/v1/watcher/stand-in/act",
-        json={
-            "character_name": "Elidor",
-            "character_class": "Rogue",
-            "penalties": ["drunk"],
-            "scene_context": "ambush",
-            "session_id": sid,
-            "campaign_id": cid,
-        },
-    )
+    with serve(stand_in_worker_double()) as worker_url:
+        select_worker_engine(monkeypatch, worker_url)
+        res_stand_in = watcher_client.post(
+            "/api/v1/watcher/stand-in/act",
+            json={
+                "character_name": "Elidor",
+                "character_class": "Rogue",
+                "penalties": ["drunk"],
+                "scene_context": "ambush",
+                "session_id": sid,
+                "campaign_id": cid,
+            },
+        )
     assert res_stand_in.status_code == 200
     assert res_stand_in.json()["character_name"] == "Elidor"
 

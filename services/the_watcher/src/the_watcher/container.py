@@ -118,8 +118,8 @@ def build_container(
     - SpiceDB: this service checks permissions, so the preshared key is required (TASK-0720).
     - The event store: build it now. A deployed service without a reachable PostgreSQL
       store, or with the memory store, refuses to start (ADR-0015 (f), TASK-0707).
-    - The engine ports: `RUNEFOBLE_WATCHER_ENGINE=inference_worker` without
-      `RUNEFOBLE_INFERENCE_URL` stops start-up.
+    - The engine ports: a port setting of `inference_worker` without `RUNEFOBLE_INFERENCE_URL`
+      stops start-up.
 
     `event_bus` replaces the bus provider that the settings select. Tests pass one.
     """

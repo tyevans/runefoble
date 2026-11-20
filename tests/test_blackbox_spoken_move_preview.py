@@ -422,30 +422,40 @@ def test_target_without_a_free_neighbour_is_a_conflict_and_stages_nothing(
         _expect_next_frame_is_staged(gateway, ws, campaign_id, session_id, to=(4, 2))
 
 
+NARRATIVE_MOVE_SPEECH = "I sneak toward the goblin"
+
+
 @pytest.fixture
 def worker_loopback(monkeypatch: pytest.MonkeyPatch, fake_llm: FakeOpenAI) -> Iterator[str]:
     """The real inference worker app, served on loopback. Only the model runtime is a fake.
 
-    The fake model answers a move and names no cell. The worker's own rules set the cell, so
-    the test reads the keys that the worker really returns (`target_x`, `target_y`).
+    The grammar returns the speech as `narrative`, so the intent port sends it to the worker
+    (ADR-0022 b). The fake model answers a move to cell (4, 7).
     """
-    fake_llm.content = json.dumps({"action_type": "move", "narrative_flavor": "The goblin slips."})
+    fake_llm.content = json.dumps(
+        {
+            "action_type": "move",
+            "narrative_flavor": "The goblin slips.",
+            "target_x": 4,
+            "target_y": 7,
+        }
+    )
     install_worker_port(monkeypatch, build_llm_port(fake_llm.settings()))
     with serve(worker_api.app) as url:
-        monkeypatch.setenv("RUNEFOBLE_WATCHER_ENGINE", "inference_worker")
+        monkeypatch.setenv("RUNEFOBLE_WATCHER_INTENT_ENGINE", "inference_worker")
         monkeypatch.setenv("RUNEFOBLE_INFERENCE_URL", url)
         yield url
 
 
-def test_worker_coordinate_move_stages_the_worker_target(
+def test_narrative_speech_answered_by_the_worker_stages_the_worker_target(
     gateway: TestClient,
     table: tuple[str, str],
     worker_loopback: str,
     board_socket: TestClient,
 ) -> None:
-    """The worker returns `target_x` and `target_y`. The preview goes to those cells."""
+    """The grammar sends the speech to the worker. The worker's target cell is the preview."""
     campaign_id, session_id = table
-    body = _move_from(session_id, campaign_id, VALEROS, VALEROS_START, "move to 4, 7")
+    body = _move_from(session_id, campaign_id, VALEROS, VALEROS_START, NARRATIVE_MOVE_SPEECH)
 
     with board_socket.websocket_connect(
         f"/ws/boards/{session_id}", subprotocols=ws_subprotocols(DM)
@@ -456,24 +466,3 @@ def test_worker_coordinate_move_stages_the_worker_target(
         preview = ws.receive_json()
 
     assert (preview["preview"]["to_x"], preview["preview"]["to_y"]) == (4, 7)
-
-
-def test_worker_named_target_uses_the_neighbour_not_the_target_cell(
-    gateway: TestClient,
-    table: tuple[str, str],
-    worker_loopback: str,
-    board_socket: TestClient,
-) -> None:
-    """The worker sets the target cell to the token's own cell. The Watcher stages a neighbour."""
-    campaign_id, session_id = table
-    body = _move_from(session_id, campaign_id, VALEROS, VALEROS_START, GOBLIN_NAME_SPEECH)
-
-    with board_socket.websocket_connect(
-        f"/ws/boards/{session_id}", subprotocols=ws_subprotocols(DM)
-    ) as ws:
-        ws.receive_json()
-        spoken = gateway.post(SPEAK_PATH, json=body, headers=bearer(DM))
-        assert spoken.status_code == 200, spoken.text
-        preview = ws.receive_json()
-
-    assert (preview["preview"]["to_x"], preview["preview"]["to_y"]) == (5, 1)

@@ -1,18 +1,25 @@
-"""Compound action combo decomposition, sequential execution, and rollback handling router."""
+"""Compound action combo decomposition, sequential execution, and rollback handling router.
+
+Routing (ADR-0022): the multi-node parse (`actions`) stays on the grammar and a node never
+reaches the worker. The single-intent result comes from the intent port, so it follows the same
+grammar-first rule as the speech route.
+"""
 
 from __future__ import annotations
 
 import time
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from the_watcher.container_access import Disambiguations, Engines
 from the_watcher.dependencies import require_character_permission, require_session_permission
+from the_watcher.engine_selection import load_watcher_ports
 from the_watcher.identity import CallerId, get_principal
 from the_watcher.models import (
     IntentExecuteRequest,
     IntentExecuteResponse,
     IntentParseRequest,
     IntentParseResponse,
+    SpeechInputRequest,
 )
 from the_watcher.routers.intent.disambiguation import (
     dispatch_disambiguation,
@@ -28,6 +35,7 @@ async def parse_intent_and_disambiguate(
     disambiguations: Disambiguations,
     caller_id: CallerId,
     req: IntentParseRequest,
+    request: Request,
 ) -> IntentParseResponse:
     """Parse player speech, decompose compound actions, and evaluate target disambiguation."""
     await require_session_permission(caller_id, req.session_id, "session.participate")
@@ -56,7 +64,9 @@ async def parse_intent_and_disambiguate(
 
     single_intent = None
     if not is_compound and len(nodes) == 1:
-        single_intent = engines.watcher.parse_speech_intent(req.transcript, req.speaker_name)
+        single_intent = await load_watcher_ports(engines.watcher).intent.parse(
+            _speech_request(req), request.headers.get("authorization")
+        )
 
     return IntentParseResponse(
         session_id=req.session_id,
@@ -67,6 +77,22 @@ async def parse_intent_and_disambiguate(
         actions=nodes,
         single_intent=single_intent,
         execution_latency_ms=latency_ms,
+    )
+
+
+def _speech_request(req: IntentParseRequest) -> SpeechInputRequest:
+    """The intent port reads the speech fields. An absent campaign id is sent as an empty string."""
+    return SpeechInputRequest(
+        speaker_id=req.speaker_id,
+        speaker_name=req.speaker_name,
+        transcript=req.transcript,
+        session_id=req.session_id,
+        campaign_id=req.campaign_id or "",
+        token_id=req.token_id,
+        from_x=req.from_x,
+        from_y=req.from_y,
+        grid_cols=req.grid_cols,
+        grid_rows=req.grid_rows,
     )
 
 

@@ -254,15 +254,23 @@ async def test_stand_in_graph_with_penalties(fake_llm, llm_port):
 
 
 @pytest.mark.asyncio
-async def test_watcher_heuristic_engine_is_explicit_and_reported():
+async def test_watcher_health_reports_each_port_setting_and_the_grammar_parses_speech(monkeypatch):
+    for name in (
+        "RUNEFOBLE_WATCHER_INTENT_ENGINE",
+        "RUNEFOBLE_WATCHER_STAND_IN_ENGINE",
+        "RUNEFOBLE_WATCHER_NARRATION_ENGINE",
+    ):
+        monkeypatch.delenv(name, raising=False)
     await make_table_runner("user-1", "sess-1", "camp-1")
-    # The local rule engine runs only when the setting selects it. The health route reports it.
+    # Every port is `none` by default. The health route reports each setting on its own.
     async with AsyncClient(
         transport=ASGITransport(app=watcher_app), base_url="http://test", headers=WATCHER_AUTH
     ) as ac:
         resp = await ac.get("/healthz")
         assert resp.status_code == 200
-        assert resp.json()["watcher_engine"] == "heuristic"
+        assert resp.json()["intent_engine"] == "none"
+        assert resp.json()["stand_in_engine"] == "none"
+        assert resp.json()["narration_engine"] == "none"
 
         act_resp = await ac.post(
             "/api/v1/watcher/transcribe-and-act",
@@ -276,3 +284,4 @@ async def test_watcher_heuristic_engine_is_explicit_and_reported():
         )
         assert act_resp.status_code == 200
         assert act_resp.json()["action_type"] == "attack"
+        assert act_resp.json()["source"] == "watcher_rules"
