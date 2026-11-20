@@ -92,8 +92,13 @@ def test_no_container_argument_carries_a_credential():
     assert leaks == [], f"credential rendered in args or command: {leaks}"
 
 
+# The credentials Secret, and the Secrets that the chart's writers generate at run time
+# (docs/reference/hosted-secrets.md, "Generated Secrets").
+ALLOWED_SECRET_NAMES = {SECRET_NAME, "zitadel-admin", "runefoble-zitadel-client"}
+
+
 def test_credential_env_vars_read_the_secret_or_stay_empty():
-    """A credential env var reads a Secret key. A plain value is allowed only when empty."""
+    """A credential env var reads a documented Secret key. A plain value is allowed only when empty."""
     offenders = []
     for workload, container in _containers(_rendered_docs()):
         for item in container.get("env", []):
@@ -102,9 +107,9 @@ def test_credential_env_vars_read_the_secret_or_stay_empty():
             if item.get("value") == "":
                 continue
             ref = item.get("valueFrom", {}).get("secretKeyRef")
-            if ref is None or ref.get("name") != SECRET_NAME:
+            if ref is None or ref.get("name") not in ALLOWED_SECRET_NAMES:
                 offenders.append(f"{workload}/{container['name']}: {item['name']}")
-    assert offenders == [], f"credential env var not read from {SECRET_NAME}: {offenders}"
+    assert offenders == [], f"credential env var not read from a documented Secret: {offenders}"
 
 
 def test_spicedb_server_reads_its_preshared_key_from_env_not_argv():
