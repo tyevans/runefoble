@@ -129,3 +129,25 @@ describe('Board reads resolve in any order', () => {
     assert.deepEqual(host.tokens.map((t) => [t.x, t.y]), [[3, 3]]);
   });
 });
+
+describe('The session load reads the roster every time (TASK-0972)', () => {
+  let reads: ReturnType<typeof installOutOfOrderBoardReads>;
+
+  afterEach(() => reads.restore());
+
+  it('a cached roster from an earlier view does not hide a character made since then', async () => {
+    reads = installOutOfOrderBoardReads();
+    const host = newHost();
+    // The caller already had a roster, read before the character of this campaign existed.
+    (host as unknown as { characters: unknown[] }).characters = [{ id: 'old-character', name: 'Old', campaignId: 'other' }];
+
+    const load = loadActiveSessionData(host, ROUTE);
+    await settle();
+    reads.answerBoardRead(0, boardBody(0, 0));
+    await load;
+
+    const ids = (host.characters as Array<{ id: string }>).map((c) => c.id);
+    assert.ok(!ids.includes('old-character'), 'the old cached roster must be replaced by a fresh read');
+    assert.ok(ids.length > 0, 'the fresh roster read must be applied');
+  });
+});

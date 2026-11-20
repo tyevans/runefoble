@@ -18,7 +18,8 @@ export async function loadLobbyData(host: RunefobleApp, route: MatchedRoute): Pr
   const sId = route.params.sessionId ?? '';
   const [lobby, chars, camp, caps] = await Promise.all([
     appDataService.fetchLobbyState(cId, sId),
-    host.characters.length > 0 ? Promise.resolve(dataOk(host.characters)) : appDataService.fetchCharacters(),
+    // Read the roster on every load. A cached list misses a character made since the last read (TASK-0972).
+    appDataService.fetchCharacters(),
     appDataService.fetchCampaign(cId),
     appDataService.fetchCampaignCapabilities(cId),
   ]);
@@ -78,7 +79,8 @@ export async function loadActiveSessionData(host: RunefobleApp, route: MatchedRo
   const [boardData, events, chars, camp, caps, status] = await Promise.all([
     appDataService.fetchBoardState(sId),
     appDataService.fetchSessionEvents(sId),
-    host.characters.length > 0 ? Promise.resolve(dataOk(host.characters)) : appDataService.fetchCharacters(),
+    // Read the roster on every load. A cached list misses a character made since the last read (TASK-0972).
+    appDataService.fetchCharacters(),
     appDataService.fetchCampaign(cId),
     appDataService.fetchCampaignCapabilities(cId),
     appDataService.fetchSessionStatus(sId),
