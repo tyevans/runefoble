@@ -1,7 +1,7 @@
 ---
 id: '0934'
 title: "The Service Client Limits the Connect Time to an Owner"
-status: Refined
+status: Complete
 created: 2026-11-19
 dependencies: []
 governing_adrs:
@@ -16,7 +16,7 @@ target_release: 0.9.0
 
 ## Status
 
-Refined. Found by the seventh full e2e run on Kind.
+Complete
 
 ## Summary
 

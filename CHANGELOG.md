@@ -93,6 +93,7 @@ The MCP gateway subpackages re-export no names, and the gateway has one entrypoi
 - Campaign analytics worker `process_event` alias, tracking property wrappers, and package root re-exports. Callers use `handle_event`. (TASK-0500)
 
 ### Added
+The session chronicle records board token moves ("Valeros the Bold moved to (3, 3)") from the board `TokenMoved` event, once per event, and the gateway sends the line live to the feed.
 The DM sets up the session battlemap from the "No battlemap yet" state: one gateway call creates the board and places a token for each seated character, and the gateway sends `board_ready` to the session after the tokens are placed.
 The Watcher publishes `runefoble.events.watcher.whisper_recorded` after it saves a DM whisper. The whisper routes answer `503` when the stream is unreachable. The gateway sends each whisper as a `dm_whisper` session frame only to sockets whose caller holds `session.control` when the socket opens.
 The gateway sends the `turn_advanced` and `dice_rolled` session frames from the game_session `TurnAdvanced` and `DiceRolled` events. Each socket of the session gets one frame for each event, and a redelivered event gives no second frame. The App Shell dice tray, dice roller, initiative tracker and board get live turn and dice updates again.
@@ -1335,6 +1336,7 @@ The App Shell auth service keeps JWT claim handling, session storage and session
 - **Documentation & Build Navigation**: Featured the Platform Showcase and Changelog in `zensical.toml` and root documentation landing page (`docs/index.md`), and enhanced `scripts/build_docs.py` to synchronize `CHANGELOG.md` to `docs/changelog.md` during documentation compilation.
 
 ### Fixed
+The service client limits the TCP connect to an owner to 2 seconds. When a Service still routes to a deleted pod, the 503 now comes within the limit, not after the full route timeout.
 the-watcher, board-state, character-sheet, campaign-lore, asset-forge and soundscape serve a gated `/readyz`, and their Helm probes use it. asset-forge also waits for the Silo asset bucket.
 A board drag sends one move, and the board shows a refused move. The board socket `connected` frame carries the current tokens, and the App Shell opens no board socket until the board read answers, so a late socket shows the current board.
 The board socket `/ws/boards/{id}` routes to board_state (the ingress sent it to gateway-api, which refused it), and board_state sends `token_placed` to open board sockets.

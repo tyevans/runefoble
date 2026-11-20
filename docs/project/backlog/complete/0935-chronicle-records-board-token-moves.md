@@ -1,7 +1,7 @@
 ---
 id: '0935'
 title: "The Session Chronicle Records Board Token Moves"
-status: Refined
+status: Complete
 created: 2026-11-19
 dependencies: []
 governing_adrs:
@@ -17,7 +17,7 @@ target_release: 0.9.0
 
 ## Status
 
-Refined. Found by the seventh full e2e run on Kind.
+Complete
 
 ## Summary
 
