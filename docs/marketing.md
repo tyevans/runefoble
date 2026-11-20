@@ -69,13 +69,14 @@ Every roleplaying group faces three barriers to regular game nights:
 
 ## ⚡ Speech Path Status
 
-The speech path has four steps. Each step has its own status.
+The speech path has four steps, and a typed command can replace the first step. Each step has its own status.
 
 | Step | Status | Evidence | Blocking task |
 |---|---|---|---|
 | Speech to text (`/api/v1/voice/transcribe`) | **In progress** | `tests/test_blackbox_voice_transcribe_input.py`, `tests/test_blackbox_streaming_whisper_e2e.py` | TASK-0942 to TASK-0947 (no UI caller) |
 | Text to intent (intent routes) | **In progress** | `tests/test_speech_to_intent.py`, `tests/test_blackbox_intent_disambiguation_flow.py` | TASK-0942 to TASK-0947 (no UI caller) |
 | Gateway speak-and-act (`/api/v1/watcher/speak-and-act`) | **Live** | Proxies to The Watcher intent route, which parses the transcript (`gateway/api/src/gateway_api/routers/watcher_speech_proxy.py`, `tests/test_blackbox_gateway_speech_proxy.py`) | None |
+| Typed command (`<runefoble-command-bar>` in the session view) | **Live** (Playwright journey not yet run on Kind) | The bar posts to speak-and-act. A typed move stages the ghost preview, and the player confirms it (`e2e/features/voice_typed_command.feature`, `frontend/test/app_shell/speak-command.test.ts`) | None |
 | Board change from speech | **Live** (preview) | A spoken move stages a ghost preview on the board socket. Only the player's `confirm_move` commits it (`tests/test_blackbox_spoken_move_preview.py`) | TASK-0942 to TASK-0947 (voice trigger) |
 
 The speech targets are not measured. The 500 millisecond target has no latency test.
