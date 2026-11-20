@@ -97,6 +97,8 @@ export class RunefobleApp extends LitElement {
   @state() public atmosphere: { location_name: string } = { location_name: '' };
   @state() public toastMessage: string | null = null;
   @state() public inviteUrl = '';
+  /** True while a Generate Link request is out (TASK-0973). The field stays empty until the reply. */
+  @state() public inviteRequestPending = false;
   /** The state of the join view for the open invite token (TASK-0950). */
   @state() public joinState: JoinViewState = IDLE_JOIN_STATE;
   @state() public isAbsenteeDirectiveOpen = false;

@@ -75,14 +75,21 @@ export async function assignRoleFromEvent(host: RunefobleApp, e: CustomEvent): P
 export async function createInviteFromEvent(host: RunefobleApp, e: CustomEvent): Promise<void> {
   const { campaignId, role, expiresInHours, maxUses } = e.detail || {};
   const cId = campaignId || host.campaignId;
-  const inv = await appDataService.createCampaignInvite(cId, role, expiresInHours, maxUses);
-  if (!inv.ok) {
-    host.showToast(`Invite not created. ${inv.message}`);
-    return;
+  // The field shows nothing until this request answers, so a previous link never reads as the new one (TASK-0973).
+  host.inviteUrl = '';
+  host.inviteRequestPending = true;
+  try {
+    const inv = await appDataService.createCampaignInvite(cId, role, expiresInHours, maxUses);
+    if (!inv.ok) {
+      host.showToast(`Invite not created. ${inv.message}`);
+      return;
+    }
+    // The server returns a path such as `/#/join/<token>`. The field shows the absolute link (ADR-0015).
+    host.inviteUrl = new URL(inv.data.invite_url, window.location.origin).href;
+    host.showToast(`Invite created for ${role}`);
+  } finally {
+    host.inviteRequestPending = false;
   }
-  // The server returns a path such as `/#/join/<token>`. The field shows the absolute link (ADR-0015).
-  host.inviteUrl = new URL(inv.data.invite_url, window.location.origin).href;
-  host.showToast(`Invite created for ${role}`);
 }
 
 export async function removeMemberFromEvent(host: RunefobleApp, e: CustomEvent): Promise<void> {
