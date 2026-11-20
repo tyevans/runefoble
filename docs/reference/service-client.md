@@ -103,13 +103,15 @@ await client.send(
 | `method` | HTTP method, for example `GET` or `POST`. |
 | `path` | Path that is appended to `base_url`, for example `/api/v1/soundscape/cue`. Build it with `path(...)` when a segment comes from input. |
 | `authorization` | The verified `Authorization` header value of the caller, or `None`. |
-| `timeout_s` | Timeout for this call, in seconds. It applies to connect, read, write, and pool. |
+| `timeout_s` | Timeout for this call, in seconds. It applies to read, write, and pool. The connect phase waits at most `CONNECT_TIMEOUT_S` (2 s), or `timeout_s` when that is shorter. |
 | `json` | Optional JSON body that the gateway built. |
 | `params` | Optional query string values. |
 | `content` | Optional raw body, forwarded unchanged. The owner parses it. Pass `json` or `content`, not both. |
 | `content_type` | Media type of `content`. The client sends it only with `content`. |
 
 The caller sets `timeout_s` for each call. The client sets no default timeout. The client does not retry. The client does not cache.
+
+The TCP connect has its own limit, `CONNECT_TIMEOUT_S = 2.0` in `service_client/client.py`. An in-cluster connect takes milliseconds, and 2 s allows one lost SYN. When a pod stops, the Service can route to the deleted pod IP for some seconds, and the SYN gets no answer. The client then raises `UpstreamUnavailableError` with the reason `ConnectTimeout` after 2 s, and the gateway answers `503`. Without this limit, the caller waits the full `timeout_s` (5 s on most proxy routes, 15 s on The Watcher LLM routes).
 
 ### `websocket_target`
 

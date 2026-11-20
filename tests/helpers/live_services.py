@@ -154,3 +154,23 @@ def unavailable_app(status_code: int = 503) -> FastAPI:
 def closed_port_url() -> str:
     """Return a base URL where nothing listens, so connections are refused."""
     return f"http://127.0.0.1:{free_port()}"
+
+
+@contextmanager
+def unanswered_port_url() -> Iterator[str]:
+    """Yield a base URL where a TCP connect never completes.
+
+    This is the state of a Kubernetes Service that still routes to a deleted pod: the SYN
+    gets no answer. The listener has a backlog of 0 and never accepts. Other connections
+    fill its accept queue, so the kernel drops each new SYN, and the connect waits.
+    """
+    with ExitStack() as stack:
+        listener = stack.enter_context(socket.socket())
+        listener.bind(("127.0.0.1", 0))
+        listener.listen(0)
+        port = listener.getsockname()[1]
+        for _ in range(4):
+            filler = stack.enter_context(socket.socket())
+            filler.setblocking(False)
+            filler.connect_ex(("127.0.0.1", port))
+        yield f"http://127.0.0.1:{port}"

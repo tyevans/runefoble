@@ -29,7 +29,7 @@ from runefoble_platform.service_client import (
 )
 from runefoble_platform.service_credential import SERVICE_CREDENTIAL_HEADER
 
-from tests.helpers.live_services import closed_port_url, serve
+from tests.helpers.live_services import closed_port_url, serve, unanswered_port_url
 
 CREDENTIAL = "test-service-credential"
 
@@ -113,6 +113,51 @@ async def test_client_times_out_at_the_caller_timeout() -> None:
             await client.aclose()
 
     assert elapsed < 0.9
+
+
+@pytest.mark.asyncio
+async def test_client_gives_up_on_an_unanswered_connect_before_the_call_timeout() -> None:
+    """A connect that gets no answer fails fast, not at the full call timeout.
+
+    A Service that still routes to a deleted pod drops the SYN. The gateway must answer 503
+    soon, so the user sees the failure while the call budget is still long.
+    """
+    with unanswered_port_url() as base_url:
+        client = ServiceClient("game_session", base_url, CREDENTIAL)
+        started = time.monotonic()
+        try:
+            with pytest.raises(UpstreamUnavailableError) as raised:
+                await client.send("POST", "/api/v1/x", authorization=None, timeout_s=10.0)
+            elapsed = time.monotonic() - started
+        finally:
+            await client.aclose()
+
+    assert raised.value.reason == "ConnectTimeout"
+    assert elapsed < 3.0
+
+
+def _slow_upstream(delay_s: float) -> FastAPI:
+    app = FastAPI()
+
+    @app.get("/api/v1/slow")
+    async def _slow() -> JSONResponse:
+        await asyncio.sleep(delay_s)
+        return JSONResponse({"ok": True})
+
+    return app
+
+
+@pytest.mark.asyncio
+async def test_client_keeps_the_call_timeout_for_a_slow_answer() -> None:
+    """The short connect limit does not cut a reply that takes longer than that limit."""
+    with serve(_slow_upstream(2.5)) as base_url:
+        client = ServiceClient("the_watcher", base_url, CREDENTIAL)
+        try:
+            reply = await client.send("GET", "/api/v1/slow", authorization=None, timeout_s=5.0)
+        finally:
+            await client.aclose()
+
+    assert reply.status_code == 200
 
 
 @pytest.mark.asyncio

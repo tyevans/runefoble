@@ -13,6 +13,7 @@ Governed by:
 
 from __future__ import annotations
 
+import time
 from collections.abc import Iterator
 from uuid import uuid4
 
@@ -21,7 +22,12 @@ import pytest
 from fastapi.testclient import TestClient
 from gateway_api.main import app as gateway_app
 
-from tests.helpers.live_services import closed_port_url, serve, unavailable_app
+from tests.helpers.live_services import (
+    closed_port_url,
+    serve,
+    unanswered_port_url,
+    unavailable_app,
+)
 from tests.helpers.ws_identity import bearer
 
 OFFICER = "guild_officer_marrow"
@@ -219,6 +225,30 @@ def test_unreachable_owner_returns_503(trusted_ws_issuer, monkeypatch: pytest.Mo
 
     assert res.status_code == 503
     assert "upstream" in res.text
+
+
+def test_owner_that_never_answers_the_connect_returns_503_soon(
+    trusted_ws_issuer, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A Service that still routes to a deleted pod drops the SYN (e2e @game-session-down).
+
+    The gateway answers 503 well inside its 5 s call timeout, so the board shows the failure
+    while the player waits.
+    """
+    with unanswered_port_url() as owner_url:
+        monkeypatch.setenv("RUNEFOBLE_GAME_SESSION_URL", owner_url)
+        with TestClient(gateway_app) as client:
+            started = time.monotonic()
+            res = client.post(
+                f"{_contracts_url(str(uuid4()))}/{uuid4()}/fulfill",
+                json={},
+                headers=bearer(OFFICER),
+            )
+            elapsed = time.monotonic() - started
+
+    assert res.status_code == 503
+    assert res.json() == {"detail": "Upstream service is unavailable", "upstream": "game_session"}
+    assert elapsed < 3.0
 
 
 def test_owner_5xx_returns_502_without_a_substitute_body(
