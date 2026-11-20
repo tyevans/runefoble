@@ -19,6 +19,20 @@ a memory limit. CPU limits are not required (see the hosted profile page).
 {{- end -}}
 {{- end -}}
 
+{{- define "runefoble.hardening.requireHostAddress" -}}
+{{- $cidr := toString .cidr -}}
+{{- if or (eq $cidr "") (contains "REPLACE-ME" $cidr) -}}
+{{- fail (printf "%s.cidr must be set for a %s render. Found: %q" .key .env $cidr) -}}
+{{- end -}}
+{{- $parts := splitList "/" $cidr -}}
+{{- if or (ne (len $parts) 2) (ne (index $parts 1) "32") -}}
+{{- fail (printf "%s.cidr must name one host address, as a /32 block, for a %s render. Found: %q" .key .env $cidr) -}}
+{{- end -}}
+{{- if or (eq (toString .host) "") (contains "REPLACE-ME" (toString .host)) -}}
+{{- fail (printf "%s.host must be set for a %s render. Found: %q" .key .env (toString .host)) -}}
+{{- end -}}
+{{- end -}}
+
 {{- $env := .Values.global.environment -}}
 {{- if or (eq $env "staging") (eq $env "production") -}}
 
@@ -47,6 +61,18 @@ a memory limit. CPU limits are not required (see the hosted profile page).
 -}}
 {{- range $workloads -}}
 {{- include "runefoble.hardening.requireMemory" (merge (dict "env" $env) .) -}}
+{{- end -}}
+
+{{- $np := required "networkPolicy must be set for a hosted render" .Values.networkPolicy -}}
+{{- $controllerNs := toString (required "networkPolicy.ingressController.namespace must be set for a hosted render" $np.ingressController.namespace) -}}
+{{- if contains "REPLACE-ME" $controllerNs -}}
+{{- fail (printf "networkPolicy.ingressController.namespace must name the ingress controller namespace for a %s render. Found: %s" $env $controllerNs) -}}
+{{- end -}}
+{{- range $i, $api := $np.kubeApi -}}
+{{- include "runefoble.hardening.requireHostAddress" (dict "key" (printf "networkPolicy.kubeApi[%d]" $i) "cidr" $api.cidr "host" "kubernetes API" "env" $env) -}}
+{{- end -}}
+{{- range $i, $ext := $np.external -}}
+{{- include "runefoble.hardening.requireHostAddress" (dict "key" (printf "networkPolicy.external[%d]" $i) "cidr" $ext.cidr "host" $ext.host "env" $env) -}}
 {{- end -}}
 
 {{- end -}}

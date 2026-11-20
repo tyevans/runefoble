@@ -125,6 +125,39 @@ observability:
   grafana:
     resources: *medium
 
+# Network policies (TASK-0962). Only the hosted render uses them. The chart allows each path that a
+# consumers list names. It also allows the platform paths. Standard NetworkPolicy matches an IP
+# address, not a host name, so each external entry names one address (a /32) and its host.
+networkPolicy:
+  # Decision D2d. The namespace and pod labels of the ingress controller that routes to the paths above.
+  ingressController:
+    namespace: REPLACE-ME
+    podLabels:
+      app.kubernetes.io/name: traefik
+  # Address of the Kubernetes API server as the pods reach it (the endpoint, not the Service IP).
+  kubeApi:
+    - cidr: REPLACE-ME/32
+      port: 6443
+  # One entry per external endpoint. `from` is the service that calls it. `host` is the name you
+  # resolved to `cidr`. Decisions D10 (model, embedding, speech-to-text) and D4 (SMTP).
+  external:
+    - from: inference-worker
+      host: REPLACE-ME
+      cidr: REPLACE-ME/32
+      port: 443
+    - from: campaign-lore
+      host: REPLACE-ME
+      cidr: REPLACE-ME/32
+      port: 443
+    - from: voice-agent
+      host: REPLACE-ME
+      cidr: REPLACE-ME/32
+      port: 443
+    - from: zitadel
+      host: REPLACE-ME
+      cidr: REPLACE-ME/32
+      port: 587
+
 services:
   campaignLore:
     # Secret that you create. It holds the embedding endpoint key under the key api-key.

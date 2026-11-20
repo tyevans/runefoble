@@ -1,0 +1,196 @@
+{{- /*
+Network policies for the hosted release (TASK-0962). The file renders only for staging and
+production. The local render has no NetworkPolicy object.
+
+Model. One default-deny policy selects every pod of the release, for ingress and egress. Each
+allow rule names one path that the platform uses today:
+  - the ingress controller to every service that an ingress path routes to (ingress.hosts);
+  - every consumer in a `consumers` list to the service that it calls (services.*.urlEnv);
+  - the platform paths: PostgreSQL, SpiceDB, Redis, Zitadel, Silo, Loki, and the OTel collector;
+  - the DNS service;
+  - the external endpoints and the Kubernetes API that networkPolicy lists (one address each).
+Docs: docs/reference/hosted-profile.md, section "Network policies".
+*/ -}}
+
+{{- define "runefoble.netpol.doc" -}}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ .name }}
+  labels:
+    app.kubernetes.io/part-of: runefoble
+spec:
+  {{- toYaml .spec | nindent 2 }}
+{{ end }}
+
+{{- if include "runefoble.hosted.profile" . -}}
+{{- $np := .Values.networkPolicy -}}
+{{- $svcs := .Values.services -}}
+
+{{- /* Pods of the services map, and the platform pods that call a platform service. */ -}}
+{{- $appServices := list -}}
+{{- $siloUsers := list -}}
+{{- range $key, $svc := $svcs -}}
+{{- if not $svc.ownTemplate -}}
+{{- $appServices = append $appServices (kebabcase $key) -}}
+{{- if or (not (hasKey $svc "siloEndpoint")) $svc.siloEndpoint -}}
+{{- $siloUsers = append $siloUsers (kebabcase $key) -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- $dbUsers := concat $appServices (list "spicedb" "zitadel" "openpanel") -}}
+{{- $spicedbClients := concat $appServices (list "spicedb-schema-migration") -}}
+{{- $redisClients := $appServices -}}
+{{- $zitadelClients := concat $appServices (list "gateway-mcp" "zitadel-bootstrap") -}}
+{{- $siloClients := concat $siloUsers (list "silo-buckets") -}}
+{{- $lokiClients := list "otel-collector" "grafana" -}}
+
+{{- /* Pods that may send a request to each platform service. Each list is an ingress allow rule. */ -}}
+{{- $platformPorts := dict
+      "postgres" .Values.postgres.port
+      "spicedb" .Values.spicedb.grpcPort
+      "redis" .Values.redis.port
+      "zitadel" .Values.zitadel.port
+      "silo" .Values.silo.port
+      "loki" .Values.observability.loki.port
+      "otel-collector" .Values.observability.otelCollector.grpcPort -}}
+
+{{- /* 1. Default deny for every release pod, in both directions. */ -}}
+{{ include "runefoble.netpol.doc" (dict "name" "default-deny" "spec" (dict
+  "podSelector" (dict)
+  "policyTypes" (list "Ingress" "Egress"))) }}
+
+{{- /* 2. DNS. Every pod may query the cluster DNS service. */ -}}
+{{ include "runefoble.netpol.doc" (dict "name" "allow-dns-egress" "spec" (dict
+  "podSelector" (dict)
+  "policyTypes" (list "Egress")
+  "egress" (list (dict
+    "to" (list (dict "namespaceSelector" (dict "matchLabels" (dict "kubernetes.io/metadata.name" ($np.dnsNamespace | default "kube-system")))))
+    "ports" (list (dict "protocol" "UDP" "port" 53) (dict "protocol" "TCP" "port" 53)))))) }}
+
+{{- /* 3. OTel. Every release pod sends telemetry to the collector. */ -}}
+{{ include "runefoble.netpol.doc" (dict "name" "allow-into-otel-collector" "spec" (dict
+  "podSelector" (dict "matchLabels" (dict "app" "otel-collector"))
+  "policyTypes" (list "Ingress")
+  "ingress" (list (dict
+    "from" (list (dict "podSelector" (dict)))
+    "ports" (list (dict "protocol" "TCP" "port" (int .Values.observability.otelCollector.grpcPort)) (dict "protocol" "TCP" "port" (int .Values.observability.otelCollector.httpPort))))))) }}
+{{ include "runefoble.netpol.doc" (dict "name" "allow-egress-to-otel-collector" "spec" (dict
+  "podSelector" (dict)
+  "policyTypes" (list "Egress")
+  "egress" (list (dict
+    "to" (list (dict "podSelector" (dict "matchLabels" (dict "app" "otel-collector"))))
+    "ports" (list (dict "protocol" "TCP" "port" (int .Values.observability.otelCollector.grpcPort)) (dict "protocol" "TCP" "port" (int .Values.observability.otelCollector.httpPort))))))) }}
+
+{{- /* 4. Ingress controller to each service that an ingress path routes to. */ -}}
+{{- $routed := dict -}}
+{{- range .Values.ingress.hosts -}}
+{{- range .paths -}}
+{{- if not (hasKey $routed .service) -}}
+{{- $_ := set $routed .service (int .port) -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- $controllerPeer := dict
+      "namespaceSelector" (dict "matchLabels" (dict "kubernetes.io/metadata.name" $np.ingressController.namespace))
+      "podSelector" (dict "matchLabels" $np.ingressController.podLabels) -}}
+{{- range $svcName, $port := $routed }}
+{{ include "runefoble.netpol.doc" (dict "name" (printf "allow-ingress-%s" $svcName) "spec" (dict
+  "podSelector" (dict "matchLabels" (dict "app" $svcName))
+  "policyTypes" (list "Ingress")
+  "ingress" (list (dict
+    "from" (list $controllerPeer)
+    "ports" (list (dict "protocol" "TCP" "port" $port)))))) }}
+{{- end }}
+
+{{- /* 5. Consumers to each service they call. One policy per target. */ -}}
+{{- range $key, $svc := $svcs }}
+{{- if $svc.urlEnv }}
+{{- $peers := list }}
+{{- range (default (list) $svc.consumers) }}
+{{- $peers = append $peers (dict "podSelector" (dict "matchLabels" (dict "app" .))) }}
+{{- end }}
+{{ include "runefoble.netpol.doc" (dict "name" (printf "allow-into-%s" (kebabcase $key)) "spec" (dict
+  "podSelector" (dict "matchLabels" (dict "app" (kebabcase $key)))
+  "policyTypes" (list "Ingress")
+  "ingress" (list (dict
+    "from" $peers
+    "ports" (list (dict "protocol" "TCP" "port" (int $svc.port)))))))  }}
+{{- end }}
+{{- end }}
+
+{{- /* 6. Platform services. One policy per platform target, from the pods that use it. */ -}}
+{{- $platformRules := list
+      (dict "name" "postgres" "from" $dbUsers)
+      (dict "name" "spicedb" "from" $spicedbClients)
+      (dict "name" "zitadel" "from" $zitadelClients)
+      (dict "name" "silo" "from" $siloClients)
+      (dict "name" "loki" "from" $lokiClients) -}}
+{{- if .Values.redis.enabled -}}
+{{- $platformRules = append $platformRules (dict "name" "redis" "from" $redisClients) -}}
+{{- end -}}
+{{- range $platformRules }}
+{{- $peers := list }}
+{{- range .from }}
+{{- $peers = append $peers (dict "podSelector" (dict "matchLabels" (dict "app" .))) }}
+{{- end }}
+{{ include "runefoble.netpol.doc" (dict "name" (printf "allow-into-%s" .name) "spec" (dict
+  "podSelector" (dict "matchLabels" (dict "app" .name))
+  "policyTypes" (list "Ingress")
+  "ingress" (list (dict
+    "from" $peers
+    "ports" (list (dict "protocol" "TCP" "port" (int (get $platformPorts .name)))))))) }}
+{{- end }}
+
+{{- /* 7. Egress of each source pod: the targets it calls, and the platform services it uses. */ -}}
+{{- $sources := concat $appServices (list "spicedb" "zitadel" "openpanel" "grafana" "otel-collector" "silo-buckets" "spicedb-schema-migration" "zitadel-bootstrap" "gateway-mcp") -}}
+{{- range $src := uniq $sources }}
+{{- $egress := list }}
+{{- range $key, $svc := $svcs }}
+{{- if and $svc.urlEnv (has $src (default (list) $svc.consumers)) }}
+{{- $egress = append $egress (dict
+      "to" (list (dict "podSelector" (dict "matchLabels" (dict "app" (kebabcase $key)))))
+      "ports" (list (dict "protocol" "TCP" "port" (int $svc.port)))) }}
+{{- end }}
+{{- end }}
+{{- $platformEgress := list -}}
+{{- if has $src $dbUsers -}}{{- $platformEgress = append $platformEgress "postgres" -}}{{- end -}}
+{{- if has $src $spicedbClients -}}{{- $platformEgress = append $platformEgress "spicedb" -}}{{- end -}}
+{{- if has $src $zitadelClients -}}{{- $platformEgress = append $platformEgress "zitadel" -}}{{- end -}}
+{{- if and $.Values.redis.enabled (has $src $redisClients) -}}{{- $platformEgress = append $platformEgress "redis" -}}{{- end -}}
+{{- if has $src $siloClients -}}{{- $platformEgress = append $platformEgress "silo" -}}{{- end -}}
+{{- if has $src $lokiClients -}}{{- $platformEgress = append $platformEgress "loki" -}}{{- end -}}
+{{- range $name := $platformEgress }}
+{{- $egress = append $egress (dict
+      "to" (list (dict "podSelector" (dict "matchLabels" (dict "app" $name))))
+      "ports" (list (dict "protocol" "TCP" "port" (int (get $platformPorts $name))))) }}
+{{- end }}
+{{- if $egress }}
+{{ include "runefoble.netpol.doc" (dict "name" (printf "allow-egress-%s" $src) "spec" (dict
+  "podSelector" (dict "matchLabels" (dict "app" $src))
+  "policyTypes" (list "Egress")
+  "egress" $egress)) }}
+{{- end }}
+{{- end }}
+
+{{- /* 8. External endpoints. One address (a /32 block) per entry, and one port. */ -}}
+{{- range $i, $ext := $np.external }}
+{{ include "runefoble.netpol.doc" (dict "name" (printf "allow-egress-external-%d" $i) "spec" (dict
+  "podSelector" (dict "matchLabels" (dict "app" $ext.from))
+  "policyTypes" (list "Egress")
+  "egress" (list (dict
+    "to" (list (dict "ipBlock" (dict "cidr" $ext.cidr)))
+    "ports" (list (dict "protocol" "TCP" "port" (int $ext.port)))))))  }}
+{{- end }}
+
+{{- /* 9. The Kubernetes API for the Zitadel pod (PAT publisher) and the bootstrap Job. */ -}}
+{{- range $i, $api := $np.kubeApi }}
+{{ include "runefoble.netpol.doc" (dict "name" (printf "allow-egress-kube-api-%d" $i) "spec" (dict
+  "podSelector" (dict "matchExpressions" (list (dict "key" "app" "operator" "In" "values" (list "zitadel" "zitadel-bootstrap"))))
+  "policyTypes" (list "Egress")
+  "egress" (list (dict
+    "to" (list (dict "ipBlock" (dict "cidr" $api.cidr)))
+    "ports" (list (dict "protocol" "TCP" "port" (int $api.port)))))))  }}
+{{- end }}
+{{- end -}}
