@@ -240,9 +240,11 @@ Then('a shareable invite link containing a signed token is displayed', async ({ 
   const linkInput = page.locator('runefoble-campaign-members .invite-link-input');
   await expect(linkInput).toBeVisible({ timeout: 10_000 });
 
+  // The field holds the absolute App Shell URL with the real token (ADR-0015). No placeholder token.
   await expect
     .poll(async () => linkInput.inputValue(), { timeout: 10_000 })
-    .toMatch(/\/join\/[a-zA-Z0-9_\-]+/);
+    .toMatch(/^https?:\/\/[^/]+\/#\/join\/[a-zA-Z0-9_\-]+$/);
+  expect(await linkInput.inputValue()).not.toContain('sample_token');
 });
 
 Then(
@@ -257,7 +259,8 @@ Then(
     await expect(modal.locator('.copied-badge')).toBeVisible({ timeout: 10_000 });
 
     const inputVal = await modal.locator('.invite-link-input').inputValue();
-    expect(inputVal).toMatch(/\/join\/.+/);
+    expect(inputVal).toMatch(/^https?:\/\/[^/]+\/#\/join\/[a-zA-Z0-9_\-]+$/);
+    expect(inputVal).not.toContain('sample_token');
 
     const clipboardText = await page.evaluate(() => navigator.clipboard.readText());
     expect(clipboardText).toBe(inputVal);

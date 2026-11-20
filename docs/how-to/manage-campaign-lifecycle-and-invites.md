@@ -170,6 +170,13 @@ A user who is already a member gets `200` again. The join does not use up anothe
 
 A person whose account came from an invite link (section 4a) completes the join here too. Their join is complete when the response is `200`. It does not use an invite slot, because the account already used one.
 
+**In the App Shell.** The invite link is `#/join/<token>`. The DM copies the absolute link from the invite field. The App Shell builds it from the `invite_url` path and the page origin (`frontend/src/app/campaign-actions.ts`). The link opens the join view `<runefoble-campaign-join>` (`services/game_session/ui/src/campaigns/runefoble-campaign-join.ts`):
+
+- A signed-in person sees the join button. The button sends `POST /api/v1/campaigns/join` with the person's bearer token. On `200` the App Shell opens `#/campaigns/<campaign_id>`. On an error it shows the server message.
+- A signed-out person sees the account form (section 4a). The App Shell keeps the link path in `sessionStorage` (key `runefoble.postSignInPath`). The key holds a route path and no credential. After the Zitadel sign-in, the App Shell opens the kept path and removes the key.
+
+The invite field shows no link until the DM clicks "Generate Link" in the current view. The App Shell never shows a placeholder token.
+
 ---
 
 ## 4a. Creating an Account from an Invite Link
@@ -207,7 +214,9 @@ No bearer token is needed. The reply is the same for a new email and for an emai
 
 Each refused case makes no call to Zitadel. A `503` records no invite use and creates no account.
 
-After the person sets the password and signs in, the App Shell returns to the join link. The join route (section 4) completes the pending join. Until then the person has no campaign relation.
+The join view shows the form. After the request the view says to read the Zitadel e-mail, set a password, and sign in. The same text shows for a new and an existing email.
+
+After the person sets the password and signs in, the App Shell returns to the join link. The join view then shows the join button (section 4). The join completes the pending join. Until then the person has no campaign relation.
 
 The token travels in the body, so access logs never record it. The limits are 20 requests for each client address and 30 requests for each invite, in one hour. Behind the ingress, the client address comes from `X-Forwarded-For` when the proxy is trusted (`ingress.trustedProxyCidrs`). A refused request waits for the `Retry-After` time. The full rules are in [Identity and Token Contract](../reference/identity-and-token-contract.md#invite-account-route-adr-0023).
 

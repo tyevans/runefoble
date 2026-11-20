@@ -11,6 +11,7 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 import { Given, When, Then } from '../support/fixtures';
 import { requireValue } from '../support/guards';
 import { lobbySessionId, personaToken, rememberPersonaToken } from '../support/lobby_session';
+import { joinCampaignThroughInviteLink } from '../support/invite_join';
 import type { World } from '../support/world';
 
 const FEED = 'runefoble-watcher-feed';
@@ -155,8 +156,7 @@ Given('{word} joins the campaign as a player with no character', async ({ browse
   rememberPersonaToken(world, key, user.token);
 
   const invite = await frontdoorApi.createCampaignInvite(campaignId, 'player', personaToken(world, 'evelyn'));
-  const joined = await frontdoorApi.joinCampaign(requireValue(invite.token, 'The invite reply has no token.'), personaToken(world, key));
-  expect(joined.role).toBe('player');
+  await joinCampaignThroughInviteLink(personaPage, requireValue(invite.token, 'The invite reply has no token.'));
 });
 
 Then('{word} sees the dice roller without a roll button', async ({ world }, persona: string) => {

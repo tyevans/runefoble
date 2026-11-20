@@ -84,7 +84,7 @@ The token for a negative scenario, such as a token signed by an unknown key, is 
 `FrontdoorApi` (`e2e/support/frontdoor_api.ts`) sends HTTP requests to public routes such as `POST /api/v1/campaigns`. It sends the bearer token when the caller passes one. The `bearerHeader(token)` helper in the same file builds the `Authorization` header. Every e2e request that carries a token uses it. Its methods include:
 
 - Health and reads: `checkHealth`, `listCampaigns`, `getCampaign`, `listCharacters`, `getCharacter`, `listCampaignMembers`, `getAtlas`, `getCodex`.
-- Writes: `createCampaign`, `createCharacter`, `assignCampaignRole`, `createCampaignInvite`, `joinCampaign`, `publishCodexEntry`, `createCampaignSession`, `joinSession`, `startSession`.
+- Writes: `createCampaign`, `createCharacter`, `assignCampaignRole`, `createCampaignInvite`, `publishCodexEntry`, `createCampaignSession`, `joinSession`, `startSession`.
 
 A setup step must throw when the request fails. It must not fall back to a fixed id.
 

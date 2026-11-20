@@ -11,6 +11,7 @@
 import { expect, test } from '@playwright/test';
 import { Given } from '../support/fixtures';
 import { requireValue } from '../support/guards';
+import { joinCampaignThroughInviteLink } from '../support/invite_join';
 import {
   lobbyRoute,
   lobbySessionId,
@@ -54,9 +55,7 @@ Given(
       rememberPersonaToken(world, persona, user.token);
 
       const invite = await frontdoorApi.createCampaignInvite(campaignId, 'player', dmToken);
-      const inviteToken = requireValue(invite.token, 'The invite reply has no token.');
-      const joined = await frontdoorApi.joinCampaign(inviteToken, personaToken(world, persona));
-      expect(joined.role, `${persona} must join the campaign as a player`).toBe('player');
+      await joinCampaignThroughInviteLink(personaPage, requireValue(invite.token, 'The invite reply has no token.'));
     }
   }
 );

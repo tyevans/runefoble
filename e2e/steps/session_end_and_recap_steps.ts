@@ -11,6 +11,7 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 import { Given, When, Then } from '../support/fixtures';
 import { requireValue } from '../support/guards';
 import { lobbySessionId, personaToken, rememberPersonaToken } from '../support/lobby_session';
+import { joinCampaignThroughInviteLink } from '../support/invite_join';
 import type { World } from '../support/world';
 
 const ROLLER = 'runefoble-dice-roller';
@@ -87,8 +88,7 @@ Given('Valeros redeems a player invite to the campaign in a browser', async ({ b
   rememberPersonaToken(world, 'valeros', user.token);
 
   const invite = await frontdoorApi.createCampaignInvite(campaignId, 'player', dmToken);
-  const joined = await frontdoorApi.joinCampaign(requireValue(invite.token, 'The invite reply has no token.'), personaToken(world, 'valeros'));
-  expect(joined.role, 'Valeros must join the campaign as a player').toBe('player');
+  await joinCampaignThroughInviteLink(personaPage, requireValue(invite.token, 'The invite reply has no token.'));
 });
 
 When('{word} rolls {string} in the dice roller in the UI', async ({ world }, persona: string, formula: string) => {
