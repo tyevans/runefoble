@@ -961,3 +961,6 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 953. **TASK-0970 (Proposed)**: [`0970-helm-values-file-under-500-lines.md`](proposed/0970-helm-values-file-under-500-lines.md) — The Helm Values File Is Split Below 500 Lines
 954. **TASK-0971 (Proposed)**: [`0971-named-token-move-reads-the-board-once.md`](proposed/0971-named-token-move-reads-the-board-once.md) — A Spoken Move to a Named Token Reads the Board Once and Fits the Gateway Budget
 955. **TASK-0975 (Proposed)**: [`0975-game-session-latency-under-e2e-load.md`](proposed/0975-game-session-latency-under-e2e-load.md) — game_session Reads Stay Under the Gateway Budget When the Kind Host Is Loaded
+956. **TASK-0976 (Proposed)**: [`0976-gateway-passes-engine-unavailable-503-to-the-browser.md`](proposed/0976-gateway-passes-engine-unavailable-503-to-the-browser.md) — The Gateway Passes an Engine-Unavailable 503 Body to the Browser
+957. **TASK-0977 (Proposed)**: [`0977-whisper-bar-approve-modify-and-send-reach-the-watcher.md`](proposed/0977-whisper-bar-approve-modify-and-send-reach-the-watcher.md) — The Whisper Bar Approve, Modify, and Send to Table Actions Reach The Watcher
+958. **TASK-0978 (Proposed)**: [`0978-approved-watcher-action-changes-the-board.md`](proposed/0978-approved-watcher-action-changes-the-board.md) — An Approved or Expired Watcher Action Changes the Board
