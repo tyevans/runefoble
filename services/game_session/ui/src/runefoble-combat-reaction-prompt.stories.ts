@@ -12,6 +12,12 @@ const meta: Meta = {
 export default meta;
 type Story = StoryObj;
 
+/** Default state. No reaction data is set, so the prompt renders nothing and runs no timer. */
+export const Idle: Story = {
+  render: () => html`<runefoble-combat-reaction-prompt></runefoble-combat-reaction-prompt>`,
+};
+
+/** Explicit open state. A reaction id and a reacting combatant open the dialog and start the countdown. */
 export const ActiveCountdown: Story = {
   render: () => html`
     <runefoble-combat-reaction-prompt

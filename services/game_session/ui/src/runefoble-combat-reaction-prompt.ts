@@ -1,5 +1,5 @@
 import { LitElement, html } from 'lit';
-import { customElement, property, state } from 'lit/decorators.js';
+import { customElement, property } from 'lit/decorators.js';
 import { reactionPromptStyles } from './runefoble-combat-reaction-prompt.styles.ts';
 
 export interface ReactionOption {
@@ -17,26 +17,41 @@ export class RunefobleCombatReactionPrompt extends LitElement {
   @property({ type: String }) sessionId = '';
   @property({ type: String }) reactionId = '';
   @property({ type: String }) reactingCombatantId = '';
-  @property({ type: String }) reactingCombatantName = 'Combatant';
+  @property({ type: String }) reactingCombatantName = '';
   @property({ type: String }) triggerPhrase = '';
-  @property({ type: String }) reactionType = 'reaction';
+  @property({ type: String }) reactionType = '';
   @property({ type: String }) targetId = '';
   @property({ type: Number }) timeoutSeconds = 15;
   @property({ type: Number }) secondsRemaining = 15;
-  @property({ type: Boolean }) isOpen = true;
   @property({ type: String }) status: 'active' | 'resolved' | 'declined' | 'expired' = 'active';
   @property({ type: String }) resolvedAction = '';
   @property({ type: Array }) options: ReactionOption[] = [];
-  @state() private timerId: number | null = null;
+  private timerId: number | null = null;
+
+  /** The prompt opens only when a real reaction (id and reacting combatant) is set. */
+  private get hasReaction(): boolean {
+    return this.reactionId !== '' && this.reactingCombatantId !== '';
+  }
 
   connectedCallback(): void {
     super.connectedCallback();
-    if (this.status === 'active') this.startTimer();
+    this.syncTimer();
   }
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
     this.stopTimer();
+  }
+
+  protected updated(): void {
+    this.syncTimer();
+  }
+
+  /** Runs the countdown only while an active reaction is open. */
+  private syncTimer(): void {
+    const shouldRun = this.hasReaction && this.status === 'active';
+    if (shouldRun && this.timerId === null) this.startTimer();
+    if (!shouldRun) this.stopTimer();
   }
 
   private startTimer(): void {
@@ -97,7 +112,7 @@ export class RunefobleCombatReactionPrompt extends LitElement {
   }
 
   render() {
-    if (!this.isOpen) return html``;
+    if (!this.hasReaction) return html``;
     const isUrgent = this.secondsRemaining <= 5 && this.status === 'active';
     const percent = Math.max(0, Math.min(100, (this.secondsRemaining / (this.timeoutSeconds || 15)) * 100));
 

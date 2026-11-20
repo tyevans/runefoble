@@ -98,7 +98,6 @@ export function registerDefaultPlugins(reg: PluginRegistry = pluginRegistry, can
     { id: 'default-soundscape-controls', name: 'Soundscape Controls', slot: 'hud-widget', tag: 'runefoble-soundscape-controls', order: 20 },
     { id: 'default-dice-roller', name: 'Dice Roller', slot: 'dice-panel', tag: 'runefoble-dice-roller', order: 10 },
     { id: 'default-dice-tray-3d', name: '3D Dice Tray', slot: 'dice-panel', tag: 'runefoble-dice-tray-3d', order: 20 },
-    { id: 'default-combat-reaction-prompt', name: 'Combat Reaction Prompt', slot: 'sidebar-tool', tag: 'runefoble-combat-reaction-prompt', order: 10 },
   ];
   for (const p of base) if (!reg.getPlugin(p.id)) reg.register(p);
   const dm: PluginDefinition[] = [

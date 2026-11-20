@@ -73,7 +73,9 @@ pluginRegistry.register({
 Runefoble seeds default built-in microfrontends into active slots via `registerDefaultPlugins(pluginRegistry, isDm)`:
 - **`hud-widget`**: `<runefoble-initiative-tracker>`, `<runefoble-soundscape-controls>`
 - **`dice-panel`**: `<runefoble-dice-roller>`, `<runefoble-dice-tray-3d>`
-- **`sidebar-tool`**: `<runefoble-combat-reaction-prompt>`, and when authenticated as DM, `<runefoble-dm-whisper-bar>` and `<runefoble-dm-trap-controls>`
+- **`sidebar-tool`**: when authenticated as DM, `<runefoble-dm-whisper-bar>` and `<runefoble-dm-trap-controls>`
+
+`<runefoble-combat-reaction-prompt>` is not a default plugin. It opens only when it receives a real reaction (TASK-0939).
 
 ## Step 3: Embed an Extension Slot in Layouts
 

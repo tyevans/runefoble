@@ -55,6 +55,7 @@ describe('App Shell Board State & Plugin Slot Wiring', () => {
   it('registers default tabletop plugins across standard slots for players and DM (TASK-0358)', () => {
     registerDefaultPlugins(pluginRegistry, false);
     assert.ok(pluginRegistry.getPluginsForSlot('hud-widget').some((p) => p.tag === 'runefoble-initiative-tracker'));
+    assert.equal(pluginRegistry.getPluginsForSlot('sidebar-tool').some((p) => p.tag === 'runefoble-combat-reaction-prompt'), false);
     assert.equal(pluginRegistry.getPluginsForSlot('sidebar-tool').some((p) => p.tag === 'runefoble-dm-whisper-bar'), false);
     registerDefaultPlugins(pluginRegistry, true);
     assert.ok(pluginRegistry.getPluginsForSlot('sidebar-tool').some((p) => p.tag === 'runefoble-dm-whisper-bar'));
