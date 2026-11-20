@@ -32,13 +32,22 @@ class InvalidInviteError(CampaignError):
     error = "invalid_invite"
 
 
+class InviteNotFoundError(CampaignError):
+    """The token matches no invite. The account route answers 404 (ADR-0023 d)."""
+
+    status_code = 404
+    error = "invite_not_found"
+
+
 class InviteExpiredError(CampaignError):
     status_code = 410
     error = "invite_expired"
 
 
 class InviteExhaustedError(CampaignError):
-    status_code = 409
+    """No use is left. Answers 410, like an expired invite (ADR-0023 d)."""
+
+    status_code = 410
     error = "invite_exhausted"
 
 
@@ -55,6 +64,13 @@ class OwnerNotRemovableError(CampaignError):
 class ConcurrentUpdateError(CampaignError):
     status_code = 409
     error = "concurrent_update"
+
+
+class AccountProviderUnavailableError(CampaignError):
+    """The identity provider could not create the account. Nothing was recorded (ADR-0023 c)."""
+
+    status_code = 503
+    error = "account_provider_unavailable"
 
 
 class AuthorizationStoreError(CampaignError):

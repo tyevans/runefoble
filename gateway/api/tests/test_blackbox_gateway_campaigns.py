@@ -241,13 +241,13 @@ async def test_spectator_invite_and_usage_limit(trusted_ws_issuer, client):
     assert res_join1.status_code == 200
     assert res_join1.json()["role"] == "spectator"
 
-    # Viewer 2 attempts to use exhausted token -> 409 Conflict
+    # Viewer 2 attempts to use exhausted token -> 410 Gone (ADR-0023 d)
     res_join2 = client.post(
         "/api/v1/campaigns/join",
         json={"invite_token": token},
         headers=headers_viewer2,
     )
-    assert res_join2.status_code == 409
+    assert res_join2.status_code == 410
     assert res_join2.json()["detail"]["error"] == "invite_exhausted"
 
     # Viewer 1 has spectator access: can view session, cannot advance turns

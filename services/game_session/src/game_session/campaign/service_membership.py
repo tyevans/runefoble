@@ -13,6 +13,7 @@ from game_session.campaign.errors import (
     OwnerNotRemovableError,
 )
 from game_session.campaign.invite_aggregate import (
+    InviteAggregate,
     generate_invite_token,
     invite_expiry,
     invite_stream_id,
@@ -90,6 +91,9 @@ async def join_campaign(
     if campaign.state.owner_id == user_id:
         return _joined(campaign_key, user_id, "owner", "owner")
 
+    if invite.pending_role_of(user_id) is not None:
+        return await _complete_pending_join(repos, spicedb, invite, cid, user_id, username)
+
     memberships = await load_memberships(repos, cid)
     existing_role = memberships.role_of(user_id)
     if existing_role is not None:
@@ -102,6 +106,34 @@ async def join_campaign(
     await save_or_conflict(repos.memberships, memberships, concurrent_update)
     await grant_member(spicedb, campaign_key, invite.state.role, user_id)
     return _joined(campaign_key, user_id, invite.state.role, relation_for_role(invite.state.role))
+
+
+async def _complete_pending_join(
+    repos: CampaignRepositories,
+    spicedb: SpiceDBPort,
+    invite: InviteAggregate,
+    cid: UUID,
+    user_id: str,
+    username: str | None,
+) -> JoinCampaignResponse:
+    """Finish the join of an account that this invite created (ADR-0023 e).
+
+    No invite use is recorded here. The use was counted when the account was created. The
+    membership is saved before the pending record is cleared. A retry after a failed save
+    then finds the membership, and it never redeems the invite again. The SpiceDB relation
+    is written last, and only now (Hard Invariant 1).
+    """
+    campaign_key = str(cid)
+    memberships = await load_memberships(repos, cid)
+    role = memberships.role_of(user_id)
+    if role is None:
+        role = invite.pending_role_of(user_id) or invite.state.role
+        memberships.add_member(user_id, role, username)
+        await save_or_conflict(repos.memberships, memberships, concurrent_update)
+    invite.complete_pending(user_id)
+    await save_or_conflict(repos.invites, invite, concurrent_update)
+    await grant_member(spicedb, campaign_key, role, user_id)
+    return _joined(campaign_key, user_id, role, relation_for_role(role))
 
 
 def _joined(campaign_id: str, user_id: str, role: str, relation: str) -> JoinCampaignResponse:
