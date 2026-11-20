@@ -1,7 +1,7 @@
 ---
 id: '0958'
 title: Zitadel Uses Real SMTP, Closed Registration, and a First Admin on the Public Domain
-status: Refined
+status: Complete
 created: 2026-11-19
 dependencies:
 - '0955'
@@ -21,7 +21,7 @@ target_release: 1.0.0
 
 ## Status
 
-Refined. Release One hosting slice 4 (PRD-0025, outcome 1 and outcome 8: real e-mail and invite-only sign-up). Writer C added dependency `0959`: the SMTP password is a Secret key, and that key set belongs to 0959.
+Complete
 
 ## Summary
 
