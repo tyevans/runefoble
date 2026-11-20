@@ -47,6 +47,8 @@ DECLARED: dict[tuple[str, str], tuple[str, Mode]] = {
     ("GET", "/api/v1/auth/sync/health"): (GATEWAY, "local"),
     # The board set-up route calls board_state through gateway_api.board_setup (TASK-0928).
     ("POST", "/api/v1/boards"): ("board_state", "proxy"),
+    # The invite account route checks two rate limits before it forwards (TASK-0967).
+    ("POST", "/api/v1/campaigns/invites/accounts"): ("game_session", "proxy"),
     (WEBSOCKET, "/ws/campaigns/{campaign_id}"): (GATEWAY, "local"),
     (WEBSOCKET, "/ws/session/{session_id}"): (_SESSION_OWNERS, "relay"),
     ("GET", "/api/v1/spectate/{session_id}"): (_SPECTATE_OWNERS, "proxy"),

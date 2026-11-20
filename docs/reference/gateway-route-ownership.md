@@ -50,8 +50,8 @@ each route, and the mode in which the gateway serves it.
 | POST | `/api/v1/boards/{session_id}/tokens/{token_id}/move` | board_state | proxy | `gateway_api.routers.boards_proxy` |
 | GET | `/api/v1/campaigns` | game_session | proxy | `gateway_api.routers.campaigns_proxy` |
 | POST | `/api/v1/campaigns` | game_session | proxy | `gateway_api.routers.campaigns_proxy` |
+| POST | `/api/v1/campaigns/invites/accounts` | game_session | proxy | `gateway_api.routers.account_invites_proxy` |
 | POST | `/api/v1/campaigns/join` | game_session | proxy | `gateway_api.routers.campaigns_proxy` |
-| POST | `/api/v1/campaigns/invites/accounts` | game_session | rate-limited proxy, no bearer token (ADR-0023) | `gateway_api.routers.account_invites_proxy` |
 | GET | `/api/v1/campaigns/{campaign_id}` | game_session | proxy | `gateway_api.routers.campaigns_proxy` |
 | PATCH | `/api/v1/campaigns/{campaign_id}` | game_session | proxy | `gateway_api.routers.campaigns_proxy` |
 | GET | `/api/v1/campaigns/{campaign_id}/atlas` | campaign_lore | proxy | `gateway_api.routers.lore_views` |
@@ -130,12 +130,16 @@ each route, and the mode in which the gateway serves it.
 | GET | `/api/v1/sessions/{session_id}/absentee-recap` | game_session | proxy | `gateway_api.routers.sessions_proxy` |
 | POST | `/api/v1/sessions/{session_id}/atmosphere` | game_session | proxy | `gateway_api.routers.sessions_proxy` |
 | POST | `/api/v1/sessions/{session_id}/dm-override` | game_session | proxy | `gateway_api.routers.sessions_proxy` |
+| POST | `/api/v1/sessions/{session_id}/end` | game_session | proxy | `gateway_api.routers.sessions_proxy` |
 | GET | `/api/v1/sessions/{session_id}/events` | game_session | proxy | `gateway_api.routers.sessions_proxy` |
 | POST | `/api/v1/sessions/{session_id}/hot-swap` | game_session | proxy | `gateway_api.routers.sessions_proxy` |
-| POST | `/api/v1/sessions/{session_id}/end` | game_session | proxy | `gateway_api.routers.sessions_proxy` |
 | POST | `/api/v1/sessions/{session_id}/join` | game_session | proxy | `gateway_api.routers.sessions_proxy` |
+| POST | `/api/v1/sessions/{session_id}/lobby/character` | game_session | proxy | `gateway_api.routers.sessions_proxy` |
+| POST | `/api/v1/sessions/{session_id}/lobby/readiness` | game_session | proxy | `gateway_api.routers.sessions_proxy` |
 | POST | `/api/v1/sessions/{session_id}/merchants/{merchant_id}/haggle` | game_session | proxy | `gateway_api.routers.downtime_proxy` |
 | POST | `/api/v1/sessions/{session_id}/rest/campfire` | game_session | proxy | `gateway_api.routers.downtime_proxy` |
+| POST | `/api/v1/sessions/{session_id}/roll` | game_session | proxy | `gateway_api.routers.sessions_proxy` |
+| POST | `/api/v1/sessions/{session_id}/seats/{player_id}/stand-in` | game_session | proxy | `gateway_api.routers.sessions_proxy` |
 | POST | `/api/v1/sessions/{session_id}/start` | game_session | proxy | `gateway_api.routers.sessions_proxy` |
 | POST | `/api/v1/sessions/{session_id}/tavern/games` | game_session | proxy | `gateway_api.routers.downtime_proxy` |
 | POST | `/api/v1/sessions/{session_id}/turns/advance` | game_session | proxy | `gateway_api.routers.sessions_proxy` |
