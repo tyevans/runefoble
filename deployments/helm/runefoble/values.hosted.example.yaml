@@ -157,6 +157,15 @@ networkPolicy:
       host: REPLACE-ME
       cidr: REPLACE-ME/32
       port: 587
+    # Backup and restore (TASK-0961) reach the bucket endpoint in backup.endpoint (decision D8).
+    - from: postgres-backup
+      host: REPLACE-ME
+      cidr: REPLACE-ME/32
+      port: 443
+    - from: postgres-restore
+      host: REPLACE-ME
+      cidr: REPLACE-ME/32
+      port: 443
 
 services:
   campaignLore:

@@ -32,6 +32,9 @@ PLATFORM_CLIENT_SOURCES = {
     "zitadel",
     # gateway-mcp verifies tokens against Zitadel (zitadelServiceEnv) but no consumers list names it.
     "gateway-mcp",
+    # The backup CronJob dumps PostgreSQL and uploads to the bucket. The restore Job reverses both.
+    "postgres-backup",
+    "postgres-restore",
     "openpanel",
     "spicedb-schema-migration",
     "zitadel-bootstrap",
@@ -216,6 +219,8 @@ def test_external_endpoints_allow_one_address_each(hosted_policies: list[dict]):
         "allow-egress-external-1": ("campaign-lore", 443),
         "allow-egress-external-2": ("voice-agent", 443),
         "allow-egress-external-3": ("zitadel", 587),
+        "allow-egress-external-4": ("postgres-backup", 443),
+        "allow-egress-external-5": ("postgres-restore", 443),
     }
 
     for name, (source, port) in expected.items():
@@ -269,3 +274,13 @@ def test_hosted_render_rejects_a_wide_external_block(tmp_path: Path):
 
     assert proc.returncode != 0
     assert "networkPolicy.external[0].cidr" in proc.stderr
+
+
+@pytest.mark.parametrize("job", ["postgres-backup", "postgres-restore"])
+def test_backup_and_restore_jobs_reach_postgres(hosted_policies: list[dict], job: str):
+    """The backup and restore pods dump and load PostgreSQL. They reach the database on its port."""
+    egress = _egress_allows(_network_policies(hosted_policies))
+    inbound = _ingress_allows(_network_policies(hosted_policies))
+
+    assert (job, "postgres", 5432) in egress
+    assert ("postgres", job, 5432) in inbound

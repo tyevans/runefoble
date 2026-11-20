@@ -39,7 +39,7 @@ spec:
 {{- end -}}
 {{- end -}}
 {{- end -}}
-{{- $dbUsers := concat $appServices (list "spicedb" "zitadel" "openpanel") -}}
+{{- $dbUsers := concat $appServices (list "spicedb" "zitadel" "openpanel" "postgres-backup" "postgres-restore") -}}
 {{- $spicedbClients := concat $appServices (list "spicedb-schema-migration") -}}
 {{- $redisClients := $appServices -}}
 {{- $zitadelClients := concat $appServices (list "gateway-mcp" "zitadel-bootstrap") -}}
@@ -144,7 +144,7 @@ spec:
 {{- end }}
 
 {{- /* 7. Egress of each source pod: the targets it calls, and the platform services it uses. */ -}}
-{{- $sources := concat $appServices (list "spicedb" "zitadel" "openpanel" "grafana" "otel-collector" "silo-buckets" "spicedb-schema-migration" "zitadel-bootstrap" "gateway-mcp") -}}
+{{- $sources := concat $appServices (list "spicedb" "zitadel" "openpanel" "grafana" "otel-collector" "silo-buckets" "spicedb-schema-migration" "zitadel-bootstrap" "gateway-mcp" "postgres-backup" "postgres-restore") -}}
 {{- range $src := uniq $sources }}
 {{- $egress := list }}
 {{- range $key, $svc := $svcs }}

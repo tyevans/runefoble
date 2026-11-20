@@ -173,9 +173,9 @@ platform uses today:
 | Consumer to the service it calls | `services.*.urlEnv` and `consumers` | `allow-into-<service>`, `allow-egress-<consumer>` |
 | Any pod to the OTel collector | Every release pod (ports 4317 and 4318) | `allow-into-otel-collector`, `allow-egress-to-otel-collector` |
 | Application service to PostgreSQL, SpiceDB, Zitadel, Redis, and Silo | Platform env in `_helpers.tpl` and `services.yaml` | `allow-into-postgres` and the other `allow-into-*` platform policies |
-| Platform pods to their own dependencies | SpiceDB and Zitadel to PostgreSQL, the schema Job to SpiceDB, the Silo Job to Silo, the collector and Grafana to Loki | `allow-egress-<pod>` |
+| Platform pods to their own dependencies | SpiceDB, Zitadel, OpenPanel, and the backup and restore Jobs to PostgreSQL, the schema Job to SpiceDB, the Silo Job to Silo, the collector and Grafana to Loki | `allow-egress-<pod>` |
 | Every pod to cluster DNS | UDP and TCP 53 in `networkPolicy.dnsNamespace` (default `kube-system`) | `allow-dns-egress` |
-| External endpoint (model, embedding, speech-to-text, SMTP) | `networkPolicy.external` | `allow-egress-external-<n>` |
+| External endpoint (model, embedding, speech-to-text, SMTP, backup bucket) | `networkPolicy.external` | `allow-egress-external-<n>` |
 | Zitadel pod and bootstrap Job to the Kubernetes API | `networkPolicy.kubeApi` | `allow-egress-kube-api-<n>` |
 
 Rules for the external and API entries:
