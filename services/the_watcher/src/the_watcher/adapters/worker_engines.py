@@ -28,8 +28,10 @@ class WorkerIntentParser(IntentParser):
         self._board_state_url = board_state_url
         self._credential = credential
 
-    async def parse(self, req: SpeechInputRequest) -> IntentResult:
-        visible_tokens = await fetch_visible_tokens(self._board_state_url, req.session_id)
+    async def parse(self, req: SpeechInputRequest, authorization: str | None) -> IntentResult:
+        visible_tokens = await fetch_visible_tokens(
+            self._board_state_url, req.session_id, authorization
+        )
         data = await call_worker(
             self._base_url,
             "/inference/v1/intent",

@@ -9,16 +9,22 @@ public routes only (ADR-0014, Hard Invariant 7).
 
 from __future__ import annotations
 
+import json
 from collections.abc import Iterator
+from typing import Any
 
 import httpx
 import pytest
 from board_state.main import app as board_app
 from fastapi.testclient import TestClient
 from gateway_api.main import app as gateway_app
+from inference_worker import api as worker_api
+from inference_worker.llm_factory import build_llm_port
 from runefoble_events.events import TokenMoved
 from runefoble_platform.event_deserializer import deserialize_event
 
+from tests.helpers.fake_openai_server import FakeOpenAI
+from tests.helpers.inference_worker_port import install_worker_port
 from tests.helpers.live_services import closed_port_url, serve
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.spectator_table import open_board_table
@@ -71,8 +77,8 @@ def board_socket(trusted_ws_issuer) -> TestClient:
     return TestClient(board_app)
 
 
-def _speech(session_id: str, campaign_id: str) -> dict[str, object]:
-    return {
+def _speech(session_id: str, campaign_id: str, **changes: object) -> dict[str, object]:
+    body: dict[str, object] = {
         "speaker_id": DM,
         "speaker_name": "Goblin Stalker",
         "transcript": TRANSCRIPT,
@@ -84,12 +90,14 @@ def _speech(session_id: str, campaign_id: str) -> dict[str, object]:
         "grid_cols": 8,
         "grid_rows": 8,
     }
+    body.update(changes)
+    return body
 
 
-def _position(board_url: str, session_id: str) -> tuple[int, int]:
+def _position(board_url: str, session_id: str, token_id: str = GOBLIN) -> tuple[int, int]:
     board = httpx.get(f"{board_url}/api/v1/boards/{session_id}", headers=bearer(DM))
     assert board.status_code == 200, board.text
-    token = board.json()["tokens"][GOBLIN]
+    token = board.json()["tokens"][token_id]
     return token["x"], token["y"]
 
 
@@ -200,3 +208,272 @@ def test_confirmed_spoken_move_publishes_one_token_moved_and_the_proposal_publis
     assert len(moves) == 1
     assert (moves[0].from_x, moves[0].from_y) == GOBLIN_START
     assert (moves[0].to_x, moves[0].to_y) == GOBLIN_TARGET
+
+
+# Destination rules (TASK-0942). The Valeros token (`t1`) starts at (2, 3). The goblin stands at
+# (6, 2). Its free neighbours in the 8 x 8 grid are the cells around it. The nearest one to
+# (2, 3), by grid distance, is (5, 1). Ties go to the lower `y`, then the lower `x`.
+VALEROS = "t1"
+VALEROS_START = (2, 3)
+GOBLIN_NAME_SPEECH = "move to the goblin stalker"
+
+
+def _move_from(
+    session_id: str, campaign_id: str, token_id: str, origin: tuple[int, int], transcript: str
+) -> dict[str, object]:
+    """A speech body for a move by `token_id` from `origin`, with the speaker named by the token."""
+    names = {VALEROS: "Valeros", GOBLIN: "Goblin Stalker"}
+    return _speech(
+        session_id,
+        campaign_id,
+        token_id=token_id,
+        speaker_name=names[token_id],
+        from_x=origin[0],
+        from_y=origin[1],
+        transcript=transcript,
+    )
+
+
+def _place_token(board_url: str, session_id: str, token_id: str, name: str, x: int, y: int) -> None:
+    """Place one token on the board through the public board route."""
+    placed = httpx.post(
+        f"{board_url}/api/v1/boards/{session_id}/tokens",
+        json={"token_id": token_id, "name": name, "token_type": "npc", "x": x, "y": y, "hp": 5},
+        headers=bearer(DM),
+    )
+    assert placed.status_code == 200, placed.text
+
+
+def _expect_next_frame_is_staged(
+    gateway: TestClient, ws: Any, campaign_id: str, session_id: str, to: tuple[int, int]
+) -> None:
+    """A rejected proposal sends no frame. The next frame must answer a later valid move."""
+    spoken = gateway.post(SPEAK_PATH, json=_speech(session_id, campaign_id), headers=bearer(DM))
+    assert spoken.status_code == 200, spoken.text
+    frame = ws.receive_json()
+    assert frame["type"] == "ghost_preview"
+    assert (frame["preview"]["to_x"], frame["preview"]["to_y"]) == to
+
+
+def test_named_target_stages_the_free_neighbour_nearest_the_origin(
+    gateway: TestClient,
+    table: tuple[str, str],
+    board_state_upstream: str,
+    board_socket: TestClient,
+) -> None:
+    """A move to a named token stages a free cell next to it. The token does not move yet."""
+    campaign_id, session_id = table
+
+    with board_socket.websocket_connect(
+        f"/ws/boards/{session_id}", subprotocols=ws_subprotocols(DM)
+    ) as ws:
+        ws.receive_json()
+        body = _move_from(session_id, campaign_id, VALEROS, VALEROS_START, GOBLIN_NAME_SPEECH)
+        spoken = gateway.post(SPEAK_PATH, json=body, headers=bearer(DM))
+        assert spoken.status_code == 200, spoken.text
+
+        preview = ws.receive_json()
+
+    assert preview["type"] == "ghost_preview"
+    assert preview["preview"]["token_id"] == VALEROS
+    assert (preview["preview"]["to_x"], preview["preview"]["to_y"]) == (5, 1)
+    assert _position(board_state_upstream, session_id, VALEROS) == VALEROS_START
+
+
+def test_named_target_skips_a_neighbour_that_another_token_holds(
+    gateway: TestClient,
+    table: tuple[str, str],
+    board_state_upstream: str,
+    board_socket: TestClient,
+) -> None:
+    """A neighbour held by a token is not free. The next nearest free neighbour is staged."""
+    campaign_id, session_id = table
+    _place_token(board_state_upstream, session_id, "t_blocker", "Blocker", 5, 1)
+
+    with board_socket.websocket_connect(
+        f"/ws/boards/{session_id}", subprotocols=ws_subprotocols(DM)
+    ) as ws:
+        ws.receive_json()
+        body = _move_from(session_id, campaign_id, VALEROS, VALEROS_START, GOBLIN_NAME_SPEECH)
+        assert gateway.post(SPEAK_PATH, json=body, headers=bearer(DM)).status_code == 200
+
+        preview = ws.receive_json()
+
+    assert (preview["preview"]["to_x"], preview["preview"]["to_y"]) == (5, 2)
+
+
+def test_coordinate_move_with_grammar_keys_stages_the_given_cell(
+    gateway: TestClient,
+    table: tuple[str, str],
+    board_socket: TestClient,
+) -> None:
+    """The grammar sets `to_x` and `to_y`. The preview goes to that cell."""
+    campaign_id, session_id = table
+    body = _move_from(session_id, campaign_id, VALEROS, VALEROS_START, "move to 4, 7")
+
+    with board_socket.websocket_connect(
+        f"/ws/boards/{session_id}", subprotocols=ws_subprotocols(DM)
+    ) as ws:
+        ws.receive_json()
+        assert gateway.post(SPEAK_PATH, json=body, headers=bearer(DM)).status_code == 200
+        preview = ws.receive_json()
+
+    assert (preview["preview"]["to_x"], preview["preview"]["to_y"]) == (4, 7)
+
+
+def test_coordinate_outside_the_grid_is_a_client_error_and_stages_nothing(
+    gateway: TestClient,
+    table: tuple[str, str],
+    board_socket: TestClient,
+) -> None:
+    """A destination outside the 8 x 8 grid returns 422. No preview reaches the board socket."""
+    campaign_id, session_id = table
+    body = _move_from(session_id, campaign_id, VALEROS, VALEROS_START, "move to 9, 9")
+
+    with board_socket.websocket_connect(
+        f"/ws/boards/{session_id}", subprotocols=ws_subprotocols(DM)
+    ) as ws:
+        ws.receive_json()
+        spoken = gateway.post(SPEAK_PATH, json=body, headers=bearer(DM))
+        assert spoken.status_code == 422, spoken.text
+        _expect_next_frame_is_staged(gateway, ws, campaign_id, session_id, to=(4, 2))
+
+
+def test_missing_origin_is_a_client_error_and_stages_nothing(
+    gateway: TestClient,
+    table: tuple[str, str],
+    board_state_upstream: str,
+    board_socket: TestClient,
+) -> None:
+    """Without `from_x` the Watcher does not invent an origin. It answers 422 and sends no frame."""
+    campaign_id, session_id = table
+    body = _speech(session_id, campaign_id)
+    del body["from_x"]
+
+    with board_socket.websocket_connect(
+        f"/ws/boards/{session_id}", subprotocols=ws_subprotocols(DM)
+    ) as ws:
+        ws.receive_json()
+        spoken = gateway.post(SPEAK_PATH, json=body, headers=bearer(DM))
+        assert spoken.status_code == 422, spoken.text
+        assert "from_x" in spoken.text
+        _expect_next_frame_is_staged(gateway, ws, campaign_id, session_id, to=(4, 2))
+
+    assert _position(board_state_upstream, session_id) == GOBLIN_START
+
+
+def test_unknown_target_name_is_a_client_error_and_stages_nothing(
+    gateway: TestClient,
+    table: tuple[str, str],
+    board_socket: TestClient,
+) -> None:
+    """A name that no token on the board carries returns 422. No preview is staged."""
+    campaign_id, session_id = table
+    body = _move_from(session_id, campaign_id, VALEROS, VALEROS_START, "move to the dragon")
+
+    with board_socket.websocket_connect(
+        f"/ws/boards/{session_id}", subprotocols=ws_subprotocols(DM)
+    ) as ws:
+        ws.receive_json()
+        spoken = gateway.post(SPEAK_PATH, json=body, headers=bearer(DM))
+        assert spoken.status_code == 422, spoken.text
+        _expect_next_frame_is_staged(gateway, ws, campaign_id, session_id, to=(4, 2))
+
+
+def test_duplicate_target_name_is_a_conflict_and_stages_nothing(
+    gateway: TestClient,
+    table: tuple[str, str],
+    board_state_upstream: str,
+    board_socket: TestClient,
+) -> None:
+    """Two tokens named alike make the target ambiguous. The Watcher answers 409."""
+    campaign_id, session_id = table
+    _place_token(board_state_upstream, session_id, "t_goblin_2", "Goblin Stalker", 0, 7)
+    body = _move_from(session_id, campaign_id, VALEROS, VALEROS_START, GOBLIN_NAME_SPEECH)
+
+    with board_socket.websocket_connect(
+        f"/ws/boards/{session_id}", subprotocols=ws_subprotocols(DM)
+    ) as ws:
+        ws.receive_json()
+        spoken = gateway.post(SPEAK_PATH, json=body, headers=bearer(DM))
+        assert spoken.status_code == 409, spoken.text
+        _expect_next_frame_is_staged(gateway, ws, campaign_id, session_id, to=(4, 2))
+
+
+def test_target_without_a_free_neighbour_is_a_conflict_and_stages_nothing(
+    gateway: TestClient,
+    table: tuple[str, str],
+    board_state_upstream: str,
+    board_socket: TestClient,
+) -> None:
+    """All eight neighbours of the goblin are held. The Watcher answers 409 and stages nothing."""
+    campaign_id, session_id = table
+    ring = [(5, 1), (6, 1), (7, 1), (5, 2), (7, 2), (5, 3), (6, 3), (7, 3)]
+    for index, (x, y) in enumerate(ring):
+        _place_token(board_state_upstream, session_id, f"t_ring_{index}", "Ring", x, y)
+    body = _move_from(session_id, campaign_id, VALEROS, VALEROS_START, GOBLIN_NAME_SPEECH)
+
+    with board_socket.websocket_connect(
+        f"/ws/boards/{session_id}", subprotocols=ws_subprotocols(DM)
+    ) as ws:
+        ws.receive_json()
+        spoken = gateway.post(SPEAK_PATH, json=body, headers=bearer(DM))
+        assert spoken.status_code == 409, spoken.text
+        _expect_next_frame_is_staged(gateway, ws, campaign_id, session_id, to=(4, 2))
+
+
+@pytest.fixture
+def worker_loopback(monkeypatch: pytest.MonkeyPatch, fake_llm: FakeOpenAI) -> Iterator[str]:
+    """The real inference worker app, served on loopback. Only the model runtime is a fake.
+
+    The fake model answers a move and names no cell. The worker's own rules set the cell, so
+    the test reads the keys that the worker really returns (`target_x`, `target_y`).
+    """
+    fake_llm.content = json.dumps({"action_type": "move", "narrative_flavor": "The goblin slips."})
+    install_worker_port(monkeypatch, build_llm_port(fake_llm.settings()))
+    with serve(worker_api.app) as url:
+        monkeypatch.setenv("RUNEFOBLE_WATCHER_ENGINE", "inference_worker")
+        monkeypatch.setenv("RUNEFOBLE_INFERENCE_URL", url)
+        yield url
+
+
+def test_worker_coordinate_move_stages_the_worker_target(
+    gateway: TestClient,
+    table: tuple[str, str],
+    worker_loopback: str,
+    board_socket: TestClient,
+) -> None:
+    """The worker returns `target_x` and `target_y`. The preview goes to those cells."""
+    campaign_id, session_id = table
+    body = _move_from(session_id, campaign_id, VALEROS, VALEROS_START, "move to 4, 7")
+
+    with board_socket.websocket_connect(
+        f"/ws/boards/{session_id}", subprotocols=ws_subprotocols(DM)
+    ) as ws:
+        ws.receive_json()
+        spoken = gateway.post(SPEAK_PATH, json=body, headers=bearer(DM))
+        assert spoken.status_code == 200, spoken.text
+        preview = ws.receive_json()
+
+    assert (preview["preview"]["to_x"], preview["preview"]["to_y"]) == (4, 7)
+
+
+def test_worker_named_target_uses_the_neighbour_not_the_target_cell(
+    gateway: TestClient,
+    table: tuple[str, str],
+    worker_loopback: str,
+    board_socket: TestClient,
+) -> None:
+    """The worker sets the target cell to the token's own cell. The Watcher stages a neighbour."""
+    campaign_id, session_id = table
+    body = _move_from(session_id, campaign_id, VALEROS, VALEROS_START, GOBLIN_NAME_SPEECH)
+
+    with board_socket.websocket_connect(
+        f"/ws/boards/{session_id}", subprotocols=ws_subprotocols(DM)
+    ) as ws:
+        ws.receive_json()
+        spoken = gateway.post(SPEAK_PATH, json=body, headers=bearer(DM))
+        assert spoken.status_code == 200, spoken.text
+        preview = ws.receive_json()
+
+    assert (preview["preview"]["to_x"], preview["preview"]["to_y"]) == (5, 1)
