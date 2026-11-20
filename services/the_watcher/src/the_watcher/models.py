@@ -121,6 +121,9 @@ class WhisperListResponse(BaseModel):
     total: int = 0
     page: int = 1
     limit: int = 20
+    # The engine of the narration port: `inference_worker`, or `none` when no language model
+    # is configured. The DM whisper bar shows the no-model state from it (TASK-0949).
+    narration_engine: str
 
 
 class WhisperCreateRequest(BaseModel):
@@ -152,6 +155,9 @@ class WhisperGenerateRequest(BaseModel):
     scene_context: str = ""
     location_type: str = "dungeon"
     threat_level: str = "medium"
+    tone: Literal["dark_fantasy", "epic_heroic", "tense_mystery", "whimsical", "gritty"] = (
+        "tense_mystery"
+    )
 
 
 class PendingAction(BaseModel):

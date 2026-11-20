@@ -5,6 +5,9 @@ All assertions and setup operate strictly through public frontdoors:
 - Public HTTP REST API whisper endpoints in the_watcher.main
 - Object-level Zanzibar authorization via SpiceDB schema (dungeon_master relation)
 - Microfrontend manifest exposure
+
+Whisper generation through the narration port is covered by
+`tests/test_blackbox_dm_whispers_model.py` (TASK-0949).
 """
 
 from __future__ import annotations
@@ -137,36 +140,6 @@ async def test_dm_whispers_creation_and_pagination(client: TestClient):
     )
     assert res_filter.status_code == 200
     assert res_filter.json()["whispers"][0]["whisper_type"] == "monster_tactics"
-
-
-@pytest.mark.asyncio
-async def test_dm_whispers_generation(client: TestClient):
-    """Verify automated whisper generation for scenes, tactics, and perception cues."""
-    spicedb: SpiceDBClient = get_spicedb_client()
-    campaign_id, session_id, dm_user = str(uuid4()), str(uuid4()), "dm_evelyn"
-    await spicedb.write_relationship(
-        resource_type="campaign",
-        resource_id=campaign_id,
-        relation="dungeon_master",
-        subject_type="user",
-        subject_id=dm_user,
-    )
-    await bind_session_to_campaign(session_id, campaign_id)
-
-    res_gen = client.post(
-        "/api/v1/watcher/whispers/generate",
-        json={
-            "session_id": session_id,
-            "campaign_id": campaign_id,
-            "scene_context": "Deep subterranean cave",
-            "threat_level": "hard",
-        },
-        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_user)}"},
-    )
-    assert res_gen.status_code == 200
-    whispers = res_gen.json()
-    assert len(whispers) >= 3
-    assert any(w["whisper_type"] == "monster_tactics" for w in whispers)
 
 
 def test_watcher_ui_manifest_includes_whisper_bar(client: TestClient):
