@@ -142,3 +142,17 @@ The check reads the `@property` declarations of each Runefoble element in `front
 
 The check also reads `test/` and `test-dom/` in each UI package. It skips `data-*` and `aria-*` attributes, and attributes that match no property. It cannot see a template that starts with an interpolation before the first SVG element. In a DOM test, assert `namespaceURI` and `getBBox()` of the SVG element (see `services/campaign_lore/ui/test-dom/atlas-svg-layers.test.ts`).
 
+
+### 11. Do Not Let a Parent Render Put Back Old Input Data
+
+Lit commits a property binding with an object or array value on every render of the parent, also when the value is the same object. Only a primitive value is compared with the last value. If an element changes its own copy of an input array (for example, `<runefoble-board>` moves a token when a socket frame arrives), the next render of the parent puts the old array back over the change.
+
+When the parent owns only the first value and the element owns the live state, bind through `guard`:
+
+```ts
+import { guard } from 'lit/directives/guard.js';
+
+html`<runefoble-board .tokens=${guard([app.tokens], () => app.tokens)}></runefoble-board>`;
+```
+
+`guard` commits the value only when `app.tokens` is a different object, that is, when a new server read replaces it. Test it in a DOM test: render the parent, change the element property, render the parent again with the same data, and assert that the element keeps its value (see `frontend/test-dom/session-board-area.test.ts`). TASK-0938 found this defect: a chronicle frame rendered the App Shell again, and the board token went back to its old cell.

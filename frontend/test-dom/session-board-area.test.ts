@@ -60,3 +60,39 @@ describe('session board area', () => {
     expect(root.querySelector('.board-loading')).toBeNull();
   });
 });
+
+describe('board tokens across App Shell renders (TASK-0938)', () => {
+  const read = [{ id: 'tok-valeros', name: 'Valeros the Bold', x: 0, y: 0 }];
+
+  it('a render with the same board read keeps a move that the board applied from its socket', () => {
+    const app = sessionApp('board');
+    (app as { tokens: unknown }).tokens = read;
+    host = document.createElement('div');
+    document.body.append(host);
+    render(renderSessionActive(app), host);
+    const board = host.querySelector('runefoble-board') as unknown as { tokens: unknown[] };
+    const moved = [{ ...read[0], x: 3, y: 3 }];
+    board.tokens = moved;
+
+    // Another shell change, for example a chronicle frame, renders the view again.
+    render(renderSessionActive(app), host);
+
+    expect(board.tokens).toBe(moved);
+  });
+
+  it('a new board read replaces the board tokens', () => {
+    const app = sessionApp('board');
+    (app as { tokens: unknown }).tokens = read;
+    host = document.createElement('div');
+    document.body.append(host);
+    render(renderSessionActive(app), host);
+    const board = host.querySelector('runefoble-board') as unknown as { tokens: unknown[] };
+    board.tokens = [{ ...read[0], x: 3, y: 3 }];
+
+    const nextRead = [{ ...read[0], x: 5, y: 5 }];
+    (app as { tokens: unknown }).tokens = nextRead;
+    render(renderSessionActive(app), host);
+
+    expect(board.tokens).toBe(nextRead);
+  });
+});
