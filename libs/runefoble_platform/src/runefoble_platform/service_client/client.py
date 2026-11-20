@@ -83,15 +83,21 @@ class ServiceClient:
         service: str,
         base_url: str,
         service_credential: str,
+        transport: httpx.AsyncBaseTransport | None = None,
     ) -> None:
         if not service_credential.strip():
             raise ValueError(f"Service client {service} needs a service credential (ADR-0015 e)")
         self.service = service
         self._base_url = base_url.rstrip("/")
         self._service_credential = service_credential
-        self._http = httpx.AsyncClient(limits=httpx.Limits(keepalive_expiry=KEEPALIVE_EXPIRY_S))
+        # `transport` lets a test route calls to an in-process app. Production passes none.
+        self._http = httpx.AsyncClient(
+            transport=transport, limits=httpx.Limits(keepalive_expiry=KEEPALIVE_EXPIRY_S)
+        )
         # Keeps no idle connection, so each retry opens a new one.
-        self._fresh_http = httpx.AsyncClient(limits=httpx.Limits(max_keepalive_connections=0))
+        self._fresh_http = httpx.AsyncClient(
+            transport=transport, limits=httpx.Limits(max_keepalive_connections=0)
+        )
 
     async def send(
         self,

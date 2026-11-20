@@ -70,7 +70,7 @@ A row whose owner path has a segment that the owner cannot encode (`.`, `..`, or
 ## `ServiceClient`
 
 ```python
-ServiceClient(service: str, base_url: str, service_credential: str)
+ServiceClient(service: str, base_url: str, service_credential: str, transport: httpx.AsyncBaseTransport | None = None)
 ```
 
 | Argument | Meaning |
@@ -78,6 +78,7 @@ ServiceClient(service: str, base_url: str, service_credential: str)
 | `service` | Service name. It appears in errors and in the gateway error body (`upstream`). |
 | `base_url` | Base URL of the owning service. A trailing `/` is removed. |
 | `service_credential` | Service credential (ADR-0015 e). It is sent on every call in the `X-Runefoble-Service-Credential` header. The constructor raises `ValueError` when it is blank. |
+| `transport` | Optional HTTP transport. Tests pass a transport here to call an in-process app. Production code omits it. Both clients of the instance use it. |
 
 Each instance owns one pooled `httpx.AsyncClient`, and one `httpx.AsyncClient` that keeps no idle connection, for retries. Call `await aclose()` when the instance is no longer needed. It closes both.
 
