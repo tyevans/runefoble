@@ -955,3 +955,5 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 947. **TASK-0941 (Proposed)**: [`0941-reaction-prompt-receives-real-reactions.md`](proposed/0941-reaction-prompt-receives-real-reactions.md) — The Reaction Prompt Receives Real Reactions From the Session
 948. **TASK-0968 (Proposed)**: [`0968-dice-roll-name-comes-from-the-bound-character.md`](proposed/0968-dice-roll-name-comes-from-the-bound-character.md) — The Dice Roll Name Comes From the Caller's Bound Character, Not From the Client
 949. **TASK-0969 (Proposed)**: [`0969-stand-in-guardrails-are-enforced-on-model-output.md`](proposed/0969-stand-in-guardrails-are-enforced-on-model-output.md) — Stand-In Guardrails Are Enforced on the Model Decision, Not Only Written in the Prompt
+950. **TASK-0970 (Proposed)**: [`0970-helm-values-file-under-500-lines.md`](proposed/0970-helm-values-file-under-500-lines.md) — The Helm Values File Is Split Below 500 Lines
+951. **TASK-0971 (Proposed)**: [`0971-named-token-move-reads-the-board-once.md`](proposed/0971-named-token-move-reads-the-board-once.md) — A Spoken Move to a Named Token Reads the Board Once and Fits the Gateway Budget
