@@ -240,6 +240,16 @@ export class AppDataService {
   }
 
   /**
+   * Vetoes one pending AI action through the gateway veto route (TASK-0949). The Watcher checks
+   * DM permission. A 200 reply holds `status: "vetoed"`, and the action does not run.
+   */
+  async vetoWatcherAction(veto: { sessionId: string; campaignId: string; actionId: string; reason: string }): Promise<DataResult<{ status: string }>> {
+    const body = JSON.stringify({ session_id: veto.sessionId, campaign_id: veto.campaignId, action_id: veto.actionId, reason: veto.reason });
+    const res = await this.request<{ status: string }>(`${this.apiBase}/watcher/veto`, { method: 'POST', body });
+    return res.ok ? requireFields(res.data, { status: isString }) : res;
+  }
+
+  /**
    * Reads the session state: its status (`lobby`, `active` or `ended`, TASK-0953) and every seated
    * participant with its stand-in state (TASK-0974). The session route reads it on every load.
    */

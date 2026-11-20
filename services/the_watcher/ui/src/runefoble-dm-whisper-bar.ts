@@ -1,68 +1,59 @@
+/**
+ * DM co-pilot whisper bar (TASK-0093, TASK-0838, TASK-0949).
+ *
+ * The bar starts with no whisper. When it has a session and a campaign id, it reads the DM
+ * whispers and the open action through the gateway. The DM asks for a whisper with
+ * "Ask for a whisper". The text comes only from the language model. When no model is configured,
+ * the bar says so and shows no invented text (ADR-0015, ADR-0022).
+ *
+ * Veto: the bar sends `action-vetoed`. The host posts the veto route, then calls
+ * `markActionVetoed` or `showActionError`. Approve and Edit send `action-approved` and
+ * `action-modified`.
+ */
+
+import { AuthConsumerController, actionFailureMessage } from '@runefoble/ui-core';
 import { LitElement, html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { dmWhisperBarStyles } from './runefoble-dm-whisper-bar.styles.ts';
 import { whisperAction } from './whisper-actions.ts';
+import { NO_NARRATION_ENGINE, fetchPendingActions, fetchWhispers, generateWhispers, openAction } from './whisper-bar-api.ts';
+import { renderInterceptor } from './whisper-bar-interceptor.template.ts';
+import type { ActionVetoedDetail, PendingActionItem, WhisperItem } from './whisper-bar-types.ts';
 
-export interface WhisperItem {
-  whisper_id: string;
-  whisper_type: 'atmospheric_hint' | 'monster_tactics' | 'passive_perception' | 'narrative_secret' | string;
-  content: string;
-  timestamp?: string;
-  metadata?: Record<string, unknown>;
-}
-
-export interface PendingActionItem {
-  action_id: string;
-  actor_name: string;
-  action_type: string;
-  description: string;
-  target?: string | null;
-  parameters?: Record<string, unknown>;
-  status?: string;
-  pause_window_ms?: number;
-}
+export const NO_MODEL_TEXT = 'No language model is configured for whispers.';
+const NARRATION_TAB = 'narration';
 
 @customElement('runefoble-dm-whisper-bar')
 export class RunefobleDmWhisperBar extends LitElement {
+  private readonly auth = new AuthConsumerController(this);
+
   @property({ type: String }) sessionId = '';
   @property({ type: String }) campaignId = '';
+  /** Gateway origin. Empty means the page origin. */
+  @property({ type: String }) apiBaseUrl = '';
   @property({ type: Number }) pauseWindowMs = 2000;
-
-  @property({ type: Array }) whispers: WhisperItem[] = [
-    {
-      whisper_id: 'whisp-1',
-      whisper_type: 'atmospheric_hint',
-      content: 'Damp cavern walls seep with glowing mineral salts that flicker when torches approach.',
-    },
-    {
-      whisper_id: 'whisp-2',
-      whisper_type: 'monster_tactics',
-      content: 'Goblin skirmishers prepare to disengage and flank squishy spellcasters.',
-    },
-    {
-      whisper_id: 'whisp-3',
-      whisper_type: 'passive_perception',
-      content: 'Passive Perception >= 14 spots the tripwire trap 10ft ahead.',
-    },
-  ];
-
+  @property({ type: Array }) whispers: WhisperItem[] = [];
   @property({ type: Object }) pendingAction: PendingActionItem | null = null;
+  /** Engine of the narration port, from the whisper list. `none` shows the no-model state. */
+  @property({ type: String }) narrationEngine = '';
 
   @state() private remainingMs = 2000;
   @state() private isEditing = false;
   @state() private editDescription = '';
   @state() private editTarget = '';
   @state() private activeTab = 'all';
+  @state() private loadError = '';
+  @state() private generateError = '';
+  @state() private actionError = '';
+  @state() private generating = false;
 
   private timerInterval: number | null = null;
+  private loadedScope = '';
 
   static styles = dmWhisperBarStyles;
 
   connectedCallback() {
     super.connectedCallback();
-    if (this.pendingAction) {
-      this.startCountdown();
-    }
     globalThis.addEventListener('runefoble:dm-whisper', this.onSessionDmWhisper);
   }
 
@@ -72,42 +63,93 @@ export class RunefobleDmWhisperBar extends LitElement {
     this.stopCountdown();
   }
 
+  /** The host's veto call succeeded. The action shows as vetoed and its countdown stops. */
+  public markActionVetoed(actionId: string): void {
+    if (this.pendingAction?.action_id !== actionId) return;
+    this.actionError = '';
+    this.pendingAction = { ...this.pendingAction, status: 'vetoed' };
+  }
+
+  /** The host's call for the open action failed. The bar shows the reason. */
+  public showActionError(message: string): void {
+    this.actionError = message;
+  }
+
   /** Session `dm_whisper` message (window event `runefoble:dm-whisper`): add the whisper to the bar. */
   private readonly onSessionDmWhisper = (e: Event): void => {
     const msg = (e as CustomEvent<Record<string, any>>).detail;
-    const whisper: WhisperItem = msg.whisper || {
-      whisper_id: msg.whisper_id || `whisp-${Date.now()}`,
-      whisper_type: msg.whisper_type || 'atmospheric_hint',
-      content: msg.content || msg.text || '',
-      timestamp: msg.timestamp || new Date().toLocaleTimeString(),
-    };
-    this.whispers = [...this.whispers, whisper];
-    if (msg.pendingAction) this.pendingAction = msg.pendingAction;
+    const whisper: WhisperItem | undefined = msg.whisper;
+    if (whisper && !this.whispers.some((w) => w.whisper_id === whisper.whisper_id)) {
+      this.whispers = [...this.whispers, whisper];
+    }
   };
 
-  updated(changedProperties: Map<string, unknown>) {
-    if (changedProperties.has('pendingAction')) {
-      if (this.pendingAction && this.pendingAction.status !== 'vetoed' && this.pendingAction.status !== 'approved') {
-        this.editDescription = this.pendingAction.description;
-        this.editTarget = this.pendingAction.target || '';
-        this.startCountdown();
-      } else {
-        this.stopCountdown();
-      }
+  updated(changed: Map<string, unknown>) {
+    if (changed.has('sessionId') || changed.has('campaignId') || changed.has('apiBaseUrl')) {
+      void this.loadSession();
+    }
+    if (changed.has('pendingAction')) this.onPendingActionChanged();
+  }
+
+  private scope() {
+    return { sessionId: this.sessionId, campaignId: this.campaignId };
+  }
+
+  private opts() {
+    return { apiBase: this.apiBaseUrl, auth: this.auth };
+  }
+
+  /** Reads the whispers and the open action once for each session. */
+  private async loadSession(): Promise<void> {
+    if (!this.sessionId || !this.campaignId) return;
+    const key = `${this.apiBaseUrl}|${this.sessionId}|${this.campaignId}`;
+    if (key === this.loadedScope) return;
+    this.loadedScope = key;
+    try {
+      const listed = await fetchWhispers(this.scope(), this.opts());
+      this.whispers = listed.whispers;
+      this.narrationEngine = listed.narration_engine;
+      this.pendingAction = openAction(await fetchPendingActions(this.scope(), this.opts()));
+      this.loadError = '';
+    } catch (err) {
+      this.loadError = actionFailureMessage(err, 'whisper request');
+    }
+  }
+
+  private async handleGenerate(): Promise<void> {
+    this.generating = true;
+    try {
+      const created = await generateWhispers(this.scope(), this.opts());
+      const known = new Set(this.whispers.map((w) => w.whisper_id));
+      this.whispers = [...this.whispers, ...created.filter((w) => !known.has(w.whisper_id))];
+      this.generateError = '';
+    } catch (err) {
+      this.generateError = actionFailureMessage(err, 'whisper request');
+    } finally {
+      this.generating = false;
+    }
+  }
+
+  private onPendingActionChanged() {
+    const action = this.pendingAction;
+    if (action && (action.status === undefined || action.status === 'pending' || action.status === 'modified')) {
+      this.editDescription = action.description;
+      this.editTarget = action.target || '';
+      this.startCountdown();
+    } else {
+      this.stopCountdown();
     }
   }
 
   private startCountdown() {
     this.stopCountdown();
-    const duration = this.pendingAction?.pause_window_ms || this.pauseWindowMs;
-    this.remainingMs = duration;
+    const total = this.pendingAction?.pause_window_ms || this.pauseWindowMs;
+    const expiresAt = this.pendingAction?.expires_at;
+    this.remainingMs = expiresAt ? Math.min(total, Math.max(0, expiresAt * 1000 - Date.now())) : total;
     const intervalStep = 100;
-
     this.timerInterval = window.setInterval(() => {
       this.remainingMs = Math.max(0, this.remainingMs - intervalStep);
-      if (this.remainingMs <= 0) {
-        this.stopCountdown();
-      }
+      if (this.remainingMs <= 0) this.stopCountdown();
     }, intervalStep);
   }
 
@@ -118,64 +160,58 @@ export class RunefobleDmWhisperBar extends LitElement {
     }
   }
 
+  private emit(name: string, detail: object) {
+    this.dispatchEvent(new CustomEvent(name, { detail, bubbles: true, composed: true }));
+  }
+
   private handleApprove() {
     if (!this.pendingAction) return;
     this.stopCountdown();
-    this.dispatchEvent(
-      new CustomEvent('action-approved', {
-        detail: { actionId: this.pendingAction.action_id },
-        bubbles: true,
-        composed: true,
-      })
-    );
+    this.emit('action-approved', { actionId: this.pendingAction.action_id });
   }
 
   private handleVeto() {
     if (!this.pendingAction) return;
+    const detail: ActionVetoedDetail = {
+      actionId: this.pendingAction.action_id,
+      reason: 'DM one-click veto',
+      sessionId: this.sessionId,
+      campaignId: this.campaignId,
+    };
+    this.emit('action-vetoed', detail);
+  }
+
+  private handleSaveEdit() {
+    if (!this.pendingAction) return;
+    this.isEditing = false;
     this.stopCountdown();
-    this.dispatchEvent(
-      new CustomEvent('action-vetoed', {
-        detail: { actionId: this.pendingAction.action_id, reason: 'DM one-click veto' },
-        bubbles: true,
-        composed: true,
-      })
-    );
+    this.emit('action-modified', {
+      actionId: this.pendingAction.action_id,
+      description: this.editDescription,
+      target: this.editTarget,
+      autoApprove: true,
+    });
   }
 
   /** Ask the host to send an audience narration to the table (TASK-0838). The host posts the DM route. */
   private handleSendNarration(w: WhisperItem) {
-    this.dispatchEvent(
-      new CustomEvent('narration-send', {
-        detail: {
-          whisperId: w.whisper_id,
-          text: w.content,
-          sessionId: this.sessionId,
-          campaignId: this.campaignId,
-        },
-        bubbles: true,
-        composed: true,
-      })
-    );
+    this.emit('narration-send', { whisperId: w.whisper_id, text: w.content, sessionId: this.sessionId, campaignId: this.campaignId });
   }
 
   private renderWhisper(w: WhisperItem) {
     const action = whisperAction(w);
     return html`
-      <div class="whisper-card">
+      <div class="whisper-card" data-whisper-type=${w.whisper_type}>
         <div class="whisper-header">
-          <span class="badge badge-whisper-type">${w.whisper_type.replace('_', ' ')}</span>
+          <span class="badge badge-whisper-type">${w.whisper_type.replaceAll('_', ' ')}</span>
         </div>
         ${action === 'notice'
           ? html`<div class="whisper-notice" role="status">${w.content}</div>`
           : html`<div class="whisper-content">${w.content}</div>`}
         ${action === 'send'
-          ? html`
-              <div class="whisper-actions">
-                <button class="rf-btn btn-approve" @click=${() => this.handleSendNarration(w)}>
-                  Send to table
-                </button>
-              </div>
-            `
+          ? html`<div class="whisper-actions">
+              <button class="rf-btn btn-approve" @click=${() => this.handleSendNarration(w)}>Send to table</button>
+            </div>`
           : action === 'sent'
             ? html`<div class="whisper-actions"><span class="sent-badge">Sent to table</span></div>`
             : ''}
@@ -183,158 +219,76 @@ export class RunefobleDmWhisperBar extends LitElement {
     `;
   }
 
-  private handleStartEdit() {
-    if (!this.pendingAction) return;
-    this.isEditing = true;
-    this.editDescription = this.pendingAction.description;
-    this.editTarget = this.pendingAction.target || '';
+  private renderModelState() {
+    if (this.narrationEngine === NO_NARRATION_ENGINE) {
+      return html`<div class="bar-status no-model" role="status">${NO_MODEL_TEXT}</div>`;
+    }
+    if (!this.sessionId || !this.campaignId) return '';
+    return html`
+      <div class="whisper-actions">
+        <button class="rf-btn btn-generate" ?disabled=${this.generating} @click=${() => this.handleGenerate()}>
+          ${this.generating ? 'Asking the model...' : 'Ask for a whisper'}
+        </button>
+      </div>
+      ${this.generateError ? html`<div class="bar-error" role="alert">${this.generateError}</div>` : ''}
+    `;
   }
 
-  private handleCancelEdit() {
-    this.isEditing = false;
-  }
-
-  private handleSaveEdit(autoApprove = true) {
-    if (!this.pendingAction) return;
-    this.isEditing = false;
-    this.stopCountdown();
-    this.dispatchEvent(
-      new CustomEvent('action-modified', {
-        detail: {
-          actionId: this.pendingAction.action_id,
-          description: this.editDescription,
-          target: this.editTarget,
-          autoApprove,
-        },
-        bubbles: true,
-        composed: true,
-      })
-    );
+  private renderTabs() {
+    const tab = (id: string, label: string) => html`
+      <button class="tab-btn ${this.activeTab === id ? 'active' : ''}" @click=${() => (this.activeTab = id)}>${label}</button>
+    `;
+    return html`<div class="filter-tabs">${tab('all', 'All')}${tab(NARRATION_TAB, 'Narration')}</div>`;
   }
 
   render() {
-    const totalDuration = this.pendingAction?.pause_window_ms || this.pauseWindowMs;
-    const progressPercent = totalDuration > 0 ? (this.remainingMs / totalDuration) * 100 : 0;
-
-    const filteredWhispers =
-      this.activeTab === 'all'
-        ? this.whispers
-        : this.whispers.filter((w) => w.whisper_type === this.activeTab);
-
+    const shown = this.activeTab === 'all' ? this.whispers : this.whispers.filter((w) => w.whisper_type === this.activeTab);
+    const open = this.pendingAction && this.pendingAction.status !== 'vetoed';
     return html`
       <div class="header">
         <div class="title-group">
           <h3>DM Co-Pilot Whisper Bar</h3>
           <span class="badge badge-dm">🔒 DM Secure Channel</span>
         </div>
-        ${this.pendingAction
-          ? html`<span class="badge badge-pending">⚡ Action Intercepted</span>`
-          : ''}
+        ${open ? html`<span class="badge badge-pending">⚡ Action Intercepted</span>` : ''}
       </div>
 
+      ${this.loadError ? html`<div class="bar-error" role="alert">${this.loadError}</div>` : ''}
+
       ${this.pendingAction
-        ? html`
-            <div class="interceptor-box">
-              <div class="interceptor-header">
-                <div class="interceptor-title">
-                  ⚠️ AI Action Intercepted (${Math.ceil(this.remainingMs / 1000)}s pause window)
-                </div>
-                <span class="badge badge-whisper-type">${this.pendingAction.action_type}</span>
-              </div>
-
-              <div class="countdown-bar">
-                <div class="countdown-fill" style="width: ${progressPercent}%;"></div>
-              </div>
-
-              <div class="action-details">
-                <span class="action-actor">${this.pendingAction.actor_name}:</span>
-                ${this.pendingAction.description}
-                ${this.pendingAction.target
-                  ? html` &rarr; <strong>Target: ${this.pendingAction.target}</strong>`
-                  : ''}
-              </div>
-
-              ${this.isEditing
-                ? html`
-                    <div class="edit-form">
-                      <div class="form-row">
-                        <label>Description</label>
-                        <input
-                          type="text"
-                          .value=${this.editDescription}
-                          @input=${(e: Event) =>
-                            (this.editDescription = (e.target as HTMLInputElement).value)}
-                        />
-                      </div>
-                      <div class="form-row">
-                        <label>Target</label>
-                        <input
-                          type="text"
-                          .value=${this.editTarget}
-                          @input=${(e: Event) =>
-                            (this.editTarget = (e.target as HTMLInputElement).value)}
-                        />
-                      </div>
-                      <div class="action-controls" style="margin-top: 6px;">
-                        <button class="rf-btn btn-approve" @click=${() => this.handleSaveEdit(true)}>
-                          Save & Approve
-                        </button>
-                        <button class="rf-btn" @click=${this.handleCancelEdit}>Cancel</button>
-                      </div>
-                    </div>
-                  `
-                : html`
-                    <div class="action-controls">
-                      <button class="rf-btn btn-approve" @click=${this.handleApprove}>Approve</button>
-                      <button class="rf-btn btn-veto" @click=${this.handleVeto}>Veto</button>
-                      <button class="rf-btn btn-edit" @click=${this.handleStartEdit}>
-                        Edit Intent
-                      </button>
-                    </div>
-                  `}
-            </div>
-          `
+        ? renderInterceptor(
+            {
+              action: this.pendingAction,
+              remainingMs: this.remainingMs,
+              totalMs: this.pendingAction.pause_window_ms || this.pauseWindowMs,
+              isEditing: this.isEditing,
+              editDescription: this.editDescription,
+              editTarget: this.editTarget,
+              actionError: this.actionError,
+            },
+            {
+              approve: () => this.handleApprove(),
+              veto: () => this.handleVeto(),
+              startEdit: () => { this.isEditing = true; },
+              cancelEdit: () => { this.isEditing = false; },
+              saveEdit: () => this.handleSaveEdit(),
+              editDescription: (v) => { this.editDescription = v; },
+              editTarget: (v) => { this.editTarget = v; },
+            },
+          )
         : ''}
 
       <div class="whisper-section">
         <div class="section-title">
           <span>Private Narrative Whispers</span>
-          <span style="font-size: 0.75rem; color: var(--rf-text-muted);">${filteredWhispers.length} Suggestions</span>
+          <span style="font-size: 0.75rem; color: var(--rf-text-muted);">${shown.length} Suggestions</span>
         </div>
-
-        <div class="filter-tabs">
-          <button
-            class="tab-btn ${this.activeTab === 'all' ? 'active' : ''}"
-            @click=${() => (this.activeTab = 'all')}
-          >
-            All
-          </button>
-          <button
-            class="tab-btn ${this.activeTab === 'atmospheric_hint' ? 'active' : ''}"
-            @click=${() => (this.activeTab = 'atmospheric_hint')}
-          >
-            Atmosphere
-          </button>
-          <button
-            class="tab-btn ${this.activeTab === 'monster_tactics' ? 'active' : ''}"
-            @click=${() => (this.activeTab = 'monster_tactics')}
-          >
-            Tactics
-          </button>
-          <button
-            class="tab-btn ${this.activeTab === 'passive_perception' ? 'active' : ''}"
-            @click=${() => (this.activeTab = 'passive_perception')}
-          >
-            Perception
-          </button>
-        </div>
-
+        ${this.renderModelState()}
+        ${this.renderTabs()}
         <div class="whisper-list">
-          ${filteredWhispers.length === 0
-            ? html`<div class="empty-state">No whispers in this category.</div>`
-            : filteredWhispers.map(
-                (w) => this.renderWhisper(w)
-              )}
+          ${shown.length === 0
+            ? html`<div class="empty-state">No whispers yet.</div>`
+            : shown.map((w) => this.renderWhisper(w))}
         </div>
       </div>
     `;
