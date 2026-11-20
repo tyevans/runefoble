@@ -1,0 +1,61 @@
+# Full image references for a hosted render (TASK-0960). Pass this file with -f after the
+# hosted values file. Every image must name a registry host and a digest. The hosted guard
+# (templates/hosted-guard-images.yaml) fails the render otherwise.
+#
+# Third-party images carry the digest of their current tag. Re-resolve it when you change a tag.
+# Runefoble images hold REPLACE-ME until `make images-push IMAGE_REGISTRY=<host>/<path>` records
+# the pushed digest for each image. The local (Kind) render does not read this file.
+postgres:
+  image: docker.io/pgvector/pgvector:pg16@sha256:484e838076e04939d27d3e176e91c86eea96236126023be8d3059761122e579f
+redis:
+  image: docker.io/library/redis:7.2-alpine@sha256:2f66de68111e64c3927859f158f8e666066dae2b97d9f82770a6f37a5aa1c335
+zitadel:
+  image: ghcr.io/zitadel/zitadel:v2.54.0@sha256:d669d8da00f6b40d1391bbbfa5cc8fee1eb65d6eb8df08c6182f8c2bd4c3a299
+spicedb:
+  image: docker.io/authzed/spicedb:v1.34.0@sha256:c30925de3a0bace7cdd8c612aeee73a6e0e457af44c57197709b98b7a0488e5b
+  schemaJob:
+    image: docker.io/authzed/zed:v0.25.0@sha256:a466fdf7a35d2fdd6145f60c6dc279ffa7139c2a2549341abfed9af7eed2e0ef
+openpanel:
+  image: docker.io/lindesvard/openpanel-dashboard:2.3.0@sha256:b773cf864454a0ec89b2a133b48bf06202880ed650a75cc2f1f5c87aaed1cffa
+mailpit:
+  image: docker.io/axllent/mailpit:v1.21.8@sha256:81370195cd4a0eab9604d17c2617a7525b0486f9365555253b6c5376c6350f1a
+observability:
+  otelCollector:
+    image: docker.io/otel/opentelemetry-collector-contrib:0.100.0@sha256:cea61bd39d318b3ec7664794f6be9ed0cce9321059a08b4ec5d3b8d310a4b609
+  loki:
+    image: docker.io/grafana/loki:3.0.0@sha256:757b5fadf816a1396f1fea598152947421fa49cb8b2db1ddd2a6e30fae003253
+  grafana:
+    image: docker.io/grafana/grafana:11.0.0@sha256:0dc5a246ab16bb2c38a349fb588174e832b4c6c2db0981d0c3e6cd774ba66a54
+swaggerUI:
+  image: docker.io/swaggerapi/swagger-ui:v5.17.14@sha256:cb968cc70260c6027b44f227d054a0f12381736e9ab628ef6b6070a19fdf2172
+services:
+  gatewayApi:
+    image: REPLACE-ME/runefoble/gateway-api:0.1.0@sha256:REPLACE-ME
+  theWatcher:
+    image: REPLACE-ME/runefoble/the-watcher:0.1.0@sha256:REPLACE-ME
+  boardState:
+    image: REPLACE-ME/runefoble/board-state:0.1.0@sha256:REPLACE-ME
+  characterSheet:
+    image: REPLACE-ME/runefoble/character-sheet:0.1.0@sha256:REPLACE-ME
+  gameSession:
+    image: REPLACE-ME/runefoble/game-session:0.1.0@sha256:REPLACE-ME
+  voiceAgent:
+    image: REPLACE-ME/runefoble/voice-agent:0.1.0@sha256:REPLACE-ME
+  campaignLore:
+    image: REPLACE-ME/runefoble/campaign-lore:0.1.0@sha256:REPLACE-ME
+  rulesCompendium:
+    image: REPLACE-ME/runefoble/rules-compendium:0.1.0@sha256:REPLACE-ME
+  assetForge:
+    image: REPLACE-ME/runefoble/asset-forge:0.1.0@sha256:REPLACE-ME
+  soundscape:
+    image: REPLACE-ME/runefoble/soundscape:0.1.0@sha256:REPLACE-ME
+  audienceStudio:
+    image: REPLACE-ME/runefoble/audience-studio:0.1.0@sha256:REPLACE-ME
+  campaignAnalytics:
+    image: REPLACE-ME/runefoble/campaign-analytics:0.1.0@sha256:REPLACE-ME
+  inferenceWorker:
+    image: REPLACE-ME/runefoble/inference-worker:0.1.0@sha256:REPLACE-ME
+  gatewayMcp:
+    image: REPLACE-ME/runefoble/gateway-mcp:0.1.0@sha256:REPLACE-ME
+frontend:
+  image: REPLACE-ME/runefoble/frontend:0.1.0@sha256:REPLACE-ME

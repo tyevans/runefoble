@@ -12,12 +12,18 @@
 #
 # `make images` runs this build for every row of PYTHON_IMAGE_ROWS in the Makefile.
 
+# Base images are pinned by digest (TASK-0960). Change a version and its digest together. The
+# digest selects the image, so the tag only documents it.
 ARG PYTHON_VERSION=3.13
+# python:3.13-slim
+ARG PYTHON_DIGEST=sha256:e48f59cdba69a3cbd9ed2cf0f348d90d45a8d350d98134cf1070bc106ee9ed90
 ARG UV_VERSION=0.12.21
+# ghcr.io/astral-sh/uv:0.12.21
+ARG UV_DIGEST=sha256:a7aed3216253ee804de3e2d8afa5073baa1a177335345d43845cd4165e43b711
 
-FROM ghcr.io/astral-sh/uv:${UV_VERSION} AS uv
+FROM ghcr.io/astral-sh/uv:${UV_VERSION}@${UV_DIGEST} AS uv
 
-FROM python:${PYTHON_VERSION}-slim
+FROM python:${PYTHON_VERSION}-slim@${PYTHON_DIGEST}
 
 ARG SERVICE
 ARG APP
