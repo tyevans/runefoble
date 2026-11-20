@@ -1,0 +1,124 @@
+{{- /*
+Daily PostgreSQL backup to an S3-compatible bucket outside the cluster (TASK-0961, PRD-0025).
+The chart renders this CronJob only when backup.enabled is true. The default is off, so the local
+render does not change. The hosted example turns it on.
+
+Two containers share the emptyDir /backup, so no image needs both a shell and an S3 client:
+- initContainer `dump` (PostgreSQL image, has a shell): writes one custom-format dump per database
+  under /backup/<UTC date>/, and encrypts each dump when backup.encryption.enabled is true.
+- container `upload` (S3 client image, no shell): copies /backup/ to bucket/postgres/. The object
+  keys then look like postgres/<UTC date>/<database>.dump.
+
+The credentials come only from the Secret that backup.credentialsSecret names (TASK-0959). The
+Job never prints them. The chart does not delete old objects: the bucket lifecycle rule does that
+(see docs/reference/hosted-profile.md).
+*/ -}}
+{{- $backup := .Values.backup | default (dict) -}}
+{{- if eq (toString $backup.enabled) "true" -}}
+{{- $secret := required "backup.credentialsSecret must name a Secret when backup.enabled is true" $backup.credentialsSecret -}}
+{{- $bucket := required "backup.bucket must be set when backup.enabled is true" $backup.bucket -}}
+{{- $endpoint := required "backup.endpoint must be set when backup.enabled is true" $backup.endpoint -}}
+{{- $image := required "backup.image must be set when backup.enabled is true" $backup.image -}}
+{{- $schedule := $backup.schedule | default "17 2 * * *" -}}
+{{- $scheme := regexFind "^https?" $endpoint -}}
+{{- if not $scheme -}}
+{{- fail (printf "backup.endpoint must start with http:// or https://. Found: %s" $endpoint) -}}
+{{- end -}}
+{{- $host := regexReplaceAll "^https?://" $endpoint "" | trimSuffix "/" -}}
+{{- $encryption := $backup.encryption | default (dict) -}}
+{{- $encrypt := eq (toString $encryption.enabled) "true" -}}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: postgres-backup
+  labels:
+    app: postgres-backup
+spec:
+  schedule: {{ $schedule | quote }}
+  # A slow run blocks the next one. Two dumps never write the same bucket prefix at once.
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: {{ $backup.successfulJobsHistoryLimit | default 3 }}
+  failedJobsHistoryLimit: {{ $backup.failedJobsHistoryLimit | default 3 }}
+  jobTemplate:
+    spec:
+      backoffLimit: {{ $backup.backoffLimit | default 3 }}
+      template:
+        metadata:
+          labels:
+            app: postgres-backup
+        spec:
+          restartPolicy: OnFailure
+          automountServiceAccountToken: false
+          initContainers:
+            - name: dump
+              image: {{ .Values.postgres.image | quote }}
+              command:
+                - /bin/bash
+                - -ec
+                - |
+                  DATE="$(date -u +%Y-%m-%d)"
+                  DIR="/backup/${DATE}"
+                  mkdir -p "$DIR"
+                  DATABASES="$(psql -At -v ON_ERROR_STOP=1 -d postgres -c "SELECT datname FROM pg_database WHERE datallowconn AND NOT datistemplate ORDER BY datname")"
+                  while read -r db; do
+                    [ -n "$db" ] || continue
+                  {{- if $encrypt }}
+                    pg_dump --format=custom --no-owner --dbname="$db" | openssl enc -aes-256-cbc -pbkdf2 -salt -pass env:BACKUP_ENCRYPTION_PASSPHRASE -out "$DIR/$db.dump.enc"
+                  {{- else }}
+                    pg_dump --format=custom --no-owner --dbname="$db" --file="$DIR/$db.dump"
+                  {{- end }}
+                    echo "dumped database $db"
+                  done <<< "$DATABASES"
+                  echo "backup-object postgres/${DATE}"
+              env:
+                - name: PGHOST
+                  value: postgres
+                - name: PGPORT
+                  value: {{ .Values.postgres.port | quote }}
+                - name: PGUSER
+                  value: {{ .Values.postgres.username | quote }}
+                {{- include "runefoble.secretEnv" (dict "root" $ "name" "PGPASSWORD" "key" "postgres-password") | nindent 16 }}
+                {{- if $encrypt }}
+                - name: BACKUP_ENCRYPTION_PASSPHRASE
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ $secret | quote }}
+                      key: encryption-passphrase
+                {{- end }}
+              volumeMounts:
+                - name: backup
+                  mountPath: /backup
+          containers:
+            - name: upload
+              image: {{ $image | quote }}
+              args:
+                - --config-dir
+                - /tmp/mc
+                - cp
+                - --recursive
+                - /backup/
+                - {{ printf "backup/%s/postgres/" $bucket | quote }}
+              env:
+                - name: BACKUP_ACCESS_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ $secret | quote }}
+                      key: access-key
+                - name: BACKUP_SECRET_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ $secret | quote }}
+                      key: secret-key
+                - name: MC_HOST_backup
+                  value: {{ printf "%s://$(BACKUP_ACCESS_KEY):$(BACKUP_SECRET_KEY)@%s" $scheme $host | quote }}
+              volumeMounts:
+                - name: backup
+                  mountPath: /backup
+                - name: tmp
+                  mountPath: /tmp
+          volumes:
+            - name: backup
+              emptyDir: {}
+            - name: tmp
+              emptyDir: {}
+{{- end -}}

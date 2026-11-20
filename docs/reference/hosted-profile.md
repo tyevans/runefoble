@@ -53,6 +53,51 @@ An unset key that the guard reads also fails the render. The guard never takes a
 | `ingress.tls.clusterIssuer` | `REPLACE-ME` | Required with `certManager`. Fails on `REPLACE-ME`. Name of a ClusterIssuer that you install. |
 | `ingress.tls.secretName` | `""` | Required with `existingSecret`. Fails on `REPLACE-ME`. Name of a `kubernetes.io/tls` Secret that you create. |
 | `ingress.httpsRedirect` | `true` | Fails unless `true`. Plain HTTP answers 301 to HTTPS. See [TLS and HTTP redirect rules](ports-and-endpoints.md#tls-and-http-redirect-rules-hosted). |
+| `backup.enabled` | `true` | Fails unless `true`. A hosted release needs the daily backup. Source: `templates/hosted-guard-backup.yaml`. |
+| `backup.endpoint` | `https://REPLACE-ME` | Fails unless it starts with `https://`. Fails on `REPLACE-ME`, `localhost`, or a `svc.cluster.local` host. The bucket must sit outside the cluster. |
+| `backup.bucket` | `REPLACE-ME` | Fails on `REPLACE-ME`. |
+| `backup.credentialsSecret` | `runefoble-backup-credentials` | Fails on `REPLACE-ME`. The Secret holds `access-key` and `secret-key`. See [`hosted-secrets.md`](hosted-secrets.md). |
+| `backup.image` | Chainguard MinIO client, pinned by digest | Fails on `REPLACE-ME`. The client copies the dumps. It needs no shell. |
+| `restore.objectPrefix` | `""` | Fails on `REPLACE-ME` when `restore.enabled` is `true`. Required when restore is on. |
+
+## PostgreSQL backup and restore (TASK-0961)
+
+The chart runs one backup CronJob, `postgres-backup`, when `backup.enabled` is `true`. The default
+is `false`, so the local render holds no backup object. The hosted example turns it on.
+
+| Value | Default | Meaning |
+|---|---|---|
+| `backup.schedule` | `17 2 * * *` | Cron schedule, in UTC. The Job runs once a day. |
+| `backup.endpoint` | none | HTTPS endpoint of an S3-compatible store outside the cluster. |
+| `backup.bucket` | none | Bucket. The dumps go under `postgres/<UTC date>/`. |
+| `backup.credentialsSecret` | none | Secret with `access-key` and `secret-key`. Add `encryption-passphrase` when encryption is on. |
+| `backup.image` | none | S3 client image, pinned by digest. |
+| `backup.encryption.enabled` | `false` | When `true`, each dump is encrypted with AES-256-CBC (PBKDF2). The key is `encryption-passphrase`. |
+| `backup.retentionDays` | `30` in the example | Documentation only. The bucket lifecycle rule enforces the period. The chart never deletes an object. |
+
+Each run makes one custom-format `pg_dump` for each database that accepts connections. The dump
+reads the `postgres` service and the `postgres-password` key. The Job ends by it logging
+`backup-object postgres/<date>`. That prefix names the run. The `concurrencyPolicy` is `Forbid`.
+
+Start a run on demand with `kubectl create job --from=cronjob/postgres-backup <name>`.
+
+### Restore
+
+The restore Job `postgres-restore` renders only when `restore.enabled` is `true`. It is a
+post-install hook, so it runs once, for a fresh install. It never runs on upgrade.
+
+1. Set `restore.enabled: true` and `restore.objectPrefix` to the logged prefix, for example `postgres/2026-11-18`.
+2. Install the release into an empty namespace, with the same credentials Secret and the same backup values.
+3. The Job downloads the prefix. It waits for PostgreSQL, decrypts any `.enc` file, and runs `pg_restore --clean --if-exists` for each dump. The dump name is the database name.
+4. Restart the services after the Job completes, so each service reads the restored rows.
+
+A restore replaces the objects of every dumped database. Run it only into a fresh release. The
+runbook (TASK-0965) holds the operator steps and the lifecycle rule.
+
+### Lifecycle rule (operator)
+
+Configure a bucket lifecycle rule that expires objects under `postgres/` after `backup.retentionDays`.
+The chart does not delete dumps.
 
 ## Development routes and the analytics decision (D6)
 

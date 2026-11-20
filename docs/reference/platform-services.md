@@ -29,6 +29,7 @@ Runefoble is designed around a Kubernetes-first microservices topology deployed 
 ### 1. PostgreSQL (Relational Datastore & Event Persistence)
 - **Role**: Durable persistence for events (`eventsource-py`), projections, and downstream service databases.
 - **Initialization**: ConfigMap `/docker-entrypoint-initdb.d/init-multidb.sh` automatically provisions dedicated application and platform databases upon container startup with permissions granted to the default user (`runefoble_user`).
+- **Backup and restore**: A hosted release runs a daily backup CronJob, `postgres-backup`, to an S3-compatible bucket outside the cluster (`backup.enabled`). The local render holds no backup object. The restore Job `postgres-restore` is off by default. See [`hosted-profile.md`](hosted-profile.md#postgresql-backup-and-restore-task-0961).
 - **Storage**: The Helm chart runs PostgreSQL as a StatefulSet named `postgres`. Its data claim `data` mounts at `/var/lib/postgresql/data`. The data directory is `pgdata` inside the claim (`PGDATA`). Size and storage class come from `postgres.persistence.size` (default `5Gi`) and `postgres.persistence.storageClass` (default empty, which uses the cluster default). The init script runs only on an empty data directory. A pod restart keeps every database. Deleting the claim deletes the data.
 - **Databases**:
   - `runefoble`: Primary application state and domain event tables (`events`, with `runefoble_events` alias/table configuration).
