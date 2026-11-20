@@ -1336,6 +1336,7 @@ The App Shell auth service keeps JWT claim handling, session storage and session
 - **Documentation & Build Navigation**: Featured the Platform Showcase and Changelog in `zensical.toml` and root documentation landing page (`docs/index.md`), and enhanced `scripts/build_docs.py` to synchronize `CHANGELOG.md` to `docs/changelog.md` during documentation compilation.
 
 ### Fixed
+The gateway service client sends an idempotent call once more on a fresh connection when a pooled connection closes before the answer; POST and PATCH still answer 503. Idle pooled connections expire after 4 s, and the service images start uvicorn with a 15 s keep-alive.
 The service client limits the TCP connect to an owner to 2 seconds. When a Service still routes to a deleted pod, the 503 now comes within the limit, not after the full route timeout.
 the-watcher, board-state, character-sheet, campaign-lore, asset-forge and soundscape serve a gated `/readyz`, and their Helm probes use it. asset-forge also waits for the Silo asset bucket.
 A board drag sends one move, and the board shows a refused move. The board socket `connected` frame carries the current tokens, and the App Shell opens no board socket until the board read answers, so a late socket shows the current board.

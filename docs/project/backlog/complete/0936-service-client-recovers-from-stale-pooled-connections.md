@@ -1,7 +1,7 @@
 ---
 id: '0936'
 title: The Service Client Recovers From Stale Pooled Connections After an Owner Restart
-status: Refined
+status: Complete
 created: 2026-11-19
 dependencies:
 - '0934'
@@ -17,7 +17,7 @@ target_release: 0.9.0
 
 ## Status
 
-Refined. Found by the ninth full e2e run on Kind (`.audit/work/e2e_full9.log`).
+Complete
 
 ## Summary
 
