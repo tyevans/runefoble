@@ -34,6 +34,10 @@ An unset key that the guard reads also fails the render. The guard never takes a
 | `global.domain` | `REPLACE-ME` | Fails on `REPLACE-ME`, `localhost`, or a `.local` suffix. |
 | `credentials.existingSecret` | `runefoble-hosted-credentials` | `templates/secret.yaml` fails when it is empty. The chart then renders no credential Secret, so no `DEV-ONLY` value reaches the output. The Secret keys are in [`hosted-secrets.md`](hosted-secrets.md). |
 | `services.campaignLore.embeddingApiKeySecret` | `campaign-lore-embedding` | Fails when it is empty or holds `REPLACE-ME`. The chart renders no Secret with this name in a hosted render. The operator creates it with the key `api-key`. |
+| `services.inferenceWorker.openaiApiKeySecret.name` | `inference-worker-openai` | Fails when empty or holds `REPLACE-ME`. The chart renders no Secret with this name. The operator creates it with the key named in the next row. Source: `templates/hosted-guard-model.yaml`. |
+| `services.inferenceWorker.openaiApiKeySecret.key` | `api-key` | Fails when empty or holds `REPLACE-ME`. The worker reads `RUNEFOBLE_WORKER_OPENAI_API_KEY` from this key. |
+| `services.inferenceWorker.temperature`, `maxTokens`, `timeoutSeconds` | `0.7`, `512`, `30` | No guard. An unset value uses the worker default. See [`platform-services.md`](platform-services.md#inference-worker-and-watcher-call-budgets-task-0948). |
+| `services.theWatcher.env` (`RUNEFOBLE_WATCHER_*_TIMEOUT_S`) | `2.0`, `10.0`, `10.0`, `2.0`, `2.0` | No guard. The call budgets of The Watcher. See [`platform-services.md`](platform-services.md#inference-worker-and-watcher-call-budgets-task-0948). |
 | `ingress.hosts[].host` | `REPLACE-ME` and `auth.REPLACE-ME` | Fails on `REPLACE-ME`, `localhost`, or a `.local` suffix. |
 | `zitadel.externalDomain` | `auth.REPLACE-ME` | Fails on `REPLACE-ME`, `localhost`, or a `.local` suffix. |
 | `global.imagePullSecrets` | `[]` | Names of pull Secrets for the registry. No guard. The chart adds them to every pod spec. |

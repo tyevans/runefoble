@@ -82,6 +82,7 @@ async def _propose_move(
     authorization = request.headers.get("authorization")
     if not authorization:
         raise HTTPException(status_code=401, detail="A bearer token is required to propose a move")
+    settings = WatcherEngineSettings()
     origin = check_origin(req.from_x, req.from_y)
     if intent.parameters.get("action") == "move_to_token" and req.token_id is None:
         raise HTTPException(
@@ -89,9 +90,9 @@ async def _propose_move(
             detail="A spoken move to a named token needs token_id, the speaker's token. "
             "The Watcher stages nothing.",
         )
-    to_x, to_y = await _destination(req, intent, origin, authorization, engine_)
+    to_x, to_y = await _destination(req, intent, origin, authorization, engine_, settings)
     await propose_move_preview(
-        WatcherEngineSettings().board_state_url,
+        settings.board_state_url,
         authorization,
         req.session_id,
         {
@@ -103,6 +104,7 @@ async def _propose_move(
             "from_x": req.from_x,
             "from_y": req.from_y,
         },
+        timeout_s=settings.watcher_proposal_timeout_s,
     )
 
 
@@ -112,6 +114,7 @@ async def _destination(
     origin: tuple[int, int],
     authorization: str,
     engine_: TheWatcherEngine,
+    settings: WatcherEngineSettings,
 ) -> tuple[int, int]:
     """Choose the destination cell. The order is named token, then coordinates, then distance.
 
@@ -122,7 +125,10 @@ async def _destination(
     names, token_id = named_target(params)
     if names or token_id:
         tokens = await fetch_visible_tokens(
-            WatcherEngineSettings().board_state_url, req.session_id, authorization
+            settings.board_state_url,
+            req.session_id,
+            authorization,
+            timeout_s=settings.watcher_board_timeout_s,
         )
         return resolve_named_target(names, token_id, tokens, origin, req.grid_cols, req.grid_rows)
     if (cell := coordinate_target(params)) is not None:

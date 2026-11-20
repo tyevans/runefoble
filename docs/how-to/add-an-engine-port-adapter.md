@@ -2,7 +2,7 @@
 
 This guide shows how a service adds an engine port. The port is an interface in the owning service. A setting picks the adapter. An engine that cannot work returns an explicit `503`. It never returns substitute output.
 
-Read this guide with ADR-0015 (decision 4, "Fallbacks hide failures"). A deployed service fails fast when a configured engine is missing. It does not switch to a fake.
+Read this guide with ADR-0015 (Context item 4, "Fallbacks hide failures"). A deployed service fails fast when a configured engine is missing. It does not switch to a fake.
 
 ## What Is Shared and What Is Not
 
@@ -156,7 +156,7 @@ uv run pytest -q -p no:randomly tests/test_engine_port_adapters.py tests/test_bl
 - The rules compendium embedding provider does not map its errors to `503` yet. A provider failure returns `500`. Map it when the embedding port gets its own error contract.
 - The wardrobe generator has no failure path. It has no `503`. Add the mapping when a generator can fail.
 - The inference worker keeps its published flat body, `{"error": "backend_unavailable", "backend": "<name>"}`, with no `detail` wrapper and no `message` key. It registers its own handler in `api.py`. Its contract is `docs/reference/inference-worker-response-contract.md`. The worker also checks its engine once in the lifespan (`LLMPort.check_ready`). A port that fails that check stops start-up.
-- The inference worker has no canned adapter. A `mock` value is refused, and the worker adds no keyword or template path. ADR-0015 decision 4 forbids those fallbacks in every environment.
+- The inference worker has no canned adapter. A `mock` value is refused, and the worker adds no keyword or template path. ADR-0015 Context item 4 forbids those fallbacks in every environment.
 - `campaign_lore` builds its ports with a `match` and `assert_never`. It is not yet on `build_adapter`.
 - The Watcher builds its ports from the environment on each request (`load_watcher_ports` in `the_watcher/engine_selection.py`), not once as a singleton. The ports are not in the app container yet. `build_container` runs the same build once in the lifespan, so a bad setting stops start-up. Tests set the environment with `monkeypatch`. The worker adapters get `RUNEFOBLE_SERVICE_CREDENTIAL` from the same settings (`WatcherEngineSettings.service_credential`). Without it, a worker call answers `503`.
 - The Watcher stand-in recap still calls the local rule engine directly. It is not a port and has no worker path.

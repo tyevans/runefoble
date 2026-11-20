@@ -74,12 +74,20 @@ class WorkerSettings(BaseSettings):
     @field_validator("backend", mode="before")
     @classmethod
     def _mock_is_not_an_engine(cls, value: object) -> object:
-        """Refuse `mock` in every environment. The worker has no canned engine (ADR-0015 decision 4)."""
+        """Refuse `mock` in every environment. The worker has no canned engine (ADR-0015 Context item 4)."""
         if value == "mock":
             raise ValueError(
                 "RUNEFOBLE_WORKER_BACKEND=mock is refused in every environment. The worker has no "
                 "canned engine. Use openai_compatible or ollama, or a test double at a process boundary."
             )
+        return value
+
+    @field_validator("openai_api_key")
+    @classmethod
+    def _api_key_is_not_blank(cls, value: SecretStr) -> SecretStr:
+        """A blank key is refused. An unset key keeps the local default (no key for llama-swap)."""
+        if not value.get_secret_value().strip():
+            raise ValueError("RUNEFOBLE_WORKER_OPENAI_API_KEY must not be blank")
         return value
 
     @field_validator("service_credential")

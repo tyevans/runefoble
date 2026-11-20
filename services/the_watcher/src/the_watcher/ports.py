@@ -1,7 +1,7 @@
 """Engine ports of The Watcher. Routers call these ports and never an engine directly.
 
 An adapter raises `EngineUnavailableError` when its engine cannot produce a result. It never
-returns substitute output (ADR-0015, decision 4). See docs/how-to/add-an-engine-port-adapter.md.
+returns substitute output (ADR-0015, Context item 4). See docs/how-to/add-an-engine-port-adapter.md.
 """
 
 from __future__ import annotations

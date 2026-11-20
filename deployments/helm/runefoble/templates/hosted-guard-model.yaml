@@ -1,0 +1,22 @@
+{{- /*
+Hosted model guard (TASK-0948, ADR-0015 e). A staging or production render fails when the
+inference worker has no API key Secret, or when the Secret name or key still holds a placeholder
+(REPLACE-ME). The worker reads the key from that Secret, and no default fills the gap. The file
+renders no object. The local render is not affected. Docs: docs/reference/hosted-profile.md.
+The fail helper lives in hosted-guard.yaml.
+*/ -}}
+
+{{- $env := .Values.global.environment -}}
+{{- if or (eq $env "staging") (eq $env "production") -}}
+
+{{- $keyName := required "services.inferenceWorker.openaiApiKeySecret.name must name a Secret for a hosted render" (dig "openaiApiKeySecret" "name" "" .Values.services.inferenceWorker) -}}
+{{- if contains "REPLACE-ME" $keyName -}}
+{{- include "runefoble.hosted.fail" (dict "key" "services.inferenceWorker.openaiApiKeySecret.name" "value" $keyName "env" $env) -}}
+{{- end -}}
+
+{{- $keyField := required "services.inferenceWorker.openaiApiKeySecret.key must name the Secret key for a hosted render" (dig "openaiApiKeySecret" "key" "" .Values.services.inferenceWorker) -}}
+{{- if contains "REPLACE-ME" $keyField -}}
+{{- include "runefoble.hosted.fail" (dict "key" "services.inferenceWorker.openaiApiKeySecret.key" "value" $keyField "env" $env) -}}
+{{- end -}}
+
+{{- end -}}

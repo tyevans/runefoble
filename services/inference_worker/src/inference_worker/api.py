@@ -48,7 +48,7 @@ def set_llm_port(port: LLMPort) -> None:
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
-    """Build the engine and refuse to start when it does not answer (ADR-0015 decision 4)."""
+    """Build the engine and refuse to start when it does not answer (ADR-0015 Context item 4)."""
     port = build_llm_port(settings)
     await port.check_ready()
     set_llm_port(port)

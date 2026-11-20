@@ -22,15 +22,23 @@ class WorkerIntentParser(IntentParser):
     engine_name = WORKER_ENGINE
 
     def __init__(
-        self, base_url: str, board_state_url: str | None, credential: SecretStr | None
+        self,
+        base_url: str,
+        board_state_url: str | None,
+        credential: SecretStr | None,
+        *,
+        intent_timeout_s: float,
+        board_timeout_s: float,
     ) -> None:
         self._base_url = base_url
         self._board_state_url = board_state_url
         self._credential = credential
+        self._intent_timeout_s = intent_timeout_s
+        self._board_timeout_s = board_timeout_s
 
     async def parse(self, req: SpeechInputRequest, authorization: str | None) -> IntentResult:
         visible_tokens = await fetch_visible_tokens(
-            self._board_state_url, req.session_id, authorization
+            self._board_state_url, req.session_id, authorization, timeout_s=self._board_timeout_s
         )
         data = await call_worker(
             self._base_url,
@@ -43,7 +51,7 @@ class WorkerIntentParser(IntentParser):
                 "transcript": req.transcript,
                 "visible_tokens": visible_tokens,
             },
-            timeout=2.0,
+            timeout=self._intent_timeout_s,
             credential=self._credential,
         )
         action = data["action"]
@@ -64,9 +72,10 @@ class WorkerStandInDecider(StandInDecider):
 
     engine_name = WORKER_ENGINE
 
-    def __init__(self, base_url: str, credential: SecretStr | None) -> None:
+    def __init__(self, base_url: str, credential: SecretStr | None, *, timeout_s: float) -> None:
         self._base_url = base_url
         self._credential = credential
+        self._timeout_s = timeout_s
 
     async def decide(self, req: StandInRequest) -> StandInAction:
         guardrails = req.guardrails.model_dump(mode="json") if req.guardrails is not None else None
@@ -83,7 +92,7 @@ class WorkerStandInDecider(StandInDecider):
                 "personality_traits": req.personality_traits,
                 "guardrails": guardrails,
             },
-            timeout=10.0,
+            timeout=self._timeout_s,
             credential=self._credential,
         )
         return StandInAction(
@@ -103,9 +112,10 @@ class WorkerSceneNarrator(SceneNarrator):
 
     engine_name = WORKER_ENGINE
 
-    def __init__(self, base_url: str, credential: SecretStr | None) -> None:
+    def __init__(self, base_url: str, credential: SecretStr | None, *, timeout_s: float) -> None:
         self._base_url = base_url
         self._credential = credential
+        self._timeout_s = timeout_s
 
     async def narrate(self, req: DMGuidanceRequest) -> DMNarrationResult:
         data = await call_worker(
@@ -118,7 +128,7 @@ class WorkerSceneNarrator(SceneNarrator):
                 "tone": req.tone,
                 "guidance_prompt": req.prompt,
             },
-            timeout=10.0,
+            timeout=self._timeout_s,
             credential=self._credential,
         )
         return DMNarrationResult(

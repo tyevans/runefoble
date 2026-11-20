@@ -126,6 +126,24 @@ def test_hosted_campaign_lore_reads_api_key_from_the_named_secret(tmp_path: Path
     assert "campaign-lore-embedding" not in _secret_names(docs)
 
 
+WORKER_NAME_CELL = "services.inferenceWorker.openaiApiKeySecret.name"
+WORKER_SECRET = "inference-worker-openai"
+
+
+def test_hosted_inference_worker_reads_api_key_from_the_named_secret(tmp_path: Path):
+    """The worker reads the api-key key from the named Secret. The chart renders no Secret for it."""
+    docs = render_chart("-f", str(hosted_values_file(tmp_path)))
+    refs = dict(_env_secret_refs(docs))
+
+    assert refs["RUNEFOBLE_WORKER_OPENAI_API_KEY"] == {"name": WORKER_SECRET, "key": "api-key"}
+    assert WORKER_SECRET not in _secret_names(docs)
+
+
+def test_inference_worker_row_names_the_api_key_key():
+    """The table row for the worker Secret lists the key api-key."""
+    assert _contract_keys(WORKER_NAME_CELL) == {"api-key"}
+
+
 def test_campaign_lore_row_names_the_api_key_key():
     """The table row for the campaign-lore Secret lists the key api-key."""
     assert _contract_keys(CAMPAIGN_LORE_NAME_CELL) == {"api-key"}

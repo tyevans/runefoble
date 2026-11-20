@@ -44,6 +44,37 @@ spec:
             - name: RUNEFOBLE_WORKER_OPENAI_MODEL
               value: {{ .openaiCompatibleModel | quote }}
             {{- end }}
+            {{- /* The API key comes from a Secret (ADR-0015 e). Unset names add no entry. */ -}}
+            {{- with .openaiApiKeySecret }}
+            {{- if .name }}
+            - name: RUNEFOBLE_WORKER_OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .name | quote }}
+                  key: {{ required "services.inferenceWorker.openaiApiKeySecret.key must name a key when name is set" .key | quote }}
+            {{- end }}
+            {{- end }}
+            {{- /* An unset value adds no entry, so the worker default applies. Zero is a value. */ -}}
+            {{- with .ollamaBaseUrl }}
+            - name: RUNEFOBLE_WORKER_OLLAMA_BASE_URL
+              value: {{ . | quote }}
+            {{- end }}
+            {{- with .ollamaModel }}
+            - name: RUNEFOBLE_WORKER_OLLAMA_MODEL
+              value: {{ . | quote }}
+            {{- end }}
+            {{- if not (kindIs "invalid" .temperature) }}
+            - name: RUNEFOBLE_WORKER_TEMPERATURE
+              value: {{ .temperature | quote }}
+            {{- end }}
+            {{- if not (kindIs "invalid" .maxTokens) }}
+            - name: RUNEFOBLE_WORKER_MAX_TOKENS
+              value: {{ .maxTokens | quote }}
+            {{- end }}
+            {{- if not (kindIs "invalid" .timeoutSeconds) }}
+            - name: RUNEFOBLE_WORKER_TIMEOUT_SECONDS
+              value: {{ .timeoutSeconds | quote }}
+            {{- end }}
             # The Redis Streams consumer stays off until a producer exists (ADR-0006).
             - name: RUNEFOBLE_WORKER_REDIS_ENABLED
               value: "false"

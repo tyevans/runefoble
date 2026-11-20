@@ -14,8 +14,6 @@ import httpx
 from fastapi import HTTPException
 from the_watcher.dependencies import logger
 
-PROPOSE_TIMEOUT_S = 2.0
-
 
 def _unavailable() -> HTTPException:
     return HTTPException(
@@ -29,6 +27,8 @@ async def propose_move_preview(
     authorization: str,
     session_id: str,
     proposal: dict[str, Any],
+    *,
+    timeout_s: float,
 ) -> dict[str, Any]:
     """POST the proposal to board_state and return the staged `ghost_preview` message."""
     if not base_url:
@@ -37,7 +37,7 @@ async def propose_move_preview(
 
     url = f"{base_url}/api/v1/boards/{session_id}/ghost-previews"
     try:
-        async with httpx.AsyncClient(timeout=PROPOSE_TIMEOUT_S) as client:
+        async with httpx.AsyncClient(timeout=timeout_s) as client:
             res = await client.post(url, json=proposal, headers={"Authorization": authorization})
     except httpx.HTTPError as e:
         logger.error("Board state service unreachable at %s: %s", base_url, e)

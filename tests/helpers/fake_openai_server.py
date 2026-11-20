@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import threading
+import time
 from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass, field
@@ -25,12 +26,14 @@ class FakeOpenAI:
     """The state of one fake server. Set `status` and `content` before a request.
 
     Set `raw_body` to send those exact bytes with status 200 instead of a chat completion.
+    Set `delay_s` to hold each reply for that many seconds, so a test can model a slow model.
     """
 
     base_url: str = ""
     status: int = 200
     content: str = "{}"
     raw_body: bytes | None = None
+    delay_s: float = 0.0
     requests: list[dict[str, Any]] = field(default_factory=list)
 
     def settings(self, **overrides: Any) -> WorkerSettings:
@@ -65,6 +68,8 @@ class _Handler(BaseHTTPRequestHandler):
         body = json.loads(self.rfile.read(length) or b"{}")
         state: FakeOpenAI = self.server.state  # type: ignore[attr-defined]
         state.requests.append(body)
+        if state.delay_s > 0:
+            time.sleep(state.delay_s)
         if state.status != 200:
             self._send(state.status, {"error": {"message": "fake failure", "type": "invalid"}})
             return
