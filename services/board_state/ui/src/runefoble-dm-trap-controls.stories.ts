@@ -2,7 +2,6 @@ import '@runefoble/ui-core/story-auth-provider';
 import type { Meta, StoryObj } from '@storybook/web-components';
 import { html } from 'lit';
 import './runefoble-dm-trap-controls.ts';
-import './runefoble-map-switcher.ts';
 
 const meta: Meta = {
   title: 'BoardState/DMTrapControls',
@@ -12,28 +11,6 @@ const meta: Meta = {
 
 export default meta;
 type Story = StoryObj;
-
-const sampleMaps = [
-  { id: 'dungeon_lvl1', name: 'Catacombs of Despair - L1', cols: 15, rows: 15, spawnCoords: [2, 2] as [number, number] },
-  { id: 'dungeon_lvl2', name: 'Sanctum of the Wyrm - L2', cols: 20, rows: 20, spawnCoords: [10, 15] as [number, number] },
-  { id: 'cavern_depths', name: 'Underdark Chasm', cols: 25, rows: 25, spawnCoords: [4, 6] as [number, number] },
-];
-
-export const HiddenLayerActive: Story = {
-  render: () => html`
-    <div style="max-width: 420px; padding: 20px; background: #f4f4f4;">
-      <runefoble-dm-trap-controls .layerVisible=${true} .selectedTrapType=${'pit_trap'}></runefoble-dm-trap-controls>
-    </div>
-  `,
-};
-
-export const HiddenLayerDisabled: Story = {
-  render: () => html`
-    <div style="max-width: 420px; padding: 20px; background: #f4f4f4;">
-      <runefoble-dm-trap-controls .layerVisible=${false}></runefoble-dm-trap-controls>
-    </div>
-  `,
-};
 
 export const TrapArmingPalette: Story = {
   render: () => html`
@@ -61,54 +38,6 @@ export const DangerZonePreview: Story = {
       ></runefoble-dm-trap-controls>
     </div>
   `,
-};
-
-export const MultiMapSwitcherModal: Story = {
-  render: () => html`
-    <div style="max-width: 600px; padding: 20px; position: relative; min-height: 400px;">
-      <runefoble-map-switcher
-        .open=${true}
-        .currentMapId=${'dungeon_lvl1'}
-        .maps=${sampleMaps}
-        .boardId=${'board-42'}
-      ></runefoble-map-switcher>
-    </div>
-  `,
-};
-
-export const TeleportPostsSwitchMapRoute: Story = {
-  render: () => html`
-    <div style="max-width: 600px; padding: 20px; position: relative; min-height: 400px;">
-      <runefoble-story-auth-provider token="story-token">
-        <runefoble-map-switcher
-          .open=${true}
-          .currentMapId=${'dungeon_lvl1'}
-          .maps=${sampleMaps}
-          .boardId=${'board-42'}
-        ></runefoble-map-switcher>
-      </runefoble-story-auth-provider>
-    </div>
-  `,
-  play: async ({ canvasElement }) => {
-    const stub = stubFetchForStory(200, {
-      board_id: 'board-42', new_map_id: 'dungeon_lvl2', cols: 20, rows: 20,
-      teleported_tokens: { valeros: [10, 15] }, status: 'switched',
-    });
-    try {
-      const el = canvasElement.querySelector('runefoble-map-switcher') as HTMLElement;
-      const buttons = el.shadowRoot?.querySelectorAll('.teleport-btn') ?? [];
-      (buttons[1] as HTMLButtonElement).click();
-      await waitForCall(stub.calls);
-      const call = stub.calls[0];
-      if (!call) throw new Error('No request sent to the switch-map route');
-      if (call.url !== '/api/v1/boards/board-42/switch-map') throw new Error(`Wrong URL: ${call.url}`);
-      if (call.auth !== 'Bearer story-token') throw new Error(`Missing bearer: ${call.auth}`);
-      const body = call.body as Record<string, unknown>;
-      if (body.new_map_id !== 'dungeon_lvl2' || body.cols !== 20) throw new Error('Wrong switch-map body');
-    } finally {
-      stub.restore();
-    }
-  },
 };
 
 /** Replaces window.fetch for one story. Records each call and returns a fixed response. */

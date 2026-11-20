@@ -15,7 +15,6 @@ export class RunefobleChronicleTimeline extends LitElement {
   @property({ type: Object }) timelineData: CampaignTimelineResponse | null = null;
   @property({ type: Number }) activeIndex = 0;
 
-  @state() private playingAudioId: string | null = null;
   @state() private isAutoScrubbing = false;
   private autoScrubInterval: number | null = null;
 
@@ -83,26 +82,6 @@ export class RunefobleChronicleTimeline extends LitElement {
     if (this.autoScrubInterval !== null) {
       clearInterval(this.autoScrubInterval);
       this.autoScrubInterval = null;
-    }
-  }
-
-  private handlePlayAudio(milestone: TimelineMilestone, e: Event) {
-    e.stopPropagation();
-    if (this.playingAudioId === milestone.id) {
-      this.playingAudioId = null;
-    } else {
-      this.playingAudioId = milestone.id;
-      this.dispatchEvent(
-        new CustomEvent('play-audio-recap', {
-          detail: {
-            milestoneId: milestone.id,
-            title: milestone.title,
-            audioUrl: milestone.metadata?.audio_url || null,
-          },
-          bubbles: true,
-          composed: true,
-        })
-      );
     }
   }
 
@@ -175,23 +154,6 @@ export class RunefobleChronicleTimeline extends LitElement {
                   </div>
                   <div class="milestone-title">${m.title}</div>
                   <div class="milestone-desc">${m.description}</div>
-                  <div class="audio-action-row">
-                    <button
-                      class="audio-btn ${this.playingAudioId === m.id ? 'playing' : ''}"
-                      @click=${(e: Event) => this.handlePlayAudio(m, e)}
-                    >
-                      ${this.playingAudioId === m.id
-                        ? html`
-                            <span class="audio-waves">
-                              <span class="audio-bar"></span>
-                              <span class="audio-bar"></span>
-                              <span class="audio-bar"></span>
-                            </span>
-                            Stop
-                          `
-                        : html`▶ Audio Recap`}
-                    </button>
-                  </div>
                 </div>
               `
             )}
