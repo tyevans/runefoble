@@ -1,0 +1,44 @@
+{{- /*
+Hosted identity guard (TASK-0958, ADR-0023 a). A staging or production render fails when the
+SMTP provider is unset or plain, or when Zitadel self-registration stays open. The file renders no
+object. The local render is not affected. Each check names the key path that failed.
+Docs: docs/reference/hosted-profile.md. The fail helpers live in hosted-guard.yaml.
+*/ -}}
+
+{{- $env := .Values.global.environment -}}
+{{- if or (eq $env "staging") (eq $env "production") -}}
+
+{{- $smtp := dig "smtp" (dict) .Values.zitadel -}}
+
+{{- $smtpHost := dig "host" "" $smtp | toString -}}
+{{- if not $smtpHost -}}
+{{- fail (printf "zitadel.smtp.host must be set for a %s render. Name the SMTP provider host." $env) -}}
+{{- end -}}
+{{- if include "runefoble.hosted.isPlaceholderOrDevHost" $smtpHost -}}
+{{- include "runefoble.hosted.fail" (dict "key" "zitadel.smtp.host" "value" $smtpHost "env" $env) -}}
+{{- end -}}
+
+{{- $smtpUser := dig "user" "" $smtp | toString -}}
+{{- if contains "REPLACE-ME" $smtpUser -}}
+{{- include "runefoble.hosted.fail" (dict "key" "zitadel.smtp.user" "value" $smtpUser "env" $env) -}}
+{{- end -}}
+
+{{- $fromAddress := dig "fromAddress" "" $smtp | toString -}}
+{{- if not $fromAddress -}}
+{{- fail (printf "zitadel.smtp.fromAddress must be set for a %s render. Name the sender address." $env) -}}
+{{- end -}}
+{{- if or (contains "REPLACE-ME" $fromAddress) (hasSuffix ".local" $fromAddress) -}}
+{{- include "runefoble.hosted.fail" (dict "key" "zitadel.smtp.fromAddress" "value" $fromAddress "env" $env) -}}
+{{- end -}}
+
+{{- $tls := dig "tls" true $smtp -}}
+{{- if ne (toString $tls) "true" -}}
+{{- include "runefoble.hosted.fail" (dict "key" "zitadel.smtp.tls" "value" $tls "env" $env) -}}
+{{- end -}}
+
+{{- $closed := dig "closedRegistration" false .Values.zitadel.bootstrap -}}
+{{- if ne (toString $closed) "true" -}}
+{{- include "runefoble.hosted.fail" (dict "key" "zitadel.bootstrap.closedRegistration" "value" $closed "env" $env) -}}
+{{- end -}}
+
+{{- end -}}

@@ -27,8 +27,6 @@ OPERATOR_NAME_CELL = "credentials.existingSecret"
 CAMPAIGN_LORE_NAME_CELL = "services.campaignLore.embeddingApiKeySecret"
 GENERATED_NAME_CELLS = {"zitadel-admin", "runefoble-zitadel-client"}
 TEAM_SECRET = "team-credentials"
-# Read by the chart only after TASK-0958 wires the SMTP password. Listed in the table now.
-NOT_READ_YET = {"smtp-password"}
 
 
 def _plain(cell: str) -> str:
@@ -100,8 +98,7 @@ def test_hosted_render_reads_only_contract_keys_from_the_named_secret(tmp_path: 
     )
     read_from_team = {ref["key"] for _, ref in _env_secret_refs(docs) if ref["name"] == TEAM_SECRET}
 
-    assert read_from_team <= _contract_keys(OPERATOR_NAME_CELL)
-    assert read_from_team >= _contract_keys(OPERATOR_NAME_CELL) - NOT_READ_YET
+    assert read_from_team == _contract_keys(OPERATOR_NAME_CELL)
 
 
 def test_hosted_render_reads_no_credential_from_the_local_secret(tmp_path: Path):
