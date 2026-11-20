@@ -82,7 +82,7 @@ async def start_session(
 async def end_session(
     session_id: UUID, _controller: SessionController, repo: SessionRepo
 ) -> GameSessionState:
-    """End the session. The caller needs `session.control`. The owner publishes `session.ended`."""
+    """End an active session. The caller needs `session.control`. The owner publishes `session.ended`."""
     session = await _load_session(repo, session_id)
     try:
         session.end()

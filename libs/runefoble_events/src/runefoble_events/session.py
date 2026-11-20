@@ -76,7 +76,7 @@ class SessionEnded(BaseRunefobleEvent):
     event_type: str = "runefoble.events.session.ended"
 
     aggregate_type: str = "GameSession"
-    summary: str = "Session completed"
+    summary: str = "Session ended."
 
 
 @register_event("runefoble.events.session.combat_encounter_started")

@@ -6,7 +6,7 @@ Mesh frames carry the kind in `type` and may carry a payload field named `action
 `CLIENT_FRAME_PERMISSIONS`. Each kind maps to the `game_session` permission that the sender must
 hold. Other fields pass through unchanged, because each kind carries its own payload.
 
-Server kinds are not client kinds. `session_started` comes only from the gateway start route.
+Server kinds are not client kinds. `session_started` comes only from the gateway start route, and `session_ended` only from the gateway end route (TASK-0953).
 `turn_advanced`, `dice_rolled`, `token_moved` and `dm_whisper` have owner routes or owner
 sockets, so a client frame of these kinds is an `UNKNOWN_FRAME`.
 """

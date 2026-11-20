@@ -9,7 +9,8 @@ in `upstream_errors.py`: 503 when unreachable, 502 on upstream 5xx, upstream 4xx
 the same caller: it needs `observe` here, and the owner checks `participate` and
 `character.edit`. `dm-override` and `atmosphere` have no gateway check: game_session checks
 `session.control`. `join` has no gateway check: game_session checks `participate` and seats
-the verified caller (TASK-0889). `events` and `absentee-recap` keep their
+the verified caller (TASK-0889). `end` has no gateway check: game_session checks `session.control`
+and refuses an end from any status but `active`. `events` and `absentee-recap` keep their
 gateway check because game_session answers 404 for an unknown session before it checks
 `observe`. Without the gateway check, a caller could tell a session that exists from one that
 does not.
@@ -39,8 +40,8 @@ router = APIRouter(tags=["Tabletop & Game Sessions"])
 _VERIFIED = [Depends(get_principal)]
 
 
-class StartedSessionReply(BaseModel):
-    """The part of the owner's start reply that the gateway reads. Other fields pass through."""
+class SessionStatusReply(BaseModel):
+    """The part of the owner's start or end reply that the gateway reads. Other fields pass through."""
 
     model_config = ConfigDict(extra="allow")
 
@@ -96,17 +97,41 @@ async def start_session_proxy(session_id: str, request: Request) -> Any:
     state = await forward_json(
         request, service=SERVICE, method="POST", path=f"{SESSIONS}/{session_id}/start"
     )
+    reply = _status_reply(state, session_id, "start")
+    await ws_manager.broadcast(
+        session_id, {"type": "session_started", "sessionId": session_id, "status": reply.status}
+    )
+    return state
+
+
+@router.post("/api/v1/sessions/{session_id}/end", dependencies=_VERIFIED)
+async def end_session_proxy(session_id: str, request: Request) -> Any:
+    """End an active session (game_session checks 'control' and refuses any other status).
+
+    The gateway then tells its WebSocket clients that the session ended. This route is the only
+    source of the `session_ended` frame. The owner's reply supplies the status, and a reply
+    without a status returns 502. The gateway keeps no state.
+    """
+    route = owner_route(owner_routes.end_session, session_id)
+    state = await forward_json(request, service=SERVICE, method=route.method, path=route.path)
+    reply = _status_reply(state, session_id, "end")
+    await ws_manager.broadcast(
+        session_id, {"type": "session_ended", "sessionId": session_id, "status": reply.status}
+    )
+    return state
+
+
+def _status_reply(state: Any, session_id: str, action: str) -> SessionStatusReply:
+    """Read the owner's status from a start or end reply. A reply without a status is a 502."""
     try:
-        started = StartedSessionReply.model_validate(state)
+        return SessionStatusReply.model_validate(state)
     except ValidationError as exc:
-        logger.warning("Upstream %s start reply has no status: session %s", SERVICE, session_id)
+        logger.warning(
+            "Upstream %s %s reply has no status: session %s", SERVICE, action, session_id
+        )
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY, detail=UPSTREAM_INVALID_DETAIL
         ) from exc
-    await ws_manager.broadcast(
-        session_id, {"type": "session_started", "sessionId": session_id, "status": started.status}
-    )
-    return state
 
 
 @router.post(

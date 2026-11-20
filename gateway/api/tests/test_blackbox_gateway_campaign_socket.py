@@ -196,6 +196,8 @@ def test_a_frame_for_a_session_of_another_campaign_is_refused(
 
 def test_dm_ends_the_session_through_the_owner(client: TestClient, campaign: tuple[str, str]):
     campaign_id, session_id = campaign
+    started = client.post(f"/api/v1/sessions/{session_id}/start", headers=bearer(DM))
+    assert started.status_code == 200, started.text
     with _open(client, campaign_id, DM) as ws:
         assert ws.receive_json()["type"] == "connected"
         ws.send_json({"action": "end_session", "session_id": session_id})

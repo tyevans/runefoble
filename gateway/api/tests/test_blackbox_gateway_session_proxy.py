@@ -35,6 +35,7 @@ def _auth(issuer, sub: str) -> dict[str, str]:
 SESSION_ROUTES = [
     ("GET", "/api/v1/sessions/{sid}", None, False),
     ("POST", "/api/v1/sessions/{sid}/start", None, False),
+    ("POST", "/api/v1/sessions/{sid}/end", None, False),
     ("POST", "/api/v1/sessions/{sid}/hot-swap", {"characterId": str(uuid4())}, True),
     ("POST", "/api/v1/sessions/{sid}/turns/advance", None, False),
     ("POST", "/api/v1/sessions/{sid}/dm-override", {"action": "pause"}, False),

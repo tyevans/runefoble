@@ -5,7 +5,8 @@ answer: a socket of a caller with control joins the DM group, which alone gets D
 such as `dm_whisper` (TASK-0927). When SpiceDB cannot answer, the socket stays an observer
 socket and gets an `AUTHZ_UNAVAILABLE` frame for `dm_whisper`. Each inbound frame is validated against the session frame contract,
 then the sender must hold the permission that the contract names for its kind (TASK-0810,
-TASK-0910). The gateway start route is the only source of `session_started`.
+TASK-0910). The gateway start route is the only source of `session_started`, and the gateway
+end route is the only source of `session_ended` (TASK-0953).
 """
 
 from __future__ import annotations
