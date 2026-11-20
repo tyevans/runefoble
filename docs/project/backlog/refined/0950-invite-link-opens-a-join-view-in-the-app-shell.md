@@ -3,7 +3,8 @@ id: '0950'
 title: An Invite Link Opens a Join View in the App Shell
 status: Refined
 created: 2026-11-19
-dependencies: []
+dependencies:
+- '0967'
 governing_adrs:
 - ADR-0001
 - ADR-0013
@@ -70,6 +71,10 @@ Evidence from `.audit/research/r1-core-journeys.md`, section 4, items 1 and 3.
 5. **E2E setup.** Replace the API redemption with a UI join. Remove the call to `frontdoorApi.joinCampaign` in `e2e/steps/vtt_setup_steps.ts:58` and `e2e/steps/session_lobby_roles_steps.ts:79`. The steps open the copied link in a second browser context and join through the UI.
 6. **Storybook.** Add `runefoble-campaign-join.stories.ts` with the joining, joined and refused states. The stories must show zero console errors.
 7. **Docs.** Update the invite how-to, the component catalog, and `docs/reference/ports-and-endpoints.md` when the App Shell join route is in use.
+
+## ADR-0023 Update (2026-11-19)
+
+The user chose that the invite link creates the account (ADR-0023). When the person is not signed in, the join view shows the campaign name and a form for a display name and an email. It posts to `POST /api/v1/campaigns/invites/{token}/accounts` (TASK-0967) and then tells the person to read the Zitadel email and set a password. After sign-in, the App Shell returns to `#/join/<token>` and completes the join. A signed-in person sees the join button only.
 
 ## Frontdoor Blackbox Test Plan
 

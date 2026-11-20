@@ -32,7 +32,7 @@ The research for this release is in `.audit/research/r1-voice-path.md`, `r1-watc
 
 ## What good looks like
 
-1. Evelyn signs up, creates a campaign, and sends an invite link. Marcus and Sarah open the link, sign up, and join the campaign through the UI.
+1. Evelyn signs up, creates a campaign, and sends an invite link. Marcus and Sarah open the link, create their accounts from it (Zitadel sends the email to set a password), and join the campaign through the UI. Open self-registration is off (ADR-0023).
 2. Each player creates a character. Evelyn opens a lobby. The players mark themselves ready. An absent player gets an AI stand-in. The state survives a page reload.
 3. Evelyn launches the session and sets up the battlemap.
 4. Marcus holds Push to Talk and says "move my warrior to the chest". A ghost preview shows the path to the chest. He confirms, and the token moves on every screen. He can also type the same command.
@@ -74,10 +74,11 @@ The research for this release is in `.audit/research/r1-voice-path.md`, `r1-watc
 ## Governing Decisions
 
 - ADR-0022: Grammar-First Intent Routing for the Voice Loop.
+- ADR-0023: A Campaign Invite Link Creates the Player Account.
 - ADR-0015: Audit Remediation Decisions (no hidden fallbacks, service credentials, event store).
 - ADR-0005: Kubernetes-first infrastructure with Helm and Kind.
 - ADR-0013, ADR-0014: microfrontends, BDD and Playwright.
 
 ## Implementing Backlog Tasks
 
-Voice loop: TASK-0942 to TASK-0947. The Watcher and the model: TASK-0948, TASK-0949. Core journey: TASK-0950 to TASK-0954, TASK-0654, TASK-0655. Hosting: TASK-0933, TASK-0955 to TASK-0965. `docs/project/backlog/PRIORITY.md` lists them under "Release One".
+Voice loop: TASK-0942 to TASK-0947. The Watcher and the model: TASK-0948, TASK-0949. Core journey: TASK-0967, TASK-0950 to TASK-0954, TASK-0654, TASK-0655. Hosting: TASK-0933, TASK-0955 to TASK-0965. `docs/project/backlog/PRIORITY.md` lists them under "Release One".

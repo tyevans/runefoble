@@ -26,6 +26,7 @@ This registry records every architectural decision in Runefoble. Numbers are all
 | ADR-0020 | Declarative Dynamic Tool Handlers | Accepted | 2026-11-17 | [`adr-0020-declarative-dynamic-tool-handlers.md`](accepted/adr-0020-declarative-dynamic-tool-handlers.md) |
 | ADR-0021 | Bounded Context Packages Inside game_session | Accepted | 2026-11-19 | [`adr-0021-game-session-internal-bounded-contexts.md`](accepted/adr-0021-game-session-internal-bounded-contexts.md) |
 | ADR-0022 | Grammar-First Intent Routing for the Voice Loop | Accepted | 2026-11-19 | [`adr-0022-grammar-first-voice-intent-routing.md`](accepted/adr-0022-grammar-first-voice-intent-routing.md) |
+| ADR-0023 | A Campaign Invite Link Creates the Player Account | Accepted | 2026-11-19 | [`adr-0023-invite-link-creates-the-account.md`](accepted/adr-0023-invite-link-creates-the-account.md) |
 
 ## spec-ops Baseline Mapping
 

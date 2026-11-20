@@ -34,6 +34,7 @@ We adopt the following decisions. They apply to all new and existing refined tas
 ### (d) Registration and sign-in use Zitadel
 - New users register through the Zitadel hosted sign-up page.
 - The client signs in with the OIDC authorization-code flow and PKCE. No in-app sign-up form exists.
+- ADR-0023 (2026-11-19) changes the first rule for release one: Zitadel self-registration is off, and a campaign invite link creates the account through Zitadel. Runefoble still handles no password.
 - Claim sync based on roles is removed. No Zitadel role grants a SpiceDB relation. Authorization checks use only the relations in `runefoble.zed` (Hard Invariant 1).
 
 ### (e) Service-to-service calls use a Kubernetes Secret credential

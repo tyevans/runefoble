@@ -87,6 +87,10 @@ Rules for this record:
 - D12: how members get accounts. Option A: the admin creates each account in Zitadel, and Zitadel sends the setup e-mail. Option B: keep self-registration open, which is not invite-only. This record implements A.
 - D12b: PAT expiry and rotation owner. The runbook (0965) gets the steps.
 
+## ADR-0023 Update (2026-11-19)
+
+The hosted profile turns Zitadel self-registration off (ADR-0023 (a)). The only ways to get an account are a campaign invite (TASK-0967) and the Zitadel admin console. The first admin is created by the bootstrap in this task. Test: `helm template` with the hosted values renders the login policy with registration off.
+
 ## Frontdoor Blackbox Test Plan
 
 Render tests in a new file `tests/test_blackbox_helm_zitadel_hosted.py`:
