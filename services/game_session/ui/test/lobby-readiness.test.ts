@@ -51,6 +51,16 @@ describe('computeReadinessSummary', () => {
     assert.equal(summary.allReady, false);
   });
 
+  it('counts the active players who are not ready and leaves out stand-ins', () => {
+    const summary = computeReadinessSummary([
+      participant({ userId: 'p-1', role: 'player', isReady: true }),
+      participant({ userId: 'p-2', role: 'player', isReady: false }),
+      participant({ userId: 'p-3', role: 'player', isReady: false, isAbsent: true }),
+    ]);
+
+    assert.equal(summary.notReadyCount, 1);
+  });
+
   it('reports absent stand-ins in the summary text', () => {
     const summary = computeReadinessSummary([
       participant({ userId: 'p-1', role: 'player', isReady: true }),

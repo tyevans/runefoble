@@ -33,6 +33,8 @@ export interface ReadinessSummary {
   readyCount: number;
   totalActivePlayers: number;
   absentCount: number;
+  /** Active players who are not ready. A stand-in is not counted: the AI plays that seat (TASK-0952). */
+  notReadyCount: number;
   allReady: boolean;
   summaryText: string;
 }
@@ -76,6 +78,7 @@ export interface LaunchSessionEventDetail {
  * - Active players: isAbsent == false
  * - Ready players: isAbsent == false && isReady == true
  * - Stand-in players: isAbsent == true
+ * - Seats not ready: isAbsent == false && isReady == false
  * With no player present, the summary reports zero players.
  */
 export function computeReadinessSummary(participants: LobbyParticipant[]): ReadinessSummary {
@@ -87,6 +90,7 @@ export function computeReadinessSummary(participants: LobbyParticipant[]): Readi
 
   const readyCount = readyList.length;
   const totalActivePlayers = activeList.length;
+  const notReadyCount = totalActivePlayers - readyCount;
   const absentCount = absentList.length;
   const totalPlayers = players.length;
 
@@ -106,6 +110,7 @@ export function computeReadinessSummary(participants: LobbyParticipant[]): Readi
     readyCount,
     totalActivePlayers,
     absentCount,
+    notReadyCount,
     allReady,
     summaryText,
   };

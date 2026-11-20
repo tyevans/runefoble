@@ -108,7 +108,7 @@ The App Shell fetches data parameterized by route attributes via `appDataService
 - **Campaign Metadata & Updates**: Fetches metadata from `GET /api/v1/campaigns/:id` and persists updates from `@update-campaign` via `PATCH /api/v1/campaigns/:id` with Zanzibar authorization.
 - **Campaign Detail**: Fetches roster from `GET /api/v1/campaigns/:id/members` and sessions from `GET /api/v1/campaigns/:id/sessions`.
 - **Characters**: Fetches player characters from `GET /api/v1/characters` and scopes party roster in `#/campaigns/:id/characters`.
-- **Session Lobby**: Fetches participant readiness from `GET /api/v1/sessions/:id`.
+- **Session Lobby**: Fetches participant readiness and presence from `GET /api/v1/sessions/:id`. A reload shows the stored values.
 - **Active Tabletop**: Fetches tactical tokens from `GET /api/v1/boards/:id`. The route returns `404` for an unknown board and never creates one. Create the board first with `POST /api/v1/boards`. A `404` is not a load failure. `fetchBoardState` returns the typed `{ kind: 'no_board' }` result, and the view still renders the feed, the character card and the other panels. The board area shows `<runefoble-board-empty>` ("No battlemap yet"). A caller with the `run_session` capability also sees a hint and the "Set up battlemap" control. For that caller the loader also reads the seated characters (`fetchSessionSeats`, `GET /api/v1/sessions/:id`) into `sessionSeats`. See [Set up the session battlemap](interact-with-tactile-board-and-ghost-previews.md#0-set-up-the-session-battlemap). The DM board controls do not show until the board exists. Other board failures (`401`, `403`, `5xx`, network) still set `loadError`.
 - **Session Scheduling & Staging**: Creates new sessions or launches staging lobbies from `POST /api/v1/campaigns/:id/sessions` via `<runefoble-session-modal>`.
 
@@ -166,7 +166,8 @@ In the active session (`session-active`) and pre-game lobby (`session-lobby`), t
 
 1. **Session Lobby Readiness & Absentee AI Stand-In Sync**:
    - `<runefoble-session-lobby>` dispatches `@toggle-readiness` and `@toggle-stand-in`.
-   - The App Shell updates `lobbyParticipants` state and broadcasts `{ type: 'player_readiness', userId, isReady }` and `{ type: 'player_stand_in', userId, isAbsent }` to all connected party members.
+   - The App Shell calls the owner through the gateway: `POST /lobby/readiness` for readiness, and `POST /seats/{player_id}/stand-in` for the stand-in (absent or back; the DM may set any seat). It reads the roster again after each saved change (TASK-0952).
+   - The gateway sends `{ type: 'player_readiness', userId, isReady }` and `{ type: 'player_stand_in', userId, isAbsent }` to the session sockets after the owner saves the change. The App Shell applies these frames to `lobbyParticipants`. A client cannot send these frames.
 2. **Tactical Board Event Mesh & Dynamic Bounds**:
    - `<runefoble-board>` receives `.cols` and `.rows` dynamically from `appDataService.fetchBoardState(sessionId)` when the result is `{ kind: 'board' }` and `.websocketUrl` connecting directly to the session WebSocket.
    - Listens to board actions:

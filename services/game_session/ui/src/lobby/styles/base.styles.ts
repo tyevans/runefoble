@@ -89,6 +89,12 @@ export const baseStyles = css`
     color: var(--rf-text-primary, rgb(18, 18, 18));
     letter-spacing: 0.02em;
   }
+  .launch-hint {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--rf-text-muted, rgb(90, 90, 90));
+  }
+
   .btn-launch {
     background: var(--rf-accent-primary, rgb(230, 57, 70));
     color: var(--rf-text-inverse, rgb(255, 255, 255));

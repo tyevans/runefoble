@@ -126,7 +126,7 @@ async def get_character(
 @router.post(
     "/api/v1/characters/{character_id}/stand-in",
     response_model=CharacterState,
-    dependencies=deps.EDIT_CHARACTER,
+    dependencies=deps.EDIT_CHARACTER_OR_SERVICE,
 )
 async def set_stand_in_active(
     character_id: UUID, req: schemas.StandInActivationRequest, repo: deps.RepoDep

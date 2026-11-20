@@ -5,11 +5,10 @@
  * stand-in. Each lobby change that the owner records goes through an HTTP route.
  */
 
-import type { TakeSeatEventDetail } from '@runefoble/game-session-ui';
+import type { TakeSeatEventDetail, ToggleReadinessEventDetail, ToggleStandInEventDetail } from '@runefoble/game-session-ui';
 import { appDataService } from '../services/app-data-service.ts';
 import { router } from '../router/index.ts';
 import type { RunefobleApp } from '../runefoble-app.ts';
-import { handleToggleStandIn } from '../vtt-mesh-handlers.ts';
 import { markSessionEnded } from './session-messages.ts';
 
 /**
@@ -53,10 +52,67 @@ export async function endSession(host: RunefobleApp): Promise<void> {
   markSessionEnded(host);
 }
 
-/** Toggles the stand-in for a player. An absent player opens the directives drawer. */
-export function toggleStandIn(host: RunefobleApp, e: CustomEvent): void {
-  handleToggleStandIn(host, e, host.sessionSocket.current);
-  if (e.detail?.isAbsent) {
+/**
+ * Forces the lobby to render again, so each checkbox shows the roster state. A failed write
+ * leaves the roster as it was, and the checkbox must go back to that state (TASK-0952).
+ */
+function rerenderRoster(host: RunefobleApp): void {
+  host.lobbyParticipants = [...host.lobbyParticipants];
+}
+
+/** Reads the roster again from the owner. The stored readiness and presence replace the page state. */
+async function reloadRoster(host: RunefobleApp, sId: string): Promise<void> {
+  const lobby = await appDataService.fetchLobbyState(host.campaignId, sId);
+  if (!lobby.ok) {
+    host.showToast(`The roster did not load: ${lobby.message}`);
+    return;
+  }
+  host.lobbyParticipants = lobby.data.participants;
+  host.lobbyAvailableCharacters = lobby.data.availableCharacters;
+}
+
+/**
+ * Saves the caller's readiness through the gateway route (TASK-0952). The owner stores it, and
+ * the roster is read again. A refusal shows the owner's message and restores the checkbox.
+ */
+export async function toggleReadiness(host: RunefobleApp, e: CustomEvent<ToggleReadinessEventDetail>): Promise<void> {
+  const sId = e.detail?.sessionId || host.sessionId;
+  if (!sId) {
+    host.showToast('Readiness not saved. The session is not known.');
+    rerenderRoster(host);
+    return;
+  }
+  const saved = await appDataService.setLobbyReadiness(sId, e.detail.isReady === true);
+  if (!saved.ok) {
+    host.showToast(`Readiness not saved: ${saved.message}`);
+    rerenderRoster(host);
+    return;
+  }
+  await reloadRoster(host, sId);
+}
+
+/**
+ * Sets or releases the AI stand-in of a seat (TASK-0952). A player sets their own seat. The DM sets
+ * any seat. game_session activates the lobby character's stand-in, or releases it. The roster is
+ * read again after a saved change. An absent seat opens the directives drawer when the player set it.
+ */
+export async function toggleStandIn(host: RunefobleApp, e: CustomEvent<ToggleStandInEventDetail>): Promise<void> {
+  const sId = e.detail?.sessionId || host.sessionId;
+  const userId = e.detail?.userId;
+  const isAbsent = e.detail?.isAbsent === true;
+  if (!sId || !userId) {
+    host.showToast('Stand-in not changed. The session or the player is not known.');
+    rerenderRoster(host);
+    return;
+  }
+  const saved = await appDataService.setSeatStandIn(sId, userId, isAbsent);
+  if (!saved.ok) {
+    host.showToast(`Stand-in not changed: ${saved.message}`);
+    rerenderRoster(host);
+    return;
+  }
+  await reloadRoster(host, sId);
+  if (isAbsent && userId === host.currentUserId) {
     host.isAbsenteeDirectiveOpen = true;
     host.showToast('Stand-In Activated: Directives drawer opened');
   }
@@ -80,6 +136,9 @@ export async function takeLobbySeat(host: RunefobleApp, e: CustomEvent<TakeSeatE
     host.showToast(`Seat not taken: ${joined.message}`);
     return;
   }
+  // The owner stands in with the lobby character, so the seat records it (TASK-0952).
+  const picked = await appDataService.selectLobbyCharacter(sId, seat.characterId);
+  if (!picked.ok) host.showToast(`Seat taken, but the lobby character was not saved: ${picked.message}`);
   const lobby = await appDataService.fetchLobbyState(host.campaignId, sId);
   if (!lobby.ok) {
     host.showToast(`Seat taken, but the roster did not load: ${lobby.message}`);

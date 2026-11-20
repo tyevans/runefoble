@@ -2,7 +2,8 @@
 
 game_session never imports the character_sheet package. It calls public routes only.
 Activation and release call POST /api/v1/characters/{character_id}/stand-in with the verified
-bearer of the player whose session action triggers it (ADR-0015 c). The policy read calls
+bearer of the player whose session action triggers it (ADR-0015 c). When the DM sets another
+seat, the call carries the service credential instead (ADR-0015 e). The policy read calls
 GET /api/v1/characters/{character_id}/guardrails with the service credential, because the
 session owner who starts an auto-pilot turn does not hold a grant on the absent character
 (ADR-0015 e). Upstream failures raise CharacterSheetUnavailableError. Callers must surface the
@@ -13,7 +14,6 @@ from __future__ import annotations
 
 from uuid import UUID
 
-import httpx
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.errors import ServiceUnavailableError
 from runefoble_platform.service_client import ServiceClient, UpstreamError
@@ -38,24 +38,32 @@ def _base_url() -> str:
 
 
 async def _set_stand_in(
-    character_id: UUID, session_id: UUID, *, active: bool, authorization: str
+    character_id: UUID, session_id: UUID, *, active: bool, authorization: str | None
 ) -> None:
-    """Set the AI stand-in flag on a character. Raise CharacterSheetUnavailableError on failure."""
-    url = f"{_base_url()}{STAND_IN_PATH.format(character_id=character_id)}"
-    try:
-        async with httpx.AsyncClient(timeout=CHARACTER_SHEET_TIMEOUT_SECONDS) as client:
-            response = await client.post(
-                url,
-                json={"active": active, "session_id": str(session_id)},
-                headers={"Authorization": authorization},
-            )
-    except httpx.HTTPError as exc:
-        raise CharacterSheetUnavailableError(f"character_sheet is unreachable: {exc}") from exc
+    """Set the AI stand-in flag on a character. Raise CharacterSheetUnavailableError on failure.
 
-    if response.status_code != 200:
+    With a bearer, character_sheet checks the player's `edit` grant. With no bearer, the call
+    carries only the service credential (ADR-0015 e). game_session uses that when the DM sets a
+    seat that is not the caller's own, after it checked `session.control`.
+    """
+    client = ServiceClient("character_sheet", _base_url(), expected_service_credential())
+    try:
+        reply = await client.send(
+            "POST",
+            STAND_IN_PATH.format(character_id=character_id),
+            authorization=authorization,
+            json={"active": active, "session_id": str(session_id)},
+            timeout_s=CHARACTER_SHEET_TIMEOUT_SECONDS,
+        )
+    except UpstreamError as exc:
+        raise CharacterSheetUnavailableError(str(exc)) from exc
+    finally:
+        await client.aclose()
+
+    if reply.status_code != 200:
         action = "activation" if active else "release"
         raise CharacterSheetUnavailableError(
-            f"character_sheet returned HTTP {response.status_code} for stand-in {action}"
+            f"character_sheet returned HTTP {reply.status_code} for stand-in {action}"
         )
 
 
@@ -90,12 +98,16 @@ async def fetch_stand_in_policy(character_id: UUID) -> StandInGuardrailPolicy:
         ) from exc
 
 
-async def activate_stand_in(character_id: UUID, session_id: UUID, *, authorization: str) -> None:
+async def activate_stand_in(
+    character_id: UUID, session_id: UUID, *, authorization: str | None
+) -> None:
     """Hand an absent player's character to the AI stand-in (TASK-0690)."""
     await _set_stand_in(character_id, session_id, active=True, authorization=authorization)
 
 
-async def release_stand_in(character_id: UUID, session_id: UUID, *, authorization: str) -> None:
+async def release_stand_in(
+    character_id: UUID, session_id: UUID, *, authorization: str | None
+) -> None:
     """Release the AI stand-in on a character so the returning player takes control."""
     await _set_stand_in(character_id, session_id, active=False, authorization=authorization)
 

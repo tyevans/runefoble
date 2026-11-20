@@ -51,6 +51,22 @@ def roll_session(session_id: str) -> OwnerRoute:
     return OwnerRoute("POST", _session(session_id, "roll"))
 
 
+def set_seat_stand_in(session_id: str, player_id: str) -> OwnerRoute:
+    """POST: set or release the AI stand-in of one seat. The owner checks `participate` for the
+    seat's own player and `control` for any other caller (TASK-0952)."""
+    return OwnerRoute("POST", _session(session_id, "seats", player_id, "stand-in"))
+
+
+def select_lobby_character(session_id: str) -> OwnerRoute:
+    """POST: record the character the verified caller brings to the lobby. The owner checks `participate`."""
+    return OwnerRoute("POST", _session(session_id, "lobby", "character"))
+
+
+def set_lobby_readiness(session_id: str) -> OwnerRoute:
+    """POST: record the verified caller's lobby readiness. The owner checks `participate`."""
+    return OwnerRoute("POST", _session(session_id, "lobby", "readiness"))
+
+
 def start_encounter(session_id: str) -> OwnerRoute:
     """POST: start combat and record the enemy placements on one event. The owner checks `control`."""
     return OwnerRoute("POST", _session(session_id, "encounters", "start"))

@@ -87,6 +87,13 @@ const participantsWithAbsentee: LobbyParticipant[] = [
   },
 ];
 
+/** One seat is not ready. Marcus is not ready. Lyra is ready. */
+const participantsOneNotReady: LobbyParticipant[] = [
+  sampleParticipants[0], // Evelyn (GM)
+  { ...sampleParticipants[1], isReady: false },
+  sampleParticipants[2], // Lyra (Ready)
+];
+
 const participantsUnready: LobbyParticipant[] = [
   sampleParticipants[0], // Evelyn (GM)
   {
@@ -122,6 +129,21 @@ export const DmViewAllReady: Story = {
       current-user-id="usr-evelyn"
       .isDm=${true}
       .participants=${sampleParticipants}
+      .availableCharacters=${sampleCharacters}
+    ></runefoble-session-lobby>
+  `,
+};
+
+/** TASK-0952: the DM sees the count of seats that are not ready before launch. */
+export const DmViewOneSeatNotReady: Story = {
+  render: () => html`
+    <runefoble-session-lobby
+      session-id="sess-star-eater-15"
+      campaign-id="camp-star-eater"
+      session-title="Session 15: Descent into the Sunken Vaults"
+      current-user-id="usr-evelyn"
+      .isDm=${true}
+      .participants=${participantsOneNotReady}
       .availableCharacters=${sampleCharacters}
     ></runefoble-session-lobby>
   `,

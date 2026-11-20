@@ -112,14 +112,14 @@ What does not work today:
 
 ## Step 4: Run a Stand-In Turn for an Absent Player
 
-Status: `Not yet available`. Blockers: no App Shell control calls the stand-in routes, and no automatic trigger runs at the start of a turn.
+Status: `Not yet available`. Blockers: the App Shell does not call the auto-pilot route, and no automatic trigger runs at the start of a turn.
 
-The public API has these routes. The App Shell does not call them:
+The public API has these routes:
 
 - `POST /api/v1/sessions/<session id>/leave`: saves the leave. It also activates the character stand-in in the character service.
 - `POST /api/v1/sessions/<session id>/turns/auto-pilot`: runs one stand-in turn through The Watcher. It needs the `RUNEFOBLE_WATCHER_URL` setting. It does not run on its own.
 
-The lobby control `Mark Absent (AI Stand-In)` does not save anything. It sends a `player_stand_in` WebSocket message. The gateway broadcasts that message to the session, and no service stores it.
+The lobby control `Mark Absent (AI Stand-In)` calls `POST /api/v1/sessions/<session id>/seats/<player id>/stand-in` through the gateway, so the absence and the stand-in are saved. A player sets their own seat, and the DM sets any seat. A reload shows the saved state. The stand-in does not act by itself: no trigger runs the auto-pilot route yet.
 
 Do not expect the AI stand-in to act, or the penalty to change a roll, during a session.
 

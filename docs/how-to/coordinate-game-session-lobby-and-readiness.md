@@ -49,6 +49,14 @@ The readiness pill counts players only. A participant with the `owner` role or a
 
 With no player present, the summary has no fallback count. The pill never counts a DM as a ready player.
 
+### Launch Rule (TASK-0952)
+
+Readiness never blocks the launch. The DM can launch the session at any time from the lobby. A seat that is not ready does not stop the start. A player with an AI stand-in does not stop it either.
+
+Before launch, the lobby shows the DM the count of seats that are not ready, for example `1 seat not ready`. An active player who is not ready counts as a seat that is not ready. A stand-in does not count, because the AI plays that seat. The count hides when every active seat is ready, or when the caller is not the DM.
+
+The owner start route (`POST /api/v1/sessions/:id/start`) checks only the session status. It does not check readiness.
+
 ### Embedding the Lit Component
 
 ```html
@@ -106,10 +114,10 @@ interface ToggleReadinessEventDetail {
 }
 ```
 
-The session service stores readiness in the session aggregate. Send it with `POST /api/v1/sessions/{session_id}/lobby/readiness` and body `{"is_ready": true}`. The player is the verified caller. The body has no player id. The caller needs `session.participate`; a caller without it gets `403`. The response is the session state, with the stored readiness in `lobby_readiness`. The route accepts changes only while the session status is `lobby`, and only for a joined player. The lobby client does not call this route yet. It still sends readiness only as a WebSocket frame (follow-up for the gateway theme).
+The App Shell (`toggleReadiness` in `frontend/src/app/session-actions.ts`) sends `POST /api/v1/sessions/{session_id}/lobby/readiness` to the gateway with body `{"is_ready": true}`. The gateway forwards the bearer and the body. game_session stores the readiness in the session aggregate. The player is the verified caller. The body has no player id. The caller needs `session.participate`; a caller without it gets `403`. The route accepts changes only while the session status is `lobby`, and only for a joined player. After the owner saves the change, the gateway sends `{"type": "player_readiness", "userId", "isReady"}` to every session socket. The App Shell reads the roster again. If the write fails, the App Shell shows the error and restores the checkbox.
 
 ### `toggle-stand-in`
-Dispatched when a player or GM toggles absentee AI stand-in takeover:
+Dispatched when a player toggles absentee AI stand-in takeover:
 ```typescript
 interface ToggleStandInEventDetail {
   sessionId: string;
@@ -117,6 +125,24 @@ interface ToggleStandInEventDetail {
   isAbsent: boolean;
 }
 ```
+
+A player sees the control on their own card. The DM sees it on every seat. The owner decides, through SpiceDB, who may act:
+
+- The seat's own player needs `session.participate`.
+- A caller with `session.control` (`campaign#run_session`, the DM) may set any seat.
+- Any other caller gets `403`. No role name grants access.
+
+The App Shell calls `POST /api/v1/sessions/{session_id}/seats/{player_id}/stand-in` with `{"is_absent": true|false}`. The gateway forwards the bearer and the body. The owner acts on the seat named in the path.
+
+- **Absent (`is_absent` true)**: game_session records the absence. When the seat has a lobby character, it activates that character's AI stand-in on `character-sheet`. The gateway then sends `{"type": "player_stand_in", "userId", "isAbsent": true}` to every session socket.
+- **Back (`is_absent` false)**: game_session releases the stand-in and marks the seat present with its own character. The gateway then sends `{"type": "player_stand_in", "userId", "isAbsent": false}`.
+
+When the DM sets another seat, the owner calls `character-sheet` with the service credential, not the player's bearer (ADR-0015 e). The DM's `session.control` check comes first. A seat with no lobby character records the absence only.
+
+The stand-in state is stored by game_session. After a reload, the lobby reads `is_present` and `is_stand_in_active` from `GET /api/v1/sessions/{session_id}`. The lobby does not keep the stand-in in the page. The gateway does not check the seat itself; it forwards the call and the owner answers `403` for a caller who may not act on the seat.
+
+### `lobby/character`
+Taking a seat also stores the seat character as the lobby character. The App Shell calls `POST /api/v1/sessions/{session_id}/lobby/character` with `{"character_id"}` after the join succeeds. game_session hands this character to the AI stand-in when the player leaves.
 
 ### `launch-session`
 Dispatched when the GM clicks "Launch Session":
@@ -149,6 +175,8 @@ curl -X POST "http://localhost:8004/api/v1/sessions/sess-star-eater-15/start" \
   "turn_order": ["char-valeros-1", "char-kyra-standin"]
 }
 ```
+
+The start route does not check readiness. Launch follows the Launch Rule in section 2.
 
 Upon successful start, a `runefoble.events.session.started` domain event is broadcast across Redis Streams channel `events:session`, prompting all connected lobby clients to navigate to the active VTT board route `#/campaigns/:campaignId/sessions/:sessionId`.
 
