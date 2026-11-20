@@ -197,6 +197,7 @@ The campaign rules tab at `#/campaigns/:campaignId/rules`. The homebrew forge re
   - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
 
 ### Changed
+The hosted profile turns off Mailpit, Swagger UI and OpenPanel and serves no `/mail`, `/docs`, `/swagger-ui` or `/analytics` route. A hosted render fails when an Ingress path reaches a development prefix or a disabled development workload.
 `POST /api/v1/characters` stores `level` (1-20) and `portraitUrl` at creation, and the create and read replies return them. `CharacterCreated` carries `level` and `portrait_url`. A bad level or portrait returns 422
 The caravan board sends accept, dispatch and fulfil through one shared `@runefoble/ui-core` request with the shell bearer. It does not send `x-user-id`. A refused action shows distinct text: a sign-in text for `401`, a not-authorized text for `403`, `Service unavailable: <detail>` for `503`, else the server detail.
 `@runefoble/ui-core` has one shared transport, `request(path, spec, opts)`. It takes an API base (`apiBase`), the shell bearer source (`auth`) and JSON or `FormData` bodies. A non-2xx reply rejects with `HttpError { status, detail }`, which carries the FastAPI detail.

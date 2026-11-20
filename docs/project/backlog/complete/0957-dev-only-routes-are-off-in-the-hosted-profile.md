@@ -1,7 +1,7 @@
 ---
 id: '0957'
 title: Development-Only Public Routes Are Off in the Hosted Profile
-status: Refined
+status: Complete
 created: 2026-11-19
 dependencies:
 - '0955'
@@ -19,7 +19,7 @@ target_release: 1.0.0
 
 ## Status
 
-Refined. Release One hosting slice 3 (PRD-0025, outcome 4: turns off Mailpit, `/mail`, `/docs` and `/analytics`).
+Complete
 
 ## Summary
 
