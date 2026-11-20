@@ -196,7 +196,7 @@ async def test_existing_email_gets_the_same_reply_and_no_create_call(account_sta
     assert stack.zitadel.create_calls()[0].body["email"]["email"] == PLAYER_EMAIL
     assert len(stack.zitadel.create_calls()) == 1
     resets = stack.zitadel.reset_calls()
-    assert [call.path for call in resets] == [f"/v2/users/{known_id}/password_reset"]
+    assert [call.path for call in resets] == [f"/v2beta/users/{known_id}/password_reset"]
     assert resets[0].body == {"sendLink": {"notificationType": "NOTIFICATION_TYPE_EMAIL"}}
     assert not _mentions(existing.json(), known_id)
 

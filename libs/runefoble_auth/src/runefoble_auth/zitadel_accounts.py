@@ -3,10 +3,10 @@
 The adapter calls the Zitadel v2 user API, the version that the chart runs (v2.54). Each call
 sends the service token as a bearer token.
 
-- `POST /v2/users` (ListUsers) with an email query finds a user that already has the email.
-- `POST /v2/users/human` (AddHumanUser) creates a user with no password. `email.sendCode` makes
+- `POST /v2beta/users` (ListUsers) with an email query finds a user that already has the email.
+- `POST /v2beta/users/human` (AddHumanUser) creates a user with no password. `email.sendCode` makes
   Zitadel send its own verification email. The person sets the password on the hosted page.
-- `POST /v2/users/{id}/password_reset` sends a reset email to a user that already exists.
+- `POST /v2beta/users/{id}/password_reset` sends a reset email to a user that already exists.
 
 Runefoble never sends or stores a password or an init code. A failed call raises
 `AccountProvisionerUnavailableError`. The adapter logs the operation and the HTTP status only.
@@ -29,6 +29,9 @@ logger = logging.getLogger("runefoble.auth.zitadel_accounts")
 
 REQUEST_TIMEOUT_S = 5.0
 STATUS_USER_EXISTS = 409
+# The user service path of the chart Zitadel image (v2.54.0). It serves the user API under
+# /v2beta; /v2 answers 404 there (checked on Kind, 2026-11-20). Change it with the image.
+USER_API = "/v2beta"
 EMAIL_EQUALS_IGNORE_CASE = "TEXT_QUERY_METHOD_EQUALS_IGNORE_CASE"
 
 
@@ -86,7 +89,7 @@ class ZitadelAccountProvisioner:
         body = {
             "queries": [{"emailQuery": {"emailAddress": email, "method": EMAIL_EQUALS_IGNORE_CASE}}]
         }
-        document = await self._expect_json("search", "/v2/users", body, status_ok={200})
+        document = await self._expect_json("search", f"{USER_API}/users", body, status_ok={200})
         results = document.get("result")
         if not isinstance(results, list):
             raise _unavailable("search", "the reply has no result list")
@@ -101,7 +104,7 @@ class ZitadelAccountProvisioner:
             "profile": {"givenName": given, "familyName": family, "displayName": display_name},
             "email": {"email": email, "sendCode": {}},
         }
-        response = await self._send("create", "/v2/users/human", body)
+        response = await self._send("create", f"{USER_API}/users/human", body)
         if response.status_code == STATUS_USER_EXISTS:
             raise _UserAlreadyExistsError()
         document = _json_object("create", response)
@@ -110,7 +113,7 @@ class ZitadelAccountProvisioner:
     async def _send_reset_link(self, user_id: str) -> None:
         body = {"sendLink": {"notificationType": "NOTIFICATION_TYPE_EMAIL"}}
         await self._expect_json(
-            "password_reset", f"/v2/users/{user_id}/password_reset", body, status_ok={200}
+            "password_reset", f"{USER_API}/users/{user_id}/password_reset", body, status_ok={200}
         )
 
     async def _expect_json(

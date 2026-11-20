@@ -131,7 +131,7 @@ Proxy routes:
   - A refused request returns `429` with `Retry-After` in seconds. The counts live in one process. A shared limiter can replace them through the `RateLimiter` port (`libs/runefoble_platform/src/runefoble_platform/rate_limit.py`).
 - **Configuration.** The adapter reads `RUNEFOBLE_ZITADEL_SERVICE_TOKEN`, `RUNEFOBLE_ZITADEL_ORG_ID`, and `RUNEFOBLE_ZITADEL_API_URL` (see Section 7). A deployed `game_session` refuses to start without the token (`services/game_session/src/game_session/container.py`).
 
-Zitadel API used: the v2 user API of the chart's Zitadel image (`v2.54.0`). The calls are `POST /v2/users` (email search), `POST /v2/users/human` (create with `email.sendCode`), and `POST /v2/users/{id}/password_reset` (`sendLink`).
+Zitadel API used: the user API of the chart's Zitadel image (`v2.54.0`), which that version serves under `/v2beta` (`/v2` answers 404). The calls are `POST /v2beta/users` (email search), `POST /v2beta/users/human` (create with `email.sendCode`), and `POST /v2beta/users/{id}/password_reset` (`sendLink`). The path prefix is `USER_API` in `libs/runefoble_auth/src/runefoble_auth/zitadel_accounts.py`. Change it when the Zitadel image changes.
 
 ### Owning services
 

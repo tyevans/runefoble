@@ -5,9 +5,9 @@ under test (`ZitadelAccountProvisioner`) sends real HTTP requests to it over loo
 code is replaced.
 
 It serves the three calls that the provisioner makes:
-- `POST /v2/users` searches by email,
-- `POST /v2/users/human` creates a user,
-- `POST /v2/users/{id}/password_reset` sends a reset link to an existing user.
+- `POST /v2beta/users` searches by email,
+- `POST /v2beta/users/human` creates a user,
+- `POST /v2beta/users/{id}/password_reset` sends a reset link to an existing user.
 
 It records every request body, so a test can check that no password reached Zitadel. A test
 sets `fail_status` to make Zitadel answer with that status to every call.
@@ -23,8 +23,8 @@ from dataclasses import dataclass, field
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
 
-HUMAN_USER_PATH = "/v2/users/human"
-SEARCH_PATH = "/v2/users"
+HUMAN_USER_PATH = "/v2beta/users/human"
+SEARCH_PATH = "/v2beta/users"
 RESET_SUFFIX = "/password_reset"
 STATUS_CONFLICT = 409
 
@@ -90,7 +90,7 @@ class FakeZitadel:
         if method == "POST" and path == HUMAN_USER_PATH:
             return self._create(body)
         if method == "POST" and path.endswith(RESET_SUFFIX):
-            user_id = path[len("/v2/users/") : -len(RESET_SUFFIX)]
+            user_id = path[len("/v2beta/users/") : -len(RESET_SUFFIX)]
             if user_id in self.users.values():
                 return 200, {"details": {}}
             return 404, {"code": 5, "message": "User not found"}
