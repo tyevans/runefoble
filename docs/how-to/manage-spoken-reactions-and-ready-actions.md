@@ -122,7 +122,8 @@ GET /api/v1/sessions/{session_id}/reactions/active
 Players interact with reaction interrupts and ready actions via two Lit Web Components vendored inside `services/game_session/ui/`:
 
 ### `<runefoble-combat-reaction-prompt>`
-An urgent modal overlay rendered when combat pauses for a spoken reaction:
+An urgent modal overlay rendered when combat pauses for a spoken reaction.
+- **Idle State**: The prompt renders nothing and runs no countdown until it receives a `reactionId` and a `reactingCombatantId`. No placeholder name or text appears. The App Shell does not mount the prompt by default (TASK-0939).
 - **Countdown Timer**: High-contrast progress bar reflecting remaining decision window (default 15s) with pulse animation under 5s.
 - **Reaction Options**: Tactile action buttons corresponding to available reaction triggers (e.g., *Cast Shield [+5 AC]*, *Counterspell*, *Opportunity Attack*), plus a *Decline / Pass* button.
 - **Resolution State**: Emits `reaction-resolved` or `reaction-timeout` CustomEvents and transitions to confirmation toast states.

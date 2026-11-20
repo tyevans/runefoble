@@ -1336,6 +1336,7 @@ The App Shell auth service keeps JWT claim handling, session storage and session
 - **Documentation & Build Navigation**: Featured the Platform Showcase and Changelog in `zensical.toml` and root documentation landing page (`docs/index.md`), and enhanced `scripts/build_docs.py` to synchronize `CHANGELOG.md` to `docs/changelog.md` during documentation compilation.
 
 ### Fixed
+The combat reaction prompt stays closed and idle until it receives a real reaction. Live sessions no longer show a fake "Turn Paused: Reaction" dialog with a running timer, because the App Shell no longer seeds the prompt as a default sidebar plugin. (TASK-0939)
 The gateway service client sends an idempotent call once more on a fresh connection when a pooled connection closes before the answer; POST and PATCH still answer 503. Idle pooled connections expire after 4 s, and the service images start uvicorn with a 15 s keep-alive.
 The service client limits the TCP connect to an owner to 2 seconds. When a Service still routes to a deleted pod, the 503 now comes within the limit, not after the full route timeout.
 the-watcher, board-state, character-sheet, campaign-lore, asset-forge and soundscape serve a gated `/readyz`, and their Helm probes use it. asset-forge also waits for the Silo asset bucket.
